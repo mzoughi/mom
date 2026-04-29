@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var thisq = 'q1';
+var thisq = '$thisq';
 var rootElId = 'ctRoot' + thisq;
 var stateKey = 'ctState_' + thisq;
 /* =========================================================
