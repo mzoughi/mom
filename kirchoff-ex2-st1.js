@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var thisq = '$thisq';
+var thisq = window.ctThisq;
 var rootElId = 'ctRoot' + thisq;
 var stateKey = 'ctState_' + thisq;
 /* =========================================================
@@ -160,7 +160,7 @@ drawComponent(svg, c);
 var pos = nodePos();
 ['n1','n2','n3','n4'].forEach(function(n){
 if (nodeDegree(n) >= 3) {
-svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ctnode'+thisq }));
+svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ctnode' }));
 }
 });
 }
@@ -170,21 +170,21 @@ function drawReturnWirePath(svg) {
 //   n4 (270,280) → (270,310) → (60,310) → (60,30) → (110,30)  [left side of E1]
 //   E1 body: (110,30) ... (170,30)
 //   (170,30) → (270,30) → n1 (270,60)
-var L = 'class="ctwire' + thisq + '"';
+var L = 'class="ctwire' + '"';
 // Down from n4
-svg.appendChild(svgEl('line', {x1:270, y1:280, x2:270, y2:310, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:270, y1:280, x2:270, y2:310, 'class':'ctwire'}));
 // Left across bottom
-svg.appendChild(svgEl('line', {x1:270, y1:310, x2:60, y2:310, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:270, y1:310, x2:60, y2:310, 'class':'ctwire'}));
 // Up the left side
-svg.appendChild(svgEl('line', {x1:60, y1:310, x2:60, y2:30, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:60, y1:310, x2:60, y2:30, 'class':'ctwire'}));
 // Across the top to E1's left lead
-svg.appendChild(svgEl('line', {x1:60, y1:30, x2:110, y2:30, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:60, y1:30, x2:110, y2:30, 'class':'ctwire'}));
 // E1: battery symbol horizontal at y=30, plates around x=140
 drawBatteryHorizontal(svg, getById('E1'), 140, 30);
 // From E1's right lead to n1
-svg.appendChild(svgEl('line', {x1:170, y1:30, x2:270, y2:30, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:170, y1:30, x2:270, y2:30, 'class':'ctwire'}));
 // Down to n1
-svg.appendChild(svgEl('line', {x1:270, y1:30, x2:270, y2:60, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:270, y1:30, x2:270, y2:60, 'class':'ctwire'}));
 }
 function drawComponent(svg, c) {
 if (c.kind === 'battery') drawBatteryDiagonal(svg, c);
@@ -210,13 +210,13 @@ var transform = 'translate(' + mx + ',' + my + ') rotate(' + ang + ')';
 var ux = dx/len, uy = dy/len;
 var bodyLeftX = mx - ux*halfLen, bodyLeftY = my - uy*halfLen;
 var bodyRightX = mx + ux*halfLen, bodyRightY = my + uy*halfLen;
-svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:bodyLeftX, y2:bodyLeftY, 'class':'ctwire'+thisq}));
-svg.appendChild(svgEl('line', {x1:bodyRightX, y1:bodyRightY, x2:x2, y2:y2, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:bodyLeftX, y2:bodyLeftY, 'class':'ctwire'}));
+svg.appendChild(svgEl('line', {x1:bodyRightX, y1:bodyRightY, x2:x2, y2:y2, 'class':'ctwire'}));
 var sel = S.selected.indexOf(c.id) >= 0;
 var rect = svgEl('rect', {
 x:bodyX, y:bodyY, width:bodyLen, height:bodyW, rx:3, ry:3,
 transform: transform,
-'class': 'ctcomp' + thisq + (sel ? ' ctcompsel' + thisq : ''),
+'class': 'ctcomp' + (sel ? ' ctcompsel' : ''),
 'data-id': c.id, tabindex:0, role:'button',
 'aria-label': describeComponent(c) + (sel ? ', selected' : ''),
 'aria-pressed': sel ? 'true' : 'false'
@@ -236,8 +236,8 @@ var dot = px * dxFromCenter + py * dyFromCenter;
 if (dot < 0) { px = -px; py = -py; }
 var labX = mx + px * labOffsetMagnitude;
 var labY = my + py * labOffsetMagnitude;
-svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ctlabel'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ctval'+thisq}, fmt(c.value) + ' \u03a9'));
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ctlabel'}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ctval'}, fmt(c.value) + ' \u03a9'));
 }
 function drawBatteryDiagonal(svg, c) {
 // Diagonal battery (E2 in bottom-left arm). Draw plates perpendicular to the wire.
@@ -262,10 +262,10 @@ var lp2x = longCx - px*longLen/2,  lp2y = longCy - py*longLen/2;
 var sp1x = shortCx + px*shortLen/2, sp1y = shortCy + py*shortLen/2;
 var sp2x = shortCx - px*shortLen/2, sp2y = shortCy - py*shortLen/2;
 // Leads from (x1,y1) to long plate, and from short plate to (x2,y2)
-svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:longCx, y2:longCy, 'class':'ctwire'+thisq}));
-svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ctwire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ctwire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:longCx, y2:longCy, 'class':'ctwire'}));
+svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ctwire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ctwire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ctwire'}));
 // Label, offset perpendicular toward outside
 var labOff = 22;
 var dxFromCenter = mx - 270, dyFromCenter = my - 175;
@@ -273,8 +273,8 @@ var dot = px * dxFromCenter + py * dyFromCenter;
 var pxL = px, pyL = py;
 if (dot < 0) { pxL = -px; pyL = -py; }
 var labX = mx + pxL*labOff, labY = my + pyL*labOff;
-svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ctlabel'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ctval'+thisq}, c.value + ' V'));
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ctlabel'}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ctval'}, c.value + ' V'));
 }
 function drawBatteryHorizontal(svg, c, cx, cy) {
 // Horizontal battery in the return wire (E1). Plates vertical, drawn around (cx,cy).
@@ -290,13 +290,13 @@ var plateGapHalf = 4;
 var longX = cx + plateGapHalf;
 var shortX = cx - plateGapHalf;
 // Leads
-svg.appendChild(svgEl('line', {x1:cx-30, y1:cy, x2:shortX, y2:cy, 'class':'ctwire'+thisq}));
-svg.appendChild(svgEl('line', {x1:shortX, y1:cy-shortLen/2, x2:shortX, y2:cy+shortLen/2, 'class':'ctwire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:longX,  y1:cy-longLen/2,  x2:longX,  y2:cy+longLen/2,  'class':'ctwire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:longX, y1:cy, x2:cx+30, y2:cy, 'class':'ctwire'+thisq}));
+svg.appendChild(svgEl('line', {x1:cx-30, y1:cy, x2:shortX, y2:cy, 'class':'ctwire'}));
+svg.appendChild(svgEl('line', {x1:shortX, y1:cy-shortLen/2, x2:shortX, y2:cy+shortLen/2, 'class':'ctwire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX,  y1:cy-longLen/2,  x2:longX,  y2:cy+longLen/2,  'class':'ctwire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX, y1:cy, x2:cx+30, y2:cy, 'class':'ctwire'}));
 // Label below
-svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ctlabel'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ctval'+thisq}, c.value + ' V'));
+svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ctlabel'}, c.label));
+svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ctval'}, c.value + ' V'));
 }
 function attachHandlers(el, c) {
 el.addEventListener('click', function(){ toggleSelection(c.id); });
@@ -363,12 +363,12 @@ updateProgress();
 function updateSelectedList() {
 var div = document.getElementById('ctSel' + thisq);
 if (S.selected.length === 0) {
-div.innerHTML = '<span class="ctempty' + thisq + '">Click two resistors\u2026</span>';
+div.innerHTML = '<span class="ctempty' + '">Click two resistors\u2026</span>';
 return;
 }
 div.innerHTML = S.selected.map(function(id){
 var c = getById(id);
-return '<div class="ctseitem' + thisq + '">' + c.label + ' = ' + fmt(c.value) + ' \u03a9</div>';
+return '<div class="ctseitem' + '">' + c.label + ' = ' + fmt(c.value) + ' \u03a9</div>';
 }).join('');
 }
 function updateButtons() {
@@ -383,7 +383,7 @@ if (note) note.textContent = nR + ' resistors in circuit';
 }
 function setFeedback(msg, tone) {
 var fb = document.getElementById('ctFb' + thisq);
-fb.className = 'ctfb' + thisq + (tone === 'good' ? ' ctfbgood' + thisq : tone === 'bad' ? ' ctfbbad' + thisq : tone === 'info' ? ' ctfbinfo' + thisq : '');
+fb.className = 'ctfb' + (tone === 'good' ? ' ctfbgood' : tone === 'bad' ? ' ctfbbad' : tone === 'info' ? ' ctfbinfo' : '');
 fb.innerHTML = msg;
 }
 function announce(msg) {
@@ -416,7 +416,7 @@ label:newReqLabel(),
 // Place merged resistor at the midpoint of the two originals
 geom: { kind:'arm', x1:c1.geom.x1, y1:c1.geom.y1, x2:c2.geom.x2, y2:c2.geom.y2, orient:'diagonal' }
 });
-setFeedback('<strong>Correct \u2014 these are in series.</strong><div class="ctformula' + thisq + '">R = ' + c1.label + ' + ' + c2.label + ' = ' + c1.value + ' + ' + c2.value + ' = ' + fmt(newVal) + ' \u03a9</div>', 'good');
+setFeedback('<strong>Correct \u2014 these are in series.</strong><div class="ctformula' + '">R = ' + c1.label + ' + ' + c2.label + ' = ' + c1.value + ' + ' + c2.value + ' = ' + fmt(newVal) + ' \u03a9</div>', 'good');
 announce('Series merge: ' + c1.label + ' + ' + c2.label + ' = ' + fmt(newVal) + ' ohms.');
 S.selected = [];
 refreshUI();
@@ -442,7 +442,7 @@ geom: c1.geom // approximate
 var formula = '(' + c1.label + ' \u00d7 ' + c2.label + ') / (' + c1.label + ' + ' + c2.label + ')'
 + ' = (' + c1.value + ' \u00d7 ' + c2.value + ') / (' + c1.value + ' + ' + c2.value + ')'
 + ' = ' + fmt(newVal) + ' \u03a9';
-setFeedback('<strong>Correct \u2014 these are in parallel.</strong><div class="ctformula' + thisq + '">R = ' + formula + '</div>', 'good');
+setFeedback('<strong>Correct \u2014 these are in parallel.</strong><div class="ctformula' + '">R = ' + formula + '</div>', 'good');
 announce('Parallel merge: ' + fmt(newVal) + ' ohms.');
 S.selected = [];
 refreshUI();
@@ -456,7 +456,7 @@ refreshUI();
 function resetCircuit() {
 S.circuit = makeInitialCircuit();
 S.selected = [];
-document.getElementById('ctComp' + thisq).classList.remove('ctshow' + thisq);
+document.getElementById('ctComp' + thisq).classList.remove('ctshow');
 setFeedback('Circuit reset.');
 refreshUI();
 }
@@ -476,12 +476,12 @@ return true;
 function checkComplete() {
 if (isIrreducible()) {
 var banner = document.getElementById('ctComp' + thisq);
-banner.classList.add('ctshow' + thisq);
+banner.classList.add('ctshow');
 var R = S.circuit.components.filter(function(c){return c.kind==='resistor';});
 var msg = 'No further series or parallel reductions are possible. This is a bridge circuit, which is irreducible by series/parallel \u2014 Kirchhoff\u2019s rules are required.';
 banner.innerHTML = ''
-+ '<div class="ctcompmsg' + thisq + '">\u2713 ' + msg + '</div>'
-+ '<button type="button" class="ctbtn' + thisq + ' ctbtnnext' + thisq + '" id="ctBtnNext' + thisq + '">'
++ '<div class="ctcompmsg' + '">\u2713 ' + msg + '</div>'
++ '<button type="button" class="ctbtn' + ' ctbtnnext' + '" id="ctBtnNext' + thisq + '">'
 + 'Continue to Stage 2 \u2192</button>';
 var nextBtn = document.getElementById('ctBtnNext' + thisq);
 if (nextBtn) {
@@ -510,23 +510,23 @@ checkComplete();
  ACCESSIBILITY
 ========================================================= */
 function applyA11y() {
-var root = document.getElementById(rootElId).querySelector('.ctroot' + thisq);
+var root = document.getElementById(rootElId).querySelector('.ctroot');
 if (!root) return;
-root.classList.toggle('ctlm' + thisq, S.a11y.lm);
-root.classList.toggle('cthc' + thisq, S.a11y.hc);
+root.classList.toggle('ctlm', S.a11y.lm);
+root.classList.toggle('cthc', S.a11y.hc);
 var fontSizes = ['14px','16px','19px'];
-root.style.setProperty('--ctfs' + thisq, fontSizes[S.a11y.fs]);
+root.style.setProperty('--ctfs', fontSizes[S.a11y.fs]);
 setBtn('ctBtnLM', S.a11y.lm, 'LIGHT MODE');
 setBtn('ctBtnNR', S.a11y.nr, 'NARRATION', true);
 setBtn('ctBtnHC', S.a11y.hc, 'HIGH CONTRAST');
 setBtn('ctBtnFS', S.a11y.fs > 0, 'FONT SIZE: ' + ['NORMAL','LARGE','XL'][S.a11y.fs]);
 var nar = document.getElementById('ctNar' + thisq);
-if (nar) nar.classList.toggle('ctnarshow' + thisq, S.a11y.nr);
+if (nar) nar.classList.toggle('ctnarshow', S.a11y.nr);
 }
 function setBtn(idBase, on, label, withSuffix) {
 var b = document.getElementById(idBase + thisq);
 if (!b) return;
-b.classList.toggle('cta11yon' + thisq, on);
+b.classList.toggle('cta11yon', on);
 b.setAttribute('aria-pressed', on ? 'true' : 'false');
 b.textContent = withSuffix ? (label + ': ' + (on ? 'ON' : 'OFF')) : label;
 }
@@ -542,56 +542,56 @@ render();
 function buildDOM() {
 var root = document.getElementById(rootElId);
 var html = ''
-+ '<div class="ctroot' + thisq + '" role="region" aria-label="Bridge circuit simplification tutorial">'
-+ '  <div class="cta11y' + thisq + '" role="toolbar" aria-label="Display options">'
-+ '    <button type="button" class="cta11ybtn' + thisq + '" id="ctBtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
-+ '    <button type="button" class="cta11ybtn' + thisq + ' cta11yon' + thisq + '" id="ctBtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
-+ '    <button type="button" class="cta11ybtn' + thisq + '" id="ctBtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
-+ '    <button type="button" class="cta11ybtn' + thisq + '" id="ctBtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
++ '<div class="ctroot' + '" role="region" aria-label="Bridge circuit simplification tutorial">'
++ '  <div class="cta11y' + '" role="toolbar" aria-label="Display options">'
++ '    <button type="button" class="cta11ybtn' + '" id="ctBtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
++ '    <button type="button" class="cta11ybtn' + ' cta11yon' + '" id="ctBtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
++ '    <button type="button" class="cta11ybtn' + '" id="ctBtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
++ '    <button type="button" class="cta11ybtn' + '" id="ctBtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
 + '  </div>'
-+ '  <div id="ctNar' + thisq + '" class="ctnarbar' + thisq + ' ctnarshow' + thisq + '" role="status" aria-live="polite" aria-atomic="true"></div>'
-+ '  <h3 class="cttitle' + thisq + '">Example 2 \u2014 Stage 1: Simplification (Bridge Circuit)</h3>'
-+ '  <div class="ctsubtitle' + thisq + '">Try to simplify this bridge circuit. Some circuits can\u2019t be reduced by series or parallel combinations \u2014 see if this is one of them.</div>'
-+ '  <div class="ctstagebar' + thisq + '" role="navigation" aria-label="Tutorial stages">'
-+ '    <span class="ctpill' + thisq + ' ctpillactive' + thisq + '">1. Simplify</span>'
-+ '    <span class="ctpill' + thisq + '">2. Branches \u0026 Loops</span>'
-+ '    <span class="ctpill' + thisq + '">3. Currents</span>'
-+ '    <span class="ctpill' + thisq + '">4. Polarities</span>'
-+ '    <span class="ctpill' + thisq + '">5. Equations</span>'
++ '  <div id="ctNar' + thisq + '" class="ctnarbar' + ' ctnarshow' + '" role="status" aria-live="polite" aria-atomic="true"></div>'
++ '  <h3 class="cttitle' + '">Example 2 \u2014 Stage 1: Simplification (Bridge Circuit)</h3>'
++ '  <div class="ctsubtitle' + '">Try to simplify this bridge circuit. Some circuits can\u2019t be reduced by series or parallel combinations \u2014 see if this is one of them.</div>'
++ '  <div class="ctstagebar' + '" role="navigation" aria-label="Tutorial stages">'
++ '    <span class="ctpill' + ' ctpillactive' + '">1. Simplify</span>'
++ '    <span class="ctpill' + '">2. Branches \u0026 Loops</span>'
++ '    <span class="ctpill' + '">3. Currents</span>'
++ '    <span class="ctpill' + '">4. Polarities</span>'
++ '    <span class="ctpill' + '">5. Equations</span>'
 + '  </div>'
-+ '  <div class="ctlayout' + thisq + '">'
++ '  <div class="ctlayout' + '">'
 + '    <div class="ctcanvasWrap' + thisq + '">'
-+ '      <div class="cthint' + thisq + '">Click two resistors and choose Series or Parallel. If you can\u2019t find any valid reductions, click \u201CDeclare Irreducible\u201D to confirm and move on.</div>'
-+ '      <svg class="ctsvg' + thisq + '" id="ctSvg' + thisq + '" viewBox="0 0 540 340" role="img" aria-label="Bridge circuit"></svg>'
-+ '      <div class="ctcomplete' + thisq + '" id="ctComp' + thisq + '" role="status"></div>'
++ '      <div class="cthint' + '">Click two resistors and choose Series or Parallel. If you can\u2019t find any valid reductions, click \u201CDeclare Irreducible\u201D to confirm and move on.</div>'
++ '      <svg class="ctsvg' + '" id="ctSvg' + thisq + '" viewBox="0 0 540 340" role="img" aria-label="Bridge circuit"></svg>'
++ '      <div class="ctcomplete' + '" id="ctComp' + thisq + '" role="status"></div>'
 + '    </div>'
-+ '    <aside class="ctside' + thisq + '" aria-label="Simplification controls">'
++ '    <aside class="ctside' + '" aria-label="Simplification controls">'
 + '      <div>'
-+ '        <h2 class="ctsideh' + thisq + '">Selected</h2>'
-+ '        <div class="ctselist' + thisq + '" id="ctSel' + thisq + '" aria-live="polite"></div>'
++ '        <h2 class="ctsideh' + '">Selected</h2>'
++ '        <div class="ctselist' + '" id="ctSel' + thisq + '" aria-live="polite"></div>'
 + '      </div>'
 + '      <div>'
-+ '        <h2 class="ctsideh' + thisq + '">Operation</h2>'
-+ '        <div class="ctbtnrow' + thisq + '">'
-+ '          <button type="button" class="ctbtn' + thisq + '" id="ctBtnSer' + thisq + '" disabled>Series</button>'
-+ '          <button type="button" class="ctbtn' + thisq + '" id="ctBtnPar' + thisq + '" disabled>Parallel</button>'
++ '        <h2 class="ctsideh' + '">Operation</h2>'
++ '        <div class="ctbtnrow' + '">'
++ '          <button type="button" class="ctbtn' + '" id="ctBtnSer' + thisq + '" disabled>Series</button>'
++ '          <button type="button" class="ctbtn' + '" id="ctBtnPar' + thisq + '" disabled>Parallel</button>'
 + '        </div>'
 + '      </div>'
 + '      <div>'
-+ '        <h2 class="ctsideh' + thisq + '">Feedback</h2>'
-+ '        <div class="ctfb' + thisq + '" id="ctFb' + thisq + '">Try to find any pair of resistors in series or parallel. If you can\u2019t, declare the circuit irreducible.</div>'
++ '        <h2 class="ctsideh' + '">Feedback</h2>'
++ '        <div class="ctfb' + '" id="ctFb' + thisq + '">Try to find any pair of resistors in series or parallel. If you can\u2019t, declare the circuit irreducible.</div>'
 + '      </div>'
-+ '      <div class="ctbtnrow' + thisq + '">'
-+ '        <button type="button" class="ctbtn' + thisq + ' ctbtndanger' + thisq + '" id="ctBtnClr' + thisq + '">Clear</button>'
-+ '        <button type="button" class="ctbtn' + thisq + '" id="ctBtnRst' + thisq + '">Reset</button>'
++ '      <div class="ctbtnrow' + '">'
++ '        <button type="button" class="ctbtn' + ' ctbtndanger' + '" id="ctBtnClr' + thisq + '">Clear</button>'
++ '        <button type="button" class="ctbtn' + '" id="ctBtnRst' + thisq + '">Reset</button>'
 + '      </div>'
-+ '      <div class="ctbtnrow' + thisq + '">'
-+ '        <button type="button" class="ctbtn' + thisq + ' ctbtnlearn' + thisq + '" id="ctBtnIrr' + thisq + '">Declare Irreducible</button>'
++ '      <div class="ctbtnrow' + '">'
++ '        <button type="button" class="ctbtn' + ' ctbtnlearn' + '" id="ctBtnIrr' + thisq + '">Declare Irreducible</button>'
 + '      </div>'
-+ '      <div class="ctprogress' + thisq + '" id="ctProg' + thisq + '"></div>'
++ '      <div class="ctprogress' + '" id="ctProg' + thisq + '"></div>'
 + '    </aside>'
 + '  </div>'
-+ '  <span class="ctsr' + thisq + '" id="ctLive' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
++ '  <span class="ctsr' + '" id="ctLive' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
 + '</div>';
 root.innerHTML = html;
 document.getElementById('ctBtnSer' + thisq).addEventListener('click', trySeries);
