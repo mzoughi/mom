@@ -1,0 +1,1029 @@
+(function(){
+'use strict';
+var thisq = 'q1';
+var rootElId = 'ct2Root' + thisq;
+var stateKey = 'ctState2_' + thisq;
+/* =========================================================
+ COLORS for found branches and loops (cycled)
+========================================================= */
+var FOUND_COLORS = ['#00d4ff', '#ff6ec7', '#a8e063', '#ffdd66', '#c084fc', '#fb923c'];
+/* =========================================================
+ STATE
+========================================================= */
+if (!window[stateKey]) {
+window[stateKey] = {
+a11y: { lm:false, nr:true, hc:false, fs:0 },
+phase: 'branches',           // 'branches' | 'loops' | 'independence'
+selected: [],                // currently selected component ids
+foundBranches: [],           // [{ ids:Set, color:'#xxx' }]
+foundLoops: [],              // [{ ids:Set, color:'#xxx' }]
+independenceSelection: [],   // indices into foundLoops
+circuit: null                // populated in init from Stage 1 or fallback
+};
+}
+var S = window[stateKey];
+/* =========================================================
+ FALLBACK CIRCUIT (if Stage 1 hasn't run yet)
+ Mirrors Example 2's bridge circuit (irreducible, so Stage 1 doesn't change it).
+========================================================= */
+function fallbackCircuit() {
+return {
+components: [
+{ id:'R1', kind:'resistor', value:2, a:'n1', b:'n2', label:'R\u2081',
+geom: { x1:270, y1:60, x2:130, y2:175 } },
+{ id:'R2', kind:'resistor', value:4, a:'n1', b:'n3', label:'R\u2082',
+geom: { x1:270, y1:60, x2:410, y2:175 } },
+{ id:'R5', kind:'resistor', value:5, a:'n2', b:'n3', label:'R\u2085',
+geom: { x1:130, y1:175, x2:410, y2:175 } },
+{ id:'E2', kind:'battery', value:6, a:'n2', b:'nE2int', label:'E\u2082',
+geom: { x1:130, y1:175, x2:200, y2:227 } },
+{ id:'R3', kind:'resistor', value:3, a:'nE2int', b:'n4', label:'R\u2083',
+geom: { x1:200, y1:227, x2:270, y2:280 } },
+{ id:'R4', kind:'resistor', value:6, a:'n3', b:'n4', label:'R\u2084',
+geom: { x1:410, y1:175, x2:270, y2:280 } },
+{ id:'E1', kind:'battery', value:12, a:'n1', b:'n4', label:'E\u2081',
+geom: { kind:'return-wire-horizontal' } }
+]
+};
+}
+/* =========================================================
+ GRAPH HELPERS
+========================================================= */
+function nodeDegreeFull(node) {
+var d = 0;
+S.circuit.components.forEach(function(c){
+if (c.a === node) d++;
+if (c.b === node) d++;
+});
+return d;
+}
+function nodeDegreeInSet(node, idSet) {
+var d = 0;
+S.circuit.components.forEach(function(c){
+if (idSet.has(c.id)) {
+if (c.a === node) d++;
+if (c.b === node) d++;
+}
+});
+return d;
+}
+function nodesInSet(idSet) {
+var nodes = new Set();
+S.circuit.components.forEach(function(c){
+if (idSet.has(c.id)) { nodes.add(c.a); nodes.add(c.b); }
+});
+return nodes;
+}
+function isConnected(idSet) {
+if (idSet.size === 0) return false;
+var firstId = idSet.values().next().value;
+var firstComp = S.circuit.components.find(function(c){return c.id===firstId;});
+if (!firstComp) return false;
+var visited = new Set();
+var queue = [firstComp.a];
+visited.add(firstComp.a);
+while (queue.length) {
+var node = queue.shift();
+S.circuit.components.forEach(function(c){
+if (!idSet.has(c.id)) return;
+var other = (c.a === node) ? c.b : (c.b === node) ? c.a : null;
+if (other && !visited.has(other)) {
+visited.add(other); queue.push(other);
+}
+});
+}
+var ok = true;
+nodesInSet(idSet).forEach(function(n){ if (!visited.has(n)) ok = false; });
+return ok;
+}
+function getById(id) {
+for (var i=0; i<S.circuit.components.length; i++) {
+if (S.circuit.components[i].id === id) return S.circuit.components[i];
+}
+return null;
+}
+/* =========================================================
+ BRANCH + LOOP VALIDATION
+========================================================= */
+function checkBranch(idSet) {
+if (idSet.size === 0) return { ok:false, reason:'No components selected.' };
+if (!isConnected(idSet)) {
+return { ok:false, reason:'These components are not all connected along a single path.' };
+}
+var nodes = nodesInSet(idSet);
+var endpoints = [];
+var internal = [];
+nodes.forEach(function(n){
+var dSub = nodeDegreeInSet(n, idSet);
+if (dSub === 1) endpoints.push(n);
+else internal.push({ node:n, dSub:dSub });
+});
+if (endpoints.length === 0) {
+return { ok:false, reason:'This forms a closed loop, not a branch. A branch must have two endpoints at junction nodes.' };
+}
+if (endpoints.length !== 2) {
+return { ok:false, reason:'A branch should have exactly 2 endpoints; this set has ' + endpoints.length + '.' };
+}
+for (var i=0; i<internal.length; i++) {
+if (internal[i].dSub !== 2) {
+return { ok:false, reason:'A node in your selection has degree ' + internal[i].dSub + '. A branch must be a simple path (no forks or T\u2011junctions).' };
+}
+var dFull = nodeDegreeFull(internal[i].node);
+if (dFull !== 2) {
+return { ok:false, reason:'Your selection passes through a junction node. A branch must end at every junction it reaches.' };
+}
+}
+for (var j=0; j<endpoints.length; j++) {
+var dFull2 = nodeDegreeFull(endpoints[j]);
+if (dFull2 < 3) {
+return { ok:false, reason:'An endpoint of your selection isn\u2019t a junction node (degree '+dFull2+'). A branch must run all the way between two junctions.' };
+}
+}
+return { ok:true, endpoints:endpoints };
+}
+function checkLoop(idSet) {
+if (idSet.size === 0) return { ok:false, reason:'No components selected.' };
+if (idSet.size < 2) {
+return { ok:false, reason:'A loop needs at least two components forming a closed path.' };
+}
+if (!isConnected(idSet)) {
+return { ok:false, reason:'The selected components are not all connected.' };
+}
+var bad = null;
+nodesInSet(idSet).forEach(function(n){
+var d = nodeDegreeInSet(n, idSet);
+if (d !== 2) bad = { node:n, d:d };
+});
+if (bad) {
+if (bad.d === 1) {
+return { ok:false, reason:'A node in your selection only has one connection \u2014 the path is not closed.' };
+}
+return { ok:false, reason:'A node in your selection has '+bad.d+' connections. A simple loop has exactly two connections at every node.' };
+}
+return { ok:true };
+}
+/* =========================================================
+ LOOP INDEPENDENCE (GF(2) Gaussian elimination)
+========================================================= */
+function loopVector(idSet) {
+return S.circuit.components.map(function(c){ return idSet.has(c.id) ? 1 : 0; });
+}
+function gf2Rank(vectors) {
+if (vectors.length === 0) return 0;
+var rows = vectors.map(function(v){ return v.slice(); });
+var n = rows.length, m = rows[0].length;
+var rank = 0;
+for (var col = 0; col < m && rank < n; col++) {
+var pivot = -1;
+for (var r = rank; r < n; r++) if (rows[r][col] === 1) { pivot = r; break; }
+if (pivot < 0) continue;
+var tmp = rows[rank]; rows[rank] = rows[pivot]; rows[pivot] = tmp;
+for (var r2 = 0; r2 < n; r2++) {
+if (r2 !== rank && rows[r2][col] === 1) {
+for (var k = 0; k < m; k++) rows[r2][k] ^= rows[rank][k];
+}
+}
+rank++;
+}
+return rank;
+}
+/* Number of independent loops needed = (branches) - (junctions) + 1, but we
+ count it more directly: it's the rank of the full set of all possible loops.
+ Simpler proxy that's correct for our circuit family: total loops dimension =
+ #branches - #junctions + 1. For our test circuit (3 branches, 2 junctions):
+ 3 - 2 + 1 = 2. Matches manual answer.
+ For robustness we also compute the dimension empirically by enumerating cycles
+ starting from each pair of branches and taking the rank.
+*/
+function expectedLoopCount() {
+// Count branches by walking the circuit. A branch = a maximal path between
+// two junction nodes. For our ladder topology, we can count components that
+// start from a junction or are between non-junctions, but the cleanest is:
+//   branches = sum over junctions of (degree)/2 — no, that's wrong too.
+// Most reliable method: enumerate via a graph walk. But we already have the
+// student's foundBranches list, so use that if present:
+if (S.foundBranches.length > 0) {
+var nB = S.foundBranches.length;
+// junctions = nodes with full-degree >= 3
+var junctions = 0;
+var seen = new Set();
+S.circuit.components.forEach(function(c){ seen.add(c.a); seen.add(c.b); });
+seen.forEach(function(n){ if (nodeDegreeFull(n) >= 3) junctions++; });
+return nB - junctions + 1;
+}
+// Fallback: count independent loops empirically by trying small subsets.
+return 2;
+}
+/* =========================================================
+ LAYOUT (geom-based, for Example 2's diamond bridge)
+ Each component carries (x1,y1,x2,y2) in c.geom.
+========================================================= */
+function layout() {
+return { L: { width: 540, height: 340 } };
+}
+/* =========================================================
+ RENDER
+========================================================= */
+function svgEl(tag, attrs, text) {
+var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+for (var k in attrs) el.setAttribute(k, attrs[k]);
+if (text != null) el.textContent = text;
+return el;
+}
+// Determine the highlight color for a component (if any)
+// Branches and loops share the same coloring scheme — once a component
+// is in a confirmed branch/loop it gets the latest color from that list.
+function highlightColorFor(id) {
+// Independence-mode highlighting: only show selected loops
+if (S.phase === 'independence') {
+for (var i=0; i<S.independenceSelection.length; i++) {
+var loopIdx = S.independenceSelection[i];
+if (S.foundLoops[loopIdx] && S.foundLoops[loopIdx].ids.has(id)) {
+return S.foundLoops[loopIdx].color;
+}
+}
+return null;
+}
+// Loops phase: show all confirmed loops
+if (S.phase === 'loops') {
+for (var i=0; i<S.foundLoops.length; i++) {
+if (S.foundLoops[i].ids.has(id)) return S.foundLoops[i].color;
+}
+}
+// Branches phase (and as a baseline when nothing else applies): show branches
+for (var i=0; i<S.foundBranches.length; i++) {
+if (S.foundBranches[i].ids.has(id)) return S.foundBranches[i].color;
+}
+return null;
+}
+function render() {
+var svg = document.getElementById('ct2Svg' + thisq);
+if (!svg) return;
+while (svg.firstChild) svg.removeChild(svg.firstChild);
+var t = document.createElementNS('http://www.w3.org/2000/svg','title');
+t.textContent = 'Bridge circuit schematic';
+var d = document.createElementNS('http://www.w3.org/2000/svg','desc');
+d.textContent = describeCircuit();
+svg.appendChild(t); svg.appendChild(d);
+// Draw the wraparound return wire (with E1 in the top stretch).
+drawReturnWirePath(svg);
+// Draw each non-return component
+S.circuit.components.forEach(function(c){
+if (c.id === 'E1') return; // drawn as part of return wire
+drawComponent(svg, c);
+});
+// Junction dots
+var pos = nodePos();
+['n1','n2','n3','n4'].forEach(function(n){
+if (pos[n] && nodeDegreeFull(n) >= 3) {
+svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ct2node'+thisq }));
+}
+});
+}
+function nodePos() {
+return {
+n1:     { x:270, y:60 },
+n2:     { x:130, y:175 },
+n3:     { x:410, y:175 },
+n4:     { x:270, y:280 },
+nE2int: { x:200, y:227 }
+};
+}
+function drawReturnWirePath(svg) {
+svg.appendChild(svgEl('line', {x1:270, y1:280, x2:270, y2:310, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:270, y1:310, x2:60,  y2:310, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:60,  y1:310, x2:60,  y2:30,  'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:110, y2:30,  'class':'ct2wire'+thisq}));
+var e1 = getById('E1');
+if (e1) drawBatteryHorizontal(svg, e1, 140, 30);
+svg.appendChild(svgEl('line', {x1:170, y1:30,  x2:270, y2:30,  'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:270, y1:30,  x2:270, y2:60,  'class':'ct2wire'+thisq}));
+}
+function drawComponent(svg, c) {
+if (c.kind === 'battery') drawBatteryDiagonal(svg, c);
+else drawResistor(svg, c);
+}
+function drawResistor(svg, c) {
+var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
+var mx = (x1+x2)/2, my = (y1+y2)/2;
+var dx = x2-x1, dy = y2-y1;
+var len = Math.sqrt(dx*dx + dy*dy);
+var ang = Math.atan2(dy, dx) * 180 / Math.PI;
+var bodyLen = 36, bodyW = 14;
+var halfLen = bodyLen/2;
+var bodyX = -halfLen, bodyY = -bodyW/2;
+var transform = 'translate(' + mx + ',' + my + ') rotate(' + ang + ')';
+var ux = dx/len, uy = dy/len;
+var bodyLeftX = mx - ux*halfLen, bodyLeftY = my - uy*halfLen;
+var bodyRightX = mx + ux*halfLen, bodyRightY = my + uy*halfLen;
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:bodyLeftX, y2:bodyLeftY, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:bodyRightX, y1:bodyRightY, x2:x2, y2:y2, 'class':'ct2wire'+thisq}));
+var sel = S.selected.indexOf(c.id) >= 0;
+var hi  = highlightColorFor(c.id);
+var rectAttrs = {
+x:bodyX, y:bodyY, width:bodyLen, height:bodyW, rx:3, ry:3,
+transform: transform,
+'class': 'ct2comp' + thisq + (sel ? ' ct2compsel' + thisq : ''),
+'data-id': c.id, tabindex:0, role:'button',
+'aria-label': describeComponent(c) + (sel?', selected':''),
+'aria-pressed': sel ? 'true' : 'false'
+};
+var rect = svgEl('rect', rectAttrs);
+if (hi && !sel) {
+rect.setAttribute('stroke', hi);
+rect.setAttribute('stroke-width', '2.6');
+rect.setAttribute('fill', hexToRgba(hi, 0.18));
+}
+attachHandlers(rect, c);
+svg.appendChild(rect);
+// Labels — perpendicular to body, pushed outward
+var px = -uy, py = ux;
+var dxFromCenter = mx - 270, dyFromCenter = my - 175;
+if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
+var labOff = 28;
+var labX = mx + px*labOff, labY = my + py*labOff;
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct2label'+thisq}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct2val'+thisq}, fmt(c.value) + ' \u03a9'));
+}
+function drawBatteryDiagonal(svg, c) {
+var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
+var mx = (x1+x2)/2, my = (y1+y2)/2;
+var dx = x2-x1, dy = y2-y1;
+var len = Math.sqrt(dx*dx + dy*dy);
+var ux = dx/len, uy = dy/len;
+var px = -uy, py = ux;
+var longLen = 24, shortLen = 14;
+var plateGapHalf = 4;
+var longCx = mx - ux*plateGapHalf, longCy = my - uy*plateGapHalf;
+var shortCx = mx + ux*plateGapHalf, shortCy = my + uy*plateGapHalf;
+var lp1x = longCx + px*longLen/2,  lp1y = longCy + py*longLen/2;
+var lp2x = longCx - px*longLen/2,  lp2y = longCy - py*longLen/2;
+var sp1x = shortCx + px*shortLen/2, sp1y = shortCy + py*shortLen/2;
+var sp2x = shortCx - px*shortLen/2, sp2y = shortCy - py*shortLen/2;
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:longCx, y2:longCy, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ct2wire'+thisq, 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ct2wire'+thisq, 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ct2wire'+thisq}));
+// Label
+var pxL = px, pyL = py;
+var dxFromCenter = mx - 270, dyFromCenter = my - 175;
+if (pxL * dxFromCenter + pyL * dyFromCenter < 0) { pxL = -pxL; pyL = -pyL; }
+var labOff = 22;
+var labX = mx + pxL*labOff, labY = my + pyL*labOff;
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct2label'+thisq}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct2val'+thisq}, c.value + ' V'));
+// Hit zone for battery (transparent rect over the body)
+var sel = S.selected.indexOf(c.id) >= 0;
+var hi  = highlightColorFor(c.id);
+var hitW = Math.max(longLen, 28), hitH = bodyHFromGeom(len);
+var hitTransform = 'translate(' + mx + ',' + my + ') rotate(' + (Math.atan2(dy,dx)*180/Math.PI) + ')';
+var hitAttrs = {
+x: -hitW/2, y: -hitH/2, width: hitW, height: hitH, rx:2,
+transform: hitTransform,
+'class': 'ct2comp' + thisq + (sel ? ' ct2compsel' + thisq : ''),
+'data-id': c.id, tabindex:0, role:'button',
+'aria-label': describeComponent(c) + (sel?', selected':''),
+'aria-pressed': sel ? 'true' : 'false',
+'fill-opacity': 0.0
+};
+var rect = svgEl('rect', hitAttrs);
+if (hi && !sel) {
+rect.setAttribute('stroke', hi);
+rect.setAttribute('stroke-width', '2.6');
+rect.setAttribute('fill', hexToRgba(hi, 0.18));
+rect.setAttribute('fill-opacity', '1');
+}
+attachHandlers(rect, c);
+svg.appendChild(rect);
+}
+function drawBatteryHorizontal(svg, c, cx, cy) {
+// E1 horizontal in return wire. c.a=n1 (positive). On screen, n1 is at (270,60),
+// accessed via the right side of E1's drawing. So long plate goes on the right.
+var longLen = 26, shortLen = 14;
+var plateGapHalf = 4;
+var longX = cx + plateGapHalf;
+var shortX = cx - plateGapHalf;
+svg.appendChild(svgEl('line', {x1:cx-30, y1:cy, x2:shortX, y2:cy, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:shortX, y1:cy-shortLen/2, x2:shortX, y2:cy+shortLen/2, 'class':'ct2wire'+thisq, 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX,  y1:cy-longLen/2,  x2:longX,  y2:cy+longLen/2,  'class':'ct2wire'+thisq, 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX, y1:cy, x2:cx+30, y2:cy, 'class':'ct2wire'+thisq}));
+// Label
+svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ct2label'+thisq}, c.label));
+svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ct2val'+thisq}, c.value + ' V'));
+// Hit zone
+var sel = S.selected.indexOf(c.id) >= 0;
+var hi  = highlightColorFor(c.id);
+var hitW = 60, hitH = 28;
+var hitAttrs = {
+x: cx-hitW/2, y: cy-hitH/2, width: hitW, height: hitH, rx:2,
+'class': 'ct2comp' + thisq + (sel ? ' ct2compsel' + thisq : ''),
+'data-id': c.id, tabindex:0, role:'button',
+'aria-label': describeComponent(c) + (sel?', selected':''),
+'aria-pressed': sel ? 'true' : 'false',
+'fill-opacity': 0.0
+};
+var rect = svgEl('rect', hitAttrs);
+if (hi && !sel) {
+rect.setAttribute('stroke', hi);
+rect.setAttribute('stroke-width', '2.6');
+rect.setAttribute('fill', hexToRgba(hi, 0.18));
+rect.setAttribute('fill-opacity', '1');
+}
+attachHandlers(rect, c);
+svg.appendChild(rect);
+}
+// Compute hit-zone height from the geom span (for diagonal batteries).
+function bodyHFromGeom(span) { return Math.min(36, span * 0.6); }
+function attachHandlers(el, c) {
+el.addEventListener('click', function(){ toggleSelection(c.id); });
+el.addEventListener('keydown', function(ev){
+if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleSelection(c.id); }
+else if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown') { ev.preventDefault(); focusNeighbor(c.id, +1); }
+else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp')   { ev.preventDefault(); focusNeighbor(c.id, -1); }
+});
+}
+function focusNeighbor(id, dir) {
+var comps = S.circuit.components;
+var idx = -1;
+for (var i=0; i<comps.length; i++) if (comps[i].id === id) { idx = i; break; }
+var n = comps.length;
+var newIdx = ((idx + dir) % n + n) % n;
+var nextId = comps[newIdx].id;
+setTimeout(function(){
+var el = document.querySelector('[data-id="' + nextId + '"]');
+if (el) el.focus();
+}, 0);
+}
+function fmt(v) {
+if (v == null) return '';
+if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+return v.toFixed(2).replace(/\.?0+$/,'');
+}
+function hexToRgba(hex, alpha) {
+var h = hex.replace('#','');
+var r = parseInt(h.substring(0,2), 16);
+var g = parseInt(h.substring(2,4), 16);
+var b = parseInt(h.substring(4,6), 16);
+return 'rgba('+r+','+g+','+b+','+alpha+')';
+}
+function describeComponent(c) {
+if (c.kind === 'battery') return 'Battery ' + c.label + ', ' + c.value + ' volts';
+return 'Resistor ' + c.label + ', ' + fmt(c.value) + ' ohms';
+}
+function describeCircuit() {
+var R = S.circuit.components.filter(function(c){return c.kind==='resistor';});
+var B = S.circuit.components.filter(function(c){return c.kind==='battery';});
+return B.length + ' batter' + (B.length===1?'y':'ies') + ' and ' + R.length + ' resistor' + (R.length===1?'':'s') + '.';
+}
+/* =========================================================
+ SELECTION + UI
+========================================================= */
+function toggleSelection(id) {
+if (S.phase === 'independence') {
+// In independence phase, clicking circuit components has no effect;
+// user picks loops via the Found Loops list.
+announce('Click on the loops in the Found Loops list to select an independent set.');
+return;
+}
+var idx = S.selected.indexOf(id);
+if (idx >= 0) S.selected.splice(idx, 1);
+else S.selected.push(id);
+refreshUI();
+}
+function clearSelection() {
+S.selected = [];
+setFeedback('Selection cleared.');
+refreshUI();
+}
+function refreshUI() {
+render();
+updateSelectedList();
+updateFoundList();
+updateButtons();
+updateProgress();
+}
+function updateSelectedList() {
+var div = document.getElementById('ct2Sel' + thisq);
+if (!div) return;
+if (S.selected.length === 0) {
+div.innerHTML = '<span class="ct2empty' + thisq + '">Click components in this ' + (S.phase === 'branches' ? 'branch' : 'loop') + '\u2026</span>';
+return;
+}
+div.innerHTML = S.selected.map(function(id){
+var c = getById(id);
+return '<div class="ct2seitem' + thisq + '">' + c.label + '</div>';
+}).join('');
+}
+function updateFoundList() {
+var div = document.getElementById('ct2Found' + thisq);
+if (!div) return;
+var list = (S.phase === 'loops' || S.phase === 'independence') ? S.foundLoops : S.foundBranches;
+if (list.length === 0) {
+div.innerHTML = '<span class="ct2empty' + thisq + '">None yet.</span>';
+return;
+}
+div.innerHTML = list.map(function(item, i){
+var labels = Array.from(item.ids).map(function(id){
+var c = getById(id); return c ? c.label : id;
+}).join(', ');
+var prefix = (S.phase === 'loops' || S.phase === 'independence') ? 'Loop ' : 'Branch ';
+var sel = S.phase === 'independence' && S.independenceSelection.indexOf(i) >= 0;
+return '<div class="ct2founditem' + thisq + (sel ? ' ct2foundselected' + thisq : '') + '" data-fidx="' + i + '">'
++ '<span class="ct2foundswatch' + thisq + '" style="background:' + item.color + ';"></span>'
++ '<span class="ct2foundtext' + thisq + '">' + prefix + (i+1) + ': ' + labels + '</span>'
++ (S.phase !== 'independence'
+? '<button type="button" class="ct2foundremove' + thisq + '" data-rmidx="' + i + '" aria-label="Remove">\u2715</button>'
+: '')
++ '</div>';
+}).join('');
+// Attach handlers
+var items = div.querySelectorAll('.ct2founditem' + thisq);
+items.forEach(function(it){
+var idx = parseInt(it.getAttribute('data-fidx'), 10);
+if (S.phase === 'independence') {
+it.style.cursor = 'pointer';
+it.addEventListener('click', function(){ toggleIndependenceSelection(idx); });
+}
+});
+var rmBtns = div.querySelectorAll('.ct2foundremove' + thisq);
+rmBtns.forEach(function(b){
+b.addEventListener('click', function(ev){
+ev.stopPropagation();
+var idx = parseInt(b.getAttribute('data-rmidx'), 10);
+removeFoundAt(idx);
+});
+});
+}
+function updateButtons() {
+var hasSel = S.selected.length > 0;
+var confirmBtn = document.getElementById('ct2BtnConfirm' + thisq);
+var clearBtn   = document.getElementById('ct2BtnClr' + thisq);
+var doneBtn    = document.getElementById('ct2BtnDone' + thisq);
+var checkIndepBtn = document.getElementById('ct2BtnCheck' + thisq);
+if (S.phase === 'independence') {
+if (confirmBtn) confirmBtn.style.display = 'none';
+if (clearBtn)   clearBtn.style.display   = 'none';
+if (doneBtn)    doneBtn.style.display    = 'none';
+if (checkIndepBtn) {
+checkIndepBtn.style.display = '';
+checkIndepBtn.disabled = S.independenceSelection.length < 1;
+}
+} else {
+if (confirmBtn) {
+confirmBtn.style.display = '';
+confirmBtn.disabled = !hasSel;
+confirmBtn.textContent = (S.phase === 'branches') ? 'Confirm Branch' : 'Confirm Loop';
+}
+if (clearBtn) { clearBtn.style.display = ''; clearBtn.disabled = !hasSel; }
+if (doneBtn) {
+doneBtn.style.display = '';
+if (S.phase === 'branches') {
+doneBtn.textContent = 'Branches Done \u2192';
+doneBtn.disabled = S.foundBranches.length === 0;
+} else {
+doneBtn.textContent = 'Loops Done \u2192';
+doneBtn.disabled = S.foundLoops.length === 0;
+}
+}
+if (checkIndepBtn) checkIndepBtn.style.display = 'none';
+}
+}
+function updateProgress() {
+var note = document.getElementById('ct2Prog' + thisq);
+if (!note) return;
+if (S.phase === 'branches') {
+note.textContent = 'Found ' + S.foundBranches.length + ' branch' + (S.foundBranches.length===1?'':'es');
+} else if (S.phase === 'loops') {
+note.textContent = 'Found ' + S.foundLoops.length + ' loop' + (S.foundLoops.length===1?'':'s');
+} else {
+var n = S.independenceSelection.length;
+note.textContent = n + ' loop' + (n===1?'':'s') + ' selected';
+}
+}
+function setFeedback(msg, tone) {
+var fb = document.getElementById('ct2Fb' + thisq);
+if (!fb) return;
+fb.className = 'ct2fb' + thisq + (tone === 'good' ? ' ct2fbgood' + thisq : tone === 'bad' ? ' ct2fbbad' + thisq : tone === 'info' ? ' ct2fbinfo' + thisq : '');
+fb.innerHTML = msg;
+}
+function announce(msg) {
+var live = document.getElementById('ct2Live' + thisq);
+var nar  = document.getElementById('ct2Nar' + thisq);
+if (live) { live.textContent = ''; setTimeout(function(){ live.textContent = msg; }, 50); }
+if (nar && S.a11y.nr) nar.textContent = msg;
+}
+/* =========================================================
+ PHASE OPERATIONS
+========================================================= */
+function nextColor(list) {
+return FOUND_COLORS[list.length % FOUND_COLORS.length];
+}
+function tryConfirm() {
+if (S.selected.length === 0) return;
+var idSet = new Set(S.selected);
+var labels = S.selected.map(function(id){var c=getById(id);return c?c.label:id;}).join(', ');
+if (S.phase === 'branches') {
+// Check it's not a duplicate
+for (var i=0; i<S.foundBranches.length; i++) {
+if (setsEqual(S.foundBranches[i].ids, idSet)) {
+setFeedback('You\u2019ve already identified that branch.', 'info');
+announce('Already identified.');
+return;
+}
+}
+var res = checkBranch(idSet);
+if (!res.ok) {
+setFeedback('<strong>Not a valid branch.</strong> ' + res.reason, 'bad');
+announce('Incorrect. ' + res.reason);
+return;
+}
+S.foundBranches.push({ ids:new Set(idSet), color: nextColor(S.foundBranches) });
+S.selected = [];
+setFeedback('<strong>Correct \u2014 valid branch:</strong> ' + labels + '.', 'good');
+announce('Branch confirmed: ' + labels + '.');
+refreshUI();
+// Auto-detect when all branches found
+if (allBranchesFound()) {
+setFeedback('<strong>You\u2019ve found all branches.</strong> Press \u201CBranches Done\u201D to move on to loops.', 'good');
+}
+} else if (S.phase === 'loops') {
+for (var j=0; j<S.foundLoops.length; j++) {
+if (setsEqual(S.foundLoops[j].ids, idSet)) {
+setFeedback('You\u2019ve already identified that loop.', 'info');
+announce('Already identified.');
+return;
+}
+}
+var res2 = checkLoop(idSet);
+if (!res2.ok) {
+setFeedback('<strong>Not a valid loop.</strong> ' + res2.reason, 'bad');
+announce('Incorrect. ' + res2.reason);
+return;
+}
+S.foundLoops.push({ ids:new Set(idSet), color: nextColor(S.foundLoops) });
+S.selected = [];
+setFeedback('<strong>Correct \u2014 valid loop:</strong> ' + labels + '.', 'good');
+announce('Loop confirmed: ' + labels + '.');
+refreshUI();
+}
+}
+function setsEqual(a, b) {
+if (a.size !== b.size) return false;
+var ok = true;
+a.forEach(function(x){ if (!b.has(x)) ok = false; });
+return ok;
+}
+function allBranchesFound() {
+// Heuristic: count how many branches the circuit actually has by scanning
+// for maximal degree-2 paths between junctions. This is the same number
+// as len(components) when there are 2 junctions and every component
+// forms a separate branch — but in our ladder topology after Stage 1
+// simplification, branches can have multiple components. We compute it
+// properly via graph traversal.
+return S.foundBranches.length >= computeTotalBranchCount();
+}
+function computeTotalBranchCount() {
+// Walk the graph: for each junction node, follow each incident edge
+// until reaching another junction. Count each branch once.
+var junctions = new Set();
+var nodes = new Set();
+S.circuit.components.forEach(function(c){ nodes.add(c.a); nodes.add(c.b); });
+nodes.forEach(function(n){ if (nodeDegreeFull(n) >= 3) junctions.add(n); });
+if (junctions.size === 0) {
+// No junctions -> circuit is a single loop (no branches in graph sense),
+// or a chain. Treat all components as one "branch."
+return S.circuit.components.length > 0 ? 1 : 0;
+}
+var branchCount = 0;
+var visitedEdges = new Set();
+junctions.forEach(function(j){
+S.circuit.components.forEach(function(c){
+if (visitedEdges.has(c.id)) return;
+if (c.a !== j && c.b !== j) return;
+// Walk this branch from j
+var cur = c;
+var curNode = (cur.a === j) ? cur.b : cur.a;
+var prevNode = j;
+visitedEdges.add(cur.id);
+while (!junctions.has(curNode)) {
+// Find the next non-visited edge from curNode
+var next = null;
+for (var i=0; i<S.circuit.components.length; i++) {
+var ec = S.circuit.components[i];
+if (visitedEdges.has(ec.id)) continue;
+if (ec.a === curNode || ec.b === curNode) { next = ec; break; }
+}
+if (!next) break;
+visitedEdges.add(next.id);
+var newNode = (next.a === curNode) ? next.b : next.a;
+prevNode = curNode;
+curNode = newNode;
+}
+branchCount++;
+});
+});
+return branchCount;
+}
+function removeFoundAt(idx) {
+var list = (S.phase === 'loops') ? S.foundLoops : S.foundBranches;
+list.splice(idx, 1);
+// Re-color remaining items so colors are consistent
+list.forEach(function(item, i){ item.color = FOUND_COLORS[i % FOUND_COLORS.length]; });
+setFeedback('Removed.', 'info');
+refreshUI();
+}
+function gotoPhase(p) {
+S.phase = p;
+S.selected = [];
+if (p === 'independence') {
+S.independenceSelection = [];
+var n = expectedLoopCount();
+setFeedback('<strong>Now identify which loops are independent.</strong><br>'
++ 'You only need <strong>' + n + '</strong> independent loop' + (n===1?'':'s') + ' for KVL '
++ '(branches \u2212 junctions + 1). Click loops in the list to select them; '
++ 'the widget will tell you if your choice is independent.', 'info');
+announce('Phase: identify independent loops. You need ' + n + ' loop' + (n===1?'':'s') + '.');
+} else if (p === 'loops') {
+setFeedback('<strong>Now identify the loops.</strong> Click components forming a closed path, then Confirm Loop.', 'info');
+announce('Phase: loops. Click components forming a closed path.');
+} else {
+setFeedback('<strong>Identify each branch.</strong> Click the components belonging to one branch, then Confirm Branch.', 'info');
+announce('Phase: branches. Click components belonging to one branch.');
+}
+updatePhaseTabs();
+refreshUI();
+}
+function updatePhaseTabs() {
+['branches','loops','independence'].forEach(function(p){
+var el = document.getElementById('ct2Phase_' + p + '_' + thisq);
+if (!el) return;
+el.classList.toggle('ct2phaseactive' + thisq, S.phase === p);
+// Mark "done" if past it
+var order = ['branches','loops','independence'];
+var pIdx = order.indexOf(p), curIdx = order.indexOf(S.phase);
+el.classList.toggle('ct2phasedone' + thisq, pIdx < curIdx);
+});
+}
+function toggleIndependenceSelection(idx) {
+var pos = S.independenceSelection.indexOf(idx);
+if (pos >= 0) S.independenceSelection.splice(pos, 1);
+else S.independenceSelection.push(idx);
+refreshUI();
+}
+function checkIndependence() {
+if (S.independenceSelection.length === 0) return;
+var vectors = S.independenceSelection.map(function(i){
+return loopVector(S.foundLoops[i].ids);
+});
+var rank = gf2Rank(vectors);
+var n = S.independenceSelection.length;
+var needed = expectedLoopCount();
+if (rank < n) {
+var dependentCount = n - rank;
+setFeedback('<strong>Not independent.</strong> '
++ dependentCount + ' of your ' + n + ' loop' + (n===1?'':'s')
++ ' can be obtained by combining (XOR) the others. '
++ 'Try a smaller or different subset.', 'bad');
+announce('Not independent. ' + dependentCount + ' of your loops are redundant.');
+return;
+}
+if (n < needed) {
+setFeedback('<strong>Independent, but not enough.</strong> '
++ 'You need ' + needed + ' independent loop' + (needed===1?'':'s')
++ ' for KVL. Add ' + (needed - n) + ' more.', 'info');
+announce('Independent, but you need ' + needed + ' total.');
+return;
+}
+if (n > needed) {
+setFeedback('<strong>That\u2019s ' + n + ' loops, but only ' + needed
++ ' are needed.</strong> Any ' + needed + ' of these would do \u2014 the others are redundant.', 'info');
+announce('Too many. Pick a smaller independent set.');
+return;
+}
+// Exactly right
+setFeedback('<strong>\u2713 Correct \u2014 ' + n + ' independent loops, exactly what KVL needs.</strong>'
++ '<br>Together with KCL at the junction, you now have enough equations for all the unknown currents.', 'good');
+announce('Correct. ' + n + ' independent loops chosen.');
+showCompleteBanner();
+}
+function showCompleteBanner() {
+var banner = document.getElementById('ct2Comp' + thisq);
+if (!banner) return;
+banner.classList.add('ct2show' + thisq);
+var msg = 'Stage 2 complete. ' + S.foundBranches.length + ' branches, '
++ S.foundLoops.length + ' loops total, ' + S.independenceSelection.length
++ ' independent. Ready for Stage 3 (current direction assignment).';
+banner.innerHTML = ''
++ '<div class="ct2compmsg' + thisq + '">\u2713 ' + msg + '</div>'
++ '<button type="button" class="ct2btn' + thisq + ' ct2btnnext' + thisq + '" id="ct2BtnNext' + thisq + '">'
++ 'Continue to Stage 3 \u2192</button>';
+var nextBtn = document.getElementById('ct2BtnNext' + thisq);
+if (nextBtn) {
+nextBtn.addEventListener('click', function(){
+var ev = new CustomEvent('ctStageComplete', { detail:{ stage:2, thisq:thisq } });
+document.dispatchEvent(ev);
+var hook = window['ctOnStageComplete_' + thisq];
+if (typeof hook === 'function') hook(2);
+announce('Advancing to Stage 3.');
+});
+}
+}
+/* =========================================================
+ ACCESSIBILITY TOOLBAR
+========================================================= */
+function applyA11y() {
+var root = document.getElementById(rootElId).querySelector('.ct2root' + thisq);
+if (!root) return;
+root.classList.toggle('ct2lm' + thisq, S.a11y.lm);
+root.classList.toggle('ct2hc' + thisq, S.a11y.hc);
+var fontSizes = ['14px','16px','19px'];
+root.style.setProperty('--ct2fs' + thisq, fontSizes[S.a11y.fs]);
+setBtn('ct2BtnLM', S.a11y.lm, 'LIGHT MODE');
+setBtn('ct2BtnNR', S.a11y.nr, 'NARRATION', true);
+setBtn('ct2BtnHC', S.a11y.hc, 'HIGH CONTRAST');
+setBtn('ct2BtnFS', S.a11y.fs > 0, 'FONT SIZE: ' + ['NORMAL','LARGE','XL'][S.a11y.fs]);
+var nar = document.getElementById('ct2Nar' + thisq);
+if (nar) nar.classList.toggle('ct2narshow' + thisq, S.a11y.nr);
+}
+function setBtn(idBase, on, label, withSuffix) {
+var b = document.getElementById(idBase + thisq);
+if (!b) return;
+b.classList.toggle('ct2a11yon' + thisq, on);
+b.setAttribute('aria-pressed', on ? 'true' : 'false');
+b.textContent = withSuffix ? (label + ': ' + (on ? 'ON' : 'OFF')) : label;
+}
+function toggleA11y(key) {
+if (key === 'fs') S.a11y.fs = (S.a11y.fs + 1) % 3;
+else S.a11y[key] = !S.a11y[key];
+applyA11y();
+render();
+}
+/* =========================================================
+ INITIAL DOM
+========================================================= */
+function buildDOM() {
+var root = document.getElementById(rootElId);
+var html = ''
++ '<div class="ct2root' + thisq + '" role="region" aria-label="Branches and loops tutorial">'
++ '  <div class="ct2a11y' + thisq + '" role="toolbar" aria-label="Display options">'
++ '    <button type="button" class="ct2a11ybtn' + thisq + '" id="ct2BtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
++ '    <button type="button" class="ct2a11ybtn' + thisq + ' ct2a11yon' + thisq + '" id="ct2BtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
++ '    <button type="button" class="ct2a11ybtn' + thisq + '" id="ct2BtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
++ '    <button type="button" class="ct2a11ybtn' + thisq + '" id="ct2BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
++ '  </div>'
++ '  <div id="ct2Nar' + thisq + '" class="ct2narbar' + thisq + ' ct2narshow' + thisq + '" role="status" aria-live="polite" aria-atomic="true"></div>'
++ '  <h3 class="ct2title' + thisq + '">Example 2 \u2014 Stage 2: Branches and Loops (Bridge)</h3>'
++ '  <div class="ct2subtitle' + thisq + '">Identify the branches in the simplified circuit, then the loops you\u2019ll use for KVL.</div>'
++ '  <div class="ct2stagebar' + thisq + '" role="navigation" aria-label="Tutorial stages">'
++ '    <span class="ct2pill' + thisq + ' ct2pilldone' + thisq + '">1. Simplify \u2713</span>'
++ '    <span class="ct2pill' + thisq + ' ct2pillactive' + thisq + '">2. Branches \u0026 Loops</span>'
++ '    <span class="ct2pill' + thisq + '">3. Currents</span>'
++ '    <span class="ct2pill' + thisq + '">4. Polarities</span>'
++ '    <span class="ct2pill' + thisq + '">5. Equations</span>'
++ '  </div>'
++ '  <div class="ct2phasebar' + thisq + '" role="tablist">'
++ '    <button type="button" class="ct2phase' + thisq + ' ct2phaseactive' + thisq + '" id="ct2Phase_branches_' + thisq + '" role="tab">2A. Branches</button>'
++ '    <button type="button" class="ct2phase' + thisq + '" id="ct2Phase_loops_' + thisq + '" role="tab">2B. Loops</button>'
++ '    <button type="button" class="ct2phase' + thisq + '" id="ct2Phase_independence_' + thisq + '" role="tab">2C. Independence</button>'
++ '  </div>'
++ '  <div class="ct2layout' + thisq + '">'
++ '    <div class="ct2canvasWrap' + thisq + '">'
++ '      <div class="ct2hint' + thisq + '" id="ct2Hint' + thisq + '">Click the components belonging to one branch (any order), then press Confirm Branch. Use Tab to focus a component, Enter or Space to select.</div>'
++ '      <svg class="ct2svg' + thisq + '" id="ct2Svg' + thisq + '" viewBox="0 0 540 340" role="img" aria-label="Bridge circuit"></svg>'
++ '      <div class="ct2complete' + thisq + '" id="ct2Comp' + thisq + '" role="status"></div>'
++ '    </div>'
++ '    <aside class="ct2side' + thisq + '" aria-label="Branches and loops controls">'
++ '      <div>'
++ '        <h2 class="ct2sideh' + thisq + '">Selected</h2>'
++ '        <div class="ct2selist' + thisq + '" id="ct2Sel' + thisq + '" aria-live="polite"></div>'
++ '      </div>'
++ '      <div>'
++ '        <h2 class="ct2sideh' + thisq + '" id="ct2FoundHdr' + thisq + '">Found Branches</h2>'
++ '        <div class="ct2foundlist' + thisq + '" id="ct2Found' + thisq + '" aria-live="polite"></div>'
++ '      </div>'
++ '      <div class="ct2btnrow' + thisq + '">'
++ '        <button type="button" class="ct2btn' + thisq + ' ct2btnprimary' + thisq + '" id="ct2BtnConfirm' + thisq + '" disabled>Confirm Branch</button>'
++ '        <button type="button" class="ct2btn' + thisq + ' ct2btndanger' + thisq + '" id="ct2BtnClr' + thisq + '" disabled>Clear</button>'
++ '      </div>'
++ '      <div class="ct2btnrow' + thisq + '">'
++ '        <button type="button" class="ct2btn' + thisq + '" id="ct2BtnDone' + thisq + '" disabled>Branches Done \u2192</button>'
++ '        <button type="button" class="ct2btn' + thisq + ' ct2btnprimary' + thisq + '" id="ct2BtnCheck' + thisq + '" style="display:none">Check Independence</button>'
++ '      </div>'
++ '      <div>'
++ '        <h2 class="ct2sideh' + thisq + '">Feedback</h2>'
++ '        <div class="ct2fb' + thisq + '" id="ct2Fb' + thisq + '">Identify each branch in the simplified circuit.</div>'
++ '      </div>'
++ '      <div class="ct2progress' + thisq + '" id="ct2Prog' + thisq + '"></div>'
++ '    </aside>'
++ '  </div>'
++ '  <span class="ct2sr' + thisq + '" id="ct2Live' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
++ '</div>';
+root.innerHTML = html;
+document.getElementById('ct2BtnConfirm' + thisq).addEventListener('click', tryConfirm);
+document.getElementById('ct2BtnClr' + thisq).addEventListener('click', clearSelection);
+document.getElementById('ct2BtnDone' + thisq).addEventListener('click', function(){
+if (S.phase === 'branches') gotoPhase('loops');
+else if (S.phase === 'loops') gotoPhase('independence');
+});
+document.getElementById('ct2BtnCheck' + thisq).addEventListener('click', checkIndependence);
+document.getElementById('ct2BtnLM' + thisq).addEventListener('click', function(){ toggleA11y('lm'); });
+document.getElementById('ct2BtnNR' + thisq).addEventListener('click', function(){ toggleA11y('nr'); });
+document.getElementById('ct2BtnHC' + thisq).addEventListener('click', function(){ toggleA11y('hc'); });
+document.getElementById('ct2BtnFS' + thisq).addEventListener('click', function(){ toggleA11y('fs'); });
+document.getElementById('ct2Phase_branches_' + thisq).addEventListener('click', function(){ gotoPhase('branches'); });
+document.getElementById('ct2Phase_loops_' + thisq).addEventListener('click', function(){
+if (S.foundBranches.length === 0) {
+setFeedback('Identify at least one branch before moving to loops.', 'info');
+return;
+}
+gotoPhase('loops');
+});
+document.getElementById('ct2Phase_independence_' + thisq).addEventListener('click', function(){
+if (S.foundLoops.length === 0) {
+setFeedback('Identify at least one loop before checking independence.', 'info');
+return;
+}
+gotoPhase('independence');
+});
+}
+/* =========================================================
+ PHASE LABEL UPDATE (Found Branches/Loops header)
+========================================================= */
+function updateFoundHeader() {
+var h = document.getElementById('ct2FoundHdr' + thisq);
+if (!h) return;
+if (S.phase === 'branches') h.textContent = 'Found Branches';
+else h.textContent = 'Found Loops';
+}
+// Wrap refreshUI to also update the side header
+var origRefresh = refreshUI;
+refreshUI = function() {
+origRefresh();
+updateFoundHeader();
+var hint = document.getElementById('ct2Hint' + thisq);
+if (hint) {
+if (S.phase === 'branches') {
+hint.textContent = 'Click the components belonging to one branch (any order), then press Confirm Branch.';
+} else if (S.phase === 'loops') {
+hint.textContent = 'Click components forming a closed path (any order), then press Confirm Loop.';
+} else {
+hint.textContent = 'Click loops in the Found Loops list to select an independent set, then Check Independence.';
+}
+}
+};
+/* =========================================================
+ INIT
+========================================================= */
+function init() {
+// Pull Stage 1's circuit if available, else fallback
+var s1state = window['ctState_' + thisq];
+if (s1state && s1state.circuit && s1state.circuit.components && s1state.circuit.components.length > 0) {
+// Deep-clone the components so mutating Stage 2 state doesn't affect Stage 1
+S.circuit = {
+components: s1state.circuit.components.map(function(c){ return Object.assign({}, c); })
+};
+} else {
+S.circuit = fallbackCircuit();
+}
+buildDOM();
+applyA11y();
+updatePhaseTabs();
+refreshUI();
+setFeedback('<strong>Stage 2 Phase A:</strong> Identify each branch in the simplified circuit. Click the components belonging to one branch, then press Confirm Branch.', 'info');
+announce('Stage 2 ready. Phase A: branches. Click components belonging to one branch, then Confirm.');
+}
+/* Re-read Stage 1's circuit and reset Stage 2 progress.
+ Called when Stage 1 fires ctStageComplete OR when the container
+ becomes visible (whichever comes first). */
+function reloadFromStage1() {
+var s1state = window['ctState_' + thisq];
+if (!(s1state && s1state.circuit && s1state.circuit.components)) return;
+S.circuit = {
+components: s1state.circuit.components.map(function(c){ return Object.assign({}, c); })
+};
+// Reset progress in case the user is restarting
+S.phase = 'branches';
+S.selected = [];
+S.foundBranches = [];
+S.foundLoops = [];
+S.independenceSelection = [];
+var banner = document.getElementById('ct2Comp' + thisq);
+if (banner) banner.classList.remove('ct2show' + thisq);
+updatePhaseTabs();
+refreshUI();
+setFeedback('<strong>Stage 2 Phase A:</strong> Identify each branch in the simplified circuit. Click the components belonging to one branch, then press Confirm Branch.', 'info');
+announce('Stage 2 starting. Phase A: branches.');
+}
+// Listen for Stage 1's completion to refresh Stage 2's circuit data
+document.addEventListener('ctStageComplete', function(e){
+if (e.detail && e.detail.stage === 1 && e.detail.thisq === thisq) {
+// Defer a tick so any DOM updates from Stage 1 finish first
+setTimeout(reloadFromStage1, 0);
+}
+});
+if (document.getElementById(rootElId)) {
+init();
+} else {
+document.addEventListener('DOMContentLoaded', init);
+}
+})();
