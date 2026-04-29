@@ -1,9 +1,10 @@
-.ctrootq1 {
+<style>
+.ctroot$thisq {
 display: block;
-background: var(--ctbgq1, #0f1117);
-color: var(--cttextq1, #d0d8f0);
+background: var(--ctbg$thisq, #0f1117);
+color: var(--cttext$thisq, #d0d8f0);
 font-family: 'Noto Sans', 'Segoe UI', Arial, sans-serif;
-font-size: var(--ctfsq1, 14px);
+font-size: var(--ctfs$thisq, 14px);
 padding: 14px 12px 18px;
 border: 1px solid #2a3050;
 border-radius: 6px;
@@ -11,116 +12,116 @@ max-width: 920px;
 margin: 0 auto;
 box-sizing: border-box;
 }
-.ctrootq1 * { box-sizing: border-box; }
-.cta11yq1 {
+.ctroot$thisq * { box-sizing: border-box; }
+.cta11y$thisq {
 display: flex; flex-wrap: wrap; gap: 6px;
 margin-bottom: 10px; padding-bottom: 10px;
 border-bottom: 1px solid #2a3050;
 }
-.cta11ybtnq1 {
+.cta11ybtn$thisq {
 background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
 padding: 5px 10px; border-radius: 3px;
 font-size: 11px; letter-spacing: 0.5px; font-family: inherit; cursor: pointer;
 }
-.cta11ybtnq1:hover { color: #d0d8f0; border-color: #5b6a8a; }
-.cta11ybtnq1:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
-.cta11yonq1 {
+.cta11ybtn$thisq:hover { color: #d0d8f0; border-color: #5b6a8a; }
+.cta11ybtn$thisq:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
+.cta11yon$thisq {
 background: rgba(0,232,208,0.12); border-color: #00e8d0; color: #00e8d0;
 }
-.ctnarbarq1 {
+.ctnarbar$thisq {
 display: none;
 background: #111828; border: 1px solid #2255aa; color: #a8c4f0;
 padding: 8px 12px; border-radius: 3px;
 font-size: 13px; margin-bottom: 10px; min-height: 32px;
 }
-.ctnarbarq1.ctnarshowq1 { display: block; }
-.cttitleq1 {
-font-size: calc(var(--ctfsq1, 14px) * 1.15);
+.ctnarbar$thisq.ctnarshow$thisq { display: block; }
+.cttitle$thisq {
+font-size: calc(var(--ctfs$thisq, 14px) * 1.15);
 font-weight: 600; margin: 0 0 4px;
 }
-.ctsubtitleq1 {
-color: #7a8aaa; font-size: calc(var(--ctfsq1, 14px) * 0.9);
+.ctsubtitle$thisq {
+color: #7a8aaa; font-size: calc(var(--ctfs$thisq, 14px) * 0.9);
 margin-bottom: 12px;
 }
-.ctstagebarq1 { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.ctpillq1 {
+.ctstagebar$thisq { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.ctpill$thisq {
 background: #181c27; border: 1px solid #2a3050; color: #7a8aaa;
 padding: 4px 11px; border-radius: 14px;
 font-size: 11px; letter-spacing: 0.5px;
 }
-.ctpillactiveq1 { background: rgba(0,212,255,0.12); border-color: #00d4ff; color: #00d4ff; }
-.ctlayoutq1 { display: grid; grid-template-columns: 1fr 270px; gap: 12px; }
-@media (max-width: 760px) { .ctlayoutq1 { grid-template-columns: 1fr; } }
-.ctcanvasWrapq1 {
+.ctpillactive$thisq { background: rgba(0,212,255,0.12); border-color: #00d4ff; color: #00d4ff; }
+.ctlayout$thisq { display: grid; grid-template-columns: 1fr 270px; gap: 12px; }
+@media (max-width: 760px) { .ctlayout$thisq { grid-template-columns: 1fr; } }
+.ctcanvasWrap$thisq {
 background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
 }
-.cthintq1 {
+.cthint$thisq {
 color: #7a8aaa; font-size: 12px; margin-bottom: 8px; line-height: 1.4;
 }
-.ctsvgq1 {
+.ctsvg$thisq {
 width: 100%; height: auto;
 background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px; display: block;
 }
-.ctsideq1 {
+.ctside$thisq {
 background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
 display: flex; flex-direction: column; gap: 10px;
 }
-.ctsidehq1 {
+.ctsideh$thisq {
 font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
 color: #7a8aaa; margin: 0 0 4px; font-weight: 600;
 }
-.ctselistq1 {
+.ctselist$thisq {
 background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
 padding: 8px 10px; min-height: 56px;
 font-family: 'Consolas', 'Monaco', monospace; font-size: 13px;
 }
-.ctemptyq1 { color: #7a8aaa; font-style: italic; font-family: inherit; }
-.ctseitemq1 { color: #00d4ff; margin: 2px 0; }
-.ctbtnrowq1 { display: flex; gap: 6px; flex-wrap: wrap; }
-.ctbtnq1 {
+.ctempty$thisq { color: #7a8aaa; font-style: italic; font-family: inherit; }
+.ctseitem$thisq { color: #00d4ff; margin: 2px 0; }
+.ctbtnrow$thisq { display: flex; gap: 6px; flex-wrap: wrap; }
+.ctbtn$thisq {
 flex: 1; min-width: 78px;
 background: #1f2434; border: 1px solid #2a3050; color: #d0d8f0;
 padding: 7px 9px; border-radius: 3px;
 font-size: 12px; font-family: inherit; cursor: pointer;
 }
-.ctbtnq1:hover:not(:disabled) {
+.ctbtn$thisq:hover:not(:disabled) {
 border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.08);
 }
-.ctbtnq1:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
-.ctbtnq1:disabled { opacity: 0.4; cursor: not-allowed; }
-.ctbtndangerq1:hover:not(:disabled) {
+.ctbtn$thisq:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
+.ctbtn$thisq:disabled { opacity: 0.4; cursor: not-allowed; }
+.ctbtndanger$thisq:hover:not(:disabled) {
 border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.08);
 }
-.ctbtnlearnq1 {
+.ctbtnlearn$thisq {
 background: rgba(255,221,102,0.10) !important;
 border-color: #ffdd66 !important;
 color: #ffdd66 !important;
 }
-.ctbtnlearnq1:hover {
+.ctbtnlearn$thisq:hover {
 background: rgba(255,221,102,0.22) !important;
 }
-.ctfbq1 {
+.ctfb$thisq {
 background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
 padding: 8px 10px; font-size: 12px; line-height: 1.5; min-height: 60px;
 }
-.ctfbgoodq1 { border-color: #6ee7b7; color: #6ee7b7; }
-.ctfbbadq1  { border-color: #f87171; color: #f87171; }
-.ctfbinfoq1 { border-color: #ffdd66; color: #ffdd66; }
-.ctformulaq1 {
+.ctfbgood$thisq { border-color: #6ee7b7; color: #6ee7b7; }
+.ctfbbad$thisq  { border-color: #f87171; color: #f87171; }
+.ctfbinfo$thisq { border-color: #ffdd66; color: #ffdd66; }
+.ctformula$thisq {
 color: #ffdd66; font-family: 'Consolas','Monaco',monospace;
 font-size: 13px; margin-top: 5px;
 }
-.ctprogressq1 { color: #7a8aaa; font-size: 12px; text-align: center; margin-top: 4px; }
-.ctcompleteq1 {
+.ctprogress$thisq { color: #7a8aaa; font-size: 12px; text-align: center; margin-top: 4px; }
+.ctcomplete$thisq {
 display: none;
 background: rgba(110,231,183,0.12);
 border: 1px solid #6ee7b7; color: #6ee7b7;
 padding: 10px 12px; border-radius: 3px; margin-top: 8px;
 font-size: 12px; text-align: center;
 }
-.ctcompleteq1.ctshowq1 { display: block; }
-.ctcompmsgq1 { margin-bottom: 8px; }
-.ctbtnnextq1 {
+.ctcomplete$thisq.ctshow$thisq { display: block; }
+.ctcompmsg$thisq { margin-bottom: 8px; }
+.ctbtnnext$thisq {
 background: rgba(110,231,183,0.12) !important;
 border-color: #6ee7b7 !important;
 color: #6ee7b7 !important;
@@ -129,122 +130,123 @@ padding: 8px 18px !important;
 flex: 0 0 auto !important;
 font-size: 13px !important;
 }
-.ctbtnnextq1:hover { background: rgba(110,231,183,0.25) !important; }
-.ctsrq1 {
+.ctbtnnext$thisq:hover { background: rgba(110,231,183,0.25) !important; }
+.ctsr$thisq {
 position: absolute !important; width: 1px; height: 1px;
 padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
 white-space: nowrap; border: 0;
 }
 /* Light mode */
-.ctrootq1.ctlmq1 { --ctbgq1: #f4f6fa; --cttextq1: #1a1e30; }
-.ctrootq1.ctlmq1 .ctcanvasWrapq1,
-.ctrootq1.ctlmq1 .ctsideq1 { background: #ffffff; border-color: #aab4cc; }
-.ctrootq1.ctlmq1 .ctsvgq1 { background: #f8fafe; border-color: #aab4cc; }
-.ctrootq1.ctlmq1 .ctselistq1,
-.ctrootq1.ctlmq1 .ctfbq1 { background: #f0f2f8; border-color: #aab4cc; }
-.ctrootq1.ctlmq1 .ctsubtitleq1,
-.ctrootq1.ctlmq1 .ctsidehq1,
-.ctrootq1.ctlmq1 .ctemptyq1,
-.ctrootq1.ctlmq1 .cthintq1,
-.ctrootq1.ctlmq1 .ctprogressq1 { color: #5a6080; }
-.ctrootq1.ctlmq1 .ctpillq1 {
+.ctroot$thisq.ctlm$thisq { --ctbg$thisq: #f4f6fa; --cttext$thisq: #1a1e30; }
+.ctroot$thisq.ctlm$thisq .ctcanvasWrap$thisq,
+.ctroot$thisq.ctlm$thisq .ctside$thisq { background: #ffffff; border-color: #aab4cc; }
+.ctroot$thisq.ctlm$thisq .ctsvg$thisq { background: #f8fafe; border-color: #aab4cc; }
+.ctroot$thisq.ctlm$thisq .ctselist$thisq,
+.ctroot$thisq.ctlm$thisq .ctfb$thisq { background: #f0f2f8; border-color: #aab4cc; }
+.ctroot$thisq.ctlm$thisq .ctsubtitle$thisq,
+.ctroot$thisq.ctlm$thisq .ctsideh$thisq,
+.ctroot$thisq.ctlm$thisq .ctempty$thisq,
+.ctroot$thisq.ctlm$thisq .cthint$thisq,
+.ctroot$thisq.ctlm$thisq .ctprogress$thisq { color: #5a6080; }
+.ctroot$thisq.ctlm$thisq .ctpill$thisq {
 background: #e8ecf4; border-color: #aab4cc; color: #5a6080;
 }
-.ctrootq1.ctlmq1 .ctpillactiveq1 {
+.ctroot$thisq.ctlm$thisq .ctpillactive$thisq {
 background: rgba(0,100,200,0.10); border-color: #2255cc; color: #2255cc;
 }
-.ctrootq1.ctlmq1 .ctbtnq1 {
+.ctroot$thisq.ctlm$thisq .ctbtn$thisq {
 background: #e8ecf4; border-color: #aab4cc; color: #1a1e30;
 }
-.ctrootq1.ctlmq1 .ctbtnq1:hover:not(:disabled) {
+.ctroot$thisq.ctlm$thisq .ctbtn$thisq:hover:not(:disabled) {
 border-color: #2255cc; color: #2255cc; background: rgba(0,100,200,0.06);
 }
-.ctrootq1.ctlmq1 .ctnarbarq1 {
+.ctroot$thisq.ctlm$thisq .ctnarbar$thisq {
 background: #e8f0ff; border-color: #6688cc; color: #112244;
 }
-.ctrootq1.ctlmq1 .ctformulaq1 { color: #884400; }
-.ctrootq1.ctlmq1 .ctseitemq1 { color: #2255cc; }
+.ctroot$thisq.ctlm$thisq .ctformula$thisq { color: #884400; }
+.ctroot$thisq.ctlm$thisq .ctseitem$thisq { color: #2255cc; }
 /* High contrast */
-.ctrootq1.cthcq1 {
---ctbgq1: #000000; --cttextq1: #ffffff;
+.ctroot$thisq.cthc$thisq {
+--ctbg$thisq: #000000; --cttext$thisq: #ffffff;
 border-color: #ffffff; border-width: 2px;
 }
-.ctrootq1.cthcq1 .ctcanvasWrapq1,
-.ctrootq1.cthcq1 .ctsideq1 {
+.ctroot$thisq.cthc$thisq .ctcanvasWrap$thisq,
+.ctroot$thisq.cthc$thisq .ctside$thisq {
 background: #000000; border: 2px solid #ffffff;
 }
-.ctrootq1.cthcq1 .ctsvgq1 {
+.ctroot$thisq.cthc$thisq .ctsvg$thisq {
 background: #000000; border: 2px solid #ffffff;
 }
-.ctrootq1.cthcq1 .ctselistq1,
-.ctrootq1.cthcq1 .ctfbq1,
-.ctrootq1.cthcq1 .ctnarbarq1 {
+.ctroot$thisq.cthc$thisq .ctselist$thisq,
+.ctroot$thisq.cthc$thisq .ctfb$thisq,
+.ctroot$thisq.cthc$thisq .ctnarbar$thisq {
 background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
-.ctrootq1.cthcq1 .ctsubtitleq1,
-.ctrootq1.cthcq1 .ctsidehq1,
-.ctrootq1.cthcq1 .ctemptyq1,
-.ctrootq1.cthcq1 .cthintq1,
-.ctrootq1.cthcq1 .ctprogressq1 { color: #ffffff; }
-.ctrootq1.cthcq1 .ctpillq1 {
+.ctroot$thisq.cthc$thisq .ctsubtitle$thisq,
+.ctroot$thisq.cthc$thisq .ctsideh$thisq,
+.ctroot$thisq.cthc$thisq .ctempty$thisq,
+.ctroot$thisq.cthc$thisq .cthint$thisq,
+.ctroot$thisq.cthc$thisq .ctprogress$thisq { color: #ffffff; }
+.ctroot$thisq.cthc$thisq .ctpill$thisq {
 background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
-.ctrootq1.cthcq1 .ctpillactiveq1 {
+.ctroot$thisq.cthc$thisq .ctpillactive$thisq {
 background: #ffff00; border-color: #ffff00; color: #000000;
 }
-.ctrootq1.cthcq1 .ctbtnq1 {
+.ctroot$thisq.cthc$thisq .ctbtn$thisq {
 background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
-.ctrootq1.cthcq1 .ctbtnq1:hover:not(:disabled) {
+.ctroot$thisq.cthc$thisq .ctbtn$thisq:hover:not(:disabled) {
 border-color: #ffff00; color: #ffff00; background: rgba(255,255,0,0.15);
 }
-.ctrootq1.cthcq1 .cta11ybtnq1 {
+.ctroot$thisq.cthc$thisq .cta11ybtn$thisq {
 background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
-.ctrootq1.cthcq1 .cta11yonq1 { background: #ffff00; color: #000000; }
-.ctrootq1.cthcq1 .ctformulaq1 { color: #ffff00; }
-.ctrootq1.cthcq1 .ctseitemq1 { color: #ffff00; }
+.ctroot$thisq.cthc$thisq .cta11yon$thisq { background: #ffff00; color: #000000; }
+.ctroot$thisq.cthc$thisq .ctformula$thisq { color: #ffff00; }
+.ctroot$thisq.cthc$thisq .ctseitem$thisq { color: #ffff00; }
 /* SVG */
-.ctrootq1 svg .ctcompq1 {
+.ctroot$thisq svg .ctcomp$thisq {
 fill: #1f2434; stroke: #d0d8f0; stroke-width: 1.6; cursor: pointer;
 }
-.ctrootq1 svg .ctcompq1:hover {
+.ctroot$thisq svg .ctcomp$thisq:hover {
 stroke: #00d4ff; fill: rgba(0,212,255,0.08);
 }
-.ctrootq1 svg .ctcompselq1 {
+.ctroot$thisq svg .ctcompsel$thisq {
 stroke: #00d4ff !important; stroke-width: 2.6 !important;
 fill: rgba(0,212,255,0.18) !important;
 }
-.ctrootq1 svg .ctcompq1:focus { outline: none; }
-.ctrootq1 svg .ctcompq1:focus-visible {
+.ctroot$thisq svg .ctcomp$thisq:focus { outline: none; }
+.ctroot$thisq svg .ctcomp$thisq:focus-visible {
 stroke: #ffdd66 !important; stroke-width: 2.6 !important;
 }
-.ctrootq1 svg .ctwireq1 { stroke: #d0d8f0; stroke-width: 1.6; fill: none; }
-.ctrootq1 svg .ctlabelq1 {
+.ctroot$thisq svg .ctwire$thisq { stroke: #d0d8f0; stroke-width: 1.6; fill: none; }
+.ctroot$thisq svg .ctlabel$thisq {
 fill: #d0d8f0; font-size: 12px; font-family: inherit; text-anchor: middle;
 pointer-events: none; user-select: none;
 }
-.ctrootq1 svg .ctvalq1 {
+.ctroot$thisq svg .ctval$thisq {
 fill: #ffdd66; font-size: 11px; text-anchor: middle;
 pointer-events: none; user-select: none;
 }
-.ctrootq1 svg .ctnodeq1 { fill: #00d4ff; pointer-events: none; }
-.ctrootq1.ctlmq1 svg .ctcompq1 { fill: #f8fafe; stroke: #1a1e30; }
-.ctrootq1.ctlmq1 svg .ctwireq1 { stroke: #1a1e30; }
-.ctrootq1.ctlmq1 svg .ctlabelq1 { fill: #1a1e30; }
-.ctrootq1.ctlmq1 svg .ctvalq1 { fill: #884400; }
-.ctrootq1.ctlmq1 svg .ctnodeq1 { fill: #2255cc; }
-.ctrootq1.ctlmq1 svg .ctcompselq1 {
+.ctroot$thisq svg .ctnode$thisq { fill: #00d4ff; pointer-events: none; }
+.ctroot$thisq.ctlm$thisq svg .ctcomp$thisq { fill: #f8fafe; stroke: #1a1e30; }
+.ctroot$thisq.ctlm$thisq svg .ctwire$thisq { stroke: #1a1e30; }
+.ctroot$thisq.ctlm$thisq svg .ctlabel$thisq { fill: #1a1e30; }
+.ctroot$thisq.ctlm$thisq svg .ctval$thisq { fill: #884400; }
+.ctroot$thisq.ctlm$thisq svg .ctnode$thisq { fill: #2255cc; }
+.ctroot$thisq.ctlm$thisq svg .ctcompsel$thisq {
 stroke: #2255cc !important; fill: rgba(0,100,200,0.15) !important;
 }
-.ctrootq1.cthcq1 svg .ctcompq1 {
+.ctroot$thisq.cthc$thisq svg .ctcomp$thisq {
 fill: #000000; stroke: #ffffff; stroke-width: 2;
 }
-.ctrootq1.cthcq1 svg .ctwireq1 { stroke: #ffffff; stroke-width: 2; }
-.ctrootq1.cthcq1 svg .ctlabelq1 { fill: #ffffff; }
-.ctrootq1.cthcq1 svg .ctvalq1 { fill: #ffff00; }
-.ctrootq1.cthcq1 svg .ctnodeq1 { fill: #ffff00; }
-.ctrootq1.cthcq1 svg .ctcompselq1 {
+.ctroot$thisq.cthc$thisq svg .ctwire$thisq { stroke: #ffffff; stroke-width: 2; }
+.ctroot$thisq.cthc$thisq svg .ctlabel$thisq { fill: #ffffff; }
+.ctroot$thisq.cthc$thisq svg .ctval$thisq { fill: #ffff00; }
+.ctroot$thisq.cthc$thisq svg .ctnode$thisq { fill: #ffff00; }
+.ctroot$thisq.cthc$thisq svg .ctcompsel$thisq {
 stroke: #ffff00 !important; stroke-width: 3 !important;
 fill: rgba(255,255,0,0.2) !important;
 }
+</style>
