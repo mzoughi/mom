@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var thisq = '$thisq';
+var thisq = window.ctThisq;
 var rootElId = 'ct2Root' + thisq;
 var stateKey = 'ctState2_' + thisq;
 /* =========================================================
@@ -276,7 +276,7 @@ drawComponent(svg, c);
 var pos = nodePos();
 ['n1','n2','n3','n4'].forEach(function(n){
 if (pos[n] && nodeDegreeFull(n) >= 3) {
-svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ct2node'+thisq }));
+svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ct2node' }));
 }
 });
 }
@@ -290,14 +290,14 @@ nE2int: { x:200, y:227 }
 };
 }
 function drawReturnWirePath(svg) {
-svg.appendChild(svgEl('line', {x1:270, y1:280, x2:270, y2:310, 'class':'ct2wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:270, y1:310, x2:60,  y2:310, 'class':'ct2wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:60,  y1:310, x2:60,  y2:30,  'class':'ct2wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:110, y2:30,  'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:270, y1:280, x2:270, y2:310, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:270, y1:310, x2:60,  y2:310, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:60,  y1:310, x2:60,  y2:30,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:110, y2:30,  'class':'ct2wire'}));
 var e1 = getById('E1');
 if (e1) drawBatteryHorizontal(svg, e1, 140, 30);
-svg.appendChild(svgEl('line', {x1:170, y1:30,  x2:270, y2:30,  'class':'ct2wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:270, y1:30,  x2:270, y2:60,  'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:170, y1:30,  x2:270, y2:30,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:270, y1:30,  x2:270, y2:60,  'class':'ct2wire'}));
 }
 function drawComponent(svg, c) {
 if (c.kind === 'battery') drawBatteryDiagonal(svg, c);
@@ -316,14 +316,14 @@ var transform = 'translate(' + mx + ',' + my + ') rotate(' + ang + ')';
 var ux = dx/len, uy = dy/len;
 var bodyLeftX = mx - ux*halfLen, bodyLeftY = my - uy*halfLen;
 var bodyRightX = mx + ux*halfLen, bodyRightY = my + uy*halfLen;
-svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:bodyLeftX, y2:bodyLeftY, 'class':'ct2wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:bodyRightX, y1:bodyRightY, x2:x2, y2:y2, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:bodyLeftX, y2:bodyLeftY, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:bodyRightX, y1:bodyRightY, x2:x2, y2:y2, 'class':'ct2wire'}));
 var sel = S.selected.indexOf(c.id) >= 0;
 var hi  = highlightColorFor(c.id);
 var rectAttrs = {
 x:bodyX, y:bodyY, width:bodyLen, height:bodyW, rx:3, ry:3,
 transform: transform,
-'class': 'ct2comp' + thisq + (sel ? ' ct2compsel' + thisq : ''),
+'class': 'ct2comp' + (sel ? ' ct2compsel' : ''),
 'data-id': c.id, tabindex:0, role:'button',
 'aria-label': describeComponent(c) + (sel?', selected':''),
 'aria-pressed': sel ? 'true' : 'false'
@@ -342,8 +342,8 @@ var dxFromCenter = mx - 270, dyFromCenter = my - 175;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
 var labOff = 28;
 var labX = mx + px*labOff, labY = my + py*labOff;
-svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct2label'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct2val'+thisq}, fmt(c.value) + ' \u03a9'));
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct2label'}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct2val'}, fmt(c.value) + ' \u03a9'));
 }
 function drawBatteryDiagonal(svg, c) {
 var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
@@ -360,18 +360,18 @@ var lp1x = longCx + px*longLen/2,  lp1y = longCy + py*longLen/2;
 var lp2x = longCx - px*longLen/2,  lp2y = longCy - py*longLen/2;
 var sp1x = shortCx + px*shortLen/2, sp1y = shortCy + py*shortLen/2;
 var sp2x = shortCx - px*shortLen/2, sp2y = shortCy - py*shortLen/2;
-svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:longCx, y2:longCy, 'class':'ct2wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ct2wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ct2wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:longCx, y2:longCy, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ct2wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ct2wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ct2wire'}));
 // Label
 var pxL = px, pyL = py;
 var dxFromCenter = mx - 270, dyFromCenter = my - 175;
 if (pxL * dxFromCenter + pyL * dyFromCenter < 0) { pxL = -pxL; pyL = -pyL; }
 var labOff = 22;
 var labX = mx + pxL*labOff, labY = my + pyL*labOff;
-svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct2label'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct2val'+thisq}, c.value + ' V'));
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct2label'}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct2val'}, c.value + ' V'));
 // Hit zone for battery (transparent rect over the body)
 var sel = S.selected.indexOf(c.id) >= 0;
 var hi  = highlightColorFor(c.id);
@@ -380,7 +380,7 @@ var hitTransform = 'translate(' + mx + ',' + my + ') rotate(' + (Math.atan2(dy,d
 var hitAttrs = {
 x: -hitW/2, y: -hitH/2, width: hitW, height: hitH, rx:2,
 transform: hitTransform,
-'class': 'ct2comp' + thisq + (sel ? ' ct2compsel' + thisq : ''),
+'class': 'ct2comp' + (sel ? ' ct2compsel' : ''),
 'data-id': c.id, tabindex:0, role:'button',
 'aria-label': describeComponent(c) + (sel?', selected':''),
 'aria-pressed': sel ? 'true' : 'false',
@@ -403,20 +403,20 @@ var longLen = 26, shortLen = 14;
 var plateGapHalf = 4;
 var longX = cx + plateGapHalf;
 var shortX = cx - plateGapHalf;
-svg.appendChild(svgEl('line', {x1:cx-30, y1:cy, x2:shortX, y2:cy, 'class':'ct2wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:shortX, y1:cy-shortLen/2, x2:shortX, y2:cy+shortLen/2, 'class':'ct2wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:longX,  y1:cy-longLen/2,  x2:longX,  y2:cy+longLen/2,  'class':'ct2wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:longX, y1:cy, x2:cx+30, y2:cy, 'class':'ct2wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:cx-30, y1:cy, x2:shortX, y2:cy, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:shortX, y1:cy-shortLen/2, x2:shortX, y2:cy+shortLen/2, 'class':'ct2wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX,  y1:cy-longLen/2,  x2:longX,  y2:cy+longLen/2,  'class':'ct2wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX, y1:cy, x2:cx+30, y2:cy, 'class':'ct2wire'}));
 // Label
-svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ct2label'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ct2val'+thisq}, c.value + ' V'));
+svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ct2label'}, c.label));
+svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ct2val'}, c.value + ' V'));
 // Hit zone
 var sel = S.selected.indexOf(c.id) >= 0;
 var hi  = highlightColorFor(c.id);
 var hitW = 60, hitH = 28;
 var hitAttrs = {
 x: cx-hitW/2, y: cy-hitH/2, width: hitW, height: hitH, rx:2,
-'class': 'ct2comp' + thisq + (sel ? ' ct2compsel' + thisq : ''),
+'class': 'ct2comp' + (sel ? ' ct2compsel' : ''),
 'data-id': c.id, tabindex:0, role:'button',
 'aria-label': describeComponent(c) + (sel?', selected':''),
 'aria-pressed': sel ? 'true' : 'false',
@@ -506,12 +506,12 @@ function updateSelectedList() {
 var div = document.getElementById('ct2Sel' + thisq);
 if (!div) return;
 if (S.selected.length === 0) {
-div.innerHTML = '<span class="ct2empty' + thisq + '">Click components in this ' + (S.phase === 'branches' ? 'branch' : 'loop') + '\u2026</span>';
+div.innerHTML = '<span class="ct2empty' + '">Click components in this ' + (S.phase === 'branches' ? 'branch' : 'loop') + '\u2026</span>';
 return;
 }
 div.innerHTML = S.selected.map(function(id){
 var c = getById(id);
-return '<div class="ct2seitem' + thisq + '">' + c.label + '</div>';
+return '<div class="ct2seitem' + '">' + c.label + '</div>';
 }).join('');
 }
 function updateFoundList() {
@@ -519,7 +519,7 @@ var div = document.getElementById('ct2Found' + thisq);
 if (!div) return;
 var list = (S.phase === 'loops' || S.phase === 'independence') ? S.foundLoops : S.foundBranches;
 if (list.length === 0) {
-div.innerHTML = '<span class="ct2empty' + thisq + '">None yet.</span>';
+div.innerHTML = '<span class="ct2empty' + '">None yet.</span>';
 return;
 }
 div.innerHTML = list.map(function(item, i){
@@ -528,16 +528,16 @@ var c = getById(id); return c ? c.label : id;
 }).join(', ');
 var prefix = (S.phase === 'loops' || S.phase === 'independence') ? 'Loop ' : 'Branch ';
 var sel = S.phase === 'independence' && S.independenceSelection.indexOf(i) >= 0;
-return '<div class="ct2founditem' + thisq + (sel ? ' ct2foundselected' + thisq : '') + '" data-fidx="' + i + '">'
-+ '<span class="ct2foundswatch' + thisq + '" style="background:' + item.color + ';"></span>'
-+ '<span class="ct2foundtext' + thisq + '">' + prefix + (i+1) + ': ' + labels + '</span>'
+return '<div class="ct2founditem' + (sel ? ' ct2foundselected' : '') + '" data-fidx="' + i + '">'
++ '<span class="ct2foundswatch' + '" style="background:' + item.color + ';"></span>'
++ '<span class="ct2foundtext' + '">' + prefix + (i+1) + ': ' + labels + '</span>'
 + (S.phase !== 'independence'
-? '<button type="button" class="ct2foundremove' + thisq + '" data-rmidx="' + i + '" aria-label="Remove">\u2715</button>'
+? '<button type="button" class="ct2foundremove' + '" data-rmidx="' + i + '" aria-label="Remove">\u2715</button>'
 : '')
 + '</div>';
 }).join('');
 // Attach handlers
-var items = div.querySelectorAll('.ct2founditem' + thisq);
+var items = div.querySelectorAll('.ct2founditem');
 items.forEach(function(it){
 var idx = parseInt(it.getAttribute('data-fidx'), 10);
 if (S.phase === 'independence') {
@@ -545,7 +545,7 @@ it.style.cursor = 'pointer';
 it.addEventListener('click', function(){ toggleIndependenceSelection(idx); });
 }
 });
-var rmBtns = div.querySelectorAll('.ct2foundremove' + thisq);
+var rmBtns = div.querySelectorAll('.ct2foundremove');
 rmBtns.forEach(function(b){
 b.addEventListener('click', function(ev){
 ev.stopPropagation();
@@ -603,7 +603,7 @@ note.textContent = n + ' loop' + (n===1?'':'s') + ' selected';
 function setFeedback(msg, tone) {
 var fb = document.getElementById('ct2Fb' + thisq);
 if (!fb) return;
-fb.className = 'ct2fb' + thisq + (tone === 'good' ? ' ct2fbgood' + thisq : tone === 'bad' ? ' ct2fbbad' + thisq : tone === 'info' ? ' ct2fbinfo' + thisq : '');
+fb.className = 'ct2fb' + (tone === 'good' ? ' ct2fbgood' : tone === 'bad' ? ' ct2fbbad' : tone === 'info' ? ' ct2fbinfo' : '');
 fb.innerHTML = msg;
 }
 function announce(msg) {
@@ -755,13 +755,13 @@ refreshUI();
 }
 function updatePhaseTabs() {
 ['branches','loops','independence'].forEach(function(p){
-var el = document.getElementById('ct2Phase_' + p + '_' + thisq);
+var el = document.getElementById('ct2Phase_' + p + '_');
 if (!el) return;
-el.classList.toggle('ct2phaseactive' + thisq, S.phase === p);
+el.classList.toggle('ct2phaseactive', S.phase === p);
 // Mark "done" if past it
 var order = ['branches','loops','independence'];
 var pIdx = order.indexOf(p), curIdx = order.indexOf(S.phase);
-el.classList.toggle('ct2phasedone' + thisq, pIdx < curIdx);
+el.classList.toggle('ct2phasedone', pIdx < curIdx);
 });
 }
 function toggleIndependenceSelection(idx) {
@@ -809,13 +809,13 @@ showCompleteBanner();
 function showCompleteBanner() {
 var banner = document.getElementById('ct2Comp' + thisq);
 if (!banner) return;
-banner.classList.add('ct2show' + thisq);
+banner.classList.add('ct2show');
 var msg = 'Stage 2 complete. ' + S.foundBranches.length + ' branches, '
 + S.foundLoops.length + ' loops total, ' + S.independenceSelection.length
 + ' independent. Ready for Stage 3 (current direction assignment).';
 banner.innerHTML = ''
-+ '<div class="ct2compmsg' + thisq + '">\u2713 ' + msg + '</div>'
-+ '<button type="button" class="ct2btn' + thisq + ' ct2btnnext' + thisq + '" id="ct2BtnNext' + thisq + '">'
++ '<div class="ct2compmsg' + '">\u2713 ' + msg + '</div>'
++ '<button type="button" class="ct2btn' + ' ct2btnnext' + '" id="ct2BtnNext' + thisq + '">'
 + 'Continue to Stage 3 \u2192</button>';
 var nextBtn = document.getElementById('ct2BtnNext' + thisq);
 if (nextBtn) {
@@ -832,23 +832,23 @@ announce('Advancing to Stage 3.');
  ACCESSIBILITY TOOLBAR
 ========================================================= */
 function applyA11y() {
-var root = document.getElementById(rootElId).querySelector('.ct2root' + thisq);
+var root = document.getElementById(rootElId).querySelector('.ct2root');
 if (!root) return;
-root.classList.toggle('ct2lm' + thisq, S.a11y.lm);
-root.classList.toggle('ct2hc' + thisq, S.a11y.hc);
+root.classList.toggle('ct2lm', S.a11y.lm);
+root.classList.toggle('ct2hc', S.a11y.hc);
 var fontSizes = ['14px','16px','19px'];
-root.style.setProperty('--ct2fs' + thisq, fontSizes[S.a11y.fs]);
+root.style.setProperty('--ct2fs', fontSizes[S.a11y.fs]);
 setBtn('ct2BtnLM', S.a11y.lm, 'LIGHT MODE');
 setBtn('ct2BtnNR', S.a11y.nr, 'NARRATION', true);
 setBtn('ct2BtnHC', S.a11y.hc, 'HIGH CONTRAST');
 setBtn('ct2BtnFS', S.a11y.fs > 0, 'FONT SIZE: ' + ['NORMAL','LARGE','XL'][S.a11y.fs]);
 var nar = document.getElementById('ct2Nar' + thisq);
-if (nar) nar.classList.toggle('ct2narshow' + thisq, S.a11y.nr);
+if (nar) nar.classList.toggle('ct2narshow', S.a11y.nr);
 }
 function setBtn(idBase, on, label, withSuffix) {
 var b = document.getElementById(idBase + thisq);
 if (!b) return;
-b.classList.toggle('ct2a11yon' + thisq, on);
+b.classList.toggle('ct2a11yon', on);
 b.setAttribute('aria-pressed', on ? 'true' : 'false');
 b.textContent = withSuffix ? (label + ': ' + (on ? 'ON' : 'OFF')) : label;
 }
@@ -864,59 +864,59 @@ render();
 function buildDOM() {
 var root = document.getElementById(rootElId);
 var html = ''
-+ '<div class="ct2root' + thisq + '" role="region" aria-label="Branches and loops tutorial">'
-+ '  <div class="ct2a11y' + thisq + '" role="toolbar" aria-label="Display options">'
-+ '    <button type="button" class="ct2a11ybtn' + thisq + '" id="ct2BtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
-+ '    <button type="button" class="ct2a11ybtn' + thisq + ' ct2a11yon' + thisq + '" id="ct2BtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
-+ '    <button type="button" class="ct2a11ybtn' + thisq + '" id="ct2BtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
-+ '    <button type="button" class="ct2a11ybtn' + thisq + '" id="ct2BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
++ '<div class="ct2root' + '" role="region" aria-label="Branches and loops tutorial">'
++ '  <div class="ct2a11y' + '" role="toolbar" aria-label="Display options">'
++ '    <button type="button" class="ct2a11ybtn' + '" id="ct2BtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
++ '    <button type="button" class="ct2a11ybtn' + ' ct2a11yon' + '" id="ct2BtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
++ '    <button type="button" class="ct2a11ybtn' + '" id="ct2BtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
++ '    <button type="button" class="ct2a11ybtn' + '" id="ct2BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
 + '  </div>'
-+ '  <div id="ct2Nar' + thisq + '" class="ct2narbar' + thisq + ' ct2narshow' + thisq + '" role="status" aria-live="polite" aria-atomic="true"></div>'
-+ '  <h3 class="ct2title' + thisq + '">Example 2 \u2014 Stage 2: Branches and Loops (Bridge)</h3>'
-+ '  <div class="ct2subtitle' + thisq + '">Identify the branches in the simplified circuit, then the loops you\u2019ll use for KVL.</div>'
-+ '  <div class="ct2stagebar' + thisq + '" role="navigation" aria-label="Tutorial stages">'
-+ '    <span class="ct2pill' + thisq + ' ct2pilldone' + thisq + '">1. Simplify \u2713</span>'
-+ '    <span class="ct2pill' + thisq + ' ct2pillactive' + thisq + '">2. Branches \u0026 Loops</span>'
-+ '    <span class="ct2pill' + thisq + '">3. Currents</span>'
-+ '    <span class="ct2pill' + thisq + '">4. Polarities</span>'
-+ '    <span class="ct2pill' + thisq + '">5. Equations</span>'
++ '  <div id="ct2Nar' + thisq + '" class="ct2narbar' + ' ct2narshow' + '" role="status" aria-live="polite" aria-atomic="true"></div>'
++ '  <h3 class="ct2title' + '">Example 2 \u2014 Stage 2: Branches and Loops (Bridge)</h3>'
++ '  <div class="ct2subtitle' + '">Identify the branches in the simplified circuit, then the loops you\u2019ll use for KVL.</div>'
++ '  <div class="ct2stagebar' + '" role="navigation" aria-label="Tutorial stages">'
++ '    <span class="ct2pill' + ' ct2pilldone' + '">1. Simplify \u2713</span>'
++ '    <span class="ct2pill' + ' ct2pillactive' + '">2. Branches \u0026 Loops</span>'
++ '    <span class="ct2pill' + '">3. Currents</span>'
++ '    <span class="ct2pill' + '">4. Polarities</span>'
++ '    <span class="ct2pill' + '">5. Equations</span>'
 + '  </div>'
-+ '  <div class="ct2phasebar' + thisq + '" role="tablist">'
-+ '    <button type="button" class="ct2phase' + thisq + ' ct2phaseactive' + thisq + '" id="ct2Phase_branches_' + thisq + '" role="tab">2A. Branches</button>'
-+ '    <button type="button" class="ct2phase' + thisq + '" id="ct2Phase_loops_' + thisq + '" role="tab">2B. Loops</button>'
-+ '    <button type="button" class="ct2phase' + thisq + '" id="ct2Phase_independence_' + thisq + '" role="tab">2C. Independence</button>'
++ '  <div class="ct2phasebar' + '" role="tablist">'
++ '    <button type="button" class="ct2phase' + ' ct2phaseactive' + '" id="ct2Phase_branches_' + thisq + '" role="tab">2A. Branches</button>'
++ '    <button type="button" class="ct2phase' + '" id="ct2Phase_loops_' + thisq + '" role="tab">2B. Loops</button>'
++ '    <button type="button" class="ct2phase' + '" id="ct2Phase_independence_' + thisq + '" role="tab">2C. Independence</button>'
 + '  </div>'
-+ '  <div class="ct2layout' + thisq + '">'
++ '  <div class="ct2layout' + '">'
 + '    <div class="ct2canvasWrap' + thisq + '">'
-+ '      <div class="ct2hint' + thisq + '" id="ct2Hint' + thisq + '">Click the components belonging to one branch (any order), then press Confirm Branch. Use Tab to focus a component, Enter or Space to select.</div>'
-+ '      <svg class="ct2svg' + thisq + '" id="ct2Svg' + thisq + '" viewBox="0 0 540 340" role="img" aria-label="Bridge circuit"></svg>'
-+ '      <div class="ct2complete' + thisq + '" id="ct2Comp' + thisq + '" role="status"></div>'
++ '      <div class="ct2hint' + '" id="ct2Hint' + thisq + '">Click the components belonging to one branch (any order), then press Confirm Branch. Use Tab to focus a component, Enter or Space to select.</div>'
++ '      <svg class="ct2svg' + '" id="ct2Svg' + thisq + '" viewBox="0 0 540 340" role="img" aria-label="Bridge circuit"></svg>'
++ '      <div class="ct2complete' + '" id="ct2Comp' + thisq + '" role="status"></div>'
 + '    </div>'
-+ '    <aside class="ct2side' + thisq + '" aria-label="Branches and loops controls">'
++ '    <aside class="ct2side' + '" aria-label="Branches and loops controls">'
 + '      <div>'
-+ '        <h2 class="ct2sideh' + thisq + '">Selected</h2>'
-+ '        <div class="ct2selist' + thisq + '" id="ct2Sel' + thisq + '" aria-live="polite"></div>'
-+ '      </div>'
-+ '      <div>'
-+ '        <h2 class="ct2sideh' + thisq + '" id="ct2FoundHdr' + thisq + '">Found Branches</h2>'
-+ '        <div class="ct2foundlist' + thisq + '" id="ct2Found' + thisq + '" aria-live="polite"></div>'
-+ '      </div>'
-+ '      <div class="ct2btnrow' + thisq + '">'
-+ '        <button type="button" class="ct2btn' + thisq + ' ct2btnprimary' + thisq + '" id="ct2BtnConfirm' + thisq + '" disabled>Confirm Branch</button>'
-+ '        <button type="button" class="ct2btn' + thisq + ' ct2btndanger' + thisq + '" id="ct2BtnClr' + thisq + '" disabled>Clear</button>'
-+ '      </div>'
-+ '      <div class="ct2btnrow' + thisq + '">'
-+ '        <button type="button" class="ct2btn' + thisq + '" id="ct2BtnDone' + thisq + '" disabled>Branches Done \u2192</button>'
-+ '        <button type="button" class="ct2btn' + thisq + ' ct2btnprimary' + thisq + '" id="ct2BtnCheck' + thisq + '" style="display:none">Check Independence</button>'
++ '        <h2 class="ct2sideh' + '">Selected</h2>'
++ '        <div class="ct2selist' + '" id="ct2Sel' + thisq + '" aria-live="polite"></div>'
 + '      </div>'
 + '      <div>'
-+ '        <h2 class="ct2sideh' + thisq + '">Feedback</h2>'
-+ '        <div class="ct2fb' + thisq + '" id="ct2Fb' + thisq + '">Identify each branch in the simplified circuit.</div>'
++ '        <h2 class="ct2sideh' + '" id="ct2FoundHdr' + thisq + '">Found Branches</h2>'
++ '        <div class="ct2foundlist' + '" id="ct2Found' + thisq + '" aria-live="polite"></div>'
 + '      </div>'
-+ '      <div class="ct2progress' + thisq + '" id="ct2Prog' + thisq + '"></div>'
++ '      <div class="ct2btnrow' + '">'
++ '        <button type="button" class="ct2btn' + ' ct2btnprimary' + '" id="ct2BtnConfirm' + thisq + '" disabled>Confirm Branch</button>'
++ '        <button type="button" class="ct2btn' + ' ct2btndanger' + '" id="ct2BtnClr' + thisq + '" disabled>Clear</button>'
++ '      </div>'
++ '      <div class="ct2btnrow' + '">'
++ '        <button type="button" class="ct2btn' + '" id="ct2BtnDone' + thisq + '" disabled>Branches Done \u2192</button>'
++ '        <button type="button" class="ct2btn' + ' ct2btnprimary' + '" id="ct2BtnCheck' + thisq + '" style="display:none">Check Independence</button>'
++ '      </div>'
++ '      <div>'
++ '        <h2 class="ct2sideh' + '">Feedback</h2>'
++ '        <div class="ct2fb' + '" id="ct2Fb' + thisq + '">Identify each branch in the simplified circuit.</div>'
++ '      </div>'
++ '      <div class="ct2progress' + '" id="ct2Prog' + thisq + '"></div>'
 + '    </aside>'
 + '  </div>'
-+ '  <span class="ct2sr' + thisq + '" id="ct2Live' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
++ '  <span class="ct2sr' + '" id="ct2Live' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
 + '</div>';
 root.innerHTML = html;
 document.getElementById('ct2BtnConfirm' + thisq).addEventListener('click', tryConfirm);
@@ -1008,7 +1008,7 @@ S.foundBranches = [];
 S.foundLoops = [];
 S.independenceSelection = [];
 var banner = document.getElementById('ct2Comp' + thisq);
-if (banner) banner.classList.remove('ct2show' + thisq);
+if (banner) banner.classList.remove('ct2show');
 updatePhaseTabs();
 refreshUI();
 setFeedback('<strong>Stage 2 Phase A:</strong> Identify each branch in the simplified circuit. Click the components belonging to one branch, then press Confirm Branch.', 'info');
