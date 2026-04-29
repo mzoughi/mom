@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var thisq = 'q1';
+var thisq = window.ctThisq;
 var rootElId = 'ct5Root' + thisq;
 var stateKey = 'ctState5_' + thisq;
 /* =========================================================
@@ -507,21 +507,21 @@ return M.map(function(row){ return row[N]; });
 function showSolution() {
 var div = document.getElementById('ct5Solution' + thisq);
 if (!div) return;
-div.classList.add('ct5solshow' + thisq);
-var html = '<div class="ct5solhdr' + thisq + '">Solution</div><div class="ct5currents' + thisq + '">';
+div.classList.add('ct5solshow');
+var html = '<div class="ct5solhdr' + '">Solution</div><div class="ct5currents' + '">';
 var anyNeg = false;
 S.branches.forEach(function(b){
 var v = S.solution[b.label];
 var negative = v < 0;
 if (negative) anyNeg = true;
-var noteCls = negative ? 'ct5flipped' + thisq : 'ct5correct' + thisq;
+var noteCls = negative ? 'ct5flipped' : 'ct5correct';
 var note = negative
 ? '\u26a0 Negative \u2014 actual current flows opposite to your assigned arrow.'
 : '\u2713 Positive \u2014 your assigned direction matches the actual flow.';
-html += '<div class="ct5currbox' + thisq + '">'
-+ '<div class="ct5currlbl' + thisq + '">' + b.label + '</div>'
-+ '<div class="ct5currval' + thisq + '">' + v.toFixed(3) + ' A</div>'
-+ '<div class="ct5currnote' + thisq + ' ' + noteCls + '">' + note + '</div>'
+html += '<div class="ct5currbox' + '">'
++ '<div class="ct5currlbl' + '">' + b.label + '</div>'
++ '<div class="ct5currval' + '">' + v.toFixed(3) + ' A</div>'
++ '<div class="ct5currnote' + ' ' + noteCls + '">' + note + '</div>'
 + '</div>';
 });
 html += '</div>';
@@ -539,10 +539,10 @@ div.innerHTML = html;
 // Show completion banner with Continue button
 var banner = document.getElementById('ct5Comp' + thisq);
 if (banner) {
-banner.classList.add('ct5show' + thisq);
+banner.classList.add('ct5show');
 banner.innerHTML = ''
-+ '<div class="ct5compmsg' + thisq + '">\u2713 All equations confirmed and solved.</div>'
-+ '<button type="button" class="ct5btn' + thisq + ' ct5btnnext' + thisq + '" id="ct5BtnDone' + thisq + '">'
++ '<div class="ct5compmsg' + '">\u2713 All equations confirmed and solved.</div>'
++ '<button type="button" class="ct5btn' + ' ct5btnnext' + '" id="ct5BtnDone' + thisq + '">'
 + 'Finish \u2192</button>';
 var doneBtn = document.getElementById('ct5BtnDone' + thisq);
 if (doneBtn) {
@@ -579,9 +579,9 @@ if (S.currentEqType === 'kcl') return chip.type === 'I';
 return chip.type !== 'I';
 });
 visible.forEach(function(chip){
-var cls = 'ct5chip' + thisq;
-if (chip.sign === +1) cls += ' ct5chipplus' + thisq;
-else if (chip.sign === -1) cls += ' ct5chipminus' + thisq;
+var cls = 'ct5chip';
+if (chip.sign === +1) cls += ' ct5chipplus';
+else if (chip.sign === -1) cls += ' ct5chipminus';
 var btn = document.createElement('button');
 btn.type = 'button';
 btn.className = cls;
@@ -604,7 +604,7 @@ var div = document.getElementById('ct5Eq' + thisq);
 if (!div) return;
 var hasAnyTerm = S.chips.some(function(c){return c.sign !== 0;});
 if (!hasAnyTerm) {
-div.innerHTML = '<span class="ct5eqempty' + thisq + '">No terms selected. Click chips to build the equation.</span>';
+div.innerHTML = '<span class="ct5eqempty' + '">No terms selected. Click chips to build the equation.</span>';
 return;
 }
 div.textContent = renderStudentEq(studentEqFromChips());
@@ -613,7 +613,7 @@ function renderConfirmedEqs() {
 var div = document.getElementById('ct5EqList' + thisq);
 if (!div) return;
 if (S.confirmedEqs.length === 0) {
-div.innerHTML = '<span class="ct5eqempty' + thisq + '">No equations confirmed yet.</span>';
+div.innerHTML = '<span class="ct5eqempty' + '">No equations confirmed yet.</span>';
 return;
 }
 div.innerHTML = S.confirmedEqs.map(function(e, i){
@@ -623,22 +623,22 @@ var depTag = '';
 if (e.isIndependent === false) {
 depTag = '<span style="color:#7a8aaa; font-style:italic; font-size:11px; margin-left:6px;">(dependent on others)</span>';
 }
-return '<div class="ct5eqitem' + thisq + '">'
-+ '<span class="ct5eqlabel' + thisq + '">' + e.label + ':</span>'
-+ '<span class="ct5eqtext' + thisq + '">' + e.rendered + '</span>'
+return '<div class="ct5eqitem' + '">'
++ '<span class="ct5eqlabel' + '">' + e.label + ':</span>'
++ '<span class="ct5eqtext' + '">' + e.rendered + '</span>'
 + depTag
-+ '<button type="button" class="ct5eqremove' + thisq + '" data-eqidx="' + i + '" aria-label="Remove">\u2715</button>'
++ '<button type="button" class="ct5eqremove' + '" data-eqidx="' + i + '" aria-label="Remove">\u2715</button>'
 + '</div>';
 }).join('');
-var rmBtns = div.querySelectorAll('.ct5eqremove' + thisq);
+var rmBtns = div.querySelectorAll('.ct5eqremove');
 rmBtns.forEach(function(btn){
 btn.addEventListener('click', function(){
 var idx = parseInt(btn.getAttribute('data-eqidx'), 10);
 S.confirmedEqs.splice(idx, 1);
 var solDiv = document.getElementById('ct5Solution' + thisq);
-if (solDiv) solDiv.classList.remove('ct5solshow' + thisq);
+if (solDiv) solDiv.classList.remove('ct5solshow');
 var banner = document.getElementById('ct5Comp' + thisq);
-if (banner) banner.classList.remove('ct5show' + thisq);
+if (banner) banner.classList.remove('ct5show');
 S.solution = null;
 setFeedback('Equation removed.', 'info');
 refreshUI();
@@ -669,7 +669,7 @@ if (clrBtn) clrBtn.disabled = !S.chips.some(function(c){return c.sign !== 0;});
 function setFeedback(msg, tone) {
 var fb = document.getElementById('ct5Fb' + thisq);
 if (!fb) return;
-fb.className = 'ct5fb' + thisq + (tone === 'good' ? ' ct5fbgood' + thisq : tone === 'bad' ? ' ct5fbbad' + thisq : tone === 'info' ? ' ct5fbinfo' + thisq : '');
+fb.className = 'ct5fb' + (tone === 'good' ? ' ct5fbgood' : tone === 'bad' ? ' ct5fbbad' : tone === 'info' ? ' ct5fbinfo' : '');
 fb.innerHTML = msg;
 }
 function announce(msg) {
@@ -698,23 +698,23 @@ if (S.currentEqType === 'kvl') setEqType('kvl');
  ACCESSIBILITY
 ========================================================= */
 function applyA11y() {
-var root = document.getElementById(rootElId).querySelector('.ct5root' + thisq);
+var root = document.getElementById(rootElId).querySelector('.ct5root');
 if (!root) return;
-root.classList.toggle('ct5lm' + thisq, S.a11y.lm);
-root.classList.toggle('ct5hc' + thisq, S.a11y.hc);
+root.classList.toggle('ct5lm', S.a11y.lm);
+root.classList.toggle('ct5hc', S.a11y.hc);
 var fontSizes = ['14px','16px','19px'];
-root.style.setProperty('--ct5fs' + thisq, fontSizes[S.a11y.fs]);
+root.style.setProperty('--ct5fs', fontSizes[S.a11y.fs]);
 setBtn('ct5BtnLM', S.a11y.lm, 'LIGHT MODE');
 setBtn('ct5BtnNR', S.a11y.nr, 'NARRATION', true);
 setBtn('ct5BtnHC', S.a11y.hc, 'HIGH CONTRAST');
 setBtn('ct5BtnFS', S.a11y.fs > 0, 'FONT SIZE: ' + ['NORMAL','LARGE','XL'][S.a11y.fs]);
 var nar = document.getElementById('ct5Nar' + thisq);
-if (nar) nar.classList.toggle('ct5narshow' + thisq, S.a11y.nr);
+if (nar) nar.classList.toggle('ct5narshow', S.a11y.nr);
 }
 function setBtn(idBase, on, label, withSuffix) {
 var b = document.getElementById(idBase + thisq);
 if (!b) return;
-b.classList.toggle('ct5a11yon' + thisq, on);
+b.classList.toggle('ct5a11yon', on);
 b.setAttribute('aria-pressed', on ? 'true' : 'false');
 b.textContent = withSuffix ? (label + ': ' + (on ? 'ON' : 'OFF')) : label;
 }
@@ -732,54 +732,54 @@ var loopOptions = S.loops.map(function(l, i){
 return '<option value="' + i + '">' + l.label + '</option>';
 }).join('');
 var html = ''
-+ '<div class="ct5root' + thisq + '" role="region" aria-label="Equations builder">'
-+ '  <div class="ct5a11y' + thisq + '" role="toolbar" aria-label="Display options">'
-+ '    <button type="button" class="ct5a11ybtn' + thisq + '" id="ct5BtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
-+ '    <button type="button" class="ct5a11ybtn' + thisq + ' ct5a11yon' + thisq + '" id="ct5BtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
-+ '    <button type="button" class="ct5a11ybtn' + thisq + '" id="ct5BtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
-+ '    <button type="button" class="ct5a11ybtn' + thisq + '" id="ct5BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
++ '<div class="ct5root' + '" role="region" aria-label="Equations builder">'
++ '  <div class="ct5a11y' + '" role="toolbar" aria-label="Display options">'
++ '    <button type="button" class="ct5a11ybtn' + '" id="ct5BtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
++ '    <button type="button" class="ct5a11ybtn' + ' ct5a11yon' + '" id="ct5BtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
++ '    <button type="button" class="ct5a11ybtn' + '" id="ct5BtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
++ '    <button type="button" class="ct5a11ybtn' + '" id="ct5BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
 + '  </div>'
-+ '  <div id="ct5Nar' + thisq + '" class="ct5narbar' + thisq + ' ct5narshow' + thisq + '" role="status" aria-live="polite" aria-atomic="true"></div>'
-+ '  <h3 class="ct5title' + thisq + '">Example 2 — Stage 5: Kirchhoff Equations (Bridge)</h3>'
-+ '  <div class="ct5subtitle' + thisq + '">Build KCL and KVL equations from the term chips below. You need ' + expectedEqCount() + ' independent equations to solve for ' + S.branches.length + ' unknown currents.</div>'
-+ '  <div class="ct5stagebar' + thisq + '" role="navigation" aria-label="Tutorial stages">'
-+ '    <span class="ct5pill' + thisq + ' ct5pilldone' + thisq + '">1. Simplify \u2713</span>'
-+ '    <span class="ct5pill' + thisq + ' ct5pilldone' + thisq + '">2. Branches \u0026 Loops \u2713</span>'
-+ '    <span class="ct5pill' + thisq + ' ct5pilldone' + thisq + '">3. Currents \u2713</span>'
-+ '    <span class="ct5pill' + thisq + ' ct5pilldone' + thisq + '">4. Polarities \u2713</span>'
-+ '    <span class="ct5pill' + thisq + ' ct5pillactive' + thisq + '">5. Equations</span>'
++ '  <div id="ct5Nar' + thisq + '" class="ct5narbar' + ' ct5narshow' + '" role="status" aria-live="polite" aria-atomic="true"></div>'
++ '  <h3 class="ct5title' + '">Example 2 — Stage 5: Kirchhoff Equations (Bridge)</h3>'
++ '  <div class="ct5subtitle' + '">Build KCL and KVL equations from the term chips below. You need ' + expectedEqCount() + ' independent equations to solve for ' + S.branches.length + ' unknown currents.</div>'
++ '  <div class="ct5stagebar' + '" role="navigation" aria-label="Tutorial stages">'
++ '    <span class="ct5pill' + ' ct5pilldone' + '">1. Simplify \u2713</span>'
++ '    <span class="ct5pill' + ' ct5pilldone' + '">2. Branches \u0026 Loops \u2713</span>'
++ '    <span class="ct5pill' + ' ct5pilldone' + '">3. Currents \u2713</span>'
++ '    <span class="ct5pill' + ' ct5pilldone' + '">4. Polarities \u2713</span>'
++ '    <span class="ct5pill' + ' ct5pillactive' + '">5. Equations</span>'
 + '  </div>'
-+ '  <div class="ct5builder' + thisq + '">'
-+ '    <div class="ct5buildhdr' + thisq + '">'
++ '  <div class="ct5builder' + '">'
++ '    <div class="ct5buildhdr' + '">'
 + '      <label for="ct5EqType' + thisq + '">Equation type:</label>'
-+ '      <select id="ct5EqType' + thisq + '" class="ct5select' + thisq + '">'
++ '      <select id="ct5EqType' + thisq + '" class="ct5select' + '">'
 + '        <option value="kcl">KCL (junction)</option>'
 + '        <option value="kvl">KVL (loop)</option>'
 + '      </select>'
 + '      <label for="ct5LoopSel' + thisq + '">Loop:</label>'
-+ '      <select id="ct5LoopSel' + thisq + '" class="ct5select' + thisq + '" disabled>'
++ '      <select id="ct5LoopSel' + thisq + '" class="ct5select' + '" disabled>'
 +          loopOptions
 + '      </select>'
 + '    </div>'
-+ '    <div class="ct5chipgrid' + thisq + '" id="ct5Chips' + thisq + '" role="group" aria-label="Equation terms">'
++ '    <div class="ct5chipgrid' + '" id="ct5Chips' + thisq + '" role="group" aria-label="Equation terms">'
 + '    </div>'
-+ '    <div class="ct5eqdisplay' + thisq + '" id="ct5Eq' + thisq + '"></div>'
-+ '    <div class="ct5btnrow' + thisq + '">'
-+ '      <button type="button" class="ct5btn' + thisq + ' ct5btnprimary' + thisq + '" id="ct5BtnCheck' + thisq + '">Check Equation</button>'
-+ '      <button type="button" class="ct5btn' + thisq + ' ct5btndanger' + thisq + '" id="ct5BtnClear' + thisq + '" disabled>Clear Terms</button>'
++ '    <div class="ct5eqdisplay' + '" id="ct5Eq' + thisq + '"></div>'
++ '    <div class="ct5btnrow' + '">'
++ '      <button type="button" class="ct5btn' + ' ct5btnprimary' + '" id="ct5BtnCheck' + thisq + '">Check Equation</button>'
++ '      <button type="button" class="ct5btn' + ' ct5btndanger' + '" id="ct5BtnClear' + thisq + '" disabled>Clear Terms</button>'
 + '    </div>'
 + '  </div>'
-+ '  <div class="ct5fb' + thisq + ' ct5fbinfo' + thisq + '" id="ct5Fb' + thisq + '">'
++ '  <div class="ct5fb' + ' ct5fbinfo' + '" id="ct5Fb' + thisq + '">'
 +    'Pick the equation type, then click chips to build your equation. Each chip cycles \u2002\u2003+ \u2192 \u2212 \u2192 unselected.'
 + '  </div>'
-+ '  <div class="ct5eqlist' + thisq + '">'
++ '  <div class="ct5eqlist' + '">'
 + '    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#7a8aaa;margin-bottom:4px;">Confirmed Equations</div>'
 + '    <div id="ct5EqList' + thisq + '"></div>'
-+ '    <div class="ct5progress' + thisq + '" id="ct5Prog' + thisq + '"></div>'
++ '    <div class="ct5progress' + '" id="ct5Prog' + thisq + '"></div>'
 + '  </div>'
-+ '  <div class="ct5solution' + thisq + '" id="ct5Solution' + thisq + '"></div>'
-+ '  <div class="ct5complete' + thisq + '" id="ct5Comp' + thisq + '" role="status"></div>'
-+ '  <span class="ct5sr' + thisq + '" id="ct5Live' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
++ '  <div class="ct5solution' + '" id="ct5Solution' + thisq + '"></div>'
++ '  <div class="ct5complete' + '" id="ct5Comp' + thisq + '" role="status"></div>'
++ '  <span class="ct5sr' + '" id="ct5Live' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
 + '</div>';
 root.innerHTML = html;
 document.getElementById('ct5EqType' + thisq).addEventListener('change', function(){
@@ -803,9 +803,9 @@ document.getElementById('ct5BtnFS' + thisq).addEventListener('click', function()
 function buildErrorDOM(reason) {
 var root = document.getElementById(rootElId);
 root.innerHTML = ''
-+ '<div class="ct5root' + thisq + '">'
-+ '  <h3 class="ct5title' + thisq + '">Example 2 — Stage 5: Kirchhoff Equations (Bridge)</h3>'
-+ '  <div class="ct5error' + thisq + '">'
++ '<div class="ct5root' + '">'
++ '  <h3 class="ct5title' + '">Example 2 — Stage 5: Kirchhoff Equations (Bridge)</h3>'
++ '  <div class="ct5error' + '">'
 + '    <strong>Cannot start Stage 5.</strong><br>' + reason
 + '  </div>'
 + '</div>';
