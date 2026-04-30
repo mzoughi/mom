@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var thisq = 'q1';
+var thisq = window.ctThisq;
 var rootElId = 'ct3Root' + thisq;
 var stateKey = 'ctState3_' + thisq;
 /* =========================================================
@@ -225,21 +225,21 @@ drawComponent(svg, c);
 // Junction dots
 var pos = nodePos();
 ['n1','n2','n3','n4'].forEach(function(n){
-svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ct3node'+thisq }));
+svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ct3node' }));
 });
 // Branch overlays (click zones + arrows)
 var info = layout();
 S.branches.forEach(function(b){ drawBranchOverlay(svg, b, info); });
 }
 function drawReturnWirePath(svg) {
-svg.appendChild(svgEl('line', {x1:270, y1:280, x2:270, y2:310, 'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:270, y1:310, x2:60,  y2:310, 'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:60,  y1:310, x2:60,  y2:30,  'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:110, y2:30,  'class':'ct3wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:270, y1:280, x2:270, y2:310, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:270, y1:310, x2:60,  y2:310, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:60,  y1:310, x2:60,  y2:30,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:110, y2:30,  'class':'ct3wire'}));
 var e1 = getById('E1');
 if (e1) drawBatteryHorizontal(svg, e1, 140, 30);
-svg.appendChild(svgEl('line', {x1:170, y1:30,  x2:270, y2:30,  'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:270, y1:30,  x2:270, y2:60,  'class':'ct3wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:170, y1:30,  x2:270, y2:30,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:270, y1:30,  x2:270, y2:60,  'class':'ct3wire'}));
 }
 function drawComponent(svg, c) {
 if (c.kind === 'battery') drawBatteryDiagonal(svg, c);
@@ -257,18 +257,18 @@ var transform = 'translate(' + mx + ',' + my + ') rotate(' + ang + ')';
 var ux = dx/len, uy = dy/len;
 var bodyLeftX = mx - ux*halfLen, bodyLeftY = my - uy*halfLen;
 var bodyRightX = mx + ux*halfLen, bodyRightY = my + uy*halfLen;
-svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:bodyLeftX, y2:bodyLeftY, 'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:bodyRightX, y1:bodyRightY, x2:x2, y2:y2, 'class':'ct3wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:bodyLeftX, y2:bodyLeftY, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:bodyRightX, y1:bodyRightY, x2:x2, y2:y2, 'class':'ct3wire'}));
 svg.appendChild(svgEl('rect', {
 x:-halfLen, y:-bodyW/2, width:bodyLen, height:bodyW, rx:3, ry:3,
-transform: transform, 'class':'ct3comp'+thisq
+transform: transform, 'class':'ct3comp'
 }));
 var px = -uy, py = ux;
 if (px * (mx-270) + py * (my-175) < 0) { px = -px; py = -py; }
 var labOff = 28;
 var labX = mx + px*labOff, labY = my + py*labOff;
-svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct3label'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct3val'+thisq}, fmt(c.value) + ' \u03a9'));
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct3label'}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct3val'}, fmt(c.value) + ' \u03a9'));
 }
 function drawBatteryDiagonal(svg, c) {
 var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
@@ -285,16 +285,16 @@ var lp1x = longCx + px*longLen/2,  lp1y = longCy + py*longLen/2;
 var lp2x = longCx - px*longLen/2,  lp2y = longCy - py*longLen/2;
 var sp1x = shortCx + px*shortLen/2, sp1y = shortCy + py*shortLen/2;
 var sp2x = shortCx - px*shortLen/2, sp2y = shortCy - py*shortLen/2;
-svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:longCx, y2:longCy, 'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ct3wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ct3wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ct3wire'+thisq}));
+svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:longCx, y2:longCy, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ct3wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ct3wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ct3wire'}));
 var pxL = px, pyL = py;
 if (pxL * (mx-270) + pyL * (my-175) < 0) { pxL = -pxL; pyL = -pyL; }
 var labOff = 22;
 var labX = mx + pxL*labOff, labY = my + pyL*labOff;
-svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct3label'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct3val'+thisq}, c.value + ' V'));
+svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct3label'}, c.label));
+svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct3val'}, c.value + ' V'));
 }
 function drawBatteryHorizontal(svg, c, cx, cy) {
 // E1: c.a=n1 (positive). On screen, we go from left to right; the long plate
@@ -303,12 +303,12 @@ var longLen = 26, shortLen = 14;
 var plateGapHalf = 4;
 var longX = cx + plateGapHalf;
 var shortX = cx - plateGapHalf;
-svg.appendChild(svgEl('line', {x1:cx-30, y1:cy, x2:shortX, y2:cy, 'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('line', {x1:shortX, y1:cy-shortLen/2, x2:shortX, y2:cy+shortLen/2, 'class':'ct3wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:longX,  y1:cy-longLen/2,  x2:longX,  y2:cy+longLen/2,  'class':'ct3wire'+thisq, 'stroke-width':2.5}));
-svg.appendChild(svgEl('line', {x1:longX, y1:cy, x2:cx+30, y2:cy, 'class':'ct3wire'+thisq}));
-svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ct3label'+thisq}, c.label));
-svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ct3val'+thisq}, c.value + ' V'));
+svg.appendChild(svgEl('line', {x1:cx-30, y1:cy, x2:shortX, y2:cy, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:shortX, y1:cy-shortLen/2, x2:shortX, y2:cy+shortLen/2, 'class':'ct3wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX,  y1:cy-longLen/2,  x2:longX,  y2:cy+longLen/2,  'class':'ct3wire', 'stroke-width':2.5}));
+svg.appendChild(svgEl('line', {x1:longX, y1:cy, x2:cx+30, y2:cy, 'class':'ct3wire'}));
+svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ct3label'}, c.label));
+svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ct3val'}, c.value + ' V'));
 }
 function getById(id) {
 return S.circuit.components.find(function(c){return c.id===id;});
@@ -324,7 +324,7 @@ var geom = branchGeometry(branch, info);
 var z1 = geom.zoneToEp1;
 var rect1 = svgEl('rect', {
 x: z1.cx - z1.w/2, y: z1.cy - z1.h/2, width: z1.w, height: z1.h,
-'class': 'ct3zone' + thisq,
+'class': 'ct3zone',
 tabindex: 0, role: 'button',
 'data-bid': branch.id, 'data-ep': geom.ep1,
 'aria-label': 'Set ' + branch.label + ' direction toward ' + geom.ep1
@@ -335,7 +335,7 @@ svg.appendChild(rect1);
 var z2 = geom.zoneToEp2;
 var rect2 = svgEl('rect', {
 x: z2.cx - z2.w/2, y: z2.cy - z2.h/2, width: z2.w, height: z2.h,
-'class': 'ct3zone' + thisq,
+'class': 'ct3zone',
 tabindex: 0, role: 'button',
 'data-bid': branch.id, 'data-ep': geom.ep2,
 'aria-label': 'Set ' + branch.label + ' direction toward ' + geom.ep2
@@ -374,7 +374,7 @@ var headX = ax + ux*shaftLen/2, headY = ay + uy*shaftLen/2;
 svg.appendChild(svgEl('line', {
 x1: tailX, y1: tailY,
 x2: headX - ux*headLen*0.6, y2: headY - uy*headLen*0.6,
-'class':'ct3arrow'+thisq, stroke: color
+'class':'ct3arrow', stroke: color
 }));
 // Head: triangle at the head tip, pointing in (ux,uy)
 var hx1 = headX - ux*headLen + px*headHalfW;
@@ -383,13 +383,13 @@ var hx2 = headX - ux*headLen - px*headHalfW;
 var hy2 = headY - uy*headLen - py*headHalfW;
 svg.appendChild(svgEl('polygon', {
 points: headX+','+headY+' '+hx1+','+hy1+' '+hx2+','+hy2,
-'class':'ct3arrowhead'+thisq, fill: color
+'class':'ct3arrowhead', fill: color
 }));
 // Label, near tail, offset further perpendicular
 var labOff = 14;
 svg.appendChild(svgEl('text', {
 x: tailX + px*labOff - ux*4, y: tailY + py*labOff - uy*4 + 4,
-'class':'ct3currlabel'+thisq, 'text-anchor':'middle', fill: color
+'class':'ct3currlabel', 'text-anchor':'middle', fill: color
 }, branch.label));
 }
 function drawDirectionPlaceholder(svg, branch, geom) {
@@ -402,7 +402,7 @@ if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
 var off = 22;
 var x = geom.midX + px*off, y = geom.midY + py*off;
 svg.appendChild(svgEl('text', {
-x: x, y: y + 4, 'class': 'ct3currlabel' + thisq, 'text-anchor': 'middle',
+x: x, y: y + 4, 'class': 'ct3currlabel', 'text-anchor': 'middle',
 fill: branch.color || '#7a8aaa'
 }, branch.label + ' = ?'));
 }
@@ -488,14 +488,14 @@ return;
 }
 div.innerHTML = S.branches.map(function(b){
 var statusCls, statusText;
-if (b.direction) { statusCls = 'ct3statset'+thisq; statusText = 'Set'; }
-else { statusCls = 'ct3statunset'+thisq; statusText = 'Unset'; }
+if (b.direction) { statusCls = 'ct3statset'; statusText = 'Set'; }
+else { statusCls = 'ct3statunset'; statusText = 'Unset'; }
 var compLabels = b.comps.map(function(c){return c.label;}).join(', ');
 var note = b.hasBattery ? ' <span style="color:#7a8aaa;font-size:10px;">(battery)</span>' : '';
-return '<div class="ct3branch'+thisq+'">'
-+ '<span class="ct3branchswatch'+thisq+'" style="background:'+b.color+';"></span>'
-+ '<span class="ct3branchlabel'+thisq+'">'+b.label+': '+compLabels+note+'</span>'
-+ '<span class="ct3branchstatus'+thisq+' '+statusCls+'">'+statusText+'</span>'
+return '<div class="ct3branch'+'">'
++ '<span class="ct3branchswatch'+'" style="background:'+b.color+';"></span>'
++ '<span class="ct3branchlabel'+'">'+b.label+': '+compLabels+note+'</span>'
++ '<span class="ct3branchstatus'+' '+statusCls+'">'+statusText+'</span>'
 + '</div>';
 }).join('');
 }
@@ -519,12 +519,12 @@ var allSet = S.branches.length > 0 && S.branches.every(function(b){ return !!b.d
 if (!allSet) return;
 var banner = document.getElementById('ct3Comp' + thisq);
 if (!banner) return;
-if (banner.classList.contains('ct3show' + thisq)) return; // already shown
-banner.classList.add('ct3show' + thisq);
+if (banner.classList.contains('ct3show')) return; // already shown
+banner.classList.add('ct3show');
 var msg = 'All branch currents assigned. Each resistor has a current direction; each battery branch follows the convention that current exits the positive terminal externally.';
 banner.innerHTML = ''
-+ '<div class="ct3compmsg' + thisq + '">\u2713 ' + msg + '</div>'
-+ '<button type="button" class="ct3btn' + thisq + ' ct3btnnext' + thisq + '" id="ct3BtnNext' + thisq + '">'
++ '<div class="ct3compmsg' + '">\u2713 ' + msg + '</div>'
++ '<button type="button" class="ct3btn' + ' ct3btnnext' + '" id="ct3BtnNext' + thisq + '">'
 + 'Continue to Stage 4 \u2192</button>';
 var nextBtn = document.getElementById('ct3BtnNext' + thisq);
 if (nextBtn) {
@@ -543,7 +543,7 @@ S.branches.forEach(function(b){
 b.direction = null; b.fromNode = null; b.toNode = null;
 });
 var banner = document.getElementById('ct3Comp' + thisq);
-if (banner) banner.classList.remove('ct3show' + thisq);
+if (banner) banner.classList.remove('ct3show');
 setFeedback('All directions cleared.', 'info');
 announce('All directions cleared.');
 refreshUI();
@@ -551,7 +551,7 @@ refreshUI();
 function setFeedback(msg, tone) {
 var fb = document.getElementById('ct3Fb' + thisq);
 if (!fb) return;
-fb.className = 'ct3fb' + thisq + (tone === 'good' ? ' ct3fbgood' + thisq : tone === 'bad' ? ' ct3fbbad' + thisq : tone === 'info' ? ' ct3fbinfo' + thisq : '');
+fb.className = 'ct3fb' + (tone === 'good' ? ' ct3fbgood' : tone === 'bad' ? ' ct3fbbad' : tone === 'info' ? ' ct3fbinfo' : '');
 fb.innerHTML = msg;
 }
 function announce(msg) {
@@ -572,23 +572,23 @@ return 'Simplified circuit with ' + S.branches.length + ' branches.';
  ACCESSIBILITY TOOLBAR
 ========================================================= */
 function applyA11y() {
-var root = document.getElementById(rootElId).querySelector('.ct3root' + thisq);
+var root = document.getElementById(rootElId).querySelector('.ct3root');
 if (!root) return;
-root.classList.toggle('ct3lm' + thisq, S.a11y.lm);
-root.classList.toggle('ct3hc' + thisq, S.a11y.hc);
+root.classList.toggle('ct3lm', S.a11y.lm);
+root.classList.toggle('ct3hc', S.a11y.hc);
 var fontSizes = ['14px','16px','19px'];
-root.style.setProperty('--ct3fs' + thisq, fontSizes[S.a11y.fs]);
+root.style.setProperty('--ct3fs', fontSizes[S.a11y.fs]);
 setBtn('ct3BtnLM', S.a11y.lm, 'LIGHT MODE');
 setBtn('ct3BtnNR', S.a11y.nr, 'NARRATION', true);
 setBtn('ct3BtnHC', S.a11y.hc, 'HIGH CONTRAST');
 setBtn('ct3BtnFS', S.a11y.fs > 0, 'FONT SIZE: ' + ['NORMAL','LARGE','XL'][S.a11y.fs]);
 var nar = document.getElementById('ct3Nar' + thisq);
-if (nar) nar.classList.toggle('ct3narshow' + thisq, S.a11y.nr);
+if (nar) nar.classList.toggle('ct3narshow', S.a11y.nr);
 }
 function setBtn(idBase, on, label, withSuffix) {
 var b = document.getElementById(idBase + thisq);
 if (!b) return;
-b.classList.toggle('ct3a11yon' + thisq, on);
+b.classList.toggle('ct3a11yon', on);
 b.setAttribute('aria-pressed', on ? 'true' : 'false');
 b.textContent = withSuffix ? (label + ': ' + (on ? 'ON' : 'OFF')) : label;
 }
@@ -604,45 +604,45 @@ render();
 function buildDOM() {
 var root = document.getElementById(rootElId);
 var html = ''
-+ '<div class="ct3root' + thisq + '" role="region" aria-label="Current direction tutorial">'
-+ '  <div class="ct3a11y' + thisq + '" role="toolbar" aria-label="Display options">'
-+ '    <button type="button" class="ct3a11ybtn' + thisq + '" id="ct3BtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
-+ '    <button type="button" class="ct3a11ybtn' + thisq + ' ct3a11yon' + thisq + '" id="ct3BtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
-+ '    <button type="button" class="ct3a11ybtn' + thisq + '" id="ct3BtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
-+ '    <button type="button" class="ct3a11ybtn' + thisq + '" id="ct3BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
++ '<div class="ct3root' + '" role="region" aria-label="Current direction tutorial">'
++ '  <div class="ct3a11y' + '" role="toolbar" aria-label="Display options">'
++ '    <button type="button" class="ct3a11ybtn' + '" id="ct3BtnLM' + thisq + '" aria-pressed="false">LIGHT MODE</button>'
++ '    <button type="button" class="ct3a11ybtn' + ' ct3a11yon' + '" id="ct3BtnNR' + thisq + '" aria-pressed="true">NARRATION: ON</button>'
++ '    <button type="button" class="ct3a11ybtn' + '" id="ct3BtnHC' + thisq + '" aria-pressed="false">HIGH CONTRAST</button>'
++ '    <button type="button" class="ct3a11ybtn' + '" id="ct3BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
 + '  </div>'
-+ '  <div id="ct3Nar' + thisq + '" class="ct3narbar' + thisq + ' ct3narshow' + thisq + '" role="status" aria-live="polite" aria-atomic="true"></div>'
-+ '  <h3 class="ct3title' + thisq + '">Example 2 — Stage 3: Current Directions (Bridge)</h3>'
-+ '  <div class="ct3subtitle' + thisq + '">Assign a current direction to each branch. For branches with a battery, you must use the conventional direction (out of the positive terminal externally).</div>'
-+ '  <div class="ct3stagebar' + thisq + '" role="navigation" aria-label="Tutorial stages">'
-+ '    <span class="ct3pill' + thisq + ' ct3pilldone' + thisq + '">1. Simplify \u2713</span>'
-+ '    <span class="ct3pill' + thisq + ' ct3pilldone' + thisq + '">2. Branches \u0026 Loops \u2713</span>'
-+ '    <span class="ct3pill' + thisq + ' ct3pillactive' + thisq + '">3. Currents</span>'
-+ '    <span class="ct3pill' + thisq + '">4. Polarities</span>'
-+ '    <span class="ct3pill' + thisq + '">5. Equations</span>'
++ '  <div id="ct3Nar' + thisq + '" class="ct3narbar' + ' ct3narshow' + '" role="status" aria-live="polite" aria-atomic="true"></div>'
++ '  <h3 class="ct3title' + '">Example 2 — Stage 3: Current Directions (Bridge)</h3>'
++ '  <div class="ct3subtitle' + '">Assign a current direction to each branch. For branches with a battery, you must use the conventional direction (out of the positive terminal externally).</div>'
++ '  <div class="ct3stagebar' + '" role="navigation" aria-label="Tutorial stages">'
++ '    <span class="ct3pill' + ' ct3pilldone' + '">1. Simplify \u2713</span>'
++ '    <span class="ct3pill' + ' ct3pilldone' + '">2. Branches \u0026 Loops \u2713</span>'
++ '    <span class="ct3pill' + ' ct3pillactive' + '">3. Currents</span>'
++ '    <span class="ct3pill' + '">4. Polarities</span>'
++ '    <span class="ct3pill' + '">5. Equations</span>'
 + '  </div>'
-+ '  <div class="ct3layout' + thisq + '">'
++ '  <div class="ct3layout' + '">'
 + '    <div class="ct3canvasWrap' + thisq + '">'
-+ '      <div class="ct3hint' + thisq + '">For each branch, click the half toward which the current should flow. For branches with a battery, the conventional direction is out of the positive (long-plate) terminal externally. Click the same half again to clear.</div>'
-+ '      <svg class="ct3svg' + thisq + '" id="ct3Svg' + thisq + '" viewBox="0 0 540 340" role="img" aria-label="Bridge circuit"></svg>'
-+ '      <div class="ct3complete' + thisq + '" id="ct3Comp' + thisq + '" role="status"></div>'
++ '      <div class="ct3hint' + '">For each branch, click the half toward which the current should flow. For branches with a battery, the conventional direction is out of the positive (long-plate) terminal externally. Click the same half again to clear.</div>'
++ '      <svg class="ct3svg' + '" id="ct3Svg' + thisq + '" viewBox="0 0 540 340" role="img" aria-label="Bridge circuit"></svg>'
++ '      <div class="ct3complete' + '" id="ct3Comp' + thisq + '" role="status"></div>'
 + '    </div>'
-+ '    <aside class="ct3side' + thisq + '">'
++ '    <aside class="ct3side' + '">'
 + '      <div>'
-+ '        <h2 class="ct3sideh' + thisq + '">Branch Currents</h2>'
-+ '        <div class="ct3branchlist' + thisq + '" id="ct3List' + thisq + '" aria-live="polite"></div>'
++ '        <h2 class="ct3sideh' + '">Branch Currents</h2>'
++ '        <div class="ct3branchlist' + '" id="ct3List' + thisq + '" aria-live="polite"></div>'
 + '      </div>'
 + '      <div>'
-+ '        <h2 class="ct3sideh' + thisq + '">Feedback</h2>'
-+ '        <div class="ct3fb' + thisq + '" id="ct3Fb' + thisq + '">Click a branch (the half toward which the current should flow) to set its direction. Branches with a battery must follow the conventional direction.</div>'
++ '        <h2 class="ct3sideh' + '">Feedback</h2>'
++ '        <div class="ct3fb' + '" id="ct3Fb' + thisq + '">Click a branch (the half toward which the current should flow) to set its direction. Branches with a battery must follow the conventional direction.</div>'
 + '      </div>'
-+ '      <div class="ct3btnrow' + thisq + '">'
-+ '        <button type="button" class="ct3btn' + thisq + '" id="ct3BtnReset' + thisq + '" disabled>Clear All Directions</button>'
++ '      <div class="ct3btnrow' + '">'
++ '        <button type="button" class="ct3btn' + '" id="ct3BtnReset' + thisq + '" disabled>Clear All Directions</button>'
 + '      </div>'
-+ '      <div class="ct3progress' + thisq + '" id="ct3Prog' + thisq + '"></div>'
++ '      <div class="ct3progress' + '" id="ct3Prog' + thisq + '"></div>'
 + '    </aside>'
 + '  </div>'
-+ '  <span class="ct3sr' + thisq + '" id="ct3Live' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
++ '  <span class="ct3sr' + '" id="ct3Live' + thisq + '" aria-live="polite" aria-atomic="true"></span>'
 + '</div>';
 root.innerHTML = html;
 document.getElementById('ct3BtnReset' + thisq).addEventListener('click', resetUserDirections);
@@ -654,9 +654,9 @@ document.getElementById('ct3BtnFS' + thisq).addEventListener('click', function()
 function buildErrorDOM(reason) {
 var root = document.getElementById(rootElId);
 root.innerHTML = ''
-+ '<div class="ct3root' + thisq + '">'
-+ '  <h3 class="ct3title' + thisq + '">Example 2 — Stage 3: Current Directions (Bridge)</h3>'
-+ '  <div class="ct3error' + thisq + '">'
++ '<div class="ct3root' + '">'
++ '  <h3 class="ct3title' + '">Example 2 — Stage 3: Current Directions (Bridge)</h3>'
++ '  <div class="ct3error' + '">'
 + '    <strong>Cannot start Stage 3.</strong><br>' + reason
 + '  </div>'
 + '</div>';
