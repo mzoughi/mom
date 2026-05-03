@@ -300,15 +300,24 @@ svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ct4val'}, c.val
 function drawCurrentArrow(svg, branch) {
 var geom = branchGeometry(branch);
 var color = branch.color || '#00d4ff';
+var ux, uy, px, py;
+if (branch.ids.has('E1')) {
+// Special case: E1 is in the wraparound return wire. Arrow is drawn at
+// (140, 30); local wire direction is horizontal. Push arrow DOWN, not up.
+ux = (branch.toNode === 'n1') ? +1 : -1;
+uy = 0;
+px = 0; py = +1;
+} else {
 var fromPos = (branch.fromNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
 var toPos = (branch.toNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
 var dx = toPos.x - fromPos.x, dy = toPos.y - fromPos.y;
 var len = Math.sqrt(dx*dx + dy*dy);
 if (len === 0) return;
-var ux = dx/len, uy = dy/len;
-var px = -uy, py = ux;
+ux = dx/len; uy = dy/len;
+px = -uy; py = ux;
 if (px * (geom.midX - 270) + py * (geom.midY - 175) < 0) { px = -px; py = -py; }
-var arrowOffset = 22;
+}
+var arrowOffset = branch.ids.has('E1') ? 36 : 22;
 var ax = geom.midX + px*arrowOffset, ay = geom.midY + py*arrowOffset;
 var shaftLen = 28, headLen = 6, headHalfW = 4;
 var tailX = ax - ux*shaftLen/2, tailY = ay - uy*shaftLen/2;
