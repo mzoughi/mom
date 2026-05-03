@@ -349,23 +349,40 @@ drawCurrentArrow(svg, branch, geom);
 drawDirectionPlaceholder(svg, branch, geom);
 }
 }
-/* Draw the current arrow: oriented along the branch direction, pointing
- from fromNode toward toNode. Placed at the branch midpoint, perpendicular
- offset so it doesn't overlap the wire. */
+/* Draw the current arrow: oriented along the LOCAL wire direction at the
+ branch's drawing midpoint, pointing from fromNode toward toNode.
+ Placed perpendicular-offset away from the wire. */
 function drawCurrentArrow(svg, branch, geom) {
 var color = branch.color || '#00d4ff';
-// Direction: from fromNode to toNode
+var ux, uy;
+if (branch.ids.has('E1')) {
+// E1 is in the wraparound return wire. The arrow is drawn at the top stretch
+// (140, 30) where the local wire direction is horizontal. Going toward n1
+// (top-right) means pointing +x (right); toward n4 (bottom) means going left
+// along the top stretch first, so -x.
+ux = (branch.toNode === 'n1') ? +1 : -1;
+uy = 0;
+} else {
+// Regular branch: direction is endpoint-to-endpoint vector.
 var fromPos = (branch.fromNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
 var toPos = (branch.toNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
 var dx = toPos.x - fromPos.x, dy = toPos.y - fromPos.y;
 var len = Math.sqrt(dx*dx + dy*dy);
 if (len === 0) return;
-var ux = dx/len, uy = dy/len;
-// Perpendicular for the offset (away from diamond center)
+ux = dx/len; uy = dy/len;
+}
+// Perpendicular for the offset (away from diamond center, except for E1
+// where "away from center" would push the arrow off-screen above the wire).
 var px = -uy, py = ux;
+if (branch.ids.has('E1')) {
+// For E1 at (140, 30), push the arrow DOWN (toward the diamond), not up.
+// The default rule "away from center (270, 175)" would push it up off-screen.
+px = 0; py = +1;
+} else {
 var dxFromCenter = geom.midX - 270, dyFromCenter = geom.midY - 175;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
-var arrowOffset = 22; // distance from the wire
+}
+var arrowOffset = branch.ids.has('E1') ? 36 : 22; // bigger for E1 to clear the 12V label
 var ax = geom.midX + px*arrowOffset, ay = geom.midY + py*arrowOffset;
 var shaftLen = 32, headLen = 7, headHalfW = 5;
 var tailX = ax - ux*shaftLen/2, tailY = ay - uy*shaftLen/2;
@@ -395,11 +412,18 @@ x: tailX + px*labOff - ux*4, y: tailY + py*labOff - uy*4 + 4,
 function drawDirectionPlaceholder(svg, branch, geom) {
 // "I_x = ?" placed at the perpendicular offset from the branch midpoint,
 // toward outside of the diamond.
+var px, py;
+if (branch.ids.has('E1')) {
+// E1 sits at top of the wraparound; push the placeholder DOWN so it stays
+// inside the SVG.
+px = 0; py = +1;
+} else {
 var ux = geom.dx, uy = geom.dy;
-var px = -uy, py = ux;
+px = -uy; py = ux;
 var dxFromCenter = geom.midX - 270, dyFromCenter = geom.midY - 175;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
-var off = 22;
+}
+var off = branch.ids.has('E1') ? 36 : 22;
 var x = geom.midX + px*off, y = geom.midY + py*off;
 svg.appendChild(svgEl('text', {
 x: x, y: y + 4, 'class': 'ct3currlabel', 'text-anchor': 'middle',
