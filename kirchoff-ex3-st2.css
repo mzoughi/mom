@@ -83,7 +83,7 @@ background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12p
 color: #7a8aaa; font-size: 12px; margin-bottom: 8px; line-height: 1.4;
 }
 .ct2svg {
-width: 100%; height: auto;
+width: 100%; height: auto; aspect-ratio: 880 / 510;
 background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px; display: block;
 }
 .ct2side {
