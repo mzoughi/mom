@@ -32,22 +32,22 @@ var S = window[stateKey];
 function stage1FallbackForTesting() {
 return {
 components: [
-{ id:'R8', kind:'resistor', value:4, a:'n_A', b:'n_Br1m', label:'R\u2088\u208a\u2089\u2225\u2081\u2080\u208a\u2081\u2081',
-geom: { x1:140, y1:90, x2:140, y2:200 } },
-{ id:'E3', kind:'battery', value:9, a:'n_Br1m', b:'n_CD', label:'E\u2083',
-geom: { x1:140, y1:230, x2:140, y2:330 } },
-{ id:'R7', kind:'resistor', value:2, a:'n_A', b:'n_Br5m', label:'R\u2087',
-geom: { x1:300, y1:90, x2:300, y2:200 } },
-{ id:'E2', kind:'battery', value:6, a:'n_CD', b:'n_Br5m', label:'E\u2082',
-geom: { x1:300, y1:330, x2:300, y2:230 } },
-{ id:'R5', kind:'resistor', value:6, a:'n_A', b:'n_B', label:'R\u2085\u208a\u2086',
-geom: { x1:520, y1:90, x2:520, y2:330 } },
-{ id:'R3', kind:'resistor', value:6, a:'n_B', b:'n_CD', label:'R\u2083\u208a\u2081\u208a\u2082',
-geom: { x1:480, y1:360, x2:120, y2:360 } },
-{ id:'R4', kind:'resistor', value:4, a:'n_B', b:'n_Br4m', label:'R\u2084',
-geom: { x1:480, y1:430, x2:340, y2:430 } },
-{ id:'E1', kind:'battery', value:12, a:'n_Br4m', b:'n_CD', label:'E\u2081',
-geom: { x1:300, y1:430, x2:120, y2:430 } }
+{ id:'R8', kind:'resistor', value:4, a:'E', b:'A', label:'R\u2088\u208a\u2089\u2225\u2081\u2080\u208a\u2081\u2081',
+geom: { x1:90, y1:30, x2:290, y2:30 } },
+{ id:'R5', kind:'resistor', value:6, a:'A', b:'B', label:'R\u2085\u208a\u2086',
+geom: { x1:410, y1:30, x2:550, y2:30 } },
+{ id:'R3', kind:'resistor', value:6, a:'B', b:'CD', label:'R\u2083\u208a\u2081\u208a\u2082',
+geom: { x1:610, y1:30, x2:770, y2:30 } },
+{ id:'R7', kind:'resistor', value:2, a:'A', b:'G', label:'R\u2087',
+geom: { x1:380, y1:90, x2:380, y2:190 } },
+{ id:'R4', kind:'resistor', value:4, a:'B', b:'H', label:'R\u2084',
+geom: { x1:580, y1:90, x2:580, y2:190 } },
+{ id:'E1', kind:'battery', value:12, a:'H', b:'CD', label:'E\u2081',
+geom: { x1:580, y1:210, x2:580, y2:330 } },
+{ id:'E2', kind:'battery', value:6, a:'CD', b:'G', label:'E\u2082',
+geom: { x1:380, y1:330, x2:380, y2:210 } },
+{ id:'E3', kind:'battery', value:9, a:'E', b:'CD', label:'E\u2083',
+geom: { x1:60, y1:360, x2:60, y2:440 } }
 ]
 };
 }
