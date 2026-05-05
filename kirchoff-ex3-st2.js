@@ -27,51 +27,61 @@ var S = window[stateKey];
  Mirrors Example 2's bridge circuit (irreducible, so Stage 1 doesn't change it).
 ========================================================= */
 function fallbackCircuit() {
-// Example 3 simplified circuit: 5 branches between 3 junctions (A, B, CD).
-//
-// Layout — "top bus, bottom rail" style:
-//   A acts as a horizontal bar at the top (y=50), spanning x=80 to x=580.
-//   Three branches drop down from A:
-//     - Br1 (A↔CD): R_891011 at x=140, then E3 below it
-//     - Br5 (A↔CD): R7 at x=300, then E2 below it
-//     - Br2 (A↔B):  R_56 at x=520, going down to B
-//   CD is a horizontal bar at the bottom (y=360), spanning x=80 to x=400.
-//   B is at (520, 360).
-//   Two branches connect B to CD:
-//     - Br3 (B↔CD): R_312 horizontally at y=360 (or just below), from B leftward
-//     - Br4 (B↔CD): R4+E1 arched below at y=430
+// Logical post-merge circuit: 8 active components on canonical merged nodes.
+// Junctions {A, B, CD}, internal degree-2 nodes {E, G, H}.
+// Used for branch/loop detection.
 return {
 components: [
-// Br1: R_891011 + E3 (left vertical at x=140)
-{ id:'R8',  kind:'resistor', value:4, a:'n_A', b:'n_Br1m',
+{ id:'R8', kind:'resistor', value:4, a:'E', b:'A',
 label:'R\u2088\u208a\u2089\u2225\u2081\u2080\u208a\u2081\u2081',
-geom: { x1:140, y1:90, x2:140, y2:200 } },
-{ id:'E3',  kind:'battery',  value:9, a:'n_Br1m', b:'n_CD', label:'E\u2083',
-// a = positive (top, A side); b = negative (bottom, CD side)
-geom: { x1:140, y1:230, x2:140, y2:330 } },
-// Br5: R7 + E2 (middle vertical at x=300)
-{ id:'R7',  kind:'resistor', value:2, a:'n_A', b:'n_Br5m', label:'R\u2087',
-geom: { x1:300, y1:90, x2:300, y2:200 } },
-{ id:'E2',  kind:'battery',  value:6, a:'n_CD', b:'n_Br5m', label:'E\u2082',
-// a = positive (CD side, bottom of this segment)
-// b = negative (top of this segment, toward A internally)
-geom: { x1:300, y1:330, x2:300, y2:230 } },
-// Br2: R_56 (right vertical at x=520, A↔B)
-{ id:'R5',  kind:'resistor', value:6, a:'n_A', b:'n_B',
+geom: { x1:90, y1:30, x2:290, y2:30 } },
+{ id:'R5', kind:'resistor', value:6, a:'A', b:'B',
 label:'R\u2085\u208a\u2086',
-geom: { x1:520, y1:90, x2:520, y2:330 } },
-// Br3: R_312 (bottom edge between CD and B)
-{ id:'R3',  kind:'resistor', value:6, a:'n_B', b:'n_CD',
+geom: { x1:410, y1:30, x2:550, y2:30 } },
+{ id:'R3', kind:'resistor', value:6, a:'B', b:'CD',
 label:'R\u2083\u208a\u2081\u208a\u2082',
-geom: { x1:480, y1:360, x2:120, y2:360 } },
-// Br4: R4 + E1 (lower arch below the bottom rail)
-{ id:'R4',  kind:'resistor', value:4, a:'n_B', b:'n_Br4m', label:'R\u2084',
-geom: { x1:480, y1:430, x2:340, y2:430 } },
-{ id:'E1',  kind:'battery',  value:12, a:'n_Br4m', b:'n_CD', label:'E\u2081',
-// a = positive (B side), b = negative (CD side)
-geom: { x1:300, y1:430, x2:120, y2:430 } }
+geom: { x1:610, y1:30, x2:770, y2:30 } },
+{ id:'R7', kind:'resistor', value:2, a:'A', b:'G', label:'R\u2087',
+geom: { x1:380, y1:90, x2:380, y2:190 } },
+{ id:'R4', kind:'resistor', value:4, a:'B', b:'H', label:'R\u2084',
+geom: { x1:580, y1:90, x2:580, y2:190 } },
+{ id:'E1', kind:'battery', value:12, a:'H', b:'CD', label:'E\u2081',
+geom: { x1:580, y1:210, x2:580, y2:330 } },
+{ id:'E2', kind:'battery', value:6, a:'CD', b:'G', label:'E\u2082',
+geom: { x1:380, y1:330, x2:380, y2:210 } },
+{ id:'E3', kind:'battery', value:9, a:'E', b:'CD', label:'E\u2083',
+geom: { x1:60, y1:360, x2:60, y2:440 } }
 ]
 };
+}
+/* Display version: full circuit including wires (R1, R2, R6, R9, R11) and the
+ absorbed R10. Used for VISUAL rendering only (skeleton + wires + components). */
+function fallbackDisplayCircuit() {
+return [
+{ id:'R8', kind:'resistor', value:4, a:'F', b:'A',
+label:'R\u2088\u208a\u2089\u2225\u2081\u2080\u208a\u2081\u2081',
+geom: { x1:90, y1:30, x2:290, y2:30 } },
+{ id:'R5', kind:'resistor', value:6, a:'A', b:'B', label:'R\u2085\u208a\u2086',
+geom: { x1:410, y1:30, x2:550, y2:30 } },
+{ id:'R3', kind:'resistor', value:6, a:'B', b:'J', label:'R\u2083\u208a\u2081\u208a\u2082',
+geom: { x1:610, y1:30, x2:770, y2:30 } },
+{ id:'R1', kind:'wire', a:'J', b:'K', geom: { x1:820, y1:90, x2:820, y2:330 } },
+{ id:'R2', kind:'wire', a:'C', b:'K', geom: { x1:650, y1:470, x2:790, y2:470 } },
+{ id:'R6', kind:'wire', a:'C', b:'D', geom: { x1:550, y1:470, x2:410, y2:470 } },
+{ id:'R11', kind:'wire', a:'D', b:'X', geom: { x1:350, y1:470, x2:140, y2:470 } },
+{ id:'R9', kind:'wire', a:'E', b:'F', geom: { x1:60, y1:150, x2:60, y2:270 } },
+{ id:'R10', kind:'absorbed', a:'A', b:'E', geom: { x1:380, y1:30, x2:60, y2:300 } },
+{ id:'R7', kind:'resistor', value:2, a:'A', b:'G', label:'R\u2087',
+geom: { x1:380, y1:90, x2:380, y2:190 } },
+{ id:'R4', kind:'resistor', value:4, a:'B', b:'H', label:'R\u2084',
+geom: { x1:580, y1:90, x2:580, y2:190 } },
+{ id:'E1', kind:'battery', value:12, a:'H', b:'C', label:'E\u2081',
+geom: { x1:580, y1:210, x2:580, y2:330 } },
+{ id:'E2', kind:'battery', value:6, a:'D', b:'G', label:'E\u2082',
+geom: { x1:380, y1:330, x2:380, y2:210 } },
+{ id:'E3', kind:'battery', value:9, a:'E', b:'X', label:'E\u2083',
+geom: { x1:60, y1:360, x2:60, y2:440 } }
+];
 }
 /* =========================================================
  GRAPH HELPERS
@@ -283,6 +293,19 @@ if (S.foundBranches[i].ids.has(id)) return S.foundBranches[i].color;
 }
 return null;
 }
+function nodePos() {
+// Canonical node names matching the simplified circuit from Stage 1's handoff.
+// After the wire merges, originally-distinct nodes {F, E} are merged into "E",
+// and {C, D, X, K, J} are merged into "CD". Internal stack nodes G and H remain.
+return {
+A:  { x:380, y:30  },
+B:  { x:580, y:30  },
+CD: { x:380, y:470 },  // canonical position; the rail visually spans much wider
+E:  { x:60,  y:300 },
+G:  { x:380, y:200 },
+H:  { x:580, y:200 }
+};
+}
 function render() {
 var svg = document.getElementById('ct2Svg' + thisq);
 if (!svg) return;
@@ -292,68 +315,63 @@ t.textContent = 'Simplified circuit (5 branches, 3 junctions)';
 var d = document.createElementNS('http://www.w3.org/2000/svg','desc');
 d.textContent = describeCircuit();
 svg.appendChild(t); svg.appendChild(d);
-// Draw the connecting wires: A is a top horizontal bar, CD is a bottom-left bar,
-// and there are jumps from B to where Br4's arch starts/ends.
 drawSkeletonWires(svg);
-// Draw each component
-S.circuit.components.forEach(function(c){
+// Draw the FULL display (including merged-away wires + absorbed components).
+// Active resistors and batteries are interactive; wires are decorative;
+// absorbed components don't draw.
+var displayList = S.displayComponents || S.circuit.components;
+displayList.forEach(function(c){
 drawComponent(svg, c);
 });
-// Junction dots
-var pos = nodePos();
-// A is the top bar; mark it at all 3 attachment points (where Br1, Br5, Br2 connect)
-// For visual clarity put a dot only at the leftmost (140) since that's where the
-// bar starts. Actually, let's put dots at the canonical junction positions.
-svg.appendChild(svgEl('circle', { cx:pos.n_A.x, cy:pos.n_A.y, r:4, 'class':'ct2node' }));
-svg.appendChild(svgEl('circle', { cx:pos.n_B.x, cy:pos.n_B.y, r:4, 'class':'ct2node' }));
-svg.appendChild(svgEl('circle', { cx:pos.n_CD.x, cy:pos.n_CD.y, r:4, 'class':'ct2node' }));
+// Junction dots — drawn at canonical positions for the 3 simplified junctions.
+svg.appendChild(svgEl('circle', { cx:380, cy:30,  r:3.5, 'class':'ct2node' })); // A
+svg.appendChild(svgEl('circle', { cx:580, cy:30,  r:3.5, 'class':'ct2node' })); // B
+// CD is the entire bottom rail; mark a few visible points
+[{x:60, y:470}, {x:380, y:470}, {x:580, y:470}, {x:820, y:470}].forEach(function(p){
+svg.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:3.5, 'class':'ct2node' }));
+});
+}
+function drawComponent(svg, c) {
+if (c.kind === 'absorbed') return;  // parallel-merged; not drawn
+if (c.kind === 'wire') {
+// Series-merged-away component; draw a straight line at its old position.
+svg.appendChild(svgEl('line', {
+x1: c.geom.x1, y1: c.geom.y1, x2: c.geom.x2, y2: c.geom.y2,
+'class':'ct2wire'
+}));
+return;
+}
+if (c.kind === 'battery') drawBatteryDiagonal(svg, c);
+else drawResistor(svg, c);
 }
 function drawSkeletonWires(svg) {
-// A bus: horizontal at y=50, from x=140 (leftmost branch) to x=520 (rightmost).
-svg.appendChild(svgEl('line', {x1:140, y1:50, x2:520, y2:50, 'class':'ct2wire'}));
-// Drops from A bus to each top branch terminal
-svg.appendChild(svgEl('line', {x1:140, y1:50, x2:140, y2:90, 'class':'ct2wire'}));
-svg.appendChild(svgEl('line', {x1:300, y1:50, x2:300, y2:90, 'class':'ct2wire'}));
-svg.appendChild(svgEl('line', {x1:520, y1:50, x2:520, y2:90, 'class':'ct2wire'}));
-// CD bar: at y=360, from x=120 (leftmost) to x=400. Plus the bottom-arch path.
-svg.appendChild(svgEl('line', {x1:120, y1:360, x2:400, y2:360, 'class':'ct2wire'}));
-// Bottom of Br1 (R8910+11, E3) connects up to the CD bar at x=140
-svg.appendChild(svgEl('line', {x1:140, y1:330, x2:140, y2:360, 'class':'ct2wire'}));
-// Bottom of Br5 (R7, E2) connects up to the CD bar at x=300
-svg.appendChild(svgEl('line', {x1:300, y1:330, x2:300, y2:360, 'class':'ct2wire'}));
-// Bottom of Br3 (R312) connects to CD at the bar's right end (x=120 is the leftmost
-// and x=400 is just before B)
-// Actually Br3 goes from B at (520, 360) leftward. Its right endpoint connects
-// to B; left endpoint to CD bar.
-svg.appendChild(svgEl('line', {x1:120, y1:360, x2:120, y2:360, 'class':'ct2wire'})); // (no-op)
-// B node connections: Br2 ends at B (520, 330), then there's a wire down to (520, 360).
-svg.appendChild(svgEl('line', {x1:520, y1:330, x2:520, y2:360, 'class':'ct2wire'}));
-// From B, wires go to Br3 (left, at y=360) and Br4 arch (downward)
-svg.appendChild(svgEl('line', {x1:520, y1:360, x2:480, y2:360, 'class':'ct2wire'}));
-svg.appendChild(svgEl('line', {x1:520, y1:360, x2:520, y2:430, 'class':'ct2wire'}));
-svg.appendChild(svgEl('line', {x1:520, y1:430, x2:480, y2:430, 'class':'ct2wire'}));
-// Br4 lower arch connects to CD bar at x=120 (left end)
-svg.appendChild(svgEl('line', {x1:120, y1:430, x2:120, y2:360, 'class':'ct2wire'}));
-}
-function nodePos() {
-return {
-// A is a horizontal bus at y=50 from x=140 to x=520. We use the leftmost
-// attachment point as its canonical position.
-n_A:    { x:140, y:50  },
-n_B:    { x:520, y:360 },
-n_CD:   { x:120, y:360 },
-n_Br1m: { x:140, y:215 },   // between R_891011 and E3 (vertical)
-n_Br4m: { x:340, y:430 },   // between R4 and E1 (horizontal arch)
-n_Br5m: { x:300, y:215 }    // between R7 and E2 (vertical)
-};
+// Stage 1's exact wire layout. Active components are drawn separately.
+// Top horizontal rail: F(60,30) → wire → R8 → wire → A(380,30) → wire → R5 → wire → B(580,30) → wire → R3 → wire → J(820,30)
+svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:90,  y2:30,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:290, y1:30,  x2:380, y2:30,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:380, y1:30,  x2:410, y2:30,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:550, y1:30,  x2:580, y2:30,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:580, y1:30,  x2:610, y2:30,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:770, y1:30,  x2:820, y2:30,  'class':'ct2wire'}));
+// Right vertical (R1 was wire) — straight wire down
+svg.appendChild(svgEl('line', {x1:820, y1:30,  x2:820, y2:470, 'class':'ct2wire'}));
+// Bottom horizontal rail: spans entire bottom from X(60,470) to K(820,470)
+svg.appendChild(svgEl('line', {x1:60,  y1:470, x2:820, y2:470, 'class':'ct2wire'}));
+// Left vertical: F(60,30) → R9(wire) → E(60,300) → wire → E3 → wire → X(60,470)
+svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:60,  y2:360, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:60,  y1:440, x2:60,  y2:470, 'class':'ct2wire'}));
+// R7-E2 stack (A → G → E2 → CD), connecting wires
+svg.appendChild(svgEl('line', {x1:380, y1:30,  x2:380, y2:90,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:380, y1:190, x2:380, y2:210, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:380, y1:330, x2:380, y2:470, 'class':'ct2wire'}));
+// R4-E1 stack (B → H → E1 → CD)
+svg.appendChild(svgEl('line', {x1:580, y1:30,  x2:580, y2:90,  'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:580, y1:190, x2:580, y2:210, 'class':'ct2wire'}));
+svg.appendChild(svgEl('line', {x1:580, y1:330, x2:580, y2:470, 'class':'ct2wire'}));
 }
 // Stage 2 used to have a return-wire path (Example 2's wraparound). Example 3
 // doesn't use one, so this is now a no-op kept for compatibility.
 function drawReturnWirePath(svg) {}
-function drawComponent(svg, c) {
-if (c.kind === 'battery') drawBatteryDiagonal(svg, c);
-else drawResistor(svg, c);
-}
 function drawResistor(svg, c) {
 var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
 var mx = (x1+x2)/2, my = (y1+y2)/2;
@@ -389,7 +407,7 @@ attachHandlers(rect, c);
 svg.appendChild(rect);
 // Labels — perpendicular to body, pushed outward
 var px = -uy, py = ux;
-var dxFromCenter = mx - 320, dyFromCenter = my - 240;
+var dxFromCenter = mx - 440, dyFromCenter = my - 250;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
 var labOff = 28;
 var labX = mx + px*labOff, labY = my + py*labOff;
@@ -417,7 +435,7 @@ svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ct2w
 svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ct2wire'}));
 // Label
 var pxL = px, pyL = py;
-var dxFromCenter = mx - 320, dyFromCenter = my - 240;
+var dxFromCenter = mx - 440, dyFromCenter = my - 250;
 if (pxL * dxFromCenter + pyL * dyFromCenter < 0) { pxL = -pxL; pyL = -pyL; }
 var labOff = 22;
 var labX = mx + pxL*labOff, labY = my + pyL*labOff;
@@ -940,7 +958,7 @@ var html = ''
 + '  <div class="ct2layout' + '">'
 + '    <div class="ct2canvasWrap' + thisq + '">'
 + '      <div class="ct2hint' + '" id="ct2Hint' + thisq + '">Click the components belonging to one branch (any order), then press Confirm Branch. Use Tab to focus a component, Enter or Space to select.</div>'
-+ '      <svg class="ct2svg' + '" id="ct2Svg' + thisq + '" viewBox="0 0 700 480" role="img" aria-label="Simplified circuit"></svg>'
++ '      <svg class="ct2svg' + '" id="ct2Svg' + thisq + '" viewBox="0 0 880 510" role="img" aria-label="Simplified circuit"></svg>'
 + '      <div class="ct2complete' + '" id="ct2Comp' + thisq + '" role="status"></div>'
 + '    </div>'
 + '    <aside class="ct2side' + '" aria-label="Branches and loops controls">'
@@ -1032,8 +1050,10 @@ function init() {
 var simplified = window['ctStage1Simplified_' + thisq];
 if (simplified && simplified.components) {
 S.circuit = { components: simplified.components.map(function(c){return Object.assign({}, c);}) };
+S.displayComponents = (simplified.displayComponents || simplified.components).map(function(c){return Object.assign({}, c);});
 } else {
 S.circuit = fallbackCircuit();
+S.displayComponents = fallbackDisplayCircuit();
 }
 buildDOM();
 applyA11y();
@@ -1042,13 +1062,10 @@ refreshUI();
 setFeedback('<strong>Stage 2 Phase A:</strong> Identify each branch in the simplified circuit. Click the components belonging to one branch, then press Confirm Branch.', 'info');
 announce('Stage 2 ready. Phase A: branches. Click components belonging to one branch, then Confirm.');
 }
-/* Re-read the simplified circuit and reset Stage 2 progress.
- Called when Stage 1 fires ctStageComplete with detail.simplifiedCircuit. */
 function reloadFromStage1(simplified) {
 if (!simplified || !simplified.components) return;
-S.circuit = {
-components: simplified.components.map(function(c){ return Object.assign({}, c); })
-};
+S.circuit = { components: simplified.components.map(function(c){ return Object.assign({}, c); }) };
+S.displayComponents = (simplified.displayComponents || simplified.components).map(function(c){return Object.assign({}, c);});
 S.phase = 'branches';
 S.selected = [];
 S.foundBranches = [];
