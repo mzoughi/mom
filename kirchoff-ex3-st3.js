@@ -25,25 +25,50 @@ var S = window[stateKey];
 function stage1FallbackForTesting() {
 return {
 components: [
-{ id:'R8', kind:'resistor', value:4, a:'n_A', b:'n_Br1m',
+{ id:'R8', kind:'resistor', value:4, a:'E', b:'A',
 label:'R\u2088\u208a\u2089\u2225\u2081\u2080\u208a\u2081\u2081',
-geom: { x1:140, y1:90, x2:140, y2:200 } },
-{ id:'E3', kind:'battery', value:9, a:'n_Br1m', b:'n_CD', label:'E\u2083',
-geom: { x1:140, y1:230, x2:140, y2:330 } },
-{ id:'R7', kind:'resistor', value:2, a:'n_A', b:'n_Br5m', label:'R\u2087',
-geom: { x1:300, y1:90, x2:300, y2:200 } },
-{ id:'E2', kind:'battery', value:6, a:'n_CD', b:'n_Br5m', label:'E\u2082',
-geom: { x1:300, y1:330, x2:300, y2:230 } },
-{ id:'R5', kind:'resistor', value:6, a:'n_A', b:'n_B',
+geom: { x1:90, y1:30, x2:290, y2:30 } },
+{ id:'R5', kind:'resistor', value:6, a:'A', b:'B',
 label:'R\u2085\u208a\u2086',
-geom: { x1:520, y1:90, x2:520, y2:330 } },
-{ id:'R3', kind:'resistor', value:6, a:'n_B', b:'n_CD',
+geom: { x1:410, y1:30, x2:550, y2:30 } },
+{ id:'R3', kind:'resistor', value:6, a:'B', b:'CD',
 label:'R\u2083\u208a\u2081\u208a\u2082',
-geom: { x1:480, y1:360, x2:120, y2:360 } },
-{ id:'R4', kind:'resistor', value:4, a:'n_B', b:'n_Br4m', label:'R\u2084',
-geom: { x1:480, y1:430, x2:340, y2:430 } },
-{ id:'E1', kind:'battery', value:12, a:'n_Br4m', b:'n_CD', label:'E\u2081',
-geom: { x1:300, y1:430, x2:120, y2:430 } }
+geom: { x1:610, y1:30, x2:770, y2:30 } },
+{ id:'R7', kind:'resistor', value:2, a:'A', b:'G', label:'R\u2087',
+geom: { x1:380, y1:90, x2:380, y2:190 } },
+{ id:'R4', kind:'resistor', value:4, a:'B', b:'H', label:'R\u2084',
+geom: { x1:580, y1:90, x2:580, y2:190 } },
+{ id:'E1', kind:'battery', value:12, a:'H', b:'CD', label:'E\u2081',
+geom: { x1:580, y1:210, x2:580, y2:330 } },
+{ id:'E2', kind:'battery', value:6, a:'CD', b:'G', label:'E\u2082',
+geom: { x1:380, y1:330, x2:380, y2:210 } },
+{ id:'E3', kind:'battery', value:9, a:'E', b:'CD', label:'E\u2083',
+geom: { x1:60, y1:360, x2:60, y2:440 } }
+],
+displayComponents: [
+{ id:'R8', kind:'resistor', value:4, a:'F', b:'A',
+label:'R\u2088\u208a\u2089\u2225\u2081\u2080\u208a\u2081\u2081',
+geom: { x1:90, y1:30, x2:290, y2:30 } },
+{ id:'R5', kind:'resistor', value:6, a:'A', b:'B', label:'R\u2085\u208a\u2086',
+geom: { x1:410, y1:30, x2:550, y2:30 } },
+{ id:'R3', kind:'resistor', value:6, a:'B', b:'J', label:'R\u2083\u208a\u2081\u208a\u2082',
+geom: { x1:610, y1:30, x2:770, y2:30 } },
+{ id:'R1', kind:'wire', a:'J', b:'K', geom: { x1:820, y1:90, x2:820, y2:330 } },
+{ id:'R2', kind:'wire', a:'C', b:'K', geom: { x1:650, y1:470, x2:790, y2:470 } },
+{ id:'R6', kind:'wire', a:'C', b:'D', geom: { x1:550, y1:470, x2:410, y2:470 } },
+{ id:'R11', kind:'wire', a:'D', b:'X', geom: { x1:350, y1:470, x2:140, y2:470 } },
+{ id:'R9', kind:'wire', a:'E', b:'F', geom: { x1:60, y1:150, x2:60, y2:270 } },
+{ id:'R10', kind:'absorbed', a:'A', b:'E', geom: { x1:380, y1:30, x2:60, y2:300 } },
+{ id:'R7', kind:'resistor', value:2, a:'A', b:'G', label:'R\u2087',
+geom: { x1:380, y1:90, x2:380, y2:190 } },
+{ id:'R4', kind:'resistor', value:4, a:'B', b:'H', label:'R\u2084',
+geom: { x1:580, y1:90, x2:580, y2:190 } },
+{ id:'E1', kind:'battery', value:12, a:'H', b:'C', label:'E\u2081',
+geom: { x1:580, y1:210, x2:580, y2:330 } },
+{ id:'E2', kind:'battery', value:6, a:'D', b:'G', label:'E\u2082',
+geom: { x1:380, y1:330, x2:380, y2:210 } },
+{ id:'E3', kind:'battery', value:9, a:'E', b:'X', label:'E\u2083',
+geom: { x1:60, y1:360, x2:60, y2:440 } }
 ]
 };
 }
@@ -59,10 +84,14 @@ simplified = stage1FallbackForTesting();
 if (!(s2 && s2.foundBranches && s2.foundBranches.length > 0)) {
 return { ok:false, reason:'Complete Stage 2 first \u2014 the branches must be identified before assigning current directions.' };
 }
-// Copy circuit
+// Copy circuit (logical components for branch detection)
 S.circuit = {
 components: simplified.components.map(function(c){ return Object.assign({}, c); })
 };
+// Stash displayComponents for visual rendering (full schematic with wires)
+S.displayComponents = (simplified.displayComponents || simplified.components).map(function(c){
+return Object.assign({}, c);
+});
 // Build branches list. Each Stage 2 entry: { ids:Set, color }
 // We need to derive endpoints (fromNode/toNode) and label them I1, I2, ...
 // Order branches left-to-right by minimum column index of their components.
@@ -168,23 +197,43 @@ return { L: { width: 540, height: 340 } };
 }
 function nodePos() {
 return {
-n_A:    { x:140, y:50  },
-n_B:    { x:520, y:360 },
-n_CD:   { x:120, y:360 },
-n_Br1m: { x:140, y:215 },
-n_Br4m: { x:340, y:430 },
-n_Br5m: { x:300, y:215 }
+A:  { x:380, y:30  },
+B:  { x:580, y:30  },
+CD: { x:380, y:470 },
+E:  { x:60,  y:300 },
+G:  { x:380, y:200 },
+H:  { x:580, y:200 }
 };
 }
-// For a branch, compute its rendering geometry: midpoint and click-zone half-axis.
-// The midpoint is the geometric center of the branch's actual rendered components,
-// not the abstract junction-to-junction midpoint (which would collide for parallel branches).
+/* Compute the rendering geometry for a branch's click zones and arrow.
+ For each branch endpoint (ep1, ep2), find the COMPONENT in the branch
+ that connects directly to that endpoint, then place the click zone at
+ that component's end pointing toward the endpoint.
+ For the ARROW, use the midpoint of the rendered components and a direction
+ derived from the branch's "outer" component pointing along its own body. */
 function branchGeometry(branch, info) {
 var ep1 = branch.endpoints[0], ep2 = branch.endpoints[1];
 var pos = nodePos();
 var p1 = pos[ep1], p2 = pos[ep2];
-// Compute midpoint from actual component geoms (works for parallel branches that
-// share endpoints but live at different x/y).
+// Find the components in the branch that touch ep1 and ep2 respectively.
+var outerEp1 = null, outerEp2 = null;
+branch.comps.forEach(function(c){
+if (c.a === ep1 || c.b === ep1) outerEp1 = c;
+if (c.a === ep2 || c.b === ep2) outerEp2 = c;
+});
+// Fallbacks
+if (!outerEp1) outerEp1 = branch.comps[0];
+if (!outerEp2) outerEp2 = branch.comps[branch.comps.length - 1];
+// For each outer component, determine which end of its geom points toward
+// its junction endpoint.
+function endTowardJunction(comp, junctionNode) {
+// By convention: c.geom (x1,y1) corresponds to c.a; (x2,y2) to c.b.
+if (comp.a === junctionNode) return { x: comp.geom.x1, y: comp.geom.y1 };
+return { x: comp.geom.x2, y: comp.geom.y2 };
+}
+var ep1End = endTowardJunction(outerEp1, ep1);
+var ep2End = endTowardJunction(outerEp2, ep2);
+// Branch midpoint: average of all comp midpoints
 var sumX = 0, sumY = 0, n = 0;
 branch.comps.forEach(function(c){
 sumX += (c.geom.x1 + c.geom.x2) / 2;
@@ -193,18 +242,32 @@ n++;
 });
 var mx = n > 0 ? sumX / n : (p1.x + p2.x) / 2;
 var my = n > 0 ? sumY / n : (p1.y + p2.y) / 2;
-// Direction: from ep1's pos to ep2's pos in screen space.
-var dx = p2.x - p1.x, dy = p2.y - p1.y;
+// Direction unit vector: from ep1End to ep2End (i.e., along the rendered branch)
+var dx = ep2End.x - ep1End.x, dy = ep2End.y - ep1End.y;
 var len = Math.sqrt(dx*dx + dy*dy);
 if (len > 0) { dx /= len; dy /= len; }
+// Click zones: each ZONE is centered at the corresponding outer-component's end
+// point (slightly inset from the very tip).
 var zoneSize = 36;
-var zoneOffset = Math.max(20, Math.min(40, len * 0.15));
-var z1cx = mx - dx * zoneOffset, z1cy = my - dy * zoneOffset;
-var z2cx = mx + dx * zoneOffset, z2cy = my + dy * zoneOffset;
+// The "toward ep1" zone is at outerEp1's body, near its ep1 terminal.
+// For a horizontal/vertical resistor, this is the half closer to that terminal.
+function zoneAtComp(comp, towardJunction) {
+var midx = (comp.geom.x1 + comp.geom.x2) / 2;
+var midy = (comp.geom.y1 + comp.geom.y2) / 2;
+var endX, endY;
+if (comp.a === towardJunction) { endX = comp.geom.x1; endY = comp.geom.y1; }
+else                             { endX = comp.geom.x2; endY = comp.geom.y2; }
+// Zone is between midpoint and end, biased ~70% of the way to end.
+return {
+cx: midx + (endX - midx) * 0.6,
+cy: midy + (endY - midy) * 0.6,
+w: zoneSize * 2, h: zoneSize * 2
+};
+}
 return {
 midX: mx, midY: my,
-zoneToEp1: { cx: z1cx, cy: z1cy, w: zoneSize*2, h: zoneSize*2 },
-zoneToEp2: { cx: z2cx, cy: z2cy, w: zoneSize*2, h: zoneSize*2 },
+zoneToEp1: zoneAtComp(outerEp1, ep1),
+zoneToEp2: zoneAtComp(outerEp2, ep2),
 ep1: ep1, ep2: ep2,
 ep1Pos: p1, ep2Pos: p2,
 dx: dx, dy: dy, length: len
@@ -229,38 +292,58 @@ var d = document.createElementNS('http://www.w3.org/2000/svg', 'desc');
 d.textContent = describeCircuit();
 svg.appendChild(t); svg.appendChild(d);
 drawSkeletonWires(svg);
-S.circuit.components.forEach(function(c){
+// Use the FULL displayed components if available (includes wires + absorbed
+// markers from Stage 1), else fall back to the logical components.
+var displayList = S.displayComponents || S.circuit.components;
+displayList.forEach(function(c){
 drawComponent(svg, c);
 });
-var pos = nodePos();
-['n_A','n_B','n_CD'].forEach(function(n){
-svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:4, 'class':'ct3node' }));
+// Junction dots
+svg.appendChild(svgEl('circle', { cx:380, cy:30, r:3.5, 'class':'ct3node' }));
+svg.appendChild(svgEl('circle', { cx:580, cy:30, r:3.5, 'class':'ct3node' }));
+[{x:60, y:470}, {x:380, y:470}, {x:580, y:470}, {x:820, y:470}].forEach(function(p){
+svg.appendChild(svgEl('circle', { cx:p.x, cy:p.y, r:3.5, 'class':'ct3node' }));
 });
 var info = layout();
 S.branches.forEach(function(b){ drawBranchOverlay(svg, b, info); });
 }
 function drawSkeletonWires(svg) {
-// A bus
-svg.appendChild(svgEl('line', {x1:140, y1:50, x2:520, y2:50, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:140, y1:50, x2:140, y2:90, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:300, y1:50, x2:300, y2:90, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:520, y1:50, x2:520, y2:90, 'class':'ct3wire'}));
-// CD bar
-svg.appendChild(svgEl('line', {x1:120, y1:360, x2:400, y2:360, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:140, y1:330, x2:140, y2:360, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:300, y1:330, x2:300, y2:360, 'class':'ct3wire'}));
-// B node connections
-svg.appendChild(svgEl('line', {x1:520, y1:330, x2:520, y2:360, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:520, y1:360, x2:480, y2:360, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:520, y1:360, x2:520, y2:430, 'class':'ct3wire'}));
-svg.appendChild(svgEl('line', {x1:520, y1:430, x2:480, y2:430, 'class':'ct3wire'}));
-// Br4 lower arch endpoint to CD bar
-svg.appendChild(svgEl('line', {x1:120, y1:430, x2:120, y2:360, 'class':'ct3wire'}));
+// Stage 1's exact wire layout. Active components are drawn separately.
+// Top horizontal rail
+svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:90,  y2:30,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:290, y1:30,  x2:380, y2:30,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:380, y1:30,  x2:410, y2:30,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:550, y1:30,  x2:580, y2:30,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:580, y1:30,  x2:610, y2:30,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:770, y1:30,  x2:820, y2:30,  'class':'ct3wire'}));
+// Right vertical (R1 was wire)
+svg.appendChild(svgEl('line', {x1:820, y1:30,  x2:820, y2:470, 'class':'ct3wire'}));
+// Bottom horizontal rail
+svg.appendChild(svgEl('line', {x1:60,  y1:470, x2:820, y2:470, 'class':'ct3wire'}));
+// Left vertical: F → R9(wire) → E → E3 → X
+svg.appendChild(svgEl('line', {x1:60,  y1:30,  x2:60,  y2:360, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:60,  y1:440, x2:60,  y2:470, 'class':'ct3wire'}));
+// R7-E2 stack
+svg.appendChild(svgEl('line', {x1:380, y1:30,  x2:380, y2:90,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:380, y1:190, x2:380, y2:210, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:380, y1:330, x2:380, y2:470, 'class':'ct3wire'}));
+// R4-E1 stack
+svg.appendChild(svgEl('line', {x1:580, y1:30,  x2:580, y2:90,  'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:580, y1:190, x2:580, y2:210, 'class':'ct3wire'}));
+svg.appendChild(svgEl('line', {x1:580, y1:330, x2:580, y2:470, 'class':'ct3wire'}));
 }
 function getById(id) {
 return S.circuit.components.find(function(c){return c.id===id;});
 }
 function drawComponent(svg, c) {
+if (c.kind === 'absorbed') return;  // parallel-merged; not drawn
+if (c.kind === 'wire') {
+svg.appendChild(svgEl('line', {
+x1: c.geom.x1, y1: c.geom.y1, x2: c.geom.x2, y2: c.geom.y2,
+'class':'ct3wire'
+}));
+return;
+}
 if (c.kind === 'battery') drawBatteryDiagonal(svg, c);
 else drawResistor(svg, c);
 }
@@ -379,7 +462,7 @@ if (len === 0) return;
 var ux = dx/len, uy = dy/len;
 // Perpendicular for the offset (away from layout center)
 var px = -uy, py = ux;
-var dxFromCenter = geom.midX - 320, dyFromCenter = geom.midY - 240;
+var dxFromCenter = geom.midX - 440, dyFromCenter = geom.midY - 250;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
 var arrowOffset = 22;
 var ax = geom.midX + px*arrowOffset, ay = geom.midY + py*arrowOffset;
@@ -408,7 +491,7 @@ x: tailX + px*labOff - ux*4, y: tailY + py*labOff - uy*4 + 4,
 function drawDirectionPlaceholder(svg, branch, geom) {
 var ux = geom.dx, uy = geom.dy;
 var px = -uy, py = ux;
-var dxFromCenter = geom.midX - 320, dyFromCenter = geom.midY - 240;
+var dxFromCenter = geom.midX - 440, dyFromCenter = geom.midY - 250;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
 var off = 22;
 var x = geom.midX + px*off, y = geom.midY + py*off;
@@ -635,7 +718,7 @@ var html = ''
 + '  <div class="ct3layout' + '">'
 + '    <div class="ct3canvasWrap' + thisq + '">'
 + '      <div class="ct3hint' + '">For each branch, click the half toward which the current should flow. For branches with a battery, the conventional direction is out of the positive (long-plate) terminal externally. Click the same half again to clear.</div>'
-+ '      <svg class="ct3svg' + '" id="ct3Svg' + thisq + '" viewBox="0 0 700 500" role="img" aria-label="Simplified circuit"></svg>'
++ '      <svg class="ct3svg' + '" id="ct3Svg' + thisq + '" viewBox="0 0 880 510" role="img" aria-label="Simplified circuit"></svg>'
 + '      <div class="ct3complete' + '" id="ct3Comp' + thisq + '" role="status"></div>'
 + '    </div>'
 + '    <aside class="ct3side' + '">'
