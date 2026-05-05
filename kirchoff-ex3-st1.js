@@ -661,103 +661,78 @@ if (checkParallel(R[i], R[j]).ok) return false;
 }
 return true;
 }
-/* Build the simplified circuit data structure that Stages 2-5 will consume.
- This represents the 5-branch / 3-junction reduction:
-- Junctions: A (top), B (bottom-right), CD (bottom-left, merged C+D)
-- Branch 1 (A↔CD): single resistor R_{891011} + battery E3
-- Branch 2 (A↔B):  single resistor R_{56}
-- Branch 3 (B↔CD): single resistor R_{312}
-- Branch 4 (B↔CD): R4 + E1 (E1's + at B side)
-- Branch 5 (A↔CD): R7 + E2 (E2's + at CD side)
- The new circuit uses fresh node names (n_A, n_B, n_CD) and fresh component
- IDs (e1, e3, R56, R312, R7, R4, e2 for batteries; resistors keep original
- names where possible).
- Layout uses the triangle:
-A  (270, 50)
-CD (130, 280)
-B  (410, 280)
-*/
+/* Build the simplified circuit data structure that Stages 2-5 consume.
+ Returns:
+- components: the LOGICAL post-merge state (only kind: 'resistor' and 'battery'),
+ with each component's a/b rewritten to canonical (post-merge) node names.
+ Used by Stages 2-5's branch/loop logic.
+- displayComponents: the FULL post-merge state (including kind: 'wire' and
+ kind: 'absorbed'), with original node names. Used for VISUAL rendering only.
+- junctions: the 3 surviving junction names {A, B, CD}.
+ This way, Stages 2-5 can render the same schematic Stage 1 ended with (full
+ skeleton + wires for merged-away components), while their internal logic
+ operates on the simplified 8-component graph. */
 function buildSimplifiedCircuit() {
-// Find each merged-resistor's value by looking at the current circuit.
-// R8 was merged with R9 then R10 then R11 → final value 4Ω, label "R8+R9‖R10+R11"
-//   We just read it from the kept component (whichever R8/R10 was kept
-//   throughout the merges).
-function val(id) {
-var c = getById(id);
-return c ? c.value : null;
+var canon = buildNodeCanon();
+// Map each original node name to its canonical merged-group representative.
+// Then rename common groups for friendliness:
+//   - the bottom-rail group (containing C, D) → 'CD'
+//   - the top-left/left group (containing E, F) → keep 'E' (or 'A' if it merged with A)
+// Compute representative-rename map.
+var pos = nodePos();
+var nodeNames = Object.keys(pos);
+var groupMap = {};
+nodeNames.forEach(function(n){ groupMap[canon(n)] = (groupMap[canon(n)] || []).concat([n]); });
+// For each group, pick a friendly name:
+function pickGroupName(members) {
+// Priority: A, B, CD (if both C and D in group), C, D, E, F, J, K, X, G, H
+if (members.indexOf('A') >= 0) return 'A';
+if (members.indexOf('B') >= 0) return 'B';
+if (members.indexOf('C') >= 0 && members.indexOf('D') >= 0) return 'CD';
+if (members.indexOf('C') >= 0) return 'C';
+if (members.indexOf('D') >= 0) return 'D';
+if (members.indexOf('E') >= 0) return 'E';
+return members[0];
 }
-function lbl(id) {
-var c = getById(id);
-return c ? c.label : null;
+var representativeName = {};
+Object.keys(groupMap).forEach(function(rep){
+representativeName[rep] = pickGroupName(groupMap[rep]);
+});
+function friendly(node) {
+var rep = canon(node);
+return representativeName[rep] || node;
 }
-// The "kept" component from merge 1 might be R8 or R9. Let's find which
-// resistor in the current state has a nonzero value AND has a label that
-// resulted from merging.
-function findMerged(originalIds) {
-// The merged component is whichever original-id is still kind=='resistor'.
-for (var i = 0; i < originalIds.length; i++) {
-var c = getById(originalIds[i]);
-if (c && c.kind === 'resistor') return c;
-}
-return null;
-}
-var merged_891011 = findMerged(['R8','R9','R10','R11']);
-var merged_312 = findMerged(['R3','R1','R2']);
-var merged_56 = findMerged(['R5','R6']);
-// Simplified circuit layout (triangle):
-var pos = {
-n_A:  { x:270, y:50  },
-n_B:  { x:410, y:280 },
-n_CD: { x:130, y:280 }
-};
-// Compute geom for branches with two components in series (the battery branches):
-//   Br1: A → R_{891011} → midA → E3 → CD. Place R_{891011} on left arm of triangle.
-//   Br4: B → R4 → midB → E1 → CD (across bottom)... no wait Br4 is B↔CD: R4+E1.
-//   Br5: A → R7 → midR7 → E2 → CD on the right arm? No — Br5 is A↔CD with R7+E2.
-//   And Br4 is B↔CD with R4+E1; that's parallel to Br3 (B↔CD with R_{312}).
-// Let me redesign the layout more carefully:
-// - Br1 (A↔CD via R_891011 + E3) uses the LEFT arm of triangle (A → CD)
-//   - upper half: R_{891011}
-//   - lower half: E3 (+ at A side)
-// - Br2 (A↔B via R_56) uses the right arm
-// - Br3 (B↔CD via R_312) uses the bottom edge
-// - Br4 (B↔CD via R4+E1) needs a SECOND parallel path between B and CD
-//   - draw it slightly below Br3 (curving below)
-// - Br5 (A↔CD via R7+E2) needs a SECOND parallel path between A and CD
-//   - draw it slightly inside the triangle
-// For now, give simple straight-line geoms; Stage 2's renderer can handle.
+// Logical components (resistors + batteries only), with canonicalized node names.
+var logical = S.circuit.components.filter(function(c){
+return c.kind === 'resistor' || c.kind === 'battery';
+}).map(function(c){
 return {
-junctions: ['n_A', 'n_B', 'n_CD'],
-components: [
-// Br1: R_891011 + E3 (left vertical at x=140)
-// We keep ID 'R8' since that's the kept-component throughout the merge chain.
-{ id:'R8', kind:'resistor', value: val(merged_891011 ? merged_891011.id : 'R8'),
-a:'n_A', b:'n_Br1m',
-label: lbl(merged_891011 ? merged_891011.id : 'R8') || 'R\u2088\u208a\u2089\u2225\u2081\u2080\u208a\u2081\u2081',
-geom: { x1:140, y1:90, x2:140, y2:200 } },
-{ id:'E3', kind:'battery', value:9, a:'n_Br1m', b:'n_CD', label:'E\u2083',
-geom: { x1:140, y1:230, x2:140, y2:330 } },
-// Br5: R7 + E2 (middle vertical at x=300)
-{ id:'R7', kind:'resistor', value:2, a:'n_A', b:'n_Br5m', label:'R\u2087',
-geom: { x1:300, y1:90, x2:300, y2:200 } },
-{ id:'E2', kind:'battery', value:6, a:'n_CD', b:'n_Br5m', label:'E\u2082',
-geom: { x1:300, y1:330, x2:300, y2:230 } },
-// Br2: R_56 (right vertical at x=520, A↔B)
-{ id:'R5', kind:'resistor', value: val(merged_56 ? merged_56.id : 'R5'),
-a:'n_A', b:'n_B',
-label: lbl(merged_56 ? merged_56.id : 'R5') || 'R\u2085\u208a\u2086',
-geom: { x1:520, y1:90, x2:520, y2:330 } },
-// Br3: R_312 (bottom edge between CD and B)
-{ id:'R3', kind:'resistor', value: val(merged_312 ? merged_312.id : 'R3'),
-a:'n_B', b:'n_CD',
-label: lbl(merged_312 ? merged_312.id : 'R3') || 'R\u2083\u208a\u2081\u208a\u2082',
-geom: { x1:480, y1:360, x2:120, y2:360 } },
-// Br4: R4 + E1 (lower arch below the bottom rail)
-{ id:'R4', kind:'resistor', value:4, a:'n_B', b:'n_Br4m', label:'R\u2084',
-geom: { x1:480, y1:430, x2:340, y2:430 } },
-{ id:'E1', kind:'battery', value:12, a:'n_Br4m', b:'n_CD', label:'E\u2081',
-geom: { x1:300, y1:430, x2:120, y2:430 } }
-]
+id: c.id,
+kind: c.kind,
+value: c.value,
+label: c.label,
+a: friendly(c.a),
+b: friendly(c.b),
+// Keep the original geom so Stages 2-5 can render at the same screen position.
+geom: Object.assign({}, c.geom)
+};
+});
+// Display components — full circuit (with wires), original a/b nodes preserved.
+// These are not used for branch/loop logic, just for skeleton rendering of wires.
+var display = S.circuit.components.map(function(c){
+return Object.assign({}, c, { geom: Object.assign({}, c.geom) });
+});
+// Determine which canonical groups are real junctions (degree ≥ 3 in the logical graph).
+var junctionsSet = {};
+logical.forEach(function(c){
+junctionsSet[c.a] = (junctionsSet[c.a] || 0) + 1;
+junctionsSet[c.b] = (junctionsSet[c.b] || 0) + 1;
+});
+var junctions = Object.keys(junctionsSet).filter(function(n){ return junctionsSet[n] >= 3; });
+return {
+components: logical,
+displayComponents: display,
+junctions: junctions
 };
 }
 function checkComplete() {
