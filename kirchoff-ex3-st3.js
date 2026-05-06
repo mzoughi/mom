@@ -366,11 +366,15 @@ x:-halfLen, y:-bodyW/2, width:bodyLen, height:bodyW, rx:3, ry:3,
 transform: transform, 'class':'ct3comp'
 }));
 var px = -uy, py = ux;
-if (px * (mx-270) + py * (my-175) < 0) { px = -px; py = -py; }
+if (my < 50) { px = 0; py = 1; }
+else if (my > 440) { px = 0; py = -1; }
+else {
+if (px * (mx-440) + py * (my-250) < 0) { px = -px; py = -py; }
+}
 var labOff = 28;
 var labX = mx + px*labOff, labY = my + py*labOff;
 svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct3label'}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct3val'}, fmt(c.value) + ' \u03a9'));
+svg.appendChild(svgEl('text', {x:labX, y:labY+14, 'class':'ct3val'}, fmt(c.value) + ' \u03a9'));
 }
 function drawBatteryDiagonal(svg, c) {
 var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
@@ -392,7 +396,7 @@ svg.appendChild(svgEl('line', {x1:lp1x, y1:lp1y, x2:lp2x, y2:lp2y, 'class':'ct3w
 svg.appendChild(svgEl('line', {x1:sp1x, y1:sp1y, x2:sp2x, y2:sp2y, 'class':'ct3wire', 'stroke-width':2.5}));
 svg.appendChild(svgEl('line', {x1:shortCx, y1:shortCy, x2:x2, y2:y2, 'class':'ct3wire'}));
 var pxL = px, pyL = py;
-if (pxL * (mx-270) + pyL * (my-175) < 0) { pxL = -pxL; pyL = -pyL; }
+if (pxL * (mx-440) + pyL * (my-250) < 0) { pxL = -pxL; pyL = -pyL; }
 var labOff = 22;
 var labX = mx + pxL*labOff, labY = my + pyL*labOff;
 svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct3label'}, c.label));
@@ -453,19 +457,45 @@ drawDirectionPlaceholder(svg, branch, geom);
  Placed perpendicular-offset away from the wire. */
 function drawCurrentArrow(svg, branch, geom) {
 var color = branch.color || '#00d4ff';
-// Direction: from fromNode to toNode (endpoint-to-endpoint vector)
-var fromPos = (branch.fromNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
-var toPos = (branch.toNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
-var dx = toPos.x - fromPos.x, dy = toPos.y - fromPos.y;
+// Find the outer component (closest to fromNode) to align arrow with its body.
+// Use the FROM component (since the arrow tail starts near the from-end).
+var fromComp = null;
+branch.comps.forEach(function(c){
+if (c.a === branch.fromNode || c.b === branch.fromNode) fromComp = c;
+});
+if (!fromComp) fromComp = branch.comps[0];
+// Direction of arrow: along fromComp's body, pointing FROM its fromNode end
+// TOWARD its other end (toward toNode).
+// By geom convention: (x1,y1)↔a, (x2,y2)↔b
+var fromEndX, fromEndY, toEndX, toEndY;
+if (fromComp.a === branch.fromNode) {
+fromEndX = fromComp.geom.x1; fromEndY = fromComp.geom.y1;
+toEndX = fromComp.geom.x2; toEndY = fromComp.geom.y2;
+} else {
+fromEndX = fromComp.geom.x2; fromEndY = fromComp.geom.y2;
+toEndX = fromComp.geom.x1; toEndY = fromComp.geom.y1;
+}
+var dx = toEndX - fromEndX, dy = toEndY - fromEndY;
 var len = Math.sqrt(dx*dx + dy*dy);
 if (len === 0) return;
 var ux = dx/len, uy = dy/len;
-// Perpendicular for the offset (away from layout center)
+// Position arrow at the midpoint of fromComp (the outer component)
+var arrowMidX = (fromComp.geom.x1 + fromComp.geom.x2) / 2;
+var arrowMidY = (fromComp.geom.y1 + fromComp.geom.y2) / 2;
+// Perpendicular for offset (push arrow off the body so it doesn't overlap)
 var px = -uy, py = ux;
-var dxFromCenter = geom.midX - 440, dyFromCenter = geom.midY - 250;
+// Choose perpendicular direction toward the open side of the schematic.
+// For top-row components (y<50), push DOWN (into the schematic body).
+// For bottom-row components (y>440), push UP.
+// Otherwise push away from the layout center (440, 250).
+if (arrowMidY < 50) { px = 0; py = 1; }
+else if (arrowMidY > 440) { px = 0; py = -1; }
+else {
+var dxFromCenter = arrowMidX - 440, dyFromCenter = arrowMidY - 250;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
+}
 var arrowOffset = 22;
-var ax = geom.midX + px*arrowOffset, ay = geom.midY + py*arrowOffset;
+var ax = arrowMidX + px*arrowOffset, ay = arrowMidY + py*arrowOffset;
 var shaftLen = 32, headLen = 7, headHalfW = 5;
 var tailX = ax - ux*shaftLen/2, tailY = ay - uy*shaftLen/2;
 var headX = ax + ux*shaftLen/2, headY = ay + uy*shaftLen/2;
@@ -489,12 +519,25 @@ x: tailX + px*labOff - ux*4, y: tailY + py*labOff - uy*4 + 4,
 }, branch.label));
 }
 function drawDirectionPlaceholder(svg, branch, geom) {
-var ux = geom.dx, uy = geom.dy;
+// Position placeholder at the branch's midpoint, perpendicular to its
+// outer component's body. Uses the same rule as drawCurrentArrow.
+var firstComp = branch.comps[0];
+if (!firstComp) return;
+var dx = firstComp.geom.x2 - firstComp.geom.x1;
+var dy = firstComp.geom.y2 - firstComp.geom.y1;
+var len = Math.sqrt(dx*dx + dy*dy);
+if (len === 0) return;
+var ux = dx/len, uy = dy/len;
 var px = -uy, py = ux;
-var dxFromCenter = geom.midX - 440, dyFromCenter = geom.midY - 250;
-if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
+var midX = (firstComp.geom.x1 + firstComp.geom.x2) / 2;
+var midY = (firstComp.geom.y1 + firstComp.geom.y2) / 2;
+if (midY < 50) { px = 0; py = 1; }
+else if (midY > 440) { px = 0; py = -1; }
+else {
+if (px * (midX - 440) + py * (midY - 250) < 0) { px = -px; py = -py; }
+}
 var off = 22;
-var x = geom.midX + px*off, y = geom.midY + py*off;
+var x = midX + px*off, y = midY + py*off;
 svg.appendChild(svgEl('text', {
 x: x, y: y + 4, 'class': 'ct3currlabel', 'text-anchor': 'middle',
 fill: branch.color || '#7a8aaa'
