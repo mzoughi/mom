@@ -221,11 +221,11 @@ stroke: #ffdd66 !important; stroke-width: 2.6 !important;
 }
 .ctroot svg .ctwire { stroke: #d0d8f0; stroke-width: 1.6; fill: none; }
 .ctroot svg .ctlabel {
-fill: #d0d8f0; font-size: 12px; font-family: inherit; text-anchor: middle;
+fill: #d0d8f0; font-size: 14px; font-family: inherit; text-anchor: middle;
 pointer-events: none; user-select: none;
 }
 .ctroot svg .ctval {
-fill: #ffdd66; font-size: 11px; text-anchor: middle;
+fill: #ffdd66; font-size: 13px; text-anchor: middle;
 pointer-events: none; user-select: none;
 }
 .ctroot svg .ctnode { fill: #00d4ff; pointer-events: none; }
