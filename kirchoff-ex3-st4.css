@@ -150,11 +150,11 @@ fill: #1f2434; stroke: #d0d8f0; stroke-width: 1.6;
 }
 .ct4root svg .ct4wire { stroke: #d0d8f0; stroke-width: 1.6; fill: none; }
 .ct4root svg .ct4label {
-fill: #d0d8f0; font-size: 12px; text-anchor: middle;
+fill: #d0d8f0; font-size: 14px; text-anchor: middle;
 pointer-events: none; user-select: none;
 }
 .ct4root svg .ct4val {
-fill: #ffdd66; font-size: 11px; text-anchor: middle;
+fill: #ffdd66; font-size: 13px; text-anchor: middle;
 pointer-events: none; user-select: none;
 }
 .ct4root svg .ct4node { fill: #00d4ff; pointer-events: none; }
@@ -175,7 +175,7 @@ stroke: #ffdd66; stroke-dasharray: 4 3;
 .ct4root svg .ct4arrowhead { stroke: none; pointer-events: none; }
 .ct4root svg .ct4currlabel {
 font-family: 'Consolas','Monaco',monospace;
-font-size: 13px; font-weight: 600;
+font-size: 15px; font-weight: 600;
 pointer-events: none; user-select: none;
 }
 /* + symbol */
