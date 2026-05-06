@@ -405,14 +405,19 @@ rect.setAttribute('fill', hexToRgba(hi, 0.18));
 }
 attachHandlers(rect, c);
 svg.appendChild(rect);
-// Labels — perpendicular to body, pushed outward
+// Labels — perpendicular to body. For top-row (y<50) and bottom-row (y>440)
+// resistors, force labels inside the schematic to prevent clipping.
 var px = -uy, py = ux;
+if (my < 50) { px = 0; py = 1; }
+else if (my > 440) { px = 0; py = -1; }
+else {
 var dxFromCenter = mx - 440, dyFromCenter = my - 250;
 if (px * dxFromCenter + py * dyFromCenter < 0) { px = -px; py = -py; }
+}
 var labOff = 28;
 var labX = mx + px*labOff, labY = my + py*labOff;
 svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct2label'}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct2val'}, fmt(c.value) + ' \u03a9'));
+svg.appendChild(svgEl('text', {x:labX, y:labY+14, 'class':'ct2val'}, fmt(c.value) + ' \u03a9'));
 }
 function drawBatteryDiagonal(svg, c) {
 var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
