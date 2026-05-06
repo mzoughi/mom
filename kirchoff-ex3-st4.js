@@ -314,11 +314,15 @@ x:-halfLen, y:-bodyW/2, width:bodyLen, height:bodyW, rx:3, ry:3,
 transform: transform, 'class':'ct4comp'
 }));
 var px = -uy, py = ux;
+if (my < 50) { px = 0; py = 1; }
+else if (my > 440) { px = 0; py = -1; }
+else {
 if (px * (mx-440) + py * (my-250) < 0) { px = -px; py = -py; }
+}
 var labOff = 28;
 var labX = mx + px*labOff, labY = my + py*labOff;
 svg.appendChild(svgEl('text', {x:labX, y:labY-2, 'class':'ct4label'}, c.label));
-svg.appendChild(svgEl('text', {x:labX, y:labY+12, 'class':'ct4val'}, fmt(c.value) + ' \u03a9'));
+svg.appendChild(svgEl('text', {x:labX, y:labY+14, 'class':'ct4val'}, fmt(c.value) + ' \u03a9'));
 }
 function drawBatteryDiagonal(svg, c) {
 var x1 = c.geom.x1, y1 = c.geom.y1, x2 = c.geom.x2, y2 = c.geom.y2;
@@ -376,18 +380,36 @@ svg.appendChild(svgEl('text', {x:cx, y:cy-longLen/2-6, 'class':'ct4label'}, c.la
 svg.appendChild(svgEl('text', {x:cx, y:cy+longLen/2+14, 'class':'ct4val'}, c.value + ' V'));
 }
 function drawCurrentArrow(svg, branch) {
-var geom = branchGeometry(branch);
 var color = branch.color || '#00d4ff';
-var fromPos = (branch.fromNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
-var toPos = (branch.toNode === geom.ep1) ? geom.ep1Pos : geom.ep2Pos;
-var dx = toPos.x - fromPos.x, dy = toPos.y - fromPos.y;
+// Find the outer component touching fromNode (whose body axis the arrow follows)
+var fromComp = null;
+branch.comps.forEach(function(c){
+if (c.a === branch.fromNode || c.b === branch.fromNode) fromComp = c;
+});
+if (!fromComp) fromComp = branch.comps[0];
+// Direction along fromComp's body, fromNode → other end
+var fromEndX, fromEndY, toEndX, toEndY;
+if (fromComp.a === branch.fromNode) {
+fromEndX = fromComp.geom.x1; fromEndY = fromComp.geom.y1;
+toEndX = fromComp.geom.x2; toEndY = fromComp.geom.y2;
+} else {
+fromEndX = fromComp.geom.x2; fromEndY = fromComp.geom.y2;
+toEndX = fromComp.geom.x1; toEndY = fromComp.geom.y1;
+}
+var dx = toEndX - fromEndX, dy = toEndY - fromEndY;
 var len = Math.sqrt(dx*dx + dy*dy);
 if (len === 0) return;
 var ux = dx/len, uy = dy/len;
+var arrowMidX = (fromComp.geom.x1 + fromComp.geom.x2) / 2;
+var arrowMidY = (fromComp.geom.y1 + fromComp.geom.y2) / 2;
 var px = -uy, py = ux;
-if (px * (geom.midX - 440) + py * (geom.midY - 250) < 0) { px = -px; py = -py; }
+if (arrowMidY < 50) { px = 0; py = 1; }
+else if (arrowMidY > 440) { px = 0; py = -1; }
+else {
+if (px * (arrowMidX - 440) + py * (arrowMidY - 250) < 0) { px = -px; py = -py; }
+}
 var arrowOffset = 22;
-var ax = geom.midX + px*arrowOffset, ay = geom.midY + py*arrowOffset;
+var ax = arrowMidX + px*arrowOffset, ay = arrowMidY + py*arrowOffset;
 var shaftLen = 28, headLen = 6, headHalfW = 4;
 var tailX = ax - ux*shaftLen/2, tailY = ay - uy*shaftLen/2;
 var headX = ax + ux*shaftLen/2, headY = ay + uy*shaftLen/2;
@@ -437,11 +459,13 @@ attachZoneHandlers(rect2, rEntry, zones.ep2Node);
 svg.appendChild(rect2);
 // Draw "+" at the marked terminal
 if (rEntry.userHV) {
+// Place the + at the actual component terminal, not at the abstract node position.
+// For "CD", the canonical position is (380, 470), but R3's CD-side terminal
+// is actually at (770, 30) — using pos[node] would put the + far from the resistor.
 var markedAtEp1 = (rEntry.userHV === zones.ep1Node);
-var pos = nodePos();
-var markPos = pos[rEntry.userHV] || (markedAtEp1
+var markPos = markedAtEp1
 ? { x: comp.geom.x1, y: comp.geom.y1 }
-: { x: comp.geom.x2, y: comp.geom.y2 });
+: { x: comp.geom.x2, y: comp.geom.y2 };
 // Place the "+" inset toward the body midpoint by ~20px (so it sits near the resistor body
 // but on the marked end's side).
 var ux = zones.dx, uy = zones.dy;
@@ -453,11 +477,16 @@ if (lc > 0) {
 var insetDist = Math.min(28, lc * 0.4);
 var symX = markPos.x + (dxc/lc) * insetDist;
 var symY = markPos.y + (dyc/lc) * insetDist;
-// Then nudge perpendicular to the body so it doesn't sit ON the wire
+// Then nudge perpendicular to the body so it doesn't sit ON the wire.
+// For top-row resistors push DOWN; bottom-row push UP; otherwise away from center.
 var px2 = -uy, py2 = ux;
-if (px2 * (zones.midX-270) + py2 * (zones.midY-175) < 0) { px2 = -px2; py2 = -py2; }
-symX -= px2 * 8;
-symY -= py2 * 8;
+if (zones.midY < 50) { px2 = 0; py2 = 1; }
+else if (zones.midY > 440) { px2 = 0; py2 = -1; }
+else {
+if (px2 * (zones.midX-440) + py2 * (zones.midY-250) < 0) { px2 = -px2; py2 = -py2; }
+}
+symX += px2 * 8;
+symY += py2 * 8;
 svg.appendChild(svgEl('text', {
 x: symX, y: symY, 'class': 'ct4plus'
 }, '+'));
