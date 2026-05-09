@@ -197,12 +197,18 @@ return { L: { width: 540, height: 340 } };
 }
 function nodePos() {
 return {
-A:  { x:380, y:30  },
-B:  { x:580, y:30  },
+F: { x:60,  y:30  },
+A: { x:380, y:30  },
+B: { x:580, y:30  },
+J: { x:820, y:30  },
+K: { x:820, y:470 },
+C: { x:580, y:470 },
+D: { x:380, y:470 },
+X: { x:60,  y:470 },
 CD: { x:380, y:470 },
-E:  { x:60,  y:300 },
-G:  { x:380, y:200 },
-H:  { x:580, y:200 }
+E: { x:60,  y:300 },
+G: { x:380, y:200 },
+H: { x:580, y:200 }
 };
 }
 /* Compute the rendering geometry for a branch's click zones and arrow.
@@ -225,11 +231,39 @@ if (c.a === ep2 || c.b === ep2) outerEp2 = c;
 if (!outerEp1) outerEp1 = branch.comps[0];
 if (!outerEp2) outerEp2 = branch.comps[branch.comps.length - 1];
 // For each outer component, determine which end of its geom points toward
-// its junction endpoint.
+// its junction endpoint. We use position-based lookup against the displayComp's
+// original a/b, so it works even when the geom convention (x1,y1)↔a is reversed.
 function endTowardJunction(comp, junctionNode) {
-// By convention: c.geom (x1,y1) corresponds to c.a; (x2,y2) to c.b.
-if (comp.a === junctionNode) return { x: comp.geom.x1, y: comp.geom.y1 };
-return { x: comp.geom.x2, y: comp.geom.y2 };
+var pos = nodePos();
+// Find the displayComp with same id (preserves original pre-canonicalization a/b)
+var disp = null;
+if (S.displayComponents) {
+for (var i = 0; i < S.displayComponents.length; i++) {
+if (S.displayComponents[i].id === comp.id) { disp = S.displayComponents[i]; break; }
+}
+}
+// Determine which terminal (x1,y1 or x2,y2) corresponds to junctionNode.
+// junctionNode is canonical (e.g., 'A', 'CD'). The terminal closer to ANY
+// visual point of the junction's group is the right one.
+// We compare distances of (x1,y1) and (x2,y2) to pos[disp.a] and pos[disp.b]
+// (or pos[comp.a]/pos[comp.b] as fallback).
+var aName = disp ? disp.a : comp.a;
+var bName = disp ? disp.b : comp.b;
+var pa = pos[aName], pb = pos[bName];
+// Determine: does (x1,y1) correspond to aName or bName?
+var x1ToA;
+if (pa && pb) {
+var d2_x1_a = (pa.x - comp.geom.x1) * (pa.x - comp.geom.x1) + (pa.y - comp.geom.y1) * (pa.y - comp.geom.y1);
+var d2_x1_b = (pb.x - comp.geom.x1) * (pb.x - comp.geom.x1) + (pb.y - comp.geom.y1) * (pb.y - comp.geom.y1);
+x1ToA = d2_x1_a < d2_x1_b;
+} else {
+// Fallback: use convention (x1,y1)↔a
+x1ToA = true;
+}
+// Logical comp.a corresponds to display disp.a (same end), so:
+var compAEnd = x1ToA ? { x: comp.geom.x1, y: comp.geom.y1 } : { x: comp.geom.x2, y: comp.geom.y2 };
+var compBEnd = x1ToA ? { x: comp.geom.x2, y: comp.geom.y2 } : { x: comp.geom.x1, y: comp.geom.y1 };
+return comp.a === junctionNode ? compAEnd : compBEnd;
 }
 var ep1End = endTowardJunction(outerEp1, ep1);
 var ep2End = endTowardJunction(outerEp2, ep2);
@@ -250,17 +284,15 @@ if (len > 0) { dx /= len; dy /= len; }
 // point (slightly inset from the very tip).
 var zoneSize = 36;
 // The "toward ep1" zone is at outerEp1's body, near its ep1 terminal.
-// For a horizontal/vertical resistor, this is the half closer to that terminal.
+// Same robust lookup as endTowardJunction.
 function zoneAtComp(comp, towardJunction) {
+var endPt = endTowardJunction(comp, towardJunction);
 var midx = (comp.geom.x1 + comp.geom.x2) / 2;
 var midy = (comp.geom.y1 + comp.geom.y2) / 2;
-var endX, endY;
-if (comp.a === towardJunction) { endX = comp.geom.x1; endY = comp.geom.y1; }
-else                             { endX = comp.geom.x2; endY = comp.geom.y2; }
-// Zone is between midpoint and end, biased ~70% of the way to end.
+// Zone is between midpoint and end, biased ~60% of the way to end.
 return {
-cx: midx + (endX - midx) * 0.6,
-cy: midy + (endY - midy) * 0.6,
+cx: midx + (endPt.x - midx) * 0.6,
+cy: midy + (endPt.y - midy) * 0.6,
 w: zoneSize * 2, h: zoneSize * 2
 };
 }
@@ -460,22 +492,41 @@ drawDirectionPlaceholder(svg, branch, geom);
 function drawCurrentArrow(svg, branch, geom) {
 var color = branch.color || '#00d4ff';
 // Find the outer component (closest to fromNode) to align arrow with its body.
-// Use the FROM component (since the arrow tail starts near the from-end).
 var fromComp = null;
 branch.comps.forEach(function(c){
 if (c.a === branch.fromNode || c.b === branch.fromNode) fromComp = c;
 });
 if (!fromComp) fromComp = branch.comps[0];
-// Direction of arrow: along fromComp's body, pointing FROM its fromNode end
-// TOWARD its other end (toward toNode).
-// By geom convention: (x1,y1)↔a, (x2,y2)↔b
+// Determine which end of fromComp's geom corresponds to fromNode (using
+// position-based lookup, since the (x1,y1)↔a convention is not always true).
+var pos = nodePos();
+var disp = null;
+if (S.displayComponents) {
+for (var i = 0; i < S.displayComponents.length; i++) {
+if (S.displayComponents[i].id === fromComp.id) { disp = S.displayComponents[i]; break; }
+}
+}
+var aName = disp ? disp.a : fromComp.a;
+var bName = disp ? disp.b : fromComp.b;
+var pa = pos[aName], pb = pos[bName];
+var x1ToA = true;
+if (pa && pb) {
+var d2_x1_a = (pa.x - fromComp.geom.x1) * (pa.x - fromComp.geom.x1) + (pa.y - fromComp.geom.y1) * (pa.y - fromComp.geom.y1);
+var d2_x1_b = (pb.x - fromComp.geom.x1) * (pb.x - fromComp.geom.x1) + (pb.y - fromComp.geom.y1) * (pb.y - fromComp.geom.y1);
+x1ToA = d2_x1_a < d2_x1_b;
+}
+// Logical fromComp.a corresponds to display disp.a (same end)
+var aEndX = x1ToA ? fromComp.geom.x1 : fromComp.geom.x2;
+var aEndY = x1ToA ? fromComp.geom.y1 : fromComp.geom.y2;
+var bEndX = x1ToA ? fromComp.geom.x2 : fromComp.geom.x1;
+var bEndY = x1ToA ? fromComp.geom.y2 : fromComp.geom.y1;
 var fromEndX, fromEndY, toEndX, toEndY;
 if (fromComp.a === branch.fromNode) {
-fromEndX = fromComp.geom.x1; fromEndY = fromComp.geom.y1;
-toEndX = fromComp.geom.x2; toEndY = fromComp.geom.y2;
+fromEndX = aEndX; fromEndY = aEndY;
+toEndX = bEndX; toEndY = bEndY;
 } else {
-fromEndX = fromComp.geom.x2; fromEndY = fromComp.geom.y2;
-toEndX = fromComp.geom.x1; toEndY = fromComp.geom.y1;
+fromEndX = bEndX; fromEndY = bEndY;
+toEndX = aEndX; toEndY = aEndY;
 }
 var dx = toEndX - fromEndX, dy = toEndY - fromEndY;
 var len = Math.sqrt(dx*dx + dy*dy);
@@ -486,10 +537,6 @@ var arrowMidX = (fromComp.geom.x1 + fromComp.geom.x2) / 2;
 var arrowMidY = (fromComp.geom.y1 + fromComp.geom.y2) / 2;
 // Perpendicular for offset (push arrow off the body so it doesn't overlap)
 var px = -uy, py = ux;
-// Choose perpendicular direction toward the open side of the schematic.
-// For top-row components (y<50), push DOWN (into the schematic body).
-// For bottom-row components (y>440), push UP.
-// Otherwise push away from the layout center (440, 250).
 if (arrowMidY < 50) { px = 0; py = 1; }
 else if (arrowMidY > 440) { px = 0; py = -1; }
 else {

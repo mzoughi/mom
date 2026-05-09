@@ -151,12 +151,18 @@ return { L: { width: 540, height: 340 } };
 }
 function nodePos() {
 return {
-A:  { x:380, y:30  },
-B:  { x:580, y:30  },
-CD: { x:380, y:470 },
-E:  { x:60,  y:300 },
-G:  { x:380, y:200 },
-H:  { x:580, y:200 }
+F: { x:60,  y:30  },   // top-left corner
+A: { x:380, y:30  },   // top junction
+B: { x:580, y:30  },   // top junction
+J: { x:820, y:30  },   // top-right corner
+K: { x:820, y:470 },   // bottom-right corner
+C: { x:580, y:470 },   // bottom-right junction (canonical CD)
+D: { x:380, y:470 },   // bottom-mid junction (canonical CD)
+X: { x:60,  y:470 },   // bottom-left corner (canonical CD)
+CD: { x:380, y:470 },  // canonical merged C+D group
+E: { x:60,  y:300 },   // left-mid junction
+G: { x:380, y:200 },   // R7-E2 internal node
+H: { x:580, y:200 }    // R4-E1 internal node
 };
 }
 function getById(id) {
@@ -217,11 +223,49 @@ ep1Node: ep1Node, ep2Node: ep2Node,
 midX: mx, midY: my, dx: ux, dy: uy, length: len
 };
 }
-/* For a component's terminal at screen position (x,y), find which of c.a or c.b it represents.
- We use the geom convention: (geom.x1,geom.y1) corresponds to comp.a; (geom.x2,geom.y2)
- corresponds to comp.b. This is more reliable than geometric distance to nodePos(),
- because some "nodes" (like the A bus or CD rail) span multiple x positions. */
+/* For a component's terminal at screen position (x,y), find which CANONICAL
+ node (comp.a or comp.b) it represents.
+ The challenge: comp.a and comp.b are canonical merged-group names like 'A' or
+ 'CD'. The position of these is ambiguous (e.g., 'CD' members live at multiple
+ visual positions). We solve this by looking up the SAME component in
+ displayComponents, where a/b are the PRE-canonicalization original node names
+ (F, J, K, etc.) — each with a unique visual position. We compare distances
+ to those, and the result tells us which terminal corresponds to displayComp.a
+ vs displayComp.b. We then know how the component's geom maps to its
+ canonical a/b too. */
 function nodeNearestPosition(comp, x, y) {
+var pos = nodePos();
+// Try to find the displayComp with the same id (preserving original a/b)
+var displayComp = null;
+if (S.displayComponents) {
+for (var i = 0; i < S.displayComponents.length; i++) {
+if (S.displayComponents[i].id === comp.id) { displayComp = S.displayComponents[i]; break; }
+}
+}
+if (displayComp) {
+var pa = pos[displayComp.a], pb = pos[displayComp.b];
+if (pa && pb) {
+var d2a = (pa.x - x) * (pa.x - x) + (pa.y - y) * (pa.y - y);
+var d2b = (pb.x - x) * (pb.x - x) + (pb.y - y) * (pb.y - y);
+// The terminal is closer to displayComp.a or displayComp.b. Now translate
+// to the canonical comp.a or comp.b. Since displayComp.a and comp.a refer
+// to the same physical end (just one canonicalized), we can map by
+// checking whether displayComp.a got renamed to comp.a or comp.b.
+// Simpler approach: if the closer original node is displayComp.a, we
+// return whichever of comp.a/comp.b corresponds to that end. Since
+// canonicalization preserves the a/b labeling order in our build code,
+// displayComp.a maps to comp.a and displayComp.b maps to comp.b.
+return d2a < d2b ? comp.a : comp.b;
+}
+}
+// Fallback 1: compare distances to canonical positions of comp.a and comp.b
+var paC = pos[comp.a], pbC = pos[comp.b];
+if (paC && pbC) {
+var d2a2 = (paC.x - x) * (paC.x - x) + (paC.y - y) * (paC.y - y);
+var d2b2 = (pbC.x - x) * (pbC.x - x) + (pbC.y - y) * (pbC.y - y);
+return d2a2 < d2b2 ? comp.a : comp.b;
+}
+// Fallback 2: assume the geom convention (x1,y1)↔a, (x2,y2)↔b
 var dx1 = comp.geom.x1 - x, dy1 = comp.geom.y1 - y;
 var dx2 = comp.geom.x2 - x, dy2 = comp.geom.y2 - y;
 var d2_1 = dx1*dx1 + dy1*dy1;
@@ -389,14 +433,35 @@ branch.comps.forEach(function(c){
 if (c.a === branch.fromNode || c.b === branch.fromNode) fromComp = c;
 });
 if (!fromComp) fromComp = branch.comps[0];
-// Direction along fromComp's body, fromNode → other end
+// Direction along fromComp's body, fromNode → other end (using position-based
+// terminal lookup since the (x1,y1)↔a convention is not always true).
+var pos = nodePos();
+var disp = null;
+if (S.displayComponents) {
+for (var i = 0; i < S.displayComponents.length; i++) {
+if (S.displayComponents[i].id === fromComp.id) { disp = S.displayComponents[i]; break; }
+}
+}
+var aName = disp ? disp.a : fromComp.a;
+var bName = disp ? disp.b : fromComp.b;
+var pa = pos[aName], pb = pos[bName];
+var x1ToA = true;
+if (pa && pb) {
+var d2_x1_a = (pa.x - fromComp.geom.x1) * (pa.x - fromComp.geom.x1) + (pa.y - fromComp.geom.y1) * (pa.y - fromComp.geom.y1);
+var d2_x1_b = (pb.x - fromComp.geom.x1) * (pb.x - fromComp.geom.x1) + (pb.y - fromComp.geom.y1) * (pb.y - fromComp.geom.y1);
+x1ToA = d2_x1_a < d2_x1_b;
+}
+var aEndX = x1ToA ? fromComp.geom.x1 : fromComp.geom.x2;
+var aEndY = x1ToA ? fromComp.geom.y1 : fromComp.geom.y2;
+var bEndX = x1ToA ? fromComp.geom.x2 : fromComp.geom.x1;
+var bEndY = x1ToA ? fromComp.geom.y2 : fromComp.geom.y1;
 var fromEndX, fromEndY, toEndX, toEndY;
 if (fromComp.a === branch.fromNode) {
-fromEndX = fromComp.geom.x1; fromEndY = fromComp.geom.y1;
-toEndX = fromComp.geom.x2; toEndY = fromComp.geom.y2;
+fromEndX = aEndX; fromEndY = aEndY;
+toEndX = bEndX; toEndY = bEndY;
 } else {
-fromEndX = fromComp.geom.x2; fromEndY = fromComp.geom.y2;
-toEndX = fromComp.geom.x1; toEndY = fromComp.geom.y1;
+fromEndX = bEndX; fromEndY = bEndY;
+toEndX = aEndX; toEndY = aEndY;
 }
 var dx = toEndX - fromEndX, dy = toEndY - fromEndY;
 var len = Math.sqrt(dx*dx + dy*dy);

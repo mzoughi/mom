@@ -571,8 +571,41 @@ banner.innerHTML = ''
 var doneBtn = document.getElementById('ct5BtnDone' + thisq);
 if (doneBtn) {
 doneBtn.addEventListener('click', function(){
+// Write "finished" to MOM's hidden answer input, if present.
+// MOM uses several common naming patterns for the hidden answer field;
+// we try them in order and write to the first one we find.
+var answerValue = 'finished';
+var candidateSelectors = [
+// By id
+'#ans_',
+'#gradeval_',
+'#mom_answer_',
+'#answer_',
+'#stuans_',
+// By name attribute
+'input[name="ans_' + '"]',
+'input[name="gradeval_' + '"]',
+'input[name="answer_' + '"]',
+'input[name="stuans_' + '"]',
+// Generic fallback: any hidden input near the question with thisq in its id
+'input[type="hidden"][id*="' + thisq + '"]'
+];
+var wrote = false;
+for (var i = 0; i < candidateSelectors.length; i++) {
+var el = document.querySelector(candidateSelectors[i]);
+if (el) {
+el.value = answerValue;
+// Fire change/input events so MOM's JS picks up the new value
+el.dispatchEvent(new Event('input', { bubbles: true }));
+el.dispatchEvent(new Event('change', { bubbles: true }));
+wrote = true;
+break;
+}
+}
+// (For debugging: uncomment to see which selector worked, if any)
+// if (!wrote) console.warn('Could not find MOM answer input for ' + thisq);
 var ev = new CustomEvent('ctStageComplete', { detail:{
-stage:5, thisq:thisq, currents: S.solution
+stage:5, thisq:thisq, currents: S.solution, answerWritten: wrote
 }});
 document.dispatchEvent(ev);
 var hook = window['ctOnStageComplete_' + thisq];
