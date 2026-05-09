@@ -1,241 +1,222 @@
 .ct4root {
-  display: block;
-  background: var(--ct4bg, #0f1117);
-  color: var(--ct4text, #d0d8f0);
-  font-family: 'Noto Sans', 'Segoe UI', Arial, sans-serif;
-  font-size: var(--ct4fs, 14px);
-  padding: 14px 12px 18px;
-  border: 1px solid #2a3050;
-  border-radius: 6px;
-  max-width: 920px;
-  margin: 16px auto 0;
-  box-sizing: border-box;
+display: block;
+background: var(--ct4bg, #0f1117);
+color: var(--ct4text, #d0d8f0);
+font-family: 'Noto Sans', 'Segoe UI', Arial, sans-serif;
+font-size: var(--ct4fs, 14px);
+padding: 14px 12px 18px;
+border: 1px solid #2a3050;
+border-radius: 6px;
+max-width: 920px;
+margin: 16px auto 0;
+box-sizing: border-box;
 }
 .ct4root * { box-sizing: border-box; }
-
 .ct4a11y {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin-bottom: 10px; padding-bottom: 10px;
-  border-bottom: 1px solid #2a3050;
+display: flex; flex-wrap: wrap; gap: 6px;
+margin-bottom: 10px; padding-bottom: 10px;
+border-bottom: 1px solid #2a3050;
 }
 .ct4a11ybtn {
-  background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
-  padding: 5px 10px; border-radius: 3px;
-  font-size: 11px; letter-spacing: 0.5px; font-family: inherit; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+padding: 5px 10px; border-radius: 3px;
+font-size: 11px; letter-spacing: 0.5px; font-family: inherit; cursor: pointer;
 }
 .ct4a11ybtn:hover { color: #d0d8f0; border-color: #5b6a8a; }
 .ct4a11ybtn:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
 .ct4a11yon {
-  background: rgba(0,232,208,0.12); border-color: #00e8d0; color: #00e8d0;
+background: rgba(0,232,208,0.12); border-color: #00e8d0; color: #00e8d0;
 }
-
 .ct4narbar {
-  display: none;
-  background: #111828; border: 1px solid #2255aa; color: #a8c4f0;
-  padding: 8px 12px; border-radius: 3px;
-  font-size: 13px; margin-bottom: 10px; min-height: 32px;
+display: none;
+background: #111828; border: 1px solid #2255aa; color: #a8c4f0;
+padding: 8px 12px; border-radius: 3px;
+font-size: 13px; margin-bottom: 10px; min-height: 32px;
 }
 .ct4narbar.ct4narshow { display: block; }
-
 .ct4title {
-  font-size: calc(var(--ct4fs, 14px) * 1.15);
-  font-weight: 600; margin: 0 0 4px;
+font-size: calc(var(--ct4fs, 14px) * 1.15);
+font-weight: 600; margin: 0 0 4px;
 }
 .ct4subtitle {
-  color: #7a8aaa; font-size: calc(var(--ct4fs, 14px) * 0.9);
-  margin-bottom: 12px;
+color: #7a8aaa; font-size: calc(var(--ct4fs, 14px) * 0.9);
+margin-bottom: 12px;
 }
-
 .ct4stagebar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
 .ct4pill {
-  background: #181c27; border: 1px solid #2a3050; color: #7a8aaa;
-  padding: 4px 11px; border-radius: 14px;
-  font-size: 11px; letter-spacing: 0.5px;
+background: #181c27; border: 1px solid #2a3050; color: #7a8aaa;
+padding: 4px 11px; border-radius: 14px;
+font-size: 11px; letter-spacing: 0.5px;
 }
 .ct4pillactive {
-  background: rgba(0,212,255,0.12); border-color: #00d4ff; color: #00d4ff;
+background: rgba(0,212,255,0.12); border-color: #00d4ff; color: #00d4ff;
 }
 .ct4pilldone { border-color: #6ee7b7; color: #6ee7b7; }
-
 .ct4layout {
-  display: grid; grid-template-columns: 1fr 290px; gap: 12px;
+display: grid; grid-template-columns: 1fr 290px; gap: 12px;
 }
 @media (max-width: 760px) { .ct4layout { grid-template-columns: 1fr; } }
-
 .ct4canvasWrap {
-  background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
+background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
 }
 .ct4hint {
-  color: #7a8aaa; font-size: 12px; margin-bottom: 8px; line-height: 1.4;
+color: #7a8aaa; font-size: 12px; margin-bottom: 8px; line-height: 1.4;
 }
 .ct4svg {
-  width: 100%; height: auto; aspect-ratio: 880 / 510;
-  background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px; display: block;
+width: 100%; height: auto; aspect-ratio: 880 / 510;
+background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px; display: block;
 }
-
 .ct4side {
-  background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
-  display: flex; flex-direction: column; gap: 10px;
+background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
+display: flex; flex-direction: column; gap: 10px;
 }
 .ct4sideh {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
-  color: #7a8aaa; margin: 0 0 4px; font-weight: 600;
+font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+color: #7a8aaa; margin: 0 0 4px; font-weight: 600;
 }
-
 .ct4list {
-  background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
-  padding: 8px 10px; min-height: 60px; font-size: 12px;
+background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
+padding: 8px 10px; min-height: 60px; font-size: 12px;
 }
 .ct4item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px dashed #2a3050;
+display: flex; align-items: center; gap: 8px;
+padding: 6px 0;
+border-bottom: 1px dashed #2a3050;
 }
 .ct4item:last-child { border-bottom: none; }
 .ct4itemlabel {
-  font-family: 'Consolas','Monaco',monospace;
-  flex-grow: 1; color: #d0d8f0;
+font-family: 'Consolas','Monaco',monospace;
+flex-grow: 1; color: #d0d8f0;
 }
 .ct4itemstatus {
-  font-size: 11px; padding: 2px 6px; border-radius: 2px;
-  font-family: 'Consolas','Monaco',monospace;
+font-size: 11px; padding: 2px 6px; border-radius: 2px;
+font-family: 'Consolas','Monaco',monospace;
 }
 .ct4statunset { color: #f87171; border: 1px solid #f87171; }
 .ct4statset { color: #6ee7b7; border: 1px solid #6ee7b7; }
-
 .ct4fb {
-  background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
-  padding: 8px 10px; font-size: 12px; line-height: 1.5; min-height: 50px;
+background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
+padding: 8px 10px; font-size: 12px; line-height: 1.5; min-height: 50px;
 }
 .ct4fbgood { border-color: #6ee7b7; color: #6ee7b7; }
 .ct4fbbad { border-color: #f87171; color: #f87171; }
 .ct4fbinfo { border-color: #ffdd66; color: #ffdd66; }
-
 .ct4btnrow { display: flex; gap: 6px; flex-wrap: wrap; }
 .ct4btn {
-  flex: 1; min-width: 78px;
-  background: #1f2434; border: 1px solid #2a3050; color: #d0d8f0;
-  padding: 7px 9px; border-radius: 3px;
-  font-size: 12px; font-family: inherit; cursor: pointer;
+flex: 1; min-width: 78px;
+background: #1f2434; border: 1px solid #2a3050; color: #d0d8f0;
+padding: 7px 9px; border-radius: 3px;
+font-size: 12px; font-family: inherit; cursor: pointer;
 }
 .ct4btn:hover:not(:disabled) {
-  border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.08);
+border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.08);
 }
 .ct4btn:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
 .ct4btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
 .ct4progress { color: #7a8aaa; font-size: 12px; text-align: center; margin-top: 4px; }
-
 .ct4complete {
-  display: none;
-  background: rgba(110,231,183,0.12);
-  border: 1px solid #6ee7b7; color: #6ee7b7;
-  padding: 10px 12px; border-radius: 3px; margin-top: 8px;
-  font-size: 12px; text-align: center;
+display: none;
+background: rgba(110,231,183,0.12);
+border: 1px solid #6ee7b7; color: #6ee7b7;
+padding: 10px 12px; border-radius: 3px; margin-top: 8px;
+font-size: 12px; text-align: center;
 }
 .ct4complete.ct4show { display: block; }
 .ct4compmsg { margin-bottom: 8px; }
 .ct4btnnext {
-  background: rgba(110,231,183,0.12) !important;
-  border-color: #6ee7b7 !important;
-  color: #6ee7b7 !important;
-  font-weight: 600;
-  padding: 8px 18px !important;
-  flex: 0 0 auto !important;
-  font-size: 13px !important;
+background: rgba(110,231,183,0.12) !important;
+border-color: #6ee7b7 !important;
+color: #6ee7b7 !important;
+font-weight: 600;
+padding: 8px 18px !important;
+flex: 0 0 auto !important;
+font-size: 13px !important;
 }
 .ct4btnnext:hover { background: rgba(110,231,183,0.25) !important; }
-
 .ct4error {
-  background: rgba(248,113,113,0.10);
-  border: 1px solid #f87171; color: #f87171;
-  padding: 14px 16px; border-radius: 4px;
-  text-align: center;
+background: rgba(248,113,113,0.10);
+border: 1px solid #f87171; color: #f87171;
+padding: 14px 16px; border-radius: 4px;
+text-align: center;
 }
-
 .ct4sr {
-  position: absolute !important; width: 1px; height: 1px;
-  padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
-  white-space: nowrap; border: 0;
+position: absolute !important; width: 1px; height: 1px;
+padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+white-space: nowrap; border: 0;
 }
-
 /* SVG */
 .ct4root svg .ct4comp {
-  fill: #1f2434; stroke: #d0d8f0; stroke-width: 1.6;
+fill: #1f2434; stroke: #d0d8f0; stroke-width: 1.6;
 }
 .ct4root svg .ct4wire { stroke: #d0d8f0; stroke-width: 1.6; fill: none; }
 .ct4root svg .ct4label {
-  fill: #d0d8f0; font-size: 16px; text-anchor: middle;
-  pointer-events: none; user-select: none;
+fill: #d0d8f0; font-size: 16px; text-anchor: middle;
+pointer-events: none; user-select: none;
 }
 .ct4root svg .ct4val {
-  fill: #ffdd66; font-size: 15px; text-anchor: middle;
-  pointer-events: none; user-select: none;
+fill: #ffdd66; font-size: 15px; text-anchor: middle;
+pointer-events: none; user-select: none;
 }
 .ct4root svg .ct4node { fill: #00d4ff; pointer-events: none; }
-
 /* Click zone for resistor terminals */
 .ct4root svg .ct4zone {
-  fill: transparent; stroke: transparent; cursor: pointer;
+fill: transparent; stroke: transparent; cursor: pointer;
 }
 .ct4root svg .ct4zone:hover {
-  fill: rgba(0,212,255,0.08); stroke: rgba(0,212,255,0.4); stroke-dasharray: 4 3;
+fill: rgba(0,212,255,0.08); stroke: rgba(0,212,255,0.4); stroke-dasharray: 4 3;
 }
 .ct4root svg .ct4zone:focus { outline: none; }
 .ct4root svg .ct4zone:focus-visible {
-  fill: rgba(255,221,102,0.10);
-  stroke: #ffdd66; stroke-dasharray: 4 3;
+fill: rgba(255,221,102,0.10);
+stroke: #ffdd66; stroke-dasharray: 4 3;
 }
-
 /* Current arrow (carryover from Stage 3) */
 .ct4root svg .ct4arrow { stroke-width: 2.4; pointer-events: none; }
 .ct4root svg .ct4arrowhead { stroke: none; pointer-events: none; }
 .ct4root svg .ct4currlabel {
-  font-family: 'Consolas','Monaco',monospace;
-  font-size: 17px; font-weight: 600;
-  pointer-events: none; user-select: none;
+font-family: 'Consolas','Monaco',monospace;
+font-size: 17px; font-weight: 600;
+pointer-events: none; user-select: none;
 }
-
 /* + symbol */
 .ct4root svg .ct4plus {
-  fill: #6ee7b7;
-  font-size: 20px; font-weight: 700;
-  font-family: Arial, sans-serif;
-  text-anchor: middle;
-  pointer-events: none; user-select: none;
+fill: #6ee7b7;
+font-size: 20px; font-weight: 700;
+font-family: Arial, sans-serif;
+text-anchor: middle;
+pointer-events: none; user-select: none;
 }
-
 /* Light mode */
 .ct4root.ct4lm { --ct4bg: #f4f6fa; --ct4text: #1a1e30; }
 .ct4root.ct4lm .ct4canvasWrap,
 .ct4root.ct4lm .ct4side {
-  background: #ffffff; border-color: #aab4cc;
+background: #ffffff; border-color: #aab4cc;
 }
 .ct4root.ct4lm .ct4svg {
-  background: #f8fafe; border-color: #aab4cc;
+background: #f8fafe; border-color: #aab4cc;
 }
 .ct4root.ct4lm .ct4list,
 .ct4root.ct4lm .ct4fb {
-  background: #f0f2f8; border-color: #aab4cc;
+background: #f0f2f8; border-color: #aab4cc;
 }
 .ct4root.ct4lm .ct4subtitle,
 .ct4root.ct4lm .ct4sideh,
 .ct4root.ct4lm .ct4hint,
 .ct4root.ct4lm .ct4progress { color: #5a6080; }
 .ct4root.ct4lm .ct4pill {
-  background: #e8ecf4; border-color: #aab4cc; color: #5a6080;
+background: #e8ecf4; border-color: #aab4cc; color: #5a6080;
 }
 .ct4root.ct4lm .ct4pillactive {
-  background: rgba(0,100,200,0.10); border-color: #2255cc; color: #2255cc;
+background: rgba(0,100,200,0.10); border-color: #2255cc; color: #2255cc;
 }
 .ct4root.ct4lm .ct4btn {
-  background: #e8ecf4; border-color: #aab4cc; color: #1a1e30;
+background: #e8ecf4; border-color: #aab4cc; color: #1a1e30;
 }
 .ct4root.ct4lm .ct4btn:hover:not(:disabled) {
-  border-color: #2255cc; color: #2255cc; background: rgba(0,100,200,0.06);
+border-color: #2255cc; color: #2255cc; background: rgba(0,100,200,0.06);
 }
 .ct4root.ct4lm .ct4narbar {
-  background: #e8f0ff; border-color: #6688cc; color: #112244;
+background: #e8f0ff; border-color: #6688cc; color: #112244;
 }
 .ct4root.ct4lm .ct4itemlabel { color: #1a1e30; }
 .ct4root.ct4lm svg .ct4comp { fill: #f8fafe; stroke: #1a1e30; }
@@ -244,47 +225,46 @@
 .ct4root.ct4lm svg .ct4val { fill: #884400; }
 .ct4root.ct4lm svg .ct4node { fill: #2255cc; }
 .ct4root.ct4lm svg .ct4plus { fill: #006040; }
-
 /* High contrast */
 .ct4root.ct4hc {
-  --ct4bg: #000000; --ct4text: #ffffff;
-  border-color: #ffffff; border-width: 2px;
+--ct4bg: #000000; --ct4text: #ffffff;
+border-color: #ffffff; border-width: 2px;
 }
 .ct4root.ct4hc .ct4canvasWrap,
 .ct4root.ct4hc .ct4side {
-  background: #000000; border: 2px solid #ffffff;
+background: #000000; border: 2px solid #ffffff;
 }
 .ct4root.ct4hc .ct4svg {
-  background: #000000; border: 2px solid #ffffff;
+background: #000000; border: 2px solid #ffffff;
 }
 .ct4root.ct4hc .ct4list,
 .ct4root.ct4hc .ct4fb,
 .ct4root.ct4hc .ct4narbar {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ct4root.ct4hc .ct4subtitle,
 .ct4root.ct4hc .ct4sideh,
 .ct4root.ct4hc .ct4hint,
 .ct4root.ct4hc .ct4progress { color: #ffffff; }
 .ct4root.ct4hc .ct4pill {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ct4root.ct4hc .ct4pillactive {
-  background: #ffff00; border-color: #ffff00; color: #000000;
+background: #ffff00; border-color: #ffff00; color: #000000;
 }
 .ct4root.ct4hc .ct4btn {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ct4root.ct4hc .ct4btn:hover:not(:disabled) {
-  border-color: #ffff00; color: #ffff00; background: rgba(255,255,0,0.15);
+border-color: #ffff00; color: #ffff00; background: rgba(255,255,0,0.15);
 }
 .ct4root.ct4hc .ct4a11ybtn {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ct4root.ct4hc .ct4a11yon { background: #ffff00; color: #000000; }
 .ct4root.ct4hc .ct4itemlabel { color: #ffffff; }
 .ct4root.ct4hc svg .ct4comp {
-  fill: #000000; stroke: #ffffff; stroke-width: 2;
+fill: #000000; stroke: #ffffff; stroke-width: 2;
 }
 .ct4root.ct4hc svg .ct4wire { stroke: #ffffff; stroke-width: 2; }
 .ct4root.ct4hc svg .ct4label { fill: #ffffff; }
@@ -292,9 +272,9 @@
 .ct4root.ct4hc svg .ct4node { fill: #ffff00; }
 .ct4root.ct4hc svg .ct4plus { fill: #ffff00; }
 .ct4root.ct4hc .ct4complete {
-  background: #000000; border: 2px solid #ffff00; color: #ffff00;
+background: #000000; border: 2px solid #ffff00; color: #ffff00;
 }
 .ct4root.ct4hc .ct4btnnext {
-  background: #ffff00 !important; color: #000000 !important;
-  border: 2px solid #ffff00 !important; font-weight: 700;
+background: #ffff00 !important; color: #000000 !important;
+border: 2px solid #ffff00 !important; font-weight: 700;
 }

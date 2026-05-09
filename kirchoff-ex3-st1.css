@@ -1,152 +1,140 @@
 .ctroot {
-  display: block;
-  background: var(--ctbg, #0f1117);
-  color: var(--cttext, #d0d8f0);
-  font-family: 'Noto Sans', 'Segoe UI', Arial, sans-serif;
-  font-size: var(--ctfs, 14px);
-  padding: 14px 12px 18px;
-  border: 1px solid #2a3050;
-  border-radius: 6px;
-  max-width: 920px;
-  margin: 0 auto;
-  box-sizing: border-box;
+display: block;
+background: var(--ctbg, #0f1117);
+color: var(--cttext, #d0d8f0);
+font-family: 'Noto Sans', 'Segoe UI', Arial, sans-serif;
+font-size: var(--ctfs, 14px);
+padding: 14px 12px 18px;
+border: 1px solid #2a3050;
+border-radius: 6px;
+max-width: 920px;
+margin: 0 auto;
+box-sizing: border-box;
 }
 .ctroot * { box-sizing: border-box; }
-
 .cta11y {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin-bottom: 10px; padding-bottom: 10px;
-  border-bottom: 1px solid #2a3050;
+display: flex; flex-wrap: wrap; gap: 6px;
+margin-bottom: 10px; padding-bottom: 10px;
+border-bottom: 1px solid #2a3050;
 }
 .cta11ybtn {
-  background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
-  padding: 5px 10px; border-radius: 3px;
-  font-size: 11px; letter-spacing: 0.5px; font-family: inherit; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+padding: 5px 10px; border-radius: 3px;
+font-size: 11px; letter-spacing: 0.5px; font-family: inherit; cursor: pointer;
 }
 .cta11ybtn:hover { color: #d0d8f0; border-color: #5b6a8a; }
 .cta11ybtn:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
 .cta11yon {
-  background: rgba(0,232,208,0.12); border-color: #00e8d0; color: #00e8d0;
+background: rgba(0,232,208,0.12); border-color: #00e8d0; color: #00e8d0;
 }
-
 .ctnarbar {
-  display: none;
-  background: #111828; border: 1px solid #2255aa; color: #a8c4f0;
-  padding: 8px 12px; border-radius: 3px;
-  font-size: 13px; margin-bottom: 10px; min-height: 32px;
+display: none;
+background: #111828; border: 1px solid #2255aa; color: #a8c4f0;
+padding: 8px 12px; border-radius: 3px;
+font-size: 13px; margin-bottom: 10px; min-height: 32px;
 }
 .ctnarbar.ctnarshow { display: block; }
-
 .cttitle {
-  font-size: calc(var(--ctfs, 14px) * 1.15);
-  font-weight: 600; margin: 0 0 4px;
+font-size: calc(var(--ctfs, 14px) * 1.15);
+font-weight: 600; margin: 0 0 4px;
 }
 .ctsubtitle {
-  color: #7a8aaa; font-size: calc(var(--ctfs, 14px) * 0.9);
-  margin-bottom: 12px;
+color: #7a8aaa; font-size: calc(var(--ctfs, 14px) * 0.9);
+margin-bottom: 12px;
 }
-
 .ctstagebar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
 .ctpill {
-  background: #181c27; border: 1px solid #2a3050; color: #7a8aaa;
-  padding: 4px 11px; border-radius: 14px;
-  font-size: 11px; letter-spacing: 0.5px;
+background: #181c27; border: 1px solid #2a3050; color: #7a8aaa;
+padding: 4px 11px; border-radius: 14px;
+font-size: 11px; letter-spacing: 0.5px;
 }
 .ctpillactive { background: rgba(0,212,255,0.12); border-color: #00d4ff; color: #00d4ff; }
-
 .ctlayout { display: grid; grid-template-columns: 1fr 270px; gap: 12px; }
 @media (max-width: 760px) { .ctlayout { grid-template-columns: 1fr; } }
-
 .ctcanvasWrap {
-  background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
+background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
 }
 .cthint {
-  color: #7a8aaa; font-size: 12px; margin-bottom: 8px; line-height: 1.4;
+color: #7a8aaa; font-size: 12px; margin-bottom: 8px; line-height: 1.4;
 }
 .ctsvg {
-  width: 100%; height: auto; aspect-ratio: 880 / 510;
-  background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px; display: block;
+width: 100%; height: auto; aspect-ratio: 880 / 510;
+background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px; display: block;
 }
-
 .ctside {
-  background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
-  display: flex; flex-direction: column; gap: 10px;
+background: #181c27; border: 1px solid #2a3050; border-radius: 4px; padding: 12px;
+display: flex; flex-direction: column; gap: 10px;
 }
 .ctsideh {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
-  color: #7a8aaa; margin: 0 0 4px; font-weight: 600;
+font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+color: #7a8aaa; margin: 0 0 4px; font-weight: 600;
 }
 .ctselist {
-  background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
-  padding: 8px 10px; min-height: 56px;
-  font-family: 'Consolas', 'Monaco', monospace; font-size: 13px;
+background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
+padding: 8px 10px; min-height: 56px;
+font-family: 'Consolas', 'Monaco', monospace; font-size: 13px;
 }
 .ctempty { color: #7a8aaa; font-style: italic; font-family: inherit; }
 .ctseitem { color: #00d4ff; margin: 2px 0; }
-
 .ctbtnrow { display: flex; gap: 6px; flex-wrap: wrap; }
 .ctbtn {
-  flex: 1; min-width: 78px;
-  background: #1f2434; border: 1px solid #2a3050; color: #d0d8f0;
-  padding: 7px 9px; border-radius: 3px;
-  font-size: 12px; font-family: inherit; cursor: pointer;
+flex: 1; min-width: 78px;
+background: #1f2434; border: 1px solid #2a3050; color: #d0d8f0;
+padding: 7px 9px; border-radius: 3px;
+font-size: 12px; font-family: inherit; cursor: pointer;
 }
 .ctbtn:hover:not(:disabled) {
-  border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.08);
+border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.08);
 }
 .ctbtn:focus-visible { outline: 2px solid #ffdd66; outline-offset: 2px; }
 .ctbtn:disabled { opacity: 0.4; cursor: not-allowed; }
 .ctbtndanger:hover:not(:disabled) {
-  border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.08);
+border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.08);
 }
 .ctbtnlearn {
-  background: rgba(255,221,102,0.10) !important;
-  border-color: #ffdd66 !important;
-  color: #ffdd66 !important;
+background: rgba(255,221,102,0.10) !important;
+border-color: #ffdd66 !important;
+color: #ffdd66 !important;
 }
 .ctbtnlearn:hover {
-  background: rgba(255,221,102,0.22) !important;
+background: rgba(255,221,102,0.22) !important;
 }
-
 .ctfb {
-  background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
-  padding: 8px 10px; font-size: 12px; line-height: 1.5; min-height: 60px;
+background: #0a0d14; border: 1px solid #2a3050; border-radius: 3px;
+padding: 8px 10px; font-size: 12px; line-height: 1.5; min-height: 60px;
 }
 .ctfbgood { border-color: #6ee7b7; color: #6ee7b7; }
 .ctfbbad  { border-color: #f87171; color: #f87171; }
 .ctfbinfo { border-color: #ffdd66; color: #ffdd66; }
 .ctformula {
-  color: #ffdd66; font-family: 'Consolas','Monaco',monospace;
-  font-size: 13px; margin-top: 5px;
+color: #ffdd66; font-family: 'Consolas','Monaco',monospace;
+font-size: 13px; margin-top: 5px;
 }
-
 .ctprogress { color: #7a8aaa; font-size: 12px; text-align: center; margin-top: 4px; }
 .ctcomplete {
-  display: none;
-  background: rgba(110,231,183,0.12);
-  border: 1px solid #6ee7b7; color: #6ee7b7;
-  padding: 10px 12px; border-radius: 3px; margin-top: 8px;
-  font-size: 12px; text-align: center;
+display: none;
+background: rgba(110,231,183,0.12);
+border: 1px solid #6ee7b7; color: #6ee7b7;
+padding: 10px 12px; border-radius: 3px; margin-top: 8px;
+font-size: 12px; text-align: center;
 }
 .ctcomplete.ctshow { display: block; }
 .ctcompmsg { margin-bottom: 8px; }
 .ctbtnnext {
-  background: rgba(110,231,183,0.12) !important;
-  border-color: #6ee7b7 !important;
-  color: #6ee7b7 !important;
-  font-weight: 600;
-  padding: 8px 18px !important;
-  flex: 0 0 auto !important;
-  font-size: 13px !important;
+background: rgba(110,231,183,0.12) !important;
+border-color: #6ee7b7 !important;
+color: #6ee7b7 !important;
+font-weight: 600;
+padding: 8px 18px !important;
+flex: 0 0 auto !important;
+font-size: 13px !important;
 }
 .ctbtnnext:hover { background: rgba(110,231,183,0.25) !important; }
-
 .ctsr {
-  position: absolute !important; width: 1px; height: 1px;
-  padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
-  white-space: nowrap; border: 0;
+position: absolute !important; width: 1px; height: 1px;
+padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+white-space: nowrap; border: 0;
 }
-
 /* Light mode */
 .ctroot.ctlm { --ctbg: #f4f6fa; --cttext: #1a1e30; }
 .ctroot.ctlm .ctcanvasWrap,
@@ -160,39 +148,38 @@
 .ctroot.ctlm .cthint,
 .ctroot.ctlm .ctprogress { color: #5a6080; }
 .ctroot.ctlm .ctpill {
-  background: #e8ecf4; border-color: #aab4cc; color: #5a6080;
+background: #e8ecf4; border-color: #aab4cc; color: #5a6080;
 }
 .ctroot.ctlm .ctpillactive {
-  background: rgba(0,100,200,0.10); border-color: #2255cc; color: #2255cc;
+background: rgba(0,100,200,0.10); border-color: #2255cc; color: #2255cc;
 }
 .ctroot.ctlm .ctbtn {
-  background: #e8ecf4; border-color: #aab4cc; color: #1a1e30;
+background: #e8ecf4; border-color: #aab4cc; color: #1a1e30;
 }
 .ctroot.ctlm .ctbtn:hover:not(:disabled) {
-  border-color: #2255cc; color: #2255cc; background: rgba(0,100,200,0.06);
+border-color: #2255cc; color: #2255cc; background: rgba(0,100,200,0.06);
 }
 .ctroot.ctlm .ctnarbar {
-  background: #e8f0ff; border-color: #6688cc; color: #112244;
+background: #e8f0ff; border-color: #6688cc; color: #112244;
 }
 .ctroot.ctlm .ctformula { color: #884400; }
 .ctroot.ctlm .ctseitem { color: #2255cc; }
-
 /* High contrast */
 .ctroot.cthc {
-  --ctbg: #000000; --cttext: #ffffff;
-  border-color: #ffffff; border-width: 2px;
+--ctbg: #000000; --cttext: #ffffff;
+border-color: #ffffff; border-width: 2px;
 }
 .ctroot.cthc .ctcanvasWrap,
 .ctroot.cthc .ctside {
-  background: #000000; border: 2px solid #ffffff;
+background: #000000; border: 2px solid #ffffff;
 }
 .ctroot.cthc .ctsvg {
-  background: #000000; border: 2px solid #ffffff;
+background: #000000; border: 2px solid #ffffff;
 }
 .ctroot.cthc .ctselist,
 .ctroot.cthc .ctfb,
 .ctroot.cthc .ctnarbar {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ctroot.cthc .ctsubtitle,
 .ctroot.cthc .ctsideh,
@@ -200,67 +187,64 @@
 .ctroot.cthc .cthint,
 .ctroot.cthc .ctprogress { color: #ffffff; }
 .ctroot.cthc .ctpill {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ctroot.cthc .ctpillactive {
-  background: #ffff00; border-color: #ffff00; color: #000000;
+background: #ffff00; border-color: #ffff00; color: #000000;
 }
 .ctroot.cthc .ctbtn {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ctroot.cthc .ctbtn:hover:not(:disabled) {
-  border-color: #ffff00; color: #ffff00; background: rgba(255,255,0,0.15);
+border-color: #ffff00; color: #ffff00; background: rgba(255,255,0,0.15);
 }
 .ctroot.cthc .cta11ybtn {
-  background: #000000; border: 2px solid #ffffff; color: #ffffff;
+background: #000000; border: 2px solid #ffffff; color: #ffffff;
 }
 .ctroot.cthc .cta11yon { background: #ffff00; color: #000000; }
 .ctroot.cthc .ctformula { color: #ffff00; }
 .ctroot.cthc .ctseitem { color: #ffff00; }
-
 /* SVG */
 .ctroot svg .ctcomp {
-  fill: #1f2434; stroke: #d0d8f0; stroke-width: 1.6; cursor: pointer;
+fill: #1f2434; stroke: #d0d8f0; stroke-width: 1.6; cursor: pointer;
 }
 .ctroot svg .ctcomp:hover {
-  stroke: #00d4ff; fill: rgba(0,212,255,0.08);
+stroke: #00d4ff; fill: rgba(0,212,255,0.08);
 }
 .ctroot svg .ctcompsel {
-  stroke: #00d4ff !important; stroke-width: 2.6 !important;
-  fill: rgba(0,212,255,0.18) !important;
+stroke: #00d4ff !important; stroke-width: 2.6 !important;
+fill: rgba(0,212,255,0.18) !important;
 }
 .ctroot svg .ctcomp:focus { outline: none; }
 .ctroot svg .ctcomp:focus-visible {
-  stroke: #ffdd66 !important; stroke-width: 2.6 !important;
+stroke: #ffdd66 !important; stroke-width: 2.6 !important;
 }
 .ctroot svg .ctwire { stroke: #d0d8f0; stroke-width: 1.6; fill: none; }
 .ctroot svg .ctlabel {
-  fill: #d0d8f0; font-size: 16px; font-family: inherit; text-anchor: middle;
-  pointer-events: none; user-select: none;
+fill: #d0d8f0; font-size: 16px; font-family: inherit; text-anchor: middle;
+pointer-events: none; user-select: none;
 }
 .ctroot svg .ctval {
-  fill: #ffdd66; font-size: 15px; text-anchor: middle;
-  pointer-events: none; user-select: none;
+fill: #ffdd66; font-size: 15px; text-anchor: middle;
+pointer-events: none; user-select: none;
 }
 .ctroot svg .ctnode { fill: #00d4ff; pointer-events: none; }
-
 .ctroot.ctlm svg .ctcomp { fill: #f8fafe; stroke: #1a1e30; }
 .ctroot.ctlm svg .ctwire { stroke: #1a1e30; }
 .ctroot.ctlm svg .ctlabel { fill: #1a1e30; }
 .ctroot.ctlm svg .ctval { fill: #884400; }
 .ctroot.ctlm svg .ctnode { fill: #2255cc; }
 .ctroot.ctlm svg .ctcompsel {
-  stroke: #2255cc !important; fill: rgba(0,100,200,0.15) !important;
+stroke: #2255cc !important; fill: rgba(0,100,200,0.15) !important;
 }
-
 .ctroot.cthc svg .ctcomp {
-  fill: #000000; stroke: #ffffff; stroke-width: 2;
+fill: #000000; stroke: #ffffff; stroke-width: 2;
 }
 .ctroot.cthc svg .ctwire { stroke: #ffffff; stroke-width: 2; }
 .ctroot.cthc svg .ctlabel { fill: #ffffff; }
 .ctroot.cthc svg .ctval { fill: #ffff00; }
 .ctroot.cthc svg .ctnode { fill: #ffff00; }
 .ctroot.cthc svg .ctcompsel {
-  stroke: #ffff00 !important; stroke-width: 3 !important;
-  fill: rgba(255,255,0,0.2) !important;
+stroke: #ffff00 !important; stroke-width: 3 !important;
+fill: rgba(255,255,0,0.2) !important;
 }
