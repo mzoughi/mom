@@ -295,46 +295,61 @@ svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ctno
 });
 }
 /* Draw the wire segments that connect adjacent component terminals.
- Each component's geom gives x1/y1 and x2/y2; the renderer draws short leads from
- the actual node position to the body endpoint of each component, then the body itself. */
+ Each wire segment is associated with one or more component IDs; if any of
+ those components is absorbed (kind: 'absorbed'), the wire is skipped to avoid
+ leaving stub leads dangling from the schematic.
+ Wires that aren't tied to any specific component (like the bare battery rails
+ or corner connectors) are always drawn. */
 function drawSkeletonWires(svg) {
 var pos = nodePos();
-var w = function(x1,y1,x2,y2){
+// Map id -> kind for fast lookup
+var kinds = {};
+S.circuit.components.forEach(function(c){ kinds[c.id] = c.kind; });
+function isAbsent(id) {
+return kinds[id] === 'absorbed';
+}
+var w = function(x1, y1, x2, y2, depIds){
+// depIds is an array of component IDs this wire depends on; if ALL are absent, skip.
+// Default: always draw (no deps).
+if (depIds && depIds.length > 0) {
+var allAbsent = depIds.every(isAbsent);
+if (allAbsent) return;
+}
 svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:x2, y2:y2, 'class':'ctwire'}));
 };
 // === Top horizontal rail: N1 → R10 → N2 → R8 → N3 → R2 → N4 ===
-w(pos.N1.x, pos.N1.y, 90, 30);     // N1 to R10 left
-w(270, 30, pos.N2.x, pos.N2.y);    // R10 right to N2
-w(pos.N2.x, pos.N2.y, 330, 30);    // N2 to R8 left
-w(510, 30, pos.N3.x, pos.N3.y);    // R8 right to N3
-w(pos.N3.x, pos.N3.y, 570, 30);    // N3 to R2 left
-w(790, 30, pos.N4.x, pos.N4.y);    // R2 right to N4
+w(pos.N1.x, pos.N1.y, 90, 30, ['R10']);     // N1 to R10 left
+w(270, 30, pos.N2.x, pos.N2.y, ['R10']);    // R10 right to N2
+w(pos.N2.x, pos.N2.y, 330, 30, ['R8']);     // N2 to R8 left
+w(510, 30, pos.N3.x, pos.N3.y, ['R8']);     // R8 right to N3
+w(pos.N3.x, pos.N3.y, 570, 30, ['R2']);     // N3 to R2 left
+w(790, 30, pos.N4.x, pos.N4.y, ['R2']);     // R2 right to N4
 // === Right vertical: N4 → R3 → N5 ===
-w(pos.N4.x, pos.N4.y, 820, 60);    // N4 to R3 top
-w(820, 440, pos.N5.x, pos.N5.y);   // R3 bottom to N5
+w(pos.N4.x, pos.N4.y, 820, 60, ['R3']);     // N4 to R3 top
+w(820, 440, pos.N5.x, pos.N5.y, ['R3']);    // R3 bottom to N5
 // === Bottom horizontal rail: N5 → R1 → N6 → R6 → N7 → N8 ===
-w(pos.N5.x, pos.N5.y, 790, 470);   // N5 to R1 right
-w(570, 470, pos.N6.x, pos.N6.y);   // R1 left to N6
-w(pos.N6.x, pos.N6.y, 510, 470);   // N6 to R6 right
-w(330, 470, pos.N7.x, pos.N7.y);   // R6 left to N7
-w(pos.N7.x, pos.N7.y, pos.N8.x, pos.N8.y); // N7 to N8 (battery − rail)
+w(pos.N5.x, pos.N5.y, 790, 470, ['R1']);    // N5 to R1 right
+w(570, 470, pos.N6.x, pos.N6.y, ['R1']);    // R1 left to N6
+w(pos.N6.x, pos.N6.y, 510, 470, ['R6']);    // N6 to R6 right
+w(330, 470, pos.N7.x, pos.N7.y, ['R6']);    // R6 left to N7
+w(pos.N7.x, pos.N7.y, pos.N8.x, pos.N8.y);  // N7 to N8 (battery rail; always)
 // === Left vertical: N1 → battery → N8 ===
-w(pos.N1.x, pos.N1.y, 60, 140);    // N1 to battery top
-w(60, 360, pos.N8.x, pos.N8.y);    // battery bottom to N8
+w(pos.N1.x, pos.N1.y, 60, 140);             // N1 to battery top (always)
+w(60, 360, pos.N8.x, pos.N8.y);             // battery bottom to N8 (always)
 // === Internal verticals ===
 // R9: from N2 down to N7
-w(pos.N2.x, pos.N2.y, 300, 60);    // N2 to R9 top
-w(300, 440, pos.N7.x, pos.N7.y);   // R9 bottom to N7
+w(pos.N2.x, pos.N2.y, 300, 60, ['R9']);     // N2 to R9 top
+w(300, 440, pos.N7.x, pos.N7.y, ['R9']);    // R9 bottom to N7
 // R5: from N3 down to N6
-w(pos.N3.x, pos.N3.y, 540, 60);    // N3 to R5 top
-w(540, 440, pos.N6.x, pos.N6.y);   // R5 bottom to N6
+w(pos.N3.x, pos.N3.y, 540, 60, ['R5']);     // N3 to R5 top
+w(540, 440, pos.N6.x, pos.N6.y, ['R5']);    // R5 bottom to N6
 // === Diagonals ===
 // R7: from N3 (top) down-and-left to N7 (bottom)
-w(pos.N3.x, pos.N3.y, 510, 60);    // N3 to R7 top (short lead)
-w(330, 440, pos.N7.x, pos.N7.y);   // R7 bottom to N7
+w(pos.N3.x, pos.N3.y, 510, 60, ['R7']);     // N3 to R7 top (short lead)
+w(330, 440, pos.N7.x, pos.N7.y, ['R7']);    // R7 bottom to N7
 // R4: from N3 (top) down-and-right to N5 (bottom-right)
-w(pos.N3.x, pos.N3.y, 570, 60);    // N3 to R4 top (short lead)
-w(790, 440, pos.N5.x, pos.N5.y);   // R4 bottom to N5
+w(pos.N3.x, pos.N3.y, 570, 60, ['R4']);     // N3 to R4 top (short lead)
+w(790, 440, pos.N5.x, pos.N5.y, ['R4']);    // R4 bottom to N5
 }
 function drawComponent(svg, c) {
 if (c.kind === 'absorbed') return; // merged via parallel; just disappears
@@ -805,8 +820,8 @@ var html = ''
 + '  <div class="ctsubtitle' + '">This network has 10 resistors and a 10\u00a0V battery. Use series and parallel reductions to simplify it down to a single equivalent resistor, then read off R\u208c\u2098.</div>'
 + '  <div class="ctstagebar' + '" role="navigation" aria-label="Tutorial stages">'
 + '    <span class="ctpill' + ' ctpillactive' + '">1. Full Network</span>'
-+ '    <span class="ctpill' + '">2. R\u2084 Shorted</span>'
-+ '    <span class="ctpill' + '">3. R\u2081 Open (Capacitor)</span>'
++ '    <span class="ctpill' + '">2. Short</span>'
++ '    <span class="ctpill' + '">3. Open (Capacitor)</span>'
 + '  </div>'
 + '  <div class="ctlayout' + '">'
 + '    <div class="ctcanvasWrap' + thisq + '">'

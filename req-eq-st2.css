@@ -91,6 +91,16 @@ border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.08);
 .ct2btndanger:hover:not(:disabled) {
 border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.08);
 }
+.ct2btndead {
+background: rgba(248,113,113,0.10) !important;
+border-color: #f87171 !important;
+color: #f87171 !important;
+font-weight: 600;
+flex: 1 1 100%;
+}
+.ct2btndead:hover {
+background: rgba(248,113,113,0.25) !important;
+}
 .ct2btnlearn {
 background: rgba(255,221,102,0.10) !important;
 border-color: #ffdd66 !important;

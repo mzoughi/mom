@@ -167,7 +167,7 @@ var canon = buildNodeCanon();
 var cycles = [];
 var seen = {};
 var components = S.circuit.components.filter(function(c){
-return c.kind !== 'wire' && c.kind !== 'absorbed';
+return c.kind !== 'wire' && c.kind !== 'absorbed' && c.kind !== 'capacitor';
 });
 components.forEach(function(startEdge){
 var u = canon(startEdge.a), v = canon(startEdge.b), eid = startEdge.id;
@@ -287,7 +287,7 @@ var svg = document.getElementById('ct3Svg' + thisq);
 if (!svg) return;
 while (svg.firstChild) svg.removeChild(svg.firstChild);
 var t = document.createElementNS('http://www.w3.org/2000/svg','title');
-t.textContent = 'Resistor network with R1 replaced by capacitor (open in DC)';
+t.textContent = 'Resistor network including a capacitor (open in DC)';
 var d = document.createElementNS('http://www.w3.org/2000/svg','desc');
 d.textContent = describeCircuit();
 svg.appendChild(t); svg.appendChild(d);
@@ -306,46 +306,54 @@ svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ct3n
 });
 }
 /* Draw the wire segments that connect adjacent component terminals.
- Each component's geom gives x1/y1 and x2/y2; the renderer draws short leads from
- the actual node position to the body endpoint of each component, then the body itself. */
+ Each wire segment is associated with one or more component IDs; if any of
+ those components is absorbed (kind: 'absorbed'), the wire is skipped to avoid
+ leaving stub leads dangling from the schematic.
+ Wires that aren't tied to any specific component (like the bare battery rails
+ or corner connectors) are always drawn. */
 function drawSkeletonWires(svg) {
 var pos = nodePos();
-var w = function(x1,y1,x2,y2){
+var kinds = {};
+S.circuit.components.forEach(function(c){ kinds[c.id] = c.kind; });
+function isAbsent(id) {
+return kinds[id] === 'absorbed';
+}
+var w = function(x1, y1, x2, y2, depIds){
+if (depIds && depIds.length > 0) {
+var allAbsent = depIds.every(isAbsent);
+if (allAbsent) return;
+}
 svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:x2, y2:y2, 'class':'ct3wire'}));
 };
 // === Top horizontal rail: N1 → R10 → N2 → R8 → N3 → R2 → N4 ===
-w(pos.N1.x, pos.N1.y, 90, 30);     // N1 to R10 left
-w(270, 30, pos.N2.x, pos.N2.y);    // R10 right to N2
-w(pos.N2.x, pos.N2.y, 330, 30);    // N2 to R8 left
-w(510, 30, pos.N3.x, pos.N3.y);    // R8 right to N3
-w(pos.N3.x, pos.N3.y, 570, 30);    // N3 to R2 left
-w(790, 30, pos.N4.x, pos.N4.y);    // R2 right to N4
+w(pos.N1.x, pos.N1.y, 90, 30, ['R10']);
+w(270, 30, pos.N2.x, pos.N2.y, ['R10']);
+w(pos.N2.x, pos.N2.y, 330, 30, ['R8']);
+w(510, 30, pos.N3.x, pos.N3.y, ['R8']);
+w(pos.N3.x, pos.N3.y, 570, 30, ['R2']);
+w(790, 30, pos.N4.x, pos.N4.y, ['R2']);
 // === Right vertical: N4 → R3 → N5 ===
-w(pos.N4.x, pos.N4.y, 820, 60);    // N4 to R3 top
-w(820, 440, pos.N5.x, pos.N5.y);   // R3 bottom to N5
+w(pos.N4.x, pos.N4.y, 820, 60, ['R3']);
+w(820, 440, pos.N5.x, pos.N5.y, ['R3']);
 // === Bottom horizontal rail: N5 → R1 → N6 → R6 → N7 → N8 ===
-w(pos.N5.x, pos.N5.y, 790, 470);   // N5 to R1 right
-w(570, 470, pos.N6.x, pos.N6.y);   // R1 left to N6
-w(pos.N6.x, pos.N6.y, 510, 470);   // N6 to R6 right
-w(330, 470, pos.N7.x, pos.N7.y);   // R6 left to N7
-w(pos.N7.x, pos.N7.y, pos.N8.x, pos.N8.y); // N7 to N8 (battery − rail)
+w(pos.N5.x, pos.N5.y, 790, 470, ['R1']);
+w(570, 470, pos.N6.x, pos.N6.y, ['R1']);
+w(pos.N6.x, pos.N6.y, 510, 470, ['R6']);
+w(330, 470, pos.N7.x, pos.N7.y, ['R6']);
+w(pos.N7.x, pos.N7.y, pos.N8.x, pos.N8.y);
 // === Left vertical: N1 → battery → N8 ===
-w(pos.N1.x, pos.N1.y, 60, 140);    // N1 to battery top
-w(60, 360, pos.N8.x, pos.N8.y);    // battery bottom to N8
+w(pos.N1.x, pos.N1.y, 60, 140);
+w(60, 360, pos.N8.x, pos.N8.y);
 // === Internal verticals ===
-// R9: from N2 down to N7
-w(pos.N2.x, pos.N2.y, 300, 60);    // N2 to R9 top
-w(300, 440, pos.N7.x, pos.N7.y);   // R9 bottom to N7
-// R5: from N3 down to N6
-w(pos.N3.x, pos.N3.y, 540, 60);    // N3 to R5 top
-w(540, 440, pos.N6.x, pos.N6.y);   // R5 bottom to N6
+w(pos.N2.x, pos.N2.y, 300, 60, ['R9']);
+w(300, 440, pos.N7.x, pos.N7.y, ['R9']);
+w(pos.N3.x, pos.N3.y, 540, 60, ['R5']);
+w(540, 440, pos.N6.x, pos.N6.y, ['R5']);
 // === Diagonals ===
-// R7: from N3 (top) down-and-left to N7 (bottom)
-w(pos.N3.x, pos.N3.y, 510, 60);    // N3 to R7 top (short lead)
-w(330, 440, pos.N7.x, pos.N7.y);   // R7 bottom to N7
-// R4: from N3 (top) down-and-right to N5 (bottom-right)
-w(pos.N3.x, pos.N3.y, 570, 60);    // N3 to R4 top (short lead)
-w(790, 440, pos.N5.x, pos.N5.y);   // R4 bottom to N5
+w(pos.N3.x, pos.N3.y, 510, 60, ['R7']);
+w(330, 440, pos.N7.x, pos.N7.y, ['R7']);
+w(pos.N3.x, pos.N3.y, 570, 60, ['R4']);
+w(790, 440, pos.N5.x, pos.N5.y, ['R4']);
 }
 function drawComponent(svg, c) {
 if (c.kind === 'absorbed') return; // merged via parallel; just disappears
@@ -894,8 +902,25 @@ if (matching.length === 1) return matching[0];
 // detected that no more parallel merges are possible, so this shouldn't happen.
 return matching.length > 0 ? matching[0] : null;
 }
+/* Check if the reduction is complete enough to display R_eq:
+ - There must be exactly one resistor between the canonical battery terminals.
+ - Any remaining resistors must be on dead branches (don't affect R_eq).
+ This allows the user to skip removing the dead branch and still get a result. */
+function isReductionComplete() {
+var eq = findEquivalentResistor();
+if (!eq) return false;
+// Confirm: among non-dead resistors, only the equivalent remains.
+var dead = findDeadResistors();
+var deadIds = {};
+dead.forEach(function(r){ deadIds[r.id] = true; });
+var resistors = S.circuit.components.filter(function(c){return c.kind==='resistor';});
+var live = resistors.filter(function(r){ return !deadIds[r.id]; });
+return live.length === 1 && live[0].id === eq.id;
+}
 function checkComplete() {
-if (!isIrreducible()) return;
+// First check: is the live (active) part fully reduced? If yes, show R_eq even
+// if dead branches still have unreduced resistors.
+if (!isReductionComplete() && !isIrreducible()) return;
 var resistors = S.circuit.components.filter(function(c){return c.kind==='resistor';});
 var batteries = S.circuit.components.filter(function(c){return c.kind==='battery';});
 // Try to find the resistor that's the actual equivalent across the battery,
@@ -925,8 +950,9 @@ var danglingNote = '';
 if (resistors.length > 1) {
 var danglers = resistors.filter(function(r){return r !== eqResistor;});
 var danglerLabels = danglers.map(function(r){return r.label;}).join(', ');
+var verb = (danglers.length === 1) ? 'is' : 'are';
 danglingNote = '<div class="ct3compmsg' + '" style="font-size:11px;color:#7a8aaa;margin-top:6px;">'
-+ 'Note: ' + danglerLabels + ' is on a dead branch (no current flows through it) and does not affect R<sub>eq</sub>.'
++ 'Note: ' + danglerLabels + ' ' + verb + ' on a dead branch (no current flows through, doesn\u2019t affect R<sub>eq</sub>).'
 + '</div>';
 }
 banner.innerHTML = ''
@@ -1043,12 +1069,12 @@ var html = ''
 + '    <button type="button" class="ct3a11ybtn' + '" id="ct3BtnFS' + thisq + '" aria-pressed="false">FONT SIZE: NORMAL</button>'
 + '  </div>'
 + '  <div id="ct3Nar' + thisq + '" class="ct3narbar' + ' ct3narshow' + '" role="status" aria-live="polite" aria-atomic="true"></div>'
-+ '  <h3 class="ct3title' + '">Equivalent Resistance \u2014 Stage 3: R\u2081 Open (Capacitor)</h3>'
++ '  <h3 class="ct3title' + '">Equivalent Resistance \u2014 Stage 3: Open (Capacitor)</h3>'
 + '  <div class="ct3subtitle' + '">Same network as before, but R\u2081 has been replaced by a capacitor \u2014 in DC steady state, no current flows through it. Identify the resistors that end up on a closed loop with no return path (the dead branch), then click \u201CRemove Dead Branch\u201D. Then continue reducing.</div>'
 + '  <div class="ct3stagebar' + '" role="navigation" aria-label="Tutorial stages">'
 + '    <span class="ct3pill' + '">1. Full Network \u2713</span>'
-+ '    <span class="ct3pill' + '">2. R\u2084 Shorted \u2713</span>'
-+ '    <span class="ct3pill' + ' ct3pillactive' + '">3. R\u2081 Open (Capacitor)</span>'
++ '    <span class="ct3pill' + '">2. Short \u2713</span>'
++ '    <span class="ct3pill' + ' ct3pillactive' + '">3. Open (Capacitor)</span>'
 + '  </div>'
 + '  <div class="ct3layout' + '">'
 + '    <div class="ct3canvasWrap' + thisq + '">'
@@ -1099,7 +1125,7 @@ function init() {
 buildDOM();
 applyA11y();
 refreshUI();
-announce('Stage 3 ready. R1 has been replaced by a capacitor — no DC current through it. Identify the dead branch and remove it, then find the equivalent resistance.');
+announce('Stage 3 ready. R1 has been replaced by a capacitor — no DC current through it. Find the equivalent resistance.');
 }
 if (document.getElementById(rootElId)) init();
 else document.addEventListener('DOMContentLoaded', init);

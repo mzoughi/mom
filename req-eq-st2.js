@@ -3,6 +3,157 @@
 var thisq = window.ctThisq;
 var rootElId = 'ct2Root' + thisq;
 var stateKey = 'ct2State_' + thisq;
+/* Find resistors that are on a "dead" branch — no current path between battery
+ terminals goes through them. Algorithm: a resistor R is ALIVE iff R lies in
+ the same biconnected component (BCC) as the virtual battery edge. We compute
+ BCCs using Tarjan's algorithm.
+ We build the augmented graph: canonical-node multi-graph from resistors PLUS
+ a virtual edge between battery terminals. Then for each edge, we determine
+ its BCC. Resistors whose BCC matches the battery edge's BCC are alive. */
+function findDeadResistors() {
+var canon = buildNodeCanon();
+var batteries = S.circuit.components.filter(function(c){return c.kind==='battery';});
+if (batteries.length !== 1) return [];
+var bA = canon(batteries[0].a), bB = canon(batteries[0].b);
+var resistors = S.circuit.components.filter(function(c){return c.kind==='resistor';});
+// Build edge list with stable IDs. Edges include resistors + virtual battery edge.
+// Allow parallel edges (same u-v with different IDs).
+var edges = []; // each: {u, v, id}
+var nodeSet = {};
+function addEdge(u, v, id) {
+if (u === v) return; // self-loop has its own BCC; resistor is dead by definition
+edges.push({u:u, v:v, id:id});
+nodeSet[u] = true; nodeSet[v] = true;
+}
+resistors.forEach(function(r){
+addEdge(canon(r.a), canon(r.b), r.id);
+});
+var BATTERY_EDGE = '__battery__';
+addEdge(bA, bB, BATTERY_EDGE);
+// Build adjacency: adjacency[node] = [{nbr, edgeIdx}, ...]
+var adj = {};
+edges.forEach(function(e, idx){
+if (!adj[e.u]) adj[e.u] = [];
+if (!adj[e.v]) adj[e.v] = [];
+adj[e.u].push({nbr: e.v, edgeIdx: idx});
+adj[e.v].push({nbr: e.u, edgeIdx: idx});
+});
+// Tarjan's BCC algorithm (iterative DFS to avoid stack overflow for large graphs).
+var disc = {};       // discovery time
+var low = {};        // low-link
+var parentEdge = {}; // parent edge index per node
+var timer = {value: 0};
+var edgeStack = [];  // stack of edge indices
+var bccOfEdge = {};  // edgeIdx -> BCC id
+var bccCounter = {value: 0};
+function dfsIterative(start) {
+// Stack of {node, iter} where iter is index into adj[node]
+var stack = [{node: start, iter: 0}];
+disc[start] = low[start] = timer.value++;
+parentEdge[start] = -1;
+while (stack.length) {
+var top = stack[stack.length - 1];
+var u = top.node;
+var neighbors = adj[u] || [];
+if (top.iter < neighbors.length) {
+var nbrInfo = neighbors[top.iter];
+top.iter++;
+var v = nbrInfo.nbr;
+var eIdx = nbrInfo.edgeIdx;
+if (eIdx === parentEdge[u]) continue; // skip the edge we came from
+if (disc[v] === undefined) {
+// tree edge
+edgeStack.push(eIdx);
+parentEdge[v] = eIdx;
+disc[v] = low[v] = timer.value++;
+stack.push({node: v, iter: 0});
+} else if (disc[v] < disc[u]) {
+// back edge
+edgeStack.push(eIdx);
+if (disc[v] < low[u]) low[u] = disc[v];
+}
+} else {
+// backtracking from u
+stack.pop();
+if (stack.length > 0) {
+var pu = stack[stack.length - 1].node;
+if (low[u] < low[pu]) low[pu] = low[u];
+// If low[u] >= disc[pu], pu is articulation; pop a BCC off edgeStack.
+if (low[u] >= disc[pu]) {
+var bccId = bccCounter.value++;
+var topEdgeIdx;
+do {
+topEdgeIdx = edgeStack.pop();
+bccOfEdge[topEdgeIdx] = bccId;
+} while (topEdgeIdx !== parentEdge[u]);
+}
+} else {
+// root: drain remaining edges as one BCC
+if (edgeStack.length > 0) {
+var bccId2 = bccCounter.value++;
+while (edgeStack.length > 0) {
+bccOfEdge[edgeStack.pop()] = bccId2;
+}
+}
+}
+}
+}
+}
+// Run DFS from each unvisited node
+Object.keys(nodeSet).forEach(function(n){
+if (disc[n] === undefined) dfsIterative(n);
+});
+// Find the BCC of the battery edge
+var batteryEdgeIdx = -1;
+for (var i = 0; i < edges.length; i++) {
+if (edges[i].id === BATTERY_EDGE) { batteryEdgeIdx = i; break; }
+}
+var batteryBCC = bccOfEdge[batteryEdgeIdx];
+// Resistors whose edge BCC matches batteryBCC are alive; others are dead.
+var dead = [];
+for (var j = 0; j < edges.length; j++) {
+var e = edges[j];
+if (e.id === BATTERY_EDGE) continue;
+if (bccOfEdge[j] !== batteryBCC) {
+var resObj = resistors.filter(function(r){return r.id === e.id;})[0];
+if (resObj) dead.push(resObj);
+}
+}
+return dead;
+}
+function removeDeadBranch() {
+var dead = findDeadResistors();
+if (dead.length === 0) {
+setFeedback('No dead branch detected. All remaining resistors carry current.', 'bad');
+announce('No dead branch found.');
+return;
+}
+var labels = dead.map(function(r){return r.label;}).join(', ');
+dead.forEach(function(r){ r.kind = 'absorbed'; });
+setFeedback('<strong>Dead branch removed.</strong> ' + labels
++ ' carry no current (open-circuit isolates them) and have been removed.', 'good');
+announce('Removed ' + dead.length + ' dead-branch resistor' + (dead.length === 1 ? '' : 's') + '.');
+S.mergesPerformed = (S.mergesPerformed || 0) + 1;
+S.selected = [];
+S.lastClickLabels = [];
+refreshUI();
+checkComplete();
+}
+/* Check if the reduction is complete enough to display R_eq:
+ - There must be exactly one resistor between the canonical battery terminals.
+ - Any remaining resistors must be on dead branches (don't affect R_eq).
+ This allows the user to skip removing the dead branch and still get a result. */
+function isReductionComplete() {
+var eq = findEquivalentResistor();
+if (!eq) return false;
+// Confirm: among non-dead resistors, only the equivalent remains.
+var dead = findDeadResistors();
+var deadIds = {};
+dead.forEach(function(r){ deadIds[r.id] = true; });
+var resistors = S.circuit.components.filter(function(c){return c.kind==='resistor';});
+var live = resistors.filter(function(r){ return !deadIds[r.id]; });
+return live.length === 1 && live[0].id === eq.id;
+}
 /* =========================================================
  PER-INSTANCE STATE
 ========================================================= */
@@ -304,46 +455,54 @@ svg.appendChild(svgEl('circle', { cx:pos[n].x, cy:pos[n].y, r:3.5, 'class':'ct2n
 });
 }
 /* Draw the wire segments that connect adjacent component terminals.
- Each component's geom gives x1/y1 and x2/y2; the renderer draws short leads from
- the actual node position to the body endpoint of each component, then the body itself. */
+ Each wire segment is associated with one or more component IDs; if any of
+ those components is absorbed (kind: 'absorbed'), the wire is skipped to avoid
+ leaving stub leads dangling from the schematic.
+ Wires that aren't tied to any specific component (like the bare battery rails
+ or corner connectors) are always drawn. */
 function drawSkeletonWires(svg) {
 var pos = nodePos();
-var w = function(x1,y1,x2,y2){
+var kinds = {};
+S.circuit.components.forEach(function(c){ kinds[c.id] = c.kind; });
+function isAbsent(id) {
+return kinds[id] === 'absorbed';
+}
+var w = function(x1, y1, x2, y2, depIds){
+if (depIds && depIds.length > 0) {
+var allAbsent = depIds.every(isAbsent);
+if (allAbsent) return;
+}
 svg.appendChild(svgEl('line', {x1:x1, y1:y1, x2:x2, y2:y2, 'class':'ct2wire'}));
 };
 // === Top horizontal rail: N1 → R10 → N2 → R8 → N3 → R2 → N4 ===
-w(pos.N1.x, pos.N1.y, 90, 30);     // N1 to R10 left
-w(270, 30, pos.N2.x, pos.N2.y);    // R10 right to N2
-w(pos.N2.x, pos.N2.y, 330, 30);    // N2 to R8 left
-w(510, 30, pos.N3.x, pos.N3.y);    // R8 right to N3
-w(pos.N3.x, pos.N3.y, 570, 30);    // N3 to R2 left
-w(790, 30, pos.N4.x, pos.N4.y);    // R2 right to N4
+w(pos.N1.x, pos.N1.y, 90, 30, ['R10']);
+w(270, 30, pos.N2.x, pos.N2.y, ['R10']);
+w(pos.N2.x, pos.N2.y, 330, 30, ['R8']);
+w(510, 30, pos.N3.x, pos.N3.y, ['R8']);
+w(pos.N3.x, pos.N3.y, 570, 30, ['R2']);
+w(790, 30, pos.N4.x, pos.N4.y, ['R2']);
 // === Right vertical: N4 → R3 → N5 ===
-w(pos.N4.x, pos.N4.y, 820, 60);    // N4 to R3 top
-w(820, 440, pos.N5.x, pos.N5.y);   // R3 bottom to N5
+w(pos.N4.x, pos.N4.y, 820, 60, ['R3']);
+w(820, 440, pos.N5.x, pos.N5.y, ['R3']);
 // === Bottom horizontal rail: N5 → R1 → N6 → R6 → N7 → N8 ===
-w(pos.N5.x, pos.N5.y, 790, 470);   // N5 to R1 right
-w(570, 470, pos.N6.x, pos.N6.y);   // R1 left to N6
-w(pos.N6.x, pos.N6.y, 510, 470);   // N6 to R6 right
-w(330, 470, pos.N7.x, pos.N7.y);   // R6 left to N7
-w(pos.N7.x, pos.N7.y, pos.N8.x, pos.N8.y); // N7 to N8 (battery − rail)
+w(pos.N5.x, pos.N5.y, 790, 470, ['R1']);
+w(570, 470, pos.N6.x, pos.N6.y, ['R1']);
+w(pos.N6.x, pos.N6.y, 510, 470, ['R6']);
+w(330, 470, pos.N7.x, pos.N7.y, ['R6']);
+w(pos.N7.x, pos.N7.y, pos.N8.x, pos.N8.y);
 // === Left vertical: N1 → battery → N8 ===
-w(pos.N1.x, pos.N1.y, 60, 140);    // N1 to battery top
-w(60, 360, pos.N8.x, pos.N8.y);    // battery bottom to N8
+w(pos.N1.x, pos.N1.y, 60, 140);
+w(60, 360, pos.N8.x, pos.N8.y);
 // === Internal verticals ===
-// R9: from N2 down to N7
-w(pos.N2.x, pos.N2.y, 300, 60);    // N2 to R9 top
-w(300, 440, pos.N7.x, pos.N7.y);   // R9 bottom to N7
-// R5: from N3 down to N6
-w(pos.N3.x, pos.N3.y, 540, 60);    // N3 to R5 top
-w(540, 440, pos.N6.x, pos.N6.y);   // R5 bottom to N6
+w(pos.N2.x, pos.N2.y, 300, 60, ['R9']);
+w(300, 440, pos.N7.x, pos.N7.y, ['R9']);
+w(pos.N3.x, pos.N3.y, 540, 60, ['R5']);
+w(540, 440, pos.N6.x, pos.N6.y, ['R5']);
 // === Diagonals ===
-// R7: from N3 (top) down-and-left to N7 (bottom)
-w(pos.N3.x, pos.N3.y, 510, 60);    // N3 to R7 top (short lead)
-w(330, 440, pos.N7.x, pos.N7.y);   // R7 bottom to N7
-// R4: from N3 (top) down-and-right to N5 (bottom-right)
-w(pos.N3.x, pos.N3.y, 570, 60);    // N3 to R4 top (short lead)
-w(790, 440, pos.N5.x, pos.N5.y);   // R4 bottom to N5
+w(pos.N3.x, pos.N3.y, 510, 60, ['R7']);
+w(330, 440, pos.N7.x, pos.N7.y, ['R7']);
+w(pos.N3.x, pos.N3.y, 570, 60, ['R4']);
+w(790, 440, pos.N5.x, pos.N5.y, ['R4']);
 }
 function drawComponent(svg, c) {
 if (c.kind === 'absorbed') return; // merged via parallel; just disappears
@@ -717,7 +876,7 @@ if (matching.length === 1) return matching[0];
 return matching.length > 0 ? matching[0] : null;
 }
 function checkComplete() {
-if (!isIrreducible()) return;
+if (!isReductionComplete() && !isIrreducible()) return;
 var resistors = S.circuit.components.filter(function(c){return c.kind==='resistor';});
 var batteries = S.circuit.components.filter(function(c){return c.kind==='battery';});
 // Try to find the resistor that's the actual equivalent across the battery,
@@ -747,8 +906,9 @@ var danglingNote = '';
 if (resistors.length > 1) {
 var danglers = resistors.filter(function(r){return r !== eqResistor;});
 var danglerLabels = danglers.map(function(r){return r.label;}).join(', ');
+var verb = (danglers.length === 1) ? 'is' : 'are';
 danglingNote = '<div class="ct2compmsg' + '" style="font-size:11px;color:#7a8aaa;margin-top:6px;">'
-+ 'Note: ' + danglerLabels + ' is on a dead branch (no current flows through it) and does not affect R<sub>eq</sub>.'
++ 'Note: ' + danglerLabels + ' ' + verb + ' on a dead branch (no current flows through, doesn\u2019t affect R<sub>eq</sub>).'
 + '</div>';
 }
 banner.innerHTML = ''
@@ -847,8 +1007,8 @@ var html = ''
 + '  <div class="ct2subtitle' + '">Same network as Stage 1, but R\u2084 has been replaced by a wire (a short circuit). Find R<sub>eq</sub> for this modified network. Note: some resistors may end up in branches that carry no current.</div>'
 + '  <div class="ct2stagebar' + '" role="navigation" aria-label="Tutorial stages">'
 + '    <span class="ct2pill' + '">1. Full Network \u2713</span>'
-+ '    <span class="ct2pill' + ' ct2pillactive' + '">2. R\u2084 Shorted</span>'
-+ '    <span class="ct2pill' + '">3. R\u2081 Open (Capacitor)</span>'
++ '    <span class="ct2pill' + ' ct2pillactive' + '">2. Short</span>'
++ '    <span class="ct2pill' + '">3. Open (Capacitor)</span>'
 + '  </div>'
 + '  <div class="ct2layout' + '">'
 + '    <div class="ct2canvasWrap' + thisq + '">'
@@ -876,6 +1036,9 @@ var html = ''
 + '        <button type="button" class="ct2btn' + ' ct2btndanger' + '" id="ct2BtnClr' + thisq + '">Clear</button>'
 + '        <button type="button" class="ct2btn' + '" id="ct2BtnRst' + thisq + '">Reset</button>'
 + '      </div>'
++ '      <div class="ct2btnrow' + '">'
++ '        <button type="button" class="ct2btn' + ' ct2btndead' + '" id="ct2BtnDead' + thisq + '">Remove Dead Branch</button>'
++ '      </div>'
 + '      <div class="ct2progress' + '" id="ct2Prog' + thisq + '"></div>'
 + '    </aside>'
 + '  </div>'
@@ -886,6 +1049,7 @@ document.getElementById('ct2BtnSer' + thisq).addEventListener('click', trySeries
 document.getElementById('ct2BtnPar' + thisq).addEventListener('click', tryParallel);
 document.getElementById('ct2BtnClr' + thisq).addEventListener('click', clearSelection);
 document.getElementById('ct2BtnRst' + thisq).addEventListener('click', resetCircuit);
+document.getElementById('ct2BtnDead' + thisq).addEventListener('click', removeDeadBranch);
 document.getElementById('ct2BtnLM' + thisq).addEventListener('click', function(){ toggleA11y('lm'); });
 document.getElementById('ct2BtnNR' + thisq).addEventListener('click', function(){ toggleA11y('nr'); });
 document.getElementById('ct2BtnHC' + thisq).addEventListener('click', function(){ toggleA11y('hc'); });
