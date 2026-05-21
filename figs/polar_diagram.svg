@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="303.97351mm"
+   height="253.77696mm"
+   version="1.1"
+   viewBox="0 0 303.97351 253.77696"
+   id="svg11"
+   sodipodi:docname="Polar_coordinate_components.svg"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs11">
+    <marker
+       style="overflow:visible"
+       id="marker15"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path15" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="namedview11"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.51"
+     inkscape:cx="627.45098"
+     inkscape:cy="345.09804"
+     inkscape:window-width="1920"
+     inkscape:window-height="1111"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg11" />
+  <g
+     id="g19">
+    <g
+       id="g18"
+       transform="translate(82.661017,2.25)">
+      <path
+         d="M 153,29 V 155"
+         fill="none"
+         stroke="#000000"
+         id="path17"
+         sodipodi:nodetypes="cc" />
+      <path
+         d="m 21,155 v 96.52696"
+         fill="none"
+         stroke="#000000"
+         id="path11"
+         sodipodi:nodetypes="cc" />
+      <path
+         d="M -82.661017,155 H 21"
+         fill="none"
+         stroke="#000000"
+         id="path12"
+         sodipodi:nodetypes="cc" />
+      <path
+         d="M 21.5,155.5 H 199.8669"
+         fill="none"
+         stroke="#000000"
+         id="path13"
+         sodipodi:nodetypes="cc"
+         style="marker-end:url(#DartArrow)" />
+      <path
+         d="M 21,159.25 V 4"
+         fill="none"
+         stroke="#000000"
+         id="path14"
+         sodipodi:nodetypes="cc"
+         style="marker-end:url(#marker15)" />
+      <path
+         d="M 151,26 21.5,155.5"
+         fill="none"
+         stroke="#000000"
+         id="path16"
+         sodipodi:nodetypes="cc" />
+      <circle
+         cx="153"
+         cy="25"
+         r="4"
+         fill="#ff0000"
+         id="circle1" />
+      <text
+         x="162"
+         y="27"
+         id="text2"
+         style="font-size:19px;font-family:Times">P</text>
+      <text
+         x="1.3541665"
+         y="175.17067"
+         id="text3"
+         style="font-size:19px;font-family:Times">O</text>
+      <text
+         x="191.92484"
+         y="142.25572"
+         id="text5"
+         style="font-style:italic;font-size:19px;font-family:Times">x</text>
+      <text
+         x="50"
+         y="145"
+         id="text6"
+         style="font-style:italic;font-size:19px;font-family:Times">φ</text>
+      <text
+         x="27"
+         y="14"
+         id="text7"
+         style="font-style:italic;font-size:19px;font-family:Times">y</text>
+      <text
+         x="156"
+         y="93"
+         id="text8"
+         style="font-style:italic;font-size:19px;font-family:Times">y=r <tspan
+   font-style="normal"
+   id="tspan7">sin</tspan><tspan
+   font-style="italic"
+   id="tspan8">φ</tspan></text>
+      <text
+         x="64"
+         y="171"
+         id="text10"
+         style="font-style:italic;font-size:19px;font-family:Times">x=r <tspan
+   font-style="normal"
+   id="tspan9">cos</tspan><tspan
+   font-style="italic"
+   id="tspan10">φ</tspan></text>
+      <text
+         x="69.706703"
+         y="86.955887"
+         id="text13"
+         style="font-style:italic;font-size:31.3972px;font-family:Times">r</text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-miterlimit:2;stroke-dasharray:none"
+         d="M 49.80392,155.5 C 50,145 50,145 41.808823,135.19118"
+         id="path18"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:16.9333px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;stroke-width:0.264583"
+       x="153.01161"
+       y="75.331635"
+       id="text33127"><tspan
+         sodipodi:role="line"
+         id="tspan33125"
+         style="font-size:16.9333px;fill:#000000;stroke-width:0.264583"
+         x="153.01161"
+         y="75.331635">⭢</tspan></text>
+  </g>
+</svg>
