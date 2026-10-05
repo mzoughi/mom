@@ -1,0 +1,2552 @@
+/* ═══════════════════════════════════════════════════════════════════
+AC CIRCUIT BUILDER with OSCILLOSCOPE  (MyOpenMath / GitHub edition)
+Taha Mzoughi
+Hosted on GitHub; the MOM question only contains a small loader and
+a configuration object, so settings stay under MOM control:
+ <div id="csb$thisq"></div>
+ <script> window.csbConfig = window.csbConfig || {};
+window.csbConfig['$thisq'] = { ...settings... }; </script>
+ <link rel="stylesheet" href=".../circuit-builder.css">
+ <script src=".../circuit-builder.js"></script>
+ <script> ...poll until window.CircuitBuilder exists, then
+CircuitBuilder.mount('$thisq'); </script>
+Several questions can share one page: each instance is built inside
+its own host div, every element id ends in that question's $thisq,
+and each instance gets its own global handle  window['CSB' + thisq].
+═══════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+if (window.CircuitBuilder) return;          // file included by several questions: load once
+var VERSION = '1.0.0';
+var ALL_TOOLS = ['select','wire','resistor','capacitor','inductor','battery','acsource','switch',
+ 'voltmeter','ammeter','scope','marker','ground','delete'];
+/* Default configuration. Anything set in the MOM question overrides these. */
+var DEFAULTS = {
+title: '',
+starter: 'sample',        // 'sample' | 'empty'   (used only when circuit is null)
+circuit: null,            // paste the output of SAVE TO TEXT here (object or string)
+frequency: null,          // Hz; null = keep the value stored with the circuit (60 Hz otherwise)
+lockFrequency: false,
+lockCircuit: false,       // parts from "circuit" cannot be moved, edited or deleted
+tools: ALL_TOOLS,
+autoRun: false,
+showSaveLoad: true,
+showClearAll: true,
+intro: '',                // first narration message
+scope: {
+enabled: true, open: true,
+measurements: true,     // automatic measurement table visible at start
+lockMeasurements: false,// true = students cannot switch the table on/off
+allowAutoSet: true,
+settings: null          // e.g. {"tdiv":0.005,"trigCh":1,"ch":[{"vdiv":5},{"vdiv":2}]}
+},
+accessibility: { highContrast: false, lightMode: false, colorBlind: false, narration: true }
+};
+/* ── Colour themes. css = panel colours, the rest = canvas palette ── */
+var THEMES = {
+dark: {
+css: { '--cs-bg':'#0a0c0f','--cs-panel':'#111418','--cs-border':'#2a3040','--cs-accent':'#00d4ff',
+'--cs-text':'#c8d4e0','--cs-text2':'#8494a8','--cs-input':'#0d1520','--cs-activebg':'#0d2030',
+'--cs-well':'#060a0d','--cs-hintbg':'rgba(10,12,15,0.88)','--cs-scr':'#05080a',
+'--cs-green':'#39ff14','--cs-danger':'#ff4040','--cs-narbar':'#1a2230','--cs-narborder':'#00d4ff' },
+gridLine:'rgba(255,255,255,0.04)', gridDot:'rgba(255,255,255,0.07)', wire:'#c8d8e8', sel:'#00d4ff',
+selBox:'rgba(0,212,255,0.6)', res:'#f0c840', cap:'#40c8ff', ind:'#c040ff', bat:'#ff6b35', ac:'#20d4a0',
+sw:'#39ff14', vm:'#ff80c0', am:'#80ff80', gnd:'#aab0c0', mark:'#a0c0ff', label:'rgba(180,200,220,0.75)',
+flowConv:'#ffd700', flowElec:'#40e0ff', acConv:'32,212,160', acElec:'120,220,255',
+term:'rgba(0,212,255,0.75)', termFill:'rgba(0,212,255,0.20)', ghost:'rgba(0,212,255,0.5)', bg:'#0a0c0f',
+scrBg:'#05080a', grat1:'rgba(150,180,200,0.13)', grat2:'rgba(150,180,200,0.32)', grat3:'rgba(150,180,200,0.4)',
+scrText:'#c8d4e0', scrDim:'#8494a8', scrBox:'rgba(5,8,10,0.82)', cursor:'rgba(255,255,255,0.75)',
+ch:['#ffd84a','#4fd8ff','#ff6fd0','#6dff8a'], glow:5, traceW:1.6
+},
+light: {
+css: { '--cs-bg':'#f4f6f9','--cs-panel':'#ffffff','--cs-border':'#b8c2cf','--cs-accent':'#005f99',
+'--cs-text':'#18202a','--cs-text2':'#4f5b6a','--cs-input':'#ffffff','--cs-activebg':'#e3f1fa',
+'--cs-well':'#f7f9fb','--cs-hintbg':'rgba(255,255,255,0.94)','--cs-scr':'#fcfdf9',
+'--cs-green':'#1d6e1d','--cs-danger':'#c62828','--cs-narbar':'#fff6d6','--cs-narborder':'#c08000' },
+gridLine:'rgba(0,0,0,0.06)', gridDot:'rgba(0,0,0,0.18)', wire:'#2b3440', sel:'#005f99',
+selBox:'rgba(0,95,153,0.6)', res:'#8a5d00', cap:'#00729e', ind:'#7a2bb0', bat:'#b8430f', ac:'#08785a',
+sw:'#2b7a00', vm:'#a8216f', am:'#1d7a33', gnd:'#4a5260', mark:'#2c58a8', label:'rgba(24,32,42,0.85)',
+flowConv:'#c27c00', flowElec:'#0068c9', acConv:'8,120,90', acElec:'0,104,201',
+term:'rgba(0,95,153,0.85)', termFill:'rgba(0,95,153,0.15)', ghost:'rgba(0,95,153,0.55)', bg:'#f4f6f9',
+scrBg:'#fcfdf9', grat1:'rgba(40,60,80,0.14)', grat2:'rgba(40,60,80,0.35)', grat3:'rgba(40,60,80,0.5)',
+scrText:'#18202a', scrDim:'#4f5b6a', scrBox:'rgba(255,255,255,0.9)', cursor:'rgba(0,0,0,0.7)',
+ch:['#9a7400','#0072b2','#b0287a','#1e8a3a'], glow:0, traceW:1.8
+},
+hc: {
+css: { '--cs-bg':'#000000','--cs-panel':'#000000','--cs-border':'#ffffff','--cs-accent':'#ffff00',
+'--cs-text':'#ffffff','--cs-text2':'#e6e6e6','--cs-input':'#000000','--cs-activebg':'#333300',
+'--cs-well':'#000000','--cs-hintbg':'rgba(0,0,0,0.95)','--cs-scr':'#000000',
+'--cs-green':'#00ff00','--cs-danger':'#ff5555','--cs-narbar':'#000000','--cs-narborder':'#ffff00' },
+gridLine:'rgba(255,255,255,0.14)', gridDot:'rgba(255,255,255,0.3)', wire:'#ffffff', sel:'#ffff00',
+selBox:'rgba(255,255,0,0.9)', res:'#ffd000', cap:'#00ffff', ind:'#ff77ff', bat:'#ff9900', ac:'#00ff99',
+sw:'#66ff66', vm:'#ff66cc', am:'#66ff66', gnd:'#ffffff', mark:'#99ccff', label:'#ffffff',
+flowConv:'#ffff00', flowElec:'#00ffff', acConv:'0,255,153', acElec:'0,255,255',
+term:'rgba(255,255,0,0.9)', termFill:'rgba(255,255,0,0.25)', ghost:'rgba(255,255,0,0.7)', bg:'#000000',
+scrBg:'#000000', grat1:'rgba(255,255,255,0.25)', grat2:'rgba(255,255,255,0.5)', grat3:'rgba(255,255,255,0.8)',
+scrText:'#ffffff', scrDim:'#e6e6e6', scrBox:'rgba(0,0,0,0.9)', cursor:'#ffffff',
+ch:['#ffff00','#00ffff','#ff66ff','#66ff66'], glow:0, traceW:2.4
+}
+};
+/* Okabe–Ito colour-blind-safe overrides, one set for dark backgrounds and one for light */
+var CB_DARK = { res:'#E69F00', cap:'#56B4E9', ind:'#CC79A7', bat:'#D55E00', ac:'#009E73', sw:'#F0E442',
+vm:'#CC79A7', am:'#009E73', flowConv:'#E69F00', flowElec:'#56B4E9', acConv:'0,158,115', acElec:'86,180,233',
+ch:['#E69F00','#56B4E9','#CC79A7','#009E73'] };
+var CB_LIGHT = { res:'#A65F00', cap:'#0072B2', ind:'#AA4499', bat:'#D55E00', ac:'#007A5A', sw:'#7A6A00',
+vm:'#AA4499', am:'#007A5A', flowConv:'#D55E00', flowElec:'#0072B2', acConv:'0,122,90', acElec:'0,114,178',
+ch:['#D55E00','#0072B2','#AA4499','#007A5A'] };
+/* In colour-blind mode the four scope channels also differ by line style */
+var DASHES = [[], [9, 4], [2, 3], [10, 3, 2, 3]];
+var MARKUP = "<div class=\"csb_wrap\" id=\"csbwrap%Q%\">\n<div class=\"csb_a11y\" role=\"toolbar\" aria-label=\"Display options\">\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_hc%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('hc')\">HIGH CONTRAST</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_lm%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('lm')\">LIGHT MODE</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_cb%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('cb')\">COLOR-BLIND SAFE</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_nr%Q%\" aria-pressed=\"true\" onclick=\"%API%.a11y('nr')\">NARRATION: ON</button>\n</div>\n<div class=\"csb_title\" id=\"csb_title%Q%\" style=\"display:none\"></div>\n<div id=\"csroot%Q%\" class=\"csb_root cs_scopeopen\" role=\"application\" aria-roledescription=\"circuit simulator\" aria-label=\"Circuit simulator. Arrow keys step through parts in Select mode, or move the placement cursor with other tools.\">\n<!-- Screen-reader live region: announces selected component readings -->\n<div id=\"cs_live%Q%\" class=\"cs_sronly\" aria-live=\"polite\" aria-atomic=\"true\"></div>\n<!-- \u2500\u2500 Toolbar \u2500\u2500 -->\n<div class=\"cs_toolbar\" id=\"cs_toolbar%Q%\" role=\"toolbar\" aria-label=\"Component tools\">\n<div class=\"cs_tbbtn cs_active\" id=\"cs_tb-select%Q%\" onclick=\"%API%.setTool('select')\" title=\"Select / Move\" aria-label=\"Select / Move\" role=\"button\" aria-pressed=\"true\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><path d=\"M6 4l16 10-7 2-3 7L6 4z\" stroke=\"currentColor\" stroke-width=\"1.5\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">SELECT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-wire%Q%\" onclick=\"%API%.setTool('wire')\" title=\"Wire\" aria-label=\"Wire\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\"><line x1=\"4\" y1=\"14\" x2=\"24\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"4\" cy=\"14\" r=\"2\" fill=\"currentColor\"/><circle cx=\"24\" cy=\"14\" r=\"2\" fill=\"currentColor\"/></svg>\n<span class=\"cs_tblabel\">WIRE</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-resistor%Q%\" onclick=\"%API%.setTool('resistor')\" title=\"Resistor\" aria-label=\"Resistor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"7\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><rect x=\"7\" y=\"10\" width=\"14\" height=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" rx=\"1\"/><line x1=\"21\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">RES</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-capacitor%Q%\" onclick=\"%API%.setTool('capacitor')\" title=\"Capacitor\" aria-label=\"Capacitor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"12\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"20\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"16\" y1=\"8\" x2=\"16\" y2=\"20\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"16\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">CAP</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-inductor%Q%\" onclick=\"%API%.setTool('inductor')\" title=\"Inductor\" aria-label=\"Inductor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"5\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M5 14 Q7 9 9 14 Q11 19 13 14 Q15 9 17 14 Q19 19 21 14 Q23 9 23 14\" stroke=\"currentColor\" stroke-width=\"1.5\" fill=\"none\"/><line x1=\"23\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">IND</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-battery%Q%\" onclick=\"%API%.setTool('battery')\" title=\"Battery / DC Voltage Source\" aria-label=\"Battery / DC Voltage Source\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\">\n<line x1=\"2\" y1=\"14\" x2=\"10\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<line x1=\"10\" y1=\"9\" x2=\"10\" y2=\"19\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n<line x1=\"18\" y1=\"9\" x2=\"18\" y2=\"19\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n<line x1=\"18\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<text x=\"11\" y=\"8\" fill=\"currentColor\" font-size=\"6\" font-family=\"monospace\">+</text></svg>\n<span class=\"cs_tblabel\">BATT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-acsource%Q%\" onclick=\"%API%.setTool('acsource')\" title=\"AC Voltage Source\" aria-label=\"AC Voltage Source\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\">\n<line x1=\"2\" y1=\"14\" x2=\"6\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<line x1=\"22\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<circle cx=\"14\" cy=\"14\" r=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<path d=\"M8 14 Q11 9 14 14 T20 14\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">AC</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-switch%Q%\" onclick=\"%API%.setTool('switch')\" title=\"Switch\" aria-label=\"Switch\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"6\" cy=\"14\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"22\" cy=\"14\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"2\" y1=\"14\" x2=\"6\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"22\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"8\" y1=\"14\" x2=\"20\" y2=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">SW</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-voltmeter%Q%\" onclick=\"%API%.setTool('voltmeter')\" title=\"Voltmeter\" aria-label=\"Voltmeter\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/><text x=\"14\" y=\"18\" fill=\"currentColor\" font-size=\"9\" text-anchor=\"middle\" font-family=\"monospace\">V</text></svg>\n<span class=\"cs_tblabel\">VOLT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-ammeter%Q%\" onclick=\"%API%.setTool('ammeter')\" title=\"Ammeter\" aria-label=\"Ammeter\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/><text x=\"14\" y=\"18\" fill=\"currentColor\" font-size=\"9\" text-anchor=\"middle\" font-family=\"monospace\">A</text></svg>\n<span class=\"cs_tblabel\">AMP</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-scope%Q%\" onclick=\"%API%.setTool('scope')\" title=\"Scope probe (differential, one channel per probe)\" aria-label=\"Scope probe (differential, one channel per probe)\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><rect x=\"3\" y=\"6\" width=\"22\" height=\"16\" rx=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M5.5 14 Q8.5 7.5 11.5 14 T17.5 14 T22.5 13\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">SCOPE</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-marker%Q%\" onclick=\"%API%.setTool('marker')\" title=\"Node Marker\" aria-label=\"Node Marker\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"6\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"14\" cy=\"14\" r=\"2\" fill=\"currentColor\"/></svg>\n<span class=\"cs_tblabel\">NODE</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-ground%Q%\" onclick=\"%API%.setTool('ground')\" title=\"Ground\" aria-label=\"Ground\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"14\" y1=\"4\" x2=\"14\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"6\" y1=\"14\" x2=\"22\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"9\" y1=\"18\" x2=\"19\" y2=\"18\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"12\" y1=\"22\" x2=\"16\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"1\"/></svg>\n<span class=\"cs_tblabel\">GND</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-delete%Q%\" onclick=\"%API%.setTool('delete')\" title=\"Delete\" aria-label=\"Delete\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"6\" y1=\"6\" x2=\"22\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"22\" y1=\"6\" x2=\"6\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>\n<span class=\"cs_tblabel\">DEL</span>\n</div>\n</div><!-- cs_toolbar -->\n<!-- \u2500\u2500 Center column: circuit canvas on top, oscilloscope below \u2500\u2500 -->\n<div class=\"cs_center\">\n<div class=\"cs_canvaswrap\" id=\"cs_canvaswrap%Q%\">\n<canvas class=\"cs_canvas\" id=\"cs_canvas%Q%\" role=\"img\" aria-label=\"Circuit canvas\"></canvas>\n<div class=\"cs_hint\" id=\"cs_hint%Q%\">SELECT: click component | WIRE: click start, click end | R=rotate</div>\n</div>\n<!-- \u2500\u2500 Oscilloscope \u2500\u2500 -->\n<div class=\"cs_scope\" id=\"cs_scope%Q%\" role=\"region\" aria-label=\"Oscilloscope\">\n<div class=\"cs_scopehdr\">\n<span class=\"cs_scopetitle\">OSCILLOSCOPE</span>\n<span class=\"cs_scopestatus\" id=\"cs_scopestatus%Q%\" aria-live=\"off\"></span>\n<input type=\"button\" class=\"cs_scbtn\" id=\"cs_scopetoggle%Q%\" value=\"&#9660; HIDE SCOPE\" onclick=\"%API%.toggleScope()\">\n</div>\n<div class=\"cs_scopebody\" id=\"cs_scopebody%Q%\">\n<div class=\"cs_scopescreen\" id=\"cs_scopescreen%Q%\">\n<canvas class=\"cs_scopecanvas\" id=\"cs_scopecanvas%Q%\" role=\"img\" aria-label=\"Oscilloscope screen\"></canvas>\n</div>\n<div class=\"cs_scopectrl\" id=\"cs_scopectrl%Q%\"></div>\n</div>\n</div>\n</div><!-- cs_center -->\n<!-- \u2500\u2500 Right panel \u2500\u2500 -->\n<div class=\"cs_rpanel\" id=\"cs_rpanel%Q%\">\n<div class=\"cs_rptitle\">PROPERTIES</div>\n<div id=\"cs_proparea%Q%\">\n<div class=\"cs_rpdimtext\">Select a component<br>to edit its properties.</div>\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">SIMULATION</div>\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#9654; RUN / UPDATE\"   onclick=\"%API%.runSim()\">\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#9632; STOP ANIMATION\" onclick=\"%API%.stopSim()\">\n<div class=\"cs_togglerow\">\n<input type=\"checkbox\" id=\"cs_chkflow%Q%\" checked onchange=\"%API%.redraw()\">\n<label for=\"cs_chkflow%Q%\">Show current flow</label>\n</div>\n<div class=\"cs_togglerow\" style=\"padding-left:14px;opacity:0.85\">\n<input type=\"radio\" id=\"cs_flowconv%Q%\" name=\"cs_flowdir%Q%\" value=\"conventional\" checked onchange=\"%API%.redraw()\">\n<label for=\"cs_flowconv%Q%\">Conventional (+\u2192\u2212)</label>\n</div>\n<div class=\"cs_togglerow\" style=\"padding-left:14px;opacity:0.85\">\n<input type=\"radio\" id=\"cs_flowelec%Q%\" name=\"cs_flowdir%Q%\" value=\"electron\" onchange=\"%API%.redraw()\">\n<label for=\"cs_flowelec%Q%\">Electron (\u2212\u2192+)</label>\n</div>\n<div class=\"cs_togglerow\">\n<input type=\"checkbox\" id=\"cs_chkvolt%Q%\" onchange=\"%API%.redraw()\">\n<label for=\"cs_chkvolt%Q%\">Voltage shading</label>\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">AC SETTINGS</div>\n<div class=\"cs_rprow\">\n<label for=\"cs_freq%Q%\">Frequency (Hz) \u2014 circuit-wide</label>\n<input type=\"text\" id=\"cs_freq%Q%\" value=\"60\"\n onchange=\"%API%.setFrequency(this.value)\">\n</div>\n<div class=\"cs_rpdimtext\" style=\"font-size:8px\">\nShared by all AC sources. RMS = peak / &radic;2.\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">READINGS</div>\n<div class=\"cs_rpreadout\" id=\"cs_readout%Q%\"><span style=\"color:var(--cs-text2)\">Click a component,<br>or use &#8592;/&#8594; keys,<br>to see its readings.</span></div>\n<div class=\"cs_rpsep\"></div>\n<div id=\"cs_clearwrap%Q%\" class=\"cs_saveload\"><input type=\"button\" class=\"cs_rpbtn cs_danger\" value=\"&#10005; CLEAR ALL\" onclick=\"%API%.clearAll()\"></div>\n<div class=\"cs_rpsep\"></div>\n<div id=\"cs_saveload%Q%\" class=\"cs_saveload\"><div class=\"cs_rptitle\">SAVE / LOAD</div>\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#11015; SAVE TO TEXT\"   onclick=\"%API%.saveCircuit()\">\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#11014; LOAD FROM TEXT\" onclick=\"%API%.loadCircuit()\">\n<textarea aria-label=\"Circuit data (JSON)\" id=\"cs_circuitdata%Q%\" class=\"cs_textarea\"\nplaceholder=\"Circuit JSON appears here after Save. Paste to Load.\">$JSON</textarea>\n</div>\n<div class=\"cs_rpdimtext\" style=\"margin-top:auto;line-height:1.5\">\nKEYS: R=rotate \u00b7 Del=delete \u00b7 Esc=cancel<br>Arrows+Enter place parts\n</div>\n</div><!-- cs_rpanel -->\n</div>\n<div class=\"csb_narbar\" id=\"csb_narbar%Q%\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"></div>\n</div>\n";
+function merge(base, over) {           // shallow-deep merge for the config object
+var out = {}, k;
+for (k in base) out[k] = base[k];
+if (over && typeof over === 'object') for (k in over) {
+if (over[k] && typeof over[k] === 'object' && !Array.isArray(over[k]) && base[k] && typeof base[k] === 'object' && !Array.isArray(base[k]))
+out[k] = merge(base[k], over[k]);
+else if (over[k] !== undefined) out[k] = over[k];
+}
+return out;
+}
+/* ════════════════════════════════════════════════════════════════════
+One simulator instance.  Q = $thisq,  API = name of its global handle
+════════════════════════════════════════════════════════════════════ */
+function create(Q, API, CFG) {
+var WRAP = document.getElementById('csbwrap' + Q);
+var TOOLS = Array.isArray(CFG.tools) ? CFG.tools.slice() : ALL_TOOLS.slice();
+if (TOOLS.indexOf('select') < 0) TOOLS.unshift('select');
+var scopeEnabled = CFG.scope.enabled !== false;
+if (!scopeEnabled) TOOLS = TOOLS.filter(function (t) { return t !== 'scope'; });
+var A11Y = { hc: !!CFG.accessibility.highContrast, lm: !!CFG.accessibility.lightMode,
+ cb: !!CFG.accessibility.colorBlind, nr: CFG.accessibility.narration !== false };
+if (A11Y.hc) A11Y.lm = false;
+var P = {};                       // active canvas palette (filled by applyTheme)
+var kbActive = false, kbPos = null, lastTrigState = null, quiet = false;
+/* ── Narration: visible caption bar + polite live region ── */
+function narrate(msg) {
+if (quiet || !A11Y.nr || !msg) return;
+var nb = document.getElementById('csb_narbar' + Q);
+if (nb) nb.textContent = msg;
+}
+/* ── Themes ── */
+function applyTheme() {
+var base = A11Y.hc ? THEMES.hc : A11Y.lm ? THEMES.light : THEMES.dark, k;
+for (k in base) if (k !== 'css') P[k] = base[k];
+if (A11Y.cb) { var o = A11Y.lm ? CB_LIGHT : CB_DARK; for (k in o) P[k] = o[k]; }
+for (k in base.css) WRAP.style.setProperty(k, base.css[k]);
+WRAP.classList.toggle('csb_hc', A11Y.hc);
+[['hc','HIGH CONTRAST'],['lm','LIGHT MODE'],['cb','COLOR-BLIND SAFE'],['nr','NARRATION']].forEach(function (b) {
+var e = document.getElementById('csb_' + b[0] + Q); if (!e) return;
+e.setAttribute('aria-pressed', A11Y[b[0]] ? 'true' : 'false');
+e.classList.toggle('csb_on', !!A11Y[b[0]]);
+if (b[0] === 'nr') e.textContent = 'NARRATION: ' + (A11Y.nr ? 'ON' : 'OFF');
+});
+var nb = document.getElementById('csb_narbar' + Q);
+if (nb) nb.style.display = A11Y.nr ? '' : 'none';
+}
+function toggleA11y(k) {
+A11Y[k] = !A11Y[k];
+if (k === 'hc' && A11Y.hc) A11Y.lm = false;
+if (k === 'lm' && A11Y.lm) A11Y.hc = false;
+applyTheme();
+if (typeof buildScopeControls === 'function') buildScopeControls();
+redraw();
+var names = { hc:'High contrast', lm:'Light mode', cb:'Color-blind-safe colors', nr:'Narration' };
+if (k === 'cb' && A11Y.cb) narrate('Color-blind-safe colors on. Scope channels also differ by line style: CH1 solid, CH2 dashed, CH3 dotted, CH4 dash-dot.');
+else narrate(names[k] + (A11Y[k] ? ' on.' : ' off.'));
+}
+/* Voltage-shading colour: blue→red normally, blue→orange in colour-blind mode */
+function shadeColor(t) {
+if (!A11Y.cb) return 'hsla(' + ((1 - t) * 240) + ',100%,55%,0.55)';
+var a = [0, 114, 178], b = [230, 159, 0];
+return 'rgba(' + Math.round(a[0] + (b[0] - a[0]) * t) + ',' + Math.round(a[1] + (b[1] - a[1]) * t) + ','
++ Math.round(a[2] + (b[2] - a[2]) * t) + ',0.6)';
+}
+/* Small colour + line-style sample shown next to each channel name */
+function chSwatch(n) {
+var d = A11Y.cb && DASHES[n - 1].length ? ' stroke-dasharray="' + DASHES[n - 1].join(',') + '"' : '';
+return '<svg aria-hidden="true" width="16" height="6" style="margin-right:3px;vertical-align:middle">'
++ '<line x1="0" y1="3" x2="16" y2="3" stroke="' + P.ch[n - 1] + '" stroke-width="2"' + d + '/></svg>';
+}
+/* ── Apply layout-related settings from the question ── */
+function applyLayoutConfig() {
+ALL_TOOLS.forEach(function (t) {
+var b = document.getElementById('cs_tb-' + t + Q);
+if (b) b.style.display = TOOLS.indexOf(t) >= 0 ? '' : 'none';
+});
+// hide separators that would end up doubled or dangling
+var tb = document.getElementById('cs_toolbar' + Q), prevSep = true, lastSep = null;
+Array.prototype.forEach.call(tb.children, function (c) {
+if (c.classList.contains('cs_tbsep')) { c.style.display = prevSep ? 'none' : ''; if (!prevSep) lastSep = c; prevSep = true; }
+else if (c.style.display !== 'none') { prevSep = false; lastSep = null; }
+});
+if (lastSep) lastSep.style.display = 'none';
+// toolbar buttons respond to Enter / Space like real buttons
+tb.addEventListener('keydown', function (e) {
+if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('cs_tbbtn')) {
+e.preventDefault(); e.stopPropagation(); e.target.click();
+}
+});
+if (CFG.title) { var t = document.getElementById('csb_title' + Q); t.textContent = CFG.title; t.style.display = ''; }
+if (CFG.showSaveLoad === false) document.getElementById('cs_saveload' + Q).style.display = 'none';
+if (CFG.showClearAll === false) document.getElementById('cs_clearwrap' + Q).style.display = 'none';
+if (CFG.lockFrequency) document.getElementById('cs_freq' + Q).disabled = true;
+if (!scopeEnabled) {
+document.getElementById('cs_scope' + Q).style.display = 'none';
+document.getElementById('csroot' + Q).classList.remove('cs_scopeopen');
+}
+// respect "reduce motion": start with the moving-charge animation off
+if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+document.getElementById('cs_chkflow' + Q).checked = false;
+}
+/* ── DOM refs ── */
+var ROOT   = el('csroot');
+var canvas = el('cs_canvas');
+var ctx    = canvas.getContext('2d');
+var wrap   = el('cs_canvaswrap');
+var scopeCanvas = el('cs_scopecanvas');
+var sctx        = scopeCanvas.getContext('2d');
+var scopeScreen = el('cs_scopescreen');
+var GRID   = 24;
+var W, H;
+var sW = 0, sH = 0;   // scope canvas size in CSS pixels
+/* ── Helpers ── */
+function el(id)       { return document.getElementById(id + Q); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function setHTML(id, html) { var e = el(id); if (e) e.innerHTML = html; }
+/* ── Resize canvas to fill wrap ── */
+function resize() {
+W = wrap.clientWidth; H = wrap.clientHeight;
+canvas.width = W; canvas.height = H;
+sizeScope();
+redraw();
+}
+/* ── State ── */
+var tool       = 'select';
+var components = [];
+var selected   = null;
+var wireStart  = null;
+var ghostPos   = null;
+var rotation   = 0;
+var simResults = null;
+var animFrame  = null;
+var flowPhase  = 0;
+var idCounter  = 1;
+var simRunning = false;
+var acFrequency = 60;  // Hz (circuit-wide global; matches US mains default)
+function getOmega() { return 2 * Math.PI * acFrequency; }
+function nextId()    { return idCounter++; }
+function toGrid(px)  { return Math.round(px / GRID); }
+function fromGrid(g) { return g * GRID; }
+/* ── Component definitions ── */
+var COMP_DEFS = {
+wire:      { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Wire' },
+resistor:  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Resistor',  defaults:{R:1000} },
+capacitor: { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Capacitor', defaults:{C:1e-6} },
+inductor:  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Inductor',  defaults:{L:1e-3} },
+battery:   { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Battery',   defaults:{V:9} },
+acsource:  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'AC Source', defaults:{Vpeak:10} },
+'switch':  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Switch',    defaults:{closed:true} },
+voltmeter: { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Voltmeter', defaults:{mode:'rms'} },
+ammeter:   { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Ammeter',   defaults:{mode:'rms'} },
+/* Scope probe: an ideal differential probe (infinite impedance, like the
+voltmeter). It displays V(terminal 1) − V(terminal 0), i.e. the "+" lead
+minus the "−" lead. Each probe feeds one scope channel (props.ch). */
+scope:     { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Scope probe', defaults:{ch:1} },
+ground:    { terminals: [{dx:0,dy:-1}],              label:'Ground',    defaults:{} },
+marker:    { terminals: [{dx:0,dy:0}],               label:'Node',      defaults:{label:'N1'} },
+};
+function makeComp(type, gx, gy, rot) {
+var def = COMP_DEFS[type];
+var props = {};
+if (def.defaults) { for (var k in def.defaults) props[k] = def.defaults[k]; }
+return { id: nextId(), type: type, gx: gx, gy: gy, rot: rot || 0, props: props };
+}
+function rotateOffset(dx, dy, rot, cx, cy) {
+var rx = dx, ry = dy;
+for (var i = 0; i < rot; i++) { var tmp = rx; rx = -ry; ry = tmp; }
+return { gx: cx + rx, gy: cy + ry };
+}
+function getTerminals(comp) {
+var def = COMP_DEFS[comp.type];
+return def.terminals.map(function(t) { return rotateOffset(t.dx, t.dy, comp.rot, comp.gx, comp.gy); });
+}
+function getActualTerminals(comp) {
+if (comp._t0) return [comp._t0, comp._t1];
+return getTerminals(comp);
+}
+function fromGridPx(comp, idx) {
+var t = getTerminals(comp)[idx];
+return { x: fromGrid(t.gx), y: fromGrid(t.gy) };
+}
+/* ── Tool management ── */
+var HINTS = {
+select:    'Click or use \u2190\u2191\u2192\u2193 to step between components | R=rotate | Del=delete',
+wire:      'Click first node, then second node to draw wire',
+resistor:  'Click grid to place resistor | R=rotate',
+capacitor: 'Click grid to place capacitor | R=rotate',
+inductor:  'Click grid to place inductor | R=rotate',
+battery:   'Click grid to place battery (+terminal right/top) | R=rotate',
+acsource:  'Click grid to place AC source | R=rotate | Frequency is set in right panel',
+'switch':  'Click grid to place switch | R=rotate',
+voltmeter: 'Click grid to place voltmeter | R=rotate',
+ammeter:   'Click grid to place ammeter | R=rotate',
+scope:     'Click grid to place a scope probe (+ lead is marked) | each probe is one channel | R=rotate',
+marker:    'Click node to mark it',
+ground:    'Click node to place ground',
+'delete':  'Click component or wire to delete it',
+};
+var PLACEABLE = ['resistor','capacitor','inductor','battery','acsource','switch','voltmeter','ammeter','scope','marker','ground'];
+function setTool(t) {
+tool = t; wireStart = null;
+var btns = ROOT.getElementsByClassName('cs_tbbtn');
+for (var _bi = 0; _bi < btns.length; _bi++) btns[_bi].classList.remove('cs_active');
+var btn = el('cs_tb-' + t);
+if (btn) btn.classList.add('cs_active');
+for (var _bj = 0; _bj < btns.length; _bj++) btns[_bj].setAttribute('aria-pressed', btns[_bj] === btn ? 'true' : 'false');
+set('cs_hint', HINTS[t] || '');
+var tname = t === 'select' ? 'Select' : t === 'wire' ? 'Wire' : t === 'delete' ? 'Delete' : (TYPE_LABEL[t] || t);
+narrate('Tool: ' + tname + '. ' + (t === 'select'
+? 'Click a part, or press the arrow keys to step through parts and hear their readings.'
+: t === 'wire' ? 'Click (or move with the arrow keys and press Enter) at the start point, then again at the end point.'
+: t === 'delete' ? 'Click a part (or move with the arrow keys and press Enter) to remove it.'
+: 'Click the grid (or move with the arrow keys and press Enter) to place it. R rotates.'));
+redraw();
+}
+/* ── Canvas events ── */
+canvas.addEventListener('mousemove', function(e) {
+var r = canvas.getBoundingClientRect();
+ghostPos = { gx: toGrid(e.clientX - r.left), gy: toGrid(e.clientY - r.top) };
+kbActive = false;
+redraw();
+});
+canvas.addEventListener('mouseleave', function() { if (!kbActive) { ghostPos = null; redraw(); } });
+canvas.addEventListener('click', function(e) {
+var r = canvas.getBoundingClientRect();
+handleClick(toGrid(e.clientX - r.left), toGrid(e.clientY - r.top));
+});
+canvas.addEventListener('dblclick', function(e) {
+var r = canvas.getBoundingClientRect();
+var gx = toGrid(e.clientX - r.left), gy = toGrid(e.clientY - r.top);
+var comp = findCompAt(gx, gy);
+if (comp && comp.type === 'switch') {
+comp.props.closed = !comp.props.closed;
+simResults = null; redraw();
+narrate('Switch #' + comp.id + ' is now ' + (comp.props.closed ? 'CLOSED' : 'OPEN') + '. Press RUN to update.');
+}
+});
+/* Keyboard events scoped to ROOT */
+ROOT.setAttribute('tabindex', '0');
+/* Select the Nth component in placement order (0-based, wraps). Also
+updates props panel and readings, and makes the canvas redraw so
+the selection ring moves. */
+function selectByIndex(idx) {
+if (components.length === 0) {
+selected = null; showProps(null); updateReadout(); redraw(); return;
+}
+var n = components.length;
+idx = ((idx % n) + n) % n;  // wrap (handles negative)
+selected = components[idx].id;
+showProps(components[idx]);
+updateReadout();
+redraw();
+}
+function navigateSelection(direction) {
+// direction: +1 = next, -1 = previous
+if (components.length === 0) return;
+var curIdx = -1;
+if (selected !== null) {
+for (var i = 0; i < components.length; i++) {
+if (components[i].id === selected) { curIdx = i; break; }
+}
+}
+var nextIdx = (curIdx < 0)
+? (direction > 0 ? 0 : components.length - 1)  // start at edge if nothing selected
+: curIdx + direction;
+selectByIndex(nextIdx);
+}
+ROOT.addEventListener('keydown', function(e) {
+var tag = document.activeElement ? document.activeElement.tagName : '';
+if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+if (e.target && e.target.closest && e.target.closest('.cs_toolbar') && (e.key === 'Enter' || e.key === ' ')) return;
+/* Keyboard placement: with a placing tool (or wire/delete) active, the arrow
+keys move a grid cursor and Enter/Space acts as a click at the cursor.
+Shift+arrow moves 4 grid steps. */
+var placing = tool !== 'select';
+if (placing && /^Arrow/.test(e.key)) {
+e.preventDefault();
+if (!ghostPos) ghostPos = kbPos || { gx: Math.round(W / 2 / GRID), gy: Math.round(H / 2 / GRID) };
+var stp = e.shiftKey ? 4 : 1;
+if (e.key === 'ArrowLeft')  ghostPos.gx -= stp;
+if (e.key === 'ArrowRight') ghostPos.gx += stp;
+if (e.key === 'ArrowUp')    ghostPos.gy -= stp;
+if (e.key === 'ArrowDown')  ghostPos.gy += stp;
+ghostPos.gx = Math.max(1, Math.min(Math.floor(W / GRID) - 1, ghostPos.gx));
+ghostPos.gy = Math.max(1, Math.min(Math.floor(H / GRID) - 1, ghostPos.gy));
+kbPos = { gx: ghostPos.gx, gy: ghostPos.gy }; kbActive = true;
+var under = findCompAt(ghostPos.gx, ghostPos.gy);
+var live = el('cs_live');
+if (live) live.textContent = 'Column ' + ghostPos.gx + ', row ' + ghostPos.gy
++ (under ? ', near ' + (TYPE_LABEL[under.type] || under.type) + ' #' + under.id : '')
++ (wireStart ? '. Wire starts at column ' + wireStart.gx + ', row ' + wireStart.gy : '') + '.';
+redraw();
+return;
+}
+if (placing && (e.key === 'Enter' || e.key === ' ') && ghostPos) {
+e.preventDefault();
+handleClick(ghostPos.gx, ghostPos.gy);
+return;
+}
+/* Arrow keys: navigate between components in placement order.
+ All four arrows work (students shouldn't need to know the model
+ is 1D). Left/Up = previous, Right/Down = next. Wraps at ends. */
+if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+e.preventDefault();
+navigateSelection(+1);
+return;
+}
+if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+e.preventDefault();
+navigateSelection(-1);
+return;
+}
+if (e.key === 'r' || e.key === 'R') { rotation = (rotation + 1) % 4; redraw(); }
+if (e.key === 'Escape') { wireStart = null; setTool('select'); redraw(); }
+if ((e.key === 'Delete' || e.key === 'Backspace') && selected !== null) {
+e.preventDefault();
+deleteComp(selected);
+}
+});
+/* Make sure arrow keys work as soon as the user clicks the canvas */
+canvas.addEventListener('mousedown', function() { ROOT.focus(); });
+/* ── Click handler ── */
+function handleClick(gx, gy) {
+if (tool === 'select') {
+var comp = findCompAt(gx, gy);
+selected = comp ? comp.id : null;
+showProps(comp); updateReadout(); redraw(); return;
+}
+if (tool === 'delete') {
+var comp2 = findCompAt(gx, gy);
+if (comp2 && comp2.locked) { narrate('That part is fixed by your instructor and cannot be deleted.'); return; }
+if (comp2) {
+var wasSel = (selected === comp2.id);
+narrate('Deleted ' + (TYPE_LABEL[comp2.type] || comp2.type) + ' #' + comp2.id + '.');
+components = components.filter(function(c) { return c.id !== comp2.id; });
+simResults = null;
+if (wasSel) { selected = null; showProps(null); }
+updateReadout();
+redraw();
+}
+return;
+}
+if (tool === 'wire') {
+if (!wireStart) {
+wireStart = { gx: gx, gy: gy };
+narrate('Wire started at column ' + gx + ', row ' + gy + '. Now choose the end point.');
+} else {
+if (wireStart.gx !== gx || wireStart.gy !== gy) {
+var segs = wireSegments(wireStart.gx, wireStart.gy, gx, gy);
+segs.forEach(function(s) {
+var cgx = Math.round((s.x1 + s.x2) / 2);
+var cgy = Math.round((s.y1 + s.y2) / 2);
+var rot2 = (s.y1 === s.y2) ? 0 : 1;
+var w = makeComp('wire', cgx, cgy, rot2);
+w._t0 = { gx: s.x1, gy: s.y1 };
+w._t1 = { gx: s.x2, gy: s.y2 };
+components.push(w);
+});
+narrate('Wire added from column ' + wireStart.gx + ', row ' + wireStart.gy + ' to column ' + gx + ', row ' + gy + '.');
+}
+wireStart = null; simResults = null; updateReadout(); redraw();
+}
+return;
+}
+if (PLACEABLE.indexOf(tool) >= 0) {
+var nc = makeComp(tool, gx, gy, rotation);
+if (tool === 'scope') {
+// Give each new probe the lowest free channel (CH1..CH4)
+nc.props.ch = nextFreeChannel();
+if (!scope.open) toggleScope();
+}
+components.push(nc);
+narrate('Placed ' + (TYPE_LABEL[tool] || tool) + ' #' + nc.id + (tool === 'scope' ? ' on channel CH' + nc.props.ch : '')
++ ' at column ' + gx + ', row ' + gy + '.');
+simResults = null; updateReadout(); redraw();
+}
+}
+function wireSegments(x1, y1, x2, y2) {
+var segs = [];
+if (x1 !== x2) segs.push({ x1: x1, y1: y1, x2: x2, y2: y1 });
+if (y1 !== y2) segs.push({ x1: x2, y1: y1, x2: x2, y2: y2 });
+if (segs.length === 0) segs.push({ x1: x1, y1: y1, x2: x2, y2: y2 });
+return segs;
+}
+function findCompAt(gx, gy) {
+for (var i = components.length - 1; i >= 0; i--) {
+var c = components[i];
+var terms = getActualTerminals(c);
+for (var j = 0; j < terms.length; j++) {
+if (Math.abs(terms[j].gx - gx) <= 1 && Math.abs(terms[j].gy - gy) <= 1) return c;
+}
+if (Math.abs(c.gx - gx) <= 1 && Math.abs(c.gy - gy) <= 1) return c;
+}
+return null;
+}
+/* ── Properties panel ── */
+function showProps(comp) {
+var area = el('cs_proparea'); if (!area) return;
+if (!comp) {
+area.innerHTML = '<div class="cs_rpdimtext">Select a component<br>to edit its properties.</div>';
+return;
+}
+var html = '<div class="cs_rprow"><label>TYPE</label>'
++ '<div style="font-family:var(--cs-mono);font-size:10px;color:var(--cs-accent)">'
++ comp.type.toUpperCase() + ' #' + comp.id + '</div></div>';
+if (comp.locked) html += '<div class="cs_rpdimtext">\uD83D\uDD12 Fixed by your instructor.</div>';
+if (comp.type === 'resistor')  html += propInput('R (\u03a9)', 'R', comp.props.R, comp.id);
+if (comp.type === 'capacitor') html += propInput('C (F)', 'C', comp.props.C, comp.id);
+if (comp.type === 'inductor')  html += propInput('L (H)', 'L', comp.props.L, comp.id);
+if (comp.type === 'battery')   html += propInput('Voltage (V)', 'V', comp.props.V, comp.id);
+if (comp.type === 'acsource')  html += propInput('V peak (V)', 'Vpeak', comp.props.Vpeak, comp.id);
+if (comp.type === 'voltmeter' || comp.type === 'ammeter') {
+html += '<div class="cs_rprow"><label>READ MODE</label>'
++ '<select onchange="' + API + '.setProp(' + comp.id + ',\'mode\',this.value)">'
++ '<option value="rms"'  + (comp.props.mode === 'rms'  ? ' selected' : '') + '>RMS (AC)</option>'
++ '<option value="mean"' + (comp.props.mode === 'mean' ? ' selected' : '') + '>Mean (DC)</option>'
++ '</select></div>';
+}
+if (comp.type === 'scope') {
+html += '<div class="cs_rprow"><label>SCOPE CHANNEL</label>'
++ '<select onchange="' + API + '.setProp(' + comp.id + ',\'ch\',this.value)">';
+for (var chn = 1; chn <= 4; chn++) {
+html += '<option value="' + chn + '"' + ((comp.props.ch|0) === chn ? ' selected' : '') + '>CH' + chn + '</option>';
+}
+html += '</select></div>'
++ '<div class="cs_rpdimtext">Shows V(+) \u2212 V(\u2212).<br>The + lead is marked on the symbol.</div>';
+}
+if (comp.type === 'switch') {
+html += '<div class="cs_rprow"><label>STATE</label>'
++ '<select onchange="' + API + '.setProp(' + comp.id + ',\'closed\',this.value===\'true\')">'
++ '<option value="true"'  + (comp.props.closed  ? ' selected' : '') + '>CLOSED</option>'
++ '<option value="false"' + (!comp.props.closed ? ' selected' : '') + '>OPEN</option>'
++ '</select></div>';
+}
+if (comp.type === 'marker') html += propInput('Label', 'label', comp.props.label, comp.id);
+if (!comp.locked) {
+if (!comp._t0) html += '<input type="button" class="cs_rpbtn" value="\u27f3 ROTATE" onclick="' + API + '.rotateComp(' + comp.id + ')">';
+if (TOOLS.indexOf('delete') >= 0) html += '<input type="button" class="cs_rpbtn cs_danger" value="\u2715 DELETE" onclick="' + API + '.deleteComp(' + comp.id + ')">';
+}
+area.innerHTML = html;
+}
+function propInput(label, key, val, id) {
+var c = components.find(function(k) { return k.id === id; });
+var lk = c && c.locked;
+var iid = 'cs_p_' + key + '_' + id + Q;
+return '<div class="cs_rprow"><label for="' + iid + '">' + label + '</label>'
++ '<input type="text" id="' + iid + '" value="' + val + '"' + (lk ? ' disabled' : '')
++ ' onchange="' + API + '.setProp(' + id + ',\'' + key + '\',this.value)"></div>';
+}
+function setProp(id, key, val) {
+var comp = components.find(function(c) { return c.id === id; });
+if (!comp) return;
+// Locked parts: students may still operate switches, meter modes and probe channels
+if (comp.locked && ['closed','mode','ch'].indexOf(key) < 0) { showProps(comp); narrate('That value is fixed by your instructor.'); return; }
+if (key === 'ch') {
+// Changing a probe's channel doesn't change the circuit, so keep the results.
+comp.props.ch = Math.min(4, Math.max(1, parseInt(val, 10) || 1));
+updateReadout(); redraw(); return;
+}
+if (key === 'closed') comp.props[key] = val;
+else if (key === 'label' || key === 'mode') comp.props[key] = val;
+else comp.props[key] = parseFloat(val) || val;
+simResults = null; updateReadout(); redraw();
+if (key === 'closed') narrate('Switch #' + comp.id + ' is now ' + (val ? 'CLOSED' : 'OPEN') + '. Press RUN to update.');
+}
+function rotateComp(id) {
+var comp = components.find(function(c) { return c.id === id; });
+if (!comp || comp._t0) return;
+if (comp.locked) { narrate('That part is fixed by your instructor.'); return; }
+comp.rot = (comp.rot + 1) % 4;
+simResults = null; updateReadout(); redraw();
+}
+function deleteComp(id) {
+var dc = components.find(function(c) { return c.id === id; });
+if (!dc) return;
+if (dc.locked) { narrate('That part is fixed by your instructor and cannot be deleted.'); return; }
+if (TOOLS.indexOf('delete') < 0) return;
+narrate('Deleted ' + (TYPE_LABEL[dc.type] || dc.type) + ' #' + dc.id + '.');
+components = components.filter(function(c) { return c.id !== id; });
+selected = null; simResults = null; showProps(null); updateReadout(); redraw();
+}
+function clearAll() {
+stopSim();
+// Parts fixed by the instructor survive CLEAR ALL
+var kept = components.filter(function(c) { return c.locked; });
+components = kept; selected = null; simResults = null; simRunning = false; wireStart = null;
+narrate(kept.length ? 'Cleared everything you added. The instructor\u2019s circuit remains.' : 'Canvas cleared.');
+showProps(null);
+updateReadout();
+redraw();
+}
+/* ── MNA Simulation ── */
+function runSim() {
+stopSim();
+var dc = solveMNA();
+var ac = solveACMNA(getOmega());
+// Unified results object. Legacy code reads simResults.voltages and
+// simResults.currents as scalars (DC). We keep that contract and add
+// simResults.ac = {voltages, currents} (complex phasors).
+simResults = dc ? { voltages: dc.voltages, currents: dc.currents, ac: ac } : null;
+lastTrigState = null;
+updateReadout();
+startAnim();
+redraw();
+if (!simResults) { narrate('The circuit could not be solved. Check that every part is connected.'); return; }
+var nProbe = components.filter(function(c) { return c.type === 'scope'; }).length;
+narrate('Simulation running' + (ac ? ' at ' + acFrequency + ' Hz' : '') + '. '
++ (nProbe && scopeEnabled && scope.open ? 'Scope: ' + measText
+: 'Select a part, or press the arrow keys in Select mode, to hear its readings.'));
+}
+function solveMNA() {
+var nodeMap = {}, nodeCount = 0;
+function nodeId(gx, gy) {
+var key = gx + ',' + gy;
+if (!(key in nodeMap)) nodeMap[key] = nodeCount++;
+return nodeMap[key];
+}
+// Reserve 0 for ground
+for (var gi = 0; gi < components.length; gi++) {
+var gc = components[gi];
+if (gc.type === 'ground') {
+var gt = getActualTerminals(gc)[0];
+var gkey = gt.gx + ',' + gt.gy;
+if (!(gkey in nodeMap)) { nodeMap[gkey] = 0; if (nodeCount === 0) nodeCount = 1; }
+}
+}
+var OPEN_CIRCUIT = { voltmeter: true, capacitor: true, scope: true };
+for (var oi = 0; oi < components.length; oi++) {
+var oc = components[oi];
+if (OPEN_CIRCUIT[oc.type]) continue;
+var ot2 = getActualTerminals(oc);
+for (var oj = 0; oj < ot2.length; oj++) nodeId(ot2[oj].gx, ot2[oj].gy);
+}
+// Union-find
+var parent = [];
+for (var pi = 0; pi < nodeCount; pi++) parent[pi] = pi;
+function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+function union(a, b) {
+a = find(a); b = find(b); if (a === b) return;
+if (b === 0) parent[a] = b; else parent[b] = a;
+}
+for (var ui = 0; ui < components.length; ui++) {
+var uc = components[ui];
+if (uc.type === 'wire' || (uc.type === 'switch' && uc.props.closed)) {
+var ut = getActualTerminals(uc);
+union(nodeId(ut[0].gx, ut[0].gy), nodeId(ut[1].gx, ut[1].gy));
+}
+}
+var remap = {};
+for (var rk in nodeMap) remap[rk] = find(nodeMap[rk]);
+var roots = [], rootSet = {};
+for (var rvk in remap) { if (!rootSet[remap[rvk]]) { rootSet[remap[rvk]] = true; roots.push(remap[rvk]); } }
+roots.sort(function(a,b) { return a-b; });
+var compact = {};
+roots.forEach(function(r, i) { compact[r] = i; });
+var N = roots.length;
+function getNode(gx, gy) {
+var key = gx + ',' + gy;
+if (!(key in remap)) return -1;
+return compact[remap[key]] !== undefined ? compact[remap[key]] : -1;
+}
+var gnd = compact[find(0)] !== undefined ? compact[find(0)] : 0;
+// Build MNA
+var G = [], Ivec = [], vsrcs = [];
+for (var i = 0; i < N; i++) { G[i] = new Float64Array(N); }
+Ivec = new Float64Array(N);
+for (var ci = 0; ci < components.length; ci++) {
+var c = components[ci];
+var terms2 = getActualTerminals(c);
+if (c.type === 'resistor') {
+var g = 1.0 / Math.max(c.props.R || 1000, 1e-9);
+var n0 = getNode(terms2[0].gx, terms2[0].gy);
+var n1 = getNode(terms2[1].gx, terms2[1].gy);
+if (n0 >= 0 && n1 >= 0 && n0 !== n1) {
+G[n0][n0] += g; G[n1][n1] += g; G[n0][n1] -= g; G[n1][n0] -= g;
+}
+}
+if (c.type === 'inductor') {
+var in0 = getNode(terms2[0].gx, terms2[0].gy);
+var in1 = getNode(terms2[1].gx, terms2[1].gy);
+if (in0 >= 0 && in1 >= 0 && in0 !== in1)
+vsrcs.push({ nPlus: in0, nMinus: in1, V: 0, compId: c.id });
+}
+if (c.type === 'battery') {
+var bn0 = getNode(terms2[0].gx, terms2[0].gy);
+var bn1 = getNode(terms2[1].gx, terms2[1].gy);
+if (bn0 >= 0 && bn1 >= 0)
+vsrcs.push({ nPlus: bn1, nMinus: bn0, V: c.props.V || 9, compId: c.id });
+}
+if (c.type === 'acsource') {
+// In the DC solve, an AC source is a short circuit (ideal source at 0Hz for DC
+// means time-average voltage = 0). We model it as a V=0 voltage source so
+// current can flow through it and so the node voltages collapse together at DC.
+var acn0 = getNode(terms2[0].gx, terms2[0].gy);
+var acn1 = getNode(terms2[1].gx, terms2[1].gy);
+if (acn0 >= 0 && acn1 >= 0)
+vsrcs.push({ nPlus: acn1, nMinus: acn0, V: 0, compId: c.id });
+}
+if (c.type === 'ammeter') {
+var an0 = getNode(terms2[0].gx, terms2[0].gy);
+var an1 = getNode(terms2[1].gx, terms2[1].gy);
+if (an0 >= 0 && an1 >= 0 && an0 !== an1)
+vsrcs.push({ nPlus: an0, nMinus: an1, V: 0, compId: c.id });
+}
+}
+var M = N + vsrcs.length;
+var A = [];
+for (var ai = 0; ai < M; ai++) A[ai] = new Float64Array(M);
+var b = new Float64Array(M);
+for (var ii = 0; ii < N; ii++) for (var jj = 0; jj < N; jj++) A[ii][jj] = G[ii][jj];
+vsrcs.forEach(function(vs, k) {
+var row = N + k;
+if (vs.nPlus  >= 0) { A[row][vs.nPlus]  =  1; A[vs.nPlus][row]  =  1; }
+if (vs.nMinus >= 0) { A[row][vs.nMinus] = -1; A[vs.nMinus][row] = -1; }
+b[row] = vs.V;
+});
+for (var gj = 0; gj < M; gj++) A[gnd][gj] = 0;
+A[gnd][gnd] = 1; b[gnd] = 0;
+var x = gaussElim(A, b, M);
+if (!x) return null;
+var voltages = {};
+for (var vk in remap) {
+var ni2 = compact[remap[vk]];
+if (ni2 !== undefined && ni2 < N) voltages[vk] = x[ni2];
+}
+// Resolve open-circuit terminals
+function resolveTerminal(gx, gy) {
+var key = gx + ',' + gy;
+if (voltages[key] !== undefined) return;
+var candidates = [];
+for (var wi = 0; wi < components.length; wi++) {
+var w = components[wi]; if (w.type !== 'wire') continue;
+var wt = getActualTerminals(w);
+var wx1=wt[0].gx, wy1=wt[0].gy, wx2=wt[1].gx, wy2=wt[1].gy;
+var onH = (wy1===wy2)&&(wy1===gy)&&(Math.min(wx1,wx2)<=gx)&&(gx<=Math.max(wx1,wx2));
+var onV = (wx1===wx2)&&(wx1===gx)&&(Math.min(wy1,wy2)<=gy)&&(gy<=Math.max(wy1,wy2));
+if (onH||onV) {
+var k0=wx1+','+wy1, k1=wx2+','+wy2;
+var v = voltages[k0]!==undefined ? voltages[k0] : voltages[k1];
+if (v !== undefined) candidates.push(v);
+}
+}
+if (candidates.length === 1) { voltages[key] = candidates[0]; return; }
+if (candidates.length > 1) {
+candidates.sort(function(a,b) { return Math.abs(b)-Math.abs(a); });
+voltages[key] = candidates[0]; return;
+}
+var best = null, bestDist = Infinity;
+for (var nk in voltages) {
+var parts = nk.split(','), nx = +parts[0], ny = +parts[1];
+var d = Math.abs(nx-gx)+Math.abs(ny-gy);
+if (d < bestDist) { bestDist = d; best = nk; }
+}
+if (best && bestDist <= 1) voltages[key] = voltages[best];
+}
+for (var rci = 0; rci < components.length; rci++) {
+var rc = components[rci];
+if (!OPEN_CIRCUIT[rc.type]) continue;
+var rct = getActualTerminals(rc);
+for (var rj = 0; rj < rct.length; rj++) resolveTerminal(rct[rj].gx, rct[rj].gy);
+}
+// Branch currents
+var currents = {};
+vsrcs.forEach(function(vs, k) { currents[vs.compId] = x[N + k]; });
+for (var bci = 0; bci < components.length; bci++) {
+var bc = components[bci];
+if (bc.type === 'resistor') {
+var bt = getActualTerminals(bc);
+var bv0 = voltages[bt[0].gx+','+bt[0].gy] || 0;
+var bv1 = voltages[bt[1].gx+','+bt[1].gy] || 0;
+currents[bc.id] = (bv0-bv1) / Math.max(bc.props.R||1000, 1e-9);
+}
+}
+/* ────────────────────────────────────────────────────────────
+ WIRE CURRENT PROPAGATION
+ ────────────────────────────────────────────────────────────
+ The MNA solve gives us currents through non-wire components
+ (resistors, batteries, inductors, ammeters). Wires in between
+ carry whatever current flows through the chain they're part of,
+ but that current isn't known directly. We need to propagate.
+ Approach:
+- Treat each wire as a graph edge between its two endpoints.
+- Treat non-wire non-open components as "injectors" that drive
+ current into one endpoint and pull from the other.
+- At every grid point, Kirchhoff's Current Law says:
+sum of currents flowing INTO this point = 0
+ So once we know all but one incident current at a point,
+ we can solve for the unknown.
+- We iterate: while any wire has unknown current but is
+ incident to a point where all OTHER incident currents are
+ known, solve for it. Repeat until stable.
+ We also need a direction convention per wire so the animation
+ can flow the right way. We store currents[wireId] as a SIGNED
+ value, positive meaning "flowing from _t0 toward _t1".
+──────────────────────────────────────────────────────────── */
+// Build incidence: for each grid key, list of {compId, terminalIdx, isWire, isOpen}
+var incidence = {};
+function addInc(key, rec) {
+if (!incidence[key]) incidence[key] = [];
+incidence[key].push(rec);
+}
+for (var pci = 0; pci < components.length; pci++) {
+var pc = components[pci];
+if (pc.type === 'ground' || pc.type === 'marker') continue;
+var pt = getActualTerminals(pc);
+var isOpen = !!OPEN_CIRCUIT[pc.type];
+var isSwOpen = (pc.type === 'switch' && !pc.props.closed);
+for (var pj = 0; pj < pt.length; pj++) {
+addInc(pt[pj].gx + ',' + pt[pj].gy, {
+compId: pc.id,
+type: pc.type,
+terminalIdx: pj,
+isWire: pc.type === 'wire',
+isOpen: isOpen || isSwOpen
+});
+}
+}
+// Known currents: map compId -> signed current (from terminal 0 to terminal 1)
+var signedCurrent = {};
+for (var scci = 0; scci < components.length; scci++) {
+var scc = components[scci];
+if (scc.type === 'wire') continue;
+if (OPEN_CIRCUIT[scc.type]) continue;
+if (scc.type === 'ground' || scc.type === 'marker') continue;
+if (scc.type === 'switch' && !scc.props.closed) continue;
+if (currents[scc.id] !== undefined && isFinite(currents[scc.id])) {
+// For batteries/AC sources the MNA current is INTO nPlus (terminal 1)
+// through the source, so we flip it to the t0 → t1 convention.
+if (scc.type === 'battery' || scc.type === 'acsource') {
+signedCurrent[scc.id] = -currents[scc.id];
+} else {
+signedCurrent[scc.id] = currents[scc.id];
+}
+}
+}
+// Iterative KCL propagation
+var MAX_ITER = components.length * 4 + 10;
+for (var iter = 0; iter < MAX_ITER; iter++) {
+var progress = false;
+for (var pk in incidence) {
+var incs = incidence[pk];
+var unknowns = [];
+var knownSum = 0;
+for (var iI = 0; iI < incs.length; iI++) {
+var rec = incs[iI];
+if (rec.isOpen) continue; // ideal voltmeter/scope/capacitor/open switch carry no current
+var curr = signedCurrent[rec.compId];
+if (curr === undefined || !isFinite(curr)) {
+unknowns.push(rec);
+} else {
+var into = (rec.terminalIdx === 0) ? -curr : curr;
+knownSum += into;
+}
+}
+if (unknowns.length === 1 && unknowns[0].isWire) {
+var u = unknowns[0];
+var unknownInto = -knownSum;
+var sc = (u.terminalIdx === 0) ? -unknownInto : unknownInto;
+signedCurrent[u.compId] = sc;
+progress = true;
+}
+}
+if (!progress) break;
+}
+for (var wwi2 = 0; wwi2 < components.length; wwi2++) {
+var ww2 = components[wwi2];
+if (ww2.type !== 'wire' && ww2.type !== 'switch') continue;
+if (ww2.type === 'switch' && !ww2.props.closed) { currents[ww2.id] = 0; continue; }
+if (signedCurrent[ww2.id] !== undefined) {
+currents[ww2.id] = signedCurrent[ww2.id];
+} else if (currents[ww2.id] === undefined) {
+currents[ww2.id] = 0;
+}
+}
+/* VOLTAGE PROPAGATION FOR SHADING: any wire endpoint that coincides
+ with another point having a known voltage adopts that voltage. */
+var vProgress = true, vIter = 0;
+while (vProgress && vIter < 20) {
+vProgress = false; vIter++;
+for (var vpi = 0; vpi < components.length; vpi++) {
+var vpc = components[vpi];
+if (vpc.type !== 'wire') continue;
+var vpt = getActualTerminals(vpc);
+var vk0 = vpt[0].gx + ',' + vpt[0].gy;
+var vk1 = vpt[1].gx + ',' + vpt[1].gy;
+var vv0 = voltages[vk0], vv1 = voltages[vk1];
+if (vv0 !== undefined && vv1 === undefined) { voltages[vk1] = vv0; vProgress = true; }
+else if (vv1 !== undefined && vv0 === undefined) { voltages[vk0] = vv1; vProgress = true; }
+}
+}
+return { voltages: voltages, currents: currents };
+}
+/* ────────────────────────────────────────────────────────────
+AC phasor MNA solve at angular frequency omega (rad/s).
+Returns { voltages, currents } where every entry is a COMPLEX
+phasor {re, im} representing the peak amplitude and phase of the
+sinusoidal steady-state signal (v(t) = Re{phasor · e^(jωt)}).
+ - Batteries are shorts (V_AC = 0).
+ - AC sources provide their peak voltage as a real phasor.
+ - Resistors 1/R, capacitors jωC, inductors 1/(jωL).
+ - Voltmeters and scope probes are open (infinite impedance).
+ - Ammeters are V=0 voltage sources.
+──────────────────────────────────────────────────────────── */
+function solveACMNA(omega) {
+var hasAC = components.some(function(c) { return c.type === 'acsource'; });
+if (!hasAC || !(omega > 0)) return null;
+var nodeMap = {}, nodeCount = 0;
+function nodeId(gx, gy) {
+var key = gx + ',' + gy;
+if (!(key in nodeMap)) nodeMap[key] = nodeCount++;
+return nodeMap[key];
+}
+for (var gi = 0; gi < components.length; gi++) {
+var gc = components[gi];
+if (gc.type === 'ground') {
+var gt = getActualTerminals(gc)[0];
+var gkey = gt.gx + ',' + gt.gy;
+if (!(gkey in nodeMap)) { nodeMap[gkey] = 0; if (nodeCount === 0) nodeCount = 1; }
+}
+}
+var OPEN_CIRCUIT = { voltmeter: true, scope: true };
+for (var oi = 0; oi < components.length; oi++) {
+var oc = components[oi];
+if (OPEN_CIRCUIT[oc.type]) continue;
+var ot2 = getActualTerminals(oc);
+for (var oj = 0; oj < ot2.length; oj++) nodeId(ot2[oj].gx, ot2[oj].gy);
+}
+var parent = [];
+for (var pi = 0; pi < nodeCount; pi++) parent[pi] = pi;
+function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+function union(a, b) {
+a = find(a); b = find(b); if (a === b) return;
+if (b === 0) parent[a] = b; else parent[b] = a;
+}
+for (var ui = 0; ui < components.length; ui++) {
+var uc = components[ui];
+if (uc.type === 'wire' || (uc.type === 'switch' && uc.props.closed)) {
+var ut = getActualTerminals(uc);
+union(nodeId(ut[0].gx, ut[0].gy), nodeId(ut[1].gx, ut[1].gy));
+}
+}
+var remap = {};
+for (var rk in nodeMap) remap[rk] = find(nodeMap[rk]);
+var roots = [], rootSet = {};
+for (var rvk in remap) { if (!rootSet[remap[rvk]]) { rootSet[remap[rvk]] = true; roots.push(remap[rvk]); } }
+roots.sort(function(a,b) { return a-b; });
+var compact = {};
+roots.forEach(function(r, i) { compact[r] = i; });
+var N = roots.length;
+function getNode(gx, gy) {
+var key = gx + ',' + gy;
+if (!(key in remap)) return -1;
+return compact[remap[key]] !== undefined ? compact[remap[key]] : -1;
+}
+var gnd = compact[find(0)] !== undefined ? compact[find(0)] : 0;
+var Y = new Array(N), vsrcs = [];
+for (var i = 0; i < N; i++) {
+Y[i] = new Array(N);
+for (var j = 0; j < N; j++) Y[i][j] = cMake(0, 0);
+}
+function addY(n0, n1, y) {
+if (n0 >= 0) Y[n0][n0] = cAdd(Y[n0][n0], y);
+if (n1 >= 0) Y[n1][n1] = cAdd(Y[n1][n1], y);
+if (n0 >= 0 && n1 >= 0) {
+Y[n0][n1] = cSub(Y[n0][n1], y);
+Y[n1][n0] = cSub(Y[n1][n0], y);
+}
+}
+for (var ci = 0; ci < components.length; ci++) {
+var c = components[ci];
+var terms2 = getActualTerminals(c);
+if (c.type === 'resistor') {
+var R = Math.max(c.props.R || 1000, 1e-9);
+addY(getNode(terms2[0].gx, terms2[0].gy), getNode(terms2[1].gx, terms2[1].gy), cMake(1/R, 0));
+}
+if (c.type === 'capacitor') {
+var C = Math.max(c.props.C || 1e-6, 1e-18);
+addY(getNode(terms2[0].gx, terms2[0].gy), getNode(terms2[1].gx, terms2[1].gy), cMake(0, omega * C));
+}
+if (c.type === 'inductor') {
+var L = Math.max(c.props.L || 1e-3, 1e-18);
+addY(getNode(terms2[0].gx, terms2[0].gy), getNode(terms2[1].gx, terms2[1].gy), cMake(0, -1/(omega * L)));
+}
+if (c.type === 'battery') {
+var bn0 = getNode(terms2[0].gx, terms2[0].gy);
+var bn1 = getNode(terms2[1].gx, terms2[1].gy);
+if (bn0 >= 0 && bn1 >= 0)
+vsrcs.push({ nPlus: bn1, nMinus: bn0, V: cMake(0, 0), compId: c.id });
+}
+if (c.type === 'acsource') {
+var acn0 = getNode(terms2[0].gx, terms2[0].gy);
+var acn1 = getNode(terms2[1].gx, terms2[1].gy);
+if (acn0 >= 0 && acn1 >= 0)
+vsrcs.push({ nPlus: acn1, nMinus: acn0, V: cMake(c.props.Vpeak || 10, 0), compId: c.id });
+}
+if (c.type === 'ammeter') {
+var an0 = getNode(terms2[0].gx, terms2[0].gy);
+var an1 = getNode(terms2[1].gx, terms2[1].gy);
+if (an0 >= 0 && an1 >= 0 && an0 !== an1)
+vsrcs.push({ nPlus: an0, nMinus: an1, V: cMake(0, 0), compId: c.id });
+}
+}
+var M = N + vsrcs.length;
+var A = new Array(M);
+for (var ai = 0; ai < M; ai++) {
+A[ai] = new Array(M);
+for (var aj = 0; aj < M; aj++) A[ai][aj] = cMake(0, 0);
+}
+var bv = new Array(M);
+for (var bi = 0; bi < M; bi++) bv[bi] = cMake(0, 0);
+for (var ii = 0; ii < N; ii++) for (var jj = 0; jj < N; jj++) A[ii][jj] = Y[ii][jj];
+vsrcs.forEach(function(vs, k) {
+var row = N + k;
+if (vs.nPlus  >= 0) { A[row][vs.nPlus]  = cMake( 1, 0); A[vs.nPlus][row]  = cMake( 1, 0); }
+if (vs.nMinus >= 0) { A[row][vs.nMinus] = cMake(-1, 0); A[vs.nMinus][row] = cMake(-1, 0); }
+bv[row] = vs.V;
+});
+for (var gj = 0; gj < M; gj++) A[gnd][gj] = cMake(0, 0);
+A[gnd][gnd] = cMake(1, 0);
+bv[gnd] = cMake(0, 0);
+var x = complexGaussElim(A, bv, M);
+if (!x) return null;
+var voltages = {};
+for (var vk in remap) {
+var ni2 = compact[remap[vk]];
+if (ni2 !== undefined && ni2 < N) voltages[vk] = { re: x[ni2].re, im: x[ni2].im };
+}
+var currents = {};
+vsrcs.forEach(function(vs, k) { currents[vs.compId] = { re: x[N + k].re, im: x[N + k].im }; });
+for (var bci = 0; bci < components.length; bci++) {
+var bc = components[bci];
+if (bc.type !== 'resistor' && bc.type !== 'capacitor' && bc.type !== 'inductor') continue;
+var bt = getActualTerminals(bc);
+if (bt.length < 2) continue;
+var bv0 = voltages[bt[0].gx+','+bt[0].gy] || cMake(0, 0);
+var bv1 = voltages[bt[1].gx+','+bt[1].gy] || cMake(0, 0);
+if (bc.type === 'resistor') {
+var R2 = Math.max(bc.props.R || 1000, 1e-9);
+currents[bc.id] = cDiv(cSub(bv0, bv1), cMake(R2, 0));
+}
+if (bc.type === 'capacitor') {
+var C2 = Math.max(bc.props.C || 1e-6, 1e-18);
+currents[bc.id] = cMul(cSub(bv0, bv1), cMake(0, omega * C2));
+}
+if (bc.type === 'inductor') {
+var L2 = Math.max(bc.props.L || 1e-3, 1e-18);
+currents[bc.id] = cMul(cSub(bv0, bv1), cMake(0, -1/(omega * L2)));
+}
+}
+// Resolve voltmeter / scope-probe terminals for display (they're open-circuit)
+function resolveTerminal(gx, gy) {
+var key = gx + ',' + gy;
+if (voltages[key] !== undefined) return;
+for (var wi = 0; wi < components.length; wi++) {
+var w = components[wi]; if (w.type !== 'wire') continue;
+var wt = getActualTerminals(w);
+var wx1=wt[0].gx, wy1=wt[0].gy, wx2=wt[1].gx, wy2=wt[1].gy;
+var onH = (wy1===wy2)&&(wy1===gy)&&(Math.min(wx1,wx2)<=gx)&&(gx<=Math.max(wx1,wx2));
+var onV = (wx1===wx2)&&(wx1===gx)&&(Math.min(wy1,wy2)<=gy)&&(gy<=Math.max(wy1,wy2));
+if (onH || onV) {
+var k0 = wx1+','+wy1, k1 = wx2+','+wy2;
+var v = voltages[k0] !== undefined ? voltages[k0] : voltages[k1];
+if (v !== undefined) { voltages[key] = { re: v.re, im: v.im }; return; }
+}
+}
+}
+for (var rci = 0; rci < components.length; rci++) {
+var rc = components[rci];
+if (!OPEN_CIRCUIT[rc.type]) continue;
+var rct = getActualTerminals(rc);
+for (var rj = 0; rj < rct.length; rj++) resolveTerminal(rct[rj].gx, rct[rj].gy);
+}
+/* Wire current propagation in COMPLEX phasor space (same KCL algorithm as DC). */
+var incidence = {};
+function addInc(key, rec) { (incidence[key] = incidence[key] || []).push(rec); }
+for (var pci = 0; pci < components.length; pci++) {
+var pc = components[pci];
+if (pc.type === 'ground' || pc.type === 'marker') continue;
+var pt = getActualTerminals(pc);
+var isOpen = !!OPEN_CIRCUIT[pc.type] || (pc.type === 'switch' && !pc.props.closed);
+for (var pj = 0; pj < pt.length; pj++) {
+addInc(pt[pj].gx + ',' + pt[pj].gy, {
+compId: pc.id, type: pc.type, terminalIdx: pj,
+isWire: pc.type === 'wire', isOpen: isOpen
+});
+}
+}
+var signedCurrent = {};
+for (var scci = 0; scci < components.length; scci++) {
+var scc = components[scci];
+if (scc.type === 'wire' || scc.type === 'ground' || scc.type === 'marker') continue;
+if (OPEN_CIRCUIT[scc.type]) continue;
+if (scc.type === 'switch' && !scc.props.closed) continue;
+var cc = currents[scc.id];
+if (cc !== undefined) {
+if (scc.type === 'battery' || scc.type === 'acsource') signedCurrent[scc.id] = cNeg(cc);
+else signedCurrent[scc.id] = { re: cc.re, im: cc.im };
+}
+}
+var MAX_ITER = components.length * 4 + 10;
+for (var iter = 0; iter < MAX_ITER; iter++) {
+var progress = false;
+for (var pk in incidence) {
+var incs = incidence[pk];
+var unknowns = [];
+var knownSum = cMake(0, 0);
+for (var iI = 0; iI < incs.length; iI++) {
+var rec = incs[iI];
+if (rec.isOpen) continue;
+var curr = signedCurrent[rec.compId];
+if (curr === undefined) unknowns.push(rec);
+else knownSum = cAdd(knownSum, (rec.terminalIdx === 0) ? cNeg(curr) : curr);
+}
+if (unknowns.length === 1 && unknowns[0].isWire) {
+var u = unknowns[0];
+var unknownInto = cNeg(knownSum);
+signedCurrent[u.compId] = (u.terminalIdx === 0) ? cNeg(unknownInto) : unknownInto;
+progress = true;
+}
+}
+if (!progress) break;
+}
+for (var wwi2 = 0; wwi2 < components.length; wwi2++) {
+var ww2 = components[wwi2];
+if (ww2.type !== 'wire' && ww2.type !== 'switch') continue;
+if (ww2.type === 'switch' && !ww2.props.closed) { currents[ww2.id] = cMake(0, 0); continue; }
+if (signedCurrent[ww2.id] !== undefined) currents[ww2.id] = signedCurrent[ww2.id];
+else if (currents[ww2.id] === undefined) currents[ww2.id] = cMake(0, 0);
+}
+var vProgress = true, vIter = 0;
+while (vProgress && vIter < 20) {
+vProgress = false; vIter++;
+for (var vpi = 0; vpi < components.length; vpi++) {
+var vpc = components[vpi];
+if (vpc.type !== 'wire') continue;
+var vpt = getActualTerminals(vpc);
+var vk0 = vpt[0].gx + ',' + vpt[0].gy;
+var vk1 = vpt[1].gx + ',' + vpt[1].gy;
+if (voltages[vk0] !== undefined && voltages[vk1] === undefined) {
+voltages[vk1] = { re: voltages[vk0].re, im: voltages[vk0].im }; vProgress = true;
+} else if (voltages[vk1] !== undefined && voltages[vk0] === undefined) {
+voltages[vk0] = { re: voltages[vk1].re, im: voltages[vk1].im }; vProgress = true;
+}
+}
+}
+return { voltages: voltages, currents: currents };
+}
+function getVoltageAt(gx, gy, simRes) {
+if (!simRes) return undefined;
+return simRes.voltages[gx + ',' + gy];
+}
+function gaussElim(A, b, n) {
+var a = A.map(function(r) { var c = new Float64Array(n); for (var _i=0;_i<n;_i++) c[_i]=r[_i]; return c; });
+var x = new Float64Array(n); for (var _i=0;_i<n;_i++) x[_i]=b[_i];
+for (var col = 0; col < n; col++) {
+var maxRow = col;
+for (var row = col+1; row < n; row++) if (Math.abs(a[row][col]) > Math.abs(a[maxRow][col])) maxRow = row;
+var tmp = a[col]; a[col] = a[maxRow]; a[maxRow] = tmp;
+var tx = x[col]; x[col] = x[maxRow]; x[maxRow] = tx;
+if (Math.abs(a[col][col]) < 1e-12) continue;
+for (var row2 = col+1; row2 < n; row2++) {
+var f = a[row2][col] / a[col][col];
+for (var k = col; k < n; k++) a[row2][k] -= f * a[col][k];
+x[row2] -= f * x[col];
+}
+}
+var result = new Float64Array(n);
+for (var bi = n-1; bi >= 0; bi--) {
+var s = x[bi];
+for (var bj = bi+1; bj < n; bj++) s -= a[bi][bj] * result[bj];
+result[bi] = Math.abs(a[bi][bi]) > 1e-12 ? s / a[bi][bi] : 0;
+}
+return result;
+}
+/* ── Complex number helpers ({re, im}, no mutation) ── */
+function cMake(re, im) { return { re: re, im: im || 0 }; }
+function cAdd(a, b) { return { re: a.re + b.re, im: a.im + b.im }; }
+function cSub(a, b) { return { re: a.re - b.re, im: a.im - b.im }; }
+function cMul(a, b) { return { re: a.re*b.re - a.im*b.im, im: a.re*b.im + a.im*b.re }; }
+function cDiv(a, b) {
+var d = b.re*b.re + b.im*b.im;
+if (d < 1e-30) return { re: 0, im: 0 };
+return { re: (a.re*b.re + a.im*b.im) / d, im: (a.im*b.re - a.re*b.im) / d };
+}
+function cNeg(a) { return { re: -a.re, im: -a.im }; }
+function cAbs(a) { return Math.sqrt(a.re*a.re + a.im*a.im); }
+function cArg(a) { return Math.atan2(a.im, a.re); }   // radians, -pi..pi
+function complexGaussElim(A, b, n) {
+var a = new Array(n);
+for (var i = 0; i < n; i++) {
+a[i] = new Array(n);
+for (var j = 0; j < n; j++) a[i][j] = { re: A[i][j].re, im: A[i][j].im };
+}
+var x = new Array(n);
+for (var _i = 0; _i < n; _i++) x[_i] = { re: b[_i].re, im: b[_i].im };
+for (var col = 0; col < n; col++) {
+var maxRow = col, maxMag = cAbs(a[col][col]);
+for (var row = col+1; row < n; row++) {
+var m = cAbs(a[row][col]);
+if (m > maxMag) { maxMag = m; maxRow = row; }
+}
+var tmp = a[col]; a[col] = a[maxRow]; a[maxRow] = tmp;
+var tx = x[col]; x[col] = x[maxRow]; x[maxRow] = tx;
+if (cAbs(a[col][col]) < 1e-12) continue;
+for (var row2 = col+1; row2 < n; row2++) {
+var f = cDiv(a[row2][col], a[col][col]);
+for (var k = col; k < n; k++) a[row2][k] = cSub(a[row2][k], cMul(f, a[col][k]));
+x[row2] = cSub(x[row2], cMul(f, x[col]));
+}
+}
+var result = new Array(n);
+for (var bi = n-1; bi >= 0; bi--) {
+var s = { re: x[bi].re, im: x[bi].im };
+for (var bj = bi+1; bj < n; bj++) s = cSub(s, cMul(a[bi][bj], result[bj]));
+result[bi] = cAbs(a[bi][bi]) > 1e-12 ? cDiv(s, a[bi][bi]) : { re: 0, im: 0 };
+}
+return result;
+}
+function fmtR(r) { if (r>=1e6) return (r/1e6).toFixed(1)+'M\u03a9'; if (r>=1e3) return (r/1e3).toFixed(1)+'k\u03a9'; return r+'\u03a9'; }
+function fmtI(i) { if (i===undefined) return '?'; var a=Math.abs(i); if(a<1e-6) return (i*1e9).toFixed(2)+'nA'; if(a<1e-3) return (i*1e6).toFixed(2)+'\u03bcA'; if(a<1) return (i*1e3).toFixed(2)+'mA'; return i.toFixed(4)+'A'; }
+function fmtV(v) { if(v===undefined||!isFinite(v)) return '?'; var a=Math.abs(v); if(a<0.001) return (v*1000).toFixed(1)+'mV'; if(a<1) return (v*1000).toFixed(2)+'mV'; return v.toFixed(3)+'V'; }
+/* Engineering format with SI prefix and 3 significant figures, e.g. 16.7 ms */
+var SI_PREFIX = [[1e9,'G'],[1e6,'M'],[1e3,'k'],[1,''],[1e-3,'m'],[1e-6,'\u03bc'],[1e-9,'n'],[1e-12,'p']];
+function fmtEng(v, unit) {
+if (v === undefined || !isFinite(v)) return '\u2014';
+var a = Math.abs(v);
+if (a < 1e-12) return '0 ' + unit;
+for (var i = 0; i < SI_PREFIX.length; i++) {
+if (a >= SI_PREFIX[i][0] * 0.9995) return (v / SI_PREFIX[i][0]).toPrecision(3) + ' ' + SI_PREFIX[i][1] + unit;
+}
+return (v / 1e-12).toPrecision(3) + ' p' + unit;
+}
+/* Short label for knob settings, e.g. 5 ms, 200 mV (no trailing zeros) */
+function fmtKnob(v, unit) {
+for (var i = 0; i < SI_PREFIX.length; i++) {
+if (v >= SI_PREFIX[i][0] * 0.9995) return parseFloat((v / SI_PREFIX[i][0]).toPrecision(3)) + ' ' + SI_PREFIX[i][1] + unit;
+}
+return v + ' ' + unit;
+}
+function getAmmeterCurrent(c) {
+if (!simResults) return undefined;
+var i = simResults.currents[c.id];
+return (i !== undefined && isFinite(i)) ? i : undefined;
+}
+/* ── Readings panel ── */
+var TYPE_LABEL = {
+wire: 'Wire', resistor: 'Resistor', capacitor: 'Capacitor',
+inductor: 'Inductor', battery: 'Battery', acsource: 'AC Source',
+'switch': 'Switch', voltmeter: 'Voltmeter', ammeter: 'Ammeter',
+scope: 'Scope probe', ground: 'Ground', marker: 'Node marker'
+};
+function acVoltageAt(gx, gy) {
+if (!simResults || !simResults.ac) return undefined;
+return simResults.ac.voltages[gx + ',' + gy];
+}
+function acCurrentOf(id) {
+if (!simResults || !simResults.ac) return undefined;
+return simResults.ac.currents[id];
+}
+/* AC phasor of the voltage across a two-terminal component (V_t1 − V_t0) */
+function acAcrossOf(c) {
+var ac = simResults && simResults.ac;
+if (!ac) return undefined;
+var t = getActualTerminals(c);
+if (t.length < 2) return undefined;
+var p0 = ac.voltages[t[0].gx + ',' + t[0].gy];
+var p1 = ac.voltages[t[1].gx + ',' + t[1].gy];
+if (!p0 || !p1) return undefined;
+return cSub(p1, p0);
+}
+var SQRT2 = Math.SQRT2;
+function rmsOfPhasor(p) { return p ? cAbs(p) / SQRT2 : 0; }
+function trueRMS(vDC, acPhasor) {
+var dc = (vDC !== undefined && isFinite(vDC)) ? vDC : 0;
+var acRMS = acPhasor ? cAbs(acPhasor) / SQRT2 : 0;
+return Math.sqrt(dc * dc + acRMS * acRMS);
+}
+function fmtPhase(rad) {
+if (rad === undefined || !isFinite(rad)) return '?';
+var deg = rad * 180 / Math.PI;
+return (deg >= 0 ? '+' : '') + deg.toFixed(1) + '\u00b0';
+}
+function terminalVoltages(c) {
+var t = getActualTerminals(c);
+if (t.length < 2) {
+var vs = simResults ? getVoltageAt(t[0].gx, t[0].gy, simResults) : undefined;
+return { v0: vs, v1: undefined, val: undefined };
+}
+var v0 = simResults ? getVoltageAt(t[0].gx, t[0].gy, simResults) : undefined;
+var v1 = simResults ? getVoltageAt(t[1].gx, t[1].gy, simResults) : undefined;
+var val = (v0 !== undefined && v1 !== undefined) ? Math.abs(v1 - v0) : undefined;
+return { v0: v0, v1: v1, val: val };
+}
+function readingsFor(comp) {
+if (!comp) {
+return {
+html: '<span style="color:var(--cs-text2)">Click a component,<br>or use \u2190/\u2192 keys,<br>to see its readings.</span>',
+prose: 'No component selected. Use left and right arrow keys to step through components.'
+};
+}
+var label = TYPE_LABEL[comp.type] || comp.type;
+var simMsg = simResults
+? ''
+: '<div style="color:var(--cs-text2);margin-top:4px">Press RUN to see live values.</div>';
+var simMsgProse = simResults ? '' : ' Simulation not run yet.';
+var html = '<div style="font-family:var(--cs-mono);color:var(--cs-accent);font-size:11px;margin-bottom:5px">'
++ label + '</div>';
+var prose = label + '. ';
+function row(k, v) {
+html += '<div>' + k + ' = <span>' + v + '</span></div>';
+prose += k + ' equals ' + v + '. ';
+}
+function dimRow(text) {
+html += '<div style="color:var(--cs-text2);font-size:9px;margin-top:2px">' + text + '</div>';
+}
+var omega = getOmega();
+var hasAC = !!(simResults && simResults.ac);
+switch (comp.type) {
+case 'wire': {
+if (simResults) {
+var wi = simResults.currents[comp.id];
+var wac = acCurrentOf(comp.id);
+if (wi !== undefined && isFinite(wi) && Math.abs(wi) > 1e-12) row('I (DC)', fmtI(Math.abs(wi)));
+if (wac && cAbs(wac) > 1e-12) {
+row('I (RMS)', fmtI(rmsOfPhasor(wac)));
+dimRow('phase \u2220 ' + fmtPhase(cArg(wac)));
+}
+if ((wi === undefined || Math.abs(wi) < 1e-12) && (!wac || cAbs(wac) < 1e-12)) row('I', '0');
+} else row('I', '(run sim)');
+break;
+}
+case 'resistor': {
+row('R', fmtR(comp.props.R));
+var rtv = terminalVoltages(comp);
+if (rtv.val !== undefined && rtv.val > 1e-12) row('V (DC)', fmtV(rtv.val));
+var ri = simResults ? simResults.currents[comp.id] : undefined;
+if (ri !== undefined && isFinite(ri) && Math.abs(ri) > 1e-12) row('I (DC)', fmtI(Math.abs(ri)));
+var rAcV = acAcrossOf(comp);
+var rAcI = acCurrentOf(comp.id);
+if (rAcV && cAbs(rAcV) > 1e-12) row('V (RMS)', fmtV(rmsOfPhasor(rAcV)));
+if (rAcI && cAbs(rAcI) > 1e-12) row('I (RMS)', fmtI(rmsOfPhasor(rAcI)));
+break;
+}
+case 'capacitor': {
+var cv = comp.props.C;
+row('C', cv < 1e-3 ? (cv * 1e6).toFixed(2) + ' \u03bcF' : cv + ' F');
+if (hasAC && omega > 0) {
+row('X\u0063', fmtR(1 / (omega * cv)) + ' @ ' + acFrequency + 'Hz');
+} else if (acFrequency === 0) {
+dimRow('At DC, capacitor is open (X\u0063 \u2192 \u221e).');
+}
+var ctv = terminalVoltages(comp);
+if (ctv.val !== undefined && ctv.val > 1e-12) row('V (DC)', fmtV(ctv.val));
+var cAcV = acAcrossOf(comp);
+var cAcI = acCurrentOf(comp.id);
+if (cAcV && cAbs(cAcV) > 1e-12) row('V (RMS)', fmtV(rmsOfPhasor(cAcV)));
+if (cAcI && cAbs(cAcI) > 1e-12) row('I (RMS)', fmtI(rmsOfPhasor(cAcI)));
+break;
+}
+case 'inductor': {
+var lv = comp.props.L;
+row('L', lv < 1 ? (lv * 1e3).toFixed(2) + ' mH' : lv + ' H');
+if (hasAC && omega > 0) row('X\u2097', fmtR(omega * lv) + ' @ ' + acFrequency + 'Hz');
+var li = simResults ? simResults.currents[comp.id] : undefined;
+if (li !== undefined && isFinite(li) && Math.abs(li) > 1e-12) row('I (DC)', fmtI(Math.abs(li)));
+var lAcV = acAcrossOf(comp);
+var lAcI = acCurrentOf(comp.id);
+if (lAcV && cAbs(lAcV) > 1e-12) row('V (RMS)', fmtV(rmsOfPhasor(lAcV)));
+if (lAcI && cAbs(lAcI) > 1e-12) row('I (RMS)', fmtI(rmsOfPhasor(lAcI)));
+break;
+}
+case 'battery': {
+row('V', comp.props.V + ' V (DC, set)');
+var bi = simResults ? simResults.currents[comp.id] : undefined;
+if (bi !== undefined && isFinite(bi)) row('I', fmtI(Math.abs(bi)));
+break;
+}
+case 'acsource': {
+var vp = comp.props.Vpeak || 10;
+row('V peak', vp + ' V');
+row('V RMS', (vp / SQRT2).toFixed(3) + ' V');
+row('f', acFrequency + ' Hz');
+var aci = acCurrentOf(comp.id);
+if (aci && cAbs(aci) > 1e-12) row('I (RMS)', fmtI(rmsOfPhasor(aci)));
+break;
+}
+case 'switch': {
+row('State', comp.props.closed ? 'CLOSED' : 'OPEN');
+if (comp.props.closed && simResults) {
+var si = simResults.currents[comp.id];
+if (si !== undefined && isFinite(si) && Math.abs(si) > 1e-12) row('I (DC)', fmtI(Math.abs(si)));
+var sAc = acCurrentOf(comp.id);
+if (sAc && cAbs(sAc) > 1e-12) row('I (RMS)', fmtI(rmsOfPhasor(sAc)));
+}
+break;
+}
+case 'voltmeter': {
+var vmMode = comp.props.mode || 'rms';
+row('Mode', vmMode === 'rms' ? 'RMS (AC)' : 'Mean (DC)');
+var vtv = terminalVoltages(comp);
+var vAcV = acAcrossOf(comp);
+if (vmMode === 'mean') {
+row('V', vtv.val !== undefined ? fmtV(vtv.val) : (simResults ? '?' : '(run sim)'));
+} else {
+if (simResults) {
+row('V', fmtV(trueRMS(vtv.val, vAcV)));
+if (vAcV && cAbs(vAcV) > 1e-12) dimRow('AC phase \u2220 ' + fmtPhase(cArg(vAcV)));
+} else row('V', '(run sim)');
+}
+break;
+}
+case 'ammeter': {
+var amMode = comp.props.mode || 'rms';
+row('Mode', amMode === 'rms' ? 'RMS (AC)' : 'Mean (DC)');
+var amDc = getAmmeterCurrent(comp);
+var amAc = acCurrentOf(comp.id);
+if (amMode === 'mean') {
+row('I', amDc !== undefined ? fmtI(Math.abs(amDc)) : (simResults ? '?' : '(run sim)'));
+} else {
+if (simResults) {
+row('I', fmtI(trueRMS(amDc, amAc)));
+if (amAc && cAbs(amAc) > 1e-12) dimRow('AC phase \u2220 ' + fmtPhase(cArg(amAc)));
+} else row('I', '(run sim)');
+}
+break;
+}
+case 'scope': {
+var pch = comp.props.ch | 0;
+row('Channel', 'CH' + pch);
+var ps = probeSignal(comp);
+if (ps) {
+if (Math.abs(ps.vdc) > 1e-12) row('V mean', fmtEng(ps.vdc, 'V'));
+if (ps.A > 0) {
+row('V peak (AC)', fmtEng(ps.A, 'V'));
+row('V RMS (AC)', fmtEng(ps.A / SQRT2, 'V'));
+row('f', fmtEng(acFrequency, 'Hz'));
+}
+if (Math.abs(ps.vdc) <= 1e-12 && ps.A === 0) row('V', '0 V');
+if (probeForCh(pch) !== comp) dimRow('Another probe already uses CH' + pch + '; this one is not displayed.');
+}
+break;
+}
+case 'marker': {
+if (comp.props.label) {
+html += '<div style="color:var(--cs-text2);font-size:10px;margin-bottom:3px">Label: ' + comp.props.label + '</div>';
+prose += 'Label ' + comp.props.label + '. ';
+}
+var mtv = terminalVoltages(comp);
+if (mtv.v0 !== undefined) row('V (DC)', fmtV(mtv.v0));
+var mt = getActualTerminals(comp);
+var mAc = mt[0] ? acVoltageAt(mt[0].gx, mt[0].gy) : undefined;
+if (mAc && cAbs(mAc) > 1e-12) {
+row('V (RMS)', fmtV(rmsOfPhasor(mAc)));
+dimRow('phase \u2220 ' + fmtPhase(cArg(mAc)));
+}
+if (mtv.v0 === undefined && !mAc) row('V', simResults ? '?' : '(run sim)');
+break;
+}
+case 'ground': {
+row('V', '0 V (reference)');
+break;
+}
+}
+html += simMsg;
+prose += simMsgProse;
+return { html: html, prose: prose };
+}
+function updateReadout() {
+var e = el('cs_readout');
+var live = el('cs_live');
+var comp = selected !== null
+? components.find(function(c) { return c.id === selected; })
+: null;
+var r = readingsFor(comp);
+if (e) e.innerHTML = r.html;
+if (live) live.textContent = r.prose;
+}
+/* ════════════════════════════════════════════════════════════
+OSCILLOSCOPE
+────────────────────────────────────────────────────────────
+Each scope probe on the canvas is an ideal differential probe
+feeding one channel. Because the simulator solves for the
+sinusoidal steady state, every channel signal is exactly
+v(t) = Vdc + A·cos(ωt + φ)
+where Vdc comes from the DC solve and A, φ from the AC phasor
+(V(+) − V(−)). The screen is drawn from that formula, and the
+automatic measurements are computed from it analytically.
+════════════════════════════════════════════════════════════ */
+function seq125(eMin, eMax, maxVal) {
+var out = [];
+for (var e = eMin; e <= eMax; e++) {
+[1, 2, 5].forEach(function(m) {
+var v = Number((m * Math.pow(10, e)).toPrecision(3));
+if (v <= maxVal) out.push(v);
+});
+}
+return out;
+}
+var TDIVS = seq125(-6, 0, 1);      // 1 µs/div … 1 s/div
+var VDIVS = seq125(-3, 1, 50);     // 1 mV/div … 50 V/div
+var scope = {
+open: true,
+tdiv: 5e-3,
+trigCh: 1, trigSlope: 'rise', trigLevel: 0,
+showMeas: true,
+curMode: 'off', curCh: 1,
+cur: { t1: 0.2, t2: 0.6, v1: 0.3, v2: 0.7 },
+ch: [
+{ on: true, vdiv: 5, pos: 0, cpl: 'dc' },
+{ on: true, vdiv: 5, pos: 0, cpl: 'dc' },
+{ on: true, vdiv: 5, pos: 0, cpl: 'dc' },
+{ on: true, vdiv: 5, pos: 0, cpl: 'dc' }
+]
+};
+var scopeGeo = null;          // graticule geometry from the last draw
+var scopeDrag = null;         // which cursor is being dragged
+var lastFreeT = 0;            // frozen free-run start time when animation stops
+var lastMeasHTML = '', lastStatus = '', lastAria = '';
+function nextFreeChannel() {
+var used = {};
+components.forEach(function(c) { if (c.type === 'scope') used[c.props.ch | 0] = true; });
+for (var n = 1; n <= 4; n++) if (!used[n]) return n;
+return 1;
+}
+/* First probe assigned to channel n (later duplicates are ignored). */
+function probeForCh(n) {
+for (var i = 0; i < components.length; i++) {
+var c = components[i];
+if (c.type === 'scope' && (c.props.ch | 0) === n) return c;
+}
+return null;
+}
+/* Raw differential signal of a probe: {vdc, A, phi}, or null before RUN. */
+function probeSignal(c) {
+if (!simResults) return null;
+var t = getActualTerminals(c);
+var v0 = simResults.voltages[t[0].gx + ',' + t[0].gy];
+var v1 = simResults.voltages[t[1].gx + ',' + t[1].gy];
+var vdc = (v0 !== undefined && v1 !== undefined && isFinite(v1 - v0)) ? (v1 - v0) : 0;
+if (Math.abs(vdc) < 1e-12) vdc = 0;
+var P = acAcrossOf(c);
+var A = P ? cAbs(P) : 0, phi = P ? cArg(P) : 0;
+if (!(A > 1e-12)) { A = 0; phi = 0; }
+return { vdc: vdc, A: A, phi: phi };
+}
+/* Signal as displayed on channel n, after input coupling. */
+function channelSignal(n) {
+var c = probeForCh(n);
+if (!c) return null;
+var s = probeSignal(c);
+if (!s) return { probe: c, s: null };
+var cpl = scope.ch[n - 1].cpl;
+var vdc = s.vdc, A = s.A;
+if (cpl === 'ac')  { vdc = 0; }
+if (cpl === 'gnd') { vdc = 0; A = 0; }
+return { probe: c, s: { vdc: vdc, A: A, phi: s.phi } };
+}
+/* Time (within one period) at which the trigger channel crosses the
+trigger level with the chosen slope, or null if it never does. */
+function triggerTime(sigs, omega) {
+var g = sigs[scope.trigCh - 1];
+if (!g || !g.s || !scope.ch[scope.trigCh - 1].on) return null;
+var s = g.s;
+if (!(omega > 0) || s.A <= 0) return null;
+var x = (scope.trigLevel - s.vdc) / s.A;
+if (x <= -1 || x >= 1) return null;
+var base = Math.acos(x);                       // θ = ωt + φ at the crossing
+var theta = (scope.trigSlope === 'rise') ? -base : base;
+var T = 2 * Math.PI / omega;
+var t = (theta - s.phi) / omega;
+return ((t % T) + T) % T;
+}
+/* ── Layout / sizing ── */
+function sizeScope() {
+if (!scope || !scope.open || !scopeScreen) return;
+var w = scopeScreen.clientWidth, h = scopeScreen.clientHeight;
+if (!w || !h) return;
+var dpr = window.devicePixelRatio || 1;
+sW = w; sH = h;
+scopeCanvas.width = Math.round(w * dpr);
+scopeCanvas.height = Math.round(h * dpr);
+scopeCanvas.style.width = w + 'px';
+scopeCanvas.style.height = h + 'px';
+sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function toggleScope(force) {
+if (!scopeEnabled) return;
+scope.open = (typeof force === 'boolean') ? force : !scope.open;
+narrate(scope.open ? 'Oscilloscope shown.' : 'Oscilloscope hidden.');
+ROOT.classList.toggle('cs_scopeopen', scope.open);
+el('cs_scopebody').style.display = scope.open ? '' : 'none';
+el('cs_scopetoggle').value = scope.open ? '\u25bc HIDE SCOPE' : '\u25b2 SHOW SCOPE';
+resize();
+}
+/* ── Controls ── */
+function optList(values, current, unit) {
+return values.map(function(v) {
+return '<option value="' + v + '"' + (Math.abs(v - current) < v * 1e-6 ? ' selected' : '') + '>'
++ fmtKnob(v, unit) + '/div</option>';
+}).join('');
+}
+function chOpts(current) {
+var s = '';
+for (var n = 1; n <= 4; n++) s += '<option value="' + n + '"' + (n === current ? ' selected' : '') + '>CH' + n + '</option>';
+return s;
+}
+function buildScopeControls() {
+var api = API + '.scopeSet';
+var h = '';
+h += '<div class="cs_scsub">HORIZONTAL &amp; TRIGGER</div>';
+h += '<div class="cs_scrow">'
++ '<label>Time <select aria-label="Time per division" onchange="' + api + '(\'tdiv\',this.value)">' + optList(TDIVS, scope.tdiv, 's') + '</select></label>'
++ '<label>Trig <select aria-label="Trigger source" onchange="' + api + '(\'trigCh\',this.value)">' + chOpts(scope.trigCh) + '</select></label>'
++ '<select aria-label="Trigger slope" onchange="' + api + '(\'trigSlope\',this.value)">'
++ '<option value="rise"' + (scope.trigSlope === 'rise' ? ' selected' : '') + '>\u2191 rising</option>'
++ '<option value="fall"' + (scope.trigSlope === 'fall' ? ' selected' : '') + '>\u2193 falling</option></select>'
++ '<label>Level <input type="text" aria-label="Trigger level in volts" value="' + scope.trigLevel + '" onchange="' + api + '(\'trigLevel\',this.value)"> V</label>'
++ '</div>';
+h += '<div class="cs_scrow">'
++ (CFG.scope.allowAutoSet === false ? '' : '<input type="button" class="cs_scbtn" value="AUTO SET" title="Choose time/div, volts/div and trigger to fit the signals" onclick="' + API + '.scopeAutoSet()">')
++ '<label>Cursors <select aria-label="Cursor mode" onchange="' + api + '(\'curMode\',this.value)">'
++ '<option value="off"' + (scope.curMode === 'off' ? ' selected' : '') + '>off</option>'
++ '<option value="time"' + (scope.curMode === 'time' ? ' selected' : '') + '>time</option>'
++ '<option value="volt"' + (scope.curMode === 'volt' ? ' selected' : '') + '>voltage</option></select></label>'
++ '<select aria-label="Voltage cursor channel" title="Channel the voltage cursors read" onchange="' + api + '(\'curCh\',this.value)">' + chOpts(scope.curCh) + '</select>'
++ (CFG.scope.lockMeasurements ? '' : '<label><input type="checkbox"' + (scope.showMeas ? ' checked' : '') + ' onchange="' + api + '(\'showMeas\',this.checked)"> Measurements</label>')
++ '</div>';
+h += '<div class="cs_scsub">CHANNELS</div>';
+h += '<table class="cs_sctable"><thead><tr><th>Ch</th><th>On</th><th>Volts/div</th><th title="Vertical position of the 0 V line, in divisions">Pos (div)</th><th>Coupling</th></tr></thead><tbody>';
+for (var n = 1; n <= 4; n++) {
+var c = scope.ch[n - 1];
+h += '<tr><td style="color:' + P.ch[n - 1] + '">' + chSwatch(n) + 'CH' + n + '</td>'
++ '<td><input type="checkbox" aria-label="CH' + n + ' on"' + (c.on ? ' checked' : '') + ' onchange="' + api + '(\'on\',this.checked,' + n + ')"></td>'
++ '<td><select aria-label="CH' + n + ' volts per division" onchange="' + api + '(\'vdiv\',this.value,' + n + ')">' + optList(VDIVS, c.vdiv, 'V') + '</select></td>'
++ '<td><input type="text" aria-label="CH' + n + ' position in divisions" value="' + c.pos + '" onchange="' + api + '(\'pos\',this.value,' + n + ')"></td>'
++ '<td><select aria-label="CH' + n + ' coupling" onchange="' + api + '(\'cpl\',this.value,' + n + ')">'
++ '<option value="dc"' + (c.cpl === 'dc' ? ' selected' : '') + '>DC</option>'
++ '<option value="ac"' + (c.cpl === 'ac' ? ' selected' : '') + '>AC</option>'
++ '<option value="gnd"' + (c.cpl === 'gnd' ? ' selected' : '') + '>GND</option></select></td></tr>';
+}
+h += '</tbody></table>';
+h += '<div class="cs_scsub">MEASUREMENTS</div><div id="cs_scmeas' + Q + '" aria-live="off"></div>';
+el('cs_scopectrl').innerHTML = h;
+lastMeasHTML = '';
+}
+function scopeSet(key, val, n) {
+var c = n ? scope.ch[n - 1] : null;
+switch (key) {
+case 'tdiv':      scope.tdiv = parseFloat(val) || scope.tdiv; break;
+case 'trigCh':    scope.trigCh = parseInt(val, 10) || 1; break;
+case 'trigSlope': scope.trigSlope = (val === 'fall') ? 'fall' : 'rise'; break;
+case 'trigLevel': scope.trigLevel = parseFloat(val) || 0; break;
+case 'showMeas':  if (!CFG.scope.lockMeasurements) scope.showMeas = !!val; break;
+case 'curMode':   scope.curMode = val; break;
+case 'curCh':     scope.curCh = parseInt(val, 10) || 1; break;
+case 'on':        c.on = !!val; break;
+case 'vdiv':      c.vdiv = parseFloat(val) || c.vdiv; break;
+case 'pos':       c.pos = Math.max(-4, Math.min(4, parseFloat(val) || 0)); break;
+case 'cpl':       c.cpl = val; break;
+}
+lastMeasHTML = '';
+drawScope();
+}
+function pickAtLeast(list, target) {
+for (var i = 0; i < list.length; i++) if (list[i] >= target * 0.999) return list[i];
+return list[list.length - 1];
+}
+function scopeAutoSet() {
+if (!simResults) runSim();
+if (!simResults) return;
+var f = acFrequency;
+var firstAC = 0;
+for (var n = 1; n <= 4; n++) {
+var g = channelSignal(n);
+var c = scope.ch[n - 1];
+if (!g) continue;
+c.on = true; c.pos = 0;
+if (c.cpl === 'gnd') c.cpl = 'dc';
+g = channelSignal(n);
+var ext = g.s ? Math.abs(g.s.vdc) + g.s.A : 0;
+c.vdiv = ext > 1e-9 ? pickAtLeast(VDIVS, ext / 3.5) : 1;
+if (!firstAC && g.s && g.s.A > 0) firstAC = n;
+}
+// About 2½ cycles across the 10 horizontal divisions
+scope.tdiv = (firstAC && f > 0) ? pickAtLeast(TDIVS, 2.5 / f / 10) : 1e-3;
+if (firstAC) {
+scope.trigCh = firstAC;
+var ts = channelSignal(firstAC).s;
+scope.trigLevel = Number(ts.vdc.toPrecision(3));   // trigger at the signal's centre line
+}
+buildScopeControls();
+drawScope();
+var parts = [];
+for (var q = 1; q <= 4; q++) if (probeForCh(q)) parts.push('CH' + q + ' ' + fmtKnob(scope.ch[q - 1].vdiv, 'V') + ' per division');
+narrate('Auto set: ' + fmtKnob(scope.tdiv, 's') + ' per division' + (parts.length ? '; ' + parts.join('; ') : '')
++ (firstAC ? '; triggering on CH' + scope.trigCh + ' rising through ' + fmtEng(scope.trigLevel, 'V') : '') + '.');
+}
+/* ── Cursor dragging on the screen ── */
+function scopePointer(e) {
+var r = scopeCanvas.getBoundingClientRect();
+return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+scopeCanvas.addEventListener('pointerdown', function(e) {
+if (!scopeGeo || scope.curMode === 'off') return;
+var p = scopePointer(e), g = scopeGeo;
+var fx = Math.max(0, Math.min(1, (p.x - g.ox) / g.gw));
+var fy = Math.max(0, Math.min(1, (p.y - g.oy) / g.gh));
+if (scope.curMode === 'time') {
+scopeDrag = Math.abs(fx - scope.cur.t1) <= Math.abs(fx - scope.cur.t2) ? 't1' : 't2';
+scope.cur[scopeDrag] = fx;
+} else {
+scopeDrag = Math.abs(fy - scope.cur.v1) <= Math.abs(fy - scope.cur.v2) ? 'v1' : 'v2';
+scope.cur[scopeDrag] = fy;
+}
+scopeCanvas.setPointerCapture(e.pointerId);
+drawScope();
+});
+scopeCanvas.addEventListener('pointermove', function(e) {
+if (!scopeDrag || !scopeGeo) return;
+var p = scopePointer(e), g = scopeGeo;
+if (scopeDrag.charAt(0) === 't') scope.cur[scopeDrag] = Math.max(0, Math.min(1, (p.x - g.ox) / g.gw));
+else scope.cur[scopeDrag] = Math.max(0, Math.min(1, (p.y - g.oy) / g.gh));
+drawScope();
+});
+scopeCanvas.addEventListener('pointerup', function() { scopeDrag = null; });
+scopeCanvas.addEventListener('pointercancel', function() { scopeDrag = null; });
+/* Keyboard control of the cursors (screen focused): 1/2 choose the cursor,
+arrows move it by 1/100 of the screen (Shift: 1/10). The readout is announced. */
+scopeCanvas.setAttribute('tabindex', '0');
+scopeCanvas.addEventListener('keydown', function(e) {
+if (e.key === '1' || e.key === '2') { kbCursor = +e.key; e.preventDefault(); narrate('Cursor ' + kbCursor + ' selected.'); return; }
+if (!/^Arrow/.test(e.key)) return;
+e.preventDefault(); e.stopPropagation();
+if (scope.curMode === 'off') {
+scope.curMode = (e.key === 'ArrowUp' || e.key === 'ArrowDown') ? 'volt' : 'time';
+buildScopeControls();
+}
+var d = (e.shiftKey ? 0.1 : 0.01) * ((e.key === 'ArrowLeft' || e.key === 'ArrowUp') ? -1 : 1);
+var key = (scope.curMode === 'time' ? 't' : 'v') + kbCursor;
+scope.cur[key] = Math.max(0, Math.min(1, scope.cur[key] + d));
+drawScope();
+var live = el('cs_live'); if (live) live.textContent = cursorText;
+});
+/* ── Drawing ── */
+function drawGraticule(g) {
+var c = sctx;
+c.fillStyle = P.scrBg;
+c.fillRect(0, 0, sW, sH);
+c.lineWidth = 1;
+c.strokeStyle = P.grat1;
+c.beginPath();
+for (var i = 0; i <= 10; i++) { var x = g.ox + i * g.div + 0.5; c.moveTo(x, g.oy); c.lineTo(x, g.oy + g.gh); }
+for (var j = 0; j <= 8; j++)  { var y = g.oy + j * g.div + 0.5; c.moveTo(g.ox, y); c.lineTo(g.ox + g.gw, y); }
+c.stroke();
+// Centre axes with minor ticks (5 per division), like a real graticule
+var cx = g.ox + g.gw / 2 + 0.5, cy = g.oy + g.gh / 2 + 0.5;
+c.strokeStyle = P.grat2;
+c.beginPath();
+c.moveTo(g.ox, cy); c.lineTo(g.ox + g.gw, cy);
+c.moveTo(cx, g.oy); c.lineTo(cx, g.oy + g.gh);
+var minor = g.div / 5;
+for (var k = 0; k <= 50; k++) { var tx = g.ox + k * minor + 0.5; c.moveTo(tx, cy - 3); c.lineTo(tx, cy + 3); }
+for (var m = 0; m <= 40; m++) { var ty = g.oy + m * minor + 0.5; c.moveTo(cx - 3, ty); c.lineTo(cx + 3, ty); }
+c.stroke();
+c.strokeStyle = P.grat3;
+c.strokeRect(g.ox + 0.5, g.oy + 0.5, g.gw, g.gh);
+}
+function screenText(lines, x, y, align) {
+var c = sctx;
+c.font = '10px monospace';
+c.textBaseline = 'top';
+var w = 0;
+lines.forEach(function(l) { w = Math.max(w, c.measureText(l.t).width); });
+var bx = align === 'right' ? x - w - 10 : x;
+c.fillStyle = P.scrBox;
+c.fillRect(bx, y, w + 10, lines.length * 13 + 6);
+c.textAlign = 'left';
+lines.forEach(function(l, i) { c.fillStyle = l.c || P.scrText; c.fillText(l.t, bx + 5, y + 4 + i * 13); });
+c.textBaseline = 'alphabetic';
+}
+function drawScope() {
+if (!scope.open || !sW || !sH) return;
+var div = Math.floor(Math.min((sW - 24) / 10, (sH - 16) / 8));
+if (div < 8) return;
+var g = { div: div, gw: div * 10, gh: div * 8 };
+g.ox = Math.floor((sW - g.gw) / 2); g.oy = Math.floor((sH - g.gh) / 2);
+scopeGeo = g;
+drawGraticule(g);
+var c = sctx;
+var status, aria;
+if (!simResults) {
+c.fillStyle = P.scrDim; c.font = '11px monospace'; c.textAlign = 'center';
+var anyProbe = components.some(function(k) { return k.type === 'scope'; });
+c.fillText(anyProbe ? 'Press RUN to see the traces' : 'Place a scope probe across any component, then press RUN',
+g.ox + g.gw / 2, g.oy + g.gh / 2 - 8);
+c.textAlign = 'left';
+status = 'Not running. ' + fmtKnob(scope.tdiv, 's') + '/div'; aria = 'Oscilloscope screen. Simulation not run.';
+setScopeText(status, aria, '<span style="color:var(--cs-text2)">Run the simulation to measure.</span>');
+return;
+}
+var omega = getOmega();
+var f = acFrequency;
+var T = omega > 0 ? 2 * Math.PI / omega : 0;
+var sigs = [1, 2, 3, 4].map(channelSignal);
+var tTrig = triggerTime(sigs, omega);
+var triggered = tTrig !== null;
+var tStart;
+if (triggered) tStart = tTrig;
+else if (T > 0 && simRunning) { tStart = (performance.now() / 1000) * 0.35 * T; lastFreeT = tStart; }
+else tStart = lastFreeT;
+var tSpan = 10 * scope.tdiv;
+var midY = g.oy + g.gh / 2;
+c.save();
+c.beginPath(); c.rect(g.ox, g.oy, g.gw, g.gh); c.clip();
+for (var n = 4; n >= 1; n--) {            // CH1 drawn last so it sits on top
+var sg = sigs[n - 1], st = scope.ch[n - 1];
+if (!sg || !sg.s || !st.on) continue;
+var s = sg.s, col = P.ch[n - 1];
+var y0 = midY - st.pos * div;
+var k = div / st.vdiv;                   // pixels per volt
+c.strokeStyle = col; c.fillStyle = col;
+c.lineWidth = P.traceW; c.shadowColor = col; c.shadowBlur = P.glow;
+c.setLineDash(A11Y.cb ? DASHES[n - 1] : []);
+var cycles = f * tSpan;
+if (s.A > 0 && cycles > g.gw / 3) {
+// Too many cycles to resolve: show the envelope as a filled band,
+// which is what a real scope screen looks like at slow sweeps.
+var yTop = y0 - (s.vdc + s.A) * k, yBot = y0 - (s.vdc - s.A) * k;
+c.globalAlpha = 0.35;
+c.fillRect(g.ox, Math.max(g.oy - 5, yTop), g.gw, Math.min(g.oy + g.gh + 5, yBot) - Math.max(g.oy - 5, yTop));
+c.globalAlpha = 1;
+} else {
+c.beginPath();
+for (var px = 0; px <= g.gw; px++) {
+var t = tStart + (px / g.gw) * tSpan;
+var v = s.vdc + s.A * Math.cos(omega * t + s.phi);
+var y = Math.max(-1e4, Math.min(1e4, y0 - v * k));
+if (px === 0) c.moveTo(g.ox + px, y); else c.lineTo(g.ox + px, y);
+}
+c.stroke();
+}
+c.shadowBlur = 0; c.setLineDash([]);
+}
+c.restore();
+if (lastTrigState !== null && lastTrigState !== triggered && T > 0)
+narrate(triggered ? 'Scope triggered: the trace is now stable.' : 'Scope not triggered: the trace drifts. Check the trigger source and level.');
+lastTrigState = triggered;
+// Channel 0 V markers on the left edge
+for (var m = 1; m <= 4; m++) {
+var sgm = sigs[m - 1], stm = scope.ch[m - 1];
+if (!sgm || !stm.on) continue;
+var ym = midY - stm.pos * div;
+if (ym < g.oy || ym > g.oy + g.gh) continue;
+c.fillStyle = P.ch[m - 1];
+c.beginPath(); c.moveTo(g.ox - 10, ym - 5); c.lineTo(g.ox - 2, ym); c.lineTo(g.ox - 10, ym + 5); c.closePath(); c.fill();
+c.fillStyle = P.scrBg; c.font = 'bold 8px monospace'; c.textAlign = 'center';
+c.fillText(String(m), g.ox - 7.5, ym + 3);
+}
+// Trigger markers: T at the left edge (trigger point), level arrow on the right
+var tsg = sigs[scope.trigCh - 1], tst = scope.ch[scope.trigCh - 1];
+if (tsg && tst.on) {
+var tcol = P.ch[scope.trigCh - 1];
+var yl = midY - tst.pos * div - scope.trigLevel * (div / tst.vdiv);
+if (yl >= g.oy && yl <= g.oy + g.gh) {
+c.fillStyle = tcol;
+c.beginPath(); c.moveTo(g.ox + g.gw + 10, yl - 5); c.lineTo(g.ox + g.gw + 2, yl); c.lineTo(g.ox + g.gw + 10, yl + 5); c.closePath(); c.fill();
+}
+if (triggered) {
+c.fillStyle = tcol;
+c.beginPath(); c.moveTo(g.ox - 5, g.oy - 7); c.lineTo(g.ox + 5, g.oy - 7); c.lineTo(g.ox, g.oy - 1); c.closePath(); c.fill();
+}
+}
+drawCursors(g, tSpan);
+// Status line and screen-reader summary
+var on = [];
+for (var q = 1; q <= 4; q++) if (sigs[q - 1] && scope.ch[q - 1].on) on.push('CH' + q + ' ' + fmtKnob(scope.ch[q - 1].vdiv, 'V') + '/div');
+status = (on.length ? on.join('   ') : 'No probes') + '   |   ' + fmtKnob(scope.tdiv, 's') + '/div   |   '
++ (triggered ? 'Trig\u2019d CH' + scope.trigCh + (scope.trigSlope === 'rise' ? ' \u2191 ' : ' \u2193 ') + fmtEng(scope.trigLevel, 'V')
+: (T > 0 ? 'AUTO: not triggered (check trigger source/level)' : 'DC only'));
+var measHTML = measurementHTML(sigs); aria = 'Oscilloscope. ' + status + '. ' + measText + ' ' + cursorText;
+setScopeText(status, aria, measHTML);
+}
+var cursorText = '', kbCursor = 1;
+function drawCursors(g, tSpan) {
+cursorText = '';
+if (scope.curMode === 'off') return;
+var c = sctx;
+c.save();
+c.setLineDash([5, 4]); c.lineWidth = 1; c.strokeStyle = P.cursor;
+var lines = [];
+if (scope.curMode === 'time') {
+var x1 = g.ox + scope.cur.t1 * g.gw, x2 = g.ox + scope.cur.t2 * g.gw;
+c.beginPath(); c.moveTo(x1, g.oy); c.lineTo(x1, g.oy + g.gh); c.moveTo(x2, g.oy); c.lineTo(x2, g.oy + g.gh); c.stroke();
+var t1 = scope.cur.t1 * tSpan, t2 = scope.cur.t2 * tSpan, dt = Math.abs(t2 - t1);
+lines.push({ t: 't1 = ' + fmtEng(t1, 's') + '   t2 = ' + fmtEng(t2, 's') });
+lines.push({ t: '\u0394t = ' + fmtEng(dt, 's') + '   1/\u0394t = ' + (dt > 0 ? fmtEng(1 / dt, 'Hz') : '\u2014') });
+} else {
+var ch = scope.ch[scope.curCh - 1];
+var y1 = g.oy + scope.cur.v1 * g.gh, y2 = g.oy + scope.cur.v2 * g.gh;
+c.strokeStyle = P.ch[scope.curCh - 1];
+c.beginPath(); c.moveTo(g.ox, y1); c.lineTo(g.ox + g.gw, y1); c.moveTo(g.ox, y2); c.lineTo(g.ox + g.gw, y2); c.stroke();
+var V1 = ((0.5 - scope.cur.v1) * 8 - ch.pos) * ch.vdiv;
+var V2 = ((0.5 - scope.cur.v2) * 8 - ch.pos) * ch.vdiv;
+lines.push({ t: 'CH' + scope.curCh + '  V1 = ' + fmtEng(V1, 'V') + '   V2 = ' + fmtEng(V2, 'V'), c: P.ch[scope.curCh - 1] });
+lines.push({ t: '\u0394V = ' + fmtEng(Math.abs(V1 - V2), 'V') });
+}
+c.restore();
+cursorText = 'Cursors: ' + lines.map(function(l) { return l.t; }).join('; ') + '.';
+lines.push({ t: 'Drag, or focus the screen and use \u2190\u2192\u2191\u2193 (1/2 picks a cursor)', c: P.scrDim });
+screenText(lines, g.ox + 4, g.oy + 4, 'left');
+}
+var measText = '';
+function measurementHTML(sigs) {
+if (!scope.showMeas) {
+measText = 'Measurements hidden.';
+return '<span style="color:var(--cs-text2)">Hidden. Read the values from the grid, or use the cursors.</span>';
+}
+// Phase reference: CH1 if it carries AC, otherwise the first channel that does
+var ref = 0;
+for (var r = 1; r <= 4; r++) {
+var gr = sigs[r - 1];
+if (gr && gr.s && gr.s.A > 0 && scope.ch[r - 1].on) { ref = r; break; }
+}
+var h = '<table class="cs_sctable"><thead><tr>'
++ '<th>Ch</th><th title="Largest |v(t)|">Vpk</th><th>Vpp</th><th title="True RMS (DC + AC)">Vrms</th><th>Mean</th><th>Freq</th>'
++ '<th title="Phase relative to CH' + (ref || 1) + '. Positive means this channel leads.">\u0394\u03c6' + (ref ? ' vs ' + ref : '') + '</th>'
++ '</tr></thead><tbody>';
+measText = '';
+for (var n = 1; n <= 4; n++) {
+var g = sigs[n - 1], col = P.ch[n - 1];
+h += '<tr><td style="color:' + col + '">' + chSwatch(n) + 'CH' + n + '</td>';
+if (!g) { h += '<td class="cs_dim" colspan="6">no probe</td></tr>'; continue; }
+if (!scope.ch[n - 1].on) { h += '<td class="cs_dim" colspan="6">off</td></tr>'; continue; }
+var s = g.s;
+var vpk = Math.abs(s.vdc) + s.A, vpp = 2 * s.A;
+var vrms = Math.sqrt(s.vdc * s.vdc + s.A * s.A / 2);
+var fr = s.A > 0 ? fmtEng(acFrequency, 'Hz') : 'DC';
+var ph = '\u2014';
+if (ref && n === ref) ph = 'ref';
+else if (ref && s.A > 0) {
+var d = (s.phi - sigs[ref - 1].s.phi) * 180 / Math.PI;
+d = ((d + 180) % 360 + 360) % 360 - 180;
+if (Math.abs(d) < 0.05) d = 0;
+ph = (d > 0 ? '+' : '') + d.toFixed(1) + '\u00b0';
+}
+h += '<td>' + fmtEng(vpk, 'V') + '</td><td>' + fmtEng(vpp, 'V') + '</td><td>' + fmtEng(vrms, 'V') + '</td>'
++ '<td>' + fmtEng(s.vdc, 'V') + '</td><td>' + fr + '</td><td>' + ph + '</td></tr>';
+measText += 'Channel ' + n + ': peak ' + fmtEng(vpk, 'V') + ', peak to peak ' + fmtEng(vpp, 'V')
++ ', RMS ' + fmtEng(vrms, 'V') + ', frequency ' + fr + (ph !== '\u2014' && ph !== 'ref' ? ', phase ' + ph : '') + '. ';
+}
+h += '</tbody></table>';
+return h;
+}
+/* Update DOM text only when it actually changes (drawScope runs every frame). */
+function setScopeText(status, aria, measHTML) {
+if (status !== lastStatus) { set('cs_scopestatus', status); lastStatus = status; }
+if (aria !== lastAria) { scopeCanvas.setAttribute('aria-label', aria); lastAria = aria; }
+if (measHTML !== lastMeasHTML) { setHTML('cs_scmeas', measHTML); lastMeasHTML = measHTML; }
+}
+/* ── Animation ── */
+function startAnim() {
+simRunning = true;
+function loop() {
+if (!simRunning) return;
+flowPhase = (flowPhase + 0.025) % 1;
+redraw();
+animFrame = requestAnimationFrame(loop);
+}
+if (animFrame) cancelAnimationFrame(animFrame);
+animFrame = requestAnimationFrame(loop);
+}
+function stopSim(fromUser) {
+if (fromUser === true && simRunning) narrate('Animation stopped. The readings keep their last values.');
+simRunning = false;
+if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+redraw();
+}
+/* ── Rendering ── */
+function redraw() {
+if (W && H) {
+ctx.clearRect(0, 0, W, H);
+drawGrid();
+var showFlow = el('cs_chkflow') && el('cs_chkflow').checked;
+var showVolt = el('cs_chkvolt') && el('cs_chkvolt').checked;
+if (showVolt && simResults) drawVoltageShading();
+for (var i = 0; i < components.length; i++) drawComp(components[i], showFlow);
+drawConnectionPoints();
+drawGhost();
+if (wireStart) drawWireGhost();
+if (kbActive && ghostPos) {
+var kx = fromGrid(ghostPos.gx), ky = fromGrid(ghostPos.gy);
+ctx.strokeStyle = P.sel; ctx.lineWidth = 2;
+ctx.strokeRect(kx - 7, ky - 7, 14, 14);
+ctx.beginPath(); ctx.moveTo(kx - 12, ky); ctx.lineTo(kx + 12, ky); ctx.moveTo(kx, ky - 12); ctx.lineTo(kx, ky + 12); ctx.stroke();
+}
+}
+drawScope();
+}
+function drawGrid() {
+ctx.strokeStyle = P.gridLine; ctx.lineWidth = 0.5;
+for (var x = 0; x < W; x += GRID) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+for (var y = 0; y < H; y += GRID) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+ctx.fillStyle = P.gridDot;
+for (var gx = 0; gx < W; gx += GRID) for (var gy = 0; gy < H; gy += GRID) {
+ctx.beginPath(); ctx.arc(gx, gy, 1, 0, Math.PI*2); ctx.fill();
+}
+}
+function drawVoltageShading() {
+var dcVolt = simResults.voltages || {};
+var acVolt = (simResults.ac && simResults.ac.voltages) || null;
+var nodeV = {};
+for (var k in dcVolt) {
+if (isFinite(dcVolt[k])) nodeV[k] = Math.abs(dcVolt[k]);
+}
+if (acVolt) {
+for (var k2 in acVolt) {
+var ph = acVolt[k2];
+var acRMS = ph ? cAbs(ph) / SQRT2 : 0;
+var dc = (dcVolt[k2] !== undefined && isFinite(dcVolt[k2])) ? dcVolt[k2] : 0;
+nodeV[k2] = Math.sqrt(dc * dc + acRMS * acRMS);
+}
+}
+var vals = [];
+for (var kk in nodeV) vals.push(nodeV[kk]);
+if (!vals.length) return;
+var vmin = Math.min.apply(null, vals), vmax = Math.max.apply(null, vals);
+var range = vmax - vmin || 1;
+for (var vi = 0; vi < components.length; vi++) {
+var vc = components[vi]; if (vc.type !== 'wire') continue;
+var vt2 = getActualTerminals(vc);
+var k0 = vt2[0].gx+','+vt2[0].gy, k1 = vt2[1].gx+','+vt2[1].gy;
+var vv0 = nodeV[k0], vv1 = nodeV[k1];
+if (vv0 === undefined && vv1 === undefined) continue;
+var v = vv0 !== undefined ? vv0 : vv1;
+var t = (v - vmin) / range;
+ctx.strokeStyle = shadeColor(t);
+ctx.lineWidth = 6;
+ctx.beginPath();
+ctx.moveTo(fromGrid(vt2[0].gx), fromGrid(vt2[0].gy));
+ctx.lineTo(fromGrid(vt2[1].gx), fromGrid(vt2[1].gy));
+ctx.stroke();
+}
+}
+var R_HALF = GRID;
+function drawComp(c, showFlow) {
+var sel = (c.id === selected);
+ctx.save();
+ctx.translate(fromGrid(c.gx), fromGrid(c.gy));
+ctx.rotate(c.rot * Math.PI / 2);
+switch (c.type) {
+case 'wire':      drawWireComp(c, sel, showFlow); break;
+case 'resistor':  drawResistor(c, sel); break;
+case 'capacitor': drawCapacitor(c, sel); break;
+case 'inductor':  drawInductor(c, sel); break;
+case 'battery':   drawBatteryComp(c, sel); break;
+case 'acsource':  drawACSource(c, sel); break;
+case 'switch':    drawSwitch(c, sel); break;
+case 'voltmeter': drawMeter(c, sel, 'V'); break;
+case 'ammeter':   drawMeter(c, sel, 'A'); break;
+case 'scope':     drawProbe(c, sel); break;
+case 'ground':    drawGroundComp(c, sel); break;
+case 'marker':    drawMarkerComp(c, sel); break;
+}
+ctx.restore();
+if (sel) {
+ctx.strokeStyle = P.selBox; ctx.lineWidth = 1;
+ctx.setLineDash([4,3]);
+ctx.strokeRect(fromGrid(c.gx)-GRID*2.5, fromGrid(c.gy)-GRID, GRID*5, GRID*2);
+ctx.setLineDash([]);
+}
+}
+function drawWireComp(c, sel, showFlow) {
+ctx.restore(); ctx.save();
+var terms = getActualTerminals(c);
+var x1=fromGrid(terms[0].gx), y1=fromGrid(terms[0].gy);
+var x2=fromGrid(terms[1].gx), y2=fromGrid(terms[1].gy);
+ctx.strokeStyle = sel ? P.sel : P.wire;
+ctx.lineWidth = sel ? 2.5 : 2;
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+if (!showFlow || !simResults || !simRunning) return;
+var dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+if (len < 2) return;
+var isElec = el('cs_flowelec') && el('cs_flowelec').checked;
+var cur = simResults.currents[c.id];
+if (cur !== undefined && Math.abs(cur) > 1e-9) {
+var sign = (cur>0?1:-1) * (isElec?-1:1);
+var speed = Math.min(0.8, Math.max(0.15, Math.log(Math.abs(cur)*1e4+1)/Math.LN10*0.3));
+var dotCount = Math.max(1, Math.floor(len/24));
+ctx.fillStyle = isElec ? P.flowElec : P.flowConv;
+for (var k = 0; k < dotCount; k++) {
+var tp = ((k/dotCount) + flowPhase*sign*speed) % 1;
+if (tp < 0) tp += 1;
+ctx.beginPath(); ctx.arc(x1+dx*tp, y1+dy*tp, 3, 0, Math.PI*2); ctx.fill();
+}
+}
+var acCur = simResults.ac && simResults.ac.currents && simResults.ac.currents[c.id];
+if (acCur && cAbs(acCur) > 1e-9) {
+var acMag = cAbs(acCur);
+var acPhase = cArg(acCur);
+var acSign = (acCur.re >= 0 ? 1 : -1) * (isElec ? -1 : 1);
+var acSpeed = Math.min(0.8, Math.max(0.15, Math.log(acMag*1e4+1)/Math.LN10*0.3));
+var acDotCount = Math.max(1, Math.floor(len/24));
+var pulse = 0.5 + 0.5 * Math.sin(flowPhase*2*Math.PI + acPhase);
+var alpha = 0.35 + 0.55 * pulse;
+ctx.fillStyle = isElec
+? 'rgba(' + P.acElec + ',' + alpha.toFixed(3) + ')'
+: 'rgba(' + P.acConv + ',' + alpha.toFixed(3) + ')';
+for (var ak = 0; ak < acDotCount; ak++) {
+var atp = ((ak/acDotCount) + flowPhase*acSign*acSpeed) % 1;
+if (atp < 0) atp += 1;
+ctx.beginPath(); ctx.arc(x1+dx*atp, y1+dy*atp, 3, 0, Math.PI*2); ctx.fill();
+}
+}
+}
+function drawResistor(c, sel) {
+var col = sel ? P.sel : P.res;
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.strokeRect(-R_HALF, -R_HALF*0.45, 2*R_HALF, R_HALF*0.9);
+ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+var steps=6, sw=(2*R_HALF)/steps;
+ctx.beginPath(); ctx.moveTo(-R_HALF, 0);
+for (var i=0;i<steps;i++) {
+ctx.lineTo(-R_HALF+sw*(i+0.5), i%2===0?-R_HALF*0.38:R_HALF*0.38);
+ctx.lineTo(-R_HALF+sw*(i+1), 0);
+}
+ctx.stroke();
+labelComp(c, fmtR(c.props.R));
+}
+function drawCapacitor(c, sel) {
+var col = sel ? P.sel : P.cap;
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF*0.35,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*0.35,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.lineWidth = 2.5;
+ctx.beginPath(); ctx.moveTo(-R_HALF*0.35,-R_HALF*0.8); ctx.lineTo(-R_HALF*0.35,R_HALF*0.8); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*0.35,-R_HALF*0.8); ctx.lineTo(R_HALF*0.35,R_HALF*0.8); ctx.stroke();
+var cv = c.props.C;
+labelComp(c, cv < 1e-3 ? (cv*1e6).toFixed(1)+'\u03bcF' : cv+'F');
+}
+function drawInductor(c, sel) {
+var col = sel ? P.sel : P.ind;
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF*1.2,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*1.2,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+var bumps=4, bw=(2*R_HALF*1.2/2)/bumps*2;
+var sx=-R_HALF*1.2;
+ctx.beginPath();
+for (var ib=0;ib<bumps;ib++) ctx.arc(sx+bw*(ib+0.5), 0, bw/2, Math.PI, 0, false);
+ctx.stroke();
+var lv = c.props.L;
+labelComp(c, lv<1 ? (lv*1e3).toFixed(1)+'mH' : lv+'H');
+}
+function drawBatteryComp(c, sel) {
+var col = sel ? P.sel : P.bat;
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF*0.25,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*0.25,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.lineWidth = 3.5;
+ctx.beginPath(); ctx.moveTo(-R_HALF*0.25,-R_HALF*0.45); ctx.lineTo(-R_HALF*0.25,R_HALF*0.45); ctx.stroke();
+ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(R_HALF*0.25,-R_HALF*0.7); ctx.lineTo(R_HALF*0.25,R_HALF*0.7); ctx.stroke();
+ctx.fillStyle = col; ctx.font = 'bold ' + (R_HALF*0.5) + 'px monospace';
+ctx.textAlign = 'center';
+ctx.fillText('+', R_HALF*0.55, -R_HALF*0.6);
+ctx.fillText('\u2212', -R_HALF*0.55, -R_HALF*0.6);
+labelComp(c, (c.props.V||9)+'V');
+}
+function drawACSource(c, sel) {
+var col = sel ? P.sel : P.ac;
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF, 0); ctx.lineTo(-R_HALF, 0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo( R_HALF, 0); ctx.lineTo( 2*R_HALF, 0); ctx.stroke();
+ctx.beginPath(); ctx.arc(0, 0, R_HALF, 0, Math.PI*2); ctx.stroke();
+ctx.lineWidth = 1.5;
+ctx.beginPath();
+var steps = 20;
+for (var i = 0; i <= steps; i++) {
+var px = -R_HALF*0.75 + (R_HALF*1.5) * (i/steps);
+var py = -R_HALF*0.4 * Math.sin((i/steps) * Math.PI*2);
+if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+}
+ctx.stroke();
+var vp = c.props.Vpeak || 10;
+labelComp(c, vp + 'Vpk ' + acFrequency + 'Hz');
+}
+function drawSwitch(c, sel) {
+var col = sel ? P.sel : P.sw;
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.arc(-R_HALF,0,4,0,Math.PI*2); ctx.fillStyle=col; ctx.fill();
+ctx.beginPath(); ctx.arc(R_HALF,0,4,0,Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.moveTo(-R_HALF+4, 0);
+if (c.props.closed) ctx.lineTo(R_HALF-4, 0);
+else ctx.lineTo(R_HALF*0.6, -R_HALF*0.5);
+ctx.strokeStyle=col; ctx.lineWidth=1.8; ctx.stroke();
+labelComp(c, c.props.closed ? 'CLOSED' : 'OPEN');
+}
+function drawMeter(c, sel, letter) {
+var isV = letter === 'V';
+var col = sel ? P.sel : (isV ? P.vm : P.am);
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.arc(0,0,R_HALF,0,Math.PI*2);
+ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+if (!isV) {
+ctx.fillStyle=col;
+ctx.beginPath(); ctx.arc(-R_HALF*0.65,-R_HALF*0.55,3.5,0,Math.PI*2); ctx.fill();
+}
+var mode = c.props.mode || 'rms';
+var reading = null;
+if (simResults) {
+var mt2 = getActualTerminals(c);
+if (isV) {
+var mv0 = getVoltageAt(mt2[0].gx, mt2[0].gy, simResults);
+var mv1 = getVoltageAt(mt2[1].gx, mt2[1].gy, simResults);
+var dcAcross = (mv0 !== undefined && mv1 !== undefined) ? Math.abs(mv1 - mv0) : undefined;
+var acAcross = acAcrossOf(c);
+if (mode === 'mean') {
+if (dcAcross !== undefined) reading = fmtV(dcAcross);
+} else {
+reading = fmtV(trueRMS(dcAcross, acAcross));
+}
+} else {
+var mi = getAmmeterCurrent(c);
+var aiAc = acCurrentOf(c.id);
+if (mode === 'mean') {
+if (mi !== undefined) reading = fmtI(Math.abs(mi));
+} else {
+reading = fmtI(trueRMS(mi, aiAc));
+}
+}
+}
+ctx.save(); ctx.rotate(-c.rot * Math.PI / 2);
+if (reading) {
+ctx.fillStyle = col; ctx.font = 'bold 8px monospace';
+ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(letter, -R_HALF*0.6, -R_HALF*0.55);
+ctx.font = '6px monospace';
+ctx.fillText(mode === 'mean' ? 'DC' : 'RMS', R_HALF*0.55, -R_HALF*0.5);
+ctx.font = 'bold 9px monospace';
+ctx.fillText(reading, 0, R_HALF*0.2);
+} else {
+ctx.fillStyle = col; ctx.font = 'bold '+(R_HALF*0.7)+'px monospace';
+ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(letter, 0, 0);
+ctx.font = '6px monospace';
+ctx.fillText(mode === 'mean' ? 'DC' : 'RMS', 0, R_HALF*0.55);
+}
+ctx.textBaseline = 'alphabetic'; ctx.restore();
+}
+/* Scope probe: a small screen with a sine wave, in its channel's colour.
+"+" marks terminal 1 (right/top), "−" marks terminal 0. */
+function drawProbe(c, sel) {
+var chn = Math.min(4, Math.max(1, c.props.ch | 0));
+var col = sel ? P.sel : P.ch[chn - 1];
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.lineWidth = 1.5;
+ctx.strokeRect(-R_HALF, -R_HALF*0.7, 2*R_HALF, R_HALF*1.4);
+ctx.beginPath();
+for (var i = 0; i <= 24; i++) {
+var px = -R_HALF*0.8 + R_HALF*1.6 * (i/24);
+var py = -R_HALF*0.35 * Math.sin((i/24) * Math.PI * 3);
+if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+}
+ctx.stroke();
+// Text is drawn upright (undo the component rotation), with the polarity
+// marks placed beside the + and − leads wherever they end up.
+ctx.save(); ctx.rotate(-c.rot * Math.PI / 2);
+ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.font = 'bold ' + (R_HALF*0.55) + 'px monospace';
+var pPlus = rotateOffset(R_HALF*1.5, -R_HALF*0.4, c.rot, 0, 0);
+var pMinus = rotateOffset(-R_HALF*1.5, -R_HALF*0.4, c.rot, 0, 0);
+ctx.fillText('+', pPlus.gx, pPlus.gy);
+ctx.fillText('\u2212', pMinus.gx, pMinus.gy);
+ctx.font = "bold 10px 'Share Tech Mono',monospace";
+if (c.rot % 2 === 0) ctx.fillText('CH' + chn, 0, -R_HALF*1.0);
+else { ctx.textAlign = 'left'; ctx.fillText('CH' + chn, R_HALF*0.95, 0); }
+ctx.textBaseline = 'alphabetic';
+ctx.restore();
+}
+function drawGroundComp(c, sel) {
+ctx.restore(); ctx.save();
+ctx.translate(fromGrid(c.gx), fromGrid(c.gy));
+var col = sel ? P.sel : P.gnd;
+ctx.strokeStyle=col; ctx.lineWidth=1.8;
+ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,R_HALF); ctx.stroke();
+ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(-R_HALF*0.9,R_HALF); ctx.lineTo(R_HALF*0.9,R_HALF); ctx.stroke();
+ctx.lineWidth=1.8; ctx.beginPath(); ctx.moveTo(-R_HALF*0.55,R_HALF*1.5); ctx.lineTo(R_HALF*0.55,R_HALF*1.5); ctx.stroke();
+ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(-R_HALF*0.2,R_HALF*2); ctx.lineTo(R_HALF*0.2,R_HALF*2); ctx.stroke();
+}
+function drawMarkerComp(c, sel) {
+ctx.restore(); ctx.save();
+ctx.translate(fromGrid(c.gx), fromGrid(c.gy));
+var col = sel ? P.sel : P.mark;
+ctx.fillStyle=col; ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fill();
+ctx.fillStyle=P.bg; ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fill();
+ctx.fillStyle=col; ctx.font='bold 10px monospace';
+ctx.textAlign='left'; ctx.fillText(c.props.label||'N', 10, -8);
+}
+function labelComp(c, text) {
+if (!text) return;
+ctx.save(); ctx.rotate(-c.rot * Math.PI/2);
+ctx.fillStyle=P.label; ctx.font="10px 'Share Tech Mono',monospace";
+ctx.textAlign='center'; ctx.fillText(text, 0, -R_HALF*0.75); ctx.restore();
+}
+function drawConnectionPoints() {
+var tally = {};
+for (var i = 0; i < components.length; i++) {
+var c = components[i];
+var terms = getActualTerminals(c);
+for (var j = 0; j < terms.length; j++) {
+var k = terms[j].gx + ',' + terms[j].gy;
+tally[k] = (tally[k] || 0) + 1;
+}
+}
+for (var key in tally) {
+var parts = key.split(',');
+var px = fromGrid(+parts[0]);
+var py = fromGrid(+parts[1]);
+var count = tally[key];
+if (count >= 3) {
+ctx.fillStyle = P.wire;
+ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill();
+} else {
+ctx.strokeStyle = P.term;
+ctx.fillStyle   = P.termFill;
+ctx.lineWidth   = 1.2;
+ctx.beginPath(); ctx.arc(px, py, 3.2, 0, Math.PI*2);
+ctx.fill(); ctx.stroke();
+}
+}
+}
+function drawGhost() {
+if (!ghostPos || tool==='select' || tool==='wire' || tool==='delete') return;
+if (PLACEABLE.indexOf(tool) < 0) return;
+ctx.globalAlpha = 0.45;
+var def2 = COMP_DEFS[tool]; var gp = {};
+if (def2.defaults) { for (var dk in def2.defaults) gp[dk] = def2.defaults[dk]; }
+if (tool === 'scope') gp.ch = nextFreeChannel();
+var ghost = { id:-1, type:tool, gx:ghostPos.gx, gy:ghostPos.gy, rot:rotation, props:gp };
+drawComp(ghost, false);
+ctx.globalAlpha = 1;
+}
+function drawWireGhost() {
+if (!wireStart || !ghostPos) return;
+var x1=fromGrid(wireStart.gx), y1=fromGrid(wireStart.gy);
+var x2=fromGrid(ghostPos.gx), y2=fromGrid(ghostPos.gy);
+ctx.strokeStyle=P.ghost; ctx.lineWidth=1.5;
+ctx.setLineDash([6,4]);
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y1); ctx.lineTo(x2,y2); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle=P.sel; ctx.beginPath(); ctx.arc(x1,y1,5,0,Math.PI*2); ctx.fill();
+}
+/* ── Save / Load ── */
+function saveCircuit() {
+var data = {
+v: 4, idCounter: idCounter,
+acFrequency: acFrequency,
+scope: {
+tdiv: scope.tdiv, trigCh: scope.trigCh, trigSlope: scope.trigSlope, trigLevel: scope.trigLevel,
+showMeas: scope.showMeas, curMode: scope.curMode, curCh: scope.curCh, cur: scope.cur, ch: scope.ch
+},
+components: components.map(function(c) {
+var obj = { id:c.id, type:c.type, gx:c.gx, gy:c.gy, rot:c.rot, props:c.props };
+if (c._t0) { obj._t0=c._t0; obj._t1=c._t1; }
+if (c.locked) obj.locked = true;
+return obj;
+})
+};
+var json = JSON.stringify(data);
+var ta = el('cs_circuitdata'); if (!ta) return;
+ta.value = json; ta.select();
+try { navigator.clipboard.writeText(json); } catch(ex) {}
+ta.style.borderColor = 'var(--cs-accent)';
+setTimeout(function() { ta.style.borderColor = 'var(--cs-border)'; }, 1500);
+}
+function loadCircuit() {
+var ta = el('cs_circuitdata'); if (!ta) return;
+var json = ta.value.trim();
+if (!json) { ta.style.borderColor='#ff4040'; setTimeout(function(){ta.style.borderColor='var(--cs-border)';},1500); return; }
+return loadCircuitFromJSON(json, ta);
+}
+/* Copy saved scope settings over the defaults, ignoring anything malformed. */
+function applyScopeSettings(s) {
+if (!s || typeof s !== 'object') return;
+['tdiv','trigLevel'].forEach(function(k) { if (isFinite(s[k])) scope[k] = +s[k]; });
+if (s.trigCh >= 1 && s.trigCh <= 4) scope.trigCh = s.trigCh | 0;
+if (s.curCh >= 1 && s.curCh <= 4) scope.curCh = s.curCh | 0;
+if (s.trigSlope === 'rise' || s.trigSlope === 'fall') scope.trigSlope = s.trigSlope;
+if (s.curMode === 'off' || s.curMode === 'time' || s.curMode === 'volt') scope.curMode = s.curMode;
+if (typeof s.showMeas === 'boolean') scope.showMeas = s.showMeas;
+if (s.cur) ['t1','t2','v1','v2'].forEach(function(k) { if (isFinite(s.cur[k])) scope.cur[k] = Math.max(0, Math.min(1, +s.cur[k])); });
+if (Array.isArray(s.ch)) s.ch.slice(0, 4).forEach(function(c, i) {
+if (!c) return;
+var d = scope.ch[i];
+if (typeof c.on === 'boolean') d.on = c.on;
+if (isFinite(c.vdiv) && c.vdiv > 0) d.vdiv = +c.vdiv;
+if (isFinite(c.pos)) d.pos = Math.max(-4, Math.min(4, +c.pos));
+if (c.cpl === 'dc' || c.cpl === 'ac' || c.cpl === 'gnd') d.cpl = c.cpl;
+});
+}
+function loadCircuitFromJSON(json, ta) {
+try {
+var data = JSON.parse(json);
+stopSim();
+components = data.components.map(function(obj) {
+var c = { id:obj.id, type:obj.type, gx:obj.gx, gy:obj.gy, rot:obj.rot||0, props:obj.props||{} };
+if (obj._t0) { c._t0=obj._t0; c._t1=obj._t1; }
+if (obj.locked) c.locked = true;
+return c;
+});
+idCounter = data.idCounter || (Math.max.apply(null, [0].concat(components.map(function(c){return c.id;}))) + 1);
+if (data.acFrequency !== undefined && isFinite(data.acFrequency)) {
+acFrequency = data.acFrequency;
+var freqInput = el('cs_freq');
+if (freqInput) freqInput.value = acFrequency;
+}
+applyScopeSettings(data.scope);
+buildScopeControls();
+selected=null; simResults=null;
+showProps(null);
+updateReadout();
+narrate('Circuit loaded: ' + components.length + ' parts. Press RUN to simulate.');
+if (ta) {
+ta.style.borderColor=P.sw;
+setTimeout(function(){ta.style.borderColor='var(--cs-border)';},1500);
+}
+redraw();
+return true;
+} catch(ex) {
+if (ta) {
+ta.style.borderColor='#ff4040';
+setTimeout(function(){ta.style.borderColor='var(--cs-border)';},1500);
+}
+return false;
+}
+}
+/* ── Sample starter circuit ──
+If the textarea has valid JSON on boot, use it instead of
+building the default sample. Otherwise fall back to the default. */
+function loadSample() {
+var ta = el('cs_circuitdata');
+if (ta && ta.value && ta.value.trim()) {
+if (loadCircuitFromJSON(ta.value.trim(), ta)) return;
+}
+var cx = Math.round(W / 2 / GRID), cy = Math.round(H / 2 / GRID);
+var bat = makeComp('battery', cx-3, cy, 45); bat.props.V=9; components.push(bat);
+var r1 = makeComp('resistor', cx, cy-3, 0); r1.props.R=1000; components.push(r1);
+var r2 = makeComp('resistor', cx, cy+3, 0); r2.props.R=2200; components.push(r2);
+function addWire(x1,y1,x2,y2) {
+var segs = wireSegments(x1,y1,x2,y2);
+segs.forEach(function(s) {
+var w = makeComp('wire', Math.round((s.x1+s.x2)/2), Math.round((s.y1+s.y2)/2), s.y1===s.y2?0:1);
+w._t0={gx:s.x1,gy:s.y1}; w._t1={gx:s.x2,gy:s.y2}; components.push(w);
+});
+}
+addWire(cx-3,cy-3,   cx-3,cy-2); addWire(cx-3,cy-3,cx-2,cy-3);
+addWire(cx-3,cy-6,   cx-3,cy-3); addWire(cx-3,cy-6,cx-2,cy-6);
+addWire(cx+2,cy-3, cx+3,cy-3); addWire(cx+3,cy-3,cx+3,cy+3);
+addWire(cx+2,cy+3, cx+3,cy+3); addWire(cx-3,cy+3,cx-2,cy+3);
+addWire(cx-3,cy+2,   cx-3,cy+3);
+addWire(cx+2,cy-6, cx+3,cy-6); addWire(cx+3,cy-3,cx+3,cy-6);
+var vm  = makeComp('voltmeter', cx, cy-6, 90); components.push(vm);
+redraw();
+}
+function setFrequency(hz) {
+var f = parseFloat(hz);
+if (!isFinite(f) || f < 0) f = 0;
+acFrequency = f;
+simResults = null;
+updateReadout();
+redraw();
+narrate('Frequency set to ' + f + ' Hz for every AC source. Press RUN to update.');
+}
+/* ── Window resize ── */
+window.addEventListener('resize', resize);
+/* ── Visibility pause/resume ── */
+document.addEventListener('visibilitychange', function() {
+if (document.hidden && animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
+else if (!document.hidden && simRunning && !animFrame) { startAnim(); }
+});
+/* ── Boot (driven by the MOM configuration) ── */
+applyLayoutConfig();
+applyTheme();
+buildScopeControls();
+resize();
+quiet = true;
+setTool('select');
+if (CFG.circuit) {
+var cj = (typeof CFG.circuit === 'string') ? CFG.circuit : JSON.stringify(CFG.circuit);
+if (!loadCircuitFromJSON(cj, null)) narrate('The circuit in the question settings could not be read; starting with an empty canvas.');
+} else if (CFG.starter !== 'empty') {
+loadSample();
+}
+// Question settings override anything stored with the saved circuit
+if (isFinite(CFG.frequency) && CFG.frequency !== null) { acFrequency = +CFG.frequency; el('cs_freq').value = acFrequency; }
+applyScopeSettings(CFG.scope.settings);
+if (CFG.scope.measurements === false) scope.showMeas = false;
+if (CFG.lockCircuit) components.forEach(function(c) { c.locked = true; });
+buildScopeControls();
+if (CFG.scope.open === false) toggleScope(false);
+quiet = false;
+narrate(CFG.intro || ('Circuit builder ready. ' + (components.length ? 'Press RUN to simulate the circuit.' : 'Choose a part from the toolbar to start building.')
++ ' Keyboard: Tab to the toolbar and press Enter to pick a tool; on the canvas, arrow keys move and Enter places.'));
+if (CFG.autoRun) runSim(); else redraw();
+updateReadout();
+/* ── Public API ── */
+return {
+setTool:      setTool,
+runSim:       runSim,
+stopSim:      function() { stopSim(true); },
+redraw:       redraw,
+clearAll:     clearAll,
+setProp:      setProp,
+rotateComp:   rotateComp,
+deleteComp:   deleteComp,
+saveCircuit:  saveCircuit,
+loadCircuit:  loadCircuit,
+setFrequency: setFrequency,
+toggleScope:  toggleScope,
+scopeSet:     scopeSet,
+scopeAutoSet: scopeAutoSet,
+a11y:         toggleA11y,
+getCircuitJSON: function() { saveCircuit(); return el('cs_circuitdata').value; }
+};
+} // end create()
+/* ════════════ Public loader ════════════ */
+window.CircuitBuilder = {
+version: VERSION,
+instances: {},
+/* mount(thisq [, config]) — config defaults to window.csbConfig[thisq] */
+mount: function (q, cfg) {
+q = String(q);
+var host = document.getElementById('csb' + q);
+if (!host) { if (window.console) console.warn('CircuitBuilder: no element with id "csb' + q + '"'); return null; }
+if (this.instances[q]) return this.instances[q];
+if (!cfg) cfg = (window.csbConfig && window.csbConfig[q]) || {};
+var C = merge(DEFAULTS, cfg);
+var api = 'CSB' + q.replace(/\W/g, '_');
+host.innerHTML = MARKUP.replace(/%Q%/g, q).replace(/%API%/g, api);
+var inst = create(q, api, C);
+window[api] = inst;
+this.instances[q] = inst;
+return inst;
+}
+};
+})();

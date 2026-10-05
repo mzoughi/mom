@@ -1,0 +1,228 @@
+/* ═══ AC Circuit Builder with Oscilloscope — styles (GitHub-hosted) ═══
+   Every rule is scoped to .csb_wrap / .csb_root, so nothing leaks into the MOM page.
+   Colours are CSS variables; the theme switcher (high contrast, light mode,
+   colour-blind safe) overrides them on .csb_wrap. */
+.csb_wrap {
+--cs-bg:#0a0c0f; --cs-panel:#111418; --cs-border:#2a3040; --cs-accent:#00d4ff;
+--cs-text:#c8d4e0; --cs-text2:#8494a8; --cs-input:#0d1520; --cs-activebg:#0d2030;
+--cs-well:#060a0d; --cs-hintbg:rgba(10,12,15,0.88); --cs-scr:#05080a;
+--cs-green:#39ff14; --cs-danger:#ff4040; --cs-narbar:#1a2230; --cs-narborder:#00d4ff;
+--cs-mono: 'Share Tech Mono', Consolas, 'Courier New', monospace;
+width: 100%; max-width: 1000px; margin: 0 auto; font-family: Arial, Helvetica, sans-serif;
+}
+.csb_wrap, .csb_wrap * { box-sizing: border-box; }
+/* Accessibility toolbar (same look as the RC simulations) */
+.csb_wrap .csb_a11y { display:flex; gap:6px; padding:4px 6px; background:#222; flex-wrap:wrap; border-radius:4px 4px 0 0; }
+.csb_wrap .csb_a11ybtn { padding:3px 8px; font-size:12px; font-family:monospace; letter-spacing:.06em;
+  border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #5a6680; color:#b8c4dc; }
+.csb_wrap .csb_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+.csb_wrap .csb_a11ybtn.csb_on { background:rgba(0,232,208,.15); border-color:#00e8d0; color:#00e8d0; }
+.csb_wrap .csb_title { padding:6px 10px; background:var(--cs-panel); color:var(--cs-text);
+  border:1px solid var(--cs-border); border-bottom:none; font-weight:bold; font-size:15px; }
+.csb_wrap .csb_narbar { min-height:30px; padding:6px 10px; background:var(--cs-narbar); color:var(--cs-text);
+  border-left:4px solid var(--cs-narborder); font-size:14px; font-style:italic; border-radius:0 0 4px 4px; }
+/* High-contrast mode: heavier borders, larger panel text */
+.csb_wrap.csb_hc .cs_tbbtn, .csb_wrap.csb_hc .cs_rpbtn, .csb_wrap.csb_hc .cs_scbtn { border-width:2px; color:var(--cs-text); }
+.csb_wrap.csb_hc .cs_rpanel, .csb_wrap.csb_hc .cs_scopectrl { font-size:12px; }
+.csb_wrap.csb_hc .cs_tblabel { font-size:8px; }
+
+/* ════════════════════════════════════════════════
+All rules scoped to .csb_root
+════════════════════════════════════════════════ */
+.csb_root {
+display: flex;
+flex-direction: row;
+align-items: stretch;
+width: 100%;
+max-width: 1000px;
+min-height: 860px;
+height: 860px;
+background: var(--cs-bg);
+color: var(--cs-text);
+font-family: Arial, Helvetica, sans-serif;
+box-sizing: border-box;
+margin: 0 auto;
+border-radius: 4px;
+overflow: hidden;
+border: 1px solid var(--cs-border);
+position: relative;
+user-select: none;
+}
+/* When the scope is open the simulator grows taller, so the circuit
+   canvas keeps the same working area it had before the scope existed. */
+.csb_root.cs_scopeopen { height: 1180px; min-height: 1180px; }
+.csb_root *, .csb_root *::before, .csb_root *::after {
+box-sizing: border-box; margin: 0; padding: 0;
+}
+/* Visually hidden, but still read by screen readers */
+.csb_root .cs_sronly {
+position: absolute; width: 1px; height: 1px;
+padding: 0; margin: -1px; overflow: hidden;
+clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+/* ── Toolbar ── */
+.csb_root .cs_toolbar {
+width: 68px; flex-shrink: 0;
+background: var(--cs-panel);
+border-right: 1px solid var(--cs-border);
+display: flex; flex-direction: column; align-items: center;
+padding: 7px 4px; gap: 3px; overflow-y: auto; z-index: 10;
+}
+.csb_root .cs_tbsep {
+width: 44px; height: 1px; background: var(--cs-border); margin: 3px 0;
+}
+.csb_root .cs_tbbtn {
+width: 52px; height: 52px; flex-shrink: 0;
+border: 1px solid var(--cs-border); border-radius: 5px;
+background: transparent; cursor: pointer;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+gap: 2px; color: var(--cs-text2);
+font-family: var(--cs-mono); font-size: 9px;
+}
+.csb_root .cs_tbbtn:hover {
+border-color: var(--cs-accent); color: var(--cs-accent); background: var(--cs-input);
+}
+.csb_root .cs_active {
+border-color: var(--cs-accent); color: var(--cs-accent);
+background: var(--cs-activebg); box-shadow: 0 0 0 2px var(--cs-accent);
+}
+.csb_root .cs_tbbtn svg { width: 26px; height: 26px; }
+.csb_root .cs_tblabel { font-size: 7px; text-align: center; line-height: 1.1; }
+/* ── Center column ── */
+.csb_root .cs_center {
+flex: 1; min-width: 0; display: flex; flex-direction: column;
+}
+/* ── Canvas wrap ── */
+.csb_root .cs_canvaswrap {
+flex: 1; position: relative; overflow: hidden; min-width: 0; min-height: 0;
+}
+.csb_root .cs_canvas { display: block; cursor: crosshair; }
+.csb_root .cs_hint {
+position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
+font-family: var(--cs-mono); font-size: 9px; color: var(--cs-text2);
+background: var(--cs-hintbg); padding: 3px 9px; border-radius: 3px;
+border: 1px solid var(--cs-border); pointer-events: none; white-space: nowrap;
+}
+/* ── Oscilloscope ── */
+.csb_root .cs_scope {
+flex-shrink: 0; border-top: 1px solid var(--cs-border);
+background: var(--cs-panel); display: flex; flex-direction: column;
+}
+.csb_root .cs_scopehdr {
+display: flex; align-items: center; gap: 10px;
+padding: 5px 8px; border-bottom: 1px solid var(--cs-border);
+font-family: var(--cs-mono); font-size: 9px;
+}
+.csb_root .cs_scopetitle { color: var(--cs-accent); letter-spacing: 1px; }
+.csb_root .cs_scopestatus { color: var(--cs-text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.csb_root .cs_scopebody { display: flex; height: 320px; }
+.csb_root .cs_scopescreen { flex: 1; min-width: 0; position: relative; background: var(--cs-scr); }
+.csb_root .cs_scopecanvas { display: block; touch-action: none; }
+.csb_root .cs_scopectrl {
+width: 330px; flex-shrink: 0; border-left: 1px solid var(--cs-border);
+padding: 6px 7px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
+font-family: var(--cs-mono); font-size: 9px; color: var(--cs-text2);
+}
+.csb_root .cs_scrow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.csb_root .cs_scrow label { display: flex; align-items: center; gap: 3px; }
+.csb_root .cs_scopectrl select,
+.csb_root .cs_scopectrl input[type=text] {
+background: var(--cs-input); border: 1px solid var(--cs-border); border-radius: 3px;
+color: var(--cs-text); font-family: var(--cs-mono); font-size: 9px; padding: 2px 3px;
+}
+.csb_root .cs_scopectrl input[type=text] { width: 44px; }
+.csb_root .cs_scopectrl select:focus,
+.csb_root .cs_scopectrl input[type=text]:focus { outline: none; border-color: var(--cs-accent); }
+.csb_root .cs_scopectrl input[type=checkbox] { accent-color: var(--cs-accent); cursor: pointer; }
+.csb_root .cs_scbtn {
+padding: 3px 7px; border: 1px solid var(--cs-border); border-radius: 4px;
+background: transparent; color: var(--cs-text2);
+font-family: var(--cs-mono); font-size: 9px; cursor: pointer;
+}
+.csb_root .cs_scbtn:hover { border-color: var(--cs-accent); color: var(--cs-accent); }
+.csb_root .cs_sctable { width: 100%; border-collapse: collapse; }
+.csb_root .cs_sctable th {
+text-align: left; font-weight: normal; color: var(--cs-text2);
+border-bottom: 1px solid var(--cs-border); padding: 2px 3px;
+}
+.csb_root .cs_sctable td { padding: 2px 3px; color: var(--cs-text); white-space: nowrap; }
+.csb_root .cs_sctable td.cs_dim { color: var(--cs-text2); }
+.csb_root .cs_scsub { color: var(--cs-accent); letter-spacing: 1px; margin-top: 2px; }
+/* Keyboard focus visible everywhere */
+.csb_root :focus-visible { outline: 1px solid var(--cs-accent); outline-offset: 1px; }
+/* ── Right panel ── */
+.csb_root .cs_rpanel {
+width: 192px; flex-shrink: 0;
+background: var(--cs-panel);
+border-left: 1px solid var(--cs-border);
+display: flex; flex-direction: column;
+padding: 9px 7px; gap: 7px; font-size: 11px;
+overflow-y: auto;
+}
+.csb_root .cs_rptitle {
+font-family: var(--cs-mono); font-size: 9px; color: var(--cs-accent);
+border-bottom: 1px solid var(--cs-border); padding-bottom: 5px;
+letter-spacing: 1px; flex-shrink: 0;
+}
+.csb_root .cs_rpsep { height: 1px; background: var(--cs-border); flex-shrink: 0; }
+.csb_root .cs_rpdimtext {
+font-family: var(--cs-mono); font-size: 9px; color: var(--cs-text2); line-height: 1.6;
+}
+/* Properties rows (injected via innerHTML) */
+.csb_root .cs_rprow { display: flex; flex-direction: column; gap: 3px; }
+.csb_root .cs_rprow label { font-size: 9px; color: var(--cs-text2); font-family: var(--cs-mono); }
+.csb_root .cs_rprow input[type=text],
+.csb_root .cs_rprow select {
+background: var(--cs-input); border: 1px solid var(--cs-border);
+border-radius: 3px; color: var(--cs-text);
+font-family: var(--cs-mono); font-size: 10px; padding: 3px 5px; width: 100%;
+}
+.csb_root .cs_rprow input[type=text]:focus,
+.csb_root .cs_rprow select:focus { outline: none; border-color: var(--cs-accent); }
+/* Buttons */
+.csb_root .cs_rpbtn {
+width: 100%; padding: 5px; border: 1px solid var(--cs-border);
+border-radius: 4px; background: transparent; color: var(--cs-text2);
+font-family: var(--cs-mono); font-size: 9px; cursor: pointer; flex-shrink: 0;
+}
+.csb_root .cs_rpbtn:hover { border-color: var(--cs-accent); color: var(--cs-accent); }
+.csb_root .cs_danger:hover { border-color: var(--cs-danger); color: var(--cs-danger); }
+/* Toggle rows */
+.csb_root .cs_togglerow {
+display: flex; align-items: center; gap: 5px;
+font-size: 9px; font-family: var(--cs-mono); color: var(--cs-text2);
+flex-shrink: 0;
+}
+.csb_root .cs_togglerow input[type=checkbox],
+.csb_root .cs_togglerow input[type=radio] {
+accent-color: var(--cs-accent); cursor: pointer;
+}
+/* Readout */
+.csb_root .cs_rpreadout {
+background: var(--cs-well); border: 1px solid var(--cs-border);
+border-radius: 4px; padding: 7px;
+font-family: var(--cs-mono); font-size: 9px; line-height: 1.8;
+color: var(--cs-text2); flex-shrink: 0;
+}
+.csb_root .cs_rpreadout span { color: var(--cs-green); }
+/* Textarea */
+.csb_root .cs_textarea {
+width: 100%; height: 58px; resize: vertical;
+background: var(--cs-well); border: 1px solid var(--cs-border);
+border-radius: 3px; color: var(--cs-text2);
+font-family: var(--cs-mono); font-size: 8px; padding: 4px;
+flex-shrink: 0;
+}
+/* Keyboard focus: always visible */
+.csb_wrap button:focus-visible, .csb_wrap input:focus-visible, .csb_wrap select:focus-visible,
+.csb_wrap textarea:focus-visible, .csb_wrap [tabindex]:focus-visible {
+  outline: 3px solid var(--cs-accent) !important; outline-offset: 1px; }
+.csb_root:focus-visible { outline: 3px solid var(--cs-accent); outline-offset: -3px; }
+.csb_root .cs_tbbtn[aria-pressed="true"] { border-width: 2px; }
+.csb_root input:disabled, .csb_root select:disabled { opacity: .55; cursor: not-allowed; }
+/* Neutralise host-page (MOM) table, button and input styles inside the simulator */
+.csb_wrap table, .csb_wrap th, .csb_wrap td { font-size: inherit; font-family: inherit; border: none; background: transparent; }
+.csb_wrap .cs_sctable th { border-bottom: 1px solid var(--cs-border); }
+.csb_wrap input, .csb_wrap select, .csb_wrap textarea, .csb_wrap button { font-size: inherit; line-height: normal; margin: 0; box-shadow: none; }
+.csb_wrap canvas { max-width: none; }
+.csb_root .cs_scopecanvas:focus-visible { outline: 3px solid var(--cs-accent); outline-offset: -3px; }
