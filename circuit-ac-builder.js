@@ -1,115 +1,124 @@
 /* ═══════════════════════════════════════════════════════════════════
-AC CIRCUIT BUILDER with OSCILLOSCOPE  (MyOpenMath / GitHub edition)
-Taha Mzoughi
-Hosted on GitHub; the MOM question only contains a small loader and
-a configuration object, so settings stay under MOM control:
- <div id="csb$thisq"></div>
- <script> window.csbConfig = window.csbConfig || {};
-window.csbConfig['$thisq'] = { ...settings... }; </script>
- <link rel="stylesheet" href=".../circuit-builder.css">
- <script src=".../circuit-builder.js"></script>
- <script> ...poll until window.CircuitBuilder exists, then
-CircuitBuilder.mount('$thisq'); </script>
-Several questions can share one page: each instance is built inside
-its own host div, every element id ends in that question's $thisq,
-and each instance gets its own global handle  window['CSB' + thisq].
-═══════════════════════════════════════════════════════════════════ */
+   AC CIRCUIT BUILDER with OSCILLOSCOPE  (MyOpenMath / GitHub edition)
+   Taha Mzoughi
+
+   Hosted on GitHub; the MOM question only contains a small loader and
+   a configuration object, so settings stay under MOM control:
+
+     <div id="csb$thisq"></div>
+     <script> window.csbConfig = window.csbConfig || {};
+              window.csbConfig['$thisq'] = { ...settings... }; </script>
+     <link rel="stylesheet" href=".../circuit-builder.css">
+     <script src=".../circuit-builder.js"></script>
+     <script> ...poll until window.CircuitBuilder exists, then
+              CircuitBuilder.mount('$thisq'); </script>
+
+   Several questions can share one page: each instance is built inside
+   its own host div, every element id ends in that question's $thisq,
+   and each instance gets its own global handle  window['CSB' + thisq].
+   ═══════════════════════════════════════════════════════════════════ */
 (function () {
 'use strict';
 if (window.CircuitBuilder) return;          // file included by several questions: load once
+
 var VERSION = '1.0.0';
 var ALL_TOOLS = ['select','wire','resistor','capacitor','inductor','battery','acsource','switch',
- 'voltmeter','ammeter','scope','marker','ground','delete'];
+                 'voltmeter','ammeter','scope','marker','ground','delete'];
+
 /* Default configuration. Anything set in the MOM question overrides these. */
 var DEFAULTS = {
-title: '',
-starter: 'sample',        // 'sample' | 'empty'   (used only when circuit is null)
-circuit: null,            // paste the output of SAVE TO TEXT here (object or string)
-frequency: null,          // Hz; null = keep the value stored with the circuit (60 Hz otherwise)
-lockFrequency: false,
-lockCircuit: false,       // parts from "circuit" cannot be moved, edited or deleted
-tools: ALL_TOOLS,
-autoRun: false,
-showSaveLoad: true,
-showClearAll: true,
-intro: '',                // first narration message
-scope: {
-enabled: true, open: true,
-measurements: true,     // automatic measurement table visible at start
-lockMeasurements: false,// true = students cannot switch the table on/off
-allowAutoSet: true,
-settings: null          // e.g. {"tdiv":0.005,"trigCh":1,"ch":[{"vdiv":5},{"vdiv":2}]}
-},
-accessibility: { highContrast: false, lightMode: false, colorBlind: false, narration: true }
+  title: '',
+  starter: 'sample',        // 'sample' | 'empty'   (used only when circuit is null)
+  circuit: null,            // paste the output of SAVE TO TEXT here (object or string)
+  frequency: null,          // Hz; null = keep the value stored with the circuit (60 Hz otherwise)
+  lockFrequency: false,
+  lockCircuit: false,       // parts from "circuit" cannot be moved, edited or deleted
+  tools: ALL_TOOLS,
+  autoRun: false,
+  showSaveLoad: true,
+  showClearAll: true,
+  intro: '',                // first narration message
+  scope: {
+    enabled: true, open: true,
+    measurements: true,     // automatic measurement table visible at start
+    lockMeasurements: false,// true = students cannot switch the table on/off
+    allowAutoSet: true,
+    settings: null          // e.g. {"tdiv":0.005,"trigCh":1,"ch":[{"vdiv":5},{"vdiv":2}]}
+  },
+  accessibility: { highContrast: false, lightMode: false, colorBlind: false, narration: true }
 };
+
 /* ── Colour themes. css = panel colours, the rest = canvas palette ── */
 var THEMES = {
-dark: {
-css: { '--cs-bg':'#0a0c0f','--cs-panel':'#111418','--cs-border':'#2a3040','--cs-accent':'#00d4ff',
-'--cs-text':'#c8d4e0','--cs-text2':'#8494a8','--cs-input':'#0d1520','--cs-activebg':'#0d2030',
-'--cs-well':'#060a0d','--cs-hintbg':'rgba(10,12,15,0.88)','--cs-scr':'#05080a',
-'--cs-green':'#39ff14','--cs-danger':'#ff4040','--cs-narbar':'#1a2230','--cs-narborder':'#00d4ff' },
-gridLine:'rgba(255,255,255,0.04)', gridDot:'rgba(255,255,255,0.07)', wire:'#c8d8e8', sel:'#00d4ff',
-selBox:'rgba(0,212,255,0.6)', res:'#f0c840', cap:'#40c8ff', ind:'#c040ff', bat:'#ff6b35', ac:'#20d4a0',
-sw:'#39ff14', vm:'#ff80c0', am:'#80ff80', gnd:'#aab0c0', mark:'#a0c0ff', label:'rgba(180,200,220,0.75)',
-flowConv:'#ffd700', flowElec:'#40e0ff', acConv:'32,212,160', acElec:'120,220,255',
-term:'rgba(0,212,255,0.75)', termFill:'rgba(0,212,255,0.20)', ghost:'rgba(0,212,255,0.5)', bg:'#0a0c0f',
-scrBg:'#05080a', grat1:'rgba(150,180,200,0.13)', grat2:'rgba(150,180,200,0.32)', grat3:'rgba(150,180,200,0.4)',
-scrText:'#c8d4e0', scrDim:'#8494a8', scrBox:'rgba(5,8,10,0.82)', cursor:'rgba(255,255,255,0.75)',
-ch:['#ffd84a','#4fd8ff','#ff6fd0','#6dff8a'], glow:5, traceW:1.6
-},
-light: {
-css: { '--cs-bg':'#f4f6f9','--cs-panel':'#ffffff','--cs-border':'#b8c2cf','--cs-accent':'#005f99',
-'--cs-text':'#18202a','--cs-text2':'#4f5b6a','--cs-input':'#ffffff','--cs-activebg':'#e3f1fa',
-'--cs-well':'#f7f9fb','--cs-hintbg':'rgba(255,255,255,0.94)','--cs-scr':'#fcfdf9',
-'--cs-green':'#1d6e1d','--cs-danger':'#c62828','--cs-narbar':'#fff6d6','--cs-narborder':'#c08000' },
-gridLine:'rgba(0,0,0,0.06)', gridDot:'rgba(0,0,0,0.18)', wire:'#2b3440', sel:'#005f99',
-selBox:'rgba(0,95,153,0.6)', res:'#8a5d00', cap:'#00729e', ind:'#7a2bb0', bat:'#b8430f', ac:'#08785a',
-sw:'#2b7a00', vm:'#a8216f', am:'#1d7a33', gnd:'#4a5260', mark:'#2c58a8', label:'rgba(24,32,42,0.85)',
-flowConv:'#c27c00', flowElec:'#0068c9', acConv:'8,120,90', acElec:'0,104,201',
-term:'rgba(0,95,153,0.85)', termFill:'rgba(0,95,153,0.15)', ghost:'rgba(0,95,153,0.55)', bg:'#f4f6f9',
-scrBg:'#fcfdf9', grat1:'rgba(40,60,80,0.14)', grat2:'rgba(40,60,80,0.35)', grat3:'rgba(40,60,80,0.5)',
-scrText:'#18202a', scrDim:'#4f5b6a', scrBox:'rgba(255,255,255,0.9)', cursor:'rgba(0,0,0,0.7)',
-ch:['#9a7400','#0072b2','#b0287a','#1e8a3a'], glow:0, traceW:1.8
-},
-hc: {
-css: { '--cs-bg':'#000000','--cs-panel':'#000000','--cs-border':'#ffffff','--cs-accent':'#ffff00',
-'--cs-text':'#ffffff','--cs-text2':'#e6e6e6','--cs-input':'#000000','--cs-activebg':'#333300',
-'--cs-well':'#000000','--cs-hintbg':'rgba(0,0,0,0.95)','--cs-scr':'#000000',
-'--cs-green':'#00ff00','--cs-danger':'#ff5555','--cs-narbar':'#000000','--cs-narborder':'#ffff00' },
-gridLine:'rgba(255,255,255,0.14)', gridDot:'rgba(255,255,255,0.3)', wire:'#ffffff', sel:'#ffff00',
-selBox:'rgba(255,255,0,0.9)', res:'#ffd000', cap:'#00ffff', ind:'#ff77ff', bat:'#ff9900', ac:'#00ff99',
-sw:'#66ff66', vm:'#ff66cc', am:'#66ff66', gnd:'#ffffff', mark:'#99ccff', label:'#ffffff',
-flowConv:'#ffff00', flowElec:'#00ffff', acConv:'0,255,153', acElec:'0,255,255',
-term:'rgba(255,255,0,0.9)', termFill:'rgba(255,255,0,0.25)', ghost:'rgba(255,255,0,0.7)', bg:'#000000',
-scrBg:'#000000', grat1:'rgba(255,255,255,0.25)', grat2:'rgba(255,255,255,0.5)', grat3:'rgba(255,255,255,0.8)',
-scrText:'#ffffff', scrDim:'#e6e6e6', scrBox:'rgba(0,0,0,0.9)', cursor:'#ffffff',
-ch:['#ffff00','#00ffff','#ff66ff','#66ff66'], glow:0, traceW:2.4
-}
+  dark: {
+    css: { '--cs-bg':'#0a0c0f','--cs-panel':'#111418','--cs-border':'#2a3040','--cs-accent':'#00d4ff',
+           '--cs-text':'#c8d4e0','--cs-text2':'#8494a8','--cs-input':'#0d1520','--cs-activebg':'#0d2030',
+           '--cs-well':'#060a0d','--cs-hintbg':'rgba(10,12,15,0.88)','--cs-scr':'#05080a',
+           '--cs-green':'#39ff14','--cs-danger':'#ff4040','--cs-narbar':'#1a2230','--cs-narborder':'#00d4ff' },
+    gridLine:'rgba(255,255,255,0.04)', gridDot:'rgba(255,255,255,0.07)', wire:'#c8d8e8', sel:'#00d4ff',
+    selBox:'rgba(0,212,255,0.6)', res:'#f0c840', cap:'#40c8ff', ind:'#c040ff', bat:'#ff6b35', ac:'#20d4a0',
+    sw:'#39ff14', vm:'#ff80c0', am:'#80ff80', gnd:'#aab0c0', mark:'#a0c0ff', label:'rgba(180,200,220,0.75)',
+    flowConv:'#ffd700', flowElec:'#40e0ff', acConv:'32,212,160', acElec:'120,220,255',
+    term:'rgba(0,212,255,0.75)', termFill:'rgba(0,212,255,0.20)', ghost:'rgba(0,212,255,0.5)', bg:'#0a0c0f',
+    scrBg:'#05080a', grat1:'rgba(150,180,200,0.13)', grat2:'rgba(150,180,200,0.32)', grat3:'rgba(150,180,200,0.4)',
+    scrText:'#c8d4e0', scrDim:'#8494a8', scrBox:'rgba(5,8,10,0.82)', cursor:'rgba(255,255,255,0.75)',
+    ch:['#ffd84a','#4fd8ff','#ff6fd0','#6dff8a'], glow:5, traceW:1.6
+  },
+  light: {
+    css: { '--cs-bg':'#f4f6f9','--cs-panel':'#ffffff','--cs-border':'#b8c2cf','--cs-accent':'#005f99',
+           '--cs-text':'#18202a','--cs-text2':'#4f5b6a','--cs-input':'#ffffff','--cs-activebg':'#e3f1fa',
+           '--cs-well':'#f7f9fb','--cs-hintbg':'rgba(255,255,255,0.94)','--cs-scr':'#fcfdf9',
+           '--cs-green':'#1d6e1d','--cs-danger':'#c62828','--cs-narbar':'#fff6d6','--cs-narborder':'#c08000' },
+    gridLine:'rgba(0,0,0,0.06)', gridDot:'rgba(0,0,0,0.18)', wire:'#2b3440', sel:'#005f99',
+    selBox:'rgba(0,95,153,0.6)', res:'#8a5d00', cap:'#00729e', ind:'#7a2bb0', bat:'#b8430f', ac:'#08785a',
+    sw:'#2b7a00', vm:'#a8216f', am:'#1d7a33', gnd:'#4a5260', mark:'#2c58a8', label:'rgba(24,32,42,0.85)',
+    flowConv:'#c27c00', flowElec:'#0068c9', acConv:'8,120,90', acElec:'0,104,201',
+    term:'rgba(0,95,153,0.85)', termFill:'rgba(0,95,153,0.15)', ghost:'rgba(0,95,153,0.55)', bg:'#f4f6f9',
+    scrBg:'#fcfdf9', grat1:'rgba(40,60,80,0.14)', grat2:'rgba(40,60,80,0.35)', grat3:'rgba(40,60,80,0.5)',
+    scrText:'#18202a', scrDim:'#4f5b6a', scrBox:'rgba(255,255,255,0.9)', cursor:'rgba(0,0,0,0.7)',
+    ch:['#9a7400','#0072b2','#b0287a','#1e8a3a'], glow:0, traceW:1.8
+  },
+  hc: {
+    css: { '--cs-bg':'#000000','--cs-panel':'#000000','--cs-border':'#ffffff','--cs-accent':'#ffff00',
+           '--cs-text':'#ffffff','--cs-text2':'#e6e6e6','--cs-input':'#000000','--cs-activebg':'#333300',
+           '--cs-well':'#000000','--cs-hintbg':'rgba(0,0,0,0.95)','--cs-scr':'#000000',
+           '--cs-green':'#00ff00','--cs-danger':'#ff5555','--cs-narbar':'#000000','--cs-narborder':'#ffff00' },
+    gridLine:'rgba(255,255,255,0.14)', gridDot:'rgba(255,255,255,0.3)', wire:'#ffffff', sel:'#ffff00',
+    selBox:'rgba(255,255,0,0.9)', res:'#ffd000', cap:'#00ffff', ind:'#ff77ff', bat:'#ff9900', ac:'#00ff99',
+    sw:'#66ff66', vm:'#ff66cc', am:'#66ff66', gnd:'#ffffff', mark:'#99ccff', label:'#ffffff',
+    flowConv:'#ffff00', flowElec:'#00ffff', acConv:'0,255,153', acElec:'0,255,255',
+    term:'rgba(255,255,0,0.9)', termFill:'rgba(255,255,0,0.25)', ghost:'rgba(255,255,0,0.7)', bg:'#000000',
+    scrBg:'#000000', grat1:'rgba(255,255,255,0.25)', grat2:'rgba(255,255,255,0.5)', grat3:'rgba(255,255,255,0.8)',
+    scrText:'#ffffff', scrDim:'#e6e6e6', scrBox:'rgba(0,0,0,0.9)', cursor:'#ffffff',
+    ch:['#ffff00','#00ffff','#ff66ff','#66ff66'], glow:0, traceW:2.4
+  }
 };
 /* Okabe–Ito colour-blind-safe overrides, one set for dark backgrounds and one for light */
 var CB_DARK = { res:'#E69F00', cap:'#56B4E9', ind:'#CC79A7', bat:'#D55E00', ac:'#009E73', sw:'#F0E442',
-vm:'#CC79A7', am:'#009E73', flowConv:'#E69F00', flowElec:'#56B4E9', acConv:'0,158,115', acElec:'86,180,233',
-ch:['#E69F00','#56B4E9','#CC79A7','#009E73'] };
+  vm:'#CC79A7', am:'#009E73', flowConv:'#E69F00', flowElec:'#56B4E9', acConv:'0,158,115', acElec:'86,180,233',
+  ch:['#E69F00','#56B4E9','#CC79A7','#009E73'] };
 var CB_LIGHT = { res:'#A65F00', cap:'#0072B2', ind:'#AA4499', bat:'#D55E00', ac:'#007A5A', sw:'#7A6A00',
-vm:'#AA4499', am:'#007A5A', flowConv:'#D55E00', flowElec:'#0072B2', acConv:'0,122,90', acElec:'0,114,178',
-ch:['#D55E00','#0072B2','#AA4499','#007A5A'] };
+  vm:'#AA4499', am:'#007A5A', flowConv:'#D55E00', flowElec:'#0072B2', acConv:'0,122,90', acElec:'0,114,178',
+  ch:['#D55E00','#0072B2','#AA4499','#007A5A'] };
 /* In colour-blind mode the four scope channels also differ by line style */
 var DASHES = [[], [9, 4], [2, 3], [10, 3, 2, 3]];
-var MARKUP = "<div class=\"csb_wrap\" id=\"csbwrap%Q%\">\n<div class=\"csb_a11y\" role=\"toolbar\" aria-label=\"Display options\">\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_hc%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('hc')\">HIGH CONTRAST</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_lm%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('lm')\">LIGHT MODE</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_cb%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('cb')\">COLOR-BLIND SAFE</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_nr%Q%\" aria-pressed=\"true\" onclick=\"%API%.a11y('nr')\">NARRATION: ON</button>\n</div>\n<div class=\"csb_title\" id=\"csb_title%Q%\" style=\"display:none\"></div>\n<div id=\"csroot%Q%\" class=\"csb_root cs_scopeopen\" role=\"application\" aria-roledescription=\"circuit simulator\" aria-label=\"Circuit simulator. Arrow keys step through parts in Select mode, or move the placement cursor with other tools.\">\n<!-- Screen-reader live region: announces selected component readings -->\n<div id=\"cs_live%Q%\" class=\"cs_sronly\" aria-live=\"polite\" aria-atomic=\"true\"></div>\n<!-- \u2500\u2500 Toolbar \u2500\u2500 -->\n<div class=\"cs_toolbar\" id=\"cs_toolbar%Q%\" role=\"toolbar\" aria-label=\"Component tools\">\n<div class=\"cs_tbbtn cs_active\" id=\"cs_tb-select%Q%\" onclick=\"%API%.setTool('select')\" title=\"Select / Move\" aria-label=\"Select / Move\" role=\"button\" aria-pressed=\"true\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><path d=\"M6 4l16 10-7 2-3 7L6 4z\" stroke=\"currentColor\" stroke-width=\"1.5\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">SELECT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-wire%Q%\" onclick=\"%API%.setTool('wire')\" title=\"Wire\" aria-label=\"Wire\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\"><line x1=\"4\" y1=\"14\" x2=\"24\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"4\" cy=\"14\" r=\"2\" fill=\"currentColor\"/><circle cx=\"24\" cy=\"14\" r=\"2\" fill=\"currentColor\"/></svg>\n<span class=\"cs_tblabel\">WIRE</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-resistor%Q%\" onclick=\"%API%.setTool('resistor')\" title=\"Resistor\" aria-label=\"Resistor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"7\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><rect x=\"7\" y=\"10\" width=\"14\" height=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" rx=\"1\"/><line x1=\"21\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">RES</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-capacitor%Q%\" onclick=\"%API%.setTool('capacitor')\" title=\"Capacitor\" aria-label=\"Capacitor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"12\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"20\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"16\" y1=\"8\" x2=\"16\" y2=\"20\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"16\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">CAP</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-inductor%Q%\" onclick=\"%API%.setTool('inductor')\" title=\"Inductor\" aria-label=\"Inductor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"5\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M5 14 Q7 9 9 14 Q11 19 13 14 Q15 9 17 14 Q19 19 21 14 Q23 9 23 14\" stroke=\"currentColor\" stroke-width=\"1.5\" fill=\"none\"/><line x1=\"23\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">IND</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-battery%Q%\" onclick=\"%API%.setTool('battery')\" title=\"Battery / DC Voltage Source\" aria-label=\"Battery / DC Voltage Source\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\">\n<line x1=\"2\" y1=\"14\" x2=\"10\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<line x1=\"10\" y1=\"9\" x2=\"10\" y2=\"19\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n<line x1=\"18\" y1=\"9\" x2=\"18\" y2=\"19\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n<line x1=\"18\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<text x=\"11\" y=\"8\" fill=\"currentColor\" font-size=\"6\" font-family=\"monospace\">+</text></svg>\n<span class=\"cs_tblabel\">BATT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-acsource%Q%\" onclick=\"%API%.setTool('acsource')\" title=\"AC Voltage Source\" aria-label=\"AC Voltage Source\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\">\n<line x1=\"2\" y1=\"14\" x2=\"6\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<line x1=\"22\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<circle cx=\"14\" cy=\"14\" r=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<path d=\"M8 14 Q11 9 14 14 T20 14\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">AC</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-switch%Q%\" onclick=\"%API%.setTool('switch')\" title=\"Switch\" aria-label=\"Switch\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"6\" cy=\"14\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"22\" cy=\"14\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"2\" y1=\"14\" x2=\"6\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"22\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"8\" y1=\"14\" x2=\"20\" y2=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">SW</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-voltmeter%Q%\" onclick=\"%API%.setTool('voltmeter')\" title=\"Voltmeter\" aria-label=\"Voltmeter\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/><text x=\"14\" y=\"18\" fill=\"currentColor\" font-size=\"9\" text-anchor=\"middle\" font-family=\"monospace\">V</text></svg>\n<span class=\"cs_tblabel\">VOLT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-ammeter%Q%\" onclick=\"%API%.setTool('ammeter')\" title=\"Ammeter\" aria-label=\"Ammeter\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/><text x=\"14\" y=\"18\" fill=\"currentColor\" font-size=\"9\" text-anchor=\"middle\" font-family=\"monospace\">A</text></svg>\n<span class=\"cs_tblabel\">AMP</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-scope%Q%\" onclick=\"%API%.setTool('scope')\" title=\"Scope probe (differential, one channel per probe)\" aria-label=\"Scope probe (differential, one channel per probe)\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><rect x=\"3\" y=\"6\" width=\"22\" height=\"16\" rx=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M5.5 14 Q8.5 7.5 11.5 14 T17.5 14 T22.5 13\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">SCOPE</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-marker%Q%\" onclick=\"%API%.setTool('marker')\" title=\"Node Marker\" aria-label=\"Node Marker\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"6\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"14\" cy=\"14\" r=\"2\" fill=\"currentColor\"/></svg>\n<span class=\"cs_tblabel\">NODE</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-ground%Q%\" onclick=\"%API%.setTool('ground')\" title=\"Ground\" aria-label=\"Ground\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"14\" y1=\"4\" x2=\"14\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"6\" y1=\"14\" x2=\"22\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"9\" y1=\"18\" x2=\"19\" y2=\"18\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"12\" y1=\"22\" x2=\"16\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"1\"/></svg>\n<span class=\"cs_tblabel\">GND</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-delete%Q%\" onclick=\"%API%.setTool('delete')\" title=\"Delete\" aria-label=\"Delete\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"6\" y1=\"6\" x2=\"22\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"22\" y1=\"6\" x2=\"6\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>\n<span class=\"cs_tblabel\">DEL</span>\n</div>\n</div><!-- cs_toolbar -->\n<!-- \u2500\u2500 Center column: circuit canvas on top, oscilloscope below \u2500\u2500 -->\n<div class=\"cs_center\">\n<div class=\"cs_canvaswrap\" id=\"cs_canvaswrap%Q%\">\n<canvas class=\"cs_canvas\" id=\"cs_canvas%Q%\" role=\"img\" aria-label=\"Circuit canvas\"></canvas>\n<div class=\"cs_hint\" id=\"cs_hint%Q%\">SELECT: click component | WIRE: click start, click end | R=rotate</div>\n</div>\n<!-- \u2500\u2500 Oscilloscope \u2500\u2500 -->\n<div class=\"cs_scope\" id=\"cs_scope%Q%\" role=\"region\" aria-label=\"Oscilloscope\">\n<div class=\"cs_scopehdr\">\n<span class=\"cs_scopetitle\">OSCILLOSCOPE</span>\n<span class=\"cs_scopestatus\" id=\"cs_scopestatus%Q%\" aria-live=\"off\"></span>\n<input type=\"button\" class=\"cs_scbtn\" id=\"cs_scopetoggle%Q%\" value=\"&#9660; HIDE SCOPE\" onclick=\"%API%.toggleScope()\">\n</div>\n<div class=\"cs_scopebody\" id=\"cs_scopebody%Q%\">\n<div class=\"cs_scopescreen\" id=\"cs_scopescreen%Q%\">\n<canvas class=\"cs_scopecanvas\" id=\"cs_scopecanvas%Q%\" role=\"img\" aria-label=\"Oscilloscope screen\"></canvas>\n</div>\n<div class=\"cs_scopectrl\" id=\"cs_scopectrl%Q%\"></div>\n</div>\n</div>\n</div><!-- cs_center -->\n<!-- \u2500\u2500 Right panel \u2500\u2500 -->\n<div class=\"cs_rpanel\" id=\"cs_rpanel%Q%\">\n<div class=\"cs_rptitle\">PROPERTIES</div>\n<div id=\"cs_proparea%Q%\">\n<div class=\"cs_rpdimtext\">Select a component<br>to edit its properties.</div>\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">SIMULATION</div>\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#9654; RUN / UPDATE\"   onclick=\"%API%.runSim()\">\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#9632; STOP ANIMATION\" onclick=\"%API%.stopSim()\">\n<div class=\"cs_togglerow\">\n<input type=\"checkbox\" id=\"cs_chkflow%Q%\" checked onchange=\"%API%.redraw()\">\n<label for=\"cs_chkflow%Q%\">Show current flow</label>\n</div>\n<div class=\"cs_togglerow\" style=\"padding-left:14px;opacity:0.85\">\n<input type=\"radio\" id=\"cs_flowconv%Q%\" name=\"cs_flowdir%Q%\" value=\"conventional\" checked onchange=\"%API%.redraw()\">\n<label for=\"cs_flowconv%Q%\">Conventional (+\u2192\u2212)</label>\n</div>\n<div class=\"cs_togglerow\" style=\"padding-left:14px;opacity:0.85\">\n<input type=\"radio\" id=\"cs_flowelec%Q%\" name=\"cs_flowdir%Q%\" value=\"electron\" onchange=\"%API%.redraw()\">\n<label for=\"cs_flowelec%Q%\">Electron (\u2212\u2192+)</label>\n</div>\n<div class=\"cs_togglerow\">\n<input type=\"checkbox\" id=\"cs_chkvolt%Q%\" onchange=\"%API%.redraw()\">\n<label for=\"cs_chkvolt%Q%\">Voltage shading</label>\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">AC SETTINGS</div>\n<div class=\"cs_rprow\">\n<label for=\"cs_freq%Q%\">Frequency (Hz) \u2014 circuit-wide</label>\n<input type=\"text\" id=\"cs_freq%Q%\" value=\"60\"\n onchange=\"%API%.setFrequency(this.value)\">\n</div>\n<div class=\"cs_rpdimtext\" style=\"font-size:8px\">\nShared by all AC sources. RMS = peak / &radic;2.\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">READINGS</div>\n<div class=\"cs_rpreadout\" id=\"cs_readout%Q%\"><span style=\"color:var(--cs-text2)\">Click a component,<br>or use &#8592;/&#8594; keys,<br>to see its readings.</span></div>\n<div class=\"cs_rpsep\"></div>\n<div id=\"cs_clearwrap%Q%\" class=\"cs_saveload\"><input type=\"button\" class=\"cs_rpbtn cs_danger\" value=\"&#10005; CLEAR ALL\" onclick=\"%API%.clearAll()\"></div>\n<div class=\"cs_rpsep\"></div>\n<div id=\"cs_saveload%Q%\" class=\"cs_saveload\"><div class=\"cs_rptitle\">SAVE / LOAD</div>\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#11015; SAVE TO TEXT\"   onclick=\"%API%.saveCircuit()\">\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#11014; LOAD FROM TEXT\" onclick=\"%API%.loadCircuit()\">\n<textarea aria-label=\"Circuit data (JSON)\" id=\"cs_circuitdata%Q%\" class=\"cs_textarea\"\nplaceholder=\"Circuit JSON appears here after Save. Paste to Load.\">$JSON</textarea>\n</div>\n<div class=\"cs_rpdimtext\" style=\"margin-top:auto;line-height:1.5\">\nKEYS: R=rotate \u00b7 Del=delete \u00b7 Esc=cancel<br>Arrows+Enter place parts\n</div>\n</div><!-- cs_rpanel -->\n</div>\n<div class=\"csb_narbar\" id=\"csb_narbar%Q%\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"></div>\n</div>\n";
+
+var MARKUP = "<div class=\"csb_wrap\" id=\"csbwrap%Q%\">\n<div class=\"csb_a11y\" role=\"toolbar\" aria-label=\"Display options\">\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_hc%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('hc')\">HIGH CONTRAST</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_lm%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('lm')\">LIGHT MODE</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_cb%Q%\" aria-pressed=\"false\" onclick=\"%API%.a11y('cb')\">COLOR-BLIND SAFE</button>\n<button type=\"button\" class=\"csb_a11ybtn\" id=\"csb_nr%Q%\" aria-pressed=\"true\" onclick=\"%API%.a11y('nr')\">NARRATION: ON</button>\n</div>\n<div class=\"csb_title\" id=\"csb_title%Q%\" style=\"display:none\"></div>\n<div id=\"csroot%Q%\" class=\"csb_root cs_scopeopen\" role=\"application\" aria-roledescription=\"circuit simulator\" aria-label=\"Circuit simulator. Arrow keys step through parts in Select mode, or move the placement cursor with other tools.\">\n<!-- Screen-reader live region: announces selected component readings -->\n<div id=\"cs_live%Q%\" class=\"cs_sronly\" aria-live=\"polite\" aria-atomic=\"true\"></div>\n<!-- \u2500\u2500 Toolbar \u2500\u2500 -->\n<div class=\"cs_toolbar\" id=\"cs_toolbar%Q%\" role=\"toolbar\" aria-label=\"Component tools\">\n<div class=\"cs_tbbtn cs_active\" id=\"cs_tb-select%Q%\" onclick=\"%API%.setTool('select')\" title=\"Select / Move\" aria-label=\"Select / Move\" role=\"button\" aria-pressed=\"true\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><path d=\"M6 4l16 10-7 2-3 7L6 4z\" stroke=\"currentColor\" stroke-width=\"1.5\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">SELECT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-wire%Q%\" onclick=\"%API%.setTool('wire')\" title=\"Wire\" aria-label=\"Wire\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\"><line x1=\"4\" y1=\"14\" x2=\"24\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"4\" cy=\"14\" r=\"2\" fill=\"currentColor\"/><circle cx=\"24\" cy=\"14\" r=\"2\" fill=\"currentColor\"/></svg>\n<span class=\"cs_tblabel\">WIRE</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-resistor%Q%\" onclick=\"%API%.setTool('resistor')\" title=\"Resistor\" aria-label=\"Resistor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"7\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><rect x=\"7\" y=\"10\" width=\"14\" height=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" rx=\"1\"/><line x1=\"21\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">RES</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-capacitor%Q%\" onclick=\"%API%.setTool('capacitor')\" title=\"Capacitor\" aria-label=\"Capacitor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"12\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"20\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"16\" y1=\"8\" x2=\"16\" y2=\"20\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"16\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">CAP</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-inductor%Q%\" onclick=\"%API%.setTool('inductor')\" title=\"Inductor\" aria-label=\"Inductor\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"2\" y1=\"14\" x2=\"5\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M5 14 Q7 9 9 14 Q11 19 13 14 Q15 9 17 14 Q19 19 21 14 Q23 9 23 14\" stroke=\"currentColor\" stroke-width=\"1.5\" fill=\"none\"/><line x1=\"23\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">IND</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-battery%Q%\" onclick=\"%API%.setTool('battery')\" title=\"Battery / DC Voltage Source\" aria-label=\"Battery / DC Voltage Source\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\">\n<line x1=\"2\" y1=\"14\" x2=\"10\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<line x1=\"10\" y1=\"9\" x2=\"10\" y2=\"19\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n<line x1=\"18\" y1=\"9\" x2=\"18\" y2=\"19\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n<line x1=\"18\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<text x=\"11\" y=\"8\" fill=\"currentColor\" font-size=\"6\" font-family=\"monospace\">+</text></svg>\n<span class=\"cs_tblabel\">BATT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-acsource%Q%\" onclick=\"%API%.setTool('acsource')\" title=\"AC Voltage Source\" aria-label=\"AC Voltage Source\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\">\n<line x1=\"2\" y1=\"14\" x2=\"6\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<line x1=\"22\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<circle cx=\"14\" cy=\"14\" r=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\"/>\n<path d=\"M8 14 Q11 9 14 14 T20 14\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">AC</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-switch%Q%\" onclick=\"%API%.setTool('switch')\" title=\"Switch\" aria-label=\"Switch\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"6\" cy=\"14\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"22\" cy=\"14\" r=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"2\" y1=\"14\" x2=\"6\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"22\" y1=\"14\" x2=\"26\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"8\" y1=\"14\" x2=\"20\" y2=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>\n<span class=\"cs_tblabel\">SW</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-voltmeter%Q%\" onclick=\"%API%.setTool('voltmeter')\" title=\"Voltmeter\" aria-label=\"Voltmeter\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/><text x=\"14\" y=\"18\" fill=\"currentColor\" font-size=\"9\" text-anchor=\"middle\" font-family=\"monospace\">V</text></svg>\n<span class=\"cs_tblabel\">VOLT</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-ammeter%Q%\" onclick=\"%API%.setTool('ammeter')\" title=\"Ammeter\" aria-label=\"Ammeter\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"9\" stroke=\"currentColor\" stroke-width=\"1.5\"/><text x=\"14\" y=\"18\" fill=\"currentColor\" font-size=\"9\" text-anchor=\"middle\" font-family=\"monospace\">A</text></svg>\n<span class=\"cs_tblabel\">AMP</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-scope%Q%\" onclick=\"%API%.setTool('scope')\" title=\"Scope probe (differential, one channel per probe)\" aria-label=\"Scope probe (differential, one channel per probe)\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><rect x=\"3\" y=\"6\" width=\"22\" height=\"16\" rx=\"2\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M5.5 14 Q8.5 7.5 11.5 14 T17.5 14 T22.5 13\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/></svg>\n<span class=\"cs_tblabel\">SCOPE</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-marker%Q%\" onclick=\"%API%.setTool('marker')\" title=\"Node Marker\" aria-label=\"Node Marker\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><circle cx=\"14\" cy=\"14\" r=\"6\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"14\" cy=\"14\" r=\"2\" fill=\"currentColor\"/></svg>\n<span class=\"cs_tblabel\">NODE</span>\n</div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-ground%Q%\" onclick=\"%API%.setTool('ground')\" title=\"Ground\" aria-label=\"Ground\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"14\" y1=\"4\" x2=\"14\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"6\" y1=\"14\" x2=\"22\" y2=\"14\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"9\" y1=\"18\" x2=\"19\" y2=\"18\" stroke=\"currentColor\" stroke-width=\"1.5\"/><line x1=\"12\" y1=\"22\" x2=\"16\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"1\"/></svg>\n<span class=\"cs_tblabel\">GND</span>\n</div>\n<div class=\"cs_tbsep\"></div>\n<div class=\"cs_tbbtn\" id=\"cs_tb-delete%Q%\" onclick=\"%API%.setTool('delete')\" title=\"Delete\" aria-label=\"Delete\" role=\"button\" aria-pressed=\"false\" tabindex=\"0\">\n<svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 28 28\" fill=\"none\"><line x1=\"6\" y1=\"6\" x2=\"22\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"2\"/><line x1=\"22\" y1=\"6\" x2=\"6\" y2=\"22\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>\n<span class=\"cs_tblabel\">DEL</span>\n</div>\n</div><!-- cs_toolbar -->\n<!-- \u2500\u2500 Center column: circuit canvas on top, oscilloscope below \u2500\u2500 -->\n<div class=\"cs_center\">\n<div class=\"cs_canvaswrap\" id=\"cs_canvaswrap%Q%\">\n<canvas class=\"cs_canvas\" id=\"cs_canvas%Q%\" role=\"img\" aria-label=\"Circuit canvas\"></canvas>\n<div class=\"cs_hint\" id=\"cs_hint%Q%\">SELECT: click component | WIRE: click start, click end | R=rotate</div>\n</div>\n<!-- \u2500\u2500 Oscilloscope \u2500\u2500 -->\n<div class=\"cs_scope\" id=\"cs_scope%Q%\" role=\"region\" aria-label=\"Oscilloscope\">\n<div class=\"cs_scopehdr\">\n<span class=\"cs_scopetitle\">OSCILLOSCOPE</span>\n<span class=\"cs_scopestatus\" id=\"cs_scopestatus%Q%\" aria-live=\"off\"></span>\n<input type=\"button\" class=\"cs_scbtn\" id=\"cs_scopetoggle%Q%\" value=\"&#9660; HIDE SCOPE\" onclick=\"%API%.toggleScope()\">\n</div>\n<div class=\"cs_scopebody\" id=\"cs_scopebody%Q%\">\n<div class=\"cs_scopescreen\" id=\"cs_scopescreen%Q%\">\n<canvas class=\"cs_scopecanvas\" id=\"cs_scopecanvas%Q%\" role=\"img\" aria-label=\"Oscilloscope screen\"></canvas>\n</div>\n<div class=\"cs_scopectrl\" id=\"cs_scopectrl%Q%\"></div>\n</div>\n</div>\n</div><!-- cs_center -->\n<!-- \u2500\u2500 Right panel \u2500\u2500 -->\n<div class=\"cs_rpanel\" id=\"cs_rpanel%Q%\">\n<div class=\"cs_rptitle\">PROPERTIES</div>\n<div id=\"cs_proparea%Q%\">\n<div class=\"cs_rpdimtext\">Select a component<br>to edit its properties.</div>\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">SIMULATION</div>\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#9654; RUN / UPDATE\"   onclick=\"%API%.runSim()\">\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#9632; STOP ANIMATION\" onclick=\"%API%.stopSim()\">\n<div class=\"cs_togglerow\">\n<input type=\"checkbox\" id=\"cs_chkflow%Q%\" checked onchange=\"%API%.redraw()\">\n<label for=\"cs_chkflow%Q%\">Show current flow</label>\n</div>\n<div class=\"cs_togglerow\" style=\"padding-left:14px;opacity:0.85\">\n<input type=\"radio\" id=\"cs_flowconv%Q%\" name=\"cs_flowdir%Q%\" value=\"conventional\" checked onchange=\"%API%.redraw()\">\n<label for=\"cs_flowconv%Q%\">Conventional (+\u2192\u2212)</label>\n</div>\n<div class=\"cs_togglerow\" style=\"padding-left:14px;opacity:0.85\">\n<input type=\"radio\" id=\"cs_flowelec%Q%\" name=\"cs_flowdir%Q%\" value=\"electron\" onchange=\"%API%.redraw()\">\n<label for=\"cs_flowelec%Q%\">Electron (\u2212\u2192+)</label>\n</div>\n<div class=\"cs_togglerow\">\n<input type=\"checkbox\" id=\"cs_chkvolt%Q%\" onchange=\"%API%.redraw()\">\n<label for=\"cs_chkvolt%Q%\">Voltage shading</label>\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">AC SETTINGS</div>\n<div class=\"cs_rprow\">\n<label for=\"cs_freq%Q%\">Frequency (Hz) \u2014 circuit-wide</label>\n<input type=\"text\" id=\"cs_freq%Q%\" value=\"60\"\n onchange=\"%API%.setFrequency(this.value)\">\n</div>\n<div class=\"cs_rpdimtext\" style=\"font-size:8px\">\nShared by all AC sources. RMS = peak / &radic;2.\n</div>\n<div class=\"cs_rpsep\"></div>\n<div class=\"cs_rptitle\">READINGS</div>\n<div class=\"cs_rpreadout\" id=\"cs_readout%Q%\"><span style=\"color:var(--cs-text2)\">Click a component,<br>or use &#8592;/&#8594; keys,<br>to see its readings.</span></div>\n<div class=\"cs_rpsep\"></div>\n<div id=\"cs_clearwrap%Q%\" class=\"cs_saveload\"><input type=\"button\" class=\"cs_rpbtn cs_danger\" value=\"&#10005; CLEAR ALL\" onclick=\"%API%.clearAll()\"></div>\n<div class=\"cs_rpsep\"></div>\n<div id=\"cs_saveload%Q%\" class=\"cs_saveload\"><div class=\"cs_rptitle\">SAVE / LOAD</div>\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#11015; SAVE TO TEXT\"   onclick=\"%API%.saveCircuit()\">\n<input type=\"button\" class=\"cs_rpbtn\" value=\"&#11014; LOAD FROM TEXT\" onclick=\"%API%.loadCircuit()\">\n<textarea aria-label=\"Circuit data (JSON)\" id=\"cs_circuitdata%Q%\" class=\"cs_textarea\"\nplaceholder=\"Circuit JSON appears here after Save. Paste to Load.\"></textarea>\n</div>\n<div class=\"cs_rpdimtext\" style=\"margin-top:auto;line-height:1.5\">\nKEYS: R=rotate \u00b7 Del=delete \u00b7 Esc=cancel<br>Arrows+Enter place parts\n</div>\n</div><!-- cs_rpanel -->\n</div>\n<div class=\"csb_narbar\" id=\"csb_narbar%Q%\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"></div>\n</div>\n";
+
 function merge(base, over) {           // shallow-deep merge for the config object
-var out = {}, k;
-for (k in base) out[k] = base[k];
-if (over && typeof over === 'object') for (k in over) {
-if (over[k] && typeof over[k] === 'object' && !Array.isArray(over[k]) && base[k] && typeof base[k] === 'object' && !Array.isArray(base[k]))
-out[k] = merge(base[k], over[k]);
-else if (over[k] !== undefined) out[k] = over[k];
+  var out = {}, k;
+  for (k in base) out[k] = base[k];
+  if (over && typeof over === 'object') for (k in over) {
+    if (over[k] && typeof over[k] === 'object' && !Array.isArray(over[k]) && base[k] && typeof base[k] === 'object' && !Array.isArray(base[k]))
+      out[k] = merge(base[k], over[k]);
+    else if (over[k] !== undefined) out[k] = over[k];
+  }
+  return out;
 }
-return out;
-}
+
 /* ════════════════════════════════════════════════════════════════════
-One simulator instance.  Q = $thisq,  API = name of its global handle
-════════════════════════════════════════════════════════════════════ */
+   One simulator instance.  Q = $thisq,  API = name of its global handle
+   ════════════════════════════════════════════════════════════════════ */
 function create(Q, API, CFG) {
 var WRAP = document.getElementById('csbwrap' + Q);
 var TOOLS = Array.isArray(CFG.tools) ? CFG.tools.slice() : ALL_TOOLS.slice();
@@ -117,86 +126,87 @@ if (TOOLS.indexOf('select') < 0) TOOLS.unshift('select');
 var scopeEnabled = CFG.scope.enabled !== false;
 if (!scopeEnabled) TOOLS = TOOLS.filter(function (t) { return t !== 'scope'; });
 var A11Y = { hc: !!CFG.accessibility.highContrast, lm: !!CFG.accessibility.lightMode,
- cb: !!CFG.accessibility.colorBlind, nr: CFG.accessibility.narration !== false };
+             cb: !!CFG.accessibility.colorBlind, nr: CFG.accessibility.narration !== false };
 if (A11Y.hc) A11Y.lm = false;
 var P = {};                       // active canvas palette (filled by applyTheme)
 var kbActive = false, kbPos = null, lastTrigState = null, quiet = false;
+
 /* ── Narration: visible caption bar + polite live region ── */
 function narrate(msg) {
-if (quiet || !A11Y.nr || !msg) return;
-var nb = document.getElementById('csb_narbar' + Q);
-if (nb) nb.textContent = msg;
+  if (quiet || !A11Y.nr || !msg) return;
+  var nb = document.getElementById('csb_narbar' + Q);
+  if (nb) nb.textContent = msg;
 }
 /* ── Themes ── */
 function applyTheme() {
-var base = A11Y.hc ? THEMES.hc : A11Y.lm ? THEMES.light : THEMES.dark, k;
-for (k in base) if (k !== 'css') P[k] = base[k];
-if (A11Y.cb) { var o = A11Y.lm ? CB_LIGHT : CB_DARK; for (k in o) P[k] = o[k]; }
-for (k in base.css) WRAP.style.setProperty(k, base.css[k]);
-WRAP.classList.toggle('csb_hc', A11Y.hc);
-[['hc','HIGH CONTRAST'],['lm','LIGHT MODE'],['cb','COLOR-BLIND SAFE'],['nr','NARRATION']].forEach(function (b) {
-var e = document.getElementById('csb_' + b[0] + Q); if (!e) return;
-e.setAttribute('aria-pressed', A11Y[b[0]] ? 'true' : 'false');
-e.classList.toggle('csb_on', !!A11Y[b[0]]);
-if (b[0] === 'nr') e.textContent = 'NARRATION: ' + (A11Y.nr ? 'ON' : 'OFF');
-});
-var nb = document.getElementById('csb_narbar' + Q);
-if (nb) nb.style.display = A11Y.nr ? '' : 'none';
+  var base = A11Y.hc ? THEMES.hc : A11Y.lm ? THEMES.light : THEMES.dark, k;
+  for (k in base) if (k !== 'css') P[k] = base[k];
+  if (A11Y.cb) { var o = A11Y.lm ? CB_LIGHT : CB_DARK; for (k in o) P[k] = o[k]; }
+  for (k in base.css) WRAP.style.setProperty(k, base.css[k]);
+  WRAP.classList.toggle('csb_hc', A11Y.hc);
+  [['hc','HIGH CONTRAST'],['lm','LIGHT MODE'],['cb','COLOR-BLIND SAFE'],['nr','NARRATION']].forEach(function (b) {
+    var e = document.getElementById('csb_' + b[0] + Q); if (!e) return;
+    e.setAttribute('aria-pressed', A11Y[b[0]] ? 'true' : 'false');
+    e.classList.toggle('csb_on', !!A11Y[b[0]]);
+    if (b[0] === 'nr') e.textContent = 'NARRATION: ' + (A11Y.nr ? 'ON' : 'OFF');
+  });
+  var nb = document.getElementById('csb_narbar' + Q);
+  if (nb) nb.style.display = A11Y.nr ? '' : 'none';
 }
 function toggleA11y(k) {
-A11Y[k] = !A11Y[k];
-if (k === 'hc' && A11Y.hc) A11Y.lm = false;
-if (k === 'lm' && A11Y.lm) A11Y.hc = false;
-applyTheme();
-if (typeof buildScopeControls === 'function') buildScopeControls();
-redraw();
-var names = { hc:'High contrast', lm:'Light mode', cb:'Color-blind-safe colors', nr:'Narration' };
-if (k === 'cb' && A11Y.cb) narrate('Color-blind-safe colors on. Scope channels also differ by line style: CH1 solid, CH2 dashed, CH3 dotted, CH4 dash-dot.');
-else narrate(names[k] + (A11Y[k] ? ' on.' : ' off.'));
+  A11Y[k] = !A11Y[k];
+  if (k === 'hc' && A11Y.hc) A11Y.lm = false;
+  if (k === 'lm' && A11Y.lm) A11Y.hc = false;
+  applyTheme();
+  if (typeof buildScopeControls === 'function') buildScopeControls();
+  redraw();
+  var names = { hc:'High contrast', lm:'Light mode', cb:'Color-blind-safe colors', nr:'Narration' };
+  if (k === 'cb' && A11Y.cb) narrate('Color-blind-safe colors on. Scope channels also differ by line style: CH1 solid, CH2 dashed, CH3 dotted, CH4 dash-dot.');
+  else narrate(names[k] + (A11Y[k] ? ' on.' : ' off.'));
 }
 /* Voltage-shading colour: blue→red normally, blue→orange in colour-blind mode */
 function shadeColor(t) {
-if (!A11Y.cb) return 'hsla(' + ((1 - t) * 240) + ',100%,55%,0.55)';
-var a = [0, 114, 178], b = [230, 159, 0];
-return 'rgba(' + Math.round(a[0] + (b[0] - a[0]) * t) + ',' + Math.round(a[1] + (b[1] - a[1]) * t) + ','
-+ Math.round(a[2] + (b[2] - a[2]) * t) + ',0.6)';
+  if (!A11Y.cb) return 'hsla(' + ((1 - t) * 240) + ',100%,55%,0.55)';
+  var a = [0, 114, 178], b = [230, 159, 0];
+  return 'rgba(' + Math.round(a[0] + (b[0] - a[0]) * t) + ',' + Math.round(a[1] + (b[1] - a[1]) * t) + ','
+       + Math.round(a[2] + (b[2] - a[2]) * t) + ',0.6)';
 }
 /* Small colour + line-style sample shown next to each channel name */
 function chSwatch(n) {
-var d = A11Y.cb && DASHES[n - 1].length ? ' stroke-dasharray="' + DASHES[n - 1].join(',') + '"' : '';
-return '<svg aria-hidden="true" width="16" height="6" style="margin-right:3px;vertical-align:middle">'
-+ '<line x1="0" y1="3" x2="16" y2="3" stroke="' + P.ch[n - 1] + '" stroke-width="2"' + d + '/></svg>';
+  var d = A11Y.cb && DASHES[n - 1].length ? ' stroke-dasharray="' + DASHES[n - 1].join(',') + '"' : '';
+  return '<svg aria-hidden="true" width="16" height="6" style="margin-right:3px;vertical-align:middle">'
+       + '<line x1="0" y1="3" x2="16" y2="3" stroke="' + P.ch[n - 1] + '" stroke-width="2"' + d + '/></svg>';
 }
 /* ── Apply layout-related settings from the question ── */
 function applyLayoutConfig() {
-ALL_TOOLS.forEach(function (t) {
-var b = document.getElementById('cs_tb-' + t + Q);
-if (b) b.style.display = TOOLS.indexOf(t) >= 0 ? '' : 'none';
-});
-// hide separators that would end up doubled or dangling
-var tb = document.getElementById('cs_toolbar' + Q), prevSep = true, lastSep = null;
-Array.prototype.forEach.call(tb.children, function (c) {
-if (c.classList.contains('cs_tbsep')) { c.style.display = prevSep ? 'none' : ''; if (!prevSep) lastSep = c; prevSep = true; }
-else if (c.style.display !== 'none') { prevSep = false; lastSep = null; }
-});
-if (lastSep) lastSep.style.display = 'none';
-// toolbar buttons respond to Enter / Space like real buttons
-tb.addEventListener('keydown', function (e) {
-if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('cs_tbbtn')) {
-e.preventDefault(); e.stopPropagation(); e.target.click();
-}
-});
-if (CFG.title) { var t = document.getElementById('csb_title' + Q); t.textContent = CFG.title; t.style.display = ''; }
-if (CFG.showSaveLoad === false) document.getElementById('cs_saveload' + Q).style.display = 'none';
-if (CFG.showClearAll === false) document.getElementById('cs_clearwrap' + Q).style.display = 'none';
-if (CFG.lockFrequency) document.getElementById('cs_freq' + Q).disabled = true;
-if (!scopeEnabled) {
-document.getElementById('cs_scope' + Q).style.display = 'none';
-document.getElementById('csroot' + Q).classList.remove('cs_scopeopen');
-}
-// respect "reduce motion": start with the moving-charge animation off
-if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-document.getElementById('cs_chkflow' + Q).checked = false;
+  ALL_TOOLS.forEach(function (t) {
+    var b = document.getElementById('cs_tb-' + t + Q);
+    if (b) b.style.display = TOOLS.indexOf(t) >= 0 ? '' : 'none';
+  });
+  // hide separators that would end up doubled or dangling
+  var tb = document.getElementById('cs_toolbar' + Q), prevSep = true, lastSep = null;
+  Array.prototype.forEach.call(tb.children, function (c) {
+    if (c.classList.contains('cs_tbsep')) { c.style.display = prevSep ? 'none' : ''; if (!prevSep) lastSep = c; prevSep = true; }
+    else if (c.style.display !== 'none') { prevSep = false; lastSep = null; }
+  });
+  if (lastSep) lastSep.style.display = 'none';
+  // toolbar buttons respond to Enter / Space like real buttons
+  tb.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('cs_tbbtn')) {
+      e.preventDefault(); e.stopPropagation(); e.target.click();
+    }
+  });
+  if (CFG.title) { var t = document.getElementById('csb_title' + Q); t.textContent = CFG.title; t.style.display = ''; }
+  if (CFG.showSaveLoad === false) document.getElementById('cs_saveload' + Q).style.display = 'none';
+  if (CFG.showClearAll === false) document.getElementById('cs_clearwrap' + Q).style.display = 'none';
+  if (CFG.lockFrequency) document.getElementById('cs_freq' + Q).disabled = true;
+  if (!scopeEnabled) {
+    document.getElementById('cs_scope' + Q).style.display = 'none';
+    document.getElementById('csroot' + Q).classList.remove('cs_scopeopen');
+  }
+  // respect "reduce motion": start with the moving-charge animation off
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    document.getElementById('cs_chkflow' + Q).checked = false;
 }
 /* ── DOM refs ── */
 var ROOT   = el('csroot');
@@ -249,8 +259,8 @@ acsource:  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'AC Source', defaults:
 voltmeter: { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Voltmeter', defaults:{mode:'rms'} },
 ammeter:   { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Ammeter',   defaults:{mode:'rms'} },
 /* Scope probe: an ideal differential probe (infinite impedance, like the
-voltmeter). It displays V(terminal 1) − V(terminal 0), i.e. the "+" lead
-minus the "−" lead. Each probe feeds one scope channel (props.ch). */
+   voltmeter). It displays V(terminal 1) − V(terminal 0), i.e. the "+" lead
+   minus the "−" lead. Each probe feeds one scope channel (props.ch). */
 scope:     { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Scope probe', defaults:{ch:1} },
 ground:    { terminals: [{dx:0,dy:-1}],              label:'Ground',    defaults:{} },
 marker:    { terminals: [{dx:0,dy:0}],               label:'Node',      defaults:{label:'N1'} },
@@ -369,8 +379,8 @@ var tag = document.activeElement ? document.activeElement.tagName : '';
 if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
 if (e.target && e.target.closest && e.target.closest('.cs_toolbar') && (e.key === 'Enter' || e.key === ' ')) return;
 /* Keyboard placement: with a placing tool (or wire/delete) active, the arrow
-keys move a grid cursor and Enter/Space acts as a click at the cursor.
-Shift+arrow moves 4 grid steps. */
+   keys move a grid cursor and Enter/Space acts as a click at the cursor.
+   Shift+arrow moves 4 grid steps. */
 var placing = tool !== 'select';
 if (placing && /^Arrow/.test(e.key)) {
 e.preventDefault();
@@ -1475,16 +1485,18 @@ if (e) e.innerHTML = r.html;
 if (live) live.textContent = r.prose;
 }
 /* ════════════════════════════════════════════════════════════
-OSCILLOSCOPE
-────────────────────────────────────────────────────────────
-Each scope probe on the canvas is an ideal differential probe
-feeding one channel. Because the simulator solves for the
-sinusoidal steady state, every channel signal is exactly
-v(t) = Vdc + A·cos(ωt + φ)
-where Vdc comes from the DC solve and A, φ from the AC phasor
-(V(+) − V(−)). The screen is drawn from that formula, and the
-automatic measurements are computed from it analytically.
-════════════════════════════════════════════════════════════ */
+   OSCILLOSCOPE
+   ────────────────────────────────────────────────────────────
+   Each scope probe on the canvas is an ideal differential probe
+   feeding one channel. Because the simulator solves for the
+   sinusoidal steady state, every channel signal is exactly
+
+       v(t) = Vdc + A·cos(ωt + φ)
+
+   where Vdc comes from the DC solve and A, φ from the AC phasor
+   (V(+) − V(−)). The screen is drawn from that formula, and the
+   automatic measurements are computed from it analytically.
+   ════════════════════════════════════════════════════════════ */
 function seq125(eMin, eMax, maxVal) {
 var out = [];
 for (var e = eMin; e <= eMax; e++) {
@@ -1555,7 +1567,7 @@ if (cpl === 'gnd') { vdc = 0; A = 0; }
 return { probe: c, s: { vdc: vdc, A: A, phi: s.phi } };
 }
 /* Time (within one period) at which the trigger channel crosses the
-trigger level with the chosen slope, or null if it never does. */
+   trigger level with the chosen slope, or null if it never does. */
 function triggerTime(sigs, omega) {
 var g = sigs[scope.trigCh - 1];
 if (!g || !g.s || !scope.ch[scope.trigCh - 1].on) return null;
@@ -1606,7 +1618,7 @@ return s;
 function buildScopeControls() {
 var api = API + '.scopeSet';
 var h = '';
-h += '<div class="cs_scsub">HORIZONTAL &amp; TRIGGER</div>';
+h += '<div class="cs_sccol"><div class="cs_scsub">HORIZONTAL &amp; TRIGGER</div>';
 h += '<div class="cs_scrow">'
 + '<label>Time <select aria-label="Time per division" onchange="' + api + '(\'tdiv\',this.value)">' + optList(TDIVS, scope.tdiv, 's') + '</select></label>'
 + '<label>Trig <select aria-label="Trigger source" onchange="' + api + '(\'trigCh\',this.value)">' + chOpts(scope.trigCh) + '</select></label>'
@@ -1637,8 +1649,8 @@ h += '<tr><td style="color:' + P.ch[n - 1] + '">' + chSwatch(n) + 'CH' + n + '</
 + '<option value="ac"' + (c.cpl === 'ac' ? ' selected' : '') + '>AC</option>'
 + '<option value="gnd"' + (c.cpl === 'gnd' ? ' selected' : '') + '>GND</option></select></td></tr>';
 }
-h += '</tbody></table>';
-h += '<div class="cs_scsub">MEASUREMENTS</div><div id="cs_scmeas' + Q + '" aria-live="off"></div>';
+h += '</tbody></table></div>';
+h += '<div class="cs_sccol"><div class="cs_scsub">MEASUREMENTS</div><div id="cs_scmeas' + Q + '" aria-live="off"></div></div>';
 el('cs_scopectrl').innerHTML = h;
 lastMeasHTML = '';
 }
@@ -1724,7 +1736,7 @@ drawScope();
 scopeCanvas.addEventListener('pointerup', function() { scopeDrag = null; });
 scopeCanvas.addEventListener('pointercancel', function() { scopeDrag = null; });
 /* Keyboard control of the cursors (screen focused): 1/2 choose the cursor,
-arrows move it by 1/100 of the screen (Shift: 1/10). The readout is announced. */
+   arrows move it by 1/100 of the screen (Shift: 1/10). The readout is announced. */
 scopeCanvas.setAttribute('tabindex', '0');
 scopeCanvas.addEventListener('keydown', function(e) {
 if (e.key === '1' || e.key === '2') { kbCursor = +e.key; e.preventDefault(); narrate('Cursor ' + kbCursor + ' selected.'); return; }
@@ -1793,7 +1805,8 @@ var anyProbe = components.some(function(k) { return k.type === 'scope'; });
 c.fillText(anyProbe ? 'Press RUN to see the traces' : 'Place a scope probe across any component, then press RUN',
 g.ox + g.gw / 2, g.oy + g.gh / 2 - 8);
 c.textAlign = 'left';
-status = 'Not running. ' + fmtKnob(scope.tdiv, 's') + '/div'; aria = 'Oscilloscope screen. Simulation not run.';
+status = 'Not running. ' + fmtKnob(scope.tdiv, 's') + '/div';
+aria = 'Oscilloscope screen. Simulation not run.';
 setScopeText(status, aria, '<span style="color:var(--cs-text2)">Run the simulation to measure.</span>');
 return;
 }
@@ -1876,7 +1889,8 @@ for (var q = 1; q <= 4; q++) if (sigs[q - 1] && scope.ch[q - 1].on) on.push('CH'
 status = (on.length ? on.join('   ') : 'No probes') + '   |   ' + fmtKnob(scope.tdiv, 's') + '/div   |   '
 + (triggered ? 'Trig\u2019d CH' + scope.trigCh + (scope.trigSlope === 'rise' ? ' \u2191 ' : ' \u2193 ') + fmtEng(scope.trigLevel, 'V')
 : (T > 0 ? 'AUTO: not triggered (check trigger source/level)' : 'DC only'));
-var measHTML = measurementHTML(sigs); aria = 'Oscilloscope. ' + status + '. ' + measText + ' ' + cursorText;
+var measHTML = measurementHTML(sigs);
+aria = 'Oscilloscope. ' + status + '. ' + measText + ' ' + cursorText;
 setScopeText(status, aria, measHTML);
 }
 var cursorText = '', kbCursor = 1;
@@ -2252,7 +2266,7 @@ ctx.fillText(mode === 'mean' ? 'DC' : 'RMS', 0, R_HALF*0.55);
 ctx.textBaseline = 'alphabetic'; ctx.restore();
 }
 /* Scope probe: a small screen with a sine wave, in its channel's colour.
-"+" marks terminal 1 (right/top), "−" marks terminal 0. */
+   "+" marks terminal 1 (right/top), "−" marks terminal 0. */
 function drawProbe(c, sel) {
 var chn = Math.min(4, Math.max(1, c.props.ch | 0));
 var col = sel ? P.sel : P.ch[chn - 1];
@@ -2529,24 +2543,25 @@ a11y:         toggleA11y,
 getCircuitJSON: function() { saveCircuit(); return el('cs_circuitdata').value; }
 };
 } // end create()
+
 /* ════════════ Public loader ════════════ */
 window.CircuitBuilder = {
-version: VERSION,
-instances: {},
-/* mount(thisq [, config]) — config defaults to window.csbConfig[thisq] */
-mount: function (q, cfg) {
-q = String(q);
-var host = document.getElementById('csb' + q);
-if (!host) { if (window.console) console.warn('CircuitBuilder: no element with id "csb' + q + '"'); return null; }
-if (this.instances[q]) return this.instances[q];
-if (!cfg) cfg = (window.csbConfig && window.csbConfig[q]) || {};
-var C = merge(DEFAULTS, cfg);
-var api = 'CSB' + q.replace(/\W/g, '_');
-host.innerHTML = MARKUP.replace(/%Q%/g, q).replace(/%API%/g, api);
-var inst = create(q, api, C);
-window[api] = inst;
-this.instances[q] = inst;
-return inst;
-}
+  version: VERSION,
+  instances: {},
+  /* mount(thisq [, config]) — config defaults to window.csbConfig[thisq] */
+  mount: function (q, cfg) {
+    q = String(q);
+    var host = document.getElementById('csb' + q);
+    if (!host) { if (window.console) console.warn('CircuitBuilder: no element with id "csb' + q + '"'); return null; }
+    if (this.instances[q]) return this.instances[q];
+    if (!cfg) cfg = (window.csbConfig && window.csbConfig[q]) || {};
+    var C = merge(DEFAULTS, cfg);
+    var api = 'CSB' + q.replace(/\W/g, '_');
+    host.innerHTML = MARKUP.replace(/%Q%/g, q).replace(/%API%/g, api);
+    var inst = create(q, api, C);
+    window[api] = inst;
+    this.instances[q] = inst;
+    return inst;
+  }
 };
 })();

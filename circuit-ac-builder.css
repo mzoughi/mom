@@ -50,7 +50,7 @@ user-select: none;
 }
 /* When the scope is open the simulator grows taller, so the circuit
    canvas keeps the same working area it had before the scope existed. */
-.csb_root.cs_scopeopen { height: 1180px; min-height: 1180px; }
+.csb_root.cs_scopeopen { height: 1360px; min-height: 1360px; }
 .csb_root *, .csb_root *::before, .csb_root *::after {
 box-sizing: border-box; margin: 0; padding: 0;
 }
@@ -115,14 +115,16 @@ font-family: var(--cs-mono); font-size: 9px;
 }
 .csb_root .cs_scopetitle { color: var(--cs-accent); letter-spacing: 1px; }
 .csb_root .cs_scopestatus { color: var(--cs-text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.csb_root .cs_scopebody { display: flex; height: 320px; }
-.csb_root .cs_scopescreen { flex: 1; min-width: 0; position: relative; background: var(--cs-scr); }
+/* Scope screen on top, controls underneath (fits narrow MOM pages) */
+.csb_root .cs_scopebody { display: flex; flex-direction: column; }
+.csb_root .cs_scopescreen { height: 350px; flex-shrink: 0; min-width: 0; position: relative; background: var(--cs-scr); }
 .csb_root .cs_scopecanvas { display: block; touch-action: none; }
 .csb_root .cs_scopectrl {
-width: 330px; flex-shrink: 0; border-left: 1px solid var(--cs-border);
-padding: 6px 7px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
+border-top: 1px solid var(--cs-border); padding: 6px 8px;
+display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 14px; align-items: start;
 font-family: var(--cs-mono); font-size: 9px; color: var(--cs-text2);
 }
+.csb_root .cs_sccol { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .csb_root .cs_scrow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .csb_root .cs_scrow label { display: flex; align-items: center; gap: 3px; }
 .csb_root .cs_scopectrl select,
