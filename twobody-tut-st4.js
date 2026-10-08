@@ -49,8 +49,9 @@ function render(){
 function setFb(html, tone){ TB.setFb(document.getElementById(id('Fb')), html, tone); }
 function diagramSVG(i, b){
   var Sit = TB.SITS[i], ax = Sit.axes.bodies[b], O = 150, L = 84, R = TB.frame(i, b), s = '';
-  s += TB.arrow(10, O, 290, O, 'ntaxis', {head:8}) + TB.arrow(O, 290, O, 10, 'ntaxis', {head:8});
-  s += '<text class="ntaxtiltl" x="278" y="140">x</text><text class="ntaxtiltl" x="158" y="22">y</text>';
+  var yd = TB.yDown(i, b);
+  s += TB.arrow(10, O, 290, O, 'ntaxis', {head:8}) + (yd ? TB.arrow(O, 10, O, 290, 'ntaxis', {head:8}) : TB.arrow(O, 290, O, 10, 'ntaxis', {head:8}));
+  s += '<text class="ntaxtiltl" x="278" y="140">x</text><text class="ntaxtiltl" x="' + (yd ? 122 : 158) + '" y="' + (yd ? 292 : 22) + '">' + (yd ? '+y' : 'y') + '</text>';
   var seen = {};
   TB.bodyForces(i, b).forEach(function(f){
     var dir = ((f.dir - R) % 360 + 360) % 360, r = dir*Math.PI/180, tx = O + L*Math.cos(r), ty = O - L*Math.sin(r), cls = TB.colorClass(f.slot);
@@ -90,7 +91,7 @@ function bodyCard(i, b, done){
   return '<div class="tbbody" role="group" aria-labelledby="' + id('BH' + b) + '">'
     + '<div class="tbbodyh" id="' + id('BH' + b) + '"><span class="tbbodytag">' + b + '</span> Block ' + b + '</div>'
     + '<svg class="ntdiag" style="margin:0 auto" viewBox="0 0 300 300" role="img" aria-label="' + TB.esc(diagramDesc(i, b)) + '">' + diagramSVG(i, b) + '</svg>'
-    + '<p class="ntinstr">' + (Sit.comps[b].length === 1 ? 'Every force on block ' + b + ' lies along its x-axis, so one equation carries all the information.' : 'One equation per axis: the components along that axis add up to <i>m</i><sub>' + b + '</sub> times block ' + b + '\u2019s acceleration component.') + ' The marked angles tell you which trig function goes with each force.</p>'
+    + '<p class="ntinstr">' + (Sit.comps[b].length === 1 ? 'Every force on block ' + b + ' is vertical, so the y-equation carries all the information (the x-equation reads 0 = 0).' : 'One equation per axis: the components along that axis add up to <i>m</i><sub>' + b + '</sub> times block ' + b + '\u2019s acceleration component.') + ' The marked angles tell you which trig function goes with each force.</p>'
     + '<div class="ntcomprows">' + rows + '</div></div>';
 }
 function renderComps(){

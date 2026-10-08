@@ -53,7 +53,8 @@ function bodyCard(i, b, done){
   var dis = done ? ' disabled' : '';
   var remind = TB.bodyForces(i, b).map(function(f){ return TB.symH(f.slot, true); }).join(', ');
   var xd = TB.SITS[i].axes.bodies[b].xdesc;
-  var note = rot(b) ? '<p class="ntfb ntfbinfo">Block ' + b + '\u2019s diagram is drawn with its chosen axes horizontal and vertical: <b>+x points ' + xd + '</b>. The picture is rotated, so the real vertical is no longer straight down on this diagram. Measure angles from +x.</p>' : '';
+  var note = TB.yDown(i, b) ? '<p class="ntfb ntfbinfo">Block ' + b + '\u2019s <b>+y axis points downward</b>, along its motion, so its acceleration will be +<i>a</i>. The picture is not rotated: enter directions as on the page (90\u00B0 is up, 270\u00B0 is down).</p>'
+    : rot(b) ? '<p class="ntfb ntfbinfo">Block ' + b + '\u2019s diagram is drawn with its chosen axes horizontal and vertical: <b>+x points ' + xd + '</b>. The picture is rotated, so the real vertical is no longer straight down on this diagram. Measure angles from +x.</p>' : '';
   return '<div class="tbbody" role="group" aria-labelledby="' + id('BH' + b) + '">'
     + '<div class="tbbodyh" id="' + id('BH' + b) + '"><span class="tbbodytag">' + b + '</span> Free-body diagram of block ' + b + '</div>'
     + note + '<p class="ntremind">Forces on block ' + b + ' from Stage 1: ' + remind + '.</p>'
@@ -119,8 +120,9 @@ function draw(b){
   for (var v=lo; v<hi; v+=25) s += '<line x1="'+v+'" y1="'+(R?-100:0)+'" x2="'+v+'" y2="'+(R?500:400)+'"/><line x1="'+(R?-100:0)+'" y1="'+v+'" x2="'+(R?500:400)+'" y2="'+v+'"/>';
   s += '</g>';
   if (!R) {
-    s += TB.arrow(8, OY, W-6, OY, 'ntaxis', {head:10}) + TB.arrow(OX, W-8, OX, 6, 'ntaxis', {head:10});
-    s += '<text class="ntaxlbl" x="380" y="186">x</text><text class="ntaxlbl" x="210" y="20">y</text>';
+    var yd = TB.yDown(S.cur, b);
+    s += TB.arrow(8, OY, W-6, OY, 'ntaxis', {head:10}) + (yd ? TB.arrow(OX, 6, OX, W-8, 'ntaxis', {head:10}) : TB.arrow(OX, W-8, OX, 6, 'ntaxis', {head:10}));
+    s += '<text class="ntaxlbl" x="380" y="186">x</text><text class="ntaxlbl" x="' + (yd ? 166 : 210) + '" y="' + (yd ? 392 : 20) + '">' + (yd ? '+y' : 'y') + '</text>';
   } else {
     [[R,'x'],[R+90,'y']].forEach(function(ax){
       var a = ax[0]*Math.PI/180, ux = Math.cos(a), uy = -Math.sin(a), E = 188;

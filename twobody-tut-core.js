@@ -87,9 +87,9 @@ TB.SITS = [
   aria:'Scene: a pulley hangs from the ceiling. A string passes over it. Block 1, smaller, hangs on the left with a dashed velocity arrow pointing up. Block 2, larger, hangs on the right with a dashed velocity arrow pointing down.',
   forces:[
     { slot:'g1', body:1, types:['grav'], agents:['earth'],  dir:270, miss:'Every block near Earth is pulled down by Earth.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'T1', body:1, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 1 and pulls on it.', tip:'The string pulls up on block 1, which is +x here (0\u00B0), because +x points along block 1\u2019s motion: up.' },
+    { slot:'T1', body:1, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 1 and pulls on it.', tip:'The string pulls straight up on block 1 (90\u00B0).' },
     { slot:'g2', body:2, types:['grav'], agents:['earth'],  dir:270, miss:'Every block near Earth is pulled down by Earth.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'T2', body:2, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 2 and pulls on it.', tip:'The string pulls up on block 2, even though it moves down. +x points down (along its motion), so the tension is along \u2212x (180\u00B0).' }
+    { slot:'T2', body:2, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 2 and pulls on it.', tip:'The string pulls straight up on block 2 (90\u00B0), even though block 2 moves down.' }
   ],
   absent:{ '1:norm':'Nothing solid supports a hanging block; only the string holds it.', '2:norm':'Nothing solid supports a hanging block; only the string holds it.',
            '1:fric':'A hanging block touches no surface, so there is no friction.', '2:fric':'A hanging block touches no surface, so there is no friction.',
@@ -114,14 +114,14 @@ TB.SITS = [
   ],
   wrap2:'Two equations, one per block, linked by two facts: the same acceleration magnitude <i>a</i> and the same tension F<sub>T</sub>.',
   axes:{ correct:'motion',
-    opts:[ {id:'motion', t:'For each block, x along its own motion: upward for block 1, downward for block 2'},
-           {id:'up', t:'x horizontal and y upward for both blocks', fb:'That works, but block 2\u2019s acceleration component would then be \u2212a while block 1\u2019s is +a. Putting x along each block\u2019s own motion (its acceleration) lets both equations use +a.'} ],
-    bodies:{ 1:{ dirs:[{n:'x',d:90},{n:'y',d:180}], xdesc:'upward, along block 1\u2019s motion', marks:[] },
-             2:{ dirs:[{n:'x',d:270},{n:'y',d:0}], xdesc:'downward, along block 2\u2019s motion', marks:[] } } },
+    opts:[ {id:'motion', t:'For each block, y vertical and positive along its own motion: up for block 1, down for block 2'},
+           {id:'up', t:'y positive upward for both blocks', fb:'That works, but block 2\u2019s acceleration component would then be \u2212a while block 1\u2019s is +a. Making y positive along each block\u2019s own motion lets both equations use +a.'} ],
+    bodies:{ 1:{ dirs:[{n:'x',d:0},{n:'y',d:90}],  xdesc:'to the right; +y points up, along block 1\u2019s motion', marks:[] },
+             2:{ dirs:[{n:'x',d:0},{n:'y',d:270}], xdesc:'to the right; +y points down, along block 2\u2019s motion', marks:[] } } },
   angles:{},
   comps:{
-    1:[ { axis:'x', terms:{ g1:'-', T1:'+' }, rhsOpts:['0','+m1a','-m1a','+m1g','+mta'], rhs:'+m1a' } ],
-    2:[ { axis:'x', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
+    1:[ { axis:'y', terms:{ g1:'-', T1:'+' }, rhsOpts:['0','+m1a','-m1a','+m1g','+mta'], rhs:'+m1a' } ],
+    2:[ { axis:'y', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
   },
   wrap4:'Add the two equations: the tension cancels, leaving {g2} \u2212 {g1} = (<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>)<i>a</i>, so <i>a</i> = (<i>m</i><sub>2</sub> \u2212 <i>m</i><sub>1</sub>)<i>g</i>/(<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>). Then F<sub>T</sub> = <i>m</i><sub>1</sub>(<i>g</i> + <i>a</i>): the tension lies between the two weights.'
 },
@@ -184,7 +184,7 @@ TB.SITS = [
     { slot:'f1', body:1, types:['fric'], agents:['surface'], dir:210, miss:'Block 1 slides along a rough ramp.', tip:'Friction opposes the sliding, so it points down the ramp: \u2212x (180\u00B0).' },
     { slot:'T1', body:1, types:['ten'],  agents:['string'],  dir:30,  miss:'The string pulls block 1 up the ramp.', tip:'The string is parallel to the ramp and pulls up it: +x (0\u00B0).' },
     { slot:'g2', body:2, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'T2', body:2, types:['ten'],  agents:['string'],  dir:90,  miss:'The string holds block 2 from above.', tip:'The string pulls up on block 2. +x points down (along its motion), so the tension is along \u2212x (180\u00B0).' }
+    { slot:'T2', body:2, types:['ten'],  agents:['string'],  dir:90,  miss:'The string holds block 2 from above.', tip:'The string pulls straight up on block 2 (90\u00B0), even though block 2 moves down.' }
   ],
   absent:{ '2:norm':'Block 2 hangs freely; it does not touch the ramp.', '2:fric':'Block 2 hangs freely; it does not rub on anything.',
            '1:app':'No person is involved; the hanging block does the pulling, through the string.', '2:app':'No person is involved here.' },
@@ -207,15 +207,15 @@ TB.SITS = [
   ],
   wrap2:'The pulley bends the string, so the two accelerations point in different directions but share one magnitude <i>a</i>.',
   axes:{ correct:'motion',
-    opts:[ {id:'motion', t:'Block 1: x up the ramp, y perpendicular to it. Block 2: x downward, along its motion'},
+    opts:[ {id:'motion', t:'Block 1: x up the ramp, y perpendicular to it. Block 2: y vertical, positive downward (along its motion)'},
            {id:'std', t:'Both blocks: x horizontal, y vertical (positive up)', fb:'Workable, but block 1\u2019s normal force, friction, tension and acceleration would all split into two components, and block 2 would need \u2212a. Choose axes along each block\u2019s motion.'} ],
     bodies:{ 1:{ dirs:[{n:'x',d:30},{n:'y',d:120}], xdesc:'up the ramp (y perpendicular to the ramp, away from it)', marks:[{a1:270,a2:300,l:'\u03B8'}] },
-             2:{ dirs:[{n:'x',d:270},{n:'y',d:0}], xdesc:'downward, along block 2\u2019s motion', marks:[] } } },
+             2:{ dirs:[{n:'x',d:0},{n:'y',d:270}], xdesc:'to the right; +y points down, along block 2\u2019s motion', marks:[] } } },
   angles:{ g1:['\u03B8'], N1:['\u03B8'], f1:['\u03B8'], T1:['\u03B8'] },
   comps:{
     1:[ { axis:'x', terms:{ g1:'-s0', N1:'0', f1:'-', T1:'+' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'+m1a' },
         { axis:'y', terms:{ g1:'-c0', N1:'+', f1:'0', T1:'0' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'0' } ],
-    2:[ { axis:'x', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
+    2:[ { axis:'y', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
   },
   wrap4:'Add block 1\u2019s x-equation and block 2\u2019s equation: the tension cancels, giving {g2} \u2212 {g1} sin <i>\u03B8</i> \u2212 {f1} = (<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>)<i>a</i>. Choosing \u201Cpositive along the motion\u201D for each block is what makes this sum work.'
 },
@@ -268,54 +268,53 @@ TB.SITS = [
 /* 5 ------------------------------------------------- stacked blocks */
 {
   id:'stack', tab:'Stacked blocks', title:'Two stacked blocks, bottom one pushed',
-  desc:'Block 2 rests on top of block 1, which sits on a <b>smooth</b> (frictionless) floor. A person pushes block 1 with a force directed <i>\u03C6</i> = 20\u00B0 <b>below</b> the horizontal. The blocks move together, without slipping, and are <b>speeding up</b> to the right. The surface between the blocks is rough.',
-  aria:'Scene: a large block 1 on a smooth floor with a smaller block 2 on top of it. A push rod meets the left side of block 1, coming from the upper left at angle phi of 20 degrees below a dashed horizontal line. A dashed velocity arrow above the blocks points right.',
+  desc:'Block 1 rests on top of block 2, which sits on a <b>smooth</b> (frictionless) floor. A person pushes block 2 with a force directed <i>\u03C6</i> = 20\u00B0 <b>below</b> the horizontal. The blocks move together, without slipping, and are <b>speeding up</b> to the right. The surface between the blocks is rough.',
+  aria:'Scene: a large block 2 on a smooth floor with a smaller block 1 on top of it. A push rod meets the left side of block 2, coming from the upper left at angle phi of 20 degrees below a dashed horizontal line. A dashed velocity arrow above the blocks points right.',
   forces:[
     { slot:'g1',  body:1, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'N1',  body:1, types:['norm'], agents:['surface'], dir:90,  miss:'Block 1 rests on the floor, which pushes up on it.', tip:'The floor pushes straight up (90\u00B0).' },
-    { slot:'N12', body:1, types:['norm'], agents:['b2'],      dir:270, miss:'Block 2 sits on block 1 and presses down on its top surface.', tip:'Block 2 presses down on block 1 (270\u00B0): the partner of the normal force block 1 exerts up on block 2.' },
-    { slot:'f12', body:1, types:['fric'], agents:['b2'],      dir:180, miss:'The rough contact between the blocks also gives block 1 a friction force.', tip:'Friction on block 1 by block 2 points left (180\u00B0): the third-law partner of the forward friction on block 2.' },
-    { slot:'A',   body:1, types:['app'],  agents:['person'],  dir:340, miss:'The person pushes block 1.', tip:'The push is 20\u00B0 below the horizontal: 340\u00B0.' },
+    { slot:'N12', body:1, types:['norm'], agents:['b2'],      dir:90,  miss:'Block 1 rests on block 2, which pushes up on it.', tip:'Block 2 pushes straight up on block 1 (90\u00B0).' },
+    { slot:'f12', body:1, types:['fric'], agents:['b2'],      dir:0,   miss:'Block 1 speeds up to the right, so something must push it horizontally. Only one thing touches it.', tip:'Static friction from block 2 drags block 1 forward: to the right (0\u00B0).' },
     { slot:'g2',  body:2, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'N21', body:2, types:['norm'], agents:['b1'],      dir:90,  miss:'Block 2 rests on block 1, which pushes up on it.', tip:'Block 1 pushes straight up on block 2 (90\u00B0).' },
-    { slot:'f21', body:2, types:['fric'], agents:['b1'],      dir:0,   miss:'Block 2 speeds up to the right, so something must push it horizontally. Only one thing touches it.', tip:'Static friction from block 1 drags block 2 forward: to the right (0\u00B0).' }
+    { slot:'N2',  body:2, types:['norm'], agents:['surface'], dir:90,  miss:'Block 2 rests on the floor, which pushes up on it.', tip:'The floor pushes straight up (90\u00B0).' },
+    { slot:'N21', body:2, types:['norm'], agents:['b1'],      dir:270, miss:'Block 1 sits on block 2 and presses down on its top surface.', tip:'Block 1 presses down on block 2 (270\u00B0): the partner of the normal force block 2 exerts up on block 1.' },
+    { slot:'f21', body:2, types:['fric'], agents:['b1'],      dir:180, miss:'The rough contact between the blocks also gives block 2 a friction force.', tip:'Friction on block 2 by block 1 points left (180\u00B0): the third-law partner of the forward friction on block 1.' },
+    { slot:'A',   body:2, types:['app'],  agents:['person'],  dir:340, miss:'The person pushes block 2.', tip:'The push is 20\u00B0 below the horizontal: 340\u00B0.' }
   ],
-  absent:{ '2:app':'The person pushes block 1 only. Block 2 is carried along by friction from block 1.',
+  absent:{ '1:app':'The person pushes block 2 only. Block 1 is carried along by friction from block 2.',
            '2:ten':'No strings here.', '1:ten':'No strings here.' },
-  agentMsg:{ '1:fric:surface':'The floor is smooth, so it exerts no friction. The friction on block 1 comes from block 2, along their rough contact surface.',
-             '2:norm:surface':'Block 2 does not touch the floor. Its supporting surface is the top of block 1.',
-             '2:fric:surface':'Block 2 does not touch the floor. Its friction comes from the top of block 1.',
-             '1:norm:b1':'A block cannot push on itself.' },
-  wrap1:'Block 1 feels five forces, two of them from block 2 (a normal force pressing down and friction pointing back). Block 2 feels three: gravity, block 1\u2019s upward normal force, and static friction pointing <b>forward</b> \u2014 the only horizontal force on it. Block 2\u2019s weight is not a force on block 1.',
+  agentMsg:{ '2:fric:surface':'The floor is smooth, so it exerts no friction. The friction on block 2 comes from block 1, along their rough contact surface.',
+             '1:norm:surface':'Block 1 does not touch the floor. Its supporting surface is the top of block 2.',
+             '1:fric:surface':'Block 1 does not touch the floor. Its friction comes from the top of block 2.' },
+  wrap1:'Block 1 (on top) feels three forces: gravity, block 2\u2019s upward normal force, and static friction pointing <b>forward</b> \u2014 the only horizontal force on it. Block 2 feels five, two of them from block 1 (a normal force pressing down and friction pointing back). Block 1\u2019s weight is not a force on block 2.',
   accel:{
-    1:{ correct:'right', opts:[ {id:'right',t:'To the right'}, {id:'push',t:'Along the push, 20\u00B0 below horizontal'}, {id:'zero',t:'Zero'} ],
-        fb:{ push:'Block 1 stays on the floor, so it accelerates horizontally.', zero:'The blocks are speeding up.' } },
-    2:{ correct:'right', opts:[ {id:'right',t:'To the right, with block 1'}, {id:'zero',t:'Zero: it just rides along'}, {id:'left',t:'To the left, since it lags behind'} ],
-        fb:{ zero:'\u201CRiding along\u201D with an accelerating block means accelerating too. Block 2 speeds up, so it accelerates to the right \u2014 and something must push it: static friction.',
-             left:'Block 2 does not slip, so it moves exactly with block 1: acceleration to the right.' } } },
-  distract:{ 1:['other:N21','other:g2','neg:f12','net'], 2:['other:A','other:f12','ma'] },
+    1:{ correct:'right', opts:[ {id:'right',t:'To the right, with block 2'}, {id:'zero',t:'Zero: it just rides along'}, {id:'left',t:'To the left, since it lags behind'} ],
+        fb:{ zero:'\u201CRiding along\u201D with an accelerating block means accelerating too. Block 1 speeds up, so it accelerates to the right \u2014 and something must push it: static friction.',
+             left:'Block 1 does not slip, so it moves exactly with block 2: acceleration to the right.' } },
+    2:{ correct:'right', opts:[ {id:'right',t:'To the right'}, {id:'push',t:'Along the push, 20\u00B0 below horizontal'}, {id:'zero',t:'Zero'} ],
+        fb:{ push:'Block 2 stays on the floor, so it accelerates horizontally.', zero:'The blocks are speeding up.' } } },
+  distract:{ 1:['other:A','other:f21','ma'], 2:['other:N12','other:g1','neg:f21','net'] },
   links:[
     { q:'How do the magnitudes of the two accelerations compare?', correct:'same',
-      opts:[ {id:'same',t:'Same magnitude a: the blocks do not slip'}, {id:'less',t:'Block 2\u2019s is smaller, because only friction pushes it'} ],
+      opts:[ {id:'same',t:'Same magnitude a: the blocks do not slip'}, {id:'less',t:'Block 1\u2019s is smaller, because only friction pushes it'} ],
       fb:{ less:'Without slipping, the blocks have the same velocity at every instant, hence the same acceleration. Static friction adjusts to whatever is needed, up to its maximum.' } },
     { q:'How are F<sub>N,12</sub> (block 2 on block 1) and F<sub>N,21</sub> (block 1 on block 2) related?', correct:'third',
-      opts:[ {id:'third',t:'Equal magnitudes, opposite directions: a Newton\u2019s third-law pair'}, {id:'weight',t:'F_N,12 is the weight of block 2'}, {id:'unrel',t:'Unrelated, because they act on different blocks'} ],
-      fb:{ weight:'Its size happens to equal <i>m</i><sub>2</sub><i>g</i> here (block 2 has no vertical acceleration), but it is a contact force exerted by block 2, not gravity. Block 2\u2019s weight acts on block 2.',
-           unrel:'Acting on different blocks is exactly what third-law partners do: block 1 pushes on block 2, block 2 pushes back on block 1, equally and oppositely.' } }
+      opts:[ {id:'third',t:'Equal magnitudes, opposite directions: a Newton\u2019s third-law pair'}, {id:'weight',t:'F_N,21 is the weight of block 1'}, {id:'unrel',t:'Unrelated, because they act on different blocks'} ],
+      fb:{ weight:'Its size happens to equal <i>m</i><sub>1</sub><i>g</i> here (block 1 has no vertical acceleration), but it is a contact force exerted by block 1, not gravity. Block 1\u2019s weight acts on block 1.',
+           unrel:'Acting on different blocks is exactly what third-law partners do: block 2 pushes on block 1, block 1 pushes back on block 2, equally and oppositely.' } }
   ],
   wrap2:'The blocks interact through two third-law pairs: F\u20D7<sub>N,12</sub> = \u2212F\u20D7<sub>N,21</sub> and F\u20D7<sub>f,12</sub> = \u2212F\u20D7<sub>f,21</sub>. Each member appears in a different block\u2019s equation.',
   axes:{ correct:'std',
     opts:[ {id:'std', t:'For both blocks: x horizontal (along the motion), y vertical'},
-           {id:'push', t:'Block 1: x along the push (20\u00B0 below horizontal); block 2: x horizontal', fb:'Then all four other forces on block 1, and its acceleration, would have two components. Put x along the acceleration.'} ],
-    bodies:{ 1:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[{a1:340,a2:360,l:'\u03C6'}] }, 2:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[] } } },
-  angles:{ A:['\u03C6'], g1:['\u03C6'], N1:['\u03C6'] },
+           {id:'push', t:'Block 2: x along the push (20\u00B0 below horizontal); block 1: x horizontal', fb:'Then all four other forces on block 2, and its acceleration, would have two components. Put x along the acceleration.'} ],
+    bodies:{ 1:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[] }, 2:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[{a1:340,a2:360,l:'\u03C6'}] } } },
+  angles:{ A:['\u03C6'], g2:['\u03C6'], N2:['\u03C6'] },
   comps:{
-    1:[ { axis:'x', terms:{ g1:'0', N1:'0', N12:'0', f12:'-', A:'+c0' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'+m1a' },
-        { axis:'y', terms:{ g1:'-', N1:'+', N12:'-', f12:'0', A:'-s0' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'0' } ],
-    2:[ { axis:'x', terms:{ g2:'0', N21:'0', f21:'+' }, rhsOpts:['0','+m2a','-m2a','+mta'], rhs:'+m2a' },
-        { axis:'y', terms:{ g2:'-', N21:'+', f21:'0' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'0' } ]
+    1:[ { axis:'x', terms:{ g1:'0', N12:'0', f12:'+' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'+m1a' },
+        { axis:'y', terms:{ g1:'-', N12:'+', f12:'0' }, rhsOpts:['0','+m1a','-m1a','+m1g','+mta'], rhs:'0' } ],
+    2:[ { axis:'x', terms:{ g2:'0', N2:'0', N21:'0', f21:'-', A:'+c0' }, rhsOpts:['0','+m2a','-m2a','+mta'], rhs:'+m2a' },
+        { axis:'y', terms:{ g2:'-', N2:'+', N21:'-', f21:'0', A:'-s0' }, rhsOpts:['0','+m2a','-m2a','+mta'], rhs:'0' } ]
   },
-  wrap4:'Static friction is the only horizontal force on block 2, so {f21} = <i>m</i><sub>2</sub><i>a</i>. Its third-law partner {f12} has the same size, so adding the x-equations gives {A} cos <i>\u03C6</i> = (<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>)<i>a</i>. Block 1\u2019s y-equation gives {N1} = {g1} + {N12} + {A} sin <i>\u03C6</i>: the floor supports both blocks <b>and</b> the downward part of the push.'
+  wrap4:'Static friction is the only horizontal force on block 1, so {f12} = <i>m</i><sub>1</sub><i>a</i>. Its third-law partner {f21} has the same size, so adding the x-equations gives {A} cos <i>\u03C6</i> = (<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>)<i>a</i>. Block 2\u2019s y-equation gives {N2} = {g2} + {N21} + {A} sin <i>\u03C6</i>: the floor supports both blocks <b>and</b> the downward part of the push.'
 }
 ];
 
@@ -338,6 +337,11 @@ TB.fillWrap = function(text){
 };
 /* real-world angle of block b's +x axis (each FBD is drawn rotated by this) */
 TB.frame = function(i, b){ var a = TB.SITS[i].axes.bodies[b].dirs; for (var j=0;j<a.length;j++) if (a[j].n === 'x') return a[j].d; return 0; };
+TB.yDown = function(i, b){
+  var d = TB.SITS[i].axes.bodies[b].dirs, x = TB.frame(i, b);
+  for (var j=0;j<d.length;j++) if (d[j].n === 'y') return (((d[j].d - x) % 360) + 360) % 360 === 270;
+  return false;
+};
 TB.bodyForces = function(i, b){ return TB.SITS[i].forces.filter(function(f){ return f.body === b; }); };
 TB.findForce = function(i, slot){ var f = TB.SITS[i].forces; for (var j=0;j<f.length;j++) if (f[j].slot===slot) return f[j]; return null; };
 
@@ -573,8 +577,8 @@ TB.sceneSVG = function(i){
   }
   else {
     s += '<line class="ntscground" x1="14" y1="170" x2="346" y2="170"/>';
-    s += '<rect class="ntscobj" x="120" y="120" width="140" height="50" rx="3"/>' + blockLbl(190,152,'1');
-    s += '<rect class="ntscobj" x="162" y="88" width="56" height="32" rx="3"/>' + blockLbl(190,110,'2');
+    s += '<rect class="ntscobj" x="120" y="120" width="140" height="50" rx="3"/>' + blockLbl(190,152,'2');
+    s += '<rect class="ntscobj" x="162" y="88" width="56" height="32" rx="3"/>' + blockLbl(190,110,'1');
     s += '<line class="ntscrod" x1="54" y1="116" x2="119" y2="139.7"/><circle class="ntschand" cx="50" cy="114.5" r="7"/>';
     s += '<line class="ntscref" x1="120" y1="140" x2="66" y2="140"/>' + TB.angleArc(120,140,46,160,180,'\u03C6','ntscarc');
     s += vel(170,72,250,72,204,64);
