@@ -27,7 +27,14 @@ var DIR_HINT = {
 function D(i){ if (!S.d[i]) S.d[i] = { forces:[], sel:-1, verdict:{}, wrong:{}, msg:null }; return S.d[i]; }
 function norm(a){ a = Math.round(Number(a)/STEP)*STEP; return ((a % 360) + 360) % 360; }
 function angDiff(a, b){ var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
+function rot(){ return NT.SITS[S.cur].fbdAxis || 0; }        /* tilt of the FBD axes */
 function dirName(a){
+  if (rot()) {
+    var ax = { 0:'along plus x', 90:'along plus y', 180:'along minus x', 270:'along minus y' };
+    if (ax.hasOwnProperty(a)) return ax[a] + ', ' + a + ' degrees from the tilted plus x axis';
+    var qq = a < 90 ? 'between plus x and plus y' : a < 180 ? 'between plus y and minus x' : a < 270 ? 'between minus x and minus y' : 'between minus y and plus x';
+    return qq + ', ' + a + ' degrees from the tilted plus x axis';
+  }
   var nm = {0:'to the right',45:'up and to the right',90:'straight up',135:'up and to the left',180:'to the left',225:'down and to the left',270:'straight down',315:'down and to the right'};
   if (nm.hasOwnProperty(a)) return nm[a] + ', ' + a + ' degrees';
   var q = a < 90 ? 'up and to the right' : a < 180 ? 'up and to the left' : a < 270 ? 'down and to the left' : 'down and to the right';
@@ -48,9 +55,10 @@ function render(){
   var Wk = document.getElementById(id('Work'));
   Wk.innerHTML = '<h4 class="ntworkh" id="' + id('WorkH') + '" tabindex="-1">Draw the free-body diagram</h4>'
     + '<p class="ntinstr">Represent the object as the dot at the origin. Add each force, give it a symbol, and aim it: select a force, then click or drag on the diagram, or type the angle (degrees from +x). With the diagram focused, \u2190/\u2192 rotate by 5\u00B0 (Shift: 45\u00B0) and number keys select a force.</p>'
+    + (Sit.fbdNote ? '<p class="ntfb ntfbinfo">' + Sit.fbdNote + '</p>' : '')
     + '<p class="ntremind">Forces from Stage 1: ' + remind + '.</p>'
     + '<div class="ntfbdwrap">'
-    + '<svg class="ntfbdsvg" id="' + id('Svg') + '" viewBox="0 0 400 400" tabindex="0" role="img" aria-label="Free-body diagram. Use the force controls, or focus here and use the arrow keys. Select Describe to hear the diagram."></svg>'
+    + '<svg class="ntfbdsvg" id="' + id('Svg') + '" viewBox="0 0 400 400" tabindex="0" role="img" aria-label="Free-body diagram' + (Sit.fbdAxis ? ' on tilted axes: x tangent to the arc, y along the string toward the pivot' : '') + '. Use the force controls, or focus here and use the arrow keys. Select Describe to hear the diagram."></svg>'
     + '<div class="ntfrows" id="' + id('Rows') + '"></div>'
     + '</div>'
     + '<div class="ntbtnrow">'
@@ -70,15 +78,25 @@ function render(){
 }
 function draw(){
   var i = S.cur, d = D(i), svg = document.getElementById(id('Svg')); if (!svg) return;
-  var s = '<g class="ntgrid">';
-  for (var v=25; v<W; v+=25) s += '<line x1="'+v+'" y1="0" x2="'+v+'" y2="400"/><line x1="0" y1="'+v+'" x2="400" y2="'+v+'"/>';
+  var R = rot(), s = '<g class="ntgrid"' + (R ? ' transform="rotate(' + (-R) + ' 200 200)"' : '') + '>';
+  var lo = R ? -100 : 25, hi = R ? 500 : W;
+  for (var v=lo; v<hi; v+=25) s += '<line x1="'+v+'" y1="'+(R?-100:0)+'" x2="'+v+'" y2="'+(R?500:400)+'"/><line x1="'+(R?-100:0)+'" y1="'+v+'" x2="'+(R?500:400)+'" y2="'+v+'"/>';
   s += '</g>';
-  s += NT.arrow(8, OY, W-6, OY, 'ntaxis', {head:10}) + NT.arrow(OX, W-8, OX, 6, 'ntaxis', {head:10});
-  s += '<text class="ntaxlbl" x="380" y="186">x</text><text class="ntaxlbl" x="210" y="20">y</text>';
+  if (!R) {
+    s += NT.arrow(8, OY, W-6, OY, 'ntaxis', {head:10}) + NT.arrow(OX, W-8, OX, 6, 'ntaxis', {head:10});
+    s += '<text class="ntaxlbl" x="380" y="186">x</text><text class="ntaxlbl" x="210" y="20">y</text>';
+  } else {
+    [[R,'x'],[R+90,'y']].forEach(function(ax){
+      var a = ax[0]*Math.PI/180, ux = Math.cos(a), uy = -Math.sin(a), E = 188;
+      s += NT.arrow(OX - ux*E, OY - uy*E, OX + ux*E, OY + uy*E, 'ntaxis', {head:10});
+      var lx = Math.max(10, Math.min(388, OX + ux*(E-6) - uy*14 - 5)), ly = Math.max(16, Math.min(394, OY + uy*(E-6) + ux*14 + 5));
+      s += '<text class="ntaxlbl" x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'">' + ax[1] + '</text>';
+    });
+  }
   var seen = {};
   d.forces.forEach(function(f, k){
     if (f.ang === null) return;
-    var a = f.ang*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
+    var a = (f.ang + R)*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
     var cls = f.key ? NT.colorClass(f.key) : 'ntk-other';
     if (k === d.sel) s += '<line class="ntselband" x1="'+OX+'" y1="'+OY+'" x2="'+tx.toFixed(1)+'" y2="'+ty.toFixed(1)+'"/>';
     s += NT.arrow(OX, OY, tx, ty, cls, {head:14});
@@ -104,13 +122,16 @@ function buildRows(){
       symOpts += '<option value="' + key + '"' + (f.key === key ? ' selected' : '') + '>F_' + F.sub + ' (' + F.name.toLowerCase() + ')</option>';
     });
     var dirOpts = '<option value="">dir</option>';
-    DIRS.forEach(function(a, j){ dirOpts += '<option value="' + a + '"' + (f.ang === a ? ' selected' : '') + '>' + GLYPH[j] + ' ' + a + '\u00B0</option>'; });
+    DIRS.forEach(function(a, j){
+    var lab = rot() ? (a + '\u00B0' + (a % 90 === 0 ? ' (' + ['+x','+y','\u2212x','\u2212y'][a/90] + ')' : '')) : (GLYPH[j] + ' ' + a + '\u00B0');
+    dirOpts += '<option value="' + a + '"' + (f.ang === a ? ' selected' : '') + '>' + lab + '</option>';
+  });
     var dis = done ? ' disabled' : '';
     html += '<div class="ntfrow ' + (f.key ? NT.colorClass(f.key) : 'ntk-other') + (k === d.sel ? ' ntfrowsel' : '') + (v === 'ok' ? ' ntfrowok' : v === 'bad' ? ' ntfrowbad' : '') + '">'
       + '<button type="button" class="ntbtn" data-act="sel" data-k="' + k + '" aria-pressed="' + (k === d.sel ? 'true' : 'false') + '" aria-label="Select ' + lab + '">Force ' + (k+1) + '</button>'
       + '<select data-act="sym" data-k="' + k + '" aria-label="Symbol of ' + lab + '"' + dis + '>' + symOpts + '</select>'
       + '<select data-act="dir" data-k="' + k + '" aria-label="Quick direction of ' + lab + '"' + dis + '>' + dirOpts + '</select>'
-      + '<input type="number" min="0" max="359" step="5" data-act="ang" data-k="' + k + '" value="' + (f.ang === null ? '' : f.ang) + '" aria-label="Angle of ' + lab + ' in degrees from the plus x axis"' + dis + '><span aria-hidden="true">\u00B0</span>'
+      + '<input type="number" min="0" max="359" step="5" data-act="ang" data-k="' + k + '" value="' + (f.ang === null ? '' : f.ang) + '" aria-label="Angle of ' + lab + ' in degrees from the ' + (rot() ? 'tilted ' : '') + 'plus x axis"' + dis + '><span aria-hidden="true">\u00B0</span>'
       + '<span class="ntstat" aria-hidden="true" style="color:var(' + (v === 'ok' ? '--nt-good' : '--nt-bad') + ')">' + (v === 'ok' ? '\u2713' : v === 'bad' ? '\u2717' : '') + '</span>'
       + (v ? '<span class="ntsr">' + (v === 'ok' ? 'correct' : 'needs fixing') + '</span>' : '')
       + '<button type="button" class="ntbtn" data-act="rm" data-k="' + k + '" aria-label="Remove ' + lab + '"' + dis + '>\u2715</button>'
@@ -193,7 +214,7 @@ function bind(){
   function aim(p){
     var d = D(S.cur); if (d.sel < 0 || !d.forces[d.sel]) return;
     var dx = p[0]-OX, dy = OY-p[1]; if (dx*dx + dy*dy < 144) return;
-    var a = norm(Math.atan2(dy, dx)*180/Math.PI), f = d.forces[d.sel];
+    var a = norm(Math.atan2(dy, dx)*180/Math.PI - rot()), f = d.forces[d.sel];
     if (f.ang !== a) { f.ang = a; clearVerdict(d.sel); refresh(); }
   }
   svg.addEventListener('pointerdown', function(e){
@@ -201,7 +222,7 @@ function bind(){
     var d = D(S.cur), p = pos(e), hit = -1;
     for (var k=d.forces.length-1; k>=0; k--){
       var f = d.forces[k]; if (f.ang === null) continue;
-      var a = f.ang*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
+      var a = (f.ang + rot())*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
       if ((tx-p[0])*(tx-p[0]) + (ty-p[1])*(ty-p[1]) < 324) { hit = k; break; }
     }
     if (hit >= 0) d.sel = hit;
@@ -246,7 +267,7 @@ function check(){
     if (!slot) { verdict[k] = 'bad'; issues.push(tag + (Sit.absent[f.key] || 'this force does not act on the object here.')); return; }
     if (used[slot.slot]) { verdict[k] = 'bad'; issues.push(tag + 'this is the same pull as force ' + (used[slot.slot]) + '. Remove one of them.'); return; }
     used[slot.slot] = k + 1;
-    if (angDiff(f.ang, slot.dir) <= TOL) { verdict[k] = 'ok'; return; }
+    if (angDiff(f.ang, norm(slot.dir - rot())) <= TOL) { verdict[k] = 'ok'; return; }
     verdict[k] = 'bad';
     d.wrong[slot.slot] = (d.wrong[slot.slot] || 0) + 1;
     issues.push(tag + 'the direction is off. ' + DIR_HINT[slot.keys[0]] + (d.wrong[slot.slot] >= 2 ? ' <i>' + slot.tip + '</i>' : ''));
@@ -267,8 +288,8 @@ function check(){
 }
 function showSuccess(say){
   var i = S.cur, Sit = NT.SITS[i];
-  var list = Sit.forces.map(function(f){ return NT.symH(NT.slotKey(thisq, i, f.slot), true) + ' at ' + f.dir + '\u00B0'; }).join(', ');
-  setFb('<span class="ntfbhead">Correct free-body diagram.</span> ' + list + '. Every arrow starts on the object and points the way its agent pushes or pulls.' + NT.nextButtonHTML(thisq, N, i), 'good');
+  var list = Sit.forces.map(function(f){ return NT.symH(NT.slotKey(thisq, i, f.slot), true) + ' at ' + norm(f.dir - rot()) + '\u00B0'; }).join(', ');
+  setFb('<span class="ntfbhead">Correct free-body diagram.</span> ' + list + (rot() ? ' (from the tilted +x axis). With these axes the tension lies entirely along y, and only gravity needs splitting.' : '.') + ' Every arrow starts on the object and points the way its agent pushes or pulls.' + NT.nextButtonHTML(thisq, N, i), 'good');
   var nb = document.getElementById(id('Next'));
   if (nb) nb.addEventListener('click', function(){ goTo(i + 1); });
   if (say) {

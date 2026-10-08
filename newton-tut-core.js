@@ -141,9 +141,13 @@ NT.SITS = [
   desc:'A small bob of mass <i>m</i> hangs from a light string of length <i>L</i>. At the instant shown, the string makes <i>\u03B8</i> = 30\u00B0 with the vertical, and the bob is swinging <b>down toward the lowest point</b> with speed <i>v</i>. Ignore air resistance.',
   aria:'Scene: a string hangs from a fixed pivot. The string makes an angle theta of 30 degrees with a dashed vertical line, with the bob to the right of the vertical. A dotted arc shows the bob\u2019s swing. A dashed velocity arrow at the bob points down and to the left along the arc, toward the lowest point.',
   forces:[
-    { slot:'g', keys:['grav'], agents:['earth'], dir:270, tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'t', keys:['ten'],  agents:['rope'],  dir:120, tip:'Tension pulls along the string toward the pivot: up and to the left, 30\u00B0 from vertical (120\u00B0 from +x).' }
+    { slot:'g', keys:['grav'], agents:['earth'], dir:270, tip:'Gravity still points straight down on the page. With these tilted axes that is 30\u00B0 from the \u2212y axis, toward \u2212x: 240\u00B0 from the tilted +x axis.' },
+    { slot:'t', keys:['ten'],  agents:['rope'],  dir:120, tip:'Tension pulls along the string toward the pivot, which is exactly the +y direction: 90\u00B0 from the tilted +x axis.' }
   ],
+  /* Stage 3 draws this FBD on tilted axes: +x tangent to the arc (up the arc),
+     +y along the string toward the pivot. Angles are measured from that +x. */
+  fbdAxis:30,
+  fbdNote:'For the pendulum the diagram uses tilted axes, one along each part of the acceleration: <b>x is tangent to the arc</b> (pointing up the arc) and <b>y points along the string toward the pivot</b>. Measure angles from this tilted +x axis.',
   absent:{
     app:'Nobody is touching the bob now. If a hand released it, that force ended when contact ended.',
     norm:'Nothing solid supports the bob from below or the side.',
@@ -160,22 +164,22 @@ NT.SITS = [
          down:'Only in free fall is the acceleration straight down. The string pulls too.' } },
   distract:['cent','neg:g','ma','net'],
   wrap2:'Two vectors, one equation. The acceleration has an inward part and an along-the-arc part, and the same two forces produce both.',
-  axes:{ correct:'rt',
-    opts:[ {id:'rt', t:'r along the string (toward the pivot), t perpendicular to it (toward the lowest point)'},
-           {id:'std', t:'x horizontal, y vertical', fb:'That works, but tension and both acceleration parts would then split into x and y pieces. Axes along and across the string match the two parts of the acceleration.'} ],
-    dirs:[ {n:'r',d:120}, {n:'t',d:210} ], marks:[ {a1:270,a2:300,l:'\u03B8'} ] },
+  axes:{ correct:'tilt',
+    opts:[ {id:'tilt', t:'x tangent to the arc (pointing up the arc), y along the string toward the pivot'},
+           {id:'std', t:'x horizontal, y vertical', fb:'That works, but tension and both parts of the acceleration would then split into horizontal and vertical pieces. Put one axis along each part of the acceleration: x along the arc (tangential), y along the string (centripetal).'} ],
+    dirs:[ {n:'x',d:30}, {n:'y',d:120} ], marks:[ {a1:270,a2:300,l:'\u03B8'} ] },
   angles:{ g:['\u03B8'], t:['\u03B8'] },
   comps:[
-    { axis:'r', terms:{ g:'-c0', t:'+' }, rhsOpts:['0','+mv2L','-mv2L','+mat'], rhs:'+mv2L',
-      rfb:{ '-mv2L':'Centripetal acceleration points toward the center of the circle \u2014 the pivot \u2014 which is +r.',
+    { axis:'x', terms:{ g:'-s0', t:'0' }, rhsOpts:['0','+mat','-mat','+mv2L'], rhs:'-mat',
+      rfb:{ '0':'The bob speeds up along the arc, so the tangential acceleration is not zero.',
+            '+mat':'The bob speeds up toward the lowest point, which is the \u2212x direction here (+x points up the arc), so a<sub>x</sub> = \u2212a<sub>t</sub>.',
+            '+mv2L':'v\u00B2/L points toward the pivot, which is along y, not x.' } },
+    { axis:'y', terms:{ g:'-c0', t:'+' }, rhsOpts:['0','+mv2L','-mv2L','+mat'], rhs:'+mv2L',
+      rfb:{ '-mv2L':'Centripetal acceleration points toward the center of the circle \u2014 the pivot \u2014 which is +y.',
             '0':'The path curves, so there is an acceleration toward the pivot of size v\u00B2/L.',
-            '+mat':'a<sub>t</sub> lies along the arc, perpendicular to r. Along r the acceleration is the centripetal v\u00B2/L.' } },
-    { axis:'t', terms:{ g:'+s0', t:'0' }, rhsOpts:['0','+mat','-mat','+mv2L'], rhs:'+mat',
-      rfb:{ '0':'The bob speeds up along the arc, so a<sub>t</sub> is not zero.',
-            '-mat':'+t points toward the lowest point, the way the bob is speeding up, so this component is positive.',
-            '+mv2L':'v\u00B2/L points toward the pivot (along r), not along the arc.' } }
+            '+mat':'a<sub>t</sub> lies along the arc (the x direction). Along y the acceleration is the centripetal v\u00B2/L.' } }
   ],
-  wrap4:'From r: {t} = <i>m g</i> cos <i>\u03B8</i> + <i>m v</i><sup>2</sup>/<i>L</i>. The tension exceeds the radial part of the weight because it must also supply the centripetal acceleration. From t: <i>a</i><sub>t</sub> = <i>g</i> sin <i>\u03B8</i>.'
+  wrap4:'Each axis carries exactly one part of the acceleration, so each equation has one unknown acceleration. From x: <i>a</i><sub>t</sub> = <i>g</i> sin <i>\u03B8</i>. From y: {t} = <i>m g</i> cos <i>\u03B8</i> + <i>m v</i><sup>2</sup>/<i>L</i> \u2014 the tension exceeds the weight\u2019s component along the string because it must also supply the centripetal acceleration.'
 },
 /* 4 ---------------------------------------------------------------- */
 {
