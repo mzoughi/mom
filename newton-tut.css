@@ -1,0 +1,220 @@
+/* =====================================================================
+   NEWTON'S SECOND LAW TUTORIAL — shared stylesheet (newton-tut.css)
+   Everything is scoped under .ntroot so it cannot restyle the MOM page.
+   ===================================================================== */
+.ntroot {
+  --nt-bg:#0e1b26; --nt-panel:#152532; --nt-inset:#0a141c; --nt-line:#2a4152;
+  --nt-text:#dde7ef; --nt-muted:#93aabb; --nt-accent:#f2b84b; --nt-good:#77d6a0; --nt-bad:#f39a90; --nt-info:#8cc8f0;
+  --nt-grav:#ff7a6e; --nt-norm:#6fb2ff; --nt-fric:#ffb547; --nt-ten:#74d68f; --nt-app:#d29bff; --nt-drag:#4fd6cb; --nt-other:#a3b1bc;
+  --nt-scene:#c9d6e0; --nt-scenefill:#1d3242;
+  --nt-math:'STIX Two Text','Cambria Math',Cambria,'Times New Roman',serif;
+  display:block; background:var(--nt-bg); color:var(--nt-text);
+  font-family:'Segoe UI','Source Sans 3','Helvetica Neue',Arial,sans-serif;
+  font-size:var(--ntfs,15px); line-height:1.45;
+  padding:14px 14px 18px; border:1px solid var(--nt-line); border-radius:6px;
+  max-width:980px; margin:0 auto; box-sizing:border-box; text-align:left;
+}
+.ntroot * { box-sizing:border-box; }
+.ntroot p, .ntroot ol, .ntroot ul, .ntroot h3, .ntroot h4, .ntroot figure, .ntroot fieldset { margin:0; }
+.ntroot button, .ntroot select, .ntroot input { font-family:inherit; font-size:inherit; }
+
+/* ---------- toolbar + narration ---------- */
+.nta11y { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--nt-line); }
+.nta11ybtn { background:#2a2e3a; border:1px solid #404a60; color:#9aa8c4; padding:5px 10px; border-radius:3px;
+  font-size:11px !important; letter-spacing:.5px; cursor:pointer; }
+.nta11ybtn:hover { color:#e0e8f8; border-color:#6a7a9a; }
+.nta11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+.ntnarbar { display:none; background:var(--nt-inset); border:1px solid var(--nt-line); border-left:4px solid var(--nt-accent);
+  color:var(--nt-text); padding:7px 12px; border-radius:3px; margin-bottom:10px; min-height:34px; font-style:italic; font-size:.92em; }
+.ntnarbar.ntnarshow { display:block; }
+.ntroot :focus-visible { outline:3px solid var(--nt-accent); outline-offset:2px; }
+
+/* ---------- header ---------- */
+.nttitle { font-size:1.22em; font-weight:650; margin-bottom:2px; }
+.ntsubtitle { color:var(--nt-muted); font-size:.93em; margin-bottom:10px; max-width:75ch; }
+.ntstagebar { list-style:none; padding:0; display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.ntpill { border:1px solid var(--nt-line); color:var(--nt-muted); padding:3px 11px; border-radius:14px; font-size:.8em; }
+.ntpillactive { border-color:var(--nt-accent); color:var(--nt-accent); font-weight:600; }
+.ntpilldone { color:var(--nt-good); border-color:var(--nt-good); }
+
+/* ---------- situation tabs: a progress track ---------- */
+.nttabs { display:flex; flex-wrap:wrap; gap:0; margin-bottom:12px; border:1px solid var(--nt-line); border-radius:4px; overflow:hidden; }
+.nttab { flex:1 1 120px; background:var(--nt-panel); color:var(--nt-text); border:0; border-right:1px solid var(--nt-line);
+  padding:7px 8px; cursor:pointer; text-align:left; font-size:.88em; }
+.nttab:last-child { border-right:0; }
+.nttab:disabled { color:var(--nt-muted); opacity:.55; cursor:not-allowed; }
+.nttabn { display:inline-block; min-width:1.5em; height:1.5em; line-height:1.5em; text-align:center; border-radius:50%;
+  border:1px solid var(--nt-muted); font-size:.85em; margin-right:3px; }
+.nttabcur { background:var(--nt-inset); box-shadow:inset 0 -3px 0 var(--nt-accent); font-weight:600; }
+.nttabcur .nttabn { border-color:var(--nt-accent); color:var(--nt-accent); }
+.nttabdone .nttabn { background:var(--nt-good); border-color:var(--nt-good); color:var(--nt-bg); }
+
+/* ---------- layout ---------- */
+.ntlayout { display:grid; grid-template-columns:minmax(250px, 340px) 1fr; gap:12px; align-items:start; }
+@media (max-width:760px) { .ntlayout { grid-template-columns:1fr; } }
+.ntscene { background:var(--nt-panel); border:1px solid var(--nt-line); border-radius:4px; padding:10px; }
+.ntscenesvg { display:block; width:100%; height:auto; background:var(--nt-inset); border-radius:3px; }
+.ntscene figcaption { margin-top:8px; display:block; }
+.ntscenet { display:block; font-weight:650; margin-bottom:3px; }
+.ntscened { display:block; font-size:.93em; }
+.ntwork { background:var(--nt-panel); border:1px solid var(--nt-line); border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+.ntworkh { font-size:1.02em; font-weight:650; }
+.ntinstr { color:var(--nt-muted); font-size:.92em; max-width:72ch; }
+
+/* ---------- controls ---------- */
+.ntbtnrow { display:flex; flex-wrap:wrap; gap:6px; }
+.ntbtn { background:var(--nt-inset); border:1px solid var(--nt-line); color:var(--nt-text); padding:7px 12px; border-radius:3px; cursor:pointer; font-size:.9em; }
+.ntbtn:hover:not(:disabled) { border-color:var(--nt-info); color:var(--nt-info); }
+.ntbtn:disabled { opacity:.45; cursor:not-allowed; }
+.ntbtnmain { border-color:var(--nt-accent); color:var(--nt-accent); font-weight:600; }
+.ntbtnmain:hover:not(:disabled) { background:rgba(242,184,75,.12); color:var(--nt-accent); border-color:var(--nt-accent); }
+.ntbtnnext { border-color:var(--nt-good); color:var(--nt-good); font-weight:600; }
+.ntroot select, .ntroot input[type=number] { background:var(--nt-inset); color:var(--nt-text); border:1px solid var(--nt-line); border-radius:3px; padding:4px 6px; }
+.ntroot select:disabled { opacity:.5; }
+.ntfb { background:var(--nt-inset); border:1px solid var(--nt-line); border-radius:3px; padding:9px 11px; font-size:.93em; min-height:44px; }
+.ntfb ul { margin:4px 0 0; padding-left:1.2em; }
+.ntfb li { margin:3px 0; }
+.ntfbgood { border-color:var(--nt-good); }
+.ntfbgood .ntfbhead { color:var(--nt-good); }
+.ntfbbad  { border-color:var(--nt-bad); }
+.ntfbbad .ntfbhead { color:var(--nt-bad); }
+.ntfbinfo { border-color:var(--nt-info); }
+.ntfbhead { font-weight:650; }
+.ntwrapnote { margin-top:6px; padding-top:6px; border-top:1px dashed var(--nt-line); }
+.ntsr { position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+/* ---------- symbols ---------- */
+.ntsym { font-family:var(--nt-math); font-style:italic; white-space:nowrap; font-size:1.08em; }
+.ntsym sub { font-size:.68em; font-style:italic; }
+.ntvec .ntb { position:relative; display:inline-block; line-height:1; padding-top:.32em; }
+.ntvec .ntb::before { content:''; position:absolute; left:.1em; right:.12em; top:.1em; border-top:max(1.5px,.075em) solid currentColor; }
+.ntvec .ntb::after { content:''; position:absolute; right:-.04em; top:calc(.1em - .14em + max(.75px,.0375em)); border-left:.26em solid currentColor; border-top:.14em solid transparent; border-bottom:.14em solid transparent; }
+.ntroot i { font-family:var(--nt-math); }
+.ntmath { font-family:var(--nt-math); font-size:1.08em; }
+
+/* ---------- stage 1: force table ---------- */
+.ntftable { width:100%; border-collapse:collapse; }
+.ntftable th { text-align:left; font-weight:600; color:var(--nt-muted); font-size:.85em; padding:4px 6px; border-bottom:1px solid var(--nt-line); }
+.ntftable td { padding:5px 6px; border-bottom:1px solid var(--nt-line); vertical-align:middle; }
+.ntftable label { display:flex; align-items:center; gap:8px; cursor:pointer; }
+.ntftable input[type=checkbox] { width:18px; height:18px; accent-color:var(--nt-accent); }
+.ntrowbad td { background:rgba(243,154,144,.10); }
+.ntrowbad td:first-child { box-shadow:inset 3px 0 0 var(--nt-bad); }
+.ntmark { font-weight:700; margin-left:4px; }
+.ntmarkok { color:var(--nt-good); }
+.ntmarkbad { color:var(--nt-bad); }
+
+/* ---------- stage 2: equation builder ---------- */
+.nttiles { display:flex; flex-wrap:wrap; gap:6px; }
+.nttile { background:var(--nt-inset); border:1px solid var(--nt-line); color:var(--nt-text); border-radius:4px; padding:8px 12px 5px; cursor:pointer; min-width:56px; font-size:1.05em; }
+.nttile[aria-pressed=true] { border-color:var(--nt-accent); background:rgba(242,184,75,.14); }
+.nteq { background:var(--nt-inset); border:1px solid var(--nt-line); border-radius:4px; padding:12px 12px 10px; font-size:1.2em; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-height:56px; }
+.nteqempty { color:var(--nt-muted); font-style:italic; font-size:.8em; }
+.ntop { font-family:var(--nt-math); padding:0 2px; }
+.ntfield { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.ntfield label { font-weight:600; }
+
+/* ---------- stage 3: FBD ---------- */
+.ntfbdwrap { display:flex; flex-direction:column; gap:10px; }
+.ntfbdsvg { display:block; width:100%; max-width:390px; margin:0 auto; height:auto; background:var(--nt-inset); border:1px solid var(--nt-line); border-radius:3px; touch-action:none; cursor:crosshair; }
+.ntfbdsvg:focus-visible { outline:3px solid var(--nt-accent); }
+.ntgrid line { stroke:var(--nt-grid,#1d3140); stroke-width:1; }
+.ntaxis .ntline { stroke:var(--nt-text); stroke-width:1.6; }
+.ntaxis .nthead { fill:var(--nt-text); }
+.ntaxlbl { fill:var(--nt-text); font-family:var(--nt-math); font-style:italic; font-size:17px; }
+.ntorigin { fill:var(--nt-text); }
+.ntfrows { display:flex; flex-direction:column; gap:6px; }
+.ntfrow { display:flex; flex-wrap:wrap; align-items:center; gap:5px; padding:6px; border:1px solid var(--nt-line); border-left:5px solid var(--nt-other); border-radius:3px; background:var(--nt-inset); }
+.ntfrowsel { box-shadow:0 0 0 2px var(--nt-accent); }
+.ntfrow input[type=number] { width:64px; }
+.ntfrow .ntstat { min-width:1.2em; font-weight:700; }
+.ntfrowok { border-color:var(--nt-good); }
+.ntfrowbad { border-color:var(--nt-bad); }
+.ntselband { stroke:var(--nt-accent); stroke-opacity:.35; stroke-width:14; stroke-linecap:round; }
+.ntremind { font-size:.9em; color:var(--nt-muted); }
+
+/* ---------- stage 4: components ---------- */
+.ntaxesset { border:1px solid var(--nt-line); border-radius:4px; padding:8px 10px; }
+.ntaxesset legend { font-weight:650; padding:0 4px; }
+.ntaxesset label { display:flex; gap:8px; align-items:flex-start; padding:4px 0; cursor:pointer; }
+.ntaxesset input { margin-top:4px; accent-color:var(--nt-accent); }
+.ntcompgrid { display:grid; grid-template-columns:minmax(200px, 270px) 1fr; gap:12px; align-items:start; }
+@media (max-width:640px) { .ntcompgrid { grid-template-columns:1fr; } }
+.ntcomprows { display:flex; flex-direction:column; gap:8px; }
+.ntcompsel select { min-width:9.5em; }
+.ntaxchosen { color:var(--nt-good); font-weight:700; margin-left:4px; }
+.ntdiag { display:block; width:100%; max-width:280px; height:auto; background:var(--nt-inset); border:1px solid var(--nt-line); border-radius:3px; }
+.ntaxtilt .ntline { stroke:var(--nt-accent); stroke-width:1.6; stroke-dasharray:7 4; }
+.ntaxtilt .nthead { fill:var(--nt-accent); }
+.ntaxtiltl { fill:var(--nt-accent); font-family:var(--nt-math); font-style:italic; font-size:17px; font-weight:600; }
+.ntcomprow { border:1px solid var(--nt-line); border-radius:4px; padding:8px; background:var(--nt-inset); display:flex; flex-direction:column; gap:6px; }
+.ntcompsel { display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
+.ntcompsel select { max-width:100%; }
+.ntaxname { font-family:var(--nt-math); font-style:italic; font-weight:700; font-size:1.1em; min-width:1.6em; }
+.ntselok { border-color:var(--nt-good) !important; box-shadow:0 0 0 1px var(--nt-good); }
+.ntselbad { border-color:var(--nt-bad) !important; box-shadow:0 0 0 1px var(--nt-bad); }
+.ntpreview { font-size:1.08em; min-height:1.6em; }
+.ntsummary { width:100%; border-collapse:collapse; font-size:.92em; margin-top:6px; }
+.ntsummary th, .ntsummary td { border:1px solid var(--nt-line); padding:4px 8px; text-align:center; }
+.ntsummary th:first-child, .ntsummary td:first-child { text-align:left; }
+
+/* ---------- completion banner ---------- */
+.ntcomplete { display:none; margin-top:12px; border:1px solid var(--nt-good); border-radius:4px; padding:12px; background:rgba(119,214,160,.08); }
+.ntcomplete.ntshow { display:block; }
+.ntcomplete h4 { color:var(--nt-good); font-size:1.05em; margin-bottom:6px; }
+
+/* ---------- force colours (labels always accompany colour) ---------- */
+.ntk-grav { --c:var(--nt-grav); } .ntk-norm { --c:var(--nt-norm); } .ntk-fric { --c:var(--nt-fric); }
+.ntk-ten { --c:var(--nt-ten); } .ntk-app { --c:var(--nt-app); } .ntk-drag { --c:var(--nt-drag); } .ntk-other { --c:var(--nt-other); }
+g[class*=ntk-] .ntline { stroke:var(--c); stroke-width:3; stroke-linecap:round; }
+g[class*=ntk-] .nthead { fill:var(--c); }
+g[class*=ntk-] .ntvlt { fill:var(--c); font-family:var(--nt-math); font-style:italic; font-weight:700; font-size:19px; paint-order:stroke; stroke:var(--nt-inset); stroke-width:4px; }
+g[class*=ntk-] .ntvls { font-size:13px; font-weight:400; }
+g[class*=ntk-] .ntvla { stroke:var(--c); fill:none; stroke-width:1.5; }
+g[class*=ntk-] circle { fill:var(--c); }
+.ntfrow.ntk-grav, .ntfrow.ntk-norm, .ntfrow.ntk-fric, .ntfrow.ntk-ten, .ntfrow.ntk-app, .ntfrow.ntk-drag, .ntfrow.ntk-other { border-left-color:var(--c); }
+.ntarc path { fill:none; stroke:var(--nt-text); stroke-width:1.3; }
+.ntarc text { fill:var(--nt-text); font-family:var(--nt-math); font-style:italic; font-size:15px; }
+
+/* ---------- scenes ---------- */
+.ntscobj { fill:var(--nt-scenefill); stroke:var(--nt-scene); stroke-width:2; }
+.ntscwheel { fill:var(--nt-scene); }
+.ntscground { stroke:var(--nt-scene); stroke-width:2; }
+.ntschatch, .ntscstreak line { stroke:var(--nt-muted); stroke-width:1.2; }
+.ntscrope { stroke:var(--nt-scene); stroke-width:2.5; }
+.ntscrod { stroke:var(--nt-scene); stroke-width:5; stroke-linecap:round; }
+.ntschand, .ntscpivot { fill:var(--nt-scene); }
+.ntscsupport { fill:var(--nt-muted); }
+.ntscramp { fill:var(--nt-scenefill); stroke:var(--nt-scene); stroke-width:2; }
+.ntscref { stroke:var(--nt-muted); stroke-width:1.3; stroke-dasharray:5 4; }
+.ntscpath { fill:none; stroke:var(--nt-muted); stroke-width:1.3; stroke-dasharray:2 4; }
+.ntscvel .ntline { stroke:var(--nt-info); stroke-width:2; }
+.ntscvel .nthead { fill:var(--nt-info); }
+.ntsclbl { fill:var(--nt-info); font-family:var(--nt-math); font-style:italic; font-size:17px; font-weight:600; }
+.ntscnote { fill:var(--nt-muted); font-size:12px; }
+.ntscinto { fill:none; stroke:var(--nt-info); stroke-width:1.8; }
+.ntscarc path { fill:none; stroke:var(--nt-accent); stroke-width:1.5; }
+.ntscarc text { fill:var(--nt-accent); font-family:var(--nt-math); font-style:italic; font-size:16px; font-weight:600; }
+
+/* ======================= THEMES ======================= */
+.ntroot.ntlm {
+  --nt-bg:#eef3f7; --nt-panel:#ffffff; --nt-inset:#f5f8fb; --nt-line:#b8c7d3; --nt-text:#13212c; --nt-muted:#4d6273;
+  --nt-accent:#9a5b00; --nt-good:#1f7a46; --nt-bad:#b3261e; --nt-info:#1f5f99;
+  --nt-grav:#c62828; --nt-norm:#1565c0; --nt-fric:#b45309; --nt-ten:#2e7d32; --nt-app:#7b1fa2; --nt-drag:#00796b; --nt-other:#5f6b75;
+  --nt-scene:#33475a; --nt-scenefill:#dfe8ef; --nt-grid:#dbe4eb;
+}
+.ntroot.ntlm .nta11ybtn { background:#dde4ec; color:#3a4a5c; border-color:#9aa8b8; }
+.ntroot.ntlm .nta11yon { background:#cdeee9; color:#00695c; border-color:#00897b; }
+.ntroot.ntlm .ntbtnmain:hover:not(:disabled) { background:rgba(154,91,0,.08); }
+.ntroot.nthc {
+  --nt-bg:#000; --nt-panel:#000; --nt-inset:#000; --nt-line:#ffffff; --nt-text:#ffffff; --nt-muted:#e8e8e8;
+  --nt-accent:#ffff00; --nt-good:#00ff7f; --nt-bad:#ff6b6b; --nt-info:#7fdfff;
+  --nt-grav:#ff5555; --nt-norm:#55aaff; --nt-fric:#ffaa00; --nt-ten:#55ff55; --nt-app:#ff77ff; --nt-drag:#00ffff; --nt-other:#cccccc;
+  --nt-scene:#ffffff; --nt-scenefill:#000; --nt-grid:#2e2e2e;
+}
+.ntroot.nthc .ntbtn, .ntroot.nthc .nttile, .ntroot.nthc select { border-width:2px; }
+.ntroot.ntcb { --nt-grav:#e8803a; --nt-norm:#56b4e9; --nt-fric:#e6c200; --nt-ten:#2fbf8f; --nt-app:#d98ab8; --nt-drag:#f0e442; }
+.ntroot.ntcb.ntlm { --nt-grav:#b44a00; --nt-norm:#0072b2; --nt-fric:#8f6a00; --nt-ten:#007a5a; --nt-app:#a4507f; --nt-drag:#6b6500; }
+.ntroot.ntcb.nthc { --nt-grav:#ff9a3c; --nt-norm:#56b4e9; --nt-fric:#ffd60a; --nt-ten:#3ee0a8; --nt-app:#ff9ad5; --nt-drag:#f0e442; }
+
+@media (prefers-reduced-motion:reduce) { .ntroot * { transition:none !important; animation:none !important; } }
