@@ -141,13 +141,10 @@ NT.SITS = [
   desc:'A small bob of mass <i>m</i> hangs from a light string of length <i>L</i>. At the instant shown, the string makes <i>\u03B8</i> = 30\u00B0 with the vertical, and the bob is swinging <b>down toward the lowest point</b> with speed <i>v</i>. Ignore air resistance.',
   aria:'Scene: a string hangs from a fixed pivot. The string makes an angle theta of 30 degrees with a dashed vertical line, with the bob to the right of the vertical. A dotted arc shows the bob\u2019s swing. A dashed velocity arrow at the bob points down and to the left along the arc, toward the lowest point.',
   forces:[
-    { slot:'g', keys:['grav'], agents:['earth'], dir:270, tip:'Gravity still points straight down on the page. With these tilted axes that is 30\u00B0 from the \u2212y axis, toward \u2212x: 240\u00B0 from the tilted +x axis.' },
-    { slot:'t', keys:['ten'],  agents:['rope'],  dir:120, tip:'Tension pulls along the string toward the pivot, which is exactly the +y direction: 90\u00B0 from the tilted +x axis.' }
+    { slot:'g', keys:['grav'], agents:['earth'], dir:270, tip:'In this rotated diagram, gravity makes 30\u00B0 with the \u2212y axis (the string direction), leaning toward \u2212x: 240\u00B0 from +x.' },
+    { slot:'t', keys:['ten'],  agents:['rope'],  dir:120, tip:'Tension pulls along the string toward the pivot, which is exactly +y: 90\u00B0.' }
   ],
-  /* Stage 3 draws this FBD on tilted axes: +x tangent to the arc (up the arc),
-     +y along the string toward the pivot. Angles are measured from that +x. */
-  fbdAxis:30,
-  fbdNote:'For the pendulum the diagram uses tilted axes, one along each part of the acceleration: <b>x is tangent to the arc</b> (pointing up the arc) and <b>y points along the string toward the pivot</b>. Measure angles from this tilted +x axis.',
+  frameNote:'The diagram is drawn with your chosen axes horizontal and vertical: <b>+x is tangent to the arc</b> (pointing up the arc) and <b>+y points along the string toward the pivot</b>. The picture is rotated, so the real vertical is no longer straight down on the diagram. Measure angles from +x.',
   absent:{
     app:'Nobody is touching the bob now. If a hand released it, that force ended when contact ended.',
     norm:'Nothing solid supports the bob from below or the side.',
@@ -187,11 +184,12 @@ NT.SITS = [
   desc:'A person pushes a box of mass <i>m</i> up a rough ramp inclined at <i>\u03B8</i> = 25\u00B0. The push is at <i>\u03C6</i> = 10\u00B0 above the horizontal \u2014 between the horizontal and the ramp, so it points slightly <b>into</b> the ramp. The box slides up the ramp at <b>constant speed</b>.',
   aria:'Scene: a ramp rising to the right at angle theta of 25 degrees. A box sits on the ramp. A push rod meets the back of the box at angle phi of 10 degrees above a dashed horizontal line, so it is less steep than the ramp. A dashed velocity arrow above the box points up the ramp.',
   forces:[
-    { slot:'g', keys:['grav'], agents:['earth'],   dir:270, tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'n', keys:['norm'], agents:['surface'], dir:115, tip:'The normal force is perpendicular to the ramp, tilted 25\u00B0 from vertical: 115\u00B0 from +x.' },
-    { slot:'f', keys:['fric'], agents:['surface'], dir:205, tip:'Friction acts along the ramp, opposite the sliding: down the ramp, 205\u00B0 from +x.' },
-    { slot:'p', keys:['app'],  agents:['person'],  dir:10,  tip:'The push is 10\u00B0 above the horizontal.' }
+    { slot:'g', keys:['grav'], agents:['earth'],   dir:270, tip:'In this rotated diagram, gravity makes \u03B8 = 25\u00B0 with the \u2212y axis, leaning toward \u2212x (down the ramp): 245\u00B0 from +x.' },
+    { slot:'n', keys:['norm'], agents:['surface'], dir:115, tip:'The normal force is perpendicular to the ramp: exactly +y, 90\u00B0.' },
+    { slot:'f', keys:['fric'], agents:['surface'], dir:205, tip:'Friction acts along the ramp, opposite the sliding: down the ramp, which is \u2212x (180\u00B0).' },
+    { slot:'p', keys:['app'],  agents:['person'],  dir:10,  tip:'The push is 10\u00B0 above the horizontal, so it is \u03B8 \u2212 \u03C6 = 15\u00B0 below the ramp: 15\u00B0 below +x, i.e. 345\u00B0.' }
   ],
+  frameNote:'The diagram is drawn with your chosen axes horizontal and vertical: <b>+x points up the ramp</b> and <b>+y points perpendicular to the ramp, away from it</b>. The picture is rotated by the ramp angle, so the real vertical is no longer straight down on the diagram. Measure angles from +x.',
   absent:{
     ten:'There is no rope here \u2014 the person pushes directly. Call it an applied force.',
     drag:'Air resistance is negligible for a slowly moving box.'

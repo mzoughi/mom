@@ -24,16 +24,22 @@ var DIR_HINT = {
   drag:'Drag points opposite to the velocity.'
 };
 
-function D(i){ if (!S.d[i]) S.d[i] = { forces:[], sel:-1, verdict:{}, wrong:{}, msg:null }; return S.d[i]; }
+function D(i){ if (!S.d[i]) S.d[i] = { forces:[], sel:-1, verdict:{}, wrong:{}, msg:null, axes:'', axesOk:false, axMsg:null }; return S.d[i]; }
 function norm(a){ a = Math.round(Number(a)/STEP)*STEP; return ((a % 360) + 360) % 360; }
 function angDiff(a, b){ var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
-function rot(){ return NT.SITS[S.cur].fbdAxis || 0; }        /* tilt of the FBD axes */
+/* Angle of the chosen +x axis in the real world. The diagram itself is always drawn
+   with the chosen axes horizontal/vertical (the picture is rotated by this angle). */
+function rot(){ var a = NT.SITS[S.cur].axes.dirs; for (var j=0;j<a.length;j++) if (a[j].n === 'x') return a[j].d; return 0; }
+var ROT_HINT = {
+  grav:'Gravity points toward Earth, but this diagram is rotated, so the real vertical is not along \u2212y. Use the angle marked in the scene to find how far gravity leans from \u2212y.',
+  app:'The diagram is rotated: find the push\u2019s angle relative to the ramp (the x-axis), not relative to the horizontal.'
+};
 function dirName(a){
   if (rot()) {
     var ax = { 0:'along plus x', 90:'along plus y', 180:'along minus x', 270:'along minus y' };
-    if (ax.hasOwnProperty(a)) return ax[a] + ', ' + a + ' degrees from the tilted plus x axis';
+    if (ax.hasOwnProperty(a)) return ax[a] + ', ' + a + ' degrees from the plus x axis';
     var qq = a < 90 ? 'between plus x and plus y' : a < 180 ? 'between plus y and minus x' : a < 270 ? 'between minus x and minus y' : 'between minus y and plus x';
-    return qq + ', ' + a + ' degrees from the tilted plus x axis';
+    return qq + ', ' + a + ' degrees from the plus x axis';
   }
   var nm = {0:'to the right',45:'up and to the right',90:'straight up',135:'up and to the left',180:'to the left',225:'down and to the left',270:'straight down',315:'down and to the right'};
   if (nm.hasOwnProperty(a)) return nm[a] + ', ' + a + ' degrees';
@@ -49,36 +55,70 @@ function speech(f){ return f.key ? NT.symSpeak(f.key, true) + ' (' + NT.FORCES[f
 
 /* ---------- rendering ---------- */
 function render(){
-  var i = S.cur, Sit = NT.SITS[i], done = sh.sits[i].done[2];
+  var i = S.cur, Sit = NT.SITS[i], done = sh.sits[i].done[2], d = D(i), ready = done || d.axesOk;
   NT.renderTabsScene(thisq, N, i);
-  var remind = Sit.forces.map(function(f){ return NT.symH(NT.slotKey(thisq, i, f.slot), true); }).join(', ');
+  var radios = '';
+  Sit.axes.opts.forEach(function(o){
+    var chosen = ready && o.id === Sit.axes.correct;
+    radios += '<label><input type="radio" name="' + id('Ax') + '" value="' + o.id + '"' + (d.axes === o.id || chosen ? ' checked' : '') + (ready ? ' disabled' : '') + '><span>' + o.t
+      + (chosen ? '<span class="ntaxchosen" aria-hidden="true"> \u2713</span><span class="ntsr"> (your choice, correct)</span>' : '') + '</span></label>';
+  });
+  var html = '<h4 class="ntworkh" id="' + id('WorkH') + '" tabindex="-1">Draw the free-body diagram</h4>'
+    + '<fieldset class="ntaxesset"><legend>1. Choose the most convenient axes</legend>' + radios + '</fieldset>'
+    + '<div class="ntfb" id="' + id('AxFb') + '"></div>';
+  if (ready) {
+    var remind = Sit.forces.map(function(f){ return NT.symH(NT.slotKey(thisq, i, f.slot), true); }).join(', ');
+    html += '<p class="ntinstr"><b>2. Draw the free-body diagram on these axes.</b> The object is the dot at the origin. Add each force, give it a symbol, and aim it: select a force, then click or drag on the diagram, or type the angle (degrees from +x). With the diagram focused, \u2190/\u2192 rotate by 5\u00B0 (Shift: 45\u00B0) and number keys select a force.</p>'
+      + (rot() && Sit.frameNote ? '<p class="ntfb ntfbinfo">' + Sit.frameNote + '</p>' : '')
+      + '<p class="ntremind">Forces from Stage 1: ' + remind + '.</p>'
+      + '<div class="ntfbdwrap">'
+      + '<svg class="ntfbdsvg" id="' + id('Svg') + '" viewBox="0 0 400 400" tabindex="0" role="img" aria-label="Free-body diagram drawn on your chosen axes' + (rot() ? ', rotated so those axes are horizontal and vertical' : '') + '. Use the force controls, or focus here and use the arrow keys. Select Describe to hear the diagram."></svg>'
+      + '<div class="ntfrows" id="' + id('Rows') + '"></div></div>'
+      + '<div class="ntbtnrow">'
+      + '<button type="button" class="ntbtn" id="' + id('Add') + '"' + (done ? ' disabled' : '') + '>Add force</button>'
+      + '<button type="button" class="ntbtn" id="' + id('Seed') + '"' + (done ? ' disabled' : '') + '>Add my Stage 1 forces</button>'
+      + '<button type="button" class="ntbtn" id="' + id('Desc') + '">Describe</button>'
+      + '<button type="button" class="ntbtn" id="' + id('Clr') + '"' + (done ? ' disabled' : '') + '>Clear diagram</button>'
+      + '<button type="button" class="ntbtn ntbtnmain" id="' + id('Check') + '"' + (done ? ' disabled' : '') + '>Check my diagram</button>'
+      + '</div><div class="ntfb" id="' + id('Fb') + '"></div>';
+  }
   var Wk = document.getElementById(id('Work'));
-  Wk.innerHTML = '<h4 class="ntworkh" id="' + id('WorkH') + '" tabindex="-1">Draw the free-body diagram</h4>'
-    + '<p class="ntinstr">Represent the object as the dot at the origin. Add each force, give it a symbol, and aim it: select a force, then click or drag on the diagram, or type the angle (degrees from +x). With the diagram focused, \u2190/\u2192 rotate by 5\u00B0 (Shift: 45\u00B0) and number keys select a force.</p>'
-    + (Sit.fbdNote ? '<p class="ntfb ntfbinfo">' + Sit.fbdNote + '</p>' : '')
-    + '<p class="ntremind">Forces from Stage 1: ' + remind + '.</p>'
-    + '<div class="ntfbdwrap">'
-    + '<svg class="ntfbdsvg" id="' + id('Svg') + '" viewBox="0 0 400 400" tabindex="0" role="img" aria-label="Free-body diagram' + (Sit.fbdAxis ? ' on tilted axes: x tangent to the arc, y along the string toward the pivot' : '') + '. Use the force controls, or focus here and use the arrow keys. Select Describe to hear the diagram."></svg>'
-    + '<div class="ntfrows" id="' + id('Rows') + '"></div>'
-    + '</div>'
-    + '<div class="ntbtnrow">'
-    + '<button type="button" class="ntbtn" id="' + id('Add') + '"' + (done ? ' disabled' : '') + '>Add force</button>'
-    + '<button type="button" class="ntbtn" id="' + id('Seed') + '"' + (done ? ' disabled' : '') + '>Add my Stage 1 forces</button>'
-    + '<button type="button" class="ntbtn" id="' + id('Desc') + '">Describe</button>'
-    + '<button type="button" class="ntbtn" id="' + id('Clr') + '"' + (done ? ' disabled' : '') + '>Clear diagram</button>'
-    + '<button type="button" class="ntbtn ntbtnmain" id="' + id('Check') + '"' + (done ? ' disabled' : '') + '>Check my diagram</button>'
-    + '</div>'
-    + '<div class="ntfb" id="' + id('Fb') + '"></div>';
-  buildRows(); draw(); bind();
-  var d = D(i);
-  if (done) showSuccess(false);
-  else if (d.msg) setFb(d.msg.html, d.msg.tone);
-  else setFb('Add the forces, aim them, then select <b>Check my diagram</b>.', '');
+  Wk.innerHTML = html;
+  var rad = Wk.querySelectorAll('input[type=radio]');
+  for (var k=0;k<rad.length;k++) rad[k].addEventListener('change', function(){ chooseAxes(this.value); });
+  if (ready) {
+    setAxFb('<span class="ntfbhead">Good axes.</span> One axis lies along the acceleration (or, with a\u20D7 = 0\u20D7, along most of the forces), so as few forces as possible need splitting.'
+      + (rot() ? ' The diagram below is drawn with these axes horizontal and vertical.' : ''), 'good');
+    buildRows(); draw(); bind();
+    if (done) showSuccess(false);
+    else if (d.msg) setFb(d.msg.html, d.msg.tone);
+    else setFb('Add the forces, aim them, then select <b>Check my diagram</b>.', '');
+  } else if (d.axMsg) setAxFb(d.axMsg.html, d.axMsg.tone);
+  else setAxFb('Before drawing, choose your axes. Tip: put one axis along the acceleration; if a\u20D7 = 0\u20D7, line the axes up with as many forces as possible.', '');
   if (NT.allDone(thisq, N)) completeBanner();
+}
+function setAxFb(html, tone){
+  var fb = document.getElementById(id('AxFb'));
+  fb.className = 'ntfb' + (tone ? ' ntfb' + tone : '');
+  fb.innerHTML = NT.vecify(html);
+}
+function chooseAxes(v){
+  var i = S.cur, Sit = NT.SITS[i], d = D(i);
+  d.axes = v;
+  if (v === Sit.axes.correct) {
+    d.axesOk = true; d.axMsg = null; render();
+    NT.announce(thisq, N, 'Good axes. Now draw the free-body diagram on them.' + (rot() ? ' The diagram is rotated so these axes are horizontal and vertical.' : ''));
+    var a = document.getElementById(id('Add')); if (a) a.focus();
+  } else {
+    var o = Sit.axes.opts.filter(function(x){ return x.id === v; })[0];
+    d.axMsg = { html:'<span class="ntfbhead">Possible, but not the best choice.</span> ' + o.fb, tone:'bad' };
+    setAxFb(d.axMsg.html, 'bad');
+    NT.announce(thisq, N, 'Possible, but not the best choice. ' + o.fb);
+  }
 }
 function draw(){
   var i = S.cur, d = D(i), svg = document.getElementById(id('Svg')); if (!svg) return;
-  var R = rot(), s = '<g class="ntgrid"' + (R ? ' transform="rotate(' + (-R) + ' 200 200)"' : '') + '>';
+  var R = 0, s = '<g class="ntgrid"' + (R ? ' transform="rotate(' + (-R) + ' 200 200)"' : '') + '>';
   var lo = R ? -100 : 25, hi = R ? 500 : W;
   for (var v=lo; v<hi; v+=25) s += '<line x1="'+v+'" y1="'+(R?-100:0)+'" x2="'+v+'" y2="'+(R?500:400)+'"/><line x1="'+(R?-100:0)+'" y1="'+v+'" x2="'+(R?500:400)+'" y2="'+v+'"/>';
   s += '</g>';
@@ -131,7 +171,7 @@ function buildRows(){
       + '<button type="button" class="ntbtn" data-act="sel" data-k="' + k + '" aria-pressed="' + (k === d.sel ? 'true' : 'false') + '" aria-label="Select ' + lab + '">Force ' + (k+1) + '</button>'
       + '<select data-act="sym" data-k="' + k + '" aria-label="Symbol of ' + lab + '"' + dis + '>' + symOpts + '</select>'
       + '<select data-act="dir" data-k="' + k + '" aria-label="Quick direction of ' + lab + '"' + dis + '>' + dirOpts + '</select>'
-      + '<input type="number" min="0" max="359" step="5" data-act="ang" data-k="' + k + '" value="' + (f.ang === null ? '' : f.ang) + '" aria-label="Angle of ' + lab + ' in degrees from the ' + (rot() ? 'tilted ' : '') + 'plus x axis"' + dis + '><span aria-hidden="true">\u00B0</span>'
+      + '<input type="number" min="0" max="359" step="5" data-act="ang" data-k="' + k + '" value="' + (f.ang === null ? '' : f.ang) + '" aria-label="Angle of ' + lab + ' in degrees from the plus x axis"' + dis + '><span aria-hidden="true">\u00B0</span>'
       + '<span class="ntstat" aria-hidden="true" style="color:var(' + (v === 'ok' ? '--nt-good' : '--nt-bad') + ')">' + (v === 'ok' ? '\u2713' : v === 'bad' ? '\u2717' : '') + '</span>'
       + (v ? '<span class="ntsr">' + (v === 'ok' ? 'correct' : 'needs fixing') + '</span>' : '')
       + '<button type="button" class="ntbtn" data-act="rm" data-k="' + k + '" aria-label="Remove ' + lab + '"' + dis + '>\u2715</button>'
@@ -205,7 +245,8 @@ function bind(){
   });
   document.getElementById(id('Desc')).addEventListener('click', describe);
   document.getElementById(id('Clr')).addEventListener('click', function(){
-    S.d[S.cur] = null; D(S.cur); render(); NT.announce(thisq, N, 'Diagram cleared.');
+    var keep = D(S.cur); S.d[S.cur] = null; var nd = D(S.cur); nd.axes = keep.axes; nd.axesOk = keep.axesOk;
+    render(); NT.announce(thisq, N, 'Diagram cleared.');
   });
   document.getElementById(id('Check')).addEventListener('click', check);
 
@@ -214,7 +255,7 @@ function bind(){
   function aim(p){
     var d = D(S.cur); if (d.sel < 0 || !d.forces[d.sel]) return;
     var dx = p[0]-OX, dy = OY-p[1]; if (dx*dx + dy*dy < 144) return;
-    var a = norm(Math.atan2(dy, dx)*180/Math.PI - rot()), f = d.forces[d.sel];
+    var a = norm(Math.atan2(dy, dx)*180/Math.PI), f = d.forces[d.sel];
     if (f.ang !== a) { f.ang = a; clearVerdict(d.sel); refresh(); }
   }
   svg.addEventListener('pointerdown', function(e){
@@ -222,7 +263,7 @@ function bind(){
     var d = D(S.cur), p = pos(e), hit = -1;
     for (var k=d.forces.length-1; k>=0; k--){
       var f = d.forces[k]; if (f.ang === null) continue;
-      var a = (f.ang + rot())*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
+      var a = f.ang*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
       if ((tx-p[0])*(tx-p[0]) + (ty-p[1])*(ty-p[1]) < 324) { hit = k; break; }
     }
     if (hit >= 0) d.sel = hit;
@@ -270,7 +311,7 @@ function check(){
     if (angDiff(f.ang, norm(slot.dir - rot())) <= TOL) { verdict[k] = 'ok'; return; }
     verdict[k] = 'bad';
     d.wrong[slot.slot] = (d.wrong[slot.slot] || 0) + 1;
-    issues.push(tag + 'the direction is off. ' + DIR_HINT[slot.keys[0]] + (d.wrong[slot.slot] >= 2 ? ' <i>' + slot.tip + '</i>' : ''));
+    issues.push(tag + 'the direction is off. ' + ((rot() && ROT_HINT[slot.keys[0]]) || DIR_HINT[slot.keys[0]]) + (d.wrong[slot.slot] >= 2 ? ' <i>' + slot.tip + '</i>' : ''));
   });
   Sit.forces.forEach(function(f){
     if (!used[f.slot]) issues.push('<b>Missing:</b> ' + NT.symH(NT.slotKey(thisq, i, f.slot), true) + ' acts on the object but is not on the diagram.');
@@ -289,7 +330,7 @@ function check(){
 function showSuccess(say){
   var i = S.cur, Sit = NT.SITS[i];
   var list = Sit.forces.map(function(f){ return NT.symH(NT.slotKey(thisq, i, f.slot), true) + ' at ' + norm(f.dir - rot()) + '\u00B0'; }).join(', ');
-  setFb('<span class="ntfbhead">Correct free-body diagram.</span> ' + list + (rot() ? ' (from the tilted +x axis). With these axes the tension lies entirely along y, and only gravity needs splitting.' : '.') + ' Every arrow starts on the object and points the way its agent pushes or pulls.' + NT.nextButtonHTML(thisq, N, i), 'good');
+  setFb('<span class="ntfbhead">Correct free-body diagram.</span> ' + list + (rot() ? ' (measured from +x on your chosen axes). Notice how many forces now lie exactly along an axis: only the tilted ones will need splitting into components.' : '.') + ' Every arrow starts on the object and points the way its agent pushes or pulls.' + NT.nextButtonHTML(thisq, N, i), 'good');
   var nb = document.getElementById(id('Next'));
   if (nb) nb.addEventListener('click', function(){ goTo(i + 1); });
   if (say) {
@@ -307,7 +348,7 @@ function goTo(i){
 
 NT.mount(thisq, N, 'nt3Root' + thisq, {
   label:'Newton\u2019s second law tutorial, stage 3: free-body diagrams',
-  subtitle:'Draw each free-body diagram. The simulation checks the symbols and the directions of your arrows.',
+  subtitle:'For each situation, choose convenient axes, then draw the free-body diagram on them. The simulation checks the symbols and the directions of your arrows.',
   render:render,
   onTab:goTo,
   onShow:function(){ NT.announce(thisq, N, 'Stage 3 ready. Draw the free-body diagram for situation ' + (S.cur+1) + '.'); }

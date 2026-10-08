@@ -13,6 +13,8 @@ if (!window[stKey]) window[stKey] = { cur:0, d:{} };
 var S = window[stKey];
 var sh = NT.shared(thisq);
 
+/* real-world angle of the chosen +x axis; the diagram is drawn rotated by it, exactly as in Stage 3 */
+function frame(i){ var a = NT.SITS[i].axes.dirs; for (var j=0;j<a.length;j++) if (a[j].n === 'x') return a[j].d; return 0; }
 function D(i){ if (!S.d[i]) S.d[i] = { axes:'', axesOk:false, pick:{}, marks:{}, msg:null, axMsg:null }; return S.d[i]; }
 
 /* ---------- component option codes ---------- */
@@ -46,69 +48,30 @@ function codeHTML(i, slot, code, first){
 
 /* ---------- rendering ---------- */
 function render(){
-  var i = S.cur, Sit = NT.SITS[i], d = D(i), done = sh.sits[i].done[3];
+  var i = S.cur, Sit = NT.SITS[i];
   NT.renderTabsScene(thisq, N, i);
-  var radios = '';
-  Sit.axes.opts.forEach(function(o, j){
-    var chosen = (done || d.axesOk) && o.id === Sit.axes.correct;
-    radios += '<label><input type="radio" name="' + id('Ax') + '" value="' + o.id + '"' + (d.axes === o.id || chosen ? ' checked' : '') + (done || d.axesOk ? ' disabled' : '') + '><span>' + o.t
-      + (chosen ? '<span class="ntaxchosen" aria-hidden="true"> \u2713</span><span class="ntsr"> (your choice, correct)</span>' : '') + '</span></label>';
-  });
+  var ax = Sit.axes.opts.filter(function(o){ return o.id === Sit.axes.correct; })[0];
   var Wk = document.getElementById(id('Work'));
   Wk.innerHTML = '<h4 class="ntworkh" id="' + id('WorkH') + '" tabindex="-1">Resolve Newton\u2019s second law into components</h4>'
-    + '<fieldset class="ntaxesset"><legend>1. Choose the most convenient axes</legend>' + radios + '</fieldset>'
-    + '<div class="ntfb" id="' + id('AxFb') + '"></div>'
+    + '<p class="ntinstr">This is your free-body diagram from Stage 3, on the same axes: <b>' + ax.t + '</b>.</p>'
     + '<div id="' + id('Comp') + 'Area"></div>';
-  var rad = Wk.querySelectorAll('input[type=radio]');
-  for (var k=0;k<rad.length;k++) rad[k].addEventListener('change', function(){ chooseAxes(this.value); });
-  if (d.axesOk || done) {
-    setAxFb('<span class="ntfbhead">Good axes.</span> One axis lies along the acceleration (or, with a\u20D7 = 0\u20D7, along most of the forces), so as few forces as possible need splitting.', 'good');
-    renderComps();
-  } else if (d.axMsg) setAxFb(d.axMsg.html, d.axMsg.tone);
-  else setAxFb('Tip: line up one axis with the acceleration. Then the right side of one equation is <i>m a</i> and the other is 0 (or a second, known acceleration component).', '');
+  renderComps();
   if (NT.allDone(thisq, N)) finalSummary(false);
 }
-function setAxFb(html, tone){
-  var fb = document.getElementById(id('AxFb'));
-  fb.className = 'ntfb' + (tone ? ' ntfb' + tone : '');
-  fb.innerHTML = NT.vecify(html);
-}
-function chooseAxes(v){
-  var i = S.cur, Sit = NT.SITS[i], d = D(i);
-  d.axes = v;
-  if (v === Sit.axes.correct) {
-    d.axesOk = true; d.axMsg = null; render();
-    NT.announce(thisq, N, 'Good axes. Now choose each force\u2019s component along each axis.');
-    var first = document.querySelector('#' + id('Comp') + 'Area select'); if (first) first.focus();
-  } else {
-    var o = Sit.axes.opts.filter(function(x){ return x.id === v; })[0];
-    d.axMsg = { html:'<span class="ntfbhead">Possible, but not the best choice.</span> ' + o.fb, tone:'bad' };
-    setAxFb(d.axMsg.html, 'bad');
-    NT.announce(thisq, N, 'Possible, but not the best choice. ' + o.fb);
-  }
-}
 function diagramSVG(i){
-  var Sit = NT.SITS[i], O = 150, L = 78, s = '';
+  var Sit = NT.SITS[i], O = 150, L = 84, R = frame(i), s = '';
   s += NT.arrow(10, O, 290, O, 'ntaxis', {head:8}) + NT.arrow(O, 290, O, 10, 'ntaxis', {head:8});
-  var std = Sit.axes.dirs[0].d === 0;
-  if (!std) {
-    Sit.axes.dirs.forEach(function(ax){
-      var a = ax.d*Math.PI/180, ux = Math.cos(a), uy = -Math.sin(a), R = 128;
-      s += NT.arrow(O - ux*R, O - uy*R, O + ux*R, O + uy*R, 'ntaxtilt', {head:10});
-      var lx = Math.max(10, Math.min(286, O + ux*(R+8) - uy*12 - 5)), ly = Math.max(16, Math.min(294, O + uy*(R+8) + ux*12 + 5));
-      s += '<text class="ntaxtiltl" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '">' + ax.n + '</text>';
-    });
-  } else {
-    s += '<text class="ntaxtiltl" x="276" y="140">x</text><text class="ntaxtiltl" x="158" y="22">y</text>';
-  }
+  s += '<text class="ntaxtiltl" x="278" y="140">x</text><text class="ntaxtiltl" x="158" y="22">y</text>';
+  var seen = {};
   Sit.forces.forEach(function(f){
-    var k = NT.slotKey(thisq, i, f.slot), a = f.dir*Math.PI/180, tx = O + L*Math.cos(a), ty = O - L*Math.sin(a), cls = NT.colorClass(k);
+    var dir = ((f.dir - R) % 360 + 360) % 360, k = NT.slotKey(thisq, i, f.slot), a = dir*Math.PI/180;
+    var tx = O + L*Math.cos(a), ty = O - L*Math.sin(a), cls = NT.colorClass(k), nn = seen[dir] || 0; seen[dir] = nn + 1;
     s += NT.arrow(O, O, tx, ty, cls, {head:11});
     var px = -Math.sin(a), py = -Math.cos(a);
-    var lx = Math.max(18, Math.min(282, tx + Math.cos(a)*20 + px*13)), ly = Math.max(18, Math.min(286, ty - Math.sin(a)*20 + py*13 + 4));
+    var lx = Math.max(18, Math.min(282, tx + Math.cos(a)*20 + px*(13 + nn*24))), ly = Math.max(18, Math.min(286, ty - Math.sin(a)*20 + py*(13 + nn*24) + 4));
     s += NT.vecLabel(lx, ly, k, cls);
   });
-  Sit.axes.marks.forEach(function(m, j){ s += NT.angleArc(O, O, 36 + j*18, m.a1, m.a2, m.l, 'ntarc'); });
+  Sit.axes.marks.forEach(function(m, j){ s += NT.angleArc(O, O, 36 + j*18, m.a1 - R, m.a2 - R, m.l, 'ntarc'); });
   s += '<circle class="ntorigin" cx="150" cy="150" r="4.5"/>';
   return s;
 }
@@ -133,9 +96,8 @@ function renderComps(){
       + '<div class="ntpreview ntmath" id="' + id('Pv' + ci) + '" aria-live="off"></div></div>';
   });
   var hint = Sit.comps.length === 1 ? 'Every force here is vertical, so only the y-equation carries information (the x-equation reads 0 = 0).' : 'Each row is one scalar equation: the sum of the components along that axis equals <i>m</i> times the acceleration component along it.';
-  area.innerHTML = '<div class="ntcompgrid" style="margin-top:4px">'
-    + '<svg class="ntdiag" viewBox="0 0 300 300" role="img" aria-label="' + NT.esc(diagramDesc(i)) + '">' + diagramSVG(i) + '</svg>'
-    + '<div style="display:flex;flex-direction:column;gap:8px;min-width:0"><b>2. Build the component equations</b><p class="ntinstr">' + hint + ' Use the magnitudes <i>F</i>, with the sign showing the direction. The marked angles on the diagram tell you which trig function goes with each force.</p></div></div>'
+  area.innerHTML = '<svg class="ntdiag" style="margin:4px auto 0" viewBox="0 0 300 300" role="img" aria-label="' + NT.esc(diagramDesc(i)) + '">' + diagramSVG(i) + '</svg>'
+    + '<p class="ntinstr" style="margin-top:10px"><b>Build the component equations.</b> ' + hint + ' Use the magnitudes <i>F</i>, with the sign showing the direction. The marked angles on the diagram tell you which trig function goes with each force.</p>'
     + '<div class="ntcomprows" style="margin-top:10px">' + rows + '</div>'
     + '<div class="ntbtnrow" style="margin-top:10px"><button type="button" class="ntbtn ntbtnmain" id="' + id('Check') + '"' + (done ? ' disabled' : '') + '>Check my equations</button>'
     + '<button type="button" class="ntbtn" id="' + id('Reset') + '"' + (done ? ' disabled' : '') + '>Clear</button></div>'
@@ -157,10 +119,11 @@ function renderComps(){
   else setFb('Choose every component and both right sides, then select <b>Check my equations</b>.', '');
 }
 function diagramDesc(i){
-  var Sit = NT.SITS[i];
-  var s = 'Free-body diagram with the chosen axes: ' + Sit.axes.dirs.map(function(a){ return a.n + ' axis at ' + a.d + ' degrees'; }).join(', ') + '. Forces: ';
-  s += Sit.forces.map(function(f){ return NT.symSpeak(NT.slotKey(thisq, i, f.slot), true) + ' at ' + f.dir + ' degrees'; }).join(', ') + '.';
-  if (Sit.axes.marks.length) s += ' Marked angles: ' + Sit.axes.marks.map(function(m){ return m.l.replace('\u03B8','theta').replace('\u03C6','phi') + ' between ' + m.a1 + ' and ' + (m.a2 % 360) + ' degrees'; }).join('; ') + '.';
+  var Sit = NT.SITS[i], R = frame(i);
+  function rel(x){ return ((x - R) % 360 + 360) % 360; }
+  var s = 'Your free-body diagram from Stage 3, with the chosen x axis horizontal and y axis vertical. Forces, in degrees from plus x: ';
+  s += Sit.forces.map(function(f){ return NT.symSpeak(NT.slotKey(thisq, i, f.slot), true) + ' at ' + rel(f.dir); }).join(', ') + '.';
+  if (Sit.axes.marks.length) s += ' Marked angles: ' + Sit.axes.marks.map(function(m){ return m.l.replace('\u03B8','theta').replace('\u03C6','phi') + ' between ' + rel(m.a1) + ' and ' + (rel(m.a2) || 360) + ' degrees'; }).join('; ') + '.';
   return s;
 }
 function previews(){
@@ -263,14 +226,14 @@ function finalSummary(fresh){
 }
 function goTo(i){
   S.cur = i; render(); NT.focusHeading(thisq, N);
-  NT.announce(thisq, N, 'Situation ' + (i+1) + ': ' + NT.SITS[i].title + '. First choose the axes.');
+  NT.announce(thisq, N, 'Situation ' + (i+1) + ': ' + NT.SITS[i].title + '. Build the component equations.');
 }
 
 NT.mount(thisq, N, 'nt4Root' + thisq, {
   label:'Newton\u2019s second law tutorial, stage 4: component equations',
-  subtitle:'Choose convenient axes, then write Newton\u2019s second law along each axis.',
+  subtitle:'Using your free-body diagram and axes from Stage 3, write Newton\u2019s second law along each axis.',
   render:render,
   onTab:goTo,
-  onShow:function(){ NT.announce(thisq, N, 'Stage 4 ready. Choose the axes for situation ' + (S.cur+1) + '.'); }
+  onShow:function(){ NT.announce(thisq, N, 'Stage 4 ready. Build the component equations for situation ' + (S.cur+1) + '.'); }
 });
 })();
