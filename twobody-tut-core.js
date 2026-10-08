@@ -74,7 +74,9 @@ TB.RHS = {
    forces[]: slot (= label key), body, types/agents accepted in Stage 1,
              dir (degrees from page +x, y up), miss (Stage 1 hint),
              tip (Stage 3 hint, in the FBD frame of that body)
-   fbdAxis : tilt of the Stage 3 FBD axes per body (x along the motion)
+   axes.bodies[b]: dirs (real-world axis directions; +x along the block's motion),
+               xdesc (words for +x), marks (angle arcs). Stages 3-4 draw each FBD
+               rotated so its own x/y axes are horizontal/vertical on screen.
    comp code: '0' | '+' | '-' | '+c0' '-s1' ... (sign, cos/sin, angle index)
    --------------------------------------------------------------------- */
 TB.SITS = [
@@ -85,9 +87,9 @@ TB.SITS = [
   aria:'Scene: a pulley hangs from the ceiling. A string passes over it. Block 1, smaller, hangs on the left with a dashed velocity arrow pointing up. Block 2, larger, hangs on the right with a dashed velocity arrow pointing down.',
   forces:[
     { slot:'g1', body:1, types:['grav'], agents:['earth'],  dir:270, miss:'Every block near Earth is pulled down by Earth.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'T1', body:1, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 1 and pulls on it.', tip:'The string pulls straight up on block 1 (90\u00B0).' },
+    { slot:'T1', body:1, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 1 and pulls on it.', tip:'The string pulls up on block 1, which is +x here (0\u00B0), because +x points along block 1\u2019s motion: up.' },
     { slot:'g2', body:2, types:['grav'], agents:['earth'],  dir:270, miss:'Every block near Earth is pulled down by Earth.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'T2', body:2, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 2 and pulls on it.', tip:'The string pulls straight up on block 2 (90\u00B0), even though block 2 moves down.' }
+    { slot:'T2', body:2, types:['ten'],  agents:['string'], dir:90,  miss:'The string is attached to block 2 and pulls on it.', tip:'The string pulls up on block 2, even though it moves down. +x points down (along its motion), so the tension is along \u2212x (180\u00B0).' }
   ],
   absent:{ '1:norm':'Nothing solid supports a hanging block; only the string holds it.', '2:norm':'Nothing solid supports a hanging block; only the string holds it.',
            '1:fric':'A hanging block touches no surface, so there is no friction.', '2:fric':'A hanging block touches no surface, so there is no friction.',
@@ -111,15 +113,15 @@ TB.SITS = [
            weight:'A tension equals the hanging weight only when that block does not accelerate. Here both blocks accelerate.' } }
   ],
   wrap2:'Two equations, one per block, linked by two facts: the same acceleration magnitude <i>a</i> and the same tension F<sub>T</sub>.',
-  fbdAxis:{ 1:0, 2:0 },
   axes:{ correct:'motion',
-    opts:[ {id:'motion', t:'For each block, y positive along its own motion: up for block 1, down for block 2'},
-           {id:'up', t:'y positive upward for both blocks', fb:'That works, but block 2\u2019s acceleration component would then be \u2212a while block 1\u2019s is +a. Choosing positive along each block\u2019s motion lets both equations use +a.'} ],
-    bodies:{ 1:{ dirs:[{n:'y',d:90}], marks:[] }, 2:{ dirs:[{n:'y',d:270}], marks:[] } } },
+    opts:[ {id:'motion', t:'For each block, x along its own motion: upward for block 1, downward for block 2'},
+           {id:'up', t:'x horizontal and y upward for both blocks', fb:'That works, but block 2\u2019s acceleration component would then be \u2212a while block 1\u2019s is +a. Putting x along each block\u2019s own motion (its acceleration) lets both equations use +a.'} ],
+    bodies:{ 1:{ dirs:[{n:'x',d:90},{n:'y',d:180}], xdesc:'upward, along block 1\u2019s motion', marks:[] },
+             2:{ dirs:[{n:'x',d:270},{n:'y',d:0}], xdesc:'downward, along block 2\u2019s motion', marks:[] } } },
   angles:{},
   comps:{
-    1:[ { axis:'y', terms:{ g1:'-', T1:'+' }, rhsOpts:['0','+m1a','-m1a','+m1g','+mta'], rhs:'+m1a' } ],
-    2:[ { axis:'y', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
+    1:[ { axis:'x', terms:{ g1:'-', T1:'+' }, rhsOpts:['0','+m1a','-m1a','+m1g','+mta'], rhs:'+m1a' } ],
+    2:[ { axis:'x', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
   },
   wrap4:'Add the two equations: the tension cancels, leaving {g2} \u2212 {g1} = (<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>)<i>a</i>, so <i>a</i> = (<i>m</i><sub>2</sub> \u2212 <i>m</i><sub>1</sub>)<i>g</i>/(<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>). Then F<sub>T</sub> = <i>m</i><sub>1</sub>(<i>g</i> + <i>a</i>): the tension lies between the two weights.'
 },
@@ -158,11 +160,10 @@ TB.SITS = [
            t1:'A light string pulls equally hard at both ends; otherwise its tiny mass would need an enormous net force.' } }
   ],
   wrap2:'Each equation contains only the forces <b>on</b> that block. F\u20D7<sub>A</sub> appears in block 1\u2019s equation only, and each block gets its own tension vector.',
-  fbdAxis:{ 1:0, 2:0 },
   axes:{ correct:'std',
     opts:[ {id:'std', t:'For both blocks: x horizontal (along the motion), y vertical'},
            {id:'rope', t:'Block 1: x along the rope (30\u00B0); block 2: x horizontal', fb:'Then every other force on block 1, and its acceleration, would have two components. Put x along the acceleration for both blocks.'} ],
-    bodies:{ 1:{ dirs:[{n:'x',d:0},{n:'y',d:90}], marks:[{a1:0,a2:30,l:'\u03B8'}] }, 2:{ dirs:[{n:'x',d:0},{n:'y',d:90}], marks:[] } } },
+    bodies:{ 1:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[{a1:0,a2:30,l:'\u03B8'}] }, 2:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[] } } },
   angles:{ g1:['\u03B8'], N1:['\u03B8'], f1:['\u03B8'], T1:['\u03B8'], A:['\u03B8'] },
   comps:{
     1:[ { axis:'x', terms:{ g1:'0', N1:'0', f1:'-', T1:'-', A:'+c0' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'+m1a' },
@@ -178,12 +179,12 @@ TB.SITS = [
   desc:'Block 1 sits on a rough ramp inclined at <i>\u03B8</i> = 30\u00B0. A light string parallel to the ramp runs over a light, frictionless pulley at the top to block 2, which hangs freely. Block 2 moves down and block 1 moves up the ramp; both are <b>speeding up</b>.',
   aria:'Scene: a ramp rising to the right at angle theta of 30 degrees. Block 1 sits on the ramp. A string runs from block 1 up along the ramp, over a pulley at the top, and down to block 2, which hangs beside the vertical right side of the ramp. Dashed velocity arrows: block 1 moves up the ramp, block 2 moves down.',
   forces:[
-    { slot:'g1', body:1, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'Gravity still points straight down on the page. In these tilted axes that is 30\u00B0 from \u2212y, toward \u2212x: 240\u00B0 from the tilted +x axis.' },
-    { slot:'N1', body:1, types:['norm'], agents:['surface'], dir:120, miss:'Block 1 rests on the ramp, which pushes back perpendicular to itself.', tip:'The normal force is perpendicular to the ramp: along +y (90\u00B0 in the tilted axes).' },
-    { slot:'f1', body:1, types:['fric'], agents:['surface'], dir:210, miss:'Block 1 slides along a rough ramp.', tip:'Friction opposes the sliding, so it points down the ramp: along \u2212x (180\u00B0 in the tilted axes).' },
-    { slot:'T1', body:1, types:['ten'],  agents:['string'],  dir:30,  miss:'The string pulls block 1 up the ramp.', tip:'The string is parallel to the ramp and pulls up it: along +x (0\u00B0 in the tilted axes).' },
+    { slot:'g1', body:1, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'In this rotated diagram, gravity makes \u03B8 = 30\u00B0 with \u2212y, leaning toward \u2212x (down the ramp): 240\u00B0 from +x.' },
+    { slot:'N1', body:1, types:['norm'], agents:['surface'], dir:120, miss:'Block 1 rests on the ramp, which pushes back perpendicular to itself.', tip:'The normal force is perpendicular to the ramp: exactly +y (90\u00B0).' },
+    { slot:'f1', body:1, types:['fric'], agents:['surface'], dir:210, miss:'Block 1 slides along a rough ramp.', tip:'Friction opposes the sliding, so it points down the ramp: \u2212x (180\u00B0).' },
+    { slot:'T1', body:1, types:['ten'],  agents:['string'],  dir:30,  miss:'The string pulls block 1 up the ramp.', tip:'The string is parallel to the ramp and pulls up it: +x (0\u00B0).' },
     { slot:'g2', body:2, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'Gravity points straight down (270\u00B0).' },
-    { slot:'T2', body:2, types:['ten'],  agents:['string'],  dir:90,  miss:'The string holds block 2 from above.', tip:'The string pulls straight up on block 2 (90\u00B0).' }
+    { slot:'T2', body:2, types:['ten'],  agents:['string'],  dir:90,  miss:'The string holds block 2 from above.', tip:'The string pulls up on block 2. +x points down (along its motion), so the tension is along \u2212x (180\u00B0).' }
   ],
   absent:{ '2:norm':'Block 2 hangs freely; it does not touch the ramp.', '2:fric':'Block 2 hangs freely; it does not rub on anything.',
            '1:app':'No person is involved; the hanging block does the pulling, through the string.', '2:app':'No person is involved here.' },
@@ -205,16 +206,16 @@ TB.SITS = [
            t1:'An ideal (light, frictionless) pulley changes the direction of the tension, not its size.' } }
   ],
   wrap2:'The pulley bends the string, so the two accelerations point in different directions but share one magnitude <i>a</i>.',
-  fbdAxis:{ 1:30, 2:0 },
   axes:{ correct:'motion',
-    opts:[ {id:'motion', t:'Block 1: x up the ramp, y perpendicular to it. Block 2: y positive downward (along its motion)'},
+    opts:[ {id:'motion', t:'Block 1: x up the ramp, y perpendicular to it. Block 2: x downward, along its motion'},
            {id:'std', t:'Both blocks: x horizontal, y vertical (positive up)', fb:'Workable, but block 1\u2019s normal force, friction, tension and acceleration would all split into two components, and block 2 would need \u2212a. Choose axes along each block\u2019s motion.'} ],
-    bodies:{ 1:{ dirs:[{n:'x',d:30},{n:'y',d:120}], marks:[{a1:270,a2:300,l:'\u03B8'}] }, 2:{ dirs:[{n:'y',d:270}], marks:[] } } },
+    bodies:{ 1:{ dirs:[{n:'x',d:30},{n:'y',d:120}], xdesc:'up the ramp (y perpendicular to the ramp, away from it)', marks:[{a1:270,a2:300,l:'\u03B8'}] },
+             2:{ dirs:[{n:'x',d:270},{n:'y',d:0}], xdesc:'downward, along block 2\u2019s motion', marks:[] } } },
   angles:{ g1:['\u03B8'], N1:['\u03B8'], f1:['\u03B8'], T1:['\u03B8'] },
   comps:{
     1:[ { axis:'x', terms:{ g1:'-s0', N1:'0', f1:'-', T1:'+' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'+m1a' },
         { axis:'y', terms:{ g1:'-c0', N1:'+', f1:'0', T1:'0' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'0' } ],
-    2:[ { axis:'y', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
+    2:[ { axis:'x', terms:{ g2:'+', T2:'-' }, rhsOpts:['0','+m2a','-m2a','+m2g','+mta'], rhs:'+m2a' } ]
   },
   wrap4:'Add block 1\u2019s x-equation and block 2\u2019s equation: the tension cancels, giving {g2} \u2212 {g1} sin <i>\u03B8</i> \u2212 {f1} = (<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>)<i>a</i>. Choosing \u201Cpositive along the motion\u201D for each block is what makes this sum work.'
 },
@@ -224,12 +225,12 @@ TB.SITS = [
   desc:'Block 1 sits on a smooth ramp at <i>\u03B8</i><sub>1</sub> = 30\u00B0, block 2 on a smooth ramp at <i>\u03B8</i><sub>2</sub> = 50\u00B0. A light string over a light, frictionless pulley at the peak joins them. Block 2 slides down its ramp and block 1 slides up its ramp; both are <b>speeding up</b>.',
   aria:'Scene: two smooth ramps meet at a peak with a pulley on top. The left ramp rises at theta 1 of 30 degrees and holds block 1. The right ramp falls at theta 2 of 50 degrees and holds block 2. A string over the pulley joins the blocks. Dashed velocity arrows: block 1 moves up its ramp toward the peak, block 2 moves down its ramp away from the peak.',
   forces:[
-    { slot:'g1', body:1, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'Gravity points straight down on the page: 30\u00B0 from \u2212y, toward \u2212x \u2014 240\u00B0 in block 1\u2019s tilted axes.' },
-    { slot:'N1', body:1, types:['norm'], agents:['surface'], dir:120, miss:'Block 1 rests on its ramp.', tip:'Perpendicular to the ramp: along +y (90\u00B0 in the tilted axes).' },
-    { slot:'T1', body:1, types:['ten'],  agents:['string'],  dir:30,  miss:'The string pulls block 1 toward the pulley.', tip:'Toward the pulley, parallel to the ramp: along +x (0\u00B0 in the tilted axes).' },
-    { slot:'g2', body:2, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'Gravity points straight down on the page: 50\u00B0 from \u2212y, toward +x \u2014 320\u00B0 in block 2\u2019s tilted axes.' },
-    { slot:'N2', body:2, types:['norm'], agents:['surface'], dir:40,  miss:'Block 2 rests on its ramp.', tip:'Perpendicular to the ramp: along +y (90\u00B0 in the tilted axes).' },
-    { slot:'T2', body:2, types:['ten'],  agents:['string'],  dir:130, miss:'The string pulls block 2 back toward the pulley.', tip:'Toward the pulley, up the ramp: along \u2212x (180\u00B0 in the tilted axes), because +x points down block 2\u2019s ramp, along its motion.' }
+    { slot:'g1', body:1, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'In this rotated diagram, gravity makes \u03B8\u2081 = 30\u00B0 with \u2212y, leaning toward \u2212x (down the ramp): 240\u00B0 from +x.' },
+    { slot:'N1', body:1, types:['norm'], agents:['surface'], dir:120, miss:'Block 1 rests on its ramp.', tip:'Perpendicular to the ramp: exactly +y (90\u00B0).' },
+    { slot:'T1', body:1, types:['ten'],  agents:['string'],  dir:30,  miss:'The string pulls block 1 toward the pulley.', tip:'Toward the pulley, parallel to the ramp: +x (0\u00B0).' },
+    { slot:'g2', body:2, types:['grav'], agents:['earth'],   dir:270, miss:'Earth pulls on every block.', tip:'In this rotated diagram, gravity makes \u03B8\u2082 = 50\u00B0 with \u2212y, leaning toward +x (down block 2\u2019s ramp): 320\u00B0 from +x.' },
+    { slot:'N2', body:2, types:['norm'], agents:['surface'], dir:40,  miss:'Block 2 rests on its ramp.', tip:'Perpendicular to the ramp: exactly +y (90\u00B0).' },
+    { slot:'T2', body:2, types:['ten'],  agents:['string'],  dir:130, miss:'The string pulls block 2 back toward the pulley.', tip:'Toward the pulley, up the ramp: \u2212x (180\u00B0), because +x points down block 2\u2019s ramp, along its motion.' }
   ],
   absent:{ '1:fric':'Both ramps are smooth (frictionless).', '2:fric':'Both ramps are smooth (frictionless).',
            '1:app':'No person is involved here.', '2:app':'No person is involved here.' },
@@ -250,12 +251,11 @@ TB.SITS = [
       fb:{ angle:'An ideal pulley changes the direction of the tension, not its size. The ramp angles affect the gravity components, not the tension.' } }
   ],
   wrap2:'Two equations with three unknown magnitudes in total (two normal forces cancel out in the motion direction later). The constraints \u2014 same <i>a</i>, same F<sub>T</sub> \u2014 link them.',
-  fbdAxis:{ 1:30, 2:310 },
   axes:{ correct:'motion',
     opts:[ {id:'motion', t:'For each block: x along its ramp in its direction of motion, y perpendicular to its ramp'},
            {id:'std', t:'Both blocks: x horizontal, y vertical', fb:'Workable, but every force except gravity, and both accelerations, would split into two components. Tilt each block\u2019s axes along its own ramp.'} ],
-    bodies:{ 1:{ dirs:[{n:'x',d:30},{n:'y',d:120}], marks:[{a1:270,a2:300,l:'\u03B8\u2081'}] },
-             2:{ dirs:[{n:'x',d:310},{n:'y',d:40}],  marks:[{a1:220,a2:270,l:'\u03B8\u2082'}] } } },
+    bodies:{ 1:{ dirs:[{n:'x',d:30},{n:'y',d:120}], xdesc:'up block 1\u2019s ramp, toward the pulley (y perpendicular to the ramp)', marks:[{a1:270,a2:300,l:'\u03B8\u2081'}] },
+             2:{ dirs:[{n:'x',d:310},{n:'y',d:40}],  xdesc:'down block 2\u2019s ramp, away from the pulley (y perpendicular to the ramp)', marks:[{a1:220,a2:270,l:'\u03B8\u2082'}] } } },
   angles:{ g1:['\u03B8\u2081','\u03B8\u2082'], N1:['\u03B8\u2081'], T1:['\u03B8\u2081'], g2:['\u03B8\u2082','\u03B8\u2081'], N2:['\u03B8\u2082'], T2:['\u03B8\u2082'] },
   comps:{
     1:[ { axis:'x', terms:{ g1:'-s0', N1:'0', T1:'+' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'+m1a' },
@@ -304,11 +304,10 @@ TB.SITS = [
            unrel:'Acting on different blocks is exactly what third-law partners do: block 1 pushes on block 2, block 2 pushes back on block 1, equally and oppositely.' } }
   ],
   wrap2:'The blocks interact through two third-law pairs: F\u20D7<sub>N,12</sub> = \u2212F\u20D7<sub>N,21</sub> and F\u20D7<sub>f,12</sub> = \u2212F\u20D7<sub>f,21</sub>. Each member appears in a different block\u2019s equation.',
-  fbdAxis:{ 1:0, 2:0 },
   axes:{ correct:'std',
     opts:[ {id:'std', t:'For both blocks: x horizontal (along the motion), y vertical'},
            {id:'push', t:'Block 1: x along the push (20\u00B0 below horizontal); block 2: x horizontal', fb:'Then all four other forces on block 1, and its acceleration, would have two components. Put x along the acceleration.'} ],
-    bodies:{ 1:{ dirs:[{n:'x',d:0},{n:'y',d:90}], marks:[{a1:340,a2:360,l:'\u03C6'}] }, 2:{ dirs:[{n:'x',d:0},{n:'y',d:90}], marks:[] } } },
+    bodies:{ 1:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[{a1:340,a2:360,l:'\u03C6'}] }, 2:{ dirs:[{n:'x',d:0},{n:'y',d:90}], xdesc:'to the right', marks:[] } } },
   angles:{ A:['\u03C6'], g1:['\u03C6'], N1:['\u03C6'] },
   comps:{
     1:[ { axis:'x', terms:{ g1:'0', N1:'0', N12:'0', f12:'-', A:'+c0' }, rhsOpts:['0','+m1a','-m1a','+mta'], rhs:'+m1a' },
@@ -337,6 +336,8 @@ TB.vecify = function(html){
 TB.fillWrap = function(text){
   return text.replace(/\{(\w+)\}/g, function(m, k){ return TB.LBL[k] ? TB.symH(k, false, true) : m; });
 };
+/* real-world angle of block b's +x axis (each FBD is drawn rotated by this) */
+TB.frame = function(i, b){ var a = TB.SITS[i].axes.bodies[b].dirs; for (var j=0;j<a.length;j++) if (a[j].n === 'x') return a[j].d; return 0; };
 TB.bodyForces = function(i, b){ return TB.SITS[i].forces.filter(function(f){ return f.body === b; }); };
 TB.findForce = function(i, slot){ var f = TB.SITS[i].forces; for (var j=0;j<f.length;j++) if (f[j].slot===slot) return f[j]; return null; };
 

@@ -14,7 +14,7 @@ if (!window[stKey]) window[stKey] = { cur:0, d:{} };
 var S = window[stKey];
 var sh = TB.shared(thisq);
 
-function D(i){ if (!S.d[i]) S.d[i] = { axes:'', axesOk:false, pick:{}, marks:{}, msg:null, axMsg:null }; return S.d[i]; }
+function D(i){ if (!S.d[i]) S.d[i] = { pick:{}, marks:{}, msg:null }; return S.d[i]; }
 
 /* ---------- component codes ---------- */
 function codes(i, slot){
@@ -36,68 +36,39 @@ function codeHTML(i, slot, c, first){
 
 /* ---------- rendering ---------- */
 function render(){
-  var i = S.cur, Sit = TB.SITS[i], d = D(i), done = sh.sits[i].done[3];
+  var i = S.cur, Sit = TB.SITS[i];
   TB.renderTabsScene(thisq, N, i);
-  var radios = '';
-  Sit.axes.opts.forEach(function(o){
-    var chosen = (done || d.axesOk) && o.id === Sit.axes.correct;
-    radios += '<label><input type="radio" name="' + id('Ax') + '" value="' + o.id + '"' + (d.axes === o.id || chosen ? ' checked' : '') + (done || d.axesOk ? ' disabled' : '') + '><span>' + o.t
-      + (chosen ? '<span class="ntaxchosen" aria-hidden="true"> \u2713</span><span class="ntsr"> (your choice, correct)</span>' : '') + '</span></label>';
-  });
+  var ax = Sit.axes.opts.filter(function(o){ return o.id === Sit.axes.correct; })[0];
   var Wk = document.getElementById(id('Work'));
   Wk.innerHTML = '<h4 class="ntworkh" id="' + id('WorkH') + '" tabindex="-1">Resolve Newton\u2019s second law for each block</h4>'
-    + '<fieldset class="ntaxesset"><legend>1. Choose the most convenient axes</legend>' + radios + '</fieldset>'
-    + '<div class="ntfb" id="' + id('AxFb') + '"></div><div id="' + id('Area') + '"></div>';
-  var rad = Wk.querySelectorAll('input[type=radio]');
-  for (var k=0;k<rad.length;k++) rad[k].addEventListener('change', function(){ chooseAxes(this.value); });
-  if (d.axesOk || done) {
-    setAxFb('<span class="ntfbhead">Good axes.</span> Each block has an axis along its own acceleration, positive in its direction of motion. Then both blocks share the same +<i>a</i>, and the equations can simply be added.', 'good');
-    renderComps();
-  } else if (d.axMsg) setAxFb(d.axMsg.html, d.axMsg.tone);
-  else setAxFb('Tip: for each block, put one axis along its acceleration and make it positive in the direction that block moves.', '');
+    + '<p class="ntinstr">These are your free-body diagrams from Stage 3, on the same axes: <b>' + ax.t + '</b>.</p>'
+    + '<div id="' + id('Area') + '"></div>';
+  renderComps();
   if (TB.allDone(thisq, N)) finalSummary(false);
 }
-function setAxFb(html, tone){ TB.setFb(document.getElementById(id('AxFb')), html, tone); }
 function setFb(html, tone){ TB.setFb(document.getElementById(id('Fb')), html, tone); }
-function chooseAxes(v){
-  var i = S.cur, Sit = TB.SITS[i], d = D(i);
-  d.axes = v;
-  if (v === Sit.axes.correct) {
-    d.axesOk = true; d.axMsg = null; render();
-    TB.announce(thisq, N, 'Good axes. Now choose each force\u2019s component for each block.');
-    var first = document.querySelector('#' + id('Area') + ' select'); if (first) first.focus();
-  } else {
-    var o = Sit.axes.opts.filter(function(x){ return x.id === v; })[0];
-    d.axMsg = { html:'<span class="ntfbhead">Possible, but not the best choice.</span> ' + o.fb, tone:'bad' };
-    setAxFb(d.axMsg.html, 'bad'); TB.announce(thisq, N, 'Possible, but not the best choice. ' + o.fb);
-  }
-}
 function diagramSVG(i, b){
-  var Sit = TB.SITS[i], ax = Sit.axes.bodies[b], O = 150, L = 78, s = '';
-  s += '<g class="ntgridfaint">' + TB.arrow(14, O, 286, O, 'ntaxis', {head:7}) + TB.arrow(O, 286, O, 14, 'ntaxis', {head:7}) + '</g>';
-  ax.dirs.forEach(function(a){
-    var r = a.d*Math.PI/180, ux = Math.cos(r), uy = -Math.sin(r), R = 128;
-    s += TB.arrow(O - ux*R, O - uy*R, O + ux*R, O + uy*R, 'ntaxtilt', {head:10});
-    var lx = Math.max(10, Math.min(286, O + ux*(R+8) - uy*12 - 5)), ly = Math.max(16, Math.min(294, O + uy*(R+8) + ux*12 + 5));
-    s += '<text class="ntaxtiltl" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '">' + a.n + '</text>';
-  });
+  var Sit = TB.SITS[i], ax = Sit.axes.bodies[b], O = 150, L = 84, R = TB.frame(i, b), s = '';
+  s += TB.arrow(10, O, 290, O, 'ntaxis', {head:8}) + TB.arrow(O, 290, O, 10, 'ntaxis', {head:8});
+  s += '<text class="ntaxtiltl" x="278" y="140">x</text><text class="ntaxtiltl" x="158" y="22">y</text>';
   var seen = {};
   TB.bodyForces(i, b).forEach(function(f){
-    var r = f.dir*Math.PI/180, tx = O + L*Math.cos(r), ty = O - L*Math.sin(r), cls = TB.colorClass(f.slot);
-    var nn = seen[f.dir] || 0; seen[f.dir] = nn + 1;
+    var dir = ((f.dir - R) % 360 + 360) % 360, r = dir*Math.PI/180, tx = O + L*Math.cos(r), ty = O - L*Math.sin(r), cls = TB.colorClass(f.slot);
+    var nn = seen[dir] || 0; seen[dir] = nn + 1;
     s += TB.arrow(O, O, tx, ty, cls, {head:11});
     var px = -Math.sin(r), py = -Math.cos(r);
     var lx = Math.max(20, Math.min(278, tx + Math.cos(r)*20 + px*(13 + nn*26))), ly = Math.max(18, Math.min(286, ty - Math.sin(r)*20 + py*(13 + nn*26) + 4));
     s += TB.vecLabel(lx, ly, f.slot, cls);
   });
-  ax.marks.forEach(function(m, j){ s += TB.angleArc(O, O, 36 + j*18, m.a1, m.a2, m.l, 'ntarc'); });
+  ax.marks.forEach(function(m, j){ s += TB.angleArc(O, O, 36 + j*18, m.a1 - R, m.a2 - R, m.l, 'ntarc'); });
   return s + '<circle class="ntorigin" cx="150" cy="150" r="4.5"/>';
 }
 function diagramDesc(i, b){
-  var ax = TB.SITS[i].axes.bodies[b];
-  return 'Block ' + b + ' free-body diagram with chosen axes: ' + ax.dirs.map(function(a){ return a.n + ' axis at ' + a.d + ' degrees'; }).join(', ')
-    + '. Forces: ' + TB.bodyForces(i, b).map(function(f){ return TB.symSpeak(f.slot, true) + ' at ' + f.dir + ' degrees'; }).join(', ') + '.'
-    + (ax.marks.length ? ' Marked angles: ' + ax.marks.map(function(m){ return m.l + ' between ' + m.a1 + ' and ' + (m.a2 % 360) + ' degrees'; }).join('; ') + '.' : '');
+  var ax = TB.SITS[i].axes.bodies[b], R = TB.frame(i, b);
+  function rel(x){ return ((x - R) % 360 + 360) % 360; }
+  return 'Block ' + b + '\u2019s free-body diagram from Stage 3, with its x axis horizontal (+x points ' + ax.xdesc + ') and y vertical. Forces, in degrees from plus x: '
+    + TB.bodyForces(i, b).map(function(f){ return TB.symSpeak(f.slot, true) + ' at ' + rel(f.dir); }).join(', ') + '.'
+    + (ax.marks.length ? ' Marked angles: ' + ax.marks.map(function(m){ return m.l + ' between ' + rel(m.a1) + ' and ' + (rel(m.a2) || 360) + ' degrees'; }).join('; ') + '.' : '');
 }
 function bodyCard(i, b, done){
   var Sit = TB.SITS[i], d = D(i), rows = '';
@@ -118,13 +89,13 @@ function bodyCard(i, b, done){
   });
   return '<div class="tbbody" role="group" aria-labelledby="' + id('BH' + b) + '">'
     + '<div class="tbbodyh" id="' + id('BH' + b) + '"><span class="tbbodytag">' + b + '</span> Block ' + b + '</div>'
-    + '<div class="ntcompgrid"><svg class="ntdiag" viewBox="0 0 300 300" role="img" aria-label="' + TB.esc(diagramDesc(i, b)) + '">' + diagramSVG(i, b) + '</svg>'
-    + '<p class="ntinstr">' + (Sit.comps[b].length === 1 ? 'Every force on block ' + b + ' lies along one line, so one equation carries all the information.' : 'One equation per axis: the components along that axis add up to <i>m</i><sub>' + b + '</sub> times block ' + b + '\u2019s acceleration component.') + ' The dashed axes are the ones you chose; the marked angles tell you which trig function goes with each force.</p></div>'
+    + '<svg class="ntdiag" style="margin:0 auto" viewBox="0 0 300 300" role="img" aria-label="' + TB.esc(diagramDesc(i, b)) + '">' + diagramSVG(i, b) + '</svg>'
+    + '<p class="ntinstr">' + (Sit.comps[b].length === 1 ? 'Every force on block ' + b + ' lies along its x-axis, so one equation carries all the information.' : 'One equation per axis: the components along that axis add up to <i>m</i><sub>' + b + '</sub> times block ' + b + '\u2019s acceleration component.') + ' The marked angles tell you which trig function goes with each force.</p>'
     + '<div class="ntcomprows">' + rows + '</div></div>';
 }
 function renderComps(){
   var i = S.cur, d = D(i), done = sh.sits[i].done[3], area = document.getElementById(id('Area'));
-  area.innerHTML = '<p class="ntinstr" style="margin:8px 0"><b>2. Build the component equations.</b> Use magnitudes, with the sign showing the direction. The string is ideal, so both tensions have the same magnitude <i>F</i><sub>T</sub>, and both blocks share the acceleration magnitude <i>a</i>.</p>'
+  area.innerHTML = '<p class="ntinstr" style="margin:8px 0"><b>Build the component equations.</b> Use magnitudes, with the sign showing the direction. The string is ideal, so both tensions have the same magnitude <i>F</i><sub>T</sub>, and both blocks share the acceleration magnitude <i>a</i>.</p>'
     + '<div class="tbfbdpair">' + bodyCard(i, 1, done) + bodyCard(i, 2, done) + '</div>'
     + '<div class="ntbtnrow" style="margin-top:10px"><button type="button" class="ntbtn ntbtnmain" id="' + id('Check') + '"' + (done ? ' disabled' : '') + '>Check my equations</button>'
     + '<button type="button" class="ntbtn" id="' + id('Reset') + '"' + (done ? ' disabled' : '') + '>Clear</button></div>'
@@ -247,12 +218,12 @@ function finalSummary(fresh){
     TB.announce(thisq, N, 'Tutorial complete. Take a snapshot of the summary and paste it in the answer box.');
   }
 }
-function goTo(i){ S.cur = i; render(); TB.focusHeading(thisq, N); TB.announce(thisq, N, 'Situation ' + (i+1) + ': ' + TB.SITS[i].title + '. First choose the axes.'); }
+function goTo(i){ S.cur = i; render(); TB.focusHeading(thisq, N); TB.announce(thisq, N, 'Situation ' + (i+1) + ': ' + TB.SITS[i].title + '. Build the component equations.'); }
 
 TB.mount(thisq, N, 'tb4Root' + thisq, {
   label:'Two-body tutorial, stage 4: component equations',
-  subtitle:'Choose axes along each block\u2019s motion, then write Newton\u2019s second law along each axis for each block.',
+  subtitle:'Using your free-body diagrams and axes from Stage 3, write Newton\u2019s second law along each axis for each block.',
   render:render, onTab:goTo,
-  onShow:function(){ TB.announce(thisq, N, 'Stage 4 ready. Choose the axes for situation ' + (S.cur+1) + '.'); }
+  onShow:function(){ TB.announce(thisq, N, 'Stage 4 ready. Build the component equations for situation ' + (S.cur+1) + '.'); }
 });
 })();

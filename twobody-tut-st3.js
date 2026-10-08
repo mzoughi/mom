@@ -2,7 +2,8 @@
    TWO-BODY TUTORIAL — STAGE 3: FREE-BODY DIAGRAMS (one per block)
    Each FBD is checked by the sim: labels, forces on the wrong block,
    missing/extra forces and directions (+/-5 deg). Blocks on ramps use
-   tilted axes (x along the motion); angles are measured from that +x.
+   The student first chooses the axes; each FBD is then drawn with that block's
+   chosen axes horizontal/vertical (x along the block's motion). Angles from +x.
    ===================================================================== */
 (function(){
 'use strict';
@@ -29,15 +30,16 @@ function D(i, b){
   if (!S.d[i][b]) S.d[i][b] = { forces:[], sel:-1, verdict:{}, wrong:{} };
   return S.d[i][b];
 }
-function rot(b){ return TB.SITS[S.cur].fbdAxis[b] || 0; }
+function rot(b){ return TB.frame(S.cur, b); }   /* real-world angle of block b's +x; the drawing is rotated by it */
+function axState(i){ if (!S.d[i]) S.d[i] = { msg:null }; if (!S.d[i].ax) S.d[i].ax = { axes:'', ok:false, msg:null }; return S.d[i].ax; }
 function norm(a){ a = Math.round(Number(a)/STEP)*STEP; return ((a % 360) + 360) % 360; }
 function angDiff(a, c){ var d = Math.abs(a - c) % 360; return d > 180 ? 360 - d : d; }
 function dirName(a, b){
   if (rot(b)) {
     var ax = { 0:'along plus x', 90:'along plus y', 180:'along minus x', 270:'along minus y' };
-    if (ax.hasOwnProperty(a)) return ax[a] + ', ' + a + ' degrees from the tilted plus x axis';
+    if (ax.hasOwnProperty(a)) return ax[a] + ', ' + a + ' degrees from the plus x axis';
     var qq = a < 90 ? 'between plus x and plus y' : a < 180 ? 'between plus y and minus x' : a < 270 ? 'between minus x and minus y' : 'between minus y and plus x';
-    return qq + ', ' + a + ' degrees from the tilted plus x axis';
+    return qq + ', ' + a + ' degrees from the plus x axis';
   }
   var nm = {0:'to the right',45:'up and to the right',90:'straight up',135:'up and to the left',180:'to the left',225:'down and to the left',270:'straight down',315:'down and to the right'};
   if (nm.hasOwnProperty(a)) return nm[a] + ', ' + a + ' degrees';
@@ -50,11 +52,12 @@ function speech(f){ return f.key ? TB.symSpeak(f.key, true) + ' (' + TB.LBL[f.ke
 function bodyCard(i, b, done){
   var dis = done ? ' disabled' : '';
   var remind = TB.bodyForces(i, b).map(function(f){ return TB.symH(f.slot, true); }).join(', ');
-  var note = rot(b) ? '<p class="ntfb ntfbinfo">Tilted axes for block ' + b + ': <b>x points along its ramp in its direction of motion</b> and y is perpendicular to the ramp. Measure angles from this tilted +x axis.</p>' : '';
+  var xd = TB.SITS[i].axes.bodies[b].xdesc;
+  var note = rot(b) ? '<p class="ntfb ntfbinfo">Block ' + b + '\u2019s diagram is drawn with its chosen axes horizontal and vertical: <b>+x points ' + xd + '</b>. The picture is rotated, so the real vertical is no longer straight down on this diagram. Measure angles from +x.</p>' : '';
   return '<div class="tbbody" role="group" aria-labelledby="' + id('BH' + b) + '">'
     + '<div class="tbbodyh" id="' + id('BH' + b) + '"><span class="tbbodytag">' + b + '</span> Free-body diagram of block ' + b + '</div>'
     + note + '<p class="ntremind">Forces on block ' + b + ' from Stage 1: ' + remind + '.</p>'
-    + '<svg class="ntfbdsvg" id="' + id('Svg' + b) + '" viewBox="0 0 400 400" tabindex="0" role="img" aria-label="Free-body diagram of block ' + b + (rot(b) ? ', on tilted axes' : '') + '. Use the force controls, or focus here and use the arrow keys. Select Describe to hear the diagram."></svg>'
+    + '<svg class="ntfbdsvg" id="' + id('Svg' + b) + '" viewBox="0 0 400 400" tabindex="0" role="img" aria-label="Free-body diagram of block ' + b + (rot(b) ? ', rotated so its chosen axes are horizontal and vertical' : '') + '. Use the force controls, or focus here and use the arrow keys. Select Describe to hear the diagram."></svg>'
     + '<div class="ntfrows" id="' + id('Rows' + b) + '"></div>'
     + '<div class="ntbtnrow">'
     + '<button type="button" class="ntbtn" data-act="add" data-b="' + b + '"' + dis + '>Add force</button>'
@@ -63,26 +66,55 @@ function bodyCard(i, b, done){
     + '<button type="button" class="ntbtn" data-act="clr" data-b="' + b + '"' + dis + '>Clear</button></div></div>';
 }
 function render(){
-  var i = S.cur, done = sh.sits[i].done[2];
+  var i = S.cur, Sit = TB.SITS[i], done = sh.sits[i].done[2], ax = axState(i), ready = done || ax.ok;
   TB.renderTabsScene(thisq, N, i);
-  var Wk = document.getElementById(id('Work'));
-  Wk.innerHTML = '<h4 class="ntworkh" id="' + id('WorkH') + '" tabindex="-1">Draw a free-body diagram for each block</h4>'
-    + '<p class="ntinstr">Represent each block as the dot at the origin of its own diagram. Add each force, give it its label, and aim it: select a force, then click or drag on the diagram, or type the angle. With a diagram focused, \u2190/\u2192 rotate by 5\u00B0 (Shift: 45\u00B0) and number keys select a force.</p>'
+  var radios = '';
+  Sit.axes.opts.forEach(function(o){
+    var chosen = ready && o.id === Sit.axes.correct;
+    radios += '<label><input type="radio" name="' + id('Ax') + '" value="' + o.id + '"' + (ax.axes === o.id || chosen ? ' checked' : '') + (ready ? ' disabled' : '') + '><span>' + o.t
+      + (chosen ? '<span class="ntaxchosen" aria-hidden="true"> \u2713</span><span class="ntsr"> (your choice, correct)</span>' : '') + '</span></label>';
+  });
+  var html = '<h4 class="ntworkh" id="' + id('WorkH') + '" tabindex="-1">Draw a free-body diagram for each block</h4>'
+    + '<fieldset class="ntaxesset"><legend>1. Choose the most convenient axes</legend>' + radios + '</fieldset>'
+    + '<div class="ntfb" id="' + id('AxFb') + '"></div>';
+  if (ready) html += '<p class="ntinstr"><b>2. Draw each block\u2019s diagram on its axes.</b> Each block is the dot at the origin of its own diagram. Add each force, give it its label, and aim it: select a force, then click or drag on the diagram, or type the angle (degrees from +x). With a diagram focused, \u2190/\u2192 rotate by 5\u00B0 (Shift: 45\u00B0) and number keys select a force.</p>'
     + '<div class="tbfbdpair">' + bodyCard(i, 1, done) + bodyCard(i, 2, done) + '</div>'
     + '<div class="ntbtnrow"><button type="button" class="ntbtn ntbtnmain" id="' + id('Check') + '"' + (done ? ' disabled' : '') + '>Check both diagrams</button></div>'
     + '<div class="ntfb" id="' + id('Fb') + '"></div>';
-  [1,2].forEach(function(b){ buildRows(b); draw(b); bindBody(b); });
+  var Wk = document.getElementById(id('Work'));
+  Wk.innerHTML = html;
+  var rad = Wk.querySelectorAll('input[type=radio]');
+  for (var k=0;k<rad.length;k++) rad[k].addEventListener('change', function(){ chooseAxes(this.value); });
   if (!Wk.getAttribute('data-bound')) { Wk.setAttribute('data-bound', '1'); delegate(Wk); }
-  document.getElementById(id('Check')).addEventListener('click', check);
-  var d = S.d[i];
-  if (done) showSuccess(false);
-  else if (d && d.msg) setFb(d.msg.html, d.msg.tone);
-  else setFb('Draw both diagrams, then select <b>Check both diagrams</b>.', '');
+  if (ready) {
+    setAxFb('<span class="ntfbhead">Good axes.</span> Each block has its x-axis along its own acceleration, positive in its direction of motion, so both blocks share +<i>a</i>. Each diagram below is drawn with that block\u2019s axes horizontal and vertical.', 'good');
+    [1,2].forEach(function(b){ buildRows(b); draw(b); bindBody(b); });
+    document.getElementById(id('Check')).addEventListener('click', check);
+    var d = S.d[i];
+    if (done) showSuccess(false);
+    else if (d && d.msg) setFb(d.msg.html, d.msg.tone);
+    else setFb('Draw both diagrams, then select <b>Check both diagrams</b>.', '');
+  } else if (ax.msg) setAxFb(ax.msg.html, ax.msg.tone);
+  else setAxFb('Before drawing, choose the axes. Tip: for each block, put x along that block\u2019s acceleration, positive in the direction it moves.', '');
   if (TB.allDone(thisq, N)) completeBanner();
+}
+function setAxFb(html, tone){ TB.setFb(document.getElementById(id('AxFb')), html, tone); }
+function chooseAxes(v){
+  var i = S.cur, Sit = TB.SITS[i], ax = axState(i);
+  ax.axes = v;
+  if (v === Sit.axes.correct) {
+    ax.ok = true; ax.msg = null; render();
+    say('Good axes. Now draw both diagrams; each is drawn with that block\u2019s axes horizontal and vertical.');
+    var a = document.querySelector('#' + id('Work') + ' button[data-act="add"]'); if (a) a.focus();
+  } else {
+    var o = Sit.axes.opts.filter(function(x){ return x.id === v; })[0];
+    ax.msg = { html:'<span class="ntfbhead">Possible, but not the best choice.</span> ' + o.fb, tone:'bad' };
+    setAxFb(ax.msg.html, 'bad'); say('Possible, but not the best choice. ' + o.fb);
+  }
 }
 function draw(b){
   var d = D(S.cur, b), svg = document.getElementById(id('Svg' + b)); if (!svg) return;
-  var R = rot(b), s = '<g class="ntgrid"' + (R ? ' transform="rotate(' + (-R) + ' 200 200)"' : '') + '>';
+  var R = 0, s = '<g class="ntgrid"' + (R ? ' transform="rotate(' + (-R) + ' 200 200)"' : '') + '>';
   var lo = R ? -100 : 25, hi = R ? 500 : W;
   for (var v=lo; v<hi; v+=25) s += '<line x1="'+v+'" y1="'+(R?-100:0)+'" x2="'+v+'" y2="'+(R?500:400)+'"/><line x1="'+(R?-100:0)+'" y1="'+v+'" x2="'+(R?500:400)+'" y2="'+v+'"/>';
   s += '</g>';
@@ -129,7 +161,7 @@ function buildRows(b){
       + '<button type="button" class="ntbtn" data-act="sel" data-b="' + b + '" data-k="' + k + '" aria-pressed="' + (k === d.sel ? 'true' : 'false') + '" aria-label="Select ' + lab + '">Force ' + (k+1) + '</button>'
       + '<select data-act="sym" data-b="' + b + '" data-k="' + k + '" aria-label="Label of ' + lab + '"' + dis + '>' + so + '</select>'
       + '<select data-act="dir" data-b="' + b + '" data-k="' + k + '" aria-label="Quick direction of ' + lab + '"' + dis + '>' + dop + '</select>'
-      + '<input type="number" min="0" max="359" step="5" data-act="ang" data-b="' + b + '" data-k="' + k + '" value="' + (f.ang === null ? '' : f.ang) + '" aria-label="Angle of ' + lab + ' in degrees from the ' + (rot(b) ? 'tilted ' : '') + 'plus x axis"' + dis + '><span aria-hidden="true">\u00B0</span>'
+      + '<input type="number" min="0" max="359" step="5" data-act="ang" data-b="' + b + '" data-k="' + k + '" value="' + (f.ang === null ? '' : f.ang) + '" aria-label="Angle of ' + lab + ' in degrees from the plus x axis"' + dis + '><span aria-hidden="true">\u00B0</span>'
       + '<span class="ntstat" aria-hidden="true" style="color:var(' + (v === 'ok' ? '--nt-good' : '--nt-bad') + ')">' + (v === 'ok' ? '\u2713' : v === 'bad' ? '\u2717' : '') + '</span>'
       + (v ? '<span class="ntsr">' + (v === 'ok' ? 'correct' : 'needs fixing') + '</span>' : '')
       + '<button type="button" class="ntbtn" data-act="rm" data-b="' + b + '" data-k="' + k + '" aria-label="Remove ' + lab + '"' + dis + '>\u2715</button></div>';
@@ -195,7 +227,7 @@ function bindBody(b){
   function aim(p){
     var d = D(S.cur, b); if (d.sel < 0 || !d.forces[d.sel]) return;
     var dx = p[0]-OX, dy = OY-p[1]; if (dx*dx + dy*dy < 144) return;
-    var a = norm(Math.atan2(dy, dx)*180/Math.PI - rot(b)), f = d.forces[d.sel];
+    var a = norm(Math.atan2(dy, dx)*180/Math.PI), f = d.forces[d.sel];
     if (f.ang !== a) { f.ang = a; delete d.verdict[d.sel]; refresh(b); }
   }
   svg.addEventListener('pointerdown', function(e){
@@ -203,7 +235,7 @@ function bindBody(b){
     var d = D(S.cur, b), p = pos(e), hit = -1;
     for (var k=d.forces.length-1; k>=0; k--){
       var f = d.forces[k]; if (f.ang === null) continue;
-      var a = (f.ang + rot(b))*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
+      var a = f.ang*Math.PI/180, tx = OX + LEN*Math.cos(a), ty = OY - LEN*Math.sin(a);
       if ((tx-p[0])*(tx-p[0]) + (ty-p[1])*(ty-p[1]) < 324) { hit = k; break; }
     }
     if (hit >= 0) d.sel = hit;
@@ -253,7 +285,7 @@ function checkBody(i, b, issues){
     if (angDiff(f.ang, norm(mine.dir - rot(b))) <= TOL) { verdict[k] = 'ok'; good++; return; }
     verdict[k] = 'bad';
     d.wrong[f.key] = (d.wrong[f.key] || 0) + 1;
-    issues.push(ft + 'points the wrong way. ' + DIR_HINT[L.type] + (d.wrong[f.key] >= 2 ? ' <i>' + mine.tip + '</i>' : ''));
+    issues.push(ft + 'points the wrong way. ' + (rot(b) && L.type === 'grav' ? 'Gravity points toward Earth, but this diagram is rotated, so the real vertical is not along \u2212y. Work out which way \u201Cdown\u201D points relative to this block\u2019s +x.' : DIR_HINT[L.type]) + (d.wrong[f.key] >= 2 ? ' <i>' + mine.tip + '</i>' : ''));
   });
   req.forEach(function(f){ if (!used[f.slot]) issues.push(tag + '<b>missing:</b> ' + TB.symH(f.slot, true) + ' acts on block ' + b + ' but is not on its diagram.'); });
   d.verdict = verdict;
@@ -276,7 +308,7 @@ function check(){
 function showSuccess(say_){
   var i = S.cur, Sit = TB.SITS[i];
   function list(b){
-    return TB.bodyForces(i, b).map(function(f){ return TB.symH(f.slot, true) + ' at ' + norm(f.dir - (Sit.fbdAxis[b] || 0)) + '\u00B0'; }).join(', ') + ((Sit.fbdAxis[b] || 0) ? ' (from the tilted +x)' : '');
+    return TB.bodyForces(i, b).map(function(f){ return TB.symH(f.slot, true) + ' at ' + norm(f.dir - TB.frame(i, b)) + '\u00B0'; }).join(', ') + (TB.frame(i, b) ? ' (from +x on its rotated diagram)' : '');
   }
   setFb('<span class="ntfbhead">Both diagrams are correct.</span><br><b>Block 1:</b> ' + list(1) + '.<br><b>Block 2:</b> ' + list(2) + '.'
     + '<div class="ntwrapnote">Each diagram shows only the forces <b>on</b> that block. Forces between the blocks, or along the string, show up once on each diagram.</div>'
@@ -294,7 +326,7 @@ function goTo(i){ S.cur = i; render(); TB.focusHeading(thisq, N); say('Situation
 
 TB.mount(thisq, N, 'tb3Root' + thisq, {
   label:'Two-body tutorial, stage 3: free-body diagrams',
-  subtitle:'Draw a separate free-body diagram for each block. The simulation checks the labels and directions.',
+  subtitle:'Choose convenient axes, then draw a separate free-body diagram for each block on them. The simulation checks the labels and directions.',
   render:render, onTab:goTo,
   onShow:function(){ say('Stage 3 ready. Draw the free-body diagrams for situation ' + (S.cur+1) + '.'); }
 });
