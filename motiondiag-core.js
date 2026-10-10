@@ -144,7 +144,7 @@ function build(cfg, thisq, host) {
   function $(n) { return document.getElementById(id(n)); }
   var dim = cfg.dim || 1, panels = cfg.panels, opts = cfg.options || [{ label: 'Show', panels: panels.map(function(_, i){ return i; }) }];
   var stepDt = cfg.stepDt || 1, rate = cfg.rate || 1;
-  var S = { t: 0, playing: false, opt: 0, vec: true, table: false, raf: 0, last: null, sig: '' };
+  var S = { t: 0, playing: false, opt: 0, vec: true, table: false, lanes: false, raf: 0, last: null, sig: '' };
 
   cfg.questions.forEach(function(q){
     var qid = cfg.stage + '.' + q.id;
@@ -155,7 +155,10 @@ function build(cfg, thisq, host) {
   var G;
   if (dim === 1) {
     var rng = cfg.range || [-40, 60];
-    G = { VW: 880, VH: 118, ly: 78, x0: rng[0], x1: rng[1] };
+    // With ghost lanes enabled the drawing gets 60 px of extra room on top;
+    // the viewBox is cropped to hide that room while the lanes are off.
+    var top = cfg.lanes ? 60 : 0;
+    G = { VW: 880, VH: 118 + top, ly: 78 + top, top: top, x0: rng[0], x1: rng[1] };
     G.px = function(x){ return 110 + (x - G.x0)*(660/(G.x1 - G.x0)); };
   } else {
     var b = cfg.bounds, m = 36, VW = 480, sc = (VW - 2*m)/(b.x[1] - b.x[0]);
@@ -208,15 +211,24 @@ function build(cfg, thisq, host) {
     var sc = panels[i], gd = ghostDt(sc), tt = Math.min(t, sc.tEnd);
     var n = Math.floor(tt/gd + 1e-6), s = '', j, kj, k = kin(sc, tt);
     if (dim === 1) {
-      var tturn = sc.lift ? turnTime(sc) : Infinity;
-      var yOf = function(time){ return time > tturn + 1e-6 ? G.ly - 18 : G.ly; };
+      // Ghost lanes: ghosts drawn above the axis, images before the turnaround in the
+      // lower lane and images after it in the upper lane. The live object never moves
+      // off the axis; small dots on the axis mark where each ghost image really is.
+      var lanes = cfg.lanes && S.lanes, tturn = turnTime(sc);
+      if (lanes) {
+        s += '<line class="mdlane" x1="' + G.px(G.x0) + '" y1="48" x2="' + G.px(G.x1) + '" y2="48"/>'
+           + '<line class="mdlane" x1="' + G.px(G.x0) + '" y1="22" x2="' + G.px(G.x1) + '" y2="22"/>'
+           + '<text class="mdlanelab" x="4" y="52">before turn</text>'
+           + '<text class="mdlanelab" x="4" y="26">after turn</text>';
+      }
       for (j = 0; j <= n; j++) {
         kj = kin(sc, j*gd);
-        var gy1 = yOf(j*gd);
-        s += '<circle class="mdghost" cx="' + G.px(kj.x).toFixed(1) + '" cy="' + gy1 + '" r="10"/>'
-           + '<circle class="mdgdot" cx="' + G.px(kj.x).toFixed(1) + '" cy="' + gy1 + '" r="1.6"/>';
+        var gx = G.px(kj.x).toFixed(1), gy1 = !lanes ? G.ly : (j*gd > tturn + 1e-6 ? 22 : 48);
+        if (lanes) s += '<circle class="mdfoot" cx="' + gx + '" cy="' + G.ly + '" r="3"/>';
+        s += '<circle class="mdghost" cx="' + gx + '" cy="' + gy1 + '" r="10"/>'
+           + '<circle class="mdgdot" cx="' + gx + '" cy="' + gy1 + '" r="1.6"/>';
       }
-      var X = G.px(k.x), Y = yOf(tt);
+      var X = G.px(k.x), Y = G.ly;
       s += '<circle class="mdlive" cx="' + X.toFixed(1) + '" cy="' + Y + '" r="11"/>';
       if (S.vec) {
         s += arrow(X, Y - 26, X + k.vx*(cfg.vPx || 3), Y - 26, 'mdvv', 'v');
@@ -319,7 +331,9 @@ function build(cfg, thisq, host) {
       if (!on) return;
       $('Dyn' + i).innerHTML = dyn(i, S.t);
       $('Read' + i).innerHTML = readout(i, S.t);
-      $('Svg' + i).setAttribute('aria-label', describe(i, S.t, true));
+      var svg = $('Svg' + i);
+      if (dim === 1 && cfg.lanes) svg.setAttribute('viewBox', S.lanes ? '0 0 880 ' + G.VH : '0 ' + G.top + ' 880 ' + (G.VH - G.top));
+      svg.setAttribute('aria-label', describe(i, S.t, true) + (cfg.lanes && S.lanes ? ' Ghost images are drawn in lanes above the axis: before the turnaround in the lower lane, after it in the upper lane.' : ''));
       sig += Math.floor(Math.min(S.t, sc.tEnd)/ghostDt(sc) + 1e-6) + ',';
     });
     $('Clock').textContent = 't = ' + fmt(S.t) + ' s';
@@ -573,6 +587,7 @@ function build(cfg, thisq, host) {
       + '<button type="button" class="mdbtn" id="' + id('Rst') + '">Reset</button>'
       + '<button type="button" class="mdbtn mdtoggle mda11yon" id="' + id('Vec') + '" aria-pressed="true">Vectors</button>'
       + '<button type="button" class="mdbtn mdtoggle" id="' + id('Tbl') + '" aria-pressed="false" aria-controls="' + id('Table') + '">Data table</button>'
+      + (cfg.lanes ? '<button type="button" class="mdbtn mdtoggle" id="' + id('Lanes') + '" aria-pressed="false">Ghost lanes</button>' : '')
       + '</div></div>'
       + '<div class="mdtable" id="' + id('Table') + '" hidden></div>'
       + '<section class="mdtext">' + cfg.text + '</section>'
@@ -591,6 +606,12 @@ function build(cfg, thisq, host) {
       S.vec = !S.vec; this.setAttribute('aria-pressed', S.vec ? 'true' : 'false');
       this.classList.toggle('mda11yon', S.vec); render();
       announce(S.vec ? 'Velocity and acceleration arrows shown.' : 'Arrows hidden.');
+    });
+    if (cfg.lanes) $('Lanes').addEventListener('click', function(){
+      S.lanes = !S.lanes; this.setAttribute('aria-pressed', S.lanes ? 'true' : 'false');
+      this.classList.toggle('mda11yon', S.lanes); render();
+      announce(S.lanes ? 'Ghost lanes on. Ghost images before the turnaround are in the lower lane above the axis, images after it in the upper lane. The object itself stays on the axis.'
+                       : 'Ghost lanes off. Ghost images are drawn on the axis.');
     });
     $('Tbl').addEventListener('click', function(){
       S.table = !S.table; this.setAttribute('aria-pressed', S.table ? 'true' : 'false');

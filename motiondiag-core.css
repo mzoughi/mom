@@ -101,6 +101,9 @@
 .mdroot svg .mdvc line { stroke:var(--mda); stroke-width:1.8; opacity:.85; }
 .mdroot svg .mdvc polygon, .mdroot svg .mdvc text { fill:var(--mda); opacity:.85; }
 .mdroot svg .mdvect { font-size:14px; font-weight:700; text-anchor:middle; font-style:italic; }
+.mdroot svg .mdlane { stroke:var(--mdline); stroke-width:1; stroke-dasharray:3 4; }
+.mdroot svg .mdlanelab { fill:var(--mdmuted); font-size:12px; }
+.mdroot svg .mdfoot { fill:var(--mdpc); }
 .mdroot.mdhc svg .mdghost { fill-opacity:.35; stroke-opacity:1; }
 
 /* controls */

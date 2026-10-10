@@ -1,13 +1,13 @@
 /* motiondiag-st6.js \u2014 Stage 6: Slowing down, stopping, turning around. Requires motiondiag-core.js */
 (function(){ 'use strict';
 function go(){ window.MotionDiag.mount({
-  stage: 6, title: 'Slowing down, stopping, and turning around', dim: 1, stepDt: 1, ghostDt: 1,
+  stage: 6, title: 'Slowing down, stopping, and turning around', dim: 1, lanes: true, stepDt: 1, ghostDt: 1,
   panels: [
-    { name: 'Object 1', color: 1, type: '1d', x0: -40, v0: 10, a: -2, tEnd: 10, lift: true,
+    { name: 'Object 1', color: 1, type: '1d', x0: -40, v0: 10, a: -2, tEnd: 10,
       desc: 'x\u2080 = \u221240 m, v\u2080 = +10 m/s, a = \u22122.00 m/s\u00b2, runs 10 s' },
-    { name: 'Object 2', color: 2, type: '1d', x0: -40, v0: 20, a: -2, tEnd: 10, lift: true,
+    { name: 'Object 2', color: 2, type: '1d', x0: -40, v0: 20, a: -2, tEnd: 10,
       desc: 'x\u2080 = \u221240 m, v\u2080 = +20 m/s, a = \u22122.00 m/s\u00b2, runs 10 s' },
-    { name: 'Object 3', color: 3, type: '1d', x0: -40, v0: 20, a: -2, tEnd: 14, lift: true,
+    { name: 'Object 3', color: 3, type: '1d', x0: -40, v0: 20, a: -2, tEnd: 14,
       desc: 'same as Object 2, but runs 14 s' }
   ],
   options: [
@@ -18,7 +18,7 @@ function go(){ window.MotionDiag.mount({
   ],
   text:
     '<h4>Zero velocity is not zero acceleration</h4>' +
-    '<p>In some cases an object starts by slowing down, stops for an instant, and then speeds up in the opposite direction. Choose \u201cTurns around\u201d to see this. Images recorded after the turnaround are drawn just above the axis so they do not hide the earlier ones.</p>' +
+    '<p>In some cases an object starts by slowing down, stops for an instant, and then speeds up in the opposite direction. Choose \u201cTurns around\u201d to see this. On the way back the object passes over its earlier positions, so its ghost images overlap. Turn on <b>Ghost lanes</b> to lift the ghost images above the axis: images before the turnaround go in the lower lane and images after it in the upper lane. The object itself stays on the axis, and small dots on the axis still mark where each image was taken.</p>' +
     '<p>Step to the moment the object stops (t = 5 s). Its velocity is zero, but <strong class="mdkey">its acceleration is still \u22122 m/s\u00b2.</strong> The acceleration never switched off; it is what turns the object around. <strong class="mdkey">Zero velocity does not mean zero acceleration.</strong></p>' +
     '<p>If we increase the initial velocity v\u2080 (\u201cSlows to a stop\u201d), the object only just stops at the end of the 10 s. Let the same motion run longer (\u201cGiven more time\u201d) and the object slows to a stop, reverses direction, and speeds up in the negative direction.</p>',
   questions: [
