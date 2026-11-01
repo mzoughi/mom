@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Rotation: Rolling Down an Incline: Roll or Slip?</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of a wheel on an incline in three steps: the forces and the condition for rolling without slipping, the motion and its energy, and a race of shapes.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="riRoot" class="ri_root" role="region" aria-label="Rolling and slipping down an incline">
+<div class="ri_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="ri_a11ybtn" id="riBtnHC" onclick="riSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ri_a11ybtn" id="riBtnLM" onclick="riSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ri_a11ybtn" id="riBtnCB" onclick="riSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ri_a11ybtn ri_a11yon" id="riBtnNR" onclick="riSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="ri_header"><p class="ri_h1">Rolling Down an Incline: Roll or Slip?</p><p class="ri_sub">the forces and the torque &middot; the motion &middot; a race of shapes</p></div>
+<div class="ri_tabs" role="tablist" aria-label="Steps">
+<button type="button" role="tab" class="ri_tab" id="riTab0" aria-selected="true" onclick="riSim.tab(0)">1. The forces: does it slip?</button>
+<button type="button" role="tab" class="ri_tab" id="riTab1" aria-selected="false" onclick="riSim.tab(1)">2. The motion</button>
+<button type="button" role="tab" class="ri_tab" id="riTab2" aria-selected="false" onclick="riSim.tab(2)">3. The race down</button>
+</div>
+<div class="ri_diag"><div class="ri_dlabel"><b id="riTitle">THE WHEEL ON THE INCLINE</b><span id="riHint"></span></div><canvas id="riScene" width="780" height="360" role="img" aria-label="The incline and the wheel, with the forces on it or its motion." aria-describedby="riStatus"></canvas></div>
+<div class="ri_bbar" id="riRun"><button type="button" class="ri_btn ri_btnon" id="riPlay">&#9654; Release</button><button type="button" class="ri_btn" id="riStep">Step &#9656;</button><button type="button" class="ri_btn" id="riReset">Back to the top</button><label>speed <input type="range" id="riSpd" min="0.05" max="1" step="0.05" value="0.5" style="width:110px"> <span id="riSpdV">0.50&times;</span></label></div>
+<div class="ri_status" id="riStatus" role="status" aria-live="polite"></div>
+<div class="ri_diag"><div class="ri_dlabel"><b id="riGTitle">GRAPH</b><span id="riGHint"></span></div><canvas id="riGraph" width="780" height="240" role="img" aria-label="A graph for this step: the friction needed and available against the angle, or the speeds against time."></canvas></div>
+<div class="ri_panels"><div class="ri_panel"><div class="ri_ptitle">Settings</div><div class="ri_pbody" id="riCtl"></div></div>
+<div class="ri_panel"><div class="ri_ptitle">Readout</div><div class="ri_pbody" id="riRead"></div></div></div>
+<div class="ri_eqs" id="riEq"></div>
+<div id="riNar" class="ri_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="ri_descwrap">
+<button type="button" class="ri_descbtn" id="riDescBtn" aria-expanded="false" aria-controls="riDesc" onclick="riSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="ri_desc" id="riDesc" role="region" aria-labelledby="riDescBtn" style="display:none">
+<p><b>The forces.</b> On a wheel on an incline of angle `theta` act its weight (split into `mg sin theta` down the slope and `mg cos theta` into it), the normal force `N = mg cos theta`, and friction `f` at the contact point, up the slope. Gravity acts at the centre, so it exerts no torque about it; only friction does, `tau = f R`. Without friction the wheel would slide down without turning.</p>
+<p><b>Rolling without slipping.</b> For the contact point to stay at rest, the wheel must speed up its spin as fast as it speeds up: `a = alpha R`. With `I = c m R^2`, Newton's laws (`m a = m g sin theta - f`, `I alpha = f R`) give</p>
+<p class="ri_eq">`a = (g sin theta)/(1 + c)` and `f = m g sin theta * c/(1 + c)`.</p>
+<p>That friction is static (the contact point does not move), and static friction can be at most `mu_s N = mu_s m g cos theta`. So the wheel rolls only if `tan theta <= mu_s (1 + c)/c`. Beyond that critical angle it slips: kinetic friction `mu_k m g cos theta` acts, the centre accelerates at `g (sin theta - mu_k cos theta)`, and the spin cannot keep up.</p>
+<p><b>Energy.</b> Rolling without slipping, static friction does no work: the potential energy lost becomes kinetic energy of translation and of rotation, in the ratio 1 to `c`, so `v = sqrt(2 g h/(1 + c))`. Slipping, kinetic friction turns some of it into heat. A frictionless block (no rotation) arrives first; among the rolling shapes, the smaller `c`, the faster.</p>
+</div></div>
+</div><!-- #riRoot -->
+<style>
+#riRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#riRoot * { box-sizing:border-box; }
+#riRoot.ri_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#riRoot.ri_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#riRoot .ri_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#riRoot .ri_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#riRoot .ri_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#riRoot .ri_header { text-align:center; }
+#riRoot .ri_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#riRoot .ri_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#riRoot .ri_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#riRoot .ri_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#riRoot .ri_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#riRoot .ri_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#riRoot .ri_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#riRoot .ri_dlabel b { color:var(--c-accent); }
+#riRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#riRoot .ri_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#riRoot .ri_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#riRoot .ri_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#riRoot .ri_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#riRoot .ri_btn:hover { border-color:var(--c-accent); }
+#riRoot .ri_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#riRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#riRoot .ri_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#riRoot .ri_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#riRoot .ri_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#riRoot .ri_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#riRoot .ri_ctrl { display:flex; flex-direction:column; gap:3px; }
+#riRoot .ri_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#riRoot .ri_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#riRoot .ri_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#riRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#riRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#riRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#riRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#riRoot .ri_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#riRoot .ri_rkey { color:var(--c-dim); }
+#riRoot .ri_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#riRoot .ri_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#riRoot .ri_eqs b { color:var(--c-val); }
+#riRoot .ri_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#riRoot .ri_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#riRoot .ri_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#riRoot .ri_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#riRoot .ri_desc p { margin:0 0 9px; }
+#riRoot .ri_eq { text-align:center; font-size:1rem; }
+#riRoot button:focus-visible, #riRoot input:focus-visible, #riRoot select:focus-visible, #riRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #riRoot .ri_row2, #riRoot .ri_panels { grid-template-columns:minmax(0,1fr); } #riRoot .ri_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #riRoot input[type=range] { height:8px; } #riRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #riRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #riRoot .ri_a11ybtn { min-height:40px; } #riRoot input[type=checkbox] { width:22px; height:22px; } }
+#riRoot .ri_chk { display:flex; gap:6px; align-items:center; font-size:.8rem; color:var(--c-text); }
+#riRoot .ri_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#riRoot .ri_tbl { width:100%; border-collapse:collapse; font-size:.74rem; }
+#riRoot .ri_tbl th, #riRoot .ri_tbl td { padding:3px 5px; border-bottom:1px solid var(--c-bd); text-align:right; color:var(--c-text); }
+#riRoot .ri_tbl th { color:var(--c-dim); font-weight:normal; }
+</style>
+<!-- ════════ SIMULATION ════════
+SI units, g = 9.8. s: distance down the slope; v = ds/dt; omega positive when rolling forward (down); slip u = v - omega R.
+Each step: if not slipping and static friction can supply f = m g sin(theta) c/(1+c) <= mu_s m g cos(theta): rolling, a = g sin/(1+c).
+Otherwise kinetic friction mu_k m g cos(theta) opposes u: a = g sin - sgn(u) mu_k g cos, d omega/dt = sgn(u) mu_k g cos/(c R).
+No dollar signs or backticks in the code.
+-->
+<script>
+var riSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('riRoot'), DPR = window.devicePixelRatio || 1, G = 9.8;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CS = hi('riScene'), CG = hi('riGraph');
+var th = { hc:false, lm:false, cb:false, nr:true }, TAB = 0, play = false, spd = 0.5;
+var SHAPES = [['solid sphere', 0.4], ['solid cylinder', 0.5], ['thin spherical shell', 2/3], ['thin cylindrical shell', 1], ['your own c', 0.8]];
+var P = { th:20, mus:0.3, muk:0.2, m:2, R:0.3, shape:1, cUser:0.8, L:4, comps:true };
+var M = { t:0, s:0, v:0, w:0, ang:0, hist:[], done:false, heat:0 };
+var RC = { t:0, objs:[] };
+function rad(){ return P.th*Math.PI/180; }
+function cOf(i){ return i === 4 ? P.cUser : SHAPES[i][1]; }
+function cP(){ return cOf(P.shape); }
+function need(c){ return Math.sin(rad())*c/(1 + c); }   /* friction needed to roll, in units of mg */
+function avail(){ return P.mus*Math.cos(rad()); }   /* the most static friction can give, in units of mg */
+function rolls(c){ return need(c) <= avail() + 1e-12; }
+function thCrit(c){ return Math.atan(P.mus*(1 + c)/c)*180/Math.PI; }
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.1)', ground:'#a9c79f', tr:'#1f5fd6', rot:'#e07a10', fr:'#c0392b', N:'#12805a', W:'#6d3fb0', wheel:'#f2a33a', wheel2:'#8a4b0f', slip:'#c2185b', ok:'#12805a', bad:'#c0392b', heat:'#c0392b' };
+  if (th.cb){ p.tr = '#0072b2'; p.rot = '#e69f00'; p.fr = '#d55e00'; p.N = '#009e73'; p.W = '#cc79a7'; p.slip = '#cc79a7'; p.ok = '#009e73'; p.bad = '#d55e00'; p.heat = '#d55e00'; }
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.25)'; p.ground = '#334'; p.tr = '#55aaff'; p.rot = '#ffaa00'; p.fr = '#ff5555'; p.N = '#00ff88'; p.W = '#ff66ff'; p.wheel = '#aa7722'; p.slip = '#ff66ff'; }
+  return p; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function arrow(g, x, y, dx, dy, col, w, dash){ var L = Math.hypot(dx, dy); if (L < 2) return; seg(g, x, y, x + dx, y + dy, col, w || 3, dash); var a = Math.atan2(dy, dx), h = 10; g.fillStyle = col; g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx - h*Math.cos(a - 0.4), y + dy - h*Math.sin(a - 0.4)); g.lineTo(x + dx - h*Math.cos(a + 0.4), y + dy - h*Math.sin(a + 0.4)); g.fill(); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('riNar').textContent = m; }
+function rrow(k, v){ return '<div class="ri_rrow"><span class="ri_rkey">' + k + '</span><span class="ri_rval">' + v + '</span></div>'; }
+function wheel(g, cx, cy, r, ang, p, col){ var gr = g.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r); gr.addColorStop(0, '#ffe2a8'); gr.addColorStop(1, col || p.wheel); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, 2*Math.PI); g.fill(); g.strokeStyle = p.wheel2; g.lineWidth = 2; g.stroke();
+  for (var i=0; i<3; i++){ var a = ang + i*Math.PI/3; seg(g, cx - r*Math.cos(a), cy - r*Math.sin(a), cx + r*Math.cos(a), cy + r*Math.sin(a), p.wheel2, 1.5); }
+  g.fillStyle = p.slip; g.beginPath(); g.arc(cx + r*0.8*Math.cos(ang - Math.PI/2), cy + r*0.8*Math.sin(ang - Math.PI/2), Math.max(3, r*0.09), 0, 2*Math.PI); g.fill(); }
+/* the slope runs down to the right: direction along it (ux, uy), outward normal (nx, ny), in screen coordinates */
+function dirs(){ var a = rad(); return { ux:Math.cos(a), uy:Math.sin(a), nx:Math.sin(a), ny:-Math.cos(a) }; }
+/* ══════════ TAB 1: the forces, and does it slip? ══════════ */
+function draw1(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), d = dirs(), c = cP(), Rp = 70, cx = 250, cy = 150, cp = { x:cx - Rp*d.nx, y:cy - Rp*d.ny }, k = 70;   /* the wheel at a fixed spot; the incline drawn through its contact point */
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  var tA = -1000, tB = 1000, A = { x:cp.x + tA*d.ux, y:cp.y + tA*d.uy }, B = { x:cp.x + tB*d.ux, y:cp.y + tB*d.uy };
+  g.fillStyle = p.ground; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.lineTo(B.x, H + 2000); g.lineTo(A.x, H + 2000); g.closePath(); g.fill(); seg(g, A.x, A.y, B.x, B.y, p.text, 2);
+  var yb = H - 22; if (d.uy > 0.02){ var xb = cp.x + (yb - cp.y)/d.uy*d.ux; if (xb < W - 20){ seg(g, xb - 120, yb, Math.min(W, xb + 10), yb, p.text, 1, [4, 3]); g.strokeStyle = p.text; g.lineWidth = 1; g.beginPath(); g.arc(xb, yb, 46, Math.PI, Math.PI + rad()); g.stroke(); Tx(g, '\u03B8 = ' + f2(P.th, 0) + '\u00B0', xb - 54, yb - 12, p.text, 'right', 'bold 12px Arial'); } else Tx(g, '\u03B8 = ' + f2(P.th, 0) + '\u00B0', W - 12, yb, p.text, 'right', 'bold 12px Arial'); }
+  else Tx(g, '\u03B8 = 0\u00B0: level ground', W - 12, yb, p.text, 'right', 'bold 12px Arial');
+  wheel(g, cx, cy, Rp, 0.3, p);
+  var r = rolls(c), fN = r ? need(c) : P.muk*Math.cos(rad()), sn = Math.sin(rad()), cs = Math.cos(rad());
+  /* the weight, and its two parts */
+  arrow(g, cx, cy, 0, k*1.3, p.W, 3.5); Tx(g, 'mg', cx + 6, cy + k*1.3 - 4, p.W, 'left', 'bold 12px Arial');
+  if (P.comps){ arrow(g, cx, cy, d.ux*k*1.3*sn, d.uy*k*1.3*sn, p.W, 2, [5, 3]); Tx(g, 'mg sin\u03B8', cx + d.ux*k*1.3*sn + 6, cy + d.uy*k*1.3*sn + 10, p.W, 'left', '11px Arial');
+    arrow(g, cx, cy, -d.nx*k*1.3*cs, -d.ny*k*1.3*cs, p.W, 2, [5, 3]); Tx(g, 'mg cos\u03B8', cx - d.nx*k*1.3*cs - 8, cy - d.ny*k*1.3*cs + 4, p.W, 'right', '11px Arial'); }
+  /* the normal force, at the contact point; friction, up the slope */
+  arrow(g, cp.x + d.ux*14, cp.y + d.uy*14, d.nx*k*1.3*cs, d.ny*k*1.3*cs, p.N, 3.5); Tx(g, 'N', cp.x + d.ux*14 + d.nx*k*1.3*cs + 6, cp.y + d.uy*14 + d.ny*k*1.3*cs, p.N, 'left', 'bold 12px Arial');
+  if (fN > 1e-4){ var fl = Math.max(14, fN*k*1.3*1.8); arrow(g, cp.x, cp.y, -d.ux*fl, -d.uy*fl, p.fr, 4); Tx(g, (r ? 'static' : 'kinetic') + ' friction', cp.x - d.ux*fl - 8, cp.y - d.uy*fl + 14, p.fr, 'right', 'bold 12px Arial');
+    g.strokeStyle = p.fr; g.lineWidth = 2.5; var r2 = Rp*0.55; g.beginPath(); g.arc(cx, cy, r2, -2.5, -0.7); g.stroke(); var ea = -0.7, ex = cx + r2*Math.cos(ea), ey = cy + r2*Math.sin(ea); g.fillStyle = p.fr; g.beginPath(); g.moveTo(ex + 6, ey + 6); g.lineTo(ex - 6, ey + 4); g.lineTo(ex + 2, ey - 6); g.fill();
+    Tx(g, 'torque fR', cx, cy - Rp - 12, p.fr, 'center', 'bold 12px Arial'); }
+  else Tx(g, 'no friction: no torque, the wheel slides without turning', cx, cy - Rp - 12, p.fr, 'center', 'bold 12px Arial');
+  /* the two bars: friction needed to roll, and the most static friction can give */
+  var bx = W - 250, by = 40, bw = 220, mx = Math.max(need(c), avail(), 0.05)*1.15;
+  Tx(g, 'friction needed to roll', bx, by, p.text, 'left', 'bold 11px Arial'); g.fillStyle = r ? p.ok : p.bad; g.fillRect(bx, by + 8, bw*need(c)/mx, 14); Tx(g, f2(need(c)*P.m*G, 2) + ' N', bx + bw*need(c)/mx + 4, by + 15, p.text, 'left', '10px Arial');
+  Tx(g, 'most static friction can give (\u03BC\u209BN)', bx, by + 40, p.text, 'left', 'bold 11px Arial'); g.fillStyle = p.N; g.fillRect(bx, by + 48, bw*avail()/mx, 14); Tx(g, f2(avail()*P.m*G, 2) + ' N', bx + bw*avail()/mx + 4, by + 55, p.text, 'left', '10px Arial');
+  Tx(g, r ? '\u2713 it rolls without slipping' : '\u2717 not enough: it slips', bx, by + 82, r ? p.ok : p.bad, 'left', 'bold 13px Arial');
+  el('riHint').textContent = 'the forces on the wheel (arrows not to scale between kinds)';
+}
+function graph1(){ /* friction needed and available against the angle (in units of mg) */
+  var g = CG.g, W = CG.W, H = CG.H, p = pal(), c = cP(), X0 = 50, X1 = W - 14, Y0 = H - 30, Y1 = 14, ymax = Math.max(0.5, P.mus*1.1);
+  function X(a){ return X0 + a/90*(X1 - X0); } function Y(v){ return Y0 - Math.min(v, ymax)/ymax*(Y0 - Y1); }
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); seg(g, X0, Y0, X1, Y0, p.text, 1); seg(g, X0, Y0, X0, Y1, p.text, 1);
+  for (var a=0; a<=90; a+=10){ seg(g, X(a), Y0, X(a), Y1, p.grid, 1); Tx(g, a + '\u00B0', X(a), Y0 + 12, p.dim, 'center', '10px Arial'); }
+  for (var v=0; v<=ymax + 1e-9; v+=ymax > 0.6 ? 0.2 : 0.1){ seg(g, X0, Y(v), X1, Y(v), p.grid, 1); Tx(g, f2(v, 1), X0 - 5, Y(v), p.dim, 'right', '10px Arial'); }
+  function curve(fn, col, w, dash){ g.strokeStyle = col; g.lineWidth = w; g.setLineDash(dash || []); g.beginPath(); for (var i=0; i<=180; i++){ var a = i/2, y = fn(a*Math.PI/180); if (i) g.lineTo(X(a), Y(y)); else g.moveTo(X(a), Y(y)); } g.stroke(); g.setLineDash([]); }
+  curve(function(t){ return Math.sin(t)*c/(1 + c); }, p.fr, 2.5); curve(function(t){ return P.mus*Math.cos(t); }, p.N, 2.5); curve(function(t){ return P.muk*Math.cos(t); }, p.N, 1.5, [5, 4]);
+  var tc = thCrit(c); seg(g, X(tc), Y0, X(tc), Y1, p.bad, 1.5, [4, 3]); Tx(g, 'critical angle ' + f2(tc, 1) + '\u00B0', X(tc) + 4, Y1 + 8, p.bad, 'left', 'bold 11px Arial');
+  g.fillStyle = 'rgba(18,128,90,0.08)'; g.fillRect(X0, Y1, X(tc) - X0, Y0 - Y1); Tx(g, 'rolls', (X0 + X(tc))/2, Y0 - 12, p.ok, 'center', 'bold 12px Arial'); Tx(g, 'slips', (X(tc) + X1)/2, Y0 - 12, p.bad, 'center', 'bold 12px Arial');
+  seg(g, X(P.th), Y0, X(P.th), Y1, p.text, 2); Tx(g, 'needed: mg sin\u03B8\u00B7c/(1+c)', X1 - 4, Y1 + 8, p.fr, 'right', 'bold 11px Arial'); Tx(g, 'available: \u03BC\u209Bmg cos\u03B8 (dashed: \u03BC\u2096mg cos\u03B8)', X1 - 4, Y1 + 24, p.N, 'right', 'bold 11px Arial');
+  Tx(g, 'angle of the incline', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial'); g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'friction / mg', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+}
+function info1(){ var c = cP(), r = rolls(c), sn = Math.sin(rad()), cs = Math.cos(rad()), a = r ? G*sn/(1 + c) : G*(sn - P.muk*cs), al = r ? a/P.R : P.muk*G*cs/(c*P.R);
+  el('riRead').innerHTML = rrow('shape', SHAPES[P.shape][0] + ', I = ' + f2(c, 3) + ' mR\u00B2') + rrow('friction needed to roll', f2(need(c)*P.m*G, 2) + ' N') + rrow('most static friction can give \u03BC\u209BN', f2(avail()*P.m*G, 2) + ' N') + rrow('critical angle: tan\u03B8 = \u03BC\u209B(1 + c)/c', f2(thCrit(c), 1) + '\u00B0')
+    + rrow('it', r ? 'rolls without slipping' : 'slips (kinetic friction ' + f2(P.muk*P.m*G*cs, 2) + ' N)') + rrow('acceleration of the centre', f2(a, 3) + ' m/s\u00B2' + (r ? ' = g sin\u03B8/(1 + c)' : ' = g(sin\u03B8 \u2212 \u03BC\u2096cos\u03B8)')) + rrow('angular acceleration', f2(al, 2) + ' rad/s\u00B2');
+  el('riEq').innerHTML = 'Only friction exerts a torque about the centre. To roll, <b>a = \u03B1R</b>; with ma = mg sin\u03B8 \u2212 f and I\u03B1 = fR: <b>a = g sin\u03B8/(1 + c)</b>, needing <b>f = mg sin\u03B8\u00B7c/(1 + c)</b>. Static friction can give at most <b>\u03BC\u209Bmg cos\u03B8</b>: it rolls while <b>tan\u03B8 \u2264 \u03BC\u209B(1 + c)/c</b>.';
+  el('riStatus').innerHTML = r ? '<b style="color:' + pal().ok + '">Rolls without slipping:</b> the friction needed (' + f2(need(c)*P.m*G, 2) + ' N) is within what static friction can give (' + f2(avail()*P.m*G, 2) + ' N). Steeper than ' + f2(thCrit(c), 1) + '\u00B0, it would slip.' : '<b style="color:' + pal().bad + '">Slips:</b> rolling would need ' + f2(need(c)*P.m*G, 2) + ' N of friction, but static friction can give only ' + f2(avail()*P.m*G, 2) + ' N. Kinetic friction acts instead; the spin cannot keep up with the speed.'; }
+/* ══════════ TAB 2: the motion ══════════ */
+function reset2(){ M.t = 0; M.s = 0; M.v = 0; M.w = 0; M.ang = 0; M.hist = [[0, 0, 0]]; M.done = false; M.heat = 0; M.atEnd = false; M.state = rolls(cP()) ? 'roll' : 'slip'; }
+function stepObj(o, c, dt){ /* one object down the slope: rolling if static friction can hold it, otherwise kinetic friction */
+  var sn = Math.sin(rad()), cs = Math.cos(rad()), h = 0.001;
+  while (dt > 1e-12 && !o.atEnd){ var d = Math.min(h, dt); dt -= d; var u = o.v - o.w*P.R, s0 = o.s, v0 = o.v, w0 = o.w, t0 = o.t, q0 = o.heat, a0 = o.ang;
+    if (c === 0){ o.v += G*sn*d; o.s += o.v*d; o.t += d; endCheck(o, s0, v0, w0, t0, q0, a0); continue; }   /* the frictionless block */
+    if (Math.abs(u) < 1e-9 && rolls(c)){ var a = G*sn/(1 + c); o.v += a*d; o.w = o.v/P.R; o.state = 'roll'; }
+    else { var sg = Math.abs(u) < 1e-9 ? 1 : Math.sign(u), a2 = G*(sn - sg*P.muk*cs), al = sg*P.muk*G*cs/(c*P.R), u2 = (o.v + a2*d) - (o.w + al*d)*P.R;
+      if (Math.abs(u) > 1e-9 && u*u2 < 0 && rolls(c)){ var fr = u/(u - u2); o.v += a2*d*fr; o.w = o.v/P.R; o.state = 'roll'; o.heat += P.muk*P.m*G*cs*Math.abs(u)*d*fr/2; }
+      else { o.heat += P.muk*P.m*G*cs*Math.abs(u)*d; o.v += a2*d; o.w += al*d; o.state = 'slip'; } }
+    o.s += o.v*d; o.ang += o.w*d; o.t += d; endCheck(o, s0, v0, w0, t0, q0, a0); } }
+function endCheck(o, s0, v0, w0, t0, q0, a0){ /* stop exactly at the bottom: interpolate within the last step */
+  if (o.s < P.L) return; var fr = (P.L - s0)/(o.s - s0); o.t = t0 + (o.t - t0)*fr; o.v = v0 + (o.v - v0)*fr; o.w = w0 + (o.w - w0)*fr; o.heat = q0 + (o.heat - q0)*fr; o.ang = a0 + (o.ang - a0)*fr; o.s = P.L; o.atEnd = true; }
+function step2(dt){ if (M.done) return; stepObj(M, cP(), dt); var last = M.hist[M.hist.length - 1]; if (M.t - last[0] > 0.01) M.hist.push([M.t, M.v, M.w*P.R]);
+  if (M.atEnd){ M.done = true; play = false; el('riPlay').innerHTML = '\u25B6 Release'; var en = energies(); narrate('At the bottom after ' + f2(M.t, 2) + ' s, at ' + f2(M.v, 2) + ' m/s. Of the ' + f2(en.pe, 1) + ' J of potential energy: ' + f2(en.kt, 1) + ' J in translation, ' + f2(en.kr, 1) + ' J in rotation' + (en.q > 0.05 ? ', and ' + f2(en.q, 1) + ' J turned into heat by kinetic friction (it slipped).' : ', and no heat: static friction does no work.')); } }
+function energies(){ var c = cP(), h = Math.min(M.s, P.L)*Math.sin(rad()), I = c*P.m*P.R*P.R; return { pe:P.m*G*h, kt:0.5*P.m*M.v*M.v, kr:0.5*I*M.w*M.w, q:M.heat }; }
+function draw2(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), d = dirs(), c = cP(), top = { x:50, y:40 }, Lp = Math.min((W - 110)/Math.max(0.2, d.ux), (H - 60)/Math.max(0.2, d.uy)), sc = Lp/P.L, Rp = Math.max(12, P.R*sc), bot = { x:top.x + Lp*d.ux, y:top.y + Lp*d.uy };
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H); g.fillStyle = p.ground; g.beginPath(); g.moveTo(top.x, top.y); g.lineTo(bot.x, bot.y); g.lineTo(bot.x, H); g.lineTo(top.x, H); g.closePath(); g.fill(); seg(g, top.x, top.y, bot.x, bot.y, p.text, 2);
+  for (var m=0; m<=P.L; m+=1){ var mx = top.x + m*sc*d.ux, my = top.y + m*sc*d.uy; seg(g, mx, my, mx - d.nx*8, my - d.ny*8, p.text, 1); Tx(g, m + ' m', mx - d.nx*18, my - d.ny*18, p.dim, 'center', '10px Arial'); }
+  var s = Math.min(M.s, P.L), cp = { x:top.x + s*sc*d.ux, y:top.y + s*sc*d.uy }, cx = cp.x + Rp*d.nx, cy = cp.y + Rp*d.ny;
+  wheel(g, cx, cy, Rp, M.ang, p);
+  var u = M.v - M.w*P.R, kv = 10; arrow(g, cx, cy, d.ux*M.v*kv, d.uy*M.v*kv, p.tr, 2.5); Tx(g, 'v = ' + f2(M.v, 2) + ' m/s', cx + d.ux*M.v*kv + 6, cy + d.uy*M.v*kv - 8, p.tr, 'left', 'bold 11px Arial');
+  if (Math.abs(u) > 0.005) { arrow(g, cp.x, cp.y, d.ux*u*kv, d.uy*u*kv, p.slip, 2.5); Tx(g, 'contact point slips ' + f2(u, 2) + ' m/s', cp.x + d.ux*u*kv + 6, cp.y + d.uy*u*kv + 12, p.slip, 'left', 'bold 11px Arial'); }
+  else Tx(g, 'contact point at rest', cp.x + 8, cp.y + 16, p.ok, 'left', 'bold 11px Arial');
+  /* energy bars */
+  var en = energies(), bx = W - 230, by = H - 120, bw = 200, tot = Math.max(en.pe, 1e-9);
+  Tx(g, 'potential energy lost: ' + f2(en.pe, 1) + ' J', bx, by, p.text, 'left', 'bold 11px Arial');
+  [['translation', en.kt, p.tr], ['rotation', en.kr, p.rot], ['heat', en.q, p.heat]].forEach(function(q, i){ var y = by + 16 + i*22; g.fillStyle = q[2]; g.fillRect(bx, y, bw*Math.min(1, q[1]/tot), 14); Tx(g, q[0] + ': ' + f2(q[1], 1) + ' J', bx + 4, y + 7 + 14, q[2], 'left', '10px Arial'); });
+  el('riHint').textContent = 't = ' + f2(M.t, 2) + ' s \u00B7 ' + (M.state === 'roll' ? 'rolling' : 'slipping') + (M.done ? ' \u00B7 at the bottom' : '');
+}
+function graph2(){ var g = CG.g, W = CG.W, H = CG.H, p = pal(), c = cP(), X0 = 50, X1 = W - 14, Y0 = H - 30, Y1 = 14, sn = Math.sin(rad()), cs = Math.cos(rad()),
+    a = rolls(c) ? G*sn/(1 + c) : G*(sn - P.muk*cs), tB = Math.sqrt(2*P.L/Math.max(0.01, a)), tmax = Math.max(0.5, tB*1.05), vmax = Math.max(1, Math.sqrt(2*G*P.L*sn))*1.1;
+  function X(t){ return X0 + t/tmax*(X1 - X0); } function Y(v){ return Y0 - v/vmax*(Y0 - Y1); }
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); seg(g, X0, Y0, X1, Y0, p.text, 1); seg(g, X0, Y0, X0, Y1, p.text, 1);
+  for (var t=0; t<=tmax; t+=tmax > 4 ? 1 : 0.25){ seg(g, X(t), Y0, X(t), Y1, p.grid, 1); Tx(g, f2(t, tmax > 4 ? 0 : 2), X(t), Y0 + 12, p.dim, 'center', '10px Arial'); }
+  for (var v=0; v<=vmax; v+=vmax > 6 ? 2 : 1){ seg(g, X0, Y(v), X1, Y(v), p.grid, 1); Tx(g, String(v), X0 - 5, Y(v), p.dim, 'right', '10px Arial'); }
+  [[1, p.tr, 'v (centre)'], [2, p.rot, '\u03C9R (rim)'], [3, p.slip, 'slip v \u2212 \u03C9R']].forEach(function(q, k){ g.strokeStyle = q[1]; g.lineWidth = 2.4; g.beginPath(); M.hist.forEach(function(h, i){ var val = q[0] === 3 ? h[1] - h[2] : h[q[0]]; if (i) g.lineTo(X(h[0]), Y(val)); else g.moveTo(X(h[0]), Y(val)); }); g.stroke(); Tx(g, q[2], X0 + 10, Y1 + 8 + k*16, q[1], 'left', 'bold 11px Arial'); });
+  Tx(g, 'time (s)', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial'); g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'speed (m/s)', 0, 0, p.text, 'center', '11px Arial'); g.restore(); }
+function info2(){ var c = cP(), r = rolls(c), en = energies(), sn = Math.sin(rad()), cs = Math.cos(rad());
+  el('riRead').innerHTML = rrow('state', M.state === 'roll' ? 'rolling without slipping' : 'slipping') + rrow('acceleration', f2(r ? G*sn/(1 + c) : G*(sn - P.muk*cs), 3) + ' m/s\u00B2') + rrow('speed v, rim speed \u03C9R', f2(M.v, 2) + ' m/s, ' + f2(M.w*P.R, 2) + ' m/s') + rrow('distance down the slope', f2(Math.min(M.s, P.L), 2) + ' of ' + f2(P.L, 1) + ' m')
+    + rrow('energy: translation, rotation, heat', f2(en.kt, 1) + ', ' + f2(en.kr, 1) + ', ' + f2(en.q, 1) + ' J of ' + f2(en.pe, 1) + ' J') + rrow('rolling: speed at the bottom \u221A(2gh/(1+c))', f2(Math.sqrt(2*G*P.L*sn/(1 + c)), 2) + ' m/s');
+  el('riEq').innerHTML = r ? 'Rolling: the contact point stays at rest, static friction does <b>no work</b>, and the lost potential energy goes into translation and rotation in the ratio <b>1 : c</b>.' : 'Slipping: the contact point slides, so kinetic friction does work against the motion: part of the potential energy becomes <b>heat</b>. The spin grows more slowly than the speed.';
+  el('riStatus').innerHTML = M.t === 0 ? 'Press Release: the wheel starts from rest, ' + (r ? 'and will roll without slipping.' : 'and will slip: the incline is steeper than the critical angle (' + f2(thCrit(c), 1) + '\u00B0).') : (M.state === 'roll' ? '<b style="color:' + pal().ok + '">Rolling:</b> v = \u03C9R, the contact point at rest.' : '<b style="color:' + pal().bad + '">Slipping:</b> v > \u03C9R; the slip grows at ' + f2(G*(sn - P.muk*cs*(1 + 1/c)), 2) + ' m/s\u00B2.'); }
+/* ══════════ TAB 3: the race down ══════════ */
+var LCOL = ['#1f5fd6', '#c0392b', '#c47f17', '#12805a', '#7d3cc8', '#555'];
+function reset3(){ RC.t = 0; RC.objs = SHAPES.map(function(s, i){ return { i:i, c:cOf(i), t:0, s:0, v:0, w:0, ang:0, heat:0, state:'roll', tEnd:null }; }); RC.objs.push({ i:5, c:0, t:0, s:0, v:0, w:0, ang:0, heat:0, state:'slide', tEnd:null, block:true }); }
+function step3(dt){ RC.t += dt; RC.objs.forEach(function(o){ if (o.tEnd !== null) return; stepObj(o, o.c, dt); if (o.atEnd){ o.tEnd = o.t; } }); if (RC.objs.every(function(o){ return o.tEnd !== null; })){ play = false; el('riPlay').innerHTML = '\u25B6 Release'; } }
+function draw3(){ var g = CS.g, W = CS.W, H = CS.H, p = pal(), n = RC.objs.length, lh = (H - 30)/n, x0 = 120, sc = (W - x0 - 40)/P.L;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  RC.objs.forEach(function(o, k){ var gy = 14 + (k + 1)*lh - 6, cx = x0 + Math.min(o.s, P.L)*sc, Rp = Math.min(lh*0.36, 16);
+    g.fillStyle = p.ground; g.fillRect(x0 - 10, gy, W - x0 - 20, 4); seg(g, x0 + P.L*sc, gy - lh + 12, x0 + P.L*sc, gy + 4, p.text, 1.5, [3, 3]);
+    if (o.block){ g.fillStyle = LCOL[5]; g.fillRect(cx - Rp, gy - 2*Rp, 2*Rp, 2*Rp); } else { var pp = pal(); pp.wheel2 = '#333'; wheel(g, cx, gy - Rp, Rp, o.ang, pp, LCOL[k]); }
+    Tx(g, o.block ? 'frictionless block' : SHAPES[k][0], 6, gy - Rp, LCOL[k], 'left', 'bold 11px Arial');
+    Tx(g, o.tEnd !== null ? f2(o.tEnd, 2) + ' s' : (o.block ? 'sliding' : o.state === 'roll' ? 'rolling' : 'slipping'), W - 14, gy - Rp, o.state === 'slip' ? p.bad : p.text, 'right', '11px Arial'); });
+  Tx(g, 'distance down the incline (top \u2192 bottom), \u03B8 = ' + f2(P.th, 0) + '\u00B0', x0, H - 8, p.dim, 'left', '10px Arial'); el('riHint').textContent = 't = ' + f2(RC.t, 2) + ' s'; }
+function graph3(){ var g = CG.g, W = CG.W, H = CG.H, p = pal(), X0 = 50, X1 = W - 14, Y0 = H - 30, Y1 = 14, sn = Math.sin(rad()), tmax = Math.max(0.5, Math.sqrt(2*P.L*2/(G*Math.max(0.02, sn)))), vmax = Math.max(1, Math.sqrt(2*G*P.L*sn))*1.1;
+  /* the speeds at the bottom: bars */
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); var bw = (X1 - X0)/RC.objs.length;
+  RC.objs.forEach(function(o, k){ var r = o.block ? 1 : rolls(o.c), c = o.c, vb = o.block ? Math.sqrt(2*G*P.L*sn) : (r ? Math.sqrt(2*G*P.L*sn/(1 + c)) : null), h = vb !== null ? vb/vmax*(Y0 - Y1) : 0, x = X0 + k*bw + 10;
+    if (vb !== null){ g.fillStyle = LCOL[k]; g.fillRect(x, Y0 - h, bw - 20, h); Tx(g, f2(vb, 2) + ' m/s', x + (bw - 20)/2, Y0 - h - 8, p.text, 'center', '11px Arial'); }
+    else if (o.tEnd !== null){ g.fillStyle = LCOL[k]; g.globalAlpha = 0.5; var hv = o.v/vmax*(Y0 - Y1); g.fillRect(x, Y0 - hv, bw - 20, hv); g.globalAlpha = 1; Tx(g, f2(o.v, 2) + ' m/s (slipped)', x + (bw - 20)/2, Y0 - hv - 8, p.bad, 'center', '11px Arial'); }
+    else Tx(g, 'slips: run it', x + (bw - 20)/2, Y0 - 20, p.bad, 'center', '11px Arial');
+    Tx(g, o.block ? 'block' : SHAPES[k][0].replace('thin ', ''), x + (bw - 20)/2, Y0 + 12, LCOL[k], 'center', 'bold 10px Arial'); });
+  seg(g, X0, Y0, X1, Y0, p.text, 1); Tx(g, 'speed at the bottom', X0, Y1, p.text, 'left', 'bold 11px Arial'); }
+function info3(){ var sn = Math.sin(rad()), cs = Math.cos(rad()), h = P.L*sn;
+  el('riRead').innerHTML = '<table class="ri_tbl"><thead><tr><th>object</th><th>c</th><th>rolls or slips</th><th>acceleration</th><th>time to the bottom</th><th>energy: translation / rotation / heat</th></tr></thead><tbody>' + RC.objs.map(function(o, k){
+      var c = o.c, r = o.block || rolls(c), a = o.block ? G*sn : r ? G*sn/(1 + c) : G*(sn - P.muk*cs), t = Math.sqrt(2*P.L/a), split = o.block ? '100 / 0 / 0 %' : r ? f2(100/(1 + c), 0) + ' / ' + f2(100*c/(1 + c), 0) + ' / 0 %' : (o.tEnd !== null ? f2(100*0.5*P.m*o.v*o.v/(P.m*G*h), 0) + ' / ' + f2(100*0.5*c*P.m*Math.pow(o.w*P.R, 2)/(P.m*G*h), 0) + ' / ' + f2(100*o.heat/(P.m*G*h), 0) + ' %' : 'run it');
+      return '<tr><td style="color:' + LCOL[k] + ';font-weight:bold;text-align:left">' + (o.block ? 'frictionless block' : SHAPES[k][0]) + '</td><td>' + (o.block ? '\u2014' : f2(c, 3)) + '</td><td>' + (o.block ? 'slides' : r ? 'rolls' : '<b style="color:' + pal().bad + '">slips</b>') + '</td><td>' + f2(a, 2) + ' m/s\u00B2</td><td>' + f2(t, 2) + ' s</td><td>' + split + '</td></tr>'; }).join('') + '</tbody></table>';
+  el('riEq').innerHTML = 'Rolling: <b>a = g sin\u03B8/(1 + c)</b>, the same for every object of a given shape, whatever its mass or size. The more of the mass is far from the axis (larger c), the more of the energy goes into rotation, and the slower it goes down. Steeper than tan\u03B8 = \u03BC\u209B(1 + c)/c, a shape slips: the large-c shapes slip first.';
+  var nsl = RC.objs.filter(function(o){ return !o.block && !rolls(o.c); }).length; el('riStatus').innerHTML = nsl ? '<b style="color:' + pal().bad + '">' + nsl + ' of the 5 shapes slip</b> at ' + f2(P.th, 0) + '\u00B0 with \u03BC\u209B = ' + f2(P.mus, 2) + ': those with most of their mass far from the axis.' : 'At ' + f2(P.th, 0) + '\u00B0 every shape rolls without slipping. Predict the order, then release them.'; }
+/* ══════════ controls ══════════ */
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function row(id, label, min, max, step, val, txt){ return '<div class="ri_ctrl"><div class="ri_ctrlhdr"><label class="ri_ctrlname" for="' + id + '">' + label + '</label><span class="ri_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function build(){
+  var h = row('riTh', 'angle of the incline \u03B8', 0, 80, 0.5, P.th, f2(P.th, 1) + '\u00B0') + row('riMs', 'static friction \u03BC\u209B', 0, 1.2, 0.01, P.mus, f2(P.mus, 2)) + row('riMk', 'kinetic friction \u03BC\u2096 (at most \u03BC\u209B)', 0, 1.2, 0.01, P.muk, f2(P.muk, 2));
+  if (TAB < 2) h += '<div class="ri_ctrl"><label class="ri_ctrlname" for="riSh">shape</label> <select id="riSh">' + SHAPES.map(function(s, i){ return '<option value="' + i + '"' + (i === P.shape ? ' selected' : '') + '>' + s[0] + (i < 4 ? ' (c = ' + f2(s[1], 3) + ')' : '') + '</option>'; }).join('') + '</select></div>';
+  h += row('riCu', 'your own c (I = c\u00B7mR\u00B2)', 0.05, 1.5, 0.01, P.cUser, f2(P.cUser, 2));
+  if (TAB === 0) h += '<label class="ri_chk"><input type="checkbox" id="riComp"' + (P.comps ? ' checked' : '') + '> show the two parts of the weight</label>';
+  else h += row('riM', 'mass m', 0.2, 10, 0.1, P.m, f2(P.m, 1) + ' kg') + row('riR', 'radius R', 0.05, 0.6, 0.01, P.R, f2(P.R, 2) + ' m') + row('riL', 'length of the incline', 1, 10, 0.5, P.L, f2(P.L, 1) + ' m');
+  el('riCtl').innerHTML = h; el('riRun').style.display = TAB === 0 ? 'none' : '';
+  var re = function(){ if (TAB === 1) reset2(); if (TAB === 2) reset3(); play = false; el('riPlay').innerHTML = '\u25B6 Release'; draw(); later(); };
+  [['riTh', 'th', 1, '\u00B0'], ['riMs', 'mus', 2, ''], ['riMk', 'muk', 2, ''], ['riCu', 'cUser', 2, ''], ['riM', 'm', 1, ' kg'], ['riR', 'R', 2, ' m'], ['riL', 'L', 1, ' m']].forEach(function(q){ on(q[0], 'input', function(){ P[q[1]] = +this.value;
+      if (q[1] === 'muk' && P.muk > P.mus){ P.muk = P.mus; this.value = P.muk; } if (q[1] === 'mus' && P.muk > P.mus){ P.muk = P.mus; var e = el('riMk'); if (e){ e.value = P.muk; el('riMkv').textContent = f2(P.muk, 2); } }
+      el(q[0] + 'v').textContent = f2(P[q[1]], q[2]) + q[3]; re(); }); });
+  on('riSh', 'change', function(){ P.shape = +this.value; re(); }); on('riComp', 'change', function(){ P.comps = this.checked; draw(); });
+}
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ var c = cP();
+  narrate(TAB === 2 ? el('riStatus').textContent : 'At ' + f2(P.th, 1) + ' degrees, the ' + SHAPES[P.shape][0] + ' needs ' + f2(need(c)*P.m*G, 2) + ' N of friction to roll; static friction can give up to ' + f2(avail()*P.m*G, 2) + ' N. ' + (rolls(c) ? 'It rolls without slipping.' : 'Not enough: it slips.') + ' The critical angle is ' + f2(thCrit(c), 1) + ' degrees.'); }, 450); }
+function draw(){ if (TAB === 0){ el('riTitle').textContent = 'THE FORCES ON A WHEEL ON THE INCLINE'; el('riGTitle').textContent = 'FRICTION NEEDED TO ROLL, AND AVAILABLE, AGAINST THE ANGLE'; draw1(); graph1(); info1(); }
+  if (TAB === 1){ el('riTitle').textContent = 'RELEASED FROM REST'; el('riGTitle').textContent = 'SPEED OF THE CENTRE, OF THE RIM, AND THE SLIP, AGAINST TIME'; draw2(); graph2(); info2(); }
+  if (TAB === 2){ el('riTitle').textContent = 'THE RACE DOWN: FIVE SHAPES AND A FRICTIONLESS BLOCK'; el('riGTitle').textContent = 'SPEED AT THE BOTTOM'; draw3(); graph3(); info3(); } }
+function advance(dt){ if (TAB === 1) step2(dt); if (TAB === 2) step3(dt); }
+var last = 0; function loop(t){ var dt = Math.min(0.05, (t - (last || t))/1000); last = t; if (play) advance(dt*spd); draw(); requestAnimationFrame(loop); }
+on('riPlay', 'click', function(){ if (TAB === 1 && M.done) reset2(); if (TAB === 2 && RC.objs.every(function(o){ return o.tEnd !== null; })) reset3(); play = !play; el('riPlay').innerHTML = play ? '\u2759\u2759 Pause' : '\u25B6 Release'; });
+on('riStep', 'click', function(){ play = false; el('riPlay').innerHTML = '\u25B6 Release'; advance(0.05); draw(); if (TAB === 1) narrate('t = ' + f2(M.t, 2) + ' s: v = ' + f2(M.v, 2) + ' m/s, \u03C9R = ' + f2(M.w*P.R, 2) + ' m/s: ' + (M.state === 'roll' ? 'rolling, the contact point at rest.' : 'slipping by ' + f2(M.v - M.w*P.R, 2) + ' m/s.')); });
+on('riReset', 'click', function(){ if (TAB === 1) reset2(); if (TAB === 2) reset3(); play = false; el('riPlay').innerHTML = '\u25B6 Release'; draw(); });
+on('riSpd', 'input', function(){ spd = +this.value; el('riSpdV').textContent = f2(spd, 2) + '\u00D7'; });
+function tab(k){ TAB = k; for (var i=0; i<3; i++) el('riTab' + i).setAttribute('aria-selected', i === k ? 'true' : 'false'); play = false; el('riPlay').innerHTML = '\u25B6 Release'; if (k === 1) reset2(); if (k === 2) reset3(); build(); draw();
+  narrate(k === 0 ? 'Step 1: the forces on a wheel on an incline. Change the angle and the friction: when can static friction keep it rolling?' : k === 1 ? 'Step 2: release the wheel from rest. Below the critical angle it rolls; above it, it slips. Watch the speeds and the energy.' : 'Step 3: five shapes and a frictionless block race down. Predict the order, then release them.'); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('ri_hc', th.hc); ROOT.classList.toggle('ri_lm', th.lm);
+  [['hc', 'riBtnHC'], ['lm', 'riBtnLM'], ['cb', 'riBtnCB'], ['nr', 'riBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('ri_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('riBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('riNar').style.display = th.nr ? '' : 'none'; draw(); }
+function toggleDesc(){ var b = el('riDescBtn'), d = el('riDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+reset2(); reset3(); tab(0); requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, _P:P, _M:M, _RC:RC, _adv:function(dt){ advance(dt); draw(); }, _set:function(k, v){ P[k] = v; if (TAB === 1) reset2(); if (TAB === 2) reset3(); draw(); }, _rolls:rolls, _crit:thCrit };
+})();
+</script>
+</main>
+</body>
+</html>

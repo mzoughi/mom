@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  // Configure MathJax to load the AsciiMath input component
+  window.MathJax = {
+    loader: { load: ['input/asciimath', 'output/chtml'] }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations - Doppler Effect</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,waves, Doppler,Effect, shock, waves, sonic, boom, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="swRoot0914">
+<!-- ── Accessibility toolbar ── -->
+<div class="sw_a11y0914" id="swA11yBar0914" role="toolbar" aria-label="Display options">
+<button type="button" class="sw_a11ybtn0914" id="swBtnHC0914" onclick="swA11y0914.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sw_a11ybtn0914" id="swBtnLM0914" onclick="swA11y0914.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sw_a11ybtn0914" id="swBtnCB0914" onclick="swA11y0914.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sw_a11ybtn0914 sw_a11yon0914" id="swBtnNR0914" onclick="swA11y0914.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0914"><h3>Shock Waves &mdash; Sonic Boom</h3></div>
+<div class="mcontent0914">
+<canvas id="swCanvas0914" style="margin:auto;display:block;border:1px solid #ccc" width="640" height="320"></canvas>
+</div>
+<div id="swNarBar0914" class="sw_narbar0914" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0914">
+<input type="button" id="swPlay0914" value="Play"
+onclick="if(this.value=='Play'){swSim0914.pl();this.value='Pause';}else{this.value='Play';swSim0914.ps();}">
+<input type="button" value="Step Back" onclick="document.getElementById('swPlay0914').value='Play';swSim0914.stepBack();">
+<input type="button" value="Step" onclick="document.getElementById('swPlay0914').value='Play';swSim0914.step();">
+<input type="button" value="Restart" onclick="document.getElementById('swPlay0914').value='Play';swSim0914.rst();">
+</div>
+<div class="footer0914">
+<div class="sw_ctrlrow0914">
+<div class="sw_ctrlcol0914">
+<div class="sw_ctrltitle0914">Source Speed</div>
+V<sub>source</sub> = <input type="range" id="swVs0914" min="0.8" max="1.8" value="1.2" step="0.05"
+oninput="document.getElementById('swVsVal0914').textContent=parseFloat(this.value).toFixed(2)" onchange="swSim0914.rst()">
+<span id="swVsVal0914">1.20</span> v<sub>w</sub>
+</div>
+<div class="sw_ctrlcol0914">
+<div class="sw_ctrltitle0914">Reference wavefront</div>
+# = <input type="range" id="swWFn0914" min="3" max="7" value="5" step="1"
+oninput="document.getElementById('swWFnVal0914').textContent=this.value" onchange="swSim0914.onWFnChange()">
+<span id="swWFnVal0914">5</span>
+</div>
+</div>
+<div class="sw_ckrow0914">
+<label><input type="checkbox" id="swTriangle0914" onclick="swSim0914.toggleShowTriangle()"> Show shock-cone triangle</label>
+<label><input type="checkbox" id="swThick0914" onclick="swSim0914.toggleThickTriangle()"> Make it thick</label>
+<label><input type="checkbox" id="swRed0914" onclick="swSim0914.toggleRedTriangle()"> Make it red</label>
+</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 646px; margin: 0; }
+#swRoot0914 {
+--sw-sky:      #00ffff;
+--sw-ground:   #c0c0c0;
+--sw-sun:      #ffd000;
+--sw-text:     #111111;
+--sw-wave:     #888888;
+--sw-wave-mark:#ff0000;
+--sw-person:   #000000;
+--sw-person-hit: #ff0000;
+--sw-databox-bg:  #ffff00;
+--sw-databox-border: #ff0000;
+--sw-toolbar-bg: #222;
+}
+#swRoot0914 .sw_a11y0914 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--sw-toolbar-bg); flex-wrap:wrap; width:646px;
+}
+#swRoot0914 .sw_a11ybtn0914 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#swRoot0914 .sw_a11ybtn0914:hover { border-color:#00e8d0; color:#00e8d0; }
+#swRoot0914 .sw_a11yon0914 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#swRoot0914 .sw_narbar0914 {
+width:646px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar0914    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; width:646px; }
+.tbar0914 h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent0914 { height:324px; width:646px; }
+.bbar0914    { height:50px; background-color:#df9; padding:10px; text-align:center; width:646px; }
+.bbar0914 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+.footer0914  { width:646px; background-color:#fce4ec; font-size:.85rem; padding:8px 0; }
+.footer0914 .sw_ctrlrow0914  { width:646px; display:flex; }
+.footer0914 .sw_ctrlcol0914  { width:323px; padding:4px 10px; }
+.footer0914 .sw_ctrltitle0914{ width:100%; font-weight:bold; margin-bottom:2px; }
+.footer0914 .sw_ckrow0914    { width:626px; padding:8px 10px 2px 10px; display:flex; gap:20px; flex-wrap:wrap; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var swA11y0914 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--sw-sky':'#000000','--sw-ground':'#222222','--sw-sun':'#ffff00','--sw-text':'#ffffff','--sw-wave':'#ffffff','--sw-wave-mark':'#ff8800','--sw-person':'#ffffff','--sw-person-hit':'#ff5500','--sw-databox-bg':'#000000','--sw-databox-border':'#ffffff','--sw-toolbar-bg':'#000'},
+lm:{'--sw-sky':'#cfeeff','--sw-ground':'#ded9c4','--sw-sun':'#ffc94d','--sw-text':'#222222','--sw-wave':'#666666','--sw-wave-mark':'#cc3300','--sw-person':'#333333','--sw-person-hit':'#d32f00','--sw-databox-bg':'#fff6d9','--sw-databox-border':'#cc8800','--sw-toolbar-bg':'#444'},
+cb:{'--sw-sky':'#cbe4f0','--sw-ground':'#cfcfcf','--sw-sun':'#e69f00','--sw-text':'#000000','--sw-wave':'#0072b2','--sw-wave-mark':'#d55e00','--sw-person':'#000000','--sw-person-hit':'#d55e00','--sw-databox-bg':'#f0f0f0','--sw-databox-border':'#0072b2','--sw-toolbar-bg':'#222'}
+};
+var DEFS = {'--sw-sky':'#00ffff','--sw-ground':'#c0c0c0','--sw-sun':'#ffd000','--sw-text':'#111111','--sw-wave':'#888888','--sw-wave-mark':'#ff0000','--sw-person':'#000000','--sw-person-hit':'#ff0000','--sw-databox-bg':'#ffff00','--sw-databox-border':'#ff0000','--sw-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('swNarBar0914');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('swBtnNR0914');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('swBtnNR0914',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('swBtnHC0914',states.hc);
+styleBtn('swBtnLM0914',states.lm);
+styleBtn('swBtnCB0914',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('swRoot0914'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('swNarBar0914');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VGG / Doppler-1 / Doppler-2 examples.
+- var simObj = function() { ... rst(); return {pl,ps,step,stepBack,rst,onWFnChange,toggleShowTriangle,toggleThickTriangle,toggleRedTriangle}; }
+- var simObj0914 = new simObj();
+- Animation: recursive window.setTimeout(runMotion, trate) guarded by runFlag
+- Physics adapted from the original doppler03_9WSL.js / props_9WSL.js / arrowsD_9WSL.js (Walter Fendt / Taha Mzoughi
+"Shock Waves" variant): a plane crosses the canvas at a speed set relative to the wave speed. When supersonic,
+a Mach (shock) cone trails it; a fixed ground observer registers "hearing" the shock only once its cone edge
+sweeps over their position. When paused, the cone geometry (V*t / C*t triangle) can be inspected and styled.
+-->
+<script>
+var swGen = function() {
+var canvas = document.getElementById('swCanvas0914');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;   /* 640 x 320 */
+var timer, runFlag = 0, finished = false;
+/* ── color helper ── */
+function c(prop, def) { return swA11y0914.col(prop, def); }
+/* ── physics constants / state ── */
+var T = 1, C = 17;                 /* wavefront period, wave speed (arbitrary units) */
+var V, Vp = 0, sonic = true;
+var trate = 40, trate2 = 400;
+var index, t, ts, tstart, pstart, pss, wcp, to, pc = 0, wc, arrival;
+var numbFronts = 0, WFnvalue = 5, iniPosFronts = [];
+var curXFront, curThetaC;
+var showTriangle = false, thickTriangle = false, redTriangle = false;
+var bcc = 0, arrivalNarrated = false;
+var mx = W/2, my = H/2 + 50, jy = H/4, jw = 50, jh = 0.26*jw, wfy = jy + jh*19/22;
+var py = H/2 + 33;
+var xs0 = 62, px0 = 589, x, px, left, adirection, pdirection;
+var aw = 50, ah = 0.65*aw, bw = 5, bh = (59/70)*bw;
+var colorHouse11 = "#ffff00", colorHouse12 = "#ff0000", colorHouse21 = "#ffc800", colorHouse22 = "#ff00ff";
+var colorWindow = "#4040ff", colorDoor = "#604020";
+var frameCount = 0, narrationEvery = 20;   /* ~ every 0.8 s at 25fps */
+var label01 = "Observer did not hear the shock wave yet!";
+var label02 = "Observer heard the shock wave!";
+var label03 = 'You can view the shock cone by checking "Show shock-cone triangle"';
+var label04 = "No shock wave forms -- the plane is not moving at supersonic speed!";
+var label00 = label01;
+/* ══════════ low-level canvas helpers (adapted from props_9WSL.js) ══════════ */
+function newPath(color, thickness){ ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = thickness; }
+function line(x1,y1,x2,y2){ ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+function rectangle(x,y,w,h,col){ if(col) ctx.fillStyle = col; newPath("#000000",1); ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h); }
+function circle(x,y,r,fillCol,strokeCol){
+if(fillCol) ctx.fillStyle = fillCol;
+newPath((strokeCol && typeof strokeCol === 'string') ? strokeCol : 'grey', 1);
+ctx.arc(x,y,r,0,2*Math.PI,true);
+if(fillCol) ctx.fill();
+if(strokeCol) ctx.stroke();
+}
+function finalcircle(x,y,r,fillCol,strokeCol){
+if(fillCol) ctx.fillStyle = fillCol;
+newPath(strokeCol,2);
+ctx.arc(x,y,r,0,2*Math.PI,true);
+if(fillCol) ctx.fill();
+if(strokeCol) ctx.stroke();
+}
+function cloud(x,y){
+ctx.fillStyle = "#ffffff"; ctx.beginPath();
+ctx.arc(x,y,10,0,2*Math.PI,true); ctx.arc(x+5,y+3,10,0,2*Math.PI,true);
+ctx.arc(x+13,y-2,10,0,2*Math.PI,true); ctx.arc(x+10,y+5,10,0,2*Math.PI,true);
+ctx.arc(x-2,y+5,10,0,2*Math.PI,true); ctx.arc(x+15,y+2,10,0,2*Math.PI,true);
+ctx.fill();
+}
+function tree(x,y,h1,h2){
+ctx.strokeStyle = "#550000"; ctx.beginPath();
+ctx.moveTo(x+h2/5-1,y+h1); ctx.lineTo(x+h2/5-1,y+h2); ctx.lineTo(x+h2/2-3,y+h2); ctx.lineTo(x+h2/3,y+h1);
+ctx.closePath(); ctx.stroke(); ctx.fillStyle="#5F0000"; ctx.fill();
+ctx.fillStyle = "#006600"; newPath("#006600",1.5);
+ctx.arc(x,y,10,0,2*Math.PI,true); ctx.arc(x+5,y+3,8,0,2*Math.PI,true); ctx.arc(x+13,y-2,8,0,2*Math.PI,true);
+ctx.arc(x+7,y-4,8,0,2*Math.PI,true); ctx.arc(x+10,y+5,8,0,2*Math.PI,true); ctx.arc(x-2,y+5,8,0,2*Math.PI,true);
+ctx.arc(x+15,y+2,8,0,2*Math.PI,true); ctx.fill();
+}
+function tree2(x,y,h1,h2){
+ctx.strokeStyle = "#550000"; ctx.beginPath();
+ctx.moveTo(x+h2/6,y+h1); ctx.lineTo(x+h2/5,y+h2+h1); ctx.lineTo(x-h2/4,y+h2+h1); ctx.lineTo(x-h2/5.5,y+h1);
+ctx.closePath(); ctx.stroke(); ctx.fillStyle="#5F0000"; ctx.fill();
+ctx.fillStyle = "#006600"; ctx.beginPath();
+ctx.moveTo(x,y); ctx.lineTo(x-h1/5,y+h1/2); ctx.lineTo(x-h1/5+h1/10,y+h1/2); ctx.lineTo(x-h1/3,y+h1);
+ctx.lineTo(x+h1/3,y+h1); ctx.lineTo(x+h1/5-h1/10,y+h1/2); ctx.lineTo(x+h1/5,y+h1/2);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+}
+function house(c1,c2,x){
+rectangle(x-45,my-45,95,45,c1); rectangle(x-50,my-75,105,30,c2);
+for(var i=0;i<4;i++) if(i!=2) rectangle(x-35+i*20,my-30,15,15,colorWindow);
+rectangle(x+5,my-30,15,30,colorDoor);
+}
+function jet(jx,jy,jw,jh,dirx){
+ctx.fillStyle = "#000000"; ctx.beginPath();
+ctx.moveTo(jx+dirx*(2-85)*jw/85,jy+1*jh/22);
+ctx.lineTo(jx+dirx*(3-85)*jw/85,jy+15*jh/22);
+ctx.lineTo(jx+dirx*(0-85)*jw/85,jy+17*jh/22);
+ctx.lineTo(jx+dirx*(4-85)*jw/85,jy+18*jh/22);
+ctx.lineTo(jx+dirx*(6-85)*jw/85,jy+20*jh/22);
+ctx.lineTo(jx+dirx*(27-85)*jw/85,jy+21*jh/22);
+ctx.lineTo(jx+dirx*(45-85)*jw/85,jy+21*jh/22);
+ctx.lineTo(jx+dirx*(50-85)*jw/85,jy+20*jh/22);
+ctx.lineTo(jx+dirx*(84-85)*jw/85,jy+19*jh/22);
+ctx.lineTo(jx+dirx*(84-85)*jw/85,jy+18*jh/22);
+ctx.lineTo(jx+dirx*(64-85)*jw/85,jy+10*jh/22);
+ctx.lineTo(jx+dirx*(57-85)*jw/85,jy+10*jh/22);
+ctx.lineTo(jx+dirx*(53-85)*jw/85,jy+13*jh/22);
+ctx.lineTo(jx+dirx*(42-85)*jw/85,jy+12*jh/22);
+ctx.lineTo(jx+dirx*(39-85)*jw/85,jy+13*jh/22);
+ctx.lineTo(jx+dirx*(31-85)*jw/85,jy+14*jh/22);
+ctx.lineTo(jx+dirx*(16-85)*jw/85,jy+14*jh/22);
+ctx.lineTo(jx+dirx*(7-85)*jw/85,jy+1*jh/22);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+}
+function person(col,x,y){
+circle(x,y-14,3,col);
+newPath(col,1.5);
+line(x,y-12,x-2,y);
+line(x,y-12,x+2,y);
+line(x,y-12,x-5,y-5);
+line(x,y-12,x+5,y-5);
+ctx.lineWidth = 1.5;
+}
+function bird(bx,by,bw,bh,dirx){
+var brate=60; ctx.fillStyle = "#000000";
+var frac = bcc%brate < (brate/6) ? 0 : bcc%brate < (2*brate/6) ? 1 : 2;
+/* simplified two-phase wing flap (see doppler_sim.html for the same simplification). */
+ctx.beginPath();
+if(frac!==2){
+ctx.moveTo(bx+dirx*(-47)*bw/70,by+7*bh/59);
+ctx.lineTo(bx+dirx*(-30)*bw/70,by+(frac===0?-8:16)*bh/59);
+ctx.lineTo(bx+dirx*(0)*bw/70,by+7*bh/59);
+ctx.lineTo(bx+dirx*(30)*bw/70,by+(frac===0?-8:16)*bh/59);
+ctx.lineTo(bx+dirx*(47)*bw/70,by+7*bh/59);
+} else {
+ctx.moveTo(bx+dirx*(-47)*bw/70,by+9*bh/59);
+ctx.lineTo(bx+dirx*(0)*bw/70,by+9*bh/59);
+ctx.lineTo(bx+dirx*(47)*bw/70,by+9*bh/59);
+}
+ctx.strokeStyle="#000000"; ctx.lineWidth=1.5; ctx.stroke();
+}
+/* ── arrow helpers (adapted from arrowsD_9WSL.js) ── */
+function arrow(x1,y1,x2,y2,w,col,txt,spc){
+if(!w) w=1; if(!txt) txt=""; if(!spc) spc=5; if(!col) col=ctx.strokeStyle;
+ctx.fillStyle=col; ctx.strokeStyle=col;
+var dx=x2-x1, dy=y2-y1; var length=Math.sqrt(dx*dx+dy*dy);
+if (length===0) return;
+dx/=length; dy/=length;
+var s=2.5*w+7.5; var xSp=x2-s*dx, ySp=y2-s*dy;
+var h=0.5*w+3.5; var xSp1=xSp-h*dy, ySp1=ySp+h*dx; var xSp2=xSp+h*dy, ySp2=ySp-h*dx;
+xSp=x2-0.6*s*dx; ySp=y2-0.6*s*dy;
+ctx.beginPath(); ctx.lineWidth=w; ctx.moveTo(x1,y1);
+if (length<5) ctx.lineTo(x2,y2); else ctx.lineTo(xSp,ySp);
+ctx.stroke();
+if (length<5) return;
+ctx.beginPath(); ctx.fillStyle=ctx.strokeStyle;
+ctx.moveTo(xSp,ySp); ctx.lineTo(xSp1,ySp1); ctx.lineTo(x2,y2); ctx.lineTo(xSp2,ySp2);
+ctx.closePath(); ctx.fill();
+var tspc = (x2<=x1) ? -(3*spc) : 2*spc;
+ctx.fillText(txt, x2+tspc, y2+spc);
+}
+function arrow2(apx,apy,r,phi,w,col,txt,spc){
+var xf = apx + r*Math.cos(phi);
+var yf = apy - r*Math.sin(phi);
+arrow(apx,apy,xf,yf,w,col,txt,spc);
+}
+/* ══════════ shock-wave physics ══════════ */
+function calcWavefronts(){
+for (var i=0; i*T<t; i++){
+var x0 = i*V*T + xs0;
+numbFronts++;
+if (numbFronts % 10 === 0){ iniPosFronts.push(x0); }
+if (pc===1 && ts===0){ tstart=t; ts++; }
+wc = i;
+if (pc===1 && pss===0){ pss++; pstart=wc; }
+}
+if (tstart===0){ to=0; wcp=0; } else { to = t-tstart; wcp = wc-pstart; }
+}
+function drawWavefronts(){
+for (var i=0; i*T<t; i++){
+var x0 = i*V*T + xs0;
+var r  = C*(t-i*T);
+circle(x0, wfy, r, null, c('--sw-wave','#888888'));
+circle(x0, wfy, 1, c('--sw-wave-mark','#ff0000'), null);
+}
+}
+function computeXFront(){
+curXFront = (iniPosFronts.length >= WFnvalue) ? iniPosFronts[iniPosFronts.length-WFnvalue] : undefined;
+}
+function physicsStep(){
+index += 1; t = index/10.0;
+left = (V >= 0); adirection = left?1:-1;
+x  = V*t + xs0;
+px = px0 + Vp*t;
+pdirection = (Vp<0) ? -1 : 1;
+curThetaC = Math.PI/2 - Math.asin(C/V);
+var shockT = x - (my-jy)*Math.tan(curThetaC);
+var wasArrival = arrival;
+arrival = false;
+if (shockT < 1.075*(px-300) && shockT > 0.90*(px-300)){ arrival = true; label00 = label02; }
+if (V <= C){ label00 = label04; sonic = false; }
+calcWavefronts();
+computeXFront();
+if (arrival && !wasArrival && !arrivalNarrated){
+arrivalNarrated = true;
+swA11y0914.narrate('The observer has just heard the shock wave!');
+}
+var stopCond = false;
+if (V===0 && Vp===0 && (1000*to/trate2) > trate2/2) stopCond = true;
+else if (Math.abs(x-px) < aw/4 || x>1.25*W || px>1.25*W || x<-0.25*W || px<-0.25*W) stopCond = true;
+if (stopCond){ runFlag = 0; finished = true; }
+}
+function displayData(bx,by,w,h){
+ctx.textBaseline='middle'; ctx.fillStyle=c('--sw-databox-bg','#ffff00'); ctx.strokeStyle=c('--sw-databox-border','#ff0000');
+ctx.lineWidth=0; ctx.beginPath(); ctx.rect(bx,by,w,h); ctx.fill(); ctx.stroke();
+ctx.font='11pt Calibri'; ctx.textAlign='left';
+ctx.fillStyle=c('--sw-text','#111111');
+var Label = 'Animation time t = '+(1000*t/trate2).toFixed(0)+' ms';
+ctx.fillText(Label, bx+6, by+10);
+ctx.fillStyle = (label00===label02 || !sonic) ? '#cc0000' : c('--sw-text','#111111');
+ctx.fillText(label00, bx+6, by+40);
+ctx.fillStyle = c('--sw-text','#111111');
+if (runFlag===0 && sonic){ ctx.fillText(label03, bx+6, by+70); }
+}
+function displayEnd(bx,by,w,h){
+ctx.textBaseline='middle'; ctx.fillStyle=c('--sw-databox-bg','#ffff00'); ctx.strokeStyle=c('--sw-databox-border','#ff0000');
+ctx.lineWidth=0; ctx.beginPath(); ctx.rect(bx,by,w,h); ctx.fill(); ctx.stroke();
+ctx.font='11pt Calibri'; ctx.fillStyle=c('--sw-text','#111111'); ctx.textAlign='left';
+ctx.fillText('Animation Ended!', bx+6, by+10);
+ctx.fillText('Press "Restart"', bx+6, by+30);
+ctx.fillText('to fly again.', bx+6, by+50);
+}
+function drawShockCone(){
+if (curXFront===undefined || isNaN(curThetaC)) return;
+var lastColor = 'blue';
+var r = C*(x-curXFront)/V;
+finalcircle(curXFront, wfy, r, null, lastColor);
+circle(curXFront, wfy, 2, 'yellow', 'yellow');
+arrow(curXFront, wfy, x, wfy, 4, 'red', 'V x t');
+arrow2(curXFront, wfy, r, curThetaC, 4, lastColor, 'C x t');
+var trThickness = thickTriangle ? 4 : 1;
+var trColor = redTriangle ? 'red' : 'yellow';
+if (showTriangle){
+ctx.font='bolder 16px Calibri'; ctx.fillStyle = trColor;
+ctx.fillText(String.fromCharCode(0x03F4), x, wfy-10);
+newPath(trColor, trThickness);
+ctx.moveTo(curXFront,wfy); ctx.lineTo(x,wfy);
+ctx.lineTo(curXFront+r*Math.cos(curThetaC), wfy-r*Math.sin(curThetaC));
+ctx.closePath(); ctx.stroke();
+}
+}
+function drawFrame(){
+rectangle(0,0,W,my,c('--sw-sky','#00ffff'));
+circle(60,30,10,c('--sw-sun','#ffd000'),'grey');
+bcc++;
+cloud(200-t,50+0.5*t); cloud(400-0.5*t,80); cloud(550+0.5*t,40+0.5*t);
+tree(145,my-25,11,25);
+tree2(505,my-55,40,15); tree2(590,my-75,60,15); tree2(25,my-45,30,15); tree2(235,my-45,30,15);
+house(colorHouse11,colorHouse12,100); house(colorHouse21,colorHouse22,350);
+tree(50,my-25,11,25); tree(195,my-25,11,25); tree(215,my-20,11,25); tree(265,my-25,11,25);
+tree(395,my-25,11,25); tree(455,my-35,11,35); tree(555,my-25,11,25);
+bird(100+2*t,80+0.5*t,bw,bh,1); bird(350-2*t,my-77-1*t,bw,bh,-1); bird(555+2*t,my-25-1*t,bw,bh,1);
+jet(x,jy,jw,jh,adirection);
+drawWavefronts();
+person(arrival ? c('--sw-person-hit','#ff0000') : c('--sw-person','#000000'), px-300, py+17);
+rectangle(0,my,W,H-my,c('--sw-ground','#c0c0c0'));
+if (t>0) displayData(0.65*mx,my+5,1.35*mx-5,my-110);
+if (runFlag===0 && t>0) displayEnd(0.05*mx,my+5,0.4*mx-5,my-150);
+if (runFlag===0 && t>0 && sonic) drawShockCone();
+}
+/* ── narration of the current scene (used on Step / periodically during Play) ── */
+function sceneNarration(){
+var msg = '';
+msg += sonic ? 'The plane is flying supersonically, at '+(V/C).toFixed(2)+' times the speed of sound. '
+: 'The plane is flying below the speed of sound -- no shock wave forms. ';
+if (sonic){ msg += arrival ? 'The observer has just heard the shock wave -- shown highlighted. ' : 'The shock wave has not reached the observer yet. '; }
+if (runFlag===0 && t>0 && sonic){ msg += 'The Mach cone triangle is available -- adjust the reference wavefront, thickness, or color below. '; }
+if (runFlag===0 && finished){ msg += 'The animation has ended. Press Restart to fly again.'; }
+swA11y0914.narrate(msg);
+}
+/* ── triangle control handlers ── */
+function refreshTriangle(){
+if (runFlag===0 && t>0){ computeXFront(); drawFrame(); sceneNarration(); }
+}
+function onWFnChange(){
+var el = document.getElementById('swWFn0914');
+WFnvalue = el ? parseInt(el.value,10) : 5;
+refreshTriangle();
+}
+function toggleShowTriangle(){
+var cb = document.getElementById('swTriangle0914');
+if (cb && cb.checked){ showTriangle = true; }
+else {
+showTriangle = false; thickTriangle = false; redTriangle = false;
+var cbT=document.getElementById('swThick0914'); if(cbT) cbT.checked=false;
+var cbR=document.getElementById('swRed0914');   if(cbR) cbR.checked=false;
+}
+refreshTriangle();
+}
+function toggleThickTriangle(){
+var cb = document.getElementById('swThick0914');
+if (cb && cb.checked){
+thickTriangle = true; showTriangle = true;
+var cbS=document.getElementById('swTriangle0914'); if(cbS) cbS.checked=true;
+} else { thickTriangle = false; }
+refreshTriangle();
+}
+function toggleRedTriangle(){
+var cb = document.getElementById('swRed0914');
+if (cb && cb.checked){
+redTriangle = true; showTriangle = true;
+var cbS=document.getElementById('swTriangle0914'); if(cbS) cbS.checked=true;
+} else { redTriangle = false; }
+refreshTriangle();
+}
+/* ── animation loop ── */
+function runMotion(){
+physicsStep();
+drawFrame();
+frameCount++;
+if (!finished && frameCount % narrationEvery === 0){ sceneNarration(); }
+if (finished){
+var playBtn = document.getElementById('swPlay0914'); if(playBtn) playBtn.value='Play';
+sceneNarration();
+}
+if (runFlag===1 && !finished){ timer = window.setTimeout(runMotion, trate); }
+}
+/* ── public: play ── */
+function pl(){ window.clearTimeout(timer); runFlag = 1; finished = false; runMotion(); }
+/* ── public: pause ── */
+function ps(){ window.clearTimeout(timer); runFlag = 0; }
+/* ── public: single step ── */
+function step(){ window.clearTimeout(timer); runFlag = 0; physicsStep(); drawFrame(); sceneNarration(); }
+/* ── public: step back ── */
+function stepBack(){
+window.clearTimeout(timer); runFlag = 0;
+index -= 2; if (index < -1) index = -1;
+physicsStep(); drawFrame(); sceneNarration();
+}
+/* ── public: restart ── */
+function rst(){
+window.clearTimeout(timer); runFlag = 0; finished = false; arrivalNarrated = false;
+var VsEl = document.getElementById('swVs0914');
+var VsMult = VsEl ? parseFloat(VsEl.value) : 1.2;
+V = VsMult*C; Vp = 0; sonic = (VsMult>1);
+var WFnEl = document.getElementById('swWFn0914');
+WFnvalue = WFnEl ? parseInt(WFnEl.value,10) : 5;
+index = -1; t = 0; ts = 0;
+arrival = false; pc = 0; wc = 0; tstart = 0; pstart = 0; pss = 0; wcp = 0; to = 0;
+numbFronts = 0; iniPosFronts = []; curXFront = undefined; curThetaC = undefined;
+bcc = 0; frameCount = 0;
+label00 = label01;
+x = xs0; px = px0;
+left = (V>=0); adirection = left?1:-1; pdirection = (Vp<0)?-1:1;
+var playBtn=document.getElementById('swPlay0914'); if(playBtn) playBtn.value='Play';
+drawFrame();
+dop_narrate_ready();
+function dop_narrate_ready(){
+swA11y0914.narrate('Ready. Source speed set to '+VsMult.toFixed(2)+' times the speed of sound ('+(sonic?'supersonic':'subsonic')+'). Press Play.');
+}
+}
+/* boot */
+rst();
+return { pl:pl, ps:ps, step:step, stepBack:stepBack, rst:rst, onWFnChange:onWFnChange,
+ toggleShowTriangle:toggleShowTriangle, toggleThickTriangle:toggleThickTriangle, toggleRedTriangle:toggleRedTriangle };
+};
+var swSim0914 = new swGen();
+</script>
+<script>
+swA11y0914.init();
+</script>
+
+</body>
+</html>

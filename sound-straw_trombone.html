@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Waves: Sound - Drinking Straws Trombone</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,Transverse, Longitudinal,Frequency, Amplitude, Tension, Mass,Length,Wave,interference,sound,drinking straw,flute,trombone,music, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="st3Root0922">
+<!-- ── Accessibility toolbar ── -->
+<div class="st3_a11y0922" id="st3A11yBar0922" role="toolbar" aria-label="Display options">
+<button type="button" class="st3_a11ybtn0922" id="st3BtnHC0922" onclick="st3A11y0922.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="st3_a11ybtn0922" id="st3BtnLM0922" onclick="st3A11y0922.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="st3_a11ybtn0922" id="st3BtnCB0922" onclick="st3A11y0922.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="st3_a11ybtn0922 st3_a11yon0922" id="st3BtnNR0922" onclick="st3A11y0922.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0922"><h3>Straw Trombone &mdash; Slide It</h3></div>
+<div class="mcontent0922">
+<canvas id="st3Canvas0922" style="margin:auto;display:block;border:1px solid #ccc" width="800" height="260"></canvas>
+</div>
+<div id="st3Readout0922" class="st3_readout0922">Total length: 12.0 cm | Frequency &asymp; 715 Hz | Note &asymp; F5</div>
+<div id="st3NarBar0922" class="st3_narbar0922" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0922">
+<input onclick="if(this.value=='Play'){st3Sim0922.pl();this.value='Pause';}else{this.value='Play';st3Sim0922.ps();}" type="button" id="st3Play0922" value="Play">
+<input type="button" value="Step" onclick="document.getElementById('st3Play0922').value='Play';st3Sim0922.step();">
+<input type="button" value="Restart" onclick="document.getElementById('st3Play0922').value='Play';st3Sim0922.rst();">
+<input type="button" id="st3Tune0922" value="Play a tune" onclick="st3Sim0922.toggleTune()">
+</div>
+<div class="footer0922">
+<div class="st3_ctrlrow0922">
+<div class="st3_ctrlcol0922">
+<div class="st3_ctrltitle0922">Slide position</div>
+<input type="range" id="st3Ext0922" min="8" max="24" value="12" step="0.5"
+oninput="st3Sim0922.setLength(this.value)">
+<span id="st3ExtVal0922">12.0</span> cm total
+</div>
+<div class="st3_ctrlcol0922 rt_hintcol0922">
+<span class="st3_hint0922">A second, thinner straw slides in and out of the reed straw like a trombone slide, continuously changing the total tube length instead of cutting it.</span>
+</div>
+</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 806px; margin: 0; }
+#st3Root0922 {
+--st3-tube:      #d8d2c4;
+--st3-tube-dark: #a8a190;
+--st3-sleeve:    #7d7566;
+--st3-slide:     #e7e2d6;
+--st3-reed:      #e8c468;
+--st3-wave:      #4fd1ff;
+--st3-text:      #111111;
+--st3-toolbar-bg:#222;
+--st3-bg:        #eef1f5;
+}
+#st3Root0922 .st3_a11y0922 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--st3-toolbar-bg); flex-wrap:wrap; width:806px;
+}
+#st3Root0922 .st3_a11ybtn0922 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#st3Root0922 .st3_a11ybtn0922:hover { border-color:#00e8d0; color:#00e8d0; }
+#st3Root0922 .st3_a11yon0922 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#st3Root0922 .st3_narbar0922 {
+width:806px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar0922    { padding:2px; height:30px; background-color:#f90; text-align:center; line-height:28px; width:806px; }
+.tbar0922 h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent0922 { height:264px; width:806px; background:var(--st3-bg); }
+.st3_readout0922 { width:786px; margin:4px auto 0; color:#222; font-size:.82rem; font-family:monospace; text-align:center; background:#fff6d9; padding:3px 0; }
+.bbar0922    { height:50px; background-color:#df9; padding:10px; text-align:center; width:806px; }
+.bbar0922 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+.footer0922  { width:806px; background-color:#fce4ec; font-size:.85rem; padding:8px 0; }
+.footer0922 .st3_ctrlrow0922  { width:806px; display:flex; flex-wrap:wrap; }
+.footer0922 .st3_ctrlcol0922  { width:360px; padding:4px 10px; }
+.footer0922 .rt_hintcol0922   { width:400px; display:flex; align-items:center; }
+.footer0922 .st3_ctrltitle0922{ width:100%; font-weight:bold; margin-bottom:2px; }
+.footer0922 .st3_hint0922     { font-size:.75rem; color:#555; font-style:italic; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var st3A11y0922 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--st3-tube':'#ffffff','--st3-tube-dark':'#aaaaaa','--st3-sleeve':'#666666','--st3-slide':'#ffffff','--st3-reed':'#ffff00','--st3-wave':'#00e8d0','--st3-text':'#ffffff','--st3-toolbar-bg':'#000','--st3-bg':'#000000'},
+lm:{'--st3-tube':'#f2efe6','--st3-tube-dark':'#c9c2b0','--st3-sleeve':'#8f8879','--st3-slide':'#faf8f2','--st3-reed':'#f0cf7a','--st3-wave':'#0072b2','--st3-text':'#222222','--st3-toolbar-bg':'#444','--st3-bg':'#f7f9fb'},
+cb:{'--st3-tube':'#e0e0e0','--st3-tube-dark':'#9a9a9a','--st3-sleeve':'#0072b2','--st3-slide':'#f0f0f0','--st3-reed':'#e69f00','--st3-wave':'#e69f00','--st3-text':'#000000','--st3-toolbar-bg':'#222','--st3-bg':'#eef1f5'}
+};
+var DEFS = {'--st3-tube':'#d8d2c4','--st3-tube-dark':'#a8a190','--st3-sleeve':'#7d7566','--st3-slide':'#e7e2d6','--st3-reed':'#e8c468','--st3-wave':'#4fd1ff','--st3-text':'#111111','--st3-toolbar-bg':'#222','--st3-bg':'#eef1f5'};
+/* defaults first, then each active theme on top (high contrast last) */
+function applyVars(){
+if(!ROOT)return;
+var m={}, p;
+for(p in DEFS) m[p]=DEFS[p];
+['lm','cb','hc'].forEach(function(k){ if(states[k]) for(var q in THEMES[k]) m[q]=THEMES[k][q]; });
+for(p in m) ROOT.style.setProperty(p,m[p]);
+}
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('st3NarBar0922');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('st3BtnNR0922');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('st3BtnNR0922',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars();
+applyNarBar();
+styleBtn('st3BtnHC0922',states.hc);
+styleBtn('st3BtnLM0922',states.lm);
+styleBtn('st3BtnCB0922',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('st3Root0922'); apply(); if(typeof st3Sim0922!=='undefined') st3Sim0922.redraw(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+if(typeof st3Sim0922!=='undefined') st3Sim0922.redraw();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('st3NarBar0922');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════
+Same family/physics as straw_reed_length.html (f = v_sound/(4*L), quarter-wave reed pipe) -- the only real
+difference is HOW the length changes: continuously via a telescoping slide straw, rather than by cutting.
+The visual adds a darker "sleeve" over the first few cm (the fixed outer straw you hold) with a lighter
+"slide" straw appearing to extend out of it as the total length grows, purely a rendering change over sim 1.
+"Play a tune" plays "When the Saints Go Marching In" (traditional, public domain) in C major, gliding the
+slide from note to note: L = v/(4f) for C5 D5 E5 F5 G5 = 16.4, 14.6, 13.0, 12.3, 10.9 cm.
+-->
+<script>
+var st3Gen = function() {
+var canvas = document.getElementById('st3Canvas0922');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+var readoutEl = document.getElementById('st3Readout0922');
+var timer, runFlag = 0;
+function c(prop, def) { return st3A11y0922.col(prop, def); }
+var V_SOUND = 34300;
+var PX_PER_CM = 26, X0 = 110, MIDY = 110, TUBE_H = 46;
+var SLEEVE_CM = 5;
+var length = 12, freq = 0, t = 0, dt = 0.04, trate = 40;
+var frameCount = 0, narrationEvery = 50;
+var NOTE_NAMES = ['C','C\u266f','D','D\u266f','E','F','F\u266f','G','G\u266f','A','A\u266f','B'];
+function el(id){ return document.getElementById(id); }
+function noteName(f){
+if (!(f>0) || !isFinite(f)) return '--';
+var midi = Math.round(69+12*Math.log2(f/440));
+var name = NOTE_NAMES[((midi%12)+12)%12];
+var octave = Math.floor(midi/12)-1;
+return name+octave;
+}
+function recompute(){
+freq = V_SOUND/(4*length);
+updateReadout();
+updateAudioFrequency();
+}
+function updateReadout(){
+if (!readoutEl) return;
+var lam = V_SOUND/freq;
+readoutEl.textContent = 'Total length: '+length.toFixed(1)+' cm | Frequency \u2248 '+freq.toFixed(0)+
+' Hz | Note \u2248 '+noteName(freq)+' | \u03bb \u2248 '+lam.toFixed(1)+' cm';
+}
+/* ══════════ Web Audio (identical pattern to straw_reed_length.html) ══════════ */
+var audioCtx, oscNode, filterNode, gainNode;
+function ensureAudio(){
+if (audioCtx) return;
+try{ window.AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); }
+catch(e){}
+}
+function startTone(){
+ensureAudio(); if (!audioCtx) return;
+if (audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} }
+stopTone();
+oscNode = audioCtx.createOscillator();
+oscNode.type = 'sawtooth';
+oscNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
+filterNode = audioCtx.createBiquadFilter();
+filterNode.type = 'lowpass';
+filterNode.frequency.setValueAtTime(2400, audioCtx.currentTime);
+gainNode = audioCtx.createGain();
+gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+gainNode.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime+0.03);
+oscNode.connect(filterNode); filterNode.connect(gainNode); gainNode.connect(audioCtx.destination);
+try{ oscNode.start(); }catch(e){}
+}
+function updateAudioFrequency(){
+if (oscNode && audioCtx){ try{ oscNode.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.02); }catch(e){} }
+}
+/* tongue each note: a short dip in volume so repeated notes are heard separately */
+function articulate(){
+if (!gainNode || !oscNode || !audioCtx) return;
+var now = audioCtx.currentTime;
+try{
+gainNode.gain.cancelScheduledValues(now);
+gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+gainNode.gain.linearRampToValueAtTime(0.03, now+0.03);
+gainNode.gain.linearRampToValueAtTime(0.18, now+0.08);
+}catch(e){}
+}
+function stopTone(){
+if (gainNode && audioCtx){
+try{
+gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
+gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime+0.05);
+}catch(e){}
+}
+if (oscNode){ var o=oscNode; oscNode=null; try{ setTimeout(function(){ try{o.stop();}catch(e){} }, 80); }catch(e){} }
+}
+/* ══════════ drawing ══════════ */
+function roundRect(x,y,w,h,r){
+ctx.beginPath();
+ctx.moveTo(x+r,y);
+ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+ctx.closePath();
+}
+function lengthPx(){ return length*PX_PER_CM; }
+function drawStraw(){
+var Lpx = lengthPx();
+var top = MIDY-TUBE_H/2, bot = MIDY+TUBE_H/2;
+var grad = ctx.createLinearGradient(0,top,0,bot);
+grad.addColorStop(0, c('--st3-tube-dark','#a8a190'));
+grad.addColorStop(0.5, c('--st3-slide','#e7e2d6'));
+grad.addColorStop(1, c('--st3-tube-dark','#a8a190'));
+ctx.fillStyle = grad; ctx.strokeStyle='#333'; ctx.lineWidth=2;
+roundRect(X0, top, Lpx, TUBE_H, 6);
+ctx.fill(); ctx.stroke();
+/* fixed sleeve overlay near the mouth */
+var sleevePx = Math.min(SLEEVE_CM*PX_PER_CM, Lpx);
+var sgrad = ctx.createLinearGradient(0,top-4,0,bot+4);
+sgrad.addColorStop(0, c('--st3-sleeve','#7d7566'));
+sgrad.addColorStop(0.5, c('--st3-tube','#d8d2c4'));
+sgrad.addColorStop(1, c('--st3-sleeve','#7d7566'));
+ctx.fillStyle = sgrad; ctx.strokeStyle='#333'; ctx.lineWidth=2;
+roundRect(X0, top-4, sleevePx, TUBE_H+8, 6);
+ctx.fill(); ctx.stroke();
+/* open end cap */
+ctx.beginPath(); ctx.ellipse(X0+Lpx, MIDY, 6, TUBE_H/2, 0, 0, 2*Math.PI);
+ctx.fillStyle = c('--st3-tube-dark','#a8a190'); ctx.fill(); ctx.stroke();
+/* reed notch */
+ctx.fillStyle = c('--st3-reed','#e8c468'); ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+ctx.beginPath(); ctx.moveTo(X0, top-4); ctx.lineTo(X0-16, top-18); ctx.lineTo(X0+6, top+2); ctx.closePath(); ctx.fill(); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(X0, bot+4); ctx.lineTo(X0-16, bot+18); ctx.lineTo(X0+6, bot-2); ctx.closePath(); ctx.fill(); ctx.stroke();
+}
+function drawStandingWave(){
+var Lpx = lengthPx();
+var amp = Math.min(38, TUBE_H*0.9);
+var omega = 2*Math.PI*freq;
+ctx.save();
+ctx.strokeStyle = c('--st3-wave','#4fd1ff'); ctx.lineWidth = 2.5; ctx.globalAlpha=0.9;
+ctx.beginPath();
+var N=80;
+for (var i=0;i<=N;i++){
+var xf=i/N; var x=X0+xf*Lpx;
+var y=MIDY-amp*Math.sin(Math.PI*xf/2)*Math.cos(omega*t);
+if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+}
+ctx.stroke();
+ctx.restore();
+}
+function drawRuler(){
+ctx.strokeStyle = c('--st3-text','#111'); ctx.fillStyle = c('--st3-text','#111');
+ctx.lineWidth = 1; ctx.font = '11px Calibri'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+var y0 = MIDY+TUBE_H/2+22;
+ctx.beginPath(); ctx.moveTo(X0,y0); ctx.lineTo(X0+24*PX_PER_CM,y0); ctx.stroke();
+for (var cm=0; cm<=24; cm+=2){
+var x = X0+cm*PX_PER_CM;
+ctx.beginPath(); ctx.moveTo(x,y0-4); ctx.lineTo(x,y0+4); ctx.stroke();
+ctx.fillText(String(cm), x, y0+16);
+}
+}
+/* during the tune: tick marks for the five "slide positions" the melody uses */
+function drawPositions(){
+if (!seqOn) return;
+var y0 = MIDY+TUBE_H/2+22;
+ctx.save();
+ctx.font = 'bold 11px Calibri, Arial, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+for (var d=1; d<=5; d++){
+var x = X0 + NOTE_LEN[d]*PX_PER_CM, on = Math.abs(NOTE_LEN[d]-length) < 0.05;
+ctx.strokeStyle = c('--st3-wave','#4fd1ff'); ctx.lineWidth = on ? 3 : 1.5; ctx.globalAlpha = on ? 1 : 0.6;
+ctx.beginPath(); ctx.moveTo(x, MIDY-TUBE_H/2-14); ctx.lineTo(x, MIDY-TUBE_H/2-4); ctx.stroke();
+ctx.fillStyle = c('--st3-text','#111');
+ctx.fillText(NOTE_LBL[d], x, MIDY-TUBE_H/2-18);
+}
+ctx.restore();
+}
+function drawBreath(){
+if (runFlag!==1) return;
+var phase=(t*4)%1;
+ctx.save(); ctx.strokeStyle=c('--st3-text','#111'); ctx.globalAlpha=0.5; ctx.lineWidth=1.5;
+for (var i=0;i<2;i++){ var r=4+(phase+i*0.5)%1*14; ctx.beginPath(); ctx.arc(X0-24,MIDY,r,-0.6,0.6); ctx.stroke(); }
+ctx.restore();
+}
+function drawFrame(){
+ctx.clearRect(0,0,W,H);
+drawStraw();
+drawStandingWave();
+drawRuler();
+drawPositions();
+drawBreath();
+}
+/* ══════════ narration ══════════ */
+function sceneNarration(){
+if (seqOn) return;
+st3A11y0922.narrate('Total length '+length.toFixed(1)+' cm. Frequency about '+freq.toFixed(0)+' Hz, note '+
+noteName(freq)+'. '+(runFlag===1?'Sounding now.':'Paused.'));
+}
+/* ══════════ public controls ══════════ */
+function setLength(v){
+length = Math.max(SLEEVE_CM+0.5, parseFloat(v)||12);
+var l=el('st3ExtVal0922'); if(l) l.textContent = length.toFixed(1);
+recompute();
+drawFrame();
+}
+/* ══════════ tune: slide from note to note ══════════ */
+var seqOn = false, seqTimer = null, glideTimer = null;
+var NOTE_F = [0, 523.25, 587.33, 659.26, 698.46, 783.99];               /* scale degrees 1-5 in C */
+var NOTE_LBL = ['', 'C', 'D', 'E', 'F', 'G'];
+var NOTE_LEN = NOTE_F.map(function(f){ return f ? V_SOUND/(4*f) : 0; }); /* 16.4 ... 10.9 cm */
+/* "When the Saints Go Marching In" (traditional, public domain): [scale degree, beats] */
+var TUNE = [
+[1,1],[3,1],[4,1],[5,4],
+[1,1],[3,1],[4,1],[5,4],
+[1,1],[3,1],[4,1],[5,2],[3,2],[1,2],[3,2],[2,4],
+[3,1],[3,1],[2,1],[1,3],[1,1],[3,2],[5,1],[5,1],[4,4],
+[3,1],[4,1],[5,2],[3,2],[1,2],[2,2],[1,4]
+];
+function btnLabel(id, txt){ var b=el(id); if(b) b.value=txt; }
+function syncSlider(){
+var s=el('st3Ext0922'); if(s) s.value = length;
+var l=el('st3ExtVal0922'); if(l) l.textContent = length.toFixed(1);
+}
+/* move the slide smoothly to the new length (about 70 ms, like a real trombonist's arm) */
+function slideTo(target, sameNote){
+window.clearTimeout(glideTimer);
+if (sameNote) articulate();
+var start = length, n = 5, k = 0;
+(function g(){
+k++;
+length = start + (target - start) * k / n;
+recompute(); syncSlider(); drawFrame();
+if (k < n) glideTimer = window.setTimeout(g, 14);
+})();
+}
+function stopSeq(quiet){
+if (!seqOn) return;
+seqOn = false; window.clearTimeout(seqTimer); window.clearTimeout(glideTimer);
+btnLabel('st3Tune0922','Play a tune');
+if (!quiet){ window.clearTimeout(timer); runFlag = 0; btnLabel('st3Play0922','Play'); stopTone(); drawFrame(); }
+}
+function toggleTune(){
+if (seqOn){ stopSeq(false); st3A11y0922.narrate('Tune stopped.'); return; }
+seqOn = true; btnLabel('st3Tune0922','Stop the tune');
+length = NOTE_LEN[TUNE[0][0]]; recompute(); syncSlider();
+if (runFlag !== 1){ window.clearTimeout(timer); runFlag = 1; btnLabel('st3Play0922','Pause'); startTone(); runMotion(); }
+st3A11y0922.narrate('Playing "When the Saints Go Marching In" (traditional). The melody uses five slide positions, marked above the straw: '
++'C at 16.4 cm, D at 14.6 cm, E at 13.0 cm, F at 12.3 cm and G at 10.9 cm. Pull the slide out for lower notes, push it in for higher ones.');
+var k = 0, prev = -1;
+(function next(){
+if (!seqOn) return;
+if (k >= TUNE.length){
+stopSeq(false);
+st3A11y0922.narrate('Tune finished. The highest note, G, needed the shortest straw (10.9 cm); the lowest, C, the longest (16.4 cm). '
++'Their frequencies are in the ratio 3 : 2, and so are their lengths, the other way around.');
+return;
+}
+var d = TUNE[k][0];
+slideTo(NOTE_LEN[d], d === prev);
+prev = d;
+var ms = TUNE[k][1]*300; k++;
+seqTimer = window.setTimeout(next, ms);
+})();
+}
+/* ══════════ animation loop ══════════ */
+function runMotion(){
+t += dt;
+drawFrame();
+frameCount++;
+if (frameCount % narrationEvery === 0){ sceneNarration(); }
+if (runFlag===1){ timer = window.setTimeout(runMotion, trate); }
+}
+function pl(){ window.clearTimeout(timer); runFlag = 1; startTone(); runMotion(); sceneNarration(); }
+function ps(){ stopSeq(true); window.clearTimeout(timer); runFlag = 0; stopTone(); drawFrame(); sceneNarration(); }
+function step(){ stopSeq(true); window.clearTimeout(timer); if (runFlag===1){ runFlag = 0; stopTone(); } t += dt; drawFrame(); }
+function rst(){
+stopSeq(true);
+window.clearTimeout(timer); runFlag = 0; stopTone();
+length = 12; t = 0; frameCount = 0;
+var lEl=el('st3Ext0922'); if(lEl) lEl.value = length;
+var lLbl=el('st3ExtVal0922'); if(lLbl) lLbl.textContent = length.toFixed(1);
+var playBtn = el('st3Play0922'); if (playBtn) playBtn.value='Play';
+recompute();
+drawFrame();
+st3A11y0922.narrate('Ready. Total length 12.0 cm. Press Play, or drag the slide.');
+}
+function redraw(){ drawFrame(); }
+/* boot */
+rst();
+return { pl:pl, ps:ps, step:step, rst:rst, redraw:redraw, toggleTune:toggleTune,
+setLength:function(v){ stopSeq(true); setLength(v); } };
+};
+var st3Sim0922 = new st3Gen();
+</script>
+<script>
+st3A11y0922.init();
+</script>
+</body>
+</html>

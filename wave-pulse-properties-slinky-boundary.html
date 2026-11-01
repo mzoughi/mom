@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Waves: A Single Pulse on Two Joined Slinkies: Reflection &amp;amp; Transmission</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,Transverse, Longitudinal,Frequency, Amplitude, Tension, Mass,Length,Wave,string, Properties,Rope, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="mobw97700916" class="mob_wrap0916">
+<div id="slinkyPulseRoot0916">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y0916" id="snBar0916" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn0916" id="snBtnHC0916" onclick="slinkyPulseA11y0916.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn0916" id="snBtnLM0916" onclick="slinkyPulseA11y0916.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn0916" id="snBtnCB0916" onclick="slinkyPulseA11y0916.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sn_a11ybtn0916 sn_a11yon0916" id="snBtnNR0916" onclick="slinkyPulseA11y0916.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0916"><h3>A Single Pulse on Two Joined Slinkies: Reflection &amp; Transmission</h3></div>
+<div class="mcontent0916"><canvas id="slinkyPulseCanvas0916" style="margin:auto;border:1px solid" width="660" height="320"></canvas></div>
+<div id="slinkyPulseNarBar0916" class="sn_narbar0916" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="playbar0916" role="group" aria-label="Animation playback controls">
+<button type="button" class="wv_btn0916 wv_btnmain0916" onclick="slinkyPulsePol0916.sendPulse()">&#128276; Send Pulse</button>
+<button type="button" class="wv_btn0916" id="slinkyPulsePlayBtn0916" onclick="slinkyPulsePol0916.togglePlay()" aria-pressed="false">&#9654; Resume</button>
+<button type="button" class="wv_btn0916" onclick="slinkyPulsePol0916.stepBack()">&#10073;&#9664; Step back</button>
+<button type="button" class="wv_btn0916" onclick="slinkyPulsePol0916.stepForward()">&#9654;&#10073; Step forward</button>
+<button type="button" class="wv_btn0916" onclick="slinkyPulsePol0916.reset()">&#8635; Reset (clear slinky)</button>
+</div>
+<div class="bbar0916" role="group" aria-label="Show or hide measurement tools and overlays">
+<label class="chk0916"><input type="checkbox" id="showMarker0916" onchange="slinkyPulsePol0916.toggleMarker(this)"> <span id="markerLbl0916">Show tracked-coil markers</span></label>
+<label class="chk0916"><input type="checkbox" id="showDX0916" onchange="slinkyPulsePol0916.toggleDeltaX(this)"> <span id="dxLbl0916">Show horizontal caliper (&#916;x)</span></label>
+<label class="chk0916"><input type="checkbox" id="showLabels0916" checked onchange="slinkyPulsePol0916.toggleLabels(this)"> <span id="labelsLbl0916">Hide pulse labels</span></label>
+<label class="chk0916"><input type="checkbox" id="showWaveData0916" checked onchange="slinkyPulsePol0916.toggleWaveData(this)"> <span id="waveDataLbl0916">Hide wave-data panel</span></label>
+</div>
+<div class="footer0916">
+<div class="left0916">Pulse direction:</div>
+<div class="center0916" role="radiogroup" aria-label="Pulse direction">
+<label><input type="radio" name="dir0916" value="push" id="dirPush0916" checked onchange="slinkyPulsePol0916.setDirection('push')"> Push &#9654;</label>
+&nbsp;&nbsp;
+<label><input type="radio" name="dir0916" value="pull" id="dirPull0916" onchange="slinkyPulsePol0916.setDirection('pull')"> Pull &#9664;</label>
+</div>
+</div>
+<div class="footer0916">
+<div class="left0916">Displacement amp.:</div>
+<div class="center0916">`A:\ ` <input class=islide0916 type="range" id="ampSlider0916" min="4" max="20" value="20" step="2" oninput="slinkyPulsePol0916.setAmp(this.value)" onchange="slinkyPulsePol0916.setAmp(this.value)"> <span id="ampValue0916">20</span> cm</div>
+</div>
+<div class="footer0916">
+<div class="left0916">Spring const., slinky 1:</div>
+<div class="center0916">`K_1:\ ` <input class=islide0916 type="range" id="k1Slider0916" min="0.1" max="0.7" value="0.4" step="0.05" oninput="slinkyPulsePol0916.setK1(this.value)" onchange="slinkyPulsePol0916.setK1(this.value)"> <span id="k1Value0916">0.4</span> N/m</div>
+</div>
+<div class="footer0916">
+<div class="left0916">Mass, slinky 1:</div>
+<div class="center0916">`M_1:\ ` <input class=islide0916 type="range" id="m1Slider0916" min="0.3" max="1.6" value="0.5" step="0.1" oninput="slinkyPulsePol0916.setM1(this.value)" onchange="slinkyPulsePol0916.setM1(this.value)"> <span id="m1Value0916">0.5</span> kg</div>
+</div>
+<div class="footer0916">
+<div class="left0916">Slinky 2 (linked):</div>
+<div class="center0916">`n_2:\ ` <input class=islide0916 type="range" id="n2Slider0916" min="1" max="3" value="2" step="0.5" oninput="slinkyPulsePol0916.setN2(this.value)" onchange="slinkyPulsePol0916.setN2(this.value)" style=width:120px> <span id="n2Value0916">2</span>&times; slinky 1 (`K_2=` <span id="k2Derived0916">--</span> N/m, `M_2=` <span id="m2Derived0916">--</span> kg)</div>
+</div>
+<hr>
+<ol type="a">
+<li>Send a pulse with the default `n_2=2` (slinky 2 = two combined). The transmitted pulse travels at the same speed as the incident one &mdash; so why is there still a visible reflected pulse?<br /></li>
+<li>Is that reflected pulse a "push" or a "pull" relative to the incident pulse? Use `Z=sqrt(K M)` to explain why.<br /></li>
+<li>Set `n_2=1` (an identical second slinky). What happens to the reflected pulse?<br /></li>
+<li>Turn on the horizontal caliper. With `n_2=2`, compare the transmitted pulse's width to the incident pulse's width. Why are they equal this time, unlike in the two-rope pulse demo?<br /></li>
+<li>Increase `K_1` and `M_1` together, keeping `n_2` fixed. Does this change `r` or `tau`? Does it change the pulses' speed?<br /></li>
+<li>Switch to Pull and send a pulse. Does the incident pulse show both a compression part and a rarefaction part? Which one leads, in the direction of travel?<br /></li>
+<li>Turn on the tracked-coil markers. Does a marked coil travel along with the pulse, or return to its starting spot after the pulse passes?<br /></li>
+<li>Compare this to the two-rope pulse demo: what physical quantity sets the reflection amplitude for a transverse pulse, versus for this longitudinal one?<br /></li>
+</ol>
+</div><!-- #slinkyPulseRoot0916 -->
+<style>:where(#mobw97700916) * { margin: 0; box-sizing: border-box; }
+:where(#mobw97700916) div { width: 663px; margin: 0; }
+#slinkyPulseRoot0916 {
+--sn-toolbar-bg: #222;
+--sn-rope:     #2e8b57;
+--sn-compress: #d1495b;
+--sn-stretch:  #1b998b;
+--sn-axis:     #000000;
+--sn-vrule:    #cd853f;
+--sn-hand:     #9b7550;
+--sn-marker:   #1a1a2e;
+--sn-boundary: #555555;
+}
+#slinkyPulseRoot0916 .sn_a11y0916 {
+display: flex; gap: 6px; padding: 6px 8px;
+background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 663px;
+}
+#slinkyPulseRoot0916 .sn_a11ybtn0916 {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+}
+#slinkyPulseRoot0916 .sn_a11ybtn0916:hover { border-color: #00e8d0; color: #00e8d0; }
+#slinkyPulseRoot0916 .sn_a11yon0916 { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#slinkyPulseRoot0916 .sn_narbar0916 {
+width: 663px; min-height: 28px; padding: 5px 10px;
+background: #ffefc0; border-left: 4px solid #e0b040;
+font-size: .88rem; color: #333; font-style: italic;
+}
+.tbar0916 { padding: 2px; height: 30px; background-color: #f90; text-align: center; }
+.mcontent0916 { height: 322px; }
+.islide0916 { width: 220px; }
+.playbar0916 {
+height: auto; min-height: 35px; background-color: #cfe8ff; padding: 3px;
+text-align: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+}
+.wv_btn0916 {
+padding: 6px 10px; font-size: .82rem; border-radius: 4px; cursor: pointer;
+background: #fff; border: 1px solid #557; color: #223;
+}
+.wv_btn0916:hover { background: #eef4ff; }
+.wv_btnmain0916 { background: #ffd94a; border-color: #a8850a; font-weight: bold; }
+.wv_btnmain0916:hover { background: #ffe97a; }
+.bbar0916 {
+background-color: #df9; padding: 8px; text-align: left;
+display: flex; flex-wrap: wrap; gap: 4px 16px;
+}
+.bbar0916 .chk0916 { width: auto; font-size: .84rem; white-space: nowrap; }
+.footer0916 { height: 40px; text-align: center; font-size: normal; display: flex; }
+.footer0916 .left0916 { width: 160px; padding: 2px; }
+.footer0916 .center0916 { width: 503px; padding: 4px; }
+.footer0916:nth-of-type(odd) { background-color: #fce4ec; }
+.footer0916:nth-of-type(even) { background-color: #e8f5e9; }</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var slinkyPulseA11y0916 = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+var THEMES = {
+hc: { '--sn-rope':'#00ff88','--sn-compress':'#ffaa00','--sn-stretch':'#00ffff','--sn-axis':'#ffffff','--sn-vrule':'#ffaa00',
+'--sn-hand':'#ffcc88','--sn-marker':'#ffffff','--sn-boundary':'#ffffff','--sn-toolbar-bg':'#000' },
+lm: { '--sn-rope':'#226622','--sn-compress':'#aa3311','--sn-stretch':'#0077aa','--sn-axis':'#222222','--sn-vrule':'#996622',
+'--sn-hand':'#8a6440','--sn-marker':'#000000','--sn-boundary':'#333333','--sn-toolbar-bg':'#333' },
+cb: { '--sn-rope':'#009e73','--sn-compress':'#d55e00','--sn-stretch':'#0072b2','--sn-axis':'#000000','--sn-vrule':'#e69f00',
+'--sn-hand':'#e69f00','--sn-marker':'#000000','--sn-boundary':'#000000' }
+};
+var DEFAULTS = { '--sn-rope':'#2e8b57','--sn-compress':'#d1495b','--sn-stretch':'#1b998b','--sn-axis':'#000000','--sn-vrule':'#cd853f',
+'--sn-hand':'#9b7550','--sn-marker':'#1a1a2e','--sn-boundary':'#555555','--sn-toolbar-bg':'#222' };
+function applyVars(theme, on) {
+if (!ROOT) return;
+var vars = THEMES[theme];
+for (var p in vars) ROOT.style.setProperty(p, on ? vars[p] : DEFAULTS[p]);
+}
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a'; b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('slinkyPulseCanvas0916');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('slinkyPulseNarBar0916');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR0916');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR0916', states.nr); }
+}
+function apply() {
+if (!ROOT) return;
+applyVars('hc', states.hc); applyVars('lm', states.lm); applyVars('cb', states.cb);
+applyCanvas(); applyNarBar();
+styleBtn('snBtnHC0916', states.hc);
+styleBtn('snBtnLM0916', states.lm);
+styleBtn('snBtnCB0916', states.cb);
+}
+function getCol(prop) {
+if (!ROOT) return DEFAULTS[prop];
+return getComputedStyle(ROOT).getPropertyValue(prop).trim() || DEFAULTS[prop];
+}
+return {
+init: function() { ROOT = document.getElementById('slinkyPulseRoot0916'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+},
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('slinkyPulseNarBar0916');
+if (nb) nb.textContent = msg;
+},
+col: function(role) { return getCol('--sn-' + role); }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var slinkyPulsePol0916 = (function(){
+var canvas  = document.getElementById('slinkyPulseCanvas0916');
+var ctx     = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var xBase = 80, yBase = 75, centerY = yBase + 90;
+var varFont = '12pt Calibri';
+var L = 6;
+var nCoils = 62, coilSpacing = 10, coilRX = 3, coilRY = 45;
+var ib = 31;                                     /* junction coil index */
+var halfWidthT = 8;                               /* pulse half-duration, animation-time units */
+var Amag = 20, direction = 'push';
+var K1 = 0.4, M1 = 0.5, n2 = 2;
+var K2, M2;
+var t = 0.0, tactual = 1.2, runRate = 30;
+var index = -1, stopIndex = 400;
+var timer = null, runFlag = 0;
+var mx = CW / 2, my = CH / 2 + 50;
+var px = 0, py = 0;
+var hw = 40, hh = (41 / 65) * hw;
+var v1, v2, r, tau, tb;
+function boundaryPx() { return xBase + ib * coilSpacing; }
+function deriveK2M2() {
+K2 = n2 * K1; M2 = n2 * M1;
+var k2El = document.getElementById('k2Derived0916'); if (k2El) k2El.textContent = K2.toFixed(2);
+var m2El = document.getElementById('m2Derived0916'); if (m2El) m2El.textContent = M2.toFixed(1);
+}
+function recompute() {
+v1 = L * Math.sqrt(K1 / M1);
+v2 = L * Math.sqrt(K2 / M2);
+/* Longitudinal impedance Z=sqrt(K*M) -- unlike the rope (shared tension
+ makes Z=T/v), K and M are independent here, so r and tau must be
+ computed from Z directly, NOT from a v1,v2 ratio. */
+var Z1 = Math.sqrt(K1 * M1), Z2 = Math.sqrt(K2 * M2);
+r = (Z1 - Z2) / (Z1 + Z2);
+tau = 2 * Z1 / (Z1 + Z2);
+tb = (ib * coilSpacing) / v1;
+var tReflExit  = tb + (ib * coilSpacing) / v1;
+var tTransExit = tb + ((nCoils - 1 - ib) * coilSpacing) / v2;
+var tEnd = Math.max(tReflExit, tTransExit) + halfWidthT;
+stopIndex = Math.ceil(tEnd * tactual) + 10;
+}
+function dirSign() { return (direction === 'push') ? 1 : -1; }
+/* ── Raised-cosine pulse: finite support, symmetric ── */
+function pulseShape(s) {
+if (Math.abs(s) > halfWidthT) return 0;
+return 0.5 * (1 + Math.cos(Math.PI * s / halfWidthT));
+}
+function xIncident(i) {
+var s = t - (coilSpacing * i) / v1;
+return dirSign() * Amag * pulseShape(s);
+}
+function xReflected(i) {
+var s = (t - tb) - (coilSpacing * (ib - i)) / v1;
+return dirSign() * Amag * r * pulseShape(s);
+}
+function xTransmitted(i) {
+var s = (t - tb) - (coilSpacing * (i - ib)) / v2;
+return dirSign() * Amag * tau * pulseShape(s);
+}
+function coilPos(i) {
+var eq = xBase + i * coilSpacing;
+var dx = (i <= ib) ? (xIncident(i) + xReflected(i)) : xTransmitted(i);
+return { x: eq + dx, y: centerY };
+}
+var addXCalFlag = 0, showMarkerFlag = 0, showLabelsFlag = 1, showWaveDataFlag = 1;
+var xCal = { by: 280, x1: 150, x2: 300, jawH: 22, box: null };
+var dragging = null;
+var mWLength = '0.00';
+var markedCoils = [7, 22, 38, 53];
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function hexToRgb(hex) {
+hex = hex.replace('#', '');
+if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+var num = parseInt(hex, 16);
+return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+function safeHex(hex) { return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex) ? hex : '#888888'; }
+function lerpColor(hexA, hexB, frac) {
+var a = hexToRgb(safeHex(hexA)), b = hexToRgb(safeHex(hexB));
+var rr = Math.round(a.r + (b.r - a.r) * frac);
+var gg = Math.round(a.g + (b.g - a.g) * frac);
+var bb = Math.round(a.b + (b.b - a.b) * frac);
+return 'rgb(' + rr + ',' + gg + ',' + bb + ')';
+}
+function arrow(x1, y1, x2, y2, w, col, txt, spc) {
+if (!w) w = 1;
+if (!txt) txt = '';
+if (!spc) spc = 5;
+if (!col) col = ctx.strokeStyle;
+ctx.fillStyle = col; ctx.strokeStyle = col;
+var dx = x2 - x1, dy = y2 - y1;
+var length = Math.sqrt(dx * dx + dy * dy);
+if (length === 0) return;
+dx /= length; dy /= length;
+var s = 2.5 * w + 7.5;
+var xSp = x2 - s * dx, ySp = y2 - s * dy;
+var h = 0.5 * w + 3.5;
+var xSp1 = xSp - h * dy, ySp1 = ySp + h * dx;
+var xSp2 = xSp + h * dy, ySp2 = ySp - h * dx;
+xSp = x2 - 0.6 * s * dx; ySp = y2 - 0.6 * s * dy;
+ctx.beginPath(); ctx.lineWidth = w; ctx.moveTo(x1, y1);
+if (length < 5) ctx.lineTo(x2, y2); else ctx.lineTo(xSp, ySp);
+ctx.stroke();
+if (length < 5) return;
+ctx.beginPath(); ctx.fillStyle = ctx.strokeStyle;
+ctx.moveTo(xSp, ySp); ctx.lineTo(xSp1, ySp1); ctx.lineTo(x2, y2); ctx.lineTo(xSp2, ySp2);
+ctx.closePath(); ctx.fill();
+}
+function arrowDraw(r0, phiA) {
+var xf = px + r0 * Math.cos(phiA);
+var yf = py - r0 * Math.sin(phiA);
+arrow(px, py, xf, yf, 3);
+}
+function addGrid(h, w, dh, dw, x0, y0, col) {
+if (!x0) x0 = 0; if (!y0) y0 = 0; if (!col) col = '#ccc';
+ctx.strokeStyle = col; ctx.lineWidth = 0.3;
+var maxV = parseInt(h / dh), maxH = parseInt(w / dw);
+for (var i = 1; i < maxV; i++) { ctx.beginPath(); ctx.moveTo(x0, y0 + dw * i); ctx.lineTo(x0 + w, y0 + dw * i); ctx.stroke(); }
+for (var j = 1; j < maxH; j++) { ctx.beginPath(); ctx.moveTo(x0 + dw * j, y0); ctx.lineTo(x0 + dw * j, y0 + h); ctx.stroke(); }
+}
+function addXYaxis(h, w, x0, y0, col) {
+if (!col) col = 'black';
+ctx.strokeStyle = col; ctx.font = '16pt Calibri'; ctx.fillStyle = col; ctx.textAlign = 'left';
+px = 0; py = y0; arrowDraw(0.99 * w, 0); ctx.fillText('x', 0.95 * w, 1.1 * y0);
+px = x0; py = h; arrowDraw(0.99 * h, Math.PI / 2); ctx.fillText('y', 0.8 * x0, 0.05 * h);
+}
+/* ── Shared per-frame coil geometry: positions and local compression
+ratios. Both the coloring and the tracked-coil markers read from this
+one array, so nothing can drift out of sync with what's drawn. ── */
+var coilXs = [], coilRatios = [];
+function computeCoilGeometry() {
+coilXs = []; coilRatios = [];
+for (var i = 0; i < nCoils; i++) coilXs.push(coilPos(i).x);
+for (var i = 0; i < nCoils; i++) {
+var spacing;
+if (i === 0) spacing = coilXs[1] - coilXs[0];
+else if (i === nCoils - 1) spacing = coilXs[i] - coilXs[i - 1];
+else spacing = (coilXs[i + 1] - coilXs[i - 1]) / 2;
+coilRatios.push(spacing / coilSpacing);
+}
+}
+/* ── The slinky: each coil is an ellipse colored by its own local
+compression (compressed = warm, stretched = cool). A single pulse
+naturally shows both, since it carries a compression on its leading
+edge and a rarefaction on its trailing edge. ── */
+function drawSlinky() {
+var compressCol = slinkyPulseA11y0916.col('compress');
+var stretchCol  = slinkyPulseA11y0916.col('stretch');
+var neutralCol  = slinkyPulseA11y0916.col('rope');
+var markerCol   = slinkyPulseA11y0916.col('marker');
+var lineW1 = clamp(Math.round(M1 * 4), 1, 6), lineW2 = clamp(Math.round(M2 * 4), 1, 6);
+for (var i = 0; i < nCoils; i++) {
+var ratio = coilRatios[i], col;
+if (ratio < 1) col = lerpColor(compressCol, neutralCol, clamp((ratio - 0.9) / 0.1, 0, 1));
+else col = lerpColor(neutralCol, stretchCol, clamp((ratio - 1) / 0.1, 0, 1));
+ctx.beginPath();
+ctx.ellipse(coilXs[i], centerY, coilRX, coilRY, 0, 0, 2 * Math.PI);
+ctx.lineWidth = (i < ib) ? lineW1 : lineW2; ctx.strokeStyle = col; ctx.stroke();
+if (showMarkerFlag && markedCoils.indexOf(i) !== -1) {
+ctx.beginPath();
+ctx.ellipse(coilXs[i], centerY, coilRX + 3, coilRY + 3, 0, 0, 2 * Math.PI);
+ctx.lineWidth = 2; ctx.strokeStyle = markerCol; ctx.stroke();
+}
+}
+}
+function drawBoundary(col) {
+var b = boundaryPx();
+ctx.strokeStyle = col; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.moveTo(b, yBase - 40); ctx.lineTo(b, yBase + 200); ctx.stroke();
+ctx.setLineDash([]);
+ctx.font = varFont; ctx.fillStyle = col; ctx.textAlign = 'center';
+ctx.fillText('junction', b, yBase - 46);
+ctx.textAlign = 'left';
+}
+function drawLabels() {
+if (!showLabelsFlag) return;
+ctx.font = 'bold 11pt Calibri'; ctx.textAlign = 'center';
+var b = boundaryPx();
+if (t < tb) {
+var xi = xBase + v1 * t;
+if (xi >= xBase && xi <= b) {
+ctx.fillStyle = slinkyPulseA11y0916.col('rope');
+ctx.fillText('incident', xi, centerY - 70);
+}
+} else {
+var xr = b - v1 * (t - tb);
+if (xr >= xBase && xr <= b) {
+ctx.fillStyle = slinkyPulseA11y0916.col('compress');
+ctx.fillText('reflected', xr, centerY - 70);
+}
+var xtm = b + v2 * (t - tb);
+if (xtm >= b && xtm <= xBase + (nCoils - 1) * coilSpacing) {
+ctx.fillStyle = slinkyPulseA11y0916.col('stretch');
+ctx.fillText('transmitted', xtm, centerY - 70);
+}
+}
+ctx.textAlign = 'left';
+}
+/* ── The hand, pushing/pulling once to launch the pulse ── */
+function handR(hx, hy, hw0, hh0, col) {
+ctx.fillStyle = col; ctx.strokeStyle = col;
+ctx.beginPath();
+ctx.moveTo(hx + (36 - 65) * hw0 / 65, hy + 0 * hh0 / 41);
+ctx.lineTo(hx + (44 - 65) * hw0 / 65, hy + 0 * hh0 / 41);
+ctx.lineTo(hx + (46 - 65) * hw0 / 65, hy + 1 * hh0 / 41);
+ctx.lineTo(hx + (51 - 65) * hw0 / 65, hy + 1 * hh0 / 41);
+ctx.lineTo(hx + (56 - 65) * hw0 / 65, hy + 2 * hh0 / 41);
+ctx.lineTo(hx + (62 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (63 - 65) * hw0 / 65, hy + 10 * hh0 / 41);
+ctx.lineTo(hx + (64 - 65) * hw0 / 65, hy + 12 * hh0 / 41);
+ctx.lineTo(hx + (65 - 65) * hw0 / 65, hy + 16 * hh0 / 41);
+ctx.lineTo(hx + (61 - 65) * hw0 / 65, hy + 17 * hh0 / 41);
+ctx.lineTo(hx + (56 - 65) * hw0 / 65, hy + 17 * hh0 / 41);
+ctx.lineTo(hx + (57 - 65) * hw0 / 65, hy + 20 * hh0 / 41);
+ctx.lineTo(hx + (56 - 65) * hw0 / 65, hy + 22 * hh0 / 41);
+ctx.lineTo(hx + (54 - 65) * hw0 / 65, hy + 24 * hh0 / 41);
+ctx.lineTo(hx + (51 - 65) * hw0 / 65, hy + 24 * hh0 / 41);
+ctx.lineTo(hx + (50 - 65) * hw0 / 65, hy + 27 * hh0 / 41);
+ctx.lineTo(hx + (49 - 65) * hw0 / 65, hy + 27 * hh0 / 41);
+ctx.lineTo(hx + (48 - 65) * hw0 / 65, hy + 28 * hh0 / 41);
+ctx.lineTo(hx + (47 - 65) * hw0 / 65, hy + 28 * hh0 / 41);
+ctx.lineTo(hx + (47 - 65) * hw0 / 65, hy + 33 * hh0 / 41);
+ctx.lineTo(hx + (46 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.lineTo(hx + (43 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.lineTo(hx + (42 - 65) * hw0 / 65, hy + 36 * hh0 / 41);
+ctx.lineTo(hx + (38 - 65) * hw0 / 65, hy + 36 * hh0 / 41);
+ctx.lineTo(hx + (38 - 65) * hw0 / 65, hy + 37 * hh0 / 41);
+ctx.lineTo(hx + (37 - 65) * hw0 / 65, hy + 36 * hh0 / 41);
+ctx.lineTo(hx + (36 - 65) * hw0 / 65, hy + 37 * hh0 / 41);
+ctx.lineTo(hx + (34 - 65) * hw0 / 65, hy + 38 * hh0 / 41);
+ctx.lineTo(hx + (32 - 65) * hw0 / 65, hy + 39 * hh0 / 41);
+ctx.lineTo(hx + (30 - 65) * hw0 / 65, hy + 39 * hh0 / 41);
+ctx.lineTo(hx + (27 - 65) * hw0 / 65, hy + 38 * hh0 / 41);
+ctx.lineTo(hx + (20 - 65) * hw0 / 65, hy + 34 * hh0 / 41);
+ctx.lineTo(hx + (15 - 65) * hw0 / 65, hy + 33 * hh0 / 41);
+ctx.lineTo(hx + (11 - 65) * hw0 / 65, hy + 33 * hh0 / 41);
+ctx.lineTo(hx + (0 - 65) * hw0 / 65, hy + 32 * hh0 / 41);
+ctx.lineTo(hx + (0 - 65) * hw0 / 65, hy + 9 * hh0 / 41);
+ctx.lineTo(hx + (4 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (17 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (25 - 65) * hw0 / 65, hy + 4 * hh0 / 41);
+ctx.lineTo(hx + (27 - 65) * hw0 / 65, hy + 3 * hh0 / 41);
+ctx.lineTo(hx + (35 - 65) * hw0 / 65, hy + 0 * hh0 / 41);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+ctx.beginPath();
+ctx.moveTo(hx + (0 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.lineTo(hx + (0 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (10 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (10 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+}
+function displayWaveData(x, y, w, h) {
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#cc99cc'; ctx.strokeStyle = '#000'; ctx.lineWidth = 0;
+ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = '#000'; ctx.textAlign = 'left';
+ctx.fillText('Slinky 1: K=' + K1.toFixed(2) + ' N/m, M=' + M1.toFixed(1) + ' kg (v\u2081=' + v1.toFixed(2) + ' m/s)  |  Slinky 2: K=' + K2.toFixed(2) + ' N/m, M=' + M2.toFixed(1) + ' kg (v\u2082=' + v2.toFixed(2) + ' m/s)', x + 6, y + 10);
+var rNote = (r < -0.02) ? ' (reflected pulse flips)' : (r > 0.02 ? ' (reflected pulse upright)' : ' (no reflection)');
+ctx.fillText('r = ' + r.toFixed(2) + rNote + ',  \u03C4 = ' + tau.toFixed(2), x + 6, y + 26);
+var Ai = dirSign() * Amag, Ar = Ai * r, At = Ai * tau;
+ctx.fillText('Incident A=' + Ai.toFixed(1) + ' cm,  Reflected A=' + Ar.toFixed(1) + ' cm,  Transmitted A=' + At.toFixed(1) + ' cm', x + 6, y + 42);
+}
+function displayEnd(x, y, w, h) {
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffff66'; ctx.strokeStyle = '#00f'; ctx.lineWidth = 0;
+ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = '#cc0000'; ctx.textAlign = 'left';
+ctx.fillText('Pulse has left the slinkies.', x + 6, y + 10);
+ctx.fillText('Press Send Pulse', x + 6, y + 30);
+ctx.fillText('to send another.', x + 6, y + 50);
+}
+function drawCaliperReadout(cx, cy, text, col) {
+ctx.font = varFont;
+var padX = 6, padY = 4;
+var tw = ctx.measureText(text).width;
+var boxW = tw + 2 * padX, boxH = 16 + 2 * padY;
+var bx0 = cx - boxW / 2, by0 = cy - boxH / 2;
+ctx.fillStyle = '#ffffff'; ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.rect(bx0, by0, boxW, boxH); ctx.fill(); ctx.stroke();
+ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(text, cx, cy + 1);
+ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+return { x: bx0, y: by0, w: boxW, h: boxH };
+}
+function drawDot(cx, cy, r0, col) {
+ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1;
+ctx.beginPath(); ctx.arc(cx, cy, r0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+}
+function drawXCaliper(col) {
+var y = xCal.by, x1 = xCal.x1, x2 = xCal.x2, h = xCal.jawH;
+var lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 3;
+ctx.beginPath(); ctx.moveTo(lo, y); ctx.lineTo(hi, y); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x1, y - h / 2); ctx.lineTo(x1, y + h / 2); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x2, y - h / 2); ctx.lineTo(x2, y + h / 2); ctx.stroke();
+drawDot(x1, y, 5, col); drawDot(x2, y, 5, col);
+mWLength = (Math.abs(x2 - x1) / 100).toFixed(2);          /* 100 px/m, a simple fixed on-screen scale */
+xCal.box = drawCaliperReadout((x1 + x2) / 2, y - h / 2 - 16, '\u0394x = ' + mWLength + ' m', col);
+}
+function hitTest(px0, py0, x, y, r0) { var dx = px0 - x, dy = py0 - y; return (dx * dx + dy * dy) <= r0 * r0; }
+function pointInBox(px0, py0, box) { return box && px0 >= box.x && px0 <= box.x + box.w && py0 >= box.y && py0 <= box.y + box.h; }
+function checkIfCaliper(x, y) {
+var jawR = 9;
+if (!addXCalFlag) return;
+if (hitTest(x, y, xCal.x1, xCal.by, jawR)) { dragging = { part: 'j1' }; return; }
+if (hitTest(x, y, xCal.x2, xCal.by, jawR)) { dragging = { part: 'j2' }; return; }
+if (pointInBox(x, y, xCal.box)) { dragging = { part: 'beam' }; return; }
+}
+function draw() {
+if (index >= stopIndex) { runFlag = 0; setPlayLabel(false); }
+ctx.clearRect(0, 0, CW, CH);
+if (runFlag === 1) index = index + 1;
+var axisCol = slinkyPulseA11y0916.col('axis');
+ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, CW, CH);
+var b = boundaryPx();
+ctx.fillStyle = '#eef6ff'; ctx.fillRect(xBase - 20, yBase - 40, b - (xBase - 20), 240);
+ctx.fillStyle = '#fff3e6'; ctx.fillRect(b, yBase - 40, xBase + (nCoils - 1) * coilSpacing - b + 20, 240);
+addGrid(2 * CH, CW, 10, 10, 0, 0, '#dddddd');
+addXYaxis(CH, CW, CH / 4, CW / 4, axisCol);
+t = index / tactual;
+computeCoilGeometry();
+drawBoundary(slinkyPulseA11y0916.col('boundary'));
+drawSlinky();
+drawLabels();
+if (showWaveDataFlag) displayWaveData(0.03 * mx, 0, 1.55 * mx, 56);
+if (runFlag === 0 && index >= stopIndex) displayEnd(1.6 * mx, my + 45, 0.4 * mx, 64);
+handR(coilPos(0).x - 2, centerY - 2, hw, hh, slinkyPulseA11y0916.col('hand'));
+if (addXCalFlag) drawXCaliper(slinkyPulseA11y0916.col('vrule'));
+}
+function narrate() {
+var rNote = (r < -0.02) ? 'reflected pulse flips' : (r > 0.02 ? 'reflected pulse upright' : 'no reflection');
+var msg = 'Slinky 1: K=' + K1.toFixed(2) + ' N/m, M=' + M1.toFixed(1) + ' kg, v=' + v1.toFixed(2) + ' m/s. ';
+msg += 'Slinky 2: K=' + K2.toFixed(2) + ' N/m, M=' + M2.toFixed(1) + ' kg, v=' + v2.toFixed(2) + ' m/s. ';
+msg += 'Reflection coefficient r=' + r.toFixed(2) + ' (' + rNote + '), transmission \u03C4=' + tau.toFixed(2) + '.';
+slinkyPulseA11y0916.narrate(msg);
+}
+function setPlayLabel(isPlaying) {
+var b = document.getElementById('slinkyPulsePlayBtn0916'); if (!b) return;
+b.innerHTML = isPlaying ? '\u23F8 Pause' : '\u25B6 Resume';
+b.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+}
+function runSim() { draw(); if (runFlag === 1) timer = window.setTimeout(runSim, runRate); }
+function play() {
+window.clearTimeout(timer);
+runFlag = 1; setPlayLabel(true);
+runSim();
+}
+function pause() {
+window.clearTimeout(timer);
+runFlag = 0; setPlayLabel(false);
+slinkyPulseA11y0916.narrate('Paused.');
+}
+function togglePlay() { if (runFlag === 1) pause(); else play(); }
+function stepForward() { window.clearTimeout(timer); runFlag = 1; draw(); runFlag = 0; setPlayLabel(false); }
+function stepBack() {
+window.clearTimeout(timer);
+index = index - 2; if (index < -1) index = -1;
+runFlag = 1; draw(); runFlag = 0; setPlayLabel(false);
+}
+function reset() {
+window.clearTimeout(timer);
+index = -1; t = 0;
+recompute(); runFlag = 0; setPlayLabel(false);
+draw();
+slinkyPulseA11y0916.narrate('Slinky cleared. Press Send Pulse when ready.');
+}
+function sendPulse() {
+window.clearTimeout(timer);
+index = -1; t = 0;
+recompute();
+runFlag = 1; setPlayLabel(true);
+slinkyPulseA11y0916.narrate('Pulse sent.');
+runSim();
+}
+function setDirection(d) { direction = d; draw(); narrate(); }
+function setAmp(val) { Amag = parseFloat(val); document.getElementById('ampValue0916').innerHTML = Amag.toFixed(0); draw(); narrate(); }
+function setK1(val)  { K1 = parseFloat(val); document.getElementById('k1Value0916').innerHTML = K1.toFixed(2); deriveK2M2(); recompute(); reset(); narrate(); }
+function setM1(val)  { M1 = parseFloat(val); document.getElementById('m1Value0916').innerHTML = M1.toFixed(1); deriveK2M2(); recompute(); reset(); narrate(); }
+function setN2(val)  { n2 = parseFloat(val); document.getElementById('n2Value0916').innerHTML = n2.toFixed(1); deriveK2M2(); recompute(); reset(); narrate(); }
+function setLabel(spanId, checked, baseText) {
+var el = document.getElementById(spanId);
+if (el) el.textContent = (checked ? 'Hide ' : 'Show ') + baseText;
+}
+function toggleMarker(cb) {
+showMarkerFlag = cb.checked ? 1 : 0; draw();
+setLabel('markerLbl0916', cb.checked, 'tracked-coil markers');
+slinkyPulseA11y0916.narrate('Tracked-coil markers ' + (cb.checked ? 'shown. Watch them \u2014 they shift briefly as the pulse passes, then settle back; they never travel with the pulse.' : 'hidden.'));
+}
+function toggleDeltaX(cb) {
+addXCalFlag = cb.checked ? 1 : 0; draw();
+setLabel('dxLbl0916', cb.checked, 'horizontal caliper (\u0394x)');
+slinkyPulseA11y0916.narrate('Horizontal-distance caliper ' + (cb.checked ? 'shown, with a live reading.' : 'hidden.'));
+}
+function toggleLabels(cb) { showLabelsFlag = cb.checked ? 1 : 0; draw(); setLabel('labelsLbl0916', cb.checked, 'pulse labels'); }
+function toggleWaveData(cb) { showWaveDataFlag = cb.checked ? 1 : 0; draw(); setLabel('waveDataLbl0916', cb.checked, 'wave-data panel'); }
+function reactionDown(x, y) {
+var r0 = canvas.getBoundingClientRect(); x = (x - r0.left)*canvas.width/r0.width; y = (y - r0.top)*canvas.height/r0.height;   /* canvas units, whatever its displayed size */
+canvas.style.cursor = 'pointer';
+checkIfCaliper(x, y);
+}
+function reactionMove(x, y) {
+var r0 = canvas.getBoundingClientRect(); x = (x - r0.left)*canvas.width/r0.width; y = (y - r0.top)*canvas.height/r0.height;   /* canvas units, whatever its displayed size */
+if (!dragging) return;
+canvas.style.cursor = 'pointer';
+if (dragging.part === 'j1') xCal.x1 = x;
+else if (dragging.part === 'j2') xCal.x2 = x;
+else if (dragging.part === 'beam') xCal.by = y;
+draw();
+}
+function reactionUp() {
+var msg = dragging ? ('Horizontal distance: \u0394x = ' + mWLength + ' m.') : null;
+dragging = null;
+canvas.style.cursor = 'default';
+if (msg) slinkyPulseA11y0916.narrate(msg);
+}
+function init() {
+canvas.onmousedown = function (e) { reactionDown(e.clientX, e.clientY); };
+canvas.onmouseup   = reactionUp;
+canvas.onmousemove = function (e) { reactionMove(e.clientX, e.clientY); };
+canvas.ontouchstart = function (e) { var o = e.changedTouches[0]; reactionDown(o.clientX, o.clientY);
+  /* only a touch on a tool takes over the finger; elsewhere the page scrolls */
+  canvas._grab = (typeof dragging !== 'undefined' && !!dragging) || (typeof wrf !== 'undefined' && wrf === 1) || (typeof arf !== 'undefined' && arf === 1) || (typeof drf !== 'undefined' && drf === 1);
+  if (canvas._grab) e.preventDefault(); };
+canvas.ontouchend   = function () { canvas._grab = false; reactionUp(); };
+canvas.ontouchmove  = function (e) { if (!canvas._grab) return; var o = e.changedTouches[0]; reactionMove(o.clientX, o.clientY); e.preventDefault(); };
+deriveK2M2();
+recompute();
+draw();
+}
+window.setTimeout(function () { init(); narrate(); }, 0);
+return {
+togglePlay: togglePlay, stepForward: stepForward, stepBack: stepBack, reset: reset, sendPulse: sendPulse,
+setDirection: setDirection, setAmp: setAmp, setK1: setK1, setM1: setM1, setN2: setN2,
+toggleMarker: toggleMarker, toggleDeltaX: toggleDeltaX, toggleLabels: toggleLabels, toggleWaveData: toggleWaveData
+};
+})();
+</script>
+<script>
+slinkyPulseA11y0916.init();
+slinkyPulseA11y0916.narrate('Pulse sim ready. Set the direction, amplitude, and each slinky\u2019s spring properties, then press Send Pulse to watch it split at the junction.');
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap0916">
+<button type="button" class="mob_descbtn0916" id="mobDescBtn0916" aria-expanded="false" aria-controls="mobDesc0916" onclick="mobDesc0916()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc0916" id="mobDesc0916" role="region" aria-labelledby="mobDescBtn0916" style="display:none">
+<p>This simulation sends a single pulse along two slinkies joined end to end. The pulse is longitudinal: the coils are pushed together (a compression) or pulled apart, along the direction the pulse travels. The spring constants and masses of the slinkies can be changed.</p>
+<p>The speed of a pulse on a slinky depends on its stiffness and its mass. For a slinky of length `L`, spring constant `K` and mass `M`,</p>
+<p class="mob_eq0916">`v = L sqrt(K/M)`.</p>
+<p>At the joint, part of the pulse is reflected and part is transmitted into the second slinky, just as for two ropes. Going into a slower slinky, the reflected pulse comes back inverted (a push returns as a pull).</p>
+<p>The tracked coils and the caliper help measure how far and how fast the pulse travels in each slinky.</p>
+</div>
+</div>
+<script>
+function mobDesc0916(){
+var b = document.getElementById('mobDescBtn0916'), d = document.getElementById('mobDesc0916'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobw97700916 { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (663 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:703px) {
+#mobw97700916 div, #mobw97700916 p, #mobw97700916 fieldset, #mobw97700916 form, #mobw97700916 section, #mobw97700916 ol, #mobw97700916 ul, #mobw97700916 table { max-width:100%; box-sizing:border-box; }
+#mobw97700916 canvas, #mobw97700916 img, #mobw97700916 svg { max-width:100%; height:auto !important; }
+#mobw97700916 input[type=range], #mobw97700916 select { max-width:100%; min-width:0; }
+#mobw97700916 #slinkyPulseRoot0916 .sn_a11y0916, #mobw97700916 .playbar0916, #mobw97700916 .bbar0916, #mobw97700916 .footer0916 { flex-wrap:wrap; }
+#mobw97700916 #slinkyPulseRoot0916 .sn_a11y0916 > div, #mobw97700916 .playbar0916 > div, #mobw97700916 .bbar0916 > div, #mobw97700916 .footer0916 > div { min-width:min(100%, 260px); }
+#mobw97700916 div[style*="height"] { height:auto !important; }
+#mobw97700916 .tbar0916, #mobw97700916 .mcontent0916, #mobw97700916 .footer0916 { height:auto; min-height:0; }
+#mobw97700916 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:723px) {
+#mobw97700916 div, #mobw97700916 p, #mobw97700916 fieldset, #mobw97700916 form, #mobw97700916 section, #mobw97700916 ol, #mobw97700916 ul, #mobw97700916 table { max-width:100%; box-sizing:border-box; }
+#mobw97700916 canvas, #mobw97700916 img, #mobw97700916 svg { max-width:100%; height:auto !important; }
+#mobw97700916 input[type=range], #mobw97700916 select { max-width:100%; min-width:0; }
+#mobw97700916 #slinkyPulseRoot0916 .sn_a11y0916, #mobw97700916 .playbar0916, #mobw97700916 .bbar0916, #mobw97700916 .footer0916 { flex-wrap:wrap; }
+#mobw97700916 #slinkyPulseRoot0916 .sn_a11y0916 > div, #mobw97700916 .playbar0916 > div, #mobw97700916 .bbar0916 > div, #mobw97700916 .footer0916 > div { min-width:min(100%, 260px); }
+#mobw97700916 div[style*="height"] { height:auto !important; }
+#mobw97700916 .tbar0916, #mobw97700916 .mcontent0916, #mobw97700916 .footer0916 { height:auto; min-height:0; }
+#mobw97700916 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobw97700916 button, #mobw97700916 input[type=button], #mobw97700916 input[type=submit], #mobw97700916 input[type=reset] { min-height:40px; }
+#mobw97700916 input[type=range] { height:28px; }
+#mobw97700916 input[type=checkbox], #mobw97700916 input[type=radio] { width:22px; height:22px; }
+#mobw97700916 select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobw97700916 .mob_a11ytop0916 { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobw97700916 .mob_a11ytop0916 input[type=button], #mobw97700916 .mob_a11ytop0916 button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobw97700916 .mob_descwrap0916 { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobw97700916 .mob_descbtn0916 { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobw97700916 .mob_descbtn0916[aria-expanded="true"] { background:#3a3220; }
+#mobw97700916 .mob_desc0916 { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobw97700916 .mob_desc0916 p { margin:0 0 9px 0; }
+#mobw97700916 .mob_eq0916 { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobw97700916 -->
+</body></html>

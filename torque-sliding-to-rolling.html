@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Rotation: From Sliding to Rolling</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation in three steps: the velocities of the points of a wheel, kinetic friction and its torque, and how the shape decides the rolling speed.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="rlRoot" class="rl_root" role="region" aria-label="From sliding to rolling: velocities, friction and torque">
+<div class="rl_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="rl_a11ybtn" id="rlBtnHC" onclick="rlSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rl_a11ybtn" id="rlBtnLM" onclick="rlSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rl_a11ybtn" id="rlBtnCB" onclick="rlSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rl_a11ybtn rl_a11yon" id="rlBtnNR" onclick="rlSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="rl_header"><p class="rl_h1">From Sliding to Rolling</p><p class="rl_sub">velocities of a wheel &middot; kinetic friction and its torque &middot; what decides the rolling</p></div>
+<div class="rl_tabs" role="tablist" aria-label="Steps">
+<button type="button" role="tab" class="rl_tab" id="rlTab0" aria-selected="true" onclick="rlSim.tab(0)">1. Velocities of three points</button>
+<button type="button" role="tab" class="rl_tab" id="rlTab1" aria-selected="false" onclick="rlSim.tab(1)">2. Kinetic friction and its torque</button>
+<button type="button" role="tab" class="rl_tab" id="rlTab2" aria-selected="false" onclick="rlSim.tab(2)">3. What decides the rolling</button>
+</div>
+<div class="rl_diag"><div class="rl_dlabel"><b id="rlTitle">THE WHEEL</b><span id="rlHint"></span></div><canvas id="rlScene" width="780" height="330" role="img" aria-label="The wheel on the ground, with arrows for the velocities or the forces." aria-describedby="rlStatus"></canvas></div>
+<div class="rl_bbar"><button type="button" class="rl_btn rl_btnon" id="rlPlay">&#9654; Run</button><button type="button" class="rl_btn" id="rlStep">Step &#9656;</button><button type="button" class="rl_btn" id="rlReset">Reset</button><label>speed <input type="range" id="rlSpd" min="0.05" max="1" step="0.05" value="0.5" style="width:110px"> <span id="rlSpdV">0.50&times;</span></label><span id="rlPresets"></span></div>
+<div class="rl_status" id="rlStatus" role="status" aria-live="polite"></div>
+<div class="rl_diag"><div class="rl_dlabel"><b id="rlGTitle">GRAPH</b><span id="rlGHint"></span></div><canvas id="rlGraph" width="780" height="240" role="img" aria-label="A graph for this step: the velocity along the wheel's vertical diameter, or the speeds against time."></canvas></div>
+<div class="rl_panels"><div class="rl_panel"><div class="rl_ptitle">Settings</div><div class="rl_pbody" id="rlCtl"></div></div>
+<div class="rl_panel"><div class="rl_ptitle">Readout</div><div class="rl_pbody" id="rlRead"></div></div></div>
+<div class="rl_eqs" id="rlEq"></div>
+<div id="rlNar" class="rl_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="rl_descwrap">
+<button type="button" class="rl_descbtn" id="rlDescBtn" aria-expanded="false" aria-controls="rlDesc" onclick="rlSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="rl_desc" id="rlDesc" role="region" aria-labelledby="rlDescBtn" style="display:none">
+<p><b>1. Velocities of three points.</b> Every point of a wheel moves with the centre, at `v`, and also turns around the centre, at `omega R` on the rim, forward at the top and backward at the bottom. So the top moves at `v + omega R`, the centre at `v`, and the contact point at `v - omega R`. The wheel <b>rolls without slipping</b> when the contact point is momentarily at rest: `v = omega R`. Then the top moves at `2v`. If `v > omega R` the wheel slides forward on the ground; if `v < omega R` it spins.</p>
+<p><b>2. Kinetic friction and its torque.</b> A wheel thrown without spin slides: its contact point moves forward over the ground, so kinetic friction `f = mu_k m g` acts backward, at the contact point. That one force does two things. It slows the centre: `a = -f/m = -mu_k g`. And, because it acts at a distance `R` below the centre, it exerts a torque `tau = f R`, which spins the wheel up: `alpha = tau/I`. The slipping `v - omega R` shrinks; when it reaches zero, the contact point stops slipping, kinetic friction stops, and the wheel rolls on at constant speed.</p>
+<p><b>3. What decides the rolling.</b> With `I = c m R^2` (`c = 1/2` for a solid cylinder, `2/5` for a solid sphere, `1` for a thin cylindrical shell, `2/3` for a thin spherical shell), the wheel starts rolling after `t = v_0 c / (mu_k g (1 + c))`, at the speed `v = v_0 / (1 + c)`. The final speed depends only on the shape: not on the friction, the mass or the radius. Friction turns a fraction `c/(1 + c)` of the kinetic energy into heat; the rest is shared between translation and rotation.</p>
+</div></div>
+</div><!-- #rlRoot -->
+<style>
+#rlRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#rlRoot * { box-sizing:border-box; }
+#rlRoot.rl_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#rlRoot.rl_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#rlRoot .rl_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#rlRoot .rl_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#rlRoot .rl_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#rlRoot .rl_header { text-align:center; }
+#rlRoot .rl_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#rlRoot .rl_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#rlRoot .rl_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#rlRoot .rl_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#rlRoot .rl_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#rlRoot .rl_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#rlRoot .rl_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#rlRoot .rl_dlabel b { color:var(--c-accent); }
+#rlRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#rlRoot .rl_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#rlRoot .rl_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#rlRoot .rl_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#rlRoot .rl_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#rlRoot .rl_btn:hover { border-color:var(--c-accent); }
+#rlRoot .rl_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#rlRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#rlRoot .rl_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#rlRoot .rl_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#rlRoot .rl_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#rlRoot .rl_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#rlRoot .rl_ctrl { display:flex; flex-direction:column; gap:3px; }
+#rlRoot .rl_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#rlRoot .rl_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#rlRoot .rl_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#rlRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#rlRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rlRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rlRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#rlRoot .rl_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#rlRoot .rl_rkey { color:var(--c-dim); }
+#rlRoot .rl_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#rlRoot .rl_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#rlRoot .rl_eqs b { color:var(--c-val); }
+#rlRoot .rl_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#rlRoot .rl_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#rlRoot .rl_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#rlRoot .rl_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#rlRoot .rl_desc p { margin:0 0 9px; }
+#rlRoot .rl_eq { text-align:center; font-size:1rem; }
+#rlRoot button:focus-visible, #rlRoot input:focus-visible, #rlRoot select:focus-visible, #rlRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #rlRoot .rl_row2, #rlRoot .rl_panels { grid-template-columns:minmax(0,1fr); } #rlRoot .rl_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #rlRoot input[type=range] { height:8px; } #rlRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #rlRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #rlRoot .rl_a11ybtn { min-height:40px; } #rlRoot input[type=checkbox] { width:22px; height:22px; } }
+#rlRoot .rl_chk { display:flex; gap:6px; align-items:center; font-size:.8rem; color:var(--c-text); }
+#rlRoot .rl_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#rlRoot .rl_tbl { width:100%; border-collapse:collapse; font-size:.74rem; }
+#rlRoot .rl_tbl th, #rlRoot .rl_tbl td { padding:3px 5px; border-bottom:1px solid var(--c-bd); text-align:right; color:var(--c-text); }
+#rlRoot .rl_tbl th { color:var(--c-dim); font-weight:normal; }
+</style>
+<!-- ════════ SIMULATION ════════
+SI units. A wheel of radius R, mass m, I = c m R^2, on level ground, g = 9.8 m/s^2. Slip velocity u = v - omega R (of the contact point).
+While u is not 0: kinetic friction f = mu m g, opposite to u: dv/dt = -sgn(u) mu g, d omega/dt = +sgn(u) mu g/(c R). When u reaches 0: rolling, v constant.
+No dollar signs or backticks in the code.
+-->
+<script>
+var rlSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('rlRoot'), DPR = window.devicePixelRatio || 1, G = 9.8;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CS = hi('rlScene'), CG = hi('rlGraph');
+var th = { hc:false, lm:false, cb:false, nr:true }, TAB = 0, play = false, spd = 0.5;
+var SHAPES = [['solid cylinder', 0.5], ['solid sphere', 0.4], ['thin cylindrical shell', 1], ['thin spherical shell', 2/3], ['your own c', 0.8]];
+var K = { v:3, wR:0, R:0.5, x:0, th:0, trace:true, parts:true, pts:[] };   /* tab 1: kinematics */
+var D = { v0:5, w0R:0, mu:0.15, m:2, R:0.5, shape:1, cUser:0.8, t:0, x:0, v:5, w:0, th:0, rolling:false, tRoll:null, hist:[], trace:[] };   /* tab 2 */
+var C = { v0:5, mu:0.15, m:2, R:0.5, t:0, objs:[] };   /* tab 3 */
+function cOf(i){ return i === 4 ? (TAB === 2 ? C.cUser || D.cUser : D.cUser) : SHAPES[i][1]; }
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.1)', ground:'#b5d3b5', tr:'#1f5fd6', rot:'#e07a10', res:'#1d2a36', fr:'#c0392b', N:'#12805a', W:'#6d3fb0', wheel:'#f2a33a', wheel2:'#8a4b0f', slip:'#c2185b', ok:'#12805a' };
+  if (th.cb){ p.tr = '#0072b2'; p.rot = '#e69f00'; p.fr = '#d55e00'; p.N = '#009e73'; p.W = '#cc79a7'; p.slip = '#cc79a7'; }
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.25)'; p.ground = '#334'; p.tr = '#55aaff'; p.rot = '#ffaa00'; p.res = '#fff'; p.fr = '#ff5555'; p.N = '#00ff88'; p.W = '#ff66ff'; p.wheel = '#aa7722'; p.slip = '#ff66ff'; }
+  return p; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function arrow(g, x, y, dx, dy, col, w, label, lpos){ var L = Math.hypot(dx, dy); if (L < 2){ g.fillStyle = col; g.beginPath(); g.arc(x, y, 3.5, 0, 2*Math.PI); g.fill(); if (label) Tx(g, label, x + 6, y - 10, col, 'left', 'bold 11px Arial'); return; }
+  seg(g, x, y, x + dx, y + dy, col, w || 3); var a = Math.atan2(dy, dx), h = 10; g.fillStyle = col; g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx - h*Math.cos(a - 0.4), y + dy - h*Math.sin(a - 0.4)); g.lineTo(x + dx - h*Math.cos(a + 0.4), y + dy - h*Math.sin(a + 0.4)); g.fill();
+  if (label) Tx(g, label, x + dx + (dx >= 0 ? 6 : -6), y + dy + (lpos || 0), col, dx >= 0 ? 'left' : 'right', 'bold 11px Arial'); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('rlNar').textContent = m; }
+function rrow(k, v){ return '<div class="rl_rrow"><span class="rl_rkey">' + k + '</span><span class="rl_rval">' + v + '</span></div>'; }
+function wheel(g, cx, cy, r, ang, p){ /* a wheel with markings, turned by ang (clockwise = rolling forward) */
+  var gr = g.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r); gr.addColorStop(0, '#ffd27a'); gr.addColorStop(1, p.wheel); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, 2*Math.PI); g.fill(); g.strokeStyle = p.wheel2; g.lineWidth = 2; g.stroke();
+  for (var i=0; i<3; i++){ var a = ang + i*Math.PI/3; seg(g, cx - r*Math.cos(a), cy - r*Math.sin(a), cx + r*Math.cos(a), cy + r*Math.sin(a), p.wheel2, 1.5); }
+  g.fillStyle = p.slip; g.beginPath(); g.arc(cx + r*0.82*Math.cos(ang - Math.PI/2), cy + r*0.82*Math.sin(ang - Math.PI/2), Math.max(3, r*0.09), 0, 2*Math.PI); g.fill(); }
+/* ══════════ TAB 1: velocities of three points ══════════ */
+function draw1(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), Rp = 70, gy = H - 60, kv = 26, cx = ((K.x*60) % (W + 2*Rp) + W + 2*Rp) % (W + 2*Rp) - Rp, cy = gy - Rp, wR = K.wR, v = K.v;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H); g.fillStyle = p.ground; g.fillRect(0, gy, W, H - gy); seg(g, 0, gy, W, gy, p.text, 2);
+  if (K.trace && K.pts.length > 1){ [['top', p.rot], ['bot', p.slip]].forEach(function(q){ g.strokeStyle = q[1]; g.lineWidth = 2; g.globalAlpha = 0.55; g.beginPath(); var st = false, lastx = null; K.pts.forEach(function(pt){ var x = pt[q[0] === 'top' ? 0 : 2], y = pt[q[0] === 'top' ? 1 : 3]; if (lastx !== null && Math.abs(x - lastx) > W/2) st = false; if (st) g.lineTo(x, y); else { g.moveTo(x, y); st = true; } lastx = x; }); g.stroke(); g.globalAlpha = 1; }); }
+  wheel(g, cx, cy, Rp, K.th, p);
+  [['top', cy - Rp, 1], ['centre', cy, 0], ['contact', cy + Rp, -1]].forEach(function(q){ var y = q[1], s = q[2], tot = v + s*wR;
+    if (K.parts && s !== 0){ arrow(g, cx, y + (s > 0 ? -16 : 16), v*kv, 0, p.tr, 2.5); arrow(g, cx + v*kv, y + (s > 0 ? -16 : 16), s*wR*kv, 0, p.rot, 2.5); }
+    arrow(g, cx, y, tot*kv, 0, p.res, 3.5, q[0] + ': ' + f2(tot, 2) + ' m/s', 0); g.fillStyle = p.res; g.beginPath(); g.arc(cx, y, 4, 0, 2*Math.PI); g.fill(); });
+  if (K.parts) { Tx(g, '\u25A0 translation v (the same everywhere)', 10, 16, p.tr, 'left', 'bold 11px Arial'); Tx(g, '\u25A0 rotation \u03C9R (forward on top, backward at the bottom)', 10, 32, p.rot, 'left', 'bold 11px Arial'); Tx(g, '\u25A0 the sum', 10, 48, p.res, 'left', 'bold 11px Arial'); }
+  var u = v - wR, st = Math.abs(u) < 0.02 ? 'rolling without slipping: the contact point is at rest' : (u > 0 ? 'sliding: the contact point slips forward over the ground' : 'spinning: the contact point slips backward over the ground');
+  Tx(g, st, W/2, H - 22, Math.abs(u) < 0.02 ? p.ok : p.slip, 'center', 'bold 13px Arial');
+  el('rlHint').textContent = 'the arrows: velocity relative to the ground';
+}
+function graph1(){ /* the velocity along the vertical diameter: a straight line from v - wR to v + wR */
+  var g = CG.g, W = CG.W, H = CG.H, p = pal(), cx = 330, top = 24, bot = H - 24, kv = 32; g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  seg(g, cx, top, cx, bot, p.text, 1.5); for (var s=-6; s<=8; s+=2){ var x = cx + s*kv; if (x < 20 || x > W - 200) continue; seg(g, x, bot, x, bot + 5, p.dim, 1); Tx(g, String(s), x, bot + 13, p.dim, 'center', '10px Arial'); }
+  Tx(g, 'velocity (m/s) \u2192', cx + 6*kv, bot + 13, p.dim, 'left', '10px Arial');
+  for (var i=0; i<=10; i++){ var f = i/10, y = bot - f*(bot - top), vv = K.v + (2*f - 1)*K.wR; arrow(g, cx, y, vv*kv, 0, i === 0 ? p.slip : i === 10 ? p.rot : p.res, i % 5 === 0 ? 2.5 : 1.2); }
+  seg(g, cx + (K.v - K.wR)*kv, bot, cx + (K.v + K.wR)*kv, top, p.tr, 1.5, [5, 4]);
+  Tx(g, 'top', cx - 8, top, p.text, 'right', 'bold 11px Arial'); Tx(g, 'centre', cx - 8, (top + bot)/2, p.text, 'right', 'bold 11px Arial'); Tx(g, 'contact', cx - 8, bot, p.text, 'right', 'bold 11px Arial');
+  var X0 = W - 190; Tx(g, 'along the vertical diameter,', X0, 40, p.text, 'left', '12px Arial'); Tx(g, 'the velocity grows in a', X0, 58, p.text, 'left', '12px Arial'); Tx(g, 'straight line from the', X0, 76, p.text, 'left', '12px Arial'); Tx(g, 'contact point to the top.', X0, 94, p.text, 'left', '12px Arial');
+  if (Math.abs(K.v - K.wR) < 0.02) { Tx(g, 'Rolling: the line passes', X0, 130, p.ok, 'left', 'bold 12px Arial'); Tx(g, 'through zero at the ground:', X0, 148, p.ok, 'left', 'bold 12px Arial'); Tx(g, 'the wheel turns about', X0, 166, p.ok, 'left', 'bold 12px Arial'); Tx(g, 'its contact point.', X0, 184, p.ok, 'left', 'bold 12px Arial'); }
+}
+function info1(){ var u = K.v - K.wR, w = K.wR/K.R;
+  el('rlRead').innerHTML = rrow('speed of the centre v', f2(K.v, 2) + ' m/s') + rrow('spin \u03C9 (\u03C9R on the rim)', f2(w, 2) + ' rad/s (' + f2(K.wR, 2) + ' m/s)') + rrow('top: v + \u03C9R', f2(K.v + K.wR, 2) + ' m/s') + rrow('contact point: v \u2212 \u03C9R', f2(u, 2) + ' m/s') + rrow('state', Math.abs(u) < 0.02 ? 'rolling without slipping' : u > 0 ? 'sliding forward (v > \u03C9R)' : 'spinning (v < \u03C9R)');
+  el('rlEq').innerHTML = 'Every point moves with the centre (<b>v</b>) and turns around it (<b>\u03C9R</b> on the rim). Top: <b>v + \u03C9R</b>. Contact point: <b>v \u2212 \u03C9R</b>. Rolling without slipping: the contact point is at rest, <b>v = \u03C9R</b>, and the top moves at 2v.';
+  el('rlStatus').innerHTML = Math.abs(u) < 0.02 ? '<b style="color:' + pal().ok + '">v = \u03C9R: rolling without slipping.</b> The contact point does not move; the top moves twice as fast as the centre.' : 'The contact point moves at <b>' + f2(u, 2) + ' m/s</b> over the ground: it ' + (u > 0 ? 'slides forward. Spin the wheel faster, or slow it, to make it roll.' : 'slips backward: the wheel spins too fast for its speed.'); }
+/* ══════════ TAB 2: kinetic friction and its torque ══════════ */
+function cD(){ return D.shape === 4 ? D.cUser : SHAPES[D.shape][1]; }
+function reset2(){ D.t = 0; D.x = 0; D.v = D.v0; D.w = D.w0R/D.R; D.th = 0; D.rolling = Math.abs(D.v0 - D.w0R) < 1e-9; D.tRoll = D.rolling ? 0 : null; D.hist = [[0, D.v, D.w*D.R]]; D.trace = []; }
+function step2(dt){ /* while slipping: friction opposes the slip; it stops when the slip reaches zero */
+  var c = cD(), h = 0.001;
+  while (dt > 1e-12){ var d = Math.min(h, dt); dt -= d;
+    if (!D.rolling){ var u = D.v - D.w*D.R, s = u > 0 ? 1 : -1, a = -s*D.mu*G, al = s*D.mu*G/(c*D.R), u2 = (D.v + a*d) - (D.w + al*d)*D.R;
+      if (u*u2 <= 0){ var fr = u/(u - u2); D.v += a*d*fr; D.w += al*d*fr; D.rolling = true; D.tRoll = D.t + d*fr; D.w = D.v/D.R; D.x += D.v*d; D.th += D.w*d; D.t += d; rolledNow(); continue; }
+      D.v += a*d; D.w += al*d; }
+    D.x += D.v*d; D.th += D.w*d; D.t += d;
+    var last = D.hist[D.hist.length - 1]; if (D.t - last[0] > 0.01) D.hist.push([D.t, D.v, D.w*D.R]); } }
+function rolledNow(){ narrate('Rolling starts at t = ' + f2(D.tRoll, 2) + ' s: the slip has reached zero, so kinetic friction stops. The wheel rolls on at ' + f2(D.v, 2) + ' m/s, with no force and no torque on it.'); }
+function draw2(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), gy = H - 70, sc = 70/D.R, Rp = 70, cam = Math.max(0, D.x*sc - W*0.4), cx = 90 + D.x*sc - cam, cy = gy - Rp;   /* zoomed so that the wheel always draws 70 px in radius */
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H); g.fillStyle = p.ground; g.fillRect(0, gy, W, H - gy); seg(g, 0, gy, W, gy, p.text, 2);
+  var stp = sc > 250 ? 0.25 : sc > 120 ? 0.5 : 1; for (var m=Math.floor(cam/sc/stp)*stp; m*sc - cam < W; m+=stp){ var xm = 90 + m*sc - cam; seg(g, xm, gy, xm, gy + 6, p.text, 1); Tx(g, f2(m, stp < 1 ? 2 : 0), xm, gy + 16, p.text, 'center', '10px Arial'); } Tx(g, 'm', W - 10, gy + 16, p.text, 'right', '10px Arial');
+  D.trace.push([D.x, D.th]); if (D.trace.length > 4000) D.trace.shift();
+  g.strokeStyle = p.slip; g.lineWidth = 2; g.globalAlpha = 0.5; g.beginPath(); D.trace.forEach(function(q, i){ var px = 90 + q[0]*sc - cam + Rp*0.82*Math.cos(q[1] - Math.PI/2), py = cy + Rp*0.82*Math.sin(q[1] - Math.PI/2); if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.stroke(); g.globalAlpha = 1;
+  wheel(g, cx, cy, Rp, D.th, p);
+  var u = D.v - D.w*D.R, kf = 26, f = D.rolling ? 0 : D.mu*D.m*G, s = u > 0 ? 1 : -1;
+  /* the forces: weight, normal, friction at the contact point; the torque of friction about the centre */
+  /* fixed, readable lengths: weight and normal 60 px; friction 30 + 120 mu px */
+  arrow(g, cx - 22, cy, 0, 60, p.W, 3); Tx(g, 'weight mg', cx - 28, cy + 40, p.W, 'right', 'bold 11px Arial');
+  arrow(g, cx + 22, gy, 0, -60, p.N, 3); Tx(g, 'normal N', cx + 28, gy - 40, p.N, 'left', 'bold 11px Arial');
+  if (!D.rolling){ var fl = 30 + 120*D.mu; arrow(g, cx, gy, -s*fl, 0, p.fr, 4); Tx(g, 'kinetic friction f = \u03BC\u2096mg = ' + f2(f, 1) + ' N', cx - s*fl/2, gy + 32, p.fr, 'center', 'bold 11px Arial');
+    var r2 = Rp*0.55; g.strokeStyle = p.fr; g.lineWidth = 2.5; g.beginPath(); if (s > 0) g.arc(cx, cy, r2, -2.4, -0.6); else g.arc(cx, cy, r2, -0.6, -2.4, true); g.stroke();
+    var ea = s > 0 ? -0.6 : -2.4, ex = cx + r2*Math.cos(ea), ey = cy + r2*Math.sin(ea), ta = ea + s*Math.PI/2; g.fillStyle = p.fr; g.beginPath(); g.moveTo(ex + 8*Math.cos(ta), ey + 8*Math.sin(ta)); g.lineTo(ex - 6*Math.cos(ta - 1.3), ey - 6*Math.sin(ta - 1.3)); g.lineTo(ex - 6*Math.cos(ta + 1.3), ey - 6*Math.sin(ta + 1.3)); g.fill();
+    Tx(g, 'torque of friction \u03C4 = fR = ' + f2(f*D.R, 2) + ' N\u00B7m', cx, cy - Rp - 14, p.fr, 'center', 'bold 11px Arial'); }
+  else Tx(g, 'rolling: no friction, no torque', cx, cy - Rp - 16, p.ok, 'center', 'bold 12px Arial');
+  arrow(g, cx, cy - Rp - 40, D.v*kf*0.6, 0, p.tr, 2.5, 'centre: v = ' + f2(D.v, 2) + ' m/s', 0); arrow(g, cx, gy + 52, u*kf*0.6, 0, p.slip, 2.5, 'slip of the contact point: ' + f2(u, 2) + ' m/s', 0);
+  el('rlHint').textContent = 't = ' + f2(D.t, 2) + ' s' + (D.rolling ? ' \u00B7 rolling' : ' \u00B7 sliding');
+}
+function graph2(){
+  var g = CG.g, W = CG.W, H = CG.H, p = pal(), X0 = 50, X1 = W - 14, Y0 = H - 30, Y1 = 14, c = cD(), u0 = D.v0 - D.w0R, tR = Math.abs(u0)/(D.mu*G*(1 + 1/c)), tmax = Math.max(1, tR*1.8), vmax = Math.max(Math.abs(D.v0), Math.abs(D.w0R), 1)*1.15, vmin = Math.min(0, D.w0R, D.v0 - D.w0R, D.v0)*1.15 - 0.2;
+  function X(t){ return X0 + t/tmax*(X1 - X0); } function Y(v){ return Y0 - (v - vmin)/(vmax - vmin)*(Y0 - Y1); }
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); seg(g, X0, Y(0), X1, Y(0), p.text, 1); seg(g, X0, Y0, X0, Y1, p.text, 1);
+  for (var t=0; t<=tmax; t+=tmax > 4 ? 1 : 0.25){ seg(g, X(t), Y0, X(t), Y1, p.grid, 1); Tx(g, f2(t, tmax > 4 ? 0 : 2), X(t), Y0 + 12, p.dim, 'center', '10px Arial'); }
+  for (var v=Math.ceil(vmin); v<=vmax; v++){ seg(g, X0, Y(v), X1, Y(v), p.grid, 1); Tx(g, String(v), X0 - 5, Y(v), p.dim, 'right', '10px Arial'); }
+  [[1, p.tr, 'v (centre)'], [2, p.rot, '\u03C9R (rim)'], [3, p.slip, 'slip v \u2212 \u03C9R']].forEach(function(q, k){ g.strokeStyle = q[1]; g.lineWidth = 2.4; g.beginPath(); D.hist.forEach(function(h, i){ var val = q[0] === 3 ? h[1] - h[2] : h[q[0]], x = X(h[0]); if (i) g.lineTo(x, Y(val)); else g.moveTo(x, Y(val)); }); g.stroke(); Tx(g, q[2], X1 - 4, Y1 + 8 + k*16, q[1], 'right', 'bold 11px Arial'); });
+  if (D.tRoll !== null){ seg(g, X(D.tRoll), Y0, X(D.tRoll), Y1, p.ok, 1.5, [4, 3]); Tx(g, 'rolling starts', X(D.tRoll) + 4, Y1 + 8, p.ok, 'left', 'bold 11px Arial'); }
+  Tx(g, 'time (s)', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial'); g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'speed (m/s)', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+}
+function info2(){ var c = cD(), I = c*D.m*D.R*D.R, f = D.mu*D.m*G, u = D.v - D.w*D.R, tR = Math.abs(D.v0 - D.w0R)/(D.mu*G*(1 + 1/c)), vf = (D.v0 + c*D.w0R)/(1 + c);   /* angular momentum about the contact point is conserved while slipping */
+  el('rlRead').innerHTML = rrow('kinetic friction f = \u03BC\u2096mg', D.rolling ? '0 (rolling)' : f2(f, 2) + ' N') + rrow('acceleration of the centre a = \u2212f/m', D.rolling ? '0' : f2(-Math.sign(u)*f/D.m, 2) + ' m/s\u00B2') + rrow('torque about the centre \u03C4 = fR', D.rolling ? '0' : f2(f*D.R, 3) + ' N\u00B7m')
+    + rrow('moment of inertia I = c\u00B7mR\u00B2', f2(I, 3) + ' kg\u00B7m\u00B2 (c = ' + f2(c, 3) + ')') + rrow('angular acceleration \u03B1 = \u03C4/I', D.rolling ? '0' : f2(Math.sign(u)*f*D.R/I, 2) + ' rad/s\u00B2') + rrow('slip of the contact point', f2(u, 3) + ' m/s') + rrow('rolling starts at', f2(tR, 3) + ' s, at v = ' + f2(vf, 3) + ' m/s');
+  el('rlEq').innerHTML = 'One force, two effects. Kinetic friction <b>f = \u03BC\u2096mg</b> opposes the slipping of the contact point. On the centre: <b>a = \u2212f/m = \u2212\u03BC\u2096g</b>. Acting R below the centre, it exerts a torque <b>\u03C4 = fR</b>, so <b>\u03B1 = \u03C4/I</b>. The slip v \u2212 \u03C9R shrinks to zero: then friction stops, and the wheel rolls.';
+  el('rlStatus').innerHTML = D.rolling ? '<b style="color:' + pal().ok + '">Rolling without slipping</b> since t = ' + f2(D.tRoll, 2) + ' s, at ' + f2(D.v, 2) + ' m/s: no slip, so no kinetic friction, so no torque.' : 'Sliding: the contact point slips ' + (u > 0 ? 'forward' : 'backward') + ' at ' + f2(Math.abs(u), 2) + ' m/s, so kinetic friction acts ' + (u > 0 ? 'backward' : 'forward') + ': it ' + (u > 0 ? 'slows the centre and spins the wheel up.' : 'speeds the centre up and slows the spin down.'); }
+/* ══════════ TAB 3: what decides the rolling ══════════ */
+function reset3(){ C.t = 0; C.objs = SHAPES.map(function(s, i){ return { i:i, c:i === 4 ? D.cUser : s[1], x:0, v:C.v0, w:0, th:0, rolling:false, tRoll:null, xRoll:null, hist:[[0, C.v0]] }; }); }
+function step3(dt){ var h = 0.001;
+  while (dt > 1e-12){ var d = Math.min(h, dt); dt -= d; C.t += d;
+    C.objs.forEach(function(o){ if (!o.rolling){ var u = o.v - o.w*C.R, a = -C.mu*G, al = C.mu*G/(o.c*C.R), u2 = (o.v + a*d) - (o.w + al*d)*C.R;
+        if (u*u2 <= 0){ var fr = u/(u - u2); o.v += a*d*fr; o.w = o.v/C.R; o.rolling = true; o.tRoll = C.t - d + d*fr; o.xRoll = o.x + o.v*d*fr; } else { o.v += a*d; o.w += al*d; } }
+      o.x += o.v*d; o.th += o.w*d; var last = o.hist[o.hist.length - 1]; if (C.t - last[0] > 0.01) o.hist.push([C.t, o.v]); }); } }
+var LCOL = ['#c0392b', '#1f5fd6', '#12805a', '#c47f17', '#7d3cc8'];
+function draw3(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), lanes = 5, lh = (H - 20)/lanes, lead = Math.max.apply(null, C.objs.map(function(o){ return o.x; })), sc = 40, cam = Math.max(0, lead*sc - W*0.6);
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  C.objs.forEach(function(o, k){ var gy = 10 + (k + 1)*lh - 4, Rp = Math.min(lh*0.38, Math.max(10, C.R*sc)), cx = 40 + o.x*sc - cam;
+    g.fillStyle = p.ground; g.fillRect(0, gy, W, 4); for (var m=Math.floor(cam/sc); m*sc - cam < W; m+=2){ var xm = 40 + m*sc - cam; seg(g, xm, gy, xm, gy + 4, p.text, 1); if (k === lanes - 1) Tx(g, m + ' m', xm, gy + 10, p.dim, 'center', '9px Arial'); }
+    if (o.xRoll !== null){ var xr = 40 + o.xRoll*sc - cam; seg(g, xr, gy - 2*Rp - 4, xr, gy, LCOL[k], 1.5, [3, 3]); }
+    var pp = pal(); pp.wheel = LCOL[k]; pp.wheel2 = '#333'; wheel(g, cx, gy - Rp, Rp, o.th, pp);
+    Tx(g, SHAPES[k][0] + (k === 4 ? ' (c = ' + f2(o.c, 2) + ')' : '') + (o.rolling ? ': rolling' : ': sliding'), 8, gy - lh + 14, LCOL[k], 'left', 'bold 11px Arial'); });
+  el('rlHint').textContent = 't = ' + f2(C.t, 2) + ' s \u00B7 dashed: where each started rolling';
+}
+function graph3(){
+  var g = CG.g, W = CG.W, H = CG.H, p = pal(), X0 = 50, X1 = W - 14, Y0 = H - 30, Y1 = 14, tmax = Math.max(0.5, C.v0/(C.mu*G)*0.7), vmax = C.v0*1.1;
+  function X(t){ return X0 + t/tmax*(X1 - X0); } function Y(v){ return Y0 - v/vmax*(Y0 - Y1); }
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); seg(g, X0, Y0, X1, Y0, p.text, 1); seg(g, X0, Y0, X0, Y1, p.text, 1);
+  for (var t=0; t<=tmax; t+=tmax > 4 ? 1 : 0.25){ seg(g, X(t), Y0, X(t), Y1, p.grid, 1); Tx(g, f2(t, tmax > 4 ? 0 : 2), X(t), Y0 + 12, p.dim, 'center', '10px Arial'); }
+  for (var v=0; v<=vmax; v++){ seg(g, X0, Y(v), X1, Y(v), p.grid, 1); Tx(g, String(v), X0 - 5, Y(v), p.dim, 'right', '10px Arial'); }
+  C.objs.forEach(function(o, k){ g.strokeStyle = LCOL[k]; g.lineWidth = 2.2; g.beginPath(); o.hist.forEach(function(h, i){ if (h[0] > tmax) return; if (i) g.lineTo(X(h[0]), Y(h[1])); else g.moveTo(X(h[0]), Y(h[1])); }); g.stroke(); seg(g, X1 - 60, Y(C.v0/(1 + o.c)), X1, Y(C.v0/(1 + o.c)), LCOL[k], 1, [3, 3]); });
+  Tx(g, 'time (s)', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial'); g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'speed of the centre (m/s)', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+  Tx(g, 'dashed: v\u2080/(1 + c)', X1 - 4, Y1 + 6, p.dim, 'right', '10px Arial');
+}
+function info3(){ var rows = '<table class="rl_tbl"><thead><tr><th>shape</th><th>c</th><th>starts rolling at</th><th>sliding distance</th><th>final speed</th><th>energy lost to heat</th></tr></thead><tbody>' + C.objs.map(function(o, k){ var tR = C.v0*o.c/(C.mu*G*(1 + o.c)), s = C.v0*tR - 0.5*C.mu*G*tR*tR;
+    return '<tr><td style="color:' + LCOL[k] + ';font-weight:bold;text-align:left">' + SHAPES[k][0] + '</td><td>' + f2(o.c, 3) + '</td><td>' + f2(tR, 2) + ' s</td><td>' + f2(s, 2) + ' m</td><td>' + f2(C.v0/(1 + o.c), 2) + ' m/s</td><td>' + f2(100*o.c/(1 + o.c), 0) + ' %</td></tr>'; }).join('') + '</tbody></table>';
+  el('rlRead').innerHTML = rows + '<p style="margin:6px 0 0;font-size:.8rem">Initial kinetic energy \u00BDmv\u2080\u00B2 = ' + f2(0.5*C.m*C.v0*C.v0, 1) + ' J. Change \u03BC, m or R: the final speeds do not change.</p>';
+  el('rlEq').innerHTML = 'With <b>I = c\u00B7mR\u00B2</b>: rolling starts when v = \u03C9R, at <b>v = v\u2080/(1 + c)</b>, after <b>t = v\u2080c/(\u03BC\u2096g(1 + c))</b>. Friction, mass and radius decide <i>when</i> and <i>where</i>, not the final speed; only the shape (c) does. A fraction <b>c/(1 + c)</b> of the energy becomes heat.';
+  var all = C.objs.every(function(o){ return o.rolling; }); el('rlStatus').innerHTML = all ? 'All five roll now. The more of the mass is far from the axis (larger c), the longer friction must work, and the slower the final rolling.' : 'Same launch speed, same friction, no spin: watch which starts rolling first, and how fast each ends up.'; }
+/* ══════════ controls ══════════ */
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function row(id, label, min, max, step, val, txt){ return '<div class="rl_ctrl"><div class="rl_ctrlhdr"><label class="rl_ctrlname" for="' + id + '">' + label + '</label><span class="rl_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function chk(id, label, v){ return '<label class="rl_chk"><input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '> ' + label + '</label>'; }
+function build(){
+  var h = '', pr = '';
+  if (TAB === 0){ h = row('rlV', 'speed of the centre v', -3, 6, 0.05, K.v, f2(K.v, 2) + ' m/s') + row('rlW', 'spin, as \u03C9R on the rim', -3, 6, 0.05, K.wR, f2(K.wR, 2) + ' m/s') + chk('rlParts', 'show the two parts (translation + rotation)', K.parts) + chk('rlTr', 'trace the top and the contact point', K.trace);
+    pr = ' presets: <button type="button" class="rl_btn" data-p="slide">sliding</button><button type="button" class="rl_btn" data-p="roll">rolling</button><button type="button" class="rl_btn" data-p="spin">spinning in place</button><button type="button" class="rl_btn" data-p="fast">spinning too fast</button><button type="button" class="rl_btn" data-p="back">backspin</button>'; }
+  if (TAB === 1){ h = row('rlV0', 'launch speed v\u2080', 0.5, 10, 0.1, D.v0, f2(D.v0, 1) + ' m/s') + row('rlW0', 'launch spin, as \u03C9\u2080R (negative: backspin)', -6, 6, 0.1, D.w0R, f2(D.w0R, 1) + ' m/s') + row('rlMu', 'coefficient of kinetic friction \u03BC\u2096', 0.02, 1, 0.01, D.mu, f2(D.mu, 2))
+    + row('rlM', 'mass m', 0.2, 10, 0.1, D.m, f2(D.m, 1) + ' kg') + row('rlR', 'radius R', 0.1, 1, 0.01, D.R, f2(D.R, 2) + ' m') + '<div class="rl_ctrl"><label class="rl_ctrlname" for="rlSh">shape</label> <select id="rlSh">' + SHAPES.map(function(s, i){ return '<option value="' + i + '"' + (i === D.shape ? ' selected' : '') + '>' + s[0] + (i < 4 ? ' (c = ' + f2(s[1], 3) + ')' : '') + '</option>'; }).join('') + '</select></div>' + row('rlCu', 'your own c (I = c\u00B7mR\u00B2)', 0.05, 1.5, 0.01, D.cUser, f2(D.cUser, 2)); }
+  if (TAB === 2){ h = row('rlV0', 'launch speed v\u2080', 0.5, 10, 0.1, C.v0, f2(C.v0, 1) + ' m/s') + row('rlMu', 'coefficient of kinetic friction \u03BC\u2096', 0.02, 1, 0.01, C.mu, f2(C.mu, 2)) + row('rlM', 'mass m', 0.2, 10, 0.1, C.m, f2(C.m, 1) + ' kg') + row('rlR', 'radius R', 0.1, 1, 0.01, C.R, f2(C.R, 2) + ' m') + row('rlCu', 'your own c', 0.05, 1.5, 0.01, D.cUser, f2(D.cUser, 2)); }
+  el('rlCtl').innerHTML = h; el('rlPresets').innerHTML = pr;
+  var bind = function(id, obj, key, dg, unit, after){ on(id, 'input', function(){ obj[key] = +this.value; el(id + 'v').textContent = f2(obj[key], dg) + unit; if (after) after(); }); };
+  if (TAB === 0){ bind('rlV', K, 'v', 2, ' m/s', function(){ K.pts = []; draw(); later(); }); bind('rlW', K, 'wR', 2, ' m/s', function(){ K.pts = []; draw(); later(); }); on('rlParts', 'change', function(){ K.parts = this.checked; draw(); }); on('rlTr', 'change', function(){ K.trace = this.checked; K.pts = []; draw(); });
+    [].forEach.call(el('rlPresets').querySelectorAll('button'), function(b){ b.addEventListener('click', function(){ var k = b.getAttribute('data-p'), P = { slide:[3, 0], roll:[3, 3], spin:[0, 3], fast:[2, 4], back:[3, -2] }[k]; K.v = P[0]; K.wR = P[1]; K.pts = []; build(); draw(); later(); play = true; el('rlPlay').innerHTML = '\u2759\u2759 Pause'; }); }); }
+  if (TAB === 1){ var r2 = function(){ reset2(); play = false; el('rlPlay').innerHTML = '\u25B6 Run'; draw(); }; bind('rlV0', D, 'v0', 1, ' m/s', r2); bind('rlW0', D, 'w0R', 1, ' m/s', r2); bind('rlMu', D, 'mu', 2, '', r2); bind('rlM', D, 'm', 1, ' kg', r2); bind('rlR', D, 'R', 2, ' m', r2); bind('rlCu', D, 'cUser', 2, '', r2);
+    on('rlSh', 'change', function(){ D.shape = +this.value; r2(); }); }
+  if (TAB === 2){ var r3 = function(){ reset3(); play = false; el('rlPlay').innerHTML = '\u25B6 Run'; draw(); }; bind('rlV0', C, 'v0', 1, ' m/s', r3); bind('rlMu', C, 'mu', 2, '', r3); bind('rlM', C, 'm', 1, ' kg', r3); bind('rlR', C, 'R', 2, ' m', r3); bind('rlCu', D, 'cUser', 2, '', r3); }
+}
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ var u = K.v - K.wR; narrate('Centre ' + f2(K.v, 2) + ' m/s, spin ' + f2(K.wR, 2) + ' m/s on the rim. Top ' + f2(K.v + K.wR, 2) + ', contact point ' + f2(u, 2) + ' m/s: ' + (Math.abs(u) < 0.02 ? 'rolling without slipping.' : u > 0 ? 'the wheel slides.' : 'the wheel spins.')); }, 450); }
+function draw(){ if (TAB === 0){ el('rlTitle').textContent = 'THE WHEEL: VELOCITY OF THE TOP, THE CENTRE AND THE CONTACT POINT'; el('rlGTitle').textContent = 'THE VELOCITY ALONG THE VERTICAL DIAMETER'; el('rlGHint').textContent = ''; draw1(); graph1(); info1(); }
+  if (TAB === 1){ el('rlTitle').textContent = 'A WHEEL LAUNCHED SLIDING: THE FORCES ON IT'; el('rlGTitle').textContent = 'SPEED OF THE CENTRE, OF THE RIM, AND THE SLIP, AGAINST TIME'; el('rlGHint').textContent = ''; draw2(); graph2(); info2(); }
+  if (TAB === 2){ el('rlTitle').textContent = 'FIVE SHAPES, LAUNCHED TOGETHER'; el('rlGTitle').textContent = 'SPEED OF THE CENTRE AGAINST TIME'; el('rlGHint').textContent = ''; draw3(); graph3(); info3(); } }
+function advance(dt){ if (TAB === 0){ K.x += K.v*dt; K.th += (K.wR/K.R)*dt; var Rp = 70, gy = CS.H - 60, W = CS.W, cx = ((K.x*60) % (W + 140) + W + 140) % (W + 140) - 70, cy = gy - Rp; K.pts.push([cx + 0, cy - Rp, cx, cy + Rp]); var a = K.th;
+    K.pts[K.pts.length - 1] = [cx + Rp*0.82*Math.cos(a - Math.PI/2), cy + Rp*0.82*Math.sin(a - Math.PI/2), cx + Rp*0.82*Math.cos(a + Math.PI/2), cy + Rp*0.82*Math.sin(a + Math.PI/2)]; if (K.pts.length > 900) K.pts.shift(); }
+  if (TAB === 1) step2(dt); if (TAB === 2) step3(dt); }
+var last = 0; function loop(t){ var dt = Math.min(0.05, (t - (last || t))/1000); last = t; if (play) advance(dt*spd); draw(); requestAnimationFrame(loop); }
+on('rlPlay', 'click', function(){ play = !play; el('rlPlay').innerHTML = play ? '\u2759\u2759 Pause' : '\u25B6 Run'; });
+on('rlStep', 'click', function(){ play = false; el('rlPlay').innerHTML = '\u25B6 Run'; advance(TAB === 0 ? 0.1 : 0.05); draw();
+  if (TAB === 1) narrate('t = ' + f2(D.t, 2) + ' s. v = ' + f2(D.v, 2) + ' m/s, \u03C9R = ' + f2(D.w*D.R, 2) + ' m/s: the slip is ' + f2(D.v - D.w*D.R, 2) + ' m/s' + (D.rolling ? ': rolling.' : '.')); });
+on('rlReset', 'click', function(){ if (TAB === 0){ K.x = 0; K.th = 0; K.pts = []; } if (TAB === 1) reset2(); if (TAB === 2) reset3(); play = false; el('rlPlay').innerHTML = '\u25B6 Run'; draw(); });
+on('rlSpd', 'input', function(){ spd = +this.value; el('rlSpdV').textContent = f2(spd, 2) + '\u00D7'; });
+function tab(k){ TAB = k; for (var i=0; i<3; i++) el('rlTab' + i).setAttribute('aria-selected', i === k ? 'true' : 'false'); play = k === 0; el('rlPlay').innerHTML = play ? '\u2759\u2759 Pause' : '\u25B6 Run'; if (k === 1) reset2(); if (k === 2) reset3(); build(); draw();
+  narrate(k === 0 ? 'Step 1: how fast do the top, the centre and the contact point move? Set the speed and the spin, or try the presets.' : k === 1 ? 'Step 2: the wheel is launched sliding. Press Run, or Step, and watch kinetic friction slow it down and, through its torque, spin it up.' : 'Step 3: five shapes, launched together at the same speed. Which starts rolling first, and which rolls fastest in the end?'); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('rl_hc', th.hc); ROOT.classList.toggle('rl_lm', th.lm);
+  [['hc', 'rlBtnHC'], ['lm', 'rlBtnLM'], ['cb', 'rlBtnCB'], ['nr', 'rlBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('rl_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('rlBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('rlNar').style.display = th.nr ? '' : 'none'; draw(); }
+function toggleDesc(){ var b = el('rlDescBtn'), d = el('rlDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+reset2(); reset3(); tab(0); requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, _D:D, _C:C, _K:K, _adv:function(dt){ advance(dt); draw(); }, _reset:function(){ if (TAB === 1) reset2(); if (TAB === 2) reset3(); draw(); } };
+})();
+</script>
+</main>
+</body>
+</html>

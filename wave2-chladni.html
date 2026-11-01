@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Waves: Chladni Plates</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,waves, standing waves, Chladni, plate, resonance, nodal lines, modes, sand, vibration, lesson, scientific">
+<meta name="description" content="Interactive Chladni plates: a disk or a square plate screwed to a vibrator at the centre or off centre; sweep the frequency to find resonances and watch sand gather on the nodal lines.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Calibri, Arial, sans-serif; }
+.page { width:646px; max-width:100%; margin:0 auto; overflow-x:auto; }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="chlRoot" class="chl_root">
+<!-- ── Accessibility toolbar ── -->
+<div class="chl_a11y" id="chlA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="chl_a11ybtn" id="chlBtnHC" onclick="chlA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="chl_a11ybtn" id="chlBtnLM" onclick="chlA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="chl_a11ybtn" id="chlBtnCB" onclick="chlA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="chl_a11ybtn chl_a11yon" id="chlBtnNR" onclick="chlA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="chl_tbar"><h3>Chladni Plates: Seeing Standing Waves with Sand</h3></div>
+<div class="chl_mcontent">
+<canvas id="chlCanvas" width="640" height="350" role="img" aria-label="Chladni plate with sand, a signal generator, a side view of the vibrating plate and a resonance spectrum"></canvas>
+</div>
+<div id="chlNarBar" class="chl_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="chl_bbar">
+<input type="button" id="chlSweep" value="Sweep &#9654;" onclick="chlSim.toggleSweep()">
+<input type="button" value="&#9664; Previous resonance" onclick="chlSim.jump(-1)">
+<input type="button" value="Next resonance &#9654;" onclick="chlSim.jump(1)">
+<input type="button" value="Sprinkle new sand" onclick="chlSim.sprinkle()">
+</div>
+<div class="chl_footer">
+<div class="chl_row">
+<span class="chl_lbl">Plate:</span>
+<input type="button" class="chl_tog chl_on" id="chlDisk" value="Disk" onclick="chlSim.setShape('disk')" aria-pressed="true">
+<input type="button" class="chl_tog" id="chlSquare" value="Square" onclick="chlSim.setShape('square')" aria-pressed="false">
+<span class="chl_lbl chl_gap">Mounted at:</span>
+<input type="button" class="chl_tog chl_on" id="chlCenter" value="Center" onclick="chlSim.setDrive('center')" aria-pressed="true">
+<input type="button" class="chl_tog" id="chlOff" value="Off-center" onclick="chlSim.setDrive('off')" aria-pressed="false">
+<label class="chl_lbl" for="chlOffset" style="margin-left:8px">offset</label>
+<input type="range" id="chlOffset" min="0.05" max="0.6" step="0.01" value="0.3" disabled aria-label="Distance of the mount from the centre, as a fraction of the way to the edge" oninput="chlSim.setOffset(this.value)" style="flex:0 0 90px;min-width:90px">
+<span id="chlOffVal" class="chl_val" style="min-width:40px">30%</span>
+</div>
+<div class="chl_row">
+<label class="chl_lbl" for="chlF">Frequency:</label>
+<input type="button" class="chl_small" value="&minus;1%" onclick="chlSim.nudge(1/1.01)" aria-label="Lower the frequency by 1 percent">
+<input type="range" id="chlF" min="0" max="4000" step="1" value="2200" aria-label="Frequency, 50 to 3000 hertz, logarithmic" oninput="chlSim.setSlider(this.value)">
+<input type="button" class="chl_small" value="+1%" onclick="chlSim.nudge(1.01)" aria-label="Raise the frequency by 1 percent">
+<span id="chlFVal" class="chl_val">300 Hz</span>
+</div>
+<div class="chl_row">
+<label class="chl_lbl" for="chlAmp">Drive strength:</label>
+<input type="range" id="chlAmp" min="0.2" max="2" step="0.05" value="1" aria-label="Drive strength" oninput="chlSim.setAmp(this.value)">
+<label class="chl_chk"><input type="checkbox" id="chlMap" onchange="chlSim.setMap(this.checked)"> Show vibration map</label>
+<label class="chl_chk"><input type="checkbox" id="chlSnd" onchange="chlSim.setSound(this.checked)"> Hear the tone</label>
+</div>
+</div>
+</div>
+<style>
+#chlRoot, #chlRoot * { box-sizing:border-box; margin:0; }
+#chlRoot {
+  width:646px; font-family:Arial, sans-serif; color:#111;
+  --chl-bg:#ffffff; --chl-plate:#5a6068; --chl-plate2:#7a828c; --chl-sand:#f3e2b3; --chl-text:#111111; --chl-dim:#555555;
+  --chl-panel:#f4f6f9; --chl-edge:#9aa3ae; --chl-curve:#1f5fc0; --chl-marker:#d03020; --chl-lcd:#0f5132; --chl-lcdbg:#dff3e4;
+  --chl-map1:#2040a0; --chl-map2:#ff4020; --chl-wood:#b8865a; --chl-toolbar-bg:#222;
+}
+#chlRoot canvas { display:block; margin:auto; border:1px solid #ccc; max-width:100%; height:auto; }
+#chlRoot .chl_a11y { display:flex; gap:6px; padding:6px 8px; background:var(--chl-toolbar-bg); flex-wrap:wrap; width:646px; }
+#chlRoot .chl_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer;
+  background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; transition:border-color .15s,color .15s; }
+#chlRoot .chl_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#chlRoot .chl_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#chlRoot .chl_tbar { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:27px; width:646px; }
+#chlRoot .chl_tbar h3 { font-size:1.1rem; font-weight:bold; }
+#chlRoot .chl_mcontent { width:646px; padding:2px 0; background:var(--chl-bg); }
+#chlRoot .chl_narbar { width:646px; min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.88rem; color:#333; font-style:italic; }
+#chlRoot .chl_bbar { width:646px; background-color:#df9; padding:10px; text-align:center; }
+#chlRoot .chl_bbar input[type=button] { margin:2px 3px; padding:4px 10px; cursor:pointer; }
+#chlRoot .chl_footer { width:646px; background-color:#fce4ec; font-size:.85rem; padding:6px 10px; }
+#chlRoot .chl_row { display:flex; align-items:center; gap:6px; padding:4px 0; flex-wrap:wrap; }
+#chlRoot .chl_lbl { font-weight:bold; }
+#chlRoot .chl_gap { margin-left:18px; }
+#chlRoot .chl_tog { padding:3px 12px; cursor:pointer; border:1px solid #888; background:#fff; border-radius:3px; }
+#chlRoot .chl_on { background:#1a3d8f; color:#ffeb3b; border-color:#1a3d8f; font-weight:bold; }
+#chlRoot .chl_small { padding:2px 6px; cursor:pointer; }
+#chlRoot input[type=range] { flex:1; min-width:150px; }
+#chlRoot #chlF { min-width:260px; }
+#chlRoot .chl_val { background:#1a3d8f; color:#ffeb3b; padding:1px 6px; font-family:monospace; min-width:76px; text-align:center; border-radius:2px; }
+#chlRoot .chl_chk { display:flex; align-items:center; gap:4px; margin-left:8px; }
+#chlRoot input:focus-visible, #chlRoot button:focus-visible { outline:2px solid #00a3ff; outline-offset:1px; }
+</style>
+<!-- ════════ A11Y CONTROLLER (same API as the VDG example: init / toggle / narrate / col) ════════ -->
+<script>
+var chlA11y = (function(){
+  var ROOT = null;
+  var states = { hc:false, lm:false, cb:false, nr:true };
+  var DEFS = { '--chl-bg':'#ffffff', '--chl-plate':'#5a6068', '--chl-plate2':'#7a828c', '--chl-sand':'#f3e2b3', '--chl-text':'#111111', '--chl-dim':'#555555',
+    '--chl-panel':'#f4f6f9', '--chl-edge':'#9aa3ae', '--chl-curve':'#1f5fc0', '--chl-marker':'#d03020', '--chl-lcd':'#0f5132', '--chl-lcdbg':'#dff3e4',
+    '--chl-map1':'#2040a0', '--chl-map2':'#ff4020', '--chl-wood':'#b8865a', '--chl-toolbar-bg':'#222' };
+  var THEMES = {
+    hc: { '--chl-bg':'#000000', '--chl-plate':'#000000', '--chl-plate2':'#202020', '--chl-sand':'#ffff00', '--chl-text':'#ffffff', '--chl-dim':'#dddddd',
+          '--chl-panel':'#000000', '--chl-edge':'#ffffff', '--chl-curve':'#00e8d0', '--chl-marker':'#ff5555', '--chl-lcd':'#00ff88', '--chl-lcdbg':'#001a00',
+          '--chl-map1':'#0000ff', '--chl-map2':'#ff0000', '--chl-wood':'#777777', '--chl-toolbar-bg':'#000' },
+    lm: { '--chl-bg':'#fbfbf8', '--chl-plate':'#6a707a', '--chl-plate2':'#8a929c', '--chl-panel':'#ffffff', '--chl-toolbar-bg':'#444' },
+    cb: { '--chl-curve':'#0072b2', '--chl-marker':'#d55e00', '--chl-map1':'#0072b2', '--chl-map2':'#e69f00', '--chl-sand':'#f0e442' }
+  };
+  var cur = {};
+  function applyVars(){
+    if (!ROOT) return; var p, order = ['lm','cb','hc'];
+    cur = {}; for (p in DEFS) cur[p] = DEFS[p];
+    for (var i = 0; i < order.length; i++) if (states[order[i]]) { var t = THEMES[order[i]]; for (p in t) cur[p] = t[p]; }
+    for (p in cur) ROOT.style.setProperty(p, cur[p]);
+  }
+  function styleBtn(id, on){
+    var b = document.getElementById(id); if (!b) return;
+    b.style.background = on ? 'rgba(0,232,208,.12)' : '#2a2e3a'; b.style.borderColor = on ? '#00e8d0' : '#404a60'; b.style.color = on ? '#00e8d0' : '#7a8aaa';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function apply(){
+    if (!ROOT) return; applyVars();
+    var nb = document.getElementById('chlNarBar'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+    var btn = document.getElementById('chlBtnNR'); if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+    styleBtn('chlBtnNR', states.nr); styleBtn('chlBtnHC', states.hc); styleBtn('chlBtnLM', states.lm); styleBtn('chlBtnCB', states.cb);
+  }
+  return {
+    init: function(){ ROOT = document.getElementById('chlRoot'); apply(); },
+    toggle: function(k){
+      states[k] = !states[k];
+      if (k === 'hc' && states.hc) states.lm = false;
+      if (k === 'lm' && states.lm) states.hc = false;
+      apply();
+      if (typeof chlSim !== 'undefined' && chlSim.refresh) chlSim.refresh();
+    },
+    narrate: function(msg){ if (!states.nr) return; var nb = document.getElementById('chlNarBar'); if (nb) nb.textContent = msg; },
+    col: function(prop){ return cur[prop] || DEFS[prop]; }
+  };
+})();
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VDG example: var simObj = function() { ... return {...}; };  var simObj = new simObj();
+Physics -- a plate SCREWED ONTO a vibrator at its mounting point (as in the classroom demo):
+  1. Start from a set of smooth plate shapes (a basis): for the disk J_m(alpha r) cos(m theta) with J_m'(alpha) = 0,
+     for the square cos(p pi (x+1/2)) cos(q pi (y+1/2)), plus the rigid motions (up-down and tilts).
+     For these shapes the bending energy integral of (Laplacian w)^2 is diagonal, so the stiffness matrix K is known
+     exactly; the mass matrix M is computed from their overlaps.
+  2. The mount clamps the plate: at the mounting point the plate cannot move or tilt relative to the vibrator
+     (w = 0, dw/dx = 0, dw/dy = 0). The modes of the clamped plate are found with these constraints by solving
+     K a = lambda M a in the constrained subspace (Rayleigh-Ritz, Jacobi eigenvalue method).
+     An off-centre clamp breaks the plate's symmetry: the nodal lines bend into curves, as on real plates.
+  3. The vibrator shakes the mount up and down. In the plate's frame this acts like a uniform force, so mode k is
+     excited in proportion to its average displacement  c_k = (1/sqrt(A)) integral psi_k dA, with resonance factor
+     r^2/(1 - r^2 + i r/Q), r = f/f_k, Q = 200. Absolute motion u = mount motion + sum of the mode motions.
+  4. Sand: each grain hops by an amount proportional to |u| and drifts toward quieter regions,
+     so it gathers on the nodal lines where the plate stays still.
+  Frequencies: disk f = 7 alpha^2 Hz (radius 1), square f = 25 (p^2 + q^2) Hz for the basis shapes.
+-->
+<script>
+var chlGen = function() {
+  var canvas = document.getElementById('chlCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  function c(k) { return chlA11y.col(k); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* ── settings ── */
+  var shape = 'disk', drive = 'center', offset = 0.3, freq = 300, amp = 1, showMap = false, sound = false, sweeping = false, Q = 200, dwell = 0;
+  var FMIN = 50, FMAX = 3000, G = 128, F0D = 7, F0S = 25/(Math.PI*Math.PI);
+
+  /* ── Bessel functions ── */
+  function besselJ(m, x) { var N = 96, s = 0; for (var k = 0; k <= N; k++) { var t = Math.PI*k/N, v = Math.cos(m*t - x*Math.sin(t)); s += (k === 0 || k === N) ? v/2 : v; } return s/N; }
+  function dJ(m, x) { return m === 0 ? -besselJ(1, x) : 0.5*(besselJ(m - 1, x) - besselJ(m + 1, x)); }
+  function zerosDJ(m, xmax) {
+    var out = [], step = 0.05, x0 = Math.max(0.3, m), y0 = dJ(m, x0);   /* the first zero of J_m' lies beyond x = m; below that J_m is tiny and numerically noisy */
+    for (var x = x0 + step; x < xmax; x += step) {
+      var y = dJ(m, x);
+      if (y0*y < 0) { var a = x - step, b = x, fa = y0; for (var it = 0; it < 30; it++) { var mid = (a + b)/2, fm = dJ(m, mid); if (fa*fm <= 0) b = mid; else { a = mid; fa = fm; } } out.push((a + b)/2); }
+      y0 = y;
+    }
+    return out;
+  }
+
+  /* ── grid ── */
+  function gridXY(i, j, sh) { return sh === 'disk' ? [-1 + 2*(i + 0.5)/G, -1 + 2*(j + 0.5)/G] : [-0.5 + (i + 0.5)/G, -0.5 + (j + 0.5)/G]; }
+
+  /* ── bases (built once) ──
+     Each basis: n functions, grid values phi[i], stiffness kap[i] (0 for rigid motions), sparse off-diagonal mass
+     entries moff = [[i, j, value]], point evaluation val(i, x, y) -> [w, dw/dx, dw/dy], info[i] for labels, cIdx = constant. */
+  var BASIS = {};
+  function buildDiskBasis() {
+    /* Only the shapes symmetric about the x-axis (cos m theta): the mount sits on the x-axis and the shaking is
+       uniform, so the antisymmetric (sin m theta) shapes can never be excited. */
+    var amax = Math.sqrt(FMAX*1.5/F0D), B = { n: 0, phi: [], kap: [], moff: [], info: [], ev: [] }, NR = 240, i, j;
+    var gr = new Float32Array(G*G), gth = new Float32Array(G*G), inside = new Uint8Array(G*G);
+    for (j = 0; j < G; j++) for (i = 0; i < G; i++) { var xy = gridXY(i, j, 'disk'), k = j*G + i; gr[k] = Math.sqrt(xy[0]*xy[0] + xy[1]*xy[1]); gth[k] = Math.atan2(xy[1], xy[0]); inside[k] = gr[k] <= 1 ? 1 : 0; }
+    function add(phi, kap, info, ev) { B.phi.push(phi); B.kap.push(kap); B.info.push(info); B.ev.push(ev); return B.n++; }
+    /* rigid: constant and tilt about the y-axis (x) */
+    var nc = Math.sqrt(Math.PI), nx = Math.sqrt(Math.PI/4), pc = new Float32Array(G*G), px = new Float32Array(G*G);
+    for (k = 0; k < G*G; k++) { if (!inside[k]) continue; pc[k] = 1/nc; px[k] = gr[k]*Math.cos(gth[k])/nx; }
+    B.cIdx = add(pc, 0, { rigid: true }, function(x, y) { return [1/nc, 0, 0]; });
+    var xIdx = add(px, 0, { rigid: true }, function(x, y) { return [x/nx, 1/nx, 0]; });
+    for (var m = 0; m <= 30; m++) {
+      var zs = zerosDJ(m, amax + 0.1); if (!zs.length) break;
+      zs.forEach(function(al) {
+        var tab = new Float64Array(NR + 1), s2 = 0, circles = 0, prev = 0, r;
+        for (r = 0; r <= NR; r++) { var v = besselJ(m, al*r/NR); tab[r] = v; var rr = r/NR, w8 = (r === 0 || r === NR) ? 0.5 : 1; s2 += w8*v*v*rr/NR; if (r > 2 && prev*v < 0) circles++; prev = v; }
+        var nrm = Math.sqrt(s2*(m === 0 ? 2*Math.PI : Math.PI)), phi = new Float32Array(G*G);
+        for (var k2 = 0; k2 < G*G; k2++) { if (!inside[k2]) continue; var u = gr[k2]*NR, i0 = Math.floor(u), fr = u - i0, v2 = i0 >= NR ? tab[NR] : tab[i0] + fr*(tab[i0 + 1] - tab[i0]); phi[k2] = v2*Math.cos(m*gth[k2])/nrm; }
+        var idx = add(phi, Math.pow(al, 4), { m: m, circles: circles }, (function(m, al, nrm) { return function(x, y) {
+          var rr = Math.sqrt(x*x + y*y), th = Math.atan2(y, x), J = besselJ(m, al*rr), dJr = al*dJ(m, al*rr), cs = Math.cos(m*th), sn = Math.sin(m*th);
+          /* d/dx = cos(th) d/dr - sin(th)/r d/dth ; at r = 0 only m = 1 has a slope */
+          if (rr < 1e-9) return [m === 0 ? 1/nrm : 0, m === 1 ? al/2/nrm : 0, 0];
+          var dwdr = dJr*cs, dwdth = -m*J*sn, ct = Math.cos(th), st = Math.sin(th);
+          return [J*cs/nrm, (ct*dwdr - st/rr*dwdth)/nrm, (st*dwdr + ct/rr*dwdth)/nrm];
+        }; })(m, al, nrm));
+        if (m === 1) { /* overlap with the tilt: pi * integral r^2 J1(alpha r) dr */ var s3 = 0; for (r = 0; r <= NR; r++) { var w9 = (r === 0 || r === NR) ? 0.5 : 1, rr2 = r/NR; s3 += w9*rr2*rr2*tab[r]/NR; } B.moff.push([xIdx, idx, Math.PI*s3/(nx*nrm)]); }
+      });
+    }
+    B.F0 = F0D; return B;
+  }
+  function buildSquareBasis() {
+    var B = { n: 0, phi: [], kap: [], moff: [], info: [], ev: [] }, i, j, k, p, q;
+    function add(phi, kap, info, ev) { B.phi.push(phi); B.kap.push(kap); B.info.push(info); B.ev.push(ev); return B.n++; }
+    var P = 14, cx = [], sxv = [];
+    for (p = 0; p <= P; p++) { cx.push(new Float32Array(G)); for (i = 0; i < G; i++) cx[p][i] = Math.cos(p*Math.PI*(-0.5 + (i + 0.5)/G + 0.5)); }
+    var n12 = Math.sqrt(1/12), pxg = new Float32Array(G*G), pyg = new Float32Array(G*G);
+    for (j = 0; j < G; j++) for (i = 0; i < G; i++) { var xy = gridXY(i, j, 'square'); pxg[j*G + i] = xy[0]/n12; pyg[j*G + i] = xy[1]/n12; }
+    var xIdx = add(pxg, 0, { rigid: true }, function(x, y) { return [x/n12, 1/n12, 0]; });
+    var yIdx = add(pyg, 0, { rigid: true }, function(x, y) { return [y/n12, 0, 1/n12]; });
+    function cpv(p, u) { return Math.cos(p*Math.PI*(u + 0.5)); }
+    function dcpv(p, u) { return -p*Math.PI*Math.sin(p*Math.PI*(u + 0.5)); }
+    function xOverlap(p) { var s = 0, N = 400; for (var t = 0; t <= N; t++) { var u = -0.5 + t/N, w = (t === 0 || t === N) ? 0.5 : 1; s += w*u*cpv(p, u)/N; } return s; }
+    for (p = 0; p <= P; p++) for (q = 0; q <= P; q++) {
+      var s2 = p*p + q*q; if (25*s2 > FMAX*1.5) continue;
+      var np = (p === 0 ? 1 : 0.5)*(q === 0 ? 1 : 0.5), nr = Math.sqrt(np), phi = new Float32Array(G*G);
+      for (j = 0; j < G; j++) for (i = 0; i < G; i++) phi[j*G + i] = cx[p][i]*cx[q][j]/nr;
+      var idx = add(phi, Math.pow(Math.PI*Math.PI*s2, 2), { p: p, q: q, rigid: s2 === 0 }, (function(p, q, nr) { return function(x, y) { return [cpv(p, x)*cpv(q, y)/nr, dcpv(p, x)*cpv(q, y)/nr, cpv(p, x)*dcpv(q, y)/nr]; }; })(p, q, nr));
+      if (s2 === 0) B.cIdx = idx;
+      if (q === 0 && p % 2 === 1) B.moff.push([xIdx, idx, xOverlap(p)/(n12*nr)]);
+      if (p === 0 && q % 2 === 1) B.moff.push([yIdx, idx, xOverlap(q)/(n12*nr)]);
+    }
+    B.F0 = F0S; return B;
+  }
+
+  /* ── linear algebra ── */
+  function jacobiEig(A, n) {
+    var V = new Float64Array(n*n), i, p, q, k;
+    for (i = 0; i < n; i++) V[i*n + i] = 1;
+    for (var sweep = 0; sweep < 60; sweep++) {
+      var off = 0, dia = 0; for (p = 0; p < n; p++) { dia += A[p*n + p]*A[p*n + p]; for (q = p + 1; q < n; q++) off += A[p*n + q]*A[p*n + q]; }
+      if (off < 1e-22*dia) break;
+      for (p = 0; p < n - 1; p++) for (q = p + 1; q < n; q++) {
+        var apq = A[p*n + q]; if (Math.abs(apq) < 1e-300) continue;
+        var app = A[p*n + p], aqq = A[q*n + q], th = (aqq - app)/(2*apq), t = (th >= 0 ? 1 : -1)/(Math.abs(th) + Math.sqrt(th*th + 1)), cs = 1/Math.sqrt(t*t + 1), sn = t*cs;
+        for (k = 0; k < n; k++) { var akp = A[k*n + p], akq = A[k*n + q]; A[k*n + p] = cs*akp - sn*akq; A[k*n + q] = sn*akp + cs*akq; }
+        for (k = 0; k < n; k++) { var apk = A[p*n + k], aqk = A[q*n + k]; A[p*n + k] = cs*apk - sn*aqk; A[q*n + k] = sn*apk + cs*aqk; }
+        for (k = 0; k < n; k++) { var vkp = V[k*n + p], vkq = V[k*n + q]; V[k*n + p] = cs*vkp - sn*vkq; V[k*n + q] = sn*vkp + cs*vkq; }
+      }
+    }
+    var w = new Float64Array(n); for (i = 0; i < n; i++) w[i] = A[i*n + i];
+    return { w: w, V: V };
+  }
+  function solveModes(B, d) {
+    var n = B.n, i, j, k, a, b;
+    /* constraint rows: w, dw/dx, dw/dy at the mount */
+    var rows = [new Float64Array(n), new Float64Array(n), new Float64Array(n)];
+    for (i = 0; i < n; i++) { var e = B.ev[i](d[0], d[1]); rows[0][i] = e[0]; rows[1][i] = e[1]; rows[2][i] = e[2]; }
+    function dot(u, v) { var s = 0; for (var t = 0; t < n; t++) s += u[t]*v[t]; return s; }
+    var U = [];
+    rows.forEach(function(r) { var ref = Math.sqrt(dot(r, r)), v = Float64Array.from(r); U.forEach(function(u) { var dp = dot(u, v); for (var t = 0; t < n; t++) v[t] -= dp*u[t]; }); var nr = Math.sqrt(dot(v, v)); if (nr > 1e-6*Math.max(1, ref) && nr > 1e-8) { for (var t = 0; t < n; t++) v[t] /= nr; U.push(v); } });
+    /* orthonormal basis of the null space */
+    var Z = [], target = n - U.length;
+    for (i = 0; i < n && Z.length < target; i++) {
+      var v = new Float64Array(n); v[i] = 1;
+      for (var pass = 0; pass < 2; pass++) { U.concat(Z).forEach(function(u) { var dp = u[i]*(pass === 0 ? 1 : 0) + (pass === 0 ? 0 : dot(u, v)); if (pass === 0) dp = dot(u, v); for (var t = 0; t < n; t++) v[t] -= dp*u[t]; }); }
+      var nr = Math.sqrt(dot(v, v)); if (nr > 0.05) { for (k = 0; k < n; k++) v[k] /= nr; Z.push(v); }
+    }
+    var m = Z.length, Kr = new Float64Array(m*m), Mr = new Float64Array(m*m);
+    for (a = 0; a < m; a++) for (b = a; b < m; b++) { var s = 0; for (k = 0; k < n; k++) s += Z[a][k]*B.kap[k]*Z[b][k]; Kr[a*m + b] = Kr[b*m + a] = s; }
+    for (a = 0; a < m; a++) Mr[a*m + a] = 1;
+    B.moff.forEach(function(o) { for (a = 0; a < m; a++) { var za_i = Z[a][o[0]], za_j = Z[a][o[1]]; if (za_i === 0 && za_j === 0) continue; for (b = 0; b < m; b++) Mr[a*m + b] += o[2]*(za_i*Z[b][o[1]] + za_j*Z[b][o[0]]); } });
+    /* Cholesky Mr = L L^T */
+    var L = new Float64Array(m*m);
+    for (i = 0; i < m; i++) for (j = 0; j <= i; j++) { var s4 = Mr[i*m + j]; for (k = 0; k < j; k++) s4 -= L[i*m + k]*L[j*m + k]; L[i*m + j] = i === j ? Math.sqrt(Math.max(s4, 1e-12)) : s4/L[j*m + j]; }
+    /* A = L^-1 Kr L^-T */
+    var X = new Float64Array(m*m);
+    for (b = 0; b < m; b++) for (i = 0; i < m; i++) { var s5 = Kr[i*m + b]; for (k = 0; k < i; k++) s5 -= L[i*m + k]*X[k*m + b]; X[i*m + b] = s5/L[i*m + i]; }
+    var A = new Float64Array(m*m);
+    for (a = 0; a < m; a++) for (i = 0; i < m; i++) { var s6 = X[a*m + i]; for (k = 0; k < i; k++) s6 -= L[i*m + k]*A[a*m + k]; A[a*m + i] = s6/L[i*m + i]; }
+    for (a = 0; a < m; a++) for (b = a + 1; b < m; b++) { var av = 0.5*(A[a*m + b] + A[b*m + a]); A[a*m + b] = A[b*m + a] = av; }
+    var eg = jacobiEig(A, m), modes = [];
+    for (var e2 = 0; e2 < m; e2++) {
+      var lam = eg.w[e2]; if (!(lam > 1e-6)) continue;
+      var f = B.F0*Math.sqrt(lam); if (f > FMAX*1.02 || f < FMIN*0.5) continue;
+      var y = new Float64Array(m); for (i = 0; i < m; i++) y[i] = eg.V[i*m + e2];
+      var cvec = new Float64Array(m); for (i = m - 1; i >= 0; i--) { var s7 = y[i]; for (k = i + 1; k < m; k++) s7 -= L[k*m + i]*cvec[k]; cvec[i] = s7/L[i*m + i]; }
+      var av2 = new Float64Array(n); for (b = 0; b < m; b++) { var cb = cvec[b]; if (cb === 0) continue; for (k = 0; k < n; k++) av2[k] += cb*Z[b][k]; }
+      /* dominant basis shape, for the label */
+      var bi = -1, bv = 0; for (k = 0; k < n; k++) { if (B.info[k].rigid) continue; if (Math.abs(av2[k]) > bv) { bv = Math.abs(av2[k]); bi = k; } }
+      var tot = 0; for (k = 0; k < n; k++) tot += av2[k]*av2[k];
+      modes.push({ f: f, a: av2, cpl: av2[B.cIdx], dom: bi, purity: bv*bv/Math.max(1e-12, tot), shape: null });
+    }
+    modes.sort(function(p1, p2) { return p1.f - p2.f; });
+    return modes;
+  }
+
+  /* ── current mode set ── */
+  var CACHE = {}, MODES = [], B = null;
+  function drivePt() { if (drive === 'center') return [0, 0]; return shape === 'disk' ? [offset, 0] : [offset*0.5, offset*0.3]; }
+  function key() { return shape + '|' + drive + '|' + (drive === 'center' ? 0 : offset.toFixed(2)); }
+  function loadModes() {
+    if (!BASIS[shape]) BASIS[shape] = shape === 'disk' ? buildDiskBasis() : buildSquareBasis();
+    B = BASIS[shape];
+    var k = key(); if (!CACHE[k]) CACHE[k] = solveModes(B, drivePt());
+    MODES = CACHE[k];
+  }
+  function modeShape(md) {
+    if (md.shape) return md.shape;
+    var s = new Float32Array(G*G);
+    for (var i = 0; i < B.n; i++) { var ai = md.a[i]; if (Math.abs(ai) < 1e-4) continue; var ph = B.phi[i]; for (var k = 0; k < G*G; k++) s[k] += ai*ph[k]; }
+    md.shape = s; return s;
+  }
+  function label(md) {
+    if (shape === 'disk' && drive === 'center') {
+      var sh = modeShape(md), cnt = 0, prev = 0;
+      for (var r = 0.08; r <= 0.99; r += 0.005) { var v = gridLookup(sh, r, 0); if (Math.abs(v) > 1e-6) { if (prev !== 0 && v*prev < 0) cnt++; prev = v; } }
+      return cnt + ' nodal circle' + (cnt === 1 ? '' : 's');
+    }
+    var inf = B.info[md.dom], base;
+    if (!inf) return 'mode';
+    if (shape === 'disk') base = inf.m + ' diameter' + (inf.m === 1 ? '' : 's') + ', ' + inf.circles + ' circle' + (inf.circles === 1 ? '' : 's');
+    else base = '(' + inf.p + ',' + inf.q + ')';
+    return md.purity > 0.8 ? base : (drive === 'center' ? 'mixed pattern near ' + base : 'curved pattern grown from ' + base);
+  }
+  function excitable(md) { return Math.abs(md.cpl) > 0.02; }
+
+  /* ── response at the current frequency ── */
+  var patt = new Float32Array(G*G), wRe = new Float32Array(G*G), wIm = new Float32Array(G*G), level = 0, nearIdx = -1;
+  function Hf(f, fk) { var r = f/fk, re = 1 - r*r, im = r/Q, d = re*re + im*im; return [r*r*re/d, -r*r*im/d]; }
+  function respAt(f) { var s = 0; for (var k = 0; k < MODES.length; k++) { var h = Hf(f, MODES[k].f), v = Math.abs(MODES[k].cpl)*Math.sqrt(h[0]*h[0] + h[1]*h[1]); if (v > s) s = v; } return s; }
+  var AREA_SQRT = { disk: Math.sqrt(Math.PI), square: 1 };
+  function compute() {
+    var n = G*G, i, k, best = 0, sa = AREA_SQRT[shape], inside = shape === 'disk' ? B.phi[B.cIdx] : null;
+    for (i = 0; i < n; i++) { wRe[i] = 1; wIm[i] = 0; }
+    nearIdx = -1;
+    for (k = 0; k < MODES.length; k++) {
+      var md = MODES[k], h = Hf(freq, md.f), bre = md.cpl*sa*h[0], bim = md.cpl*sa*h[1], mg = Math.abs(md.cpl)*Math.sqrt(h[0]*h[0] + h[1]*h[1]);
+      if (mg > best) { best = mg; nearIdx = k; }
+      if (mg < 0.01) continue;
+      var sh = modeShape(md); for (i = 0; i < n; i++) { wRe[i] += bre*sh[i]; wIm[i] += bim*sh[i]; }
+    }
+    var mx = 1e-9; for (i = 0; i < n; i++) { if (inside && inside[i] === 0) { patt[i] = 0; continue; } var a = Math.sqrt(wRe[i]*wRe[i] + wIm[i]*wIm[i]); patt[i] = a; if (a > mx) mx = a; }
+    for (i = 0; i < n; i++) patt[i] /= mx;
+    level = clamp(respAt(freq)/(0.08*Q), 0.02, 1);
+    if (showMap) buildMap();
+  }
+  function onRes() { if (nearIdx < 0) return false; var md = MODES[nearIdx]; return Math.abs(freq/md.f - 1) < 1/Q && excitable(md); }
+
+  /* ── sand ── */
+  var NS = 6000, sx = new Float32Array(NS), sy = new Float32Array(NS);
+  function sprinkle() {
+    for (var i = 0; i < NS; i++) {
+      if (shape === 'disk') { var r = Math.sqrt(Math.random()), t = Math.random()*2*Math.PI; sx[i] = r*Math.cos(t); sy[i] = r*Math.sin(t); }
+      else { sx[i] = Math.random() - 0.5; sy[i] = Math.random() - 0.5; }
+    }
+  }
+  function gridLookup(arr, x, y) {
+    var u, v;
+    if (shape === 'disk') { u = (x + 1)/2*G - 0.5; v = (y + 1)/2*G - 0.5; } else { u = (x + 0.5)*G - 0.5; v = (y + 0.5)*G - 0.5; }
+    u = clamp(u, 0, G - 1.001); v = clamp(v, 0, G - 1.001);
+    var i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j*G + i;
+    return (arr[k]*(1 - fu) + arr[k + 1]*fu)*(1 - fv) + (arr[k + G]*(1 - fu) + arr[k + G + 1]*fu)*fv;
+  }
+  function pattAt(x, y) { return gridLookup(patt, x, y); }
+  function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5)*1.414; }
+  function moveSand(dt) {
+    var sz = shape === 'disk' ? 1 : 0.5, k60 = Math.min(1.5, dt*60), scale = 0.026*sz*level*amp*k60, drift = 0.0035*sz*level*amp*k60, h = sz*1.5/G;
+    if (scale < 1e-6) return;
+    for (var i = 0; i < NS; i++) {
+      var x = sx[i], y = sy[i], a = pattAt(x, y);
+      if (a < 0.002) continue;
+      var gx = (pattAt(x + h, y) - pattAt(x - h, y))/(2*h)*sz, gy = (pattAt(x, y + h) - pattAt(x, y - h))/(2*h)*sz;
+      var gm = Math.sqrt(gx*gx + gy*gy) + 1e-9, dr = Math.min(drift*gm, drift*3)*Math.min(1, a*4);
+      x += scale*a*gauss() - dr*gx/gm; y += scale*a*gauss() - dr*gy/gm;
+      if (shape === 'disk') { var rr = Math.sqrt(x*x + y*y); if (rr > 0.995) { var q = (2*0.995 - rr)/rr; x *= q; y *= q; } }
+      else { if (x > 0.5) x = 1 - x; if (x < -0.5) x = -1 - x; if (y > 0.5) y = 1 - y; if (y < -0.5) y = -1 - y; }
+      sx[i] = x; sy[i] = y;
+    }
+  }
+
+  /* ── vibration map (offscreen) ── */
+  var mapCan = document.createElement('canvas'); mapCan.width = G; mapCan.height = G;
+  function hexRGB(h) { h = h.replace('#', ''); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
+  function buildMap() {
+    var mctx = mapCan.getContext('2d'), img = mctx.createImageData(G, G), c1 = hexRGB(c('--chl-map1')), c2 = hexRGB(c('--chl-map2'));
+    for (var j = 0; j < G; j++) for (var i = 0; i < G; i++) {
+      var k = j*G + i, t = patt[k], o = ((G - 1 - j)*G + i)*4;
+      var xy = gridXY(i, j, shape), inside = shape !== 'disk' || xy[0]*xy[0] + xy[1]*xy[1] <= 1;
+      img.data[o] = c1[0] + (c2[0] - c1[0])*t; img.data[o + 1] = c1[1] + (c2[1] - c1[1])*t; img.data[o + 2] = c1[2] + (c2[2] - c1[2])*t;
+      img.data[o + 3] = inside ? Math.round((60 + 120*level)*(0.35 + 0.65*t)) : 0;
+    }
+    mctx.putImageData(img, 0, 0);
+  }
+
+  /* ── drawing ── */
+  var PX = 8, PY = 8, PS = 334, ph = 0;
+  function toScreen(x, y) { if (shape === 'disk') return [PX + PS/2 + x*(PS/2 - 10), PY + PS/2 - y*(PS/2 - 10)]; return [PX + 12 + (x + 0.5)*(PS - 24), PY + 12 + (0.5 - y)*(PS - 24)]; }
+  function drawPlate() {
+    ctx.fillStyle = c('--chl-bg'); ctx.fillRect(0, 0, W, H);
+    var g = ctx.createLinearGradient(PX, PY, PX + PS, PY + PS); g.addColorStop(0, c('--chl-plate2')); g.addColorStop(1, c('--chl-plate'));
+    ctx.fillStyle = g; ctx.strokeStyle = c('--chl-edge'); ctx.lineWidth = 2;
+    if (shape === 'disk') { ctx.beginPath(); ctx.arc(PX + PS/2, PY + PS/2, PS/2 - 10, 0, 2*Math.PI); ctx.fill(); ctx.stroke(); }
+    else { ctx.fillRect(PX + 12, PY + 12, PS - 24, PS - 24); ctx.strokeRect(PX + 12, PY + 12, PS - 24, PS - 24); }
+    if (showMap) {
+      var a = toScreen(shape === 'disk' ? -1 : -0.5, shape === 'disk' ? 1 : 0.5), b = toScreen(shape === 'disk' ? 1 : 0.5, shape === 'disk' ? -1 : -0.5);
+      ctx.imageSmoothingEnabled = true; ctx.drawImage(mapCan, a[0], a[1], b[0] - a[0], b[1] - a[1]);
+    }
+    ctx.fillStyle = c('--chl-sand'); ctx.beginPath();
+    for (var i = 0; i < NS; i++) { var s = toScreen(sx[i], sy[i]); ctx.rect(s[0] - 0.75, s[1] - 0.75, 1.5, 1.5); }
+    ctx.fill();
+    /* the mounting screw */
+    var d = drivePt(), dp = toScreen(d[0], d[1]);
+    ctx.fillStyle = '#c8ccd2'; ctx.beginPath(); ctx.arc(dp[0], dp[1], 6, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle = '#555555'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(dp[0] - 4, dp[1]); ctx.lineTo(dp[0] + 4, dp[1]); ctx.stroke();
+    ctx.strokeStyle = c('--chl-marker'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(dp[0], dp[1], 9, 0, 2*Math.PI); ctx.stroke();
+    ctx.fillStyle = c('--chl-dim'); ctx.font = '9px monospace'; ctx.textAlign = 'left'; ctx.fillText('\u25ce mounting screw (clamped to the vibrator)', PX + 4, PY + PS - 2);
+  }
+  function drawGenerator() {
+    var x0 = 350, y0 = 8, w = 282, h = 78;
+    ctx.fillStyle = c('--chl-panel'); ctx.fillRect(x0, y0, w, h); ctx.strokeStyle = c('--chl-edge'); ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y0 + 0.5, w - 1, h - 1);
+    ctx.fillStyle = c('--chl-lcdbg'); ctx.fillRect(x0 + 8, y0 + 8, 150, 30);
+    ctx.fillStyle = c('--chl-lcd'); ctx.font = 'bold 20px monospace'; ctx.textAlign = 'right'; ctx.fillText(freq.toFixed(freq < 1000 ? 1 : 0) + ' Hz', x0 + 152, y0 + 31);
+    ctx.fillStyle = c('--chl-dim'); ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText('SIGNAL GENERATOR', x0 + 8, y0 + 50);
+    var kx = x0 + 190, ky = y0 + 30, ka = -Math.PI*0.75 + 1.5*Math.PI*Math.log(freq/FMIN)/Math.log(FMAX/FMIN);
+    ctx.fillStyle = '#3a4048'; ctx.beginPath(); ctx.arc(kx, ky, 18, 0, 2*Math.PI); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(kx + 14*Math.cos(ka - Math.PI/2), ky + 14*Math.sin(ka - Math.PI/2)); ctx.stroke();
+    var on = onRes(); ctx.fillStyle = on ? '#3ad08f' : '#2a4a3a'; ctx.beginPath(); ctx.arc(x0 + 240, y0 + 22, 7, 0, 2*Math.PI); ctx.fill();
+    ctx.fillStyle = c('--chl-dim'); ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText('RESONANCE', x0 + 240, y0 + 42);
+    var md = MODES[nearIdx];
+    ctx.fillStyle = c('--chl-text'); ctx.font = '9px monospace'; ctx.textAlign = 'left';
+    ctx.fillText(md ? (on ? 'resonance: ' : 'nearest: ') + label(md) + ', ' + Math.round(md.f) + ' Hz' : '', x0 + 8, y0 + 68);
+  }
+  function drawSide() {
+    var x0 = 350, y0 = 92, w = 282, h = 128, d = drivePt();
+    ctx.fillStyle = c('--chl-panel'); ctx.fillRect(x0, y0, w, h); ctx.strokeStyle = c('--chl-edge'); ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y0 + 0.5, w - 1, h - 1);
+    ctx.fillStyle = c('--chl-text'); ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('SIDE VIEW (slow motion, exaggerated)', x0 + 6, y0 + 12);
+    var xa = shape === 'disk' ? -1 : -0.5, xb = -xa, py = y0 + 54, sxl = x0 + 20, sxr = x0 + w - 20, pts = [];
+    var t = reducedMotion ? 0 : ph, cs = Math.cos(t), sn = Math.sin(t), A = 22*level*Math.min(1.4, amp);
+    for (var q = 0; q <= 80; q++) { var x = xa + (xb - xa)*q/80, re = gridLookup(wRe, x, d[1]), im = gridLookup(wIm, x, d[1]); pts.push([sxl + (sxr - sxl)*q/80, re*cs - im*sn]); }
+    var mx = 1e-9; pts.forEach(function(p) { mx = Math.max(mx, Math.abs(p[1])); });
+    ctx.strokeStyle = c('--chl-edge'); ctx.lineWidth = 4; ctx.beginPath();
+    pts.forEach(function(p, i) { var y = py - p[1]/mx*A; if (i === 0) ctx.moveTo(p[0], y); else ctx.lineTo(p[0], y); }); ctx.stroke();
+    ctx.fillStyle = c('--chl-sand');
+    for (var g = 2; g < 80; g += 6) { var pp = pts[g], hop = Math.abs(pp[1]/mx)*A*0.8*Math.abs(Math.sin(t*1.7 + g)); ctx.fillRect(pp[0] - 1.5, py - pp[1]/mx*A - 5 - hop, 3, 3); }
+    var dx = sxl + (sxr - sxl)*(d[0] - xa)/(xb - xa), q2 = Math.round((d[0] - xa)/(xb - xa)*80), dy = py - pts[q2][1]/mx*A;
+    ctx.strokeStyle = c('--chl-edge'); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx, dy + 2); ctx.lineTo(dx, y0 + 94); ctx.stroke();
+    ctx.fillStyle = '#3a4048'; ctx.fillRect(dx - 22, y0 + 94, 44, 26); ctx.fillStyle = '#c8813a'; ctx.fillRect(dx - 14, y0 + 99, 28, 16);
+    ctx.fillStyle = c('--chl-dim'); ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText('vibrator', dx + 26, y0 + 110);
+    ctx.textAlign = 'right'; ctx.fillText('cut through the plate at the mount', x0 + w - 6, y0 + h - 4);
+  }
+  var specCache = null, specKey = '';
+  function drawSpectrum() {
+    var x0 = 350, y0 = 226, w = 282, h = 118, gx0 = x0 + 8, gx1 = x0 + w - 8, gy0 = y0 + 18, gy1 = y0 + h - 18;
+    ctx.fillStyle = c('--chl-panel'); ctx.fillRect(x0, y0, w, h); ctx.strokeStyle = c('--chl-edge'); ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y0 + 0.5, w - 1, h - 1);
+    ctx.lineWidth = 2;
+    for (var k = 0; k < MODES.length; k++) {
+      var md = MODES[k]; if (!excitable(md)) continue;
+      var xs = gx0 + (gx1 - gx0)*Math.log(md.f/FMIN)/Math.log(FMAX/FMIN), hv = clamp(Math.log10(1 + Q*Math.abs(md.cpl))/Math.log10(1 + Q*0.6), 0.05, 1);
+      ctx.strokeStyle = k === nearIdx && onRes() ? '#3ad08f' : c('--chl-curve'); ctx.beginPath(); ctx.moveTo(xs, gy1); ctx.lineTo(xs, gy1 - hv*(gy1 - gy0)); ctx.stroke();
+    }
+    var fx = gx0 + (gx1 - gx0)*Math.log(freq/FMIN)/Math.log(FMAX/FMIN);
+    ctx.strokeStyle = c('--chl-marker'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(fx, gy0 - 4); ctx.lineTo(fx, gy1); ctx.stroke();
+    ctx.strokeStyle = c('--chl-edge'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx0, gy1 + 0.5); ctx.lineTo(gx1, gy1 + 0.5); ctx.stroke();
+    ctx.fillStyle = c('--chl-dim'); ctx.font = '8px monospace'; ctx.textAlign = 'center';
+    [50, 100, 200, 500, 1000, 2000].forEach(function(f) { var x = gx0 + (gx1 - gx0)*Math.log(f/FMIN)/Math.log(FMAX/FMIN); ctx.fillText(f >= 1000 ? f/1000 + 'k' : String(f), x, gy1 + 11); });
+    ctx.fillStyle = c('--chl-text'); ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('RESONANCES THIS MOUNT CAN EXCITE (click one)', x0 + 6, y0 + 12);
+  }
+  function draw() { drawPlate(); drawGenerator(); drawSide(); drawSpectrum(); }
+
+  /* ── sound ── */
+  var actx = null, osc = null, gain = null;
+  function soundUpdate() {
+    if (!sound) { if (gain && actx) gain.gain.setTargetAtTime(0, actx.currentTime, 0.03); return; }
+    if (!actx) { try { var AC = window.AudioContext || window.webkitAudioContext; actx = new AC(); osc = actx.createOscillator(); gain = actx.createGain(); gain.gain.value = 0; osc.connect(gain); gain.connect(actx.destination); osc.start(); } catch (e) { actx = null; return; } }
+    if (actx.state === 'suspended') { try { actx.resume(); } catch (e) {} }
+    osc.frequency.setTargetAtTime(freq, actx.currentTime, 0.02);
+    gain.gain.setTargetAtTime(0.02 + 0.13*level*Math.min(1, amp), actx.currentTime, 0.05);
+  }
+
+  /* ── narration ── */
+  function narrateState(prefix) {
+    var md = MODES[nearIdx], s = prefix ? prefix + ' ' : '';
+    s += (shape === 'disk' ? 'Disk' : 'Square plate') + ' screwed to the vibrator ' + (drive === 'center' ? 'at its centre' : Math.round(offset*100) + '% of the way to the edge') + ', ' + Math.round(freq) + ' Hz. ';
+    if (onRes()) {
+      s += 'Resonance! The plate vibrates strongly (' + label(md) + ', ' + Math.round(md.f) + ' Hz). The sand is thrown off the moving regions and collects on the nodal lines, where the plate stays still. ';
+      if (drive !== 'center') s += 'Because the plate is held off-centre, its patterns lose their symmetry: circles shift and lines bend toward the mounting point. ';
+    } else s += 'Between resonances the plate hardly vibrates, so the sand stays put. The nearest resonance is at ' + (md ? Math.round(md.f) + ' Hz' : '?') + '. ';
+    if (drive === 'center') s += shape === 'disk' ? 'Held at the centre and shaken up and down, the disk can only respond with circular patterns.' : 'Held at the centre, the square only shows patterns with its full symmetry.';
+    chlA11y.narrate(s);
+  }
+
+  /* ── loop ── */
+  var timer = null, last = 0, narrT = 0, lastOn = false;
+  function loop(ts) {
+    var dt = last ? Math.min(0.05, (ts - last)/1000) : 0.016; last = ts;
+    if (sweeping) {
+      if (dwell > 0) dwell -= dt;
+      else {
+        var fNext = freq*Math.exp(0.09*dt), hit = null;
+        for (var k = 0; k < MODES.length; k++) if (excitable(MODES[k]) && MODES[k].f > freq*1.0005 && MODES[k].f <= fNext && (!hit || MODES[k].f < hit.f)) hit = MODES[k];
+        if (hit) { setFreq(hit.f, true); dwell = 5; narrateState('Sweep: resonance found, pausing here for a few seconds.'); }
+        else setFreq(fNext, true);
+        if (freq >= FMAX) { sweeping = false; updateSweepBtn(); }
+      }
+    }
+    ph += dt*2*Math.PI*1.2;
+    moveSand(dt); draw();
+    var on = onRes(); narrT += dt;
+    if (on !== lastOn && narrT > 0.4) { narrT = 0; lastOn = on; narrateState(''); }
+    timer = window.requestAnimationFrame(loop);
+  }
+
+  /* ── controls ── */
+  function sliderFromF(f) { return Math.round(4000*Math.log(f/FMIN)/Math.log(FMAX/FMIN)); }
+  function setFreq(f, quiet) {
+    freq = clamp(f, FMIN, FMAX); compute(); soundUpdate();
+    var s = document.getElementById('chlF'); if (s) s.value = sliderFromF(freq);
+    var v = document.getElementById('chlFVal'); if (v) v.textContent = freq.toFixed(freq < 1000 ? 1 : 0) + ' Hz';
+    if (!quiet) narrateState('');
+  }
+  function setSlider(v) { setFreq(FMIN*Math.pow(FMAX/FMIN, v/4000)); }
+  function nudge(k) { setFreq(freq*k); }
+  function jump(dir) {
+    var best = null;
+    for (var k = 0; k < MODES.length; k++) {
+      if (!excitable(MODES[k])) continue;
+      if (dir > 0 && MODES[k].f > freq*1.003 && (!best || MODES[k].f < best.f)) best = MODES[k];
+      if (dir < 0 && MODES[k].f < freq/1.003 && (!best || MODES[k].f > best.f)) best = MODES[k];
+    }
+    if (best) { sweeping = false; updateSweepBtn(); setFreq(best.f, true); narrateState('Jumped to the ' + (dir > 0 ? 'next' : 'previous') + ' resonance.'); }
+    else chlA11y.narrate('No more resonances in that direction (50 Hz to 3 kHz) for this set-up.');
+  }
+  function updateSweepBtn() { var b = document.getElementById('chlSweep'); if (b) b.value = sweeping ? 'Pause \u275a\u275a' : 'Sweep \u25b6'; }
+  function toggleSweep() { sweeping = !sweeping; if (sweeping && freq >= FMAX*0.99) setFreq(FMIN, true); updateSweepBtn(); chlA11y.narrate(sweeping ? 'Sweeping the frequency upward. At each resonance the sweep pauses so the sand can form a pattern.' : 'Sweep paused at ' + Math.round(freq) + ' Hz.'); }
+  function setTog(id, on) { var b = document.getElementById(id); if (b) { b.classList.toggle('chl_on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); } }
+  function rebuild(msg) {
+    chlA11y.narrate('Working out the vibration modes of the plate held at this point...');
+    setTimeout(function() { loadModes(); sprinkle(); setFreq(freq, true); narrateState(msg); }, 20);
+  }
+  function setShape(sh) { shape = sh; setTog('chlDisk', sh === 'disk'); setTog('chlSquare', sh === 'square'); rebuild('New plate.'); }
+  function setDrive(dv) { drive = dv; setTog('chlCenter', dv === 'center'); setTog('chlOff', dv === 'off'); var o = document.getElementById('chlOffset'); if (o) o.disabled = dv === 'center'; rebuild('Mounting point moved.'); }
+  var offTimer = null;
+  function setOffset(v) { offset = parseFloat(v); var e = document.getElementById('chlOffVal'); if (e) e.textContent = Math.round(offset*100) + '%'; if (drive !== 'off') return; clearTimeout(offTimer); offTimer = setTimeout(function() { rebuild('Mounting point moved.'); }, 250); }
+  function setAmp(v) { amp = parseFloat(v); soundUpdate(); }
+  function setMap(on) { showMap = on; if (on) buildMap(); }
+  function setSound(on) { sound = on; soundUpdate(); }
+  function refresh() { if (showMap) buildMap(); draw(); }
+
+  canvas.addEventListener('click', function(e) {
+    var r = canvas.getBoundingClientRect(), x = (e.clientX - r.left)*W/r.width, y = (e.clientY - r.top)*H/r.height;
+    if (x > 358 && x < 624 && y > 230 && y < 344) {
+      sweeping = false; updateSweepBtn();
+      var f = FMIN*Math.pow(FMAX/FMIN, (x - 358)/(624 - 358)), best = null;
+      for (var k = 0; k < MODES.length; k++) if (excitable(MODES[k]) && Math.abs(Math.log(MODES[k].f/f)) < 0.025 && (!best || Math.abs(Math.log(MODES[k].f/f)) < Math.abs(Math.log(best.f/f)))) best = MODES[k];
+      setFreq(best ? best.f : f, true); narrateState(best ? 'Tuned to the resonance you clicked.' : '');
+    }
+  });
+  document.addEventListener('visibilitychange', function() { if (document.hidden && sound && gain && actx) gain.gain.setTargetAtTime(0, actx.currentTime, 0.02); else if (!document.hidden) soundUpdate(); });
+
+  /* ── boot ── */
+  loadModes(); sprinkle(); setFreq(freq, true);
+  chlA11y.narrate('Ready. A disk is screwed to the vibrator at its centre and sprinkled with sand. Press Sweep, click a resonance in the spectrum, or use Next resonance.');
+  timer = window.requestAnimationFrame(loop);
+  return { toggleSweep: toggleSweep, jump: jump, sprinkle: function() { sprinkle(); chlA11y.narrate('Fresh sand sprinkled.'); }, setShape: setShape, setDrive: setDrive, setOffset: setOffset,
+           setSlider: setSlider, nudge: nudge, setAmp: setAmp, setMap: setMap, setSound: setSound, refresh: refresh };
+};
+chlA11y.init();
+var chlSim = new chlGen();
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Standing Waves Clarinet </title>
+</head>
+<body>
+<div id="clRoot820">
+  <!-- ── Accessibility toolbar ── -->
+  <div class="cl_a11y820" id="clA11yBar820" role="toolbar" aria-label="Display options">
+    <button type="button" class="cl_a11ybtn820" id="clBtnHC820" onclick="clA11y820.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+    <button type="button" class="cl_a11ybtn820" id="clBtnLM820" onclick="clA11y820.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+    <button type="button" class="cl_a11ybtn820 cl_a11yon820" id="clBtnNR820" onclick="clA11y820.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+  </div>
+  <!-- Narration bar -->
+  <div id="clNarBar820" class="cl_narbar820" role="status" aria-live="polite" aria-atomic="true"></div>
+  <!-- Title bar -->
+  <div class="cl_tbar820"><H3>Standing Waves in a Clarinet</H3></div>
+  <!-- Canvas -->
+  <div class="cl_mcontent820">
+    <canvas id="clCv820" width="820" height="500" style="display:block;"></canvas>
+  </div>
+  <!-- Row 1: note selector -->
+  <div class="cl_bbar820 cl_row_notes820">
+    <span class="cl_sectlbl820">Note:</span>
+    <button type="button" class="cl_notebtn820 cl_active820" id="clBtnD3820"  onclick="clSim820.setNote('D3')">D3</button>
+    <button type="button" class="cl_notebtn820" id="clBtnE3820"  onclick="clSim820.setNote('E3')">E3</button>
+    <button type="button" class="cl_notebtn820" id="clBtnF3820"  onclick="clSim820.setNote('F3')">F3</button>
+    <button type="button" class="cl_notebtn820" id="clBtnG3820"  onclick="clSim820.setNote('G3')">G3</button>
+    <button type="button" class="cl_notebtn820" id="clBtnA3820"  onclick="clSim820.setNote('A3')">A3</button>
+    <button type="button" class="cl_notebtn820" id="clBtnB3820"  onclick="clSim820.setNote('B3')">B3</button>
+    <button type="button" class="cl_notebtn820" id="clBtnC4820"  onclick="clSim820.setNote('C4')">C4</button>
+    <button type="button" class="cl_notebtn820 cl_reg2820" id="clBtnA4820"  onclick="clSim820.setNote('A4')">A4 <sup>R2</sup></button>
+    <button type="button" class="cl_notebtn820 cl_reg2820" id="clBtnC5820"  onclick="clSim820.setNote('C5')">C5 <sup>R2</sup></button>
+    <span class="cl_noteinfo820" id="clNoteInfo820"></span>
+  </div>
+  <!-- Row 2: display mode + harmonic -->
+  <div class="cl_bbar820 cl_row_mode820">
+    <span class="cl_sectlbl820">Show:</span>
+    <button type="button" class="cl_modebtn820 cl_active820" id="clBtnDisp820"
+            onclick="clSim820.setMode('disp')">Displacement</button>
+    <button type="button" class="cl_modebtn820" id="clBtnPres820"
+            onclick="clSim820.setMode('pres')">Pressure</button>
+    <button type="button" class="cl_modebtn820" id="clBtnMols820"
+            onclick="clSim820.toggleMols()">Molecules: OFF</button>
+    <span class="cl_sectlbl820" style="margin-left:14px;">Harmonic:</span>
+    <button type="button" class="cl_harmbtn820 cl_active820" id="clBtnH1820" onclick="clSim820.setHarmonic(1)">n = 1</button>
+    <button type="button" class="cl_harmbtn820" id="clBtnH3820" onclick="clSim820.setHarmonic(3)">n = 3 <small>(12th)</small></button>
+    <button type="button" class="cl_harmbtn820" id="clBtnH5820" onclick="clSim820.setHarmonic(5)">n = 5</button>
+    <button type="button" class="cl_harmbtn820" id="clBtnH7820" onclick="clSim820.setHarmonic(7)">n = 7</button>
+  </div>
+  <!-- Row 3: playback -->
+  <div class="cl_bbar820 cl_row_play820">
+    <input type="button" class="butt820" id="clPlay820" value="&#9654;" onclick="if(this.value=='&#9654;'){clSim820.play();this.value='&#9208;';}else{this.value='&#9654;';clSim820.pause();}">
+    <input type="button" class="butt820" value="&#10073;&#9664;" onclick="clSim820.stepBack();document.getElementById('clPlay820').value='&#9654;';">
+    <input type="button" class="butt820" value="&#9654;&#10073;" onclick="clSim820.stepForward();document.getElementById('clPlay820').value='&#9654;';">
+    <input type="button" class="butt820" value="&#128472;" onclick="clSim820.reset();document.getElementById('clPlay820').value='&#9654;';">
+    <label class="cl_cblbl820">
+      <input type="checkbox" id="clCbSlow820" onchange="clSim820.setSlow(this.checked)"> Slow
+    </label>
+  </div>
+</div><!-- #clRoot820 -->
+<style>
+  #clRoot820 * { box-sizing: border-box; margin: 0; }
+  #clRoot820 { display: block; width: 820px; }
+  #clRoot820 canvas { display: block; }
+  #clRoot820 .cl_a11y820 {
+    display: flex; gap: 6px; padding: 6px 8px;
+    background: #222; flex-wrap: wrap; width: 820px;
+  }
+  #clRoot820 .cl_a11ybtn820 {
+    padding: 4px 10px; font-size: .72rem; font-family: monospace;
+    letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+    background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+  }
+  #clRoot820 .cl_a11ybtn820:hover { border-color: #00e8d0; color: #00e8d0; }
+  #clRoot820 .cl_a11yon820 { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+  #clRoot820 .cl_narbar820 {
+    width: 820px; min-height: 28px; padding: 5px 10px;
+    background: #ffefc0; border-left: 4px solid #e0b040;
+    font-size: .88rem; color: #333; font-style: italic;
+  }
+  #clRoot820 .cl_tbar820 {
+    padding: 4px; height: 30px; background-color: #f90;
+    text-align: center; width: 820px;
+  }
+  #clRoot820 .cl_mcontent820 { height: 502px; width: 820px; }
+  /* Control bars */
+  #clRoot820 .cl_bbar820 {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    width: 820px; padding: 7px 10px; border-top: 1px solid #ccc;
+  }
+  #clRoot820 .cl_row_notes820 { background: #e8f5e9; }
+  #clRoot820 .cl_row_mode820  { background: #e3f2fd; }
+  #clRoot820 .cl_row_play820  { background: #fff9c4; }
+  #clRoot820 .cl_sectlbl820 { font-size: 13px; font-weight: bold; color: #444; white-space: nowrap; }
+  #clRoot820 .cl_noteinfo820 { font-size: 12px; color: #555; margin-left: 10px; font-style: italic; }
+  #clRoot820 .cl_notebtn820 {
+    padding: 5px 10px; font-size: 14px; font-weight: bold; border-radius: 4px;
+    cursor: pointer; background: #fff; border: 2px solid #888; color: #333;
+  }
+  #clRoot820 .cl_notebtn820:hover { border-color: #333; }
+  #clRoot820 .cl_modebtn820, #clRoot820 .cl_harmbtn820 {
+    padding: 5px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;
+    background: #fff; border: 2px solid #888; color: #333;
+  }
+  #clRoot820 .cl_modebtn820:hover, #clRoot820 .cl_harmbtn820:hover { border-color: #333; }
+  #clRoot820 .cl_active820 { background: #333; color: #fff; border-color: #333; }
+  #clRoot820 .cl_playbtn820 {
+    padding: 4px 10px; font-size: 14px; border-radius: 4px; cursor: pointer;
+    background: #eee; border: 1px solid #999; color: #333; min-width: 36px;
+  }
+  #clRoot820 .cl_playbtn820:hover { background: #ddd; }
+  #clRoot820 .cl_cblbl820 { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  #clRoot820 .cl_reg2820 { background: #fff0e0; border-color: #c06000; color: #804000; }
+  #clRoot820 .cl_reg2820.cl_active820 { background: #804000; color: #fff; border-color: #804000; }
+</style>
+<!-- ════════ Accessibility controller ════════ -->
+<script>
+  var clA11y820 = (function(){
+    var ROOT = null, states = { hc: false, lm: false, nr: true };
+    function styleBtn(id, on) {
+      var b = document.getElementById(id); if (!b) return;
+      if (on) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+      else    { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    function apply() {
+      if (!ROOT) return;
+      var cv = document.getElementById('clCv820');
+      if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+      var nb = document.getElementById('clNarBar820');
+      if (nb) nb.style.display = states.nr ? 'block' : 'none';
+      var btn = document.getElementById('clBtnNR820');
+      if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('clBtnNR820', states.nr); }
+      styleBtn('clBtnHC820', states.hc);
+      styleBtn('clBtnLM820', states.lm);
+    }
+    return {
+      init: function() { ROOT = document.getElementById('clRoot820'); apply(); },
+      toggle: function(k) {
+        states[k] = !states[k];
+        if (k === 'hc' && states.hc) states.lm = false;
+        if (k === 'lm' && states.lm) states.hc = false;
+        apply();
+        if (typeof clSim820 !== 'undefined') clSim820.redraw();
+      },
+      isHC: function() { return states.hc; },
+      narrate: function(msg) {
+        if (!states.nr) return;
+        var nb = document.getElementById('clNarBar820'); if (!nb) return;
+        nb.innerHTML = msg;
+        if (window.MathJax) {
+          if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+          else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+        }
+      }
+    };
+  })();
+</script>
+<!-- ════════ Simulation ════════ -->
+<!-- ════════ Simulation ════════ -->
+<script>
+  var clSim820 = (function(){
+    var _ACT = ' cl_active820'; /* active-class string for split/join */
+    var canvas = document.getElementById('clCv820');
+    var ctx    = canvas.getContext('2d');
+    var V_SOUND = 345;
+    var L0 = V_SOUND / (4 * 146.8); /* full tube length ~0.587 m for D3 */
+    var HOLE_POS = [0.24, 0.34, 0.44, 0.54, 0.64, 0.74];
+    var NOTES = {
+      D3:{ freq:146.8, holes:[0,0,0,0,0,0], regKey:0, harmBase:1, label:'D3 (lowest, all closed)' },
+      E3:{ freq:164.8, holes:[0,0,0,0,0,1], regKey:0, harmBase:1, label:'E3' },
+      F3:{ freq:174.6, holes:[0,0,0,0,1,1], regKey:0, harmBase:1, label:'F3' },
+      G3:{ freq:196.0, holes:[0,0,0,1,1,1], regKey:0, harmBase:1, label:'G3' },
+      A3:{ freq:220.0, holes:[0,0,1,1,1,1], regKey:0, harmBase:1, label:'A3' },
+      B3:{ freq:246.9, holes:[0,1,1,1,1,1], regKey:0, harmBase:1, label:'B3' },
+      C4:{ freq:261.6, holes:[1,1,1,1,1,1], regKey:0, harmBase:1, label:'C4' },
+      A4:{ freq:440.0, holes:[0,0,1,1,1,1], regKey:1, harmBase:3, label:'A4 (register 2, \xd73)' },
+      C5:{ freq:523.3, holes:[1,1,1,1,1,1], regKey:1, harmBase:3, label:'C5 (register 2, \xd73)' }
+    };
+    var NOTE_ORDER = ['D3','E3','F3','G3','A3','B3','C4','A4','C5'];
+    var noteKey='D3', dispMode='disp', harmonic=1;
+    var showMols=false, slowMode=false;
+    var index=-1, time=0.0, timer, runFlag=1;
+    function getNote()  { return NOTES[noteKey]; }
+    function getLeff()  { return V_SOUND/(4*getNote().freq); }
+    function getFreq()  { return getNote().freq*harmonic; }
+    function getLambda(){ return V_SOUND/getFreq(); }
+    /* Layout */
+    var FY=100, FH=18, FX0=55, FX1=760, FW=FX1-FX0;
+    var GX0=20, GY=345, GH=110, AMPL=85, MOL_R=3;
+    function m2px(m){ return FX0+m/L0*FW; }
+    /* Molecules */
+    var molecules=[], _seed=42;
+    function _rng(){ _seed=(_seed*1664525+1013904223)&0x7fffffff; return _seed/0x7fffffff; }
+    function _presAmp(x_norm){ return Math.abs(Math.cos(harmonic*Math.PI*x_norm/2.0)); }
+    function _initMols() {
+      _seed=42; molecules=[];
+      var Leff=getLeff(), mxEnd=m2px(Leff), tubeW=mxEnd-FX0;
+      var ty=FY-FH+2, by=FY+FH-2, inner=by-ty;
+      var N_COLS=55,n_min=1,n_max=10;
+      var hues=[0,15,30,50,70,95,130,160,185,210,235,260,285,310,335];
+      for (var col=0;col<N_COLS;col++) {
+        var x_norm=(col+0.5)/N_COLS;
+        var n_col=Math.round(n_min+(n_max-n_min)*_presAmp(x_norm));
+        var px=FX0+x_norm*tubeW;
+        for (var m=0;m<n_col;m++){
+          var py=ty+Math.round(_rng()*inner);
+          var h=hues[(col*3+m*7)%hues.length];
+          molecules.push({x_eq:px,y_eq:py,col:'hsl('+h+',78%,38%)'});
+        }
+      }
+    }
+    /* Colours */
+    function cBg()  { return clA11y820.isHC()?'#0d0d0d':'#f5f0e8'; }
+    function cAx()  { return clA11y820.isHC()?'#cccccc':'#333333'; }
+    function cGrid(){ return clA11y820.isHC()?'#2a3344':'#c0c0b0'; }
+    function cTxt() { return clA11y820.isHC()?'#eeeeee':'#222222'; }
+    function cTit() { return clA11y820.isHC()?'#bbaaff':'#440088'; }
+    function cWave(){ return dispMode==='pres'?(clA11y820.isHC()?'#ffaa44':'#b86000'):(clA11y820.isHC()?'#cc77cc':'#660066'); }
+    function cBody()    { return clA11y820.isHC()?'#6a7a5a':'#7a5c28'; }
+    function cBodyFill(){ return clA11y820.isHC()?'rgba(80,100,60,0.15)':'rgba(220,195,150,0.40)'; }
+    function cEffFill() { return clA11y820.isHC()?'rgba(60,140,60,0.18)':'rgba(160,255,160,0.35)'; }
+    function cHoleOpen()  { return clA11y820.isHC()?'#222':'#eee8d0'; }
+    function cHoleClosed(){ return clA11y820.isHC()?'#5a4a2a':'#5a3e18'; }
+    function cReed(){ return clA11y820.isHC()?'#aadd88':'#5a8a20'; }
+    function cRegKey(){ return clA11y820.isHC()?'#88ccff':'#1155aa'; }
+    /* Fendt arrow */
+    function arrow(x1,y1,x2,y2,w,col,txt,spc,spcy){
+      if(!w)w=1;if(!txt)txt='';if(!col)col=ctx.strokeStyle;
+      if(!spc)spc=5;if(!spcy)spcy=5;
+      ctx.fillStyle=col;ctx.strokeStyle=col;
+      var dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+      if(len===0)return; dx/=len;dy/=len;
+      var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;
+      var h=0.5*w+3.5,xSp1=xSp-h*dy,ySp1=ySp+h*dx,xSp2=xSp+h*dy,ySp2=ySp-h*dx;
+      xSp=x2-0.6*s*dx;ySp=y2-0.6*s*dy;
+      ctx.beginPath();ctx.lineWidth=w;ctx.moveTo(x1,y1);
+      if(len<5)ctx.lineTo(x2,y2);else ctx.lineTo(xSp,ySp);ctx.stroke();
+      if(len<5)return;
+      ctx.beginPath();ctx.fillStyle=ctx.strokeStyle;
+      ctx.moveTo(xSp,ySp);ctx.lineTo(xSp1,ySp1);ctx.lineTo(x2,y2);ctx.lineTo(xSp2,ySp2);
+      ctx.closePath();ctx.fill();
+      ctx.fillText(txt,x2+((x2<=x1)?-(3*spc):2*spc),y2+((y2<=y1)?+(3*spcy):2*spcy));
+    }
+    /* Draw clarinet body */
+    function drawClarinet(){
+      var note=getNote(), Leff=getLeff(), effEnd=m2px(Leff);
+      var ty=FY-FH, by=FY+FH;
+      /* Body fill */
+      ctx.fillStyle=cBodyFill(); ctx.fillRect(FX0,ty,FW,FH*2);
+      /* Effective length highlight */
+      ctx.fillStyle=cEffFill(); ctx.fillRect(FX0,ty,effEnd-FX0,FH*2);
+      /* Tube walls */
+      ctx.strokeStyle=cBody(); ctx.lineWidth=3;
+      ctx.beginPath();ctx.moveTo(FX0,ty);ctx.lineTo(FX1-20,ty);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(FX0,by);ctx.lineTo(FX1-20,by);ctx.stroke();
+      /* Mouthpiece (tapered wedge) */
+      ctx.fillStyle=cBody();ctx.strokeStyle=cBody();ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(FX0,ty);ctx.lineTo(FX0-22,ty+4);ctx.lineTo(FX0-22,by-4);ctx.lineTo(FX0,by);
+      ctx.closePath();ctx.fill();
+      /* Reed */
+      ctx.fillStyle=cReed();
+      ctx.beginPath();
+      ctx.moveTo(FX0-2,by);ctx.lineTo(FX0-20,by-3);ctx.lineTo(FX0-20,by-1);ctx.lineTo(FX0-2,by+2);
+      ctx.closePath();ctx.fill();
+      ctx.font='9pt Calibri';ctx.fillStyle=cReed();
+      ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('reed',FX0-11,by+4);
+      ctx.fillStyle=cTxt();ctx.fillText('mouthpiece',FX0-11,ty-25);ctx.fillText('(closed)',FX0-11,ty-14);
+      /* Bell flare */
+      ctx.strokeStyle=cBody();ctx.lineWidth=3;
+      ctx.beginPath();ctx.moveTo(FX1-20,ty);ctx.bezierCurveTo(FX1-8,ty,FX1,ty-12,FX1,ty-15);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(FX1-20,by);ctx.bezierCurveTo(FX1-8,by,FX1,by+12,FX1,by+15);ctx.stroke();
+      /* Open end dashes */
+      ctx.strokeStyle=clA11y820.isHC()?'#666':'#aaa';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(FX1,ty-19);ctx.lineTo(FX1,by+19);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font='9pt Calibri';ctx.fillStyle=cTxt();
+      ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('bell (open)',FX1,by+17);
+      /* Register key */
+      var regX=m2px(L0*0.18);
+      ctx.fillStyle=note.regKey?cRegKey():cBody();
+      ctx.strokeStyle=note.regKey?cRegKey():cBody();ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.ellipse(regX,ty-7,7,4,0,0,2*Math.PI);ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(regX,ty-3);ctx.lineTo(regX,ty);ctx.stroke();
+      ctx.font='8pt Calibri';ctx.fillStyle=cTxt();ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillText('Reg',regX,ty-13);
+      /* Tone holes */
+      for(var h=0;h<6;h++){
+        var hx=m2px(HOLE_POS[h]*L0);
+        ctx.strokeStyle=cBody();ctx.lineWidth=2;
+        ctx.fillStyle=note.holes[h]?cHoleOpen():cHoleClosed();
+        ctx.beginPath();ctx.arc(hx,by+12,6,0,2*Math.PI);ctx.fill();ctx.stroke();
+        ctx.beginPath();ctx.moveTo(hx,by);ctx.lineTo(hx,by+6);ctx.stroke();
+        ctx.font='8pt Calibri';ctx.fillStyle=cTxt();ctx.textAlign='center';ctx.textBaseline='top';
+        ctx.fillText('H'+(h+1),hx,by+20);
+      }
+      /* Effective length bracket */
+      var bry=by+38;
+      ctx.strokeStyle=clA11y820.isHC()?'#88cc88':'#226622';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(FX0,bry);ctx.lineTo(effEnd,bry);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(FX0,bry-4);ctx.lineTo(FX0,bry+4);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(effEnd,bry-4);ctx.lineTo(effEnd,bry+4);ctx.stroke();
+      ctx.font='9pt Calibri';ctx.fillStyle=clA11y820.isHC()?'#88cc88':'#226622';
+      ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText('L\u2091 = '+Leff.toFixed(3)+' m  (\u03bb\u2081/4)',(FX0+effEnd)/2,bry+3);
+      /* Wave + molecules inside tube */
+      _drawWaveInTube(FX0,effEnd,ty,by);
+      if(showMols) _drawMolsInTube(effEnd);
+    }
+    /* Wave value: closed-open */
+    function _waveVal(x_norm){
+      var cosT=Math.cos(2*Math.PI*getFreq()*time);
+      return dispMode==='disp'
+        ? AMPL*Math.sin(harmonic*Math.PI*x_norm/2.0)*cosT
+      : AMPL*Math.cos(harmonic*Math.PI*x_norm/2.0)*cosT;
+    }
+    function _drawWaveInTube(x0,x1,ty,by){
+      var tA=FH-3; ctx.strokeStyle=cWave();ctx.lineWidth=2.5;
+      ctx.save();ctx.beginPath();ctx.rect(x0,ty+1,x1-x0,(by-ty)-2);ctx.clip();
+      ctx.beginPath();
+      for(var s=0;s<=200;s++){
+        var n=s/200,px=x0+n*(x1-x0),wv=_waveVal(n)*tA/AMPL;
+        if(s===0)ctx.moveTo(px,FY-wv);else ctx.lineTo(px,FY-wv);
+      }
+      ctx.stroke();ctx.restore();
+    }
+    function _drawMolsInTube(effEnd){
+      var tubeW=effEnd-FX0, colW=tubeW/55;
+      for(var k=0;k<molecules.length;k++){
+        var mol=molecules[k];
+        var xn=(mol.x_eq-FX0)/tubeW;
+        if(xn<0||xn>1) continue;
+        var cosT=Math.cos(2*Math.PI*getFreq()*time);
+        var disp=colW*Math.sin(harmonic*Math.PI*xn/2.0)*cosT*2.2;
+        var mx=Math.max(FX0+MOL_R,Math.min(effEnd-MOL_R,mol.x_eq+disp));
+        ctx.fillStyle=mol.col;ctx.beginPath();ctx.arc(mx,mol.y_eq,MOL_R,0,2*Math.PI);ctx.fill();
+      }
+    }
+    /* Graph panel */
+    function drawGraph(){
+      var Leff=getLeff(), gW=Math.min(580,Math.round(Leff/L0*600)), gxEnd=GX0+gW;
+      var axC=cAx(),grdC=cGrid(),txtC=cTxt(),titC=cTit(),wvC=cWave();
+      ctx.fillStyle=clA11y820.isHC()?'#1a2233':'#f0ecff';
+      ctx.fillRect(GX0,GY-GH,gW,GH*2);
+      /* Grid */
+      ctx.strokeStyle=grdC;ctx.lineWidth=0.8;
+      for(var i=0;i<=harmonic;i++){
+        var gx=GX0+Math.round(i*gW/harmonic);
+        ctx.beginPath();ctx.moveTo(gx,GY-GH);ctx.lineTo(gx,GY+GH);ctx.stroke();
+      }
+      for(var j=-1;j<=1;j++){
+        var gy=GY+j*GH*0.75;ctx.beginPath();ctx.moveTo(GX0-8,gy);ctx.lineTo(gxEnd,gy);ctx.stroke();
+      }
+      /* Axes */
+      ctx.font='13pt Calibri';ctx.textBaseline='middle';
+      var yLabel=dispMode==='disp'?'y (mm)':'p (Pa)';
+      arrow(GX0-2,GY,gxEnd+30,GY,2,axC,'x (m)',-16,-5);
+      arrow(GX0,GY+2,GX0,GY-GH-18,2,axC,yLabel,-5,-5);
+      /* Wave curve */
+      ctx.strokeStyle=wvC;ctx.lineWidth=2.5;ctx.beginPath();
+      for(var s=0;s<=300;s++){
+        var n=s/300,gx2=GX0+n*gW,wv=_waveVal(n);
+        if(s===0)ctx.moveTo(gx2,GY-wv);else ctx.lineTo(gx2,GY-wv);
+      }
+      ctx.stroke();
+      /* N/A labels at key positions */
+      ctx.font='bold 11pt Calibri';ctx.textBaseline='top';
+      var positions=[];
+      for(var k=0;k<harmonic*2+1;k++) positions.push(k/(harmonic*2));
+      positions.forEach(function(xn){
+        var sinV=Math.abs(Math.sin(harmonic*Math.PI*xn/2.0));
+        var cosV=Math.abs(Math.cos(harmonic*Math.PI*xn/2.0));
+        var isSpecial=(sinV>0.99||sinV<0.01);
+        if(!isSpecial)return;
+        var isDispNode=(sinV<0.01);
+        var isNode=(dispMode==='disp')?isDispNode:!isDispNode;
+        var lbl=isNode?'N':'A';
+        var gxk=GX0+xn*gW;
+        ctx.fillStyle=isNode?(clA11y820.isHC()?'#88ddff':'#0044aa'):(clA11y820.isHC()?'#ffaa66':'#aa2200');
+        ctx.textAlign='center';ctx.fillText(lbl,gxk,GY+5);
+        ctx.strokeStyle=axC;ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(gxk,GY-4);ctx.lineTo(gxk,GY+4);ctx.stroke();
+        ctx.font='10pt Calibri';ctx.fillStyle=txtC;ctx.textBaseline='top';
+        ctx.fillText((xn*Leff).toFixed(3),gxk,GY+GH-14);
+        ctx.font='bold 11pt Calibri';
+      });
+      /* Boundary labels */
+      ctx.font='10pt Calibri';ctx.textBaseline='bottom';
+      var leftLbl =(dispMode==='disp')?'(closed)':'(closed)';
+      var rightLbl=(dispMode==='disp')?'(open)':'(open)';
+      ctx.fillStyle=clA11y820.isHC()?'#88ddff':'#0044aa';ctx.textAlign='left';
+      ctx.fillText(leftLbl,GX0+6,GY-GH-4);
+      ctx.textAlign='right';ctx.fillText(rightLbl,gxEnd,GY-GH-4);
+      /* Title */
+      ctx.font='bold 13pt Calibri';ctx.fillStyle=titC;ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillText((dispMode==='disp'?'Air displacement':'Pressure variation')
+                   +' \u2014 '+noteKey+'  (n='+harmonic+', f='+getFreq().toFixed(1)+' Hz)',GX0+gW/2,GY-GH-4);
+    }
+    /* Info panel */
+    function drawInfo(){
+      var note=getNote(),Leff=getLeff(),lam=getLambda(),f=getFreq();
+      var txtC=cTxt(),titC=cTit(),ix=642,iy=GY-GH+6;
+      ctx.font='bold 13pt Calibri';ctx.fillStyle=titC;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(note.label,ix,iy);
+      ctx.font='12pt Calibri';ctx.fillStyle=txtC;
+      ctx.fillText('f = '+f.toFixed(1)+' Hz',ix,iy+24);
+      ctx.fillText('\u03bb = '+lam.toFixed(3)+' m',ix,iy+46);
+      ctx.fillText('L\u2091 = '+Leff.toFixed(3)+' m',ix,iy+68);
+      ctx.fillText('n = '+harmonic+' (odd only)',ix,iy+90);
+      ctx.fillText('t = '+time.toFixed(2)+' s',ix,iy+112);
+      var fluteL=V_SOUND/(2*getNote().freq);
+      ctx.font='10pt Calibri';ctx.fillStyle=clA11y820.isHC()?'#88ccff':'#336699';
+      ctx.fillText('Flute same pitch:',ix,iy+136);
+      ctx.fillText('L='+fluteL.toFixed(3)+' m (\xd72 shorter)',ix,iy+150);
+      var el=document.getElementById('clNoteInfo820');
+      if(el)el.textContent=note.label+'  |  f='+f.toFixed(1)+' Hz  |  \u03bb='+lam.toFixed(3)+' m';
+    }
+    function drawMotion(){
+      if(index>=8000){runFlag=0;document.getElementById('clPlay820').textContent='\u25B6';}
+      if(runFlag!==1)return;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      index++;time=index/(slowMode?30.0:100.0);
+      ctx.fillStyle=cBg();ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.font='13pt Calibri';
+      drawClarinet();drawGraph();drawInfo();
+    }
+    function runMotion(){ 
+      drawMotion(); 
+      document.getElementById("clPlay820").value=String.fromCodePoint(0x23F8);
+      if(runFlag===1) timer=window.setTimeout(runMotion,1000/60); }
+    function play()        { window.clearTimeout(timer);runFlag=1;runMotion(); }
+    function pause()       { window.clearTimeout(timer);runFlag=0; }
+    function stepForward() { window.clearTimeout(timer);runFlag=1;drawMotion(); }
+    function stepBack()    { window.clearTimeout(timer);index=Math.max(index-2,-1);time=index/(slowMode?30:100);runFlag=1;drawMotion(); }
+    function reset()       { window.clearTimeout(timer);index=-1;time=0;runFlag=1;_initMols();runMotion(); }
+    function setSlow(v)    { slowMode=v; }
+    function redraw()      { drawMotion(); }
+    function _setActive(ids,activeId){
+      ids.forEach(function(id){
+        var b=document.getElementById(id+'820');
+        if(!b)return;
+        b.className=b.className.split(_ACT).join('');
+        if(id===activeId)b.className+=_ACT;
+      });
+    }
+    function setNote(key){
+      noteKey=key;
+      _setActive(NOTE_ORDER.map(function(n){return 'clBtn'+n;}),'clBtn'+key);
+      var note=NOTES[key];
+      if(note.harmBase!==harmonic)setHarmonic(note.harmBase);
+      _initMols();reset();
+      var Leff=getLeff(),lam=V_SOUND/note.freq;
+      clA11y820.narrate(
+        '<strong>'+note.label+'</strong> &mdash; f = '+note.freq.toFixed(1)+' Hz. '
+        +'L = '+Leff.toFixed(3)+' m. \u03bb = '+lam.toFixed(3)+' m (= 4L for n=1). '
+        +(note.regKey?'<strong>Register key open</strong>: suppresses n=1, forces n=3 harmonic &mdash; a musical <strong>twelfth</strong> (\xd73) above the first register. '
+          :'Holes '+(note.holes.map(function(h,i){return h?'H'+(i+1):null;}).filter(Boolean).join(', ')||'none')+' open. ')
+        +'Closed end: pressure antinode (drives the reed). Open end: pressure node (atmospheric).'
+      );
+    }
+    function setMode(mode){
+      dispMode=mode;
+      _setActive(['clBtnDisp','clBtnPres'],'clBtn'+(mode==='disp'?'Disp':'Pres'));
+      reset();
+      clA11y820.narrate(mode==='disp'
+                           ?'<strong>Displacement</strong>: molecule oscillation. Closed end = node (wall), open end = antinode (free).'
+                           :'<strong>Pressure</strong>: local pressure variation. Closed end = antinode (max swing, drives reed). Open end = node (atmospheric).');
+    }
+    function setHarmonic(n){
+      if(n%2===0)return;
+      harmonic=n;
+      _setActive(['clBtnH1','clBtnH3','clBtnH5','clBtnH7'],'clBtnH'+n);
+      _initMols();reset();
+      clA11y820.narrate(
+        'n = '+n+' &mdash; f = '+getFreq().toFixed(1)+' Hz (\xd7'+n+' fundamental). \u03bb = '+getLambda().toFixed(3)+' m. '
+        +'Only <strong>odd harmonics</strong> (n=1,3,5,\u2026) exist in a closed-open pipe. '
+        +(n===3?'This is the <strong>second register</strong> &mdash; a musical <em>twelfth</em> above the first, unlike the flute whose second register is an <em>octave</em> (\xd72).'
+          :'')
+      );
+    }
+    function toggleMols(){
+      showMols=!showMols;
+      var btn=document.getElementById('clBtnMols820');
+      if(btn){btn.textContent='Molecules: '+(showMols?'ON':'OFF');
+              btn.className=btn.className.split(_ACT).join('')+(showMols?_ACT:'');}
+      if(showMols)_initMols();
+      if(!runFlag)drawMotion();
+      clA11y820.narrate(showMols
+                           ?'Molecules shown. Density \u221d pressure amplitude &mdash; clusters at pressure antinodes near the reed (closed) end.'
+                           :'Molecules hidden.');
+    }
+    window.setTimeout(function(){
+      _initMols();reset();
+      clA11y820.narrate(
+        'Standing Waves in a Clarinet. '
+        +'Closed-open pipe: reed end = closed (pressure antinode, displacement node); bell = open (pressure node, displacement antinode). '
+        +'Only <strong>odd harmonics</strong> (n=1,3,5,\u2026) are supported. '
+        +'Second register is a <strong>musical twelfth</strong> (\xd73), not an octave. '
+        +'For the same pitch, the clarinet tube is roughly <strong>twice as long</strong> as an equivalent flute. '
+        +'Reference: UNSW Acoustics &mdash; Flute vs Clarinet (Wolfe et al.).'
+      );
+    },0);
+    return {play,pause,stepForward,stepBack,reset,setSlow,setNote,setMode,setHarmonic,toggleMols,redraw};
+  })();
+</script>
+<script>
+  clA11y820.init();
+</script>
+
+</body>
+</html>

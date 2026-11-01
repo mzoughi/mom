@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  // Configure MathJax to load the AsciiMath input component
+  window.MathJax = {
+    loader: { load: ['input/asciimath', 'output/chtml'] }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations - Doppler Effect</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,waves, Doppler,Effect, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="dopRoot0914">
+<!-- ── Accessibility toolbar ── -->
+<div class="dop_a11y0914" id="dopA11yBar0914" role="toolbar" aria-label="Display options">
+<button type="button" class="dop_a11ybtn0914" id="dopBtnHC0914" onclick="dopA11y0914.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="dop_a11ybtn0914" id="dopBtnLM0914" onclick="dopA11y0914.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="dop_a11ybtn0914" id="dopBtnCB0914" onclick="dopA11y0914.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="dop_a11ybtn0914 dop_a11yon0914" id="dopBtnNR0914" onclick="dopA11y0914.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0914"><h3>The Doppler Effect</h3></div>
+<div class="mcontent0914">
+<canvas id="dopCanvas0914" style="margin:auto;display:block;border:1px solid #ccc" width="640" height="320"></canvas>
+</div>
+<div id="dopNarBar0914" class="dop_narbar0914" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0914">
+<input type="button" id="dopPlay0914" value="Play"
+onclick="if(this.value=='Play'){dopSim0914.pl();this.value='Pause';}else{this.value='Play';dopSim0914.ps();}">
+<input type="button" value="Step Back" onclick="document.getElementById('dopPlay0914').value='Play';dopSim0914.stepBack();">
+<input type="button" value="Step" onclick="document.getElementById('dopPlay0914').value='Play';dopSim0914.step();">
+<input type="button" value="Restart" onclick="document.getElementById('dopPlay0914').value='Play';dopSim0914.rst();">
+</div>
+<div class="footer0914">
+<div class="dop_ctrlrow0914">
+<div class="dop_ctrlcol0914">
+<div class="dop_ctrltitle0914">Source</div>
+V = <input type="range" id="dopVs0914" min="-0.9" max="0.9" value="0.5" step="0.1"
+oninput="document.getElementById('dopVsVal0914').textContent=this.value" onchange="dopSim0914.rst()">
+<span id="dopVsVal0914">0.5</span> v<sub>w</sub><br>
+x<sub>i</sub> = <input type="range" id="dopXSi0914" min="0" max="0.95" value="0.1" step="0.05"
+oninput="document.getElementById('dopXSiVal0914').textContent=this.value" onchange="dopSim0914.rst()">
+<span id="dopXSiVal0914">0.10</span> W
+</div>
+<div class="dop_ctrlcol0914">
+<div class="dop_ctrltitle0914">Observer</div>
+V = <input type="range" id="dopVo0914" min="-0.9" max="0.9" value="-0.3" step="0.1"
+oninput="document.getElementById('dopVoVal0914').textContent=this.value" onchange="dopSim0914.rst()">
+<span id="dopVoVal0914">-0.3</span> v<sub>w</sub><br>
+x<sub>i</sub> = <input type="range" id="dopXOi0914" min="0" max="0.95" value="0.95" step="0.05"
+oninput="document.getElementById('dopXOiVal0914').textContent=this.value" onchange="dopSim0914.rst()">
+<span id="dopXOiVal0914">0.95</span> W
+</div>
+</div>
+<div class="dop_sndrow0914">
+<label><input type="checkbox" id="dopSoundS0914" onclick="dopSim0914.toggleSourceSound()"> Hear the source sound</label>
+<label><input type="checkbox" id="dopSound0914" onclick="dopSim0914.toggleObserverSound()"> Hear what the observer hears</label>
+</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 646px; margin: 0; }
+#dopRoot0914 {
+--dop-sky:      #00ffff;
+--dop-ground:   #c0c0c0;
+--dop-sun:      #ffd000;
+--dop-text:     #111111;
+--dop-struct:   #111111;
+--dop-wave:     #888888;
+--dop-cyclist:  #000000;
+--dop-cyclist-hit: #ff0000;
+--dop-databox-bg:  #ffff00;
+--dop-databox-border: #ff0000;
+--dop-toolbar-bg: #222;
+}
+#dopRoot0914 .dop_a11y0914 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--dop-toolbar-bg); flex-wrap:wrap; width:646px;
+}
+#dopRoot0914 .dop_a11ybtn0914 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#dopRoot0914 .dop_a11ybtn0914:hover { border-color:#00e8d0; color:#00e8d0; }
+#dopRoot0914 .dop_a11yon0914 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#dopRoot0914 .dop_narbar0914 {
+width:646px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar0914    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; width:646px; }
+.tbar0914 h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent0914 { height:324px; width:646px; }
+.bbar0914    { height:50px; background-color:#df9; padding:10px; text-align:center; width:646px; }
+.bbar0914 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+.footer0914  { width:646px; background-color:#fce4ec; font-size:.85rem; padding:8px 0; }
+.footer0914 .dop_ctrlrow0914  { width:646px; display:flex; }
+.footer0914 .dop_ctrlcol0914  { width:323px; padding:4px 10px; }
+.footer0914 .dop_ctrltitle0914{ width:100%; font-weight:bold; margin-bottom:2px; }
+.footer0914 .dop_sndrow0914   { width:626px; padding:8px 10px 2px 10px; display:flex; gap:24px; flex-wrap:wrap; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var dopA11y0914 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--dop-sky':'#000000','--dop-ground':'#222222','--dop-sun':'#ffff00','--dop-text':'#ffffff','--dop-struct':'#ffffff','--dop-wave':'#ffffff','--dop-cyclist':'#ffffff','--dop-cyclist-hit':'#ff5500','--dop-databox-bg':'#000000','--dop-databox-border':'#ffffff','--dop-toolbar-bg':'#000'},
+lm:{'--dop-sky':'#cfeeff','--dop-ground':'#ded9c4','--dop-sun':'#ffc94d','--dop-text':'#222222','--dop-struct':'#333333','--dop-wave':'#666666','--dop-cyclist':'#333333','--dop-cyclist-hit':'#d32f00','--dop-databox-bg':'#fff6d9','--dop-databox-border':'#cc8800','--dop-toolbar-bg':'#444'},
+cb:{'--dop-sky':'#cbe4f0','--dop-ground':'#cfcfcf','--dop-sun':'#e69f00','--dop-text':'#000000','--dop-struct':'#333333','--dop-wave':'#0072b2','--dop-cyclist':'#000000','--dop-cyclist-hit':'#d55e00','--dop-databox-bg':'#f0f0f0','--dop-databox-border':'#0072b2','--dop-toolbar-bg':'#222'}
+};
+var DEFS = {'--dop-sky':'#00ffff','--dop-ground':'#c0c0c0','--dop-sun':'#ffd000','--dop-text':'#111111','--dop-struct':'#111111','--dop-wave':'#888888','--dop-cyclist':'#000000','--dop-cyclist-hit':'#ff0000','--dop-databox-bg':'#ffff00','--dop-databox-border':'#ff0000','--dop-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('dopNarBar0914');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('dopBtnNR0914');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('dopBtnNR0914',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('dopBtnHC0914',states.hc);
+styleBtn('dopBtnLM0914',states.lm);
+styleBtn('dopBtnCB0914',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('dopRoot0914'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('dopNarBar0914');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VGG (Van de Graaff) example.
+- var simObj = function() { ... rst(); return {pl,ps,step,stepBack,rst,toggleSourceSound,toggleObserverSound}; }
+- var simObj0914 = new simObj();
+- Animation: recursive window.setTimeout(runMotion, trate) guarded by runFlag
+- Physics adapted from the original doppler_5UbA.js / props_5UbA.js (Walter Fendt / Taha Mzoughi),
+restructured into physicsStep() / drawFrame() halves and re-themed via CSS vars for accessibility.
+-->
+<script>
+var dopGen = function() {
+var canvas = document.getElementById('dopCanvas0914');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;   /* 640 x 320 */
+var timer, runFlag = 0, finished = false;
+/* ── color helper ── */
+function c(prop, def) { return dopA11y0914.col(prop, def); }
+/* ── physics constants / state ── */
+var T = 2, C = 34;                 /* wavefront period, wave speed (arbitrary units) */
+var V, Vp;                          /* source / observer velocities */
+var sfrequency = 200, ofrequency = 200;
+var oSound = false, sSound = false, context, gain, oscillator, audioStart = 1, numbOscStarts = 0;
+var trate = 40, trate2 = 400;
+var index, t, ts, tstart, pstart, pss, wcp, to, pc, wc, arrival;
+var bcc = 0, arrivalNarrated = false;
+var mx = W/2, my = H/2 + 50, py = H/2 + 33;
+var hp = 15, wp = 1.236*hp;
+var xs0, px0, x, px, left, adirection, pdirection;
+var aw = 50, ah = 0.65*aw, bw = 5, bh = (59/70)*bw;
+var colorHouse11 = "#ffff00", colorHouse12 = "#ff0000", colorHouse21 = "#ffc800", colorHouse22 = "#ff00ff";
+var colorWindow = "#4040ff", colorDoor = "#604020";
+var frameCount = 0, narrationEvery = 20;   /* ~ every 0.8 s at 25fps */
+/* ══════════ low-level canvas helpers (adapted from props_5UbA.js) ══════════ */
+function newPath(color, thickness){ ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = thickness; }
+function line(x1,y1,x2,y2){ ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+function rectangle(x,y,w,h,col){ if(col) ctx.fillStyle = col; newPath("#000000",1); ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h); }
+function circle(x,y,r,fillCol,strokeCol){
+if(fillCol) ctx.fillStyle = fillCol;
+newPath((strokeCol && typeof strokeCol === 'string') ? strokeCol : 'grey', 1);
+ctx.arc(x,y,r,0,2*Math.PI,true);
+if(fillCol) ctx.fill();
+if(strokeCol) ctx.stroke();
+}
+function cloud(x,y){
+ctx.fillStyle = "#ffffff"; ctx.beginPath();
+ctx.arc(x,y,10,0,2*Math.PI,true); ctx.arc(x+5,y+3,10,0,2*Math.PI,true);
+ctx.arc(x+13,y-2,10,0,2*Math.PI,true); ctx.arc(x+10,y+5,10,0,2*Math.PI,true);
+ctx.arc(x-2,y+5,10,0,2*Math.PI,true); ctx.arc(x+15,y+2,10,0,2*Math.PI,true);
+ctx.fill();
+}
+function tree(x,y,h1,h2){
+ctx.strokeStyle = "#550000"; ctx.beginPath();
+ctx.moveTo(x+h2/5-1,y+h1); ctx.lineTo(x+h2/5-1,y+h2); ctx.lineTo(x+h2/2-3,y+h2); ctx.lineTo(x+h2/3,y+h1);
+ctx.closePath(); ctx.stroke(); ctx.fillStyle="#5F0000"; ctx.fill();
+ctx.fillStyle = "#006600"; newPath("#006600",1.5);
+ctx.arc(x,y,10,0,2*Math.PI,true); ctx.arc(x+5,y+3,8,0,2*Math.PI,true); ctx.arc(x+13,y-2,8,0,2*Math.PI,true);
+ctx.arc(x+7,y-4,8,0,2*Math.PI,true); ctx.arc(x+10,y+5,8,0,2*Math.PI,true); ctx.arc(x-2,y+5,8,0,2*Math.PI,true);
+ctx.arc(x+15,y+2,8,0,2*Math.PI,true); ctx.fill();
+}
+function tree2(x,y,h1,h2){
+ctx.strokeStyle = "#550000"; ctx.beginPath();
+ctx.moveTo(x+h2/6,y+h1); ctx.lineTo(x+h2/5,y+h2+h1); ctx.lineTo(x-h2/4,y+h2+h1); ctx.lineTo(x-h2/5.5,y+h1);
+ctx.closePath(); ctx.stroke(); ctx.fillStyle="#5F0000"; ctx.fill();
+ctx.fillStyle = "#006600"; ctx.beginPath();
+ctx.moveTo(x,y); ctx.lineTo(x-h1/5,y+h1/2); ctx.lineTo(x-h1/5+h1/10,y+h1/2); ctx.lineTo(x-h1/3,y+h1);
+ctx.lineTo(x+h1/3,y+h1); ctx.lineTo(x+h1/5-h1/10,y+h1/2); ctx.lineTo(x+h1/5,y+h1/2);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+}
+function house(c1,c2,x){
+rectangle(x-45,my-45,95,45,c1); rectangle(x-50,my-75,105,30,c2);
+for(var i=0;i<4;i++) if(i!=2) rectangle(x-35+i*20,my-30,15,15,colorWindow);
+rectangle(x+5,my-30,15,30,colorDoor);
+}
+function addspokes(pcc,sx,sy,sr,st,scol,angDir,speed,vspeed){
+if(vspeed!==0){ vspeed = Math.max(Math.abs(V),Math.abs(Vp)); }
+var lo, hi;
+if(vspeed!==0){
+if(pcc%speed < parseInt(speed/3)){ lo=Math.PI/3; hi=5*Math.PI/6; }
+else if(pcc%speed < (2*parseInt(speed/3))){ lo=Math.PI/2; hi=Math.PI; }
+else { lo=2*Math.PI/3; hi=7*Math.PI/6; }
+} else { lo=Math.PI/3; hi=5*Math.PI/6; }
+newPath(scol,st);
+ctx.moveTo(sx-sr*Math.sin(angDir*lo),sy+sr*Math.cos(angDir*lo));
+ctx.lineTo(sx+sr*Math.sin(angDir*lo),sy-sr*Math.cos(angDir*lo)); ctx.stroke();
+newPath(scol,st);
+ctx.moveTo(sx-sr*Math.sin(angDir*hi),sy+sr*Math.cos(angDir*hi));
+ctx.lineTo(sx+sr*Math.sin(angDir*hi),sy-sr*Math.cos(angDir*hi)); ctx.stroke();
+}
+function ambulance(ax,ay,aw,ah,dirx){
+ctx.fillStyle = "#ffffff"; ctx.beginPath();
+ctx.moveTo(ax-dirx*40*aw/40,ay-22*ah/26); ctx.lineTo(ax-dirx*8*aw/40,ay-22*ah/26);
+ctx.lineTo(ax-dirx*8*aw/40,ay-13*ah/26); ctx.lineTo(ax,ay-13*ah/26); ctx.lineTo(ax,ay-5*ah/26);
+ctx.lineTo(ax-dirx*40*aw/40,ay-5*ah/26); ctx.lineTo(ax-dirx*40*aw/40,ay-22*ah/26);
+ctx.closePath(); ctx.stroke(); ctx.fill(); ctx.stroke();
+rectangle(ax-dirx*17*aw/40,ay-19*ah/26,6*aw/40,7*ah/26,"#0000ff");
+if(frameCount%8<4){ ctx.fillStyle = "red"; } else { ctx.fillStyle = "yellow"; }
+ctx.fillRect(ax-dirx*16*aw/40,ay-26*ah/26,4*aw/40,4*ah/26);
+circle(ax-dirx*32*aw/40,ay-4*ah/26,4*ah/26,"#000000");
+circle(ax-dirx*8*aw/40,ay-4*ah/26,4*ah/26,"#000000");
+addspokes(frameCount,ax-dirx*32*aw/40,ay-4*ah/26,3*ah/26,2*ah/26,"grey",dirx,6,V);
+addspokes(frameCount,ax-dirx*8*aw/40,ay-4*ah/26,3*ah/26,2*ah/26,"grey",dirx,6,V);
+}
+function cyclist(col,x,y,w,h,dirx){
+newPath(col,3*w/110);
+ctx.arc(x+dirx*20*w/110,y+70*h/89,24*w/110,0,2*Math.PI,true); ctx.stroke();
+addspokes(frameCount,x+dirx*20*w/110,y+70*h/89,24*w/110,3*w/110,col,dirx,9,Vp);
+addspokes(frameCount,x+dirx*92*w/110,y+70*h/89,24*w/110,3*w/110,col,dirx,9,Vp);
+newPath(col,3*w/110);
+ctx.arc(x+dirx*92*w/110,y+70*h/89,24*w/110,0,2*Math.PI,true); ctx.stroke();
+newPath(col,1);
+ctx.arc(x+dirx*74*w/110,y+10*h/89,7*w/110,0,2*Math.PI,true); ctx.stroke();
+ctx.fillStyle=col; ctx.fill();
+newPath(col,3*w/110);
+ctx.arc(x+dirx*81*w/110,y+32*h/89,7*w/110,0,-Math.PI,true); ctx.stroke();
+newPath(col,3*w/110); ctx.moveTo(x+dirx*23*w/110,y+68*h/89); ctx.lineTo(x+dirx*43*w/110,y+48*h/89); ctx.stroke();
+newPath(col,3*w/110); ctx.moveTo(x+dirx*40*w/110,y+40*h/89); ctx.lineTo(x+dirx*49*w/110,y+59*h/89); ctx.stroke();
+newPath(col,3*w/110); ctx.moveTo(x+dirx*53*w/110,y+67*h/89); ctx.lineTo(x+dirx*75*w/110,y+43*h/89); ctx.stroke();
+newPath(col,3*w/110); ctx.moveTo(x+dirx*88*w/110,y+67*h/89); ctx.lineTo(x+dirx*72*w/110,y+34*h/89); ctx.stroke();
+ctx.lineWidth = 1.0; ctx.beginPath();
+ctx.moveTo(x+dirx*61*w/110,y+10*h/89); ctx.lineTo(x+dirx*34*w/110,y+32*h/89); ctx.lineTo(x+dirx*32*w/110,y+36*h/89);
+ctx.lineTo(x+dirx*30*w/110,y+37*h/89); ctx.lineTo(x+dirx*30*w/110,y+41*h/89); ctx.lineTo(x+dirx*47*w/110,y+41*h/89);
+ctx.lineTo(x+dirx*58*w/110,y+47*h/89); ctx.lineTo(x+dirx*47*w/110,y+61*h/89); ctx.lineTo(x+dirx*49*w/110,y+66*h/89);
+ctx.lineTo(x+dirx*22*w/110,y+68*h/89); ctx.lineTo(x+dirx*22*w/110,y+70*h/89); ctx.lineTo(x+dirx*54*w/110,y+68*h/89);
+ctx.lineTo(x+dirx*55*w/110,y+63*h/89); ctx.lineTo(x+dirx*68*w/110,y+45*h/89); ctx.lineTo(x+dirx*66*w/110,y+41*h/89);
+ctx.lineTo(x+dirx*53*w/110,y+35*h/89); ctx.lineTo(x+dirx*66*w/110,y+27*h/89); ctx.lineTo(x+dirx*71*w/110,y+35*h/89);
+ctx.lineTo(x+dirx*89*w/110,y+35*h/89); ctx.lineTo(x+dirx*88*w/110,y+32*h/89); ctx.lineTo(x+dirx*76*w/110,y+30*h/89);
+ctx.lineTo(x+dirx*72*w/110,y+22*h/89);
+ctx.closePath(); ctx.strokeStyle = col; ctx.stroke(); ctx.fillStyle=col; ctx.fill();
+}
+function bird(bx,by,bw,bh,dirx){
+var brate=60; ctx.fillStyle = "#000000";
+var frac = bcc%brate < (brate/6) ? 0 : bcc%brate < (2*brate/6) ? 1 : 2;
+/* simplified: two clean wing phases (up / down) instead of the original's 5 hand-traced silhouettes,
+ to keep this self-contained file compact while preserving the flapping motion cue. */
+ctx.beginPath();
+if(frac!==2){
+ctx.moveTo(bx+dirx*(-47)*bw/70,by+7*bh/59);
+ctx.lineTo(bx+dirx*(-30)*bw/70,by+(frac===0?-8:16)*bh/59);
+ctx.lineTo(bx+dirx*(0)*bw/70,by+7*bh/59);
+ctx.lineTo(bx+dirx*(30)*bw/70,by+(frac===0?-8:16)*bh/59);
+ctx.lineTo(bx+dirx*(47)*bw/70,by+7*bh/59);
+} else {
+ctx.moveTo(bx+dirx*(-47)*bw/70,by+9*bh/59);
+ctx.lineTo(bx+dirx*(0)*bw/70,by+9*bh/59);
+ctx.lineTo(bx+dirx*(47)*bw/70,by+9*bh/59);
+}
+ctx.strokeStyle="#000000"; ctx.lineWidth=1.5; ctx.stroke();
+}
+/* ══════════ Doppler physics ══════════ */
+function calcWavefronts(){
+arrival = false;
+for (var i=0; i*T<t; i++){
+var x0 = i*V*T + xs0;
+var r  = C*(t-i*T);
+var xFront = left ? x0+r : x0-r;
+var xBack  = left ? x0-r : x0+r;
+var timeWindow = Math.max(Math.abs(V*T), Math.abs(Vp*T));
+if (V===0 && Vp===0) timeWindow = (C*T)/5;
+if (Math.abs(xFront-px) < timeWindow){ arrival = true; pc = i+1; }
+if (Math.abs(xBack-px)  < timeWindow){ arrival = true; pc = i+1; }
+if (pc===1 && ts===0){ tstart=t; ts++; }
+wc = i;
+if (pc===1 && pss===0){ pss++; pstart=wc; }
+}
+if (tstart===0){ to=0; wcp=0; } else { to = t-tstart; wcp = wc-pstart; }
+}
+function drawWavefronts(){
+for (var i=0; i*T<t; i++){
+var x0 = i*V*T + xs0;
+var r  = C*(t-i*T);
+circle(x0, my-10, r, null, c('--dop-wave','#888888'));
+}
+}
+function physicsStep(){
+index += 1; t = index/10.0;
+x  = V*t + xs0;
+px = px0 + Vp*t;
+left = (V >= 0); adirection = left?1:-1;
+pdirection = (Vp<0) ? -1 : 1;
+var wasArrival = arrival;
+calcWavefronts();
+if (arrival && !wasArrival && !arrivalNarrated){
+arrivalNarrated = true;
+dopA11y0914.narrate('The first wavefront has just reached the observer.');
+}
+var stopCond = false;
+if (V===0 && Vp===0 && (1000*to/trate2) > trate2/2) stopCond = true;
+else if (Math.abs(x-px) < aw/4 || x>1.25*W || px>1.25*W || x<-0.25*W || px<-0.25*W) stopCond = true;
+if (stopCond){
+runFlag = 0; finished = true;
+if (audioStart>1 && gain){ gain.gain.value = 0; }
+audioStart = 1;
+}
+}
+function displayData(bx,by,w,h){
+ctx.textBaseline='middle'; ctx.fillStyle=c('--dop-databox-bg','#ffff00'); ctx.strokeStyle=c('--dop-databox-border','#ff0000');
+ctx.lineWidth=0; ctx.beginPath(); ctx.rect(bx,by,w,h); ctx.fill(); ctx.stroke();
+ctx.font='11pt Calibri'; var fs=1/((to/trate2)/wcp), fo=1/((to/trate2)/pc);
+ctx.fillStyle=c('--dop-text','#111111'); ctx.textAlign='left';
+var Label = 'Observer timer (t'+String.fromCharCode(0x2092)+') = '+(1000*to/trate2).toFixed(0)+' ms';
+ctx.fillText(Label, bx+6, by+10);
+ofrequency = sfrequency*(1-Vp/C)/(1-V/C);
+Label = 'Wavefronts emitted during t'+String.fromCharCode(0x2092)+' = '+wcp; ctx.fillText(Label, bx+6, by+30);
+Label = 'Wavefronts reaching observer = '+pc; ctx.fillText(Label, bx+6, by+50);
+if (runFlag===0){
+Label = 'Source freq (measured/set) = ('+fs.toFixed(0)+'/'+sfrequency.toFixed(0)+') Hz'; ctx.fillText(Label, bx+6, by+70);
+Label = 'Observed freq (measured/calc) = ('+fo.toFixed(0)+'/'+ofrequency.toFixed(0)+') Hz'; ctx.fillText(Label, bx+6, by+90);
+}
+}
+function displayEnd(bx,by,w,h){
+ctx.textBaseline='middle'; ctx.fillStyle=c('--dop-databox-bg','#ffff00'); ctx.strokeStyle=c('--dop-databox-border','#ff0000');
+ctx.lineWidth=0; ctx.beginPath(); ctx.rect(bx,by,w,h); ctx.fill(); ctx.stroke();
+ctx.font='11pt Calibri'; ctx.fillStyle=c('--dop-text','#111111'); ctx.textAlign='left';
+ctx.fillText('Animation Ended!', bx+6, by+10);
+ctx.fillText('Press "Restart"', bx+6, by+30);
+ctx.fillText('to play again.', bx+6, by+50);
+}
+function drawFrame(){
+rectangle(0,0,W,my,c('--dop-sky','#00ffff'));
+circle(60,30,10,c('--dop-sun','#ffd000'),'grey');
+bcc++;
+cloud(200-t,50+0.5*t); cloud(400-0.5*t,80); cloud(550+0.5*t,40+0.5*t);
+tree(145,my-25,11,25);
+tree2(505,my-55,40,15); tree2(590,my-75,60,15); tree2(25,my-45,30,15); tree2(235,my-45,30,15);
+house(colorHouse11,colorHouse12,100); house(colorHouse21,colorHouse22,350);
+tree(50,my-25,11,25); tree(195,my-25,11,25); tree(215,my-20,11,25); tree(265,my-25,11,25);
+tree(395,my-25,11,25); tree(455,my-35,11,35); tree(555,my-25,11,25);
+bird(100+2*t,80+0.5*t,bw,bh,1); bird(350-2*t,my-77-1*t,bw,bh,-1); bird(555+2*t,my-25-1*t,bw,bh,1);
+ambulance(x,my,aw,ah,adirection);
+drawWavefronts();
+cyclist(arrival ? c('--dop-cyclist-hit','#ff0000') : c('--dop-cyclist','#000000'), px,py,wp,hp,pdirection);
+rectangle(0,my,W,H-my,c('--dop-ground','#c0c0c0'));
+if (t>0) displayData(0.75*mx,my+5,1.25*mx-5,my-110);
+if (runFlag===0 && t>0) displayEnd(0.05*mx,my+5,0.4*mx-5,my-150);
+}
+/* ── narration of the current scene (used on Step / periodically during Play) ── */
+function sceneNarration(){
+var msg = '';
+if (adirection>0) msg += 'The ambulance is moving to the right. '; else msg += 'The ambulance is moving to the left. ';
+msg += arrival ? 'A wavefront has just reached the cyclist -- shown highlighted. ' : 'No wavefront is currently reaching the cyclist. ';
+if (t>0){
+msg += 'Observer timer: '+(1000*to/trate2).toFixed(0)+' ms. ';
+msg += 'Wavefronts reaching observer so far: '+pc+'. ';
+}
+if (runFlag===0 && finished){
+msg += 'The animation has ended. Press Restart to play again.';
+}
+dopA11y0914.narrate(msg);
+}
+/* ── sound ── */
+function initSound(){
+if (numbOscStarts<7){
+try{
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+context = new AudioContext();
+gain = context.createGain(); gain.gain.value = 1;
+oscillator = context.createOscillator();
+} catch(e){ /* Web Audio unsupported */ }
+}
+}
+function playSound(f){
+ofrequency = sfrequency*(1-Vp/C)/(1-V/C);
+if (audioStart===1 && numbOscStarts<7){ initSound(); audioStart++; }
+if (!oscillator || !gain) return;
+if (context && context.state==='suspended'){ try{ context.resume(); }catch(e){} }
+oscillator.type = 'sine'; oscillator.frequency.value = f; oscillator.detune.value = 0;
+oscillator.connect(gain); gain.connect(context.destination);
+if (audioStart===2 && numbOscStarts<7){ try{ oscillator.start(0); }catch(e){} }
+numbOscStarts++;
+}
+function toggleSourceSound(){
+var cb = document.getElementById('dopSoundS0914');
+var cbO = document.getElementById('dopSound0914');
+if (cb.checked){
+cbO.checked=false; oSound=false; sSound=true;
+if (runFlag===1){ if(audioStart===1){ playSound(sfrequency); } else if(oscillator){ oscillator.frequency.value=sfrequency; gain.gain.value=1; } }
+} else { sSound=false; if(gain) gain.gain.value=0; }
+}
+function toggleObserverSound(){
+var cb = document.getElementById('dopSound0914');
+var cbS = document.getElementById('dopSoundS0914');
+if (cb.checked){
+cbS.checked=false; sSound=false; oSound=true;
+if (runFlag===1){ if(audioStart===1){ playSound(ofrequency); } else if(oscillator){ oscillator.frequency.value=ofrequency; gain.gain.value=1; } }
+} else { oSound=false; if(gain) gain.gain.value=0; }
+}
+/* ── animation loop ── */
+function runMotion(){
+physicsStep();
+drawFrame();
+frameCount++;
+if (!finished && frameCount % narrationEvery === 0){ sceneNarration(); }
+if (finished){
+var playBtn = document.getElementById('dopPlay0914'); if(playBtn) playBtn.value='Play';
+sceneNarration();
+}
+if (runFlag===1 && !finished){ timer = window.setTimeout(runMotion, trate); }
+}
+/* ── public: play ── */
+function pl(){
+window.clearTimeout(timer);
+runFlag = 1; finished = false;
+if (sSound){ try{ playSound(sfrequency); }catch(e){} }
+if (oSound){ try{ playSound(ofrequency); }catch(e){} }
+runMotion();
+}
+/* ── public: pause ── */
+function ps(){ window.clearTimeout(timer); runFlag = 0; }
+/* ── public: single step ── */
+function step(){ window.clearTimeout(timer); runFlag = 0; physicsStep(); drawFrame(); sceneNarration(); }
+/* ── public: step back ── */
+function stepBack(){
+window.clearTimeout(timer); runFlag = 0;
+index -= 2; if (index < -1) index = -1;
+physicsStep(); drawFrame(); sceneNarration();
+}
+/* ── public: restart ── */
+function rst(){
+window.clearTimeout(timer); runFlag = 0; finished = false; arrivalNarrated = false;
+var VsEl=document.getElementById('dopVs0914'), VoEl=document.getElementById('dopVo0914');
+var XSiEl=document.getElementById('dopXSi0914'), XOiEl=document.getElementById('dopXOi0914');
+var VsMult = VsEl? parseFloat(VsEl.value):0.5;
+var VoMult = VoEl? parseFloat(VoEl.value):-0.3;
+var XSiMult= XSiEl? parseFloat(XSiEl.value):0.1;
+var XOiMult= XOiEl? parseFloat(XOiEl.value):0.95;
+V = VsMult*C; Vp = VoMult*C;
+xs0 = XSiMult*W; px0 = XOiMult*W;
+sfrequency = 200; ofrequency = sfrequency*(1-Vp/C)/(1-V/C);
+index = -1; t = 0; ts = 0;
+arrival = false; pc = 0; wc = 0; tstart = 0; pstart = 0; pss = 0; wcp = 0; to = 0;
+bcc = 0; frameCount = 0;
+x = xs0; px = px0;
+left = (V>=0); adirection = left?1:-1; pdirection = (Vp<0)?-1:1;
+if (audioStart>1 && oscillator){ try{ oscillator.stop(0); }catch(e){} }
+audioStart = 1; if (gain) gain.gain.value = 0;
+oSound = false; sSound = false;
+var cbS=document.getElementById('dopSoundS0914'); if(cbS) cbS.checked=false;
+var cbO=document.getElementById('dopSound0914');  if(cbO) cbO.checked=false;
+var playBtn=document.getElementById('dopPlay0914'); if(playBtn) playBtn.value='Play';
+drawFrame();
+dopA11y0914.narrate('Ready. Source starts at '+Math.round(XSiMult*100)+'% of the frame, observer at '+Math.round(XOiMult*100)+'%. Press Play.');
+}
+/* boot */
+rst();
+return { pl:pl, ps:ps, step:step, stepBack:stepBack, rst:rst, toggleSourceSound:toggleSourceSound, toggleObserverSound:toggleObserverSound };
+};
+var dopSim0914 = new dopGen();
+</script>
+<script>
+dopA11y0914.init();
+</script>
+
+</body>
+</html>

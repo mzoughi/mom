@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Waves: Sound</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,Transverse, Longitudinal,Frequency, Amplitude, Tension, Mass,Length,Wave,string, Properties,Rope, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="soundRoot0915">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y0915" id="snBar0915" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn0915" id="snBtnHC0915" onclick="soundA11y0915.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn0915" id="snBtnLM0915" onclick="soundA11y0915.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn0915" id="snBtnCB0915" onclick="soundA11y0915.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sn_a11ybtn0915 sn_a11yon0915" id="snBtnNR0915" onclick="soundA11y0915.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0915"><h3>Sound: A Longitudinal Wave in Matter</h3></div>
+<div class="mcontent0915"><canvas id="soundCanvas0915" style="margin:auto;border:1px solid" width="660" height="320"></canvas></div>
+<div id="soundNarBar0915" class="sn_narbar0915" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="playbar0915" role="group" aria-label="Animation playback controls">
+<button type="button" class="wv_btn0915" id="soundPlayBtn0915" onclick="soundPol0915.togglePlay()" aria-pressed="false">&#9654; Play</button>
+<button type="button" class="wv_btn0915" onclick="soundPol0915.stepBack()">&#10073;&#9664; Step back</button>
+<button type="button" class="wv_btn0915" onclick="soundPol0915.stepForward()">&#9654;&#10073; Step forward</button>
+<button type="button" class="wv_btn0915" onclick="soundPol0915.reset()">&#8635; Reset</button>
+<button type="button" class="wv_btn0915" onclick="soundPol0915.startTimer()">&#9201; Start timer here</button>
+</div>
+<div class="bbar0915" role="group" aria-label="Show or hide measurement tools and overlays">
+<label class="chk0915"><input type="checkbox" id="showWlen0915" onchange="soundPol0915.toggleWlen(this)"> <span id="wlenLbl0915">Show wavelength guide</span></label>
+<label class="chk0915"><input type="checkbox" id="showVibDir0915" onchange="soundPol0915.toggleVibDir(this)"> <span id="vibDirLbl0915">Show vibration-direction arrow</span></label>
+<label class="chk0915"><input type="checkbox" id="showCompress0915" onchange="soundPol0915.toggleCompress(this)"> <span id="compressLbl0915">Show compression points (when paused)</span></label>
+<label class="chk0915"><input type="checkbox" id="showRarefaction0915" onchange="soundPol0915.toggleRarefaction(this)"> <span id="rarefactionLbl0915">Show rarefaction points (when paused)</span></label>
+<label class="chk0915"><input type="checkbox" id="showMarker0915" onchange="soundPol0915.toggleMarker(this)"> <span id="markerLbl0915">Show tracked-particle markers</span></label>
+<label class="chk0915"><input type="checkbox" id="showWaveData0915" checked onchange="soundPol0915.toggleWaveData(this)"> <span id="waveDataLbl0915">Hide wave-data panel</span></label>
+<label class="chk0915"><input type="checkbox" id="showAnimData0915" checked onchange="soundPol0915.toggleAnimData(this)"> <span id="animDataLbl0915">Hide animation-time panel</span></label>
+<label class="chk0915"><input type="checkbox" id="showDX0915" onchange="soundPol0915.toggleDeltaX(this)"> <span id="dxLbl0915">Show horizontal caliper (&#916;x)</span></label>
+</div>
+<div class="footer0915">
+<div class="left0915">Frequency:</div>
+<div class="center0915">`f:\ ` <input class=islide0915 type="range" id="freqSlider0915" min="100" max="5000" value="200" step="50" oninput="soundPol0915.setFreq(this.value)" onchange="soundPol0915.setFreq(this.value)"> <span id="freqValue0915">200</span> Hz</div>
+</div>
+<div class="footer0915">
+<div class="left0915">Amplitude:</div>
+<div class="center0915">`A:\ ` <input class=islide0915 type="range" id="ampSlider0915" min="5" max="50" value="20" step="5" oninput="soundPol0915.setAmp(this.value)" onchange="soundPol0915.setAmp(this.value)"> <span id="ampValue0915">20</span> cm</div>
+</div>
+<div class="footer0915">
+<div class="left0915">Medium:</div>
+<div class="center0915">
+<select id="mediumSelect0915" onchange="soundPol0915.setMedium(this.value)">
+<option value="Vacuum">Vacuum (no medium)</option>
+<option value="Argon">Argon (gas)</option>
+<option value="Butane">Butane (gas)</option>
+<option value="CarbonDioxide">Carbon Dioxide (gas)</option>
+<option value="DryAir" selected>Dry Air (gas)</option>
+<option value="Helium">Helium (gas)</option>
+<option value="Hydrogen">Hydrogen (gas)</option>
+<option value="Neon">Neon (gas)</option>
+<option value="Oxygen">Oxygen (gas)</option>
+<option value="Propane">Propane (gas)</option>
+<option value="WaterVapor">Water Vapor (gas)</option>
+<option value="Glycerol">Glycerol (liquid)</option>
+<option value="Kerosene">Kerosene (liquid)</option>
+<option value="Mercury">Mercury (liquid)</option>
+<option value="MethylAlcohol">Methyl Alcohol (liquid)</option>
+<option value="SeaWater">Sea Water (liquid)</option>
+<option value="Water">Water (liquid)</option>
+<option value="Aluminum">Aluminum (solid)</option>
+<option value="Brass">Brass (solid)</option>
+<option value="Copper">Copper (solid)</option>
+<option value="Diamond">Diamond (solid)</option>
+<option value="Glass">Glass (solid)</option>
+<option value="Gold">Gold (solid)</option>
+<option value="Lead">Lead (solid)</option>
+<option value="Rubber">Rubber (solid)</option>
+<option value="Steel">Steel (solid)</option>
+</select>
+</div>
+</div>
+<div class="footer0915" id="tempRow0915">
+<div class="left0915">Temperature:</div>
+<div class="center0915">`T:\ ` <input class=islide0915 type="range" id="tempSlider0915" min="50" max="500" value="300" step="25" oninput="soundPol0915.setTemp(this.value)" onchange="soundPol0915.setTemp(this.value)"> <span id="tempValue0915">300</span> K</div>
+</div>
+<hr>
+<ol type="a">
+<li>Turn on the horizontal caliper. Measure the distance between two consecutive compressions (the wavelength). With the medium and temperature fixed, how does increasing frequency `f` affect this wavelength?<br /></li>
+<li>What equation relates wave speed `v`, frequency `f`, and wavelength `lambda`? Use the wave-data panel to check your answer numerically.<br /></li>
+<li>Compare a few different gases at the same temperature. How does a gas's molar mass affect the speed of sound through it?<br /></li>
+<li>For a fixed gas, how does increasing the temperature `T` affect the speed of sound?<br /></li>
+<li>Compare the speed of sound in a gas, a liquid, and a solid. What general trend do you notice, and why might that be?<br /></li>
+<li>Select "Vacuum" as the medium. What happens to the wave? Why does this make physical sense?<br /></li>
+<li>Turn on the tracked-particle markers and let the animation run. Do the marked particles travel along with the wave, or do they stay near a fixed home position? Contrast this with what the compression coloring shows.<br /></li>
+<li>Pause the animation and turn on the compression and rarefaction markers. How does the particle spacing and color differ at each type of point?<br /></li>
+</ol>
+</div><!-- #soundRoot0915 -->
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 663px; margin: 0; }
+#soundRoot0915 {
+--sn-toolbar-bg: #222;
+--sn-rope:     #888888;
+--sn-compress: #d1495b;
+--sn-stretch:  #1b998b;
+--sn-axis:     #000000;
+--sn-wrule:    #2e8b57;
+--sn-vibdir:   #ff0000;
+--sn-vrule:    #cd853f;
+--sn-speaker:  #222222;
+--sn-marker:   #1a1a2e;
+}
+#soundRoot0915 .sn_a11y0915 {
+display: flex; gap: 6px; padding: 6px 8px;
+background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 663px;
+}
+#soundRoot0915 .sn_a11ybtn0915 {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+}
+#soundRoot0915 .sn_a11ybtn0915:hover { border-color: #00e8d0; color: #00e8d0; }
+#soundRoot0915 .sn_a11yon0915 { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#soundRoot0915 .sn_narbar0915 {
+width: 663px; min-height: 28px; padding: 5px 10px;
+background: #ffefc0; border-left: 4px solid #e0b040;
+font-size: .88rem; color: #333; font-style: italic;
+}
+.tbar0915    { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+.mcontent0915 { height: 322px; }
+.islide0915 { width: 220px; }
+.playbar0915 {
+height: auto; min-height: 40px; background-color: #cfe8ff; padding: 6px;
+text-align: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+}
+.wv_btn0915 {
+padding: 6px 10px; font-size: .82rem; border-radius: 4px; cursor: pointer;
+background: #fff; border: 1px solid #557; color: #223;
+}
+.wv_btn0915:hover { background: #eef4ff; }
+.bbar0915 {
+background-color: #df9; padding: 8px; text-align: left;
+display: flex; flex-wrap: wrap; gap: 4px 16px;
+}
+.bbar0915 .chk0915 { width: auto; font-size: .84rem; white-space: nowrap; }
+.footer0915  { height: 40px; text-align: center; font-size: normal; display: flex; }
+.footer0915 .left0915   { width: 136px; padding: 2px; }
+.footer0915 .center0915 { width: 527px; padding: 4px; }
+.footer0915:nth-of-type(odd)  { background-color: #fce4ec; }
+.footer0915:nth-of-type(even) { background-color: #e8f5e9; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var soundA11y0915 = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+var THEMES = {
+hc: { '--sn-rope':'#cccccc','--sn-compress':'#ffaa00','--sn-stretch':'#00ffff',
+'--sn-axis':'#ffffff','--sn-wrule':'#00ff88','--sn-vibdir':'#ff4444','--sn-vrule':'#ffaa00',
+'--sn-speaker':'#ffffff','--sn-marker':'#ffffff','--sn-toolbar-bg':'#000' },
+lm: { '--sn-rope':'#666666','--sn-compress':'#aa3311','--sn-stretch':'#0077aa',
+'--sn-axis':'#222222','--sn-wrule':'#226622','--sn-vibdir':'#cc0000','--sn-vrule':'#996622',
+'--sn-speaker':'#333333','--sn-marker':'#000000','--sn-toolbar-bg':'#333' },
+cb: { '--sn-rope':'#888888','--sn-compress':'#d55e00','--sn-stretch':'#0072b2',
+'--sn-axis':'#000000','--sn-wrule':'#009e73','--sn-vibdir':'#d55e00','--sn-vrule':'#e69f00',
+'--sn-speaker':'#000000','--sn-marker':'#000000' }
+};
+var DEFAULTS = { '--sn-rope':'#888888','--sn-compress':'#d1495b','--sn-stretch':'#1b998b',
+'--sn-axis':'#000000','--sn-wrule':'#2e8b57','--sn-vibdir':'#ff0000','--sn-vrule':'#cd853f',
+'--sn-speaker':'#222222','--sn-marker':'#1a1a2e','--sn-toolbar-bg':'#222' };
+function applyVars(theme, on) {
+if (!ROOT) return;
+var vars = THEMES[theme];
+for (var p in vars) ROOT.style.setProperty(p, on ? vars[p] : DEFAULTS[p]);
+}
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a'; b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('soundCanvas0915');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('soundNarBar0915');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR0915');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR0915', states.nr); }
+}
+function apply() {
+if (!ROOT) return;
+applyVars('hc', states.hc); applyVars('lm', states.lm); applyVars('cb', states.cb);
+applyCanvas(); applyNarBar();
+styleBtn('snBtnHC0915', states.hc);
+styleBtn('snBtnLM0915', states.lm);
+styleBtn('snBtnCB0915', states.cb);
+}
+function getCol(prop) {
+if (!ROOT) return DEFAULTS[prop];
+return getComputedStyle(ROOT).getPropertyValue(prop).trim() || DEFAULTS[prop];
+}
+return {
+init: function() { ROOT = document.getElementById('soundRoot0915'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+},
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('soundNarBar0915');
+if (nb) nb.textContent = msg;
+},
+col: function(role) { return getCol('--sn-' + role); }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var soundPol0915 = (function(){
+var canvas  = document.getElementById('soundCanvas0915');
+var ctx     = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var xBase = 80, yBase = 75;
+var varFont = '12pt Calibri';
+var xScale = 50;                                /* pixels per metre, for both cone motion and phase */
+//TM var freq = $freq, A = $amp / 100;                /* A stored internally in metres */
+var freq = 200, A = 20 / 100;                /* A stored internally in metres */
+var t = 0.0, t0 = 0.0, tactual = 1000.0, runRate = 30;
+var GC = 8.314;
+var medium = {
+Vacuum:        { ty: 'gas',    AC: 0,     MW: 0.039948, sp: 0 },
+Argon:         { ty: 'gas',    AC: 1.667, MW: 0.039948, sp: 323 },
+Butane:        { ty: 'gas',    AC: 1.091, MW: 0.058124, sp: 216 },
+CarbonDioxide: { ty: 'gas',    AC: 1.289, MW: 0.04401,  sp: 270 },
+DryAir:        { ty: 'gas',    AC: 1.4,   MW: 0.02897,  sp: 347 },
+Helium:        { ty: 'gas',    AC: 1.667, MW: 0.004003, sp: 1019 },
+Hydrogen:      { ty: 'gas',    AC: 1.405, MW: 0.002016, sp: 1318 },
+Neon:          { ty: 'gas',    AC: 1.667, MW: 0.020183, sp: 454 },
+Oxygen:        { ty: 'gas',    AC: 1.395, MW: 0.031999, sp: 330 },
+Propane:       { ty: 'gas',    AC: 1.126, MW: 0.044097, sp: 252 },
+WaterVapor:    { ty: 'gas',    AC: 1.327, MW: 0.018015, sp: 429 },
+Glycerol:      { ty: 'liquid', AC: 0, MW: 0, sp: 1904 },
+Kerosene:      { ty: 'liquid', AC: 0, MW: 0, sp: 1324 },
+Mercury:       { ty: 'liquid', AC: 0, MW: 0, sp: 1450 },
+MethylAlcohol: { ty: 'liquid', AC: 0, MW: 0, sp: 1143 },
+SeaWater:      { ty: 'liquid', AC: 0, MW: 0, sp: 1533 },
+Water:         { ty: 'liquid', AC: 0, MW: 0, sp: 1493 },
+Aluminum:      { ty: 'solid',  AC: 0, MW: 0, sp: 5100 },
+Brass:         { ty: 'solid',  AC: 0, MW: 0, sp: 4700 },
+Copper:        { ty: 'solid',  AC: 0, MW: 0, sp: 3560 },
+Diamond:       { ty: 'solid',  AC: 0, MW: 0, sp: 12000 },
+Glass:         { ty: 'solid',  AC: 0, MW: 0, sp: 5640 },
+Gold:          { ty: 'solid',  AC: 0, MW: 0, sp: 3240 },
+Lead:          { ty: 'solid',  AC: 0, MW: 0, sp: 1322 },
+Rubber:        { ty: 'solid',  AC: 0, MW: 0, sp: 1600 },
+Steel:         { ty: 'solid',  AC: 0, MW: 0, sp: 5130 }
+};
+//var med = 'DryAir', Temp = $temp;
+var med = 'DryAir', Temp = 300;
+var v = Math.sqrt(medium[med].AC * GC * Temp / medium[med].MW);
+var lambda = (v > 0) ? v / freq : 0;             /* true wavelength, metres */
+var index = -1;
+var timer = null, runFlag = 0;
+var mx = CW / 2, my = CH / 2 + 50;
+var px = 0, py = 0;
+var gasMx = 560, gasMy = 160;
+var pLength, particles = [];
+var addWlenFlag = 0, addVibDirFlag = 0, showCompressFlag = 0, showRarefactionFlag = 0, showMarkerFlag = 0;
+var showWaveDataFlag = 1, showAnimDataFlag = 1;
+var addXCalFlag = 0;
+var xCal = { by: 260, x1: xBase + 60, x2: xBase + 260, jawH: 22, box: null };
+var wRule = { x: xBase, y: 235 };
+var dragging = null;
+var mWLength = '0.00';
+var markerBandW = 22;                            /* two fixed reference bands of particles, tracked over time */
+var markerBands = [ [30, 30 + markerBandW], [320, 320 + markerBandW] ];
+function recompute() {
+var m = medium[med];
+v = (m.ty === 'gas') ? Math.sqrt(m.AC * GC * Temp / m.MW) : m.sp;
+lambda = (v > 0 && freq > 0) ? v / freq : 0;
+}
+function buildParticles() {
+particles = [];
+pLength = Math.sqrt((gasMx * gasMy) / 624);
+for (var pX = pLength / 2; pX <= gasMx; pX += pLength) {
+for (var pY = pLength / 2; pY <= gasMy; pY += pLength) {
+particles.push({ x: pX, y: pY });
+}
+}
+}
+/* Wavefront position in pixels, and each particle's longitudinal offset / compression factor,
+both gated on the particle's own screen position rather than its array index. */
+function frontPx() { return v * t * xScale; }
+function dotCoordX(p) {
+if (lambda <= 0 || p.x > frontPx()) return 0;
+return (xScale * A) * Math.sin(2 * Math.PI * freq * t - 2 * Math.PI * p.x / (xScale * lambda));
+}
+function compressionFactor(p) {
+if (lambda <= 0 || p.x > frontPx()) return 0;
+var phase = 2 * Math.PI * freq * t - 2 * Math.PI * p.x / (xScale * lambda);
+return Math.cos(phase);                        /* +1 = fully compressed, -1 = fully rarefied */
+}
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function hexToRgb(hex) {
+hex = hex.replace('#', '');
+if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+var num = parseInt(hex, 16);
+return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+function safeHex(hex) { return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex) ? hex : '#888888'; }
+function lerpColor(hexA, hexB, frac) {
+var a = hexToRgb(safeHex(hexA)), b = hexToRgb(safeHex(hexB));
+var r = Math.round(a.r + (b.r - a.r) * frac);
+var g = Math.round(a.g + (b.g - a.g) * frac);
+var bl = Math.round(a.b + (b.b - a.b) * frac);
+return 'rgb(' + r + ',' + g + ',' + bl + ')';
+}
+function arrow(x1, y1, x2, y2, w, col, txt, spc) {
+if (!w) w = 1;
+if (!txt) txt = '';
+if (!spc) spc = 5;
+if (!col) col = ctx.strokeStyle;
+ctx.fillStyle = col; ctx.strokeStyle = col;
+var dx = x2 - x1, dy = y2 - y1;
+var length = Math.sqrt(dx * dx + dy * dy);
+if (length === 0) return;
+dx /= length; dy /= length;
+var s = 2.5 * w + 7.5;
+var xSp = x2 - s * dx, ySp = y2 - s * dy;
+var h = 0.5 * w + 3.5;
+var xSp1 = xSp - h * dy, ySp1 = ySp + h * dx;
+var xSp2 = xSp + h * dy, ySp2 = ySp - h * dx;
+xSp = x2 - 0.6 * s * dx; ySp = y2 - 0.6 * s * dy;
+ctx.beginPath(); ctx.lineWidth = w; ctx.moveTo(x1, y1);
+if (length < 5) ctx.lineTo(x2, y2); else ctx.lineTo(xSp, ySp);
+ctx.stroke();
+if (length < 5) return;
+ctx.beginPath(); ctx.fillStyle = ctx.strokeStyle;
+ctx.moveTo(xSp, ySp); ctx.lineTo(xSp1, ySp1); ctx.lineTo(x2, y2); ctx.lineTo(xSp2, ySp2);
+ctx.closePath(); ctx.fill();
+var tspc = (x2 <= x1) ? -(3 * spc) : (2 * spc);
+ctx.fillText(txt, x2 + tspc, y2 + spc);
+}
+function arrowDraw(r, phi) {
+var xf = px + r * Math.cos(phi);
+var yf = py - r * Math.sin(phi);
+arrow(px, py, xf, yf, 3);
+}
+function arrowDoubleDraw(ppx, ppy, r, phi, col, w, txt, spc) {
+var xf = ppx + r * Math.cos(phi), yf = ppy - r * Math.sin(phi);
+arrow(ppx, ppy, xf, yf, w, col, txt, spc);
+xf = ppx + r * Math.cos(phi + Math.PI); yf = ppy - r * Math.sin(phi + Math.PI);
+arrow(ppx, ppy, xf, yf, w, col);
+}
+function addGrid(h, w, dh, dw, x0, y0, col) {
+if (!x0) x0 = 0; if (!y0) y0 = 0; if (!col) col = '#ccc';
+ctx.strokeStyle = col; ctx.lineWidth = 0.3;
+var maxV = parseInt(h / dh), maxH = parseInt(w / dw);
+for (var i = 1; i < maxV; i++) { ctx.beginPath(); ctx.moveTo(x0, y0 + dw * i); ctx.lineTo(x0 + w, y0 + dw * i); ctx.stroke(); }
+for (var j = 1; j < maxH; j++) { ctx.beginPath(); ctx.moveTo(x0 + dw * j, y0); ctx.lineTo(x0 + dw * j, y0 + h); ctx.stroke(); }
+}
+function addXaxis(h, w, x0, y0, col) {
+if (!col) col = 'black';
+ctx.strokeStyle = col; ctx.font = '16pt Calibri'; ctx.fillStyle = col; ctx.textAlign = 'left';
+px = 0; py = y0; arrowDraw(0.99 * w, 0); ctx.fillText('x', 0.95 * w, 1.1 * y0);
+}
+/* ── Speaker: a simple trapezoid whose cone face oscillates with the source ── */
+function drawSpeaker(coneX, col) {
+ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(xBase - 70, yBase + 40);
+ctx.lineTo(xBase - 50, yBase + 40);
+ctx.lineTo(xBase - 20, yBase - 20);
+ctx.lineTo(xBase, yBase - 20);
+ctx.lineTo(xBase + coneX, yBase);
+ctx.lineTo(xBase + coneX, yBase + gasMy);
+ctx.lineTo(xBase, yBase + gasMy + 20);
+ctx.lineTo(xBase - 20, yBase + gasMy + 20);
+ctx.lineTo(xBase - 50, yBase + gasMy - 40);
+ctx.lineTo(xBase - 70, yBase + gasMy - 40);
+ctx.closePath(); ctx.fill();
+}
+/* ── Particle field: color blends toward "compressed" or "rarefied" from the analytic
+displacement field, giving a continuous, physically accurate density map. Particles
+whose *equilibrium* position falls in one of the fixed marker bands are additionally
+ringed in a marker color, unrelated to their compression state, so students can watch
+that those specific particles merely oscillate in place rather than travelling with
+the wave. ── */
+function inMarkerBand(x) {
+for (var b = 0; b < markerBands.length; b++) if (x >= markerBands[b][0] && x <= markerBands[b][1]) return true;
+return false;
+}
+function drawParticles() {
+var compressCol = soundA11y0915.col('compress');
+var stretchCol  = soundA11y0915.col('stretch');
+var neutralCol  = soundA11y0915.col('rope');
+var markerCol   = soundA11y0915.col('marker');
+for (var i = 0; i < particles.length; i++) {
+var p = particles[i];
+var dx = dotCoordX(p);
+var cf = compressionFactor(p);                /* -1..1 */
+var col = (cf >= 0)
+? lerpColor(neutralCol, compressCol, clamp(cf, 0, 1))
+: lerpColor(neutralCol, stretchCol, clamp(-cf, 0, 1));
+var cx = xBase + p.x + dx, cy = yBase + p.y;
+ctx.fillStyle = col; ctx.strokeStyle = col;
+ctx.beginPath();
+ctx.arc(cx, cy, 1.6, 0, 2 * Math.PI);
+ctx.fill();
+if (showMarkerFlag && inMarkerBand(p.x)) {
+ctx.beginPath();
+ctx.arc(cx, cy, 3.4, 0, 2 * Math.PI);
+ctx.lineWidth = 1; ctx.strokeStyle = markerCol; ctx.stroke();
+}
+}
+}
+function displayWaveData(x, y, w, h) {
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#cc99cc'; ctx.strokeStyle = '#000'; ctx.lineWidth = 0;
+ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = '#000'; ctx.textAlign = 'left';
+ctx.fillText('(frequency, speed, wavelength, amplitude)', x + 6, y + 10);
+var label = '(' + freq.toFixed(0) + ' Hz, ' + v.toFixed(0) + ' m/s, ' + lambda.toFixed(2) + ' m, ' + (A * 100).toFixed(0) + ' cm)';
+ctx.fillText(label, x + 6, y + 30);
+}
+function displayData(x, y, w, h) {
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffff66'; ctx.strokeStyle = '#f00'; ctx.lineWidth = 0;
+ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = '#000'; ctx.textAlign = 'left';
+var label = 'Animation time t = ' + (t * 1000).toFixed(0) + ' ms';
+ctx.fillText(label, x + 6, y + 10);
+if (t0 > 0) {
+var timeLabel = 'Timer = ' + ((t - t0) * 1000).toFixed(0) + ' ms';
+ctx.fillText(timeLabel, x + 6, y + 30);
+}
+}
+function displayEnd(x, y, w, h) {
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffff66'; ctx.strokeStyle = '#00f'; ctx.lineWidth = 0;
+ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = '#cc0000'; ctx.textAlign = 'left';
+ctx.fillText('Animation ended!', x + 6, y + 10);
+ctx.fillText('Press Play', x + 6, y + 30);
+ctx.fillText('to restart it.', x + 6, y + 50);
+}
+function displayVacuumNote() {
+ctx.font = varFont; ctx.fillStyle = '#cc0000'; ctx.textAlign = 'left';
+ctx.fillText('No medium \u2014 sound cannot propagate through a vacuum.', xBase, yBase + gasMy + 60);
+}
+function drawWlenGuide(col) {
+var px0 = wRule.x, py0 = wRule.y, w = xScale * lambda;
+ctx.strokeStyle = col; ctx.font = varFont; ctx.fillStyle = col; ctx.lineWidth = 3;
+ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px0 + w, py0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(px0, py0 - 10); ctx.lineTo(px0, py0 + 10); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(px0 + w, py0 - 10); ctx.lineTo(px0 + w, py0 + 10); ctx.stroke();
+ctx.fillText('one wavelength \u03BB (drag to move)', px0 + w / 2 - 60, py0 - 15);
+}
+function drawVibDir(col) {
+arrowDoubleDraw(xBase + 40, yBase + gasMy + 40, 45, 0, col, 4, 'vibration', -10);
+}
+/* Scans the same compressionFactor(x) that colors every particle for local
+extrema: maxima (cf near +1) are true compression points, minima (cf near
+-1) are true rarefaction points. Reading positions off this one function
+keeps the markers locked to what's actually drawn, so they can't drift
+out of phase with, or flip relative to, the visible density pattern. */
+function findPressureExtrema() {
+var xMax = Math.min(gasMx, frontPx());
+var step = 4, xs = [], vals = [];
+for (var x = 0; x <= xMax; x += step) {
+xs.push(x);
+vals.push(compressionFactor({ x: x }));
+}
+var maxima = [], minima = [];
+for (var i = 1; i < vals.length - 1; i++) {
+if (vals[i] >= vals[i - 1] && vals[i] >= vals[i + 1] && vals[i] > 0.85) maxima.push(xs[i]);
+if (vals[i] <= vals[i - 1] && vals[i] <= vals[i + 1] && vals[i] < -0.85) minima.push(xs[i]);
+}
+return { maxima: maxima, minima: minima };
+}
+function drawCompression(col) {
+var ex = findPressureExtrema();
+ctx.font = varFont; ctx.fillStyle = col; ctx.textAlign = 'center';
+for (var k = 0; k < ex.maxima.length; k++) {
+px = xBase + ex.maxima[k]; py = yBase + gasMy / 2 - 60;
+arrowDraw(35, 3 * Math.PI / 2);
+ctx.fillText('compression', px, yBase + gasMy / 2 - 100);
+}
+ctx.textAlign = 'left';
+}
+function drawRarefaction(col) {
+var ex = findPressureExtrema();
+ctx.font = varFont; ctx.fillStyle = col; ctx.textAlign = 'center';
+for (var k = 0; k < ex.minima.length; k++) {
+px = xBase + ex.minima[k]; py = yBase + gasMy / 2 + 60;
+arrowDraw(35, Math.PI / 2);
+ctx.fillText('rarefaction', px, yBase + gasMy / 2 + 100);
+}
+ctx.textAlign = 'left';
+}
+function drawCaliperReadout(cx, cy, text, col) {
+ctx.font = varFont;
+var padX = 6, padY = 4;
+var tw = ctx.measureText(text).width;
+var boxW = tw + 2 * padX, boxH = 16 + 2 * padY;
+var bx0 = cx - boxW / 2, by0 = cy - boxH / 2;
+ctx.fillStyle = '#ffffff'; ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.rect(bx0, by0, boxW, boxH); ctx.fill(); ctx.stroke();
+ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(text, cx, cy + 1);
+ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+return { x: bx0, y: by0, w: boxW, h: boxH };
+}
+function drawDot(cx, cy, r, col) {
+ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1;
+ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+}
+function drawXCaliper(col) {
+var y = xCal.by, x1 = xCal.x1, x2 = xCal.x2, h = xCal.jawH;
+var lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 3;
+ctx.beginPath(); ctx.moveTo(lo, y); ctx.lineTo(hi, y); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x1, y - h / 2); ctx.lineTo(x1, y + h / 2); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x2, y - h / 2); ctx.lineTo(x2, y + h / 2); ctx.stroke();
+drawDot(x1, y, 5, col); drawDot(x2, y, 5, col);
+mWLength = (Math.abs(x2 - x1) / xScale).toFixed(2);
+xCal.box = drawCaliperReadout((x1 + x2) / 2, y - h / 2 - 16, '\u0394x = ' + mWLength + ' m', col);
+}
+function hitTest(px0, py0, x, y, r) { var dx = px0 - x, dy = py0 - y; return (dx * dx + dy * dy) <= r * r; }
+function pointInBox(px0, py0, box) { return box && px0 >= box.x && px0 <= box.x + box.w && py0 >= box.y && py0 <= box.y + box.h; }
+function checkIfCaliper(x, y) {
+var jawR = 9;
+if (!addXCalFlag) return;
+if (hitTest(x, y, xCal.x1, xCal.by, jawR)) { dragging = { part: 'j1' }; return; }
+if (hitTest(x, y, xCal.x2, xCal.by, jawR)) { dragging = { part: 'j2' }; return; }
+if (pointInBox(x, y, xCal.box)) { dragging = { part: 'beam' }; return; }
+}
+function checkIfWlen(x, y) {
+if (!addWlenFlag || lambda <= 0) return;
+var w = xScale * lambda;
+var bx1 = wRule.x - 10, tx1 = wRule.x + w + 10;
+var by1 = wRule.y - 15, ty1 = wRule.y + 15;
+if (x >= bx1 && x <= tx1 && y >= by1 && y <= ty1) dragging = { part: 'wlen' };
+}
+function draw() {
+if (index >= 2000) { runFlag = 0; setPlayLabel(false); }
+ctx.clearRect(0, 0, CW, CH);
+if (runFlag === 1) index = index + 1;
+var axisCol = soundA11y0915.col('axis');
+ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, CW, CH);
+var m = medium[med];
+if (m.ty === 'liquid') { ctx.fillStyle = '#cceeff'; ctx.fillRect(xBase - 20, yBase, CW - xBase + 20, gasMy); }
+if (m.ty === 'solid')  { ctx.fillStyle = '#e6e2c3'; ctx.fillRect(xBase - 20, yBase, CW - xBase + 20, gasMy); }
+addGrid(2 * CH, CW, 10, 10, 0, 0, '#dddddd');
+addXaxis(CH, CW, CH / 4, 3 * CW / 8, axisCol);
+t = index / tactual;
+if (t > 0 && showAnimDataFlag) displayData(1.2 * mx, 0, 0.8 * mx, 60);
+if (runFlag === 0 && t > 0) displayEnd(1.6 * mx, my + 45, 0.4 * mx, 64);
+if (showWaveDataFlag) displayWaveData(0.1 * mx, 0, 1.0 * mx, 40);
+drawParticles();
+var coneX = (v > 0) ? (xScale * A / 2) * Math.sin(2 * Math.PI * freq * t) : 0;
+drawSpeaker(coneX, soundA11y0915.col('speaker'));
+if (v === 0) displayVacuumNote();
+if (addWlenFlag && lambda > 0) drawWlenGuide(soundA11y0915.col('wrule'));
+if (addVibDirFlag) drawVibDir(soundA11y0915.col('vibdir'));
+if (showCompressFlag && runFlag === 0 && t > 0 && lambda > 0) drawCompression(soundA11y0915.col('compress'));
+if (showRarefactionFlag && runFlag === 0 && t > 0 && lambda > 0) drawRarefaction(soundA11y0915.col('stretch'));
+if (addXCalFlag) drawXCaliper(soundA11y0915.col('vrule'));
+}
+function narrate() {
+var m = medium[med];
+var msg = 'Medium: ' + med + ' (' + m.ty + '). ';
+msg += 'Frequency f = ' + freq.toFixed(0) + ' Hz. ';
+msg += 'Amplitude A = ' + (A * 100).toFixed(0) + ' cm. ';
+if (m.ty === 'gas') msg += 'Temperature T = ' + Temp.toFixed(0) + ' K. ';
+if (v === 0) { msg += 'Wave speed v = 0. No medium, so sound cannot propagate.'; }
+else { msg += 'Wave speed v = ' + v.toFixed(0) + ' m/s. Wavelength \u03BB = ' + lambda.toFixed(2) + ' m.'; }
+soundA11y0915.narrate(msg);
+}
+function setPlayLabel(isPlaying) {
+var b = document.getElementById('soundPlayBtn0915'); if (!b) return;
+b.innerHTML = isPlaying ? '\u23F8 Pause' : '\u25B6 Play';
+b.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+}
+function runSim() { draw(); if (runFlag === 1) timer = window.setTimeout(runSim, runRate); }
+function play() {
+window.clearTimeout(timer);
+runFlag = 1; setPlayLabel(true);
+soundA11y0915.narrate('Animation playing.');
+runSim();
+}
+function pause() {
+window.clearTimeout(timer);
+runFlag = 0; setPlayLabel(false);
+soundA11y0915.narrate('Animation paused.');
+}
+function togglePlay() { if (runFlag === 1) pause(); else play(); }
+function stepForward() { window.clearTimeout(timer); runFlag = 1; draw(); runFlag = 0; setPlayLabel(false); }
+function stepBack() {
+window.clearTimeout(timer);
+index = index - 2; if (index < -1) index = -1;
+runFlag = 1; draw(); runFlag = 0; setPlayLabel(false);
+}
+function reset() {
+window.clearTimeout(timer);
+index = -1; t = 0; t0 = 0;
+recompute(); runFlag = 0; setPlayLabel(false);
+draw();
+soundA11y0915.narrate('Animation reset.');
+}
+function startTimer() {
+t0 = t;
+soundA11y0915.narrate('Timer started at the current position.');
+if (runFlag !== 1) play(); else draw();
+}
+function setFreq(val) { freq = parseFloat(val); document.getElementById('freqValue0915').innerHTML = freq.toFixed(0); recompute(); reset(); narrate(); }
+function setAmp(val)  { A = parseFloat(val) / 100; document.getElementById('ampValue0915').innerHTML = parseFloat(val).toFixed(0); reset(); narrate(); }
+function setTemp(val) { Temp = parseFloat(val); document.getElementById('tempValue0915').innerHTML = Temp.toFixed(0); recompute(); reset(); narrate(); }
+function setMedium(val) {
+med = val;
+var m = medium[med];
+var row = document.getElementById('tempRow0915');
+if (row) row.style.visibility = (m.ty === 'gas') ? 'visible' : 'hidden';
+recompute(); reset(); narrate();
+}
+function setLabel(spanId, checked, baseText) {
+var el = document.getElementById(spanId);
+if (el) el.textContent = (checked ? 'Hide ' : 'Show ') + baseText;
+}
+function toggleWlen(cb) {
+addWlenFlag = cb.checked ? 1 : 0; draw();
+setLabel('wlenLbl0915', cb.checked, 'wavelength guide');
+soundA11y0915.narrate('Wavelength guide ' + (cb.checked ? 'shown.' : 'hidden.'));
+}
+function toggleVibDir(cb) {
+addVibDirFlag = cb.checked ? 1 : 0; draw();
+setLabel('vibDirLbl0915', cb.checked, 'vibration-direction arrow');
+soundA11y0915.narrate('Vibration-direction arrow ' + (cb.checked ? 'shown. It points along the same line the wave travels.' : 'hidden.'));
+}
+function toggleCompress(cb) {
+showCompressFlag = cb.checked ? 1 : 0; draw();
+setLabel('compressLbl0915', cb.checked, 'compression points (when paused)');
+soundA11y0915.narrate('Compression markers ' + (cb.checked ? 'will appear once the animation is paused.' : 'hidden.'));
+}
+function toggleRarefaction(cb) {
+showRarefactionFlag = cb.checked ? 1 : 0; draw();
+setLabel('rarefactionLbl0915', cb.checked, 'rarefaction points (when paused)');
+soundA11y0915.narrate('Rarefaction markers ' + (cb.checked ? 'will appear once the animation is paused.' : 'hidden.'));
+}
+function toggleMarker(cb) {
+showMarkerFlag = cb.checked ? 1 : 0; draw();
+setLabel('markerLbl0915', cb.checked, 'tracked-particle markers');
+soundA11y0915.narrate('Tracked-particle markers ' + (cb.checked ? 'shown. Watch those specific particles \u2014 they oscillate near a fixed spot and never travel with the wave.' : 'hidden.'));
+}
+function toggleWaveData(cb) { showWaveDataFlag = cb.checked ? 1 : 0; draw(); setLabel('waveDataLbl0915', cb.checked, 'wave-data panel'); }
+function toggleAnimData(cb) { showAnimDataFlag = cb.checked ? 1 : 0; draw(); setLabel('animDataLbl0915', cb.checked, 'animation-time panel'); }
+function toggleDeltaX(cb) {
+addXCalFlag = cb.checked ? 1 : 0; draw();
+setLabel('dxLbl0915', cb.checked, 'horizontal caliper (\u0394x)');
+soundA11y0915.narrate('Horizontal-distance caliper ' + (cb.checked ? 'shown, with a live reading. Drag either jaw to change the gap, or drag the reading itself to move the whole caliper.' : 'hidden.'));
+}
+function reactionDown(x, y) {
+var r = canvas.getBoundingClientRect(); x -= r.left; y -= r.top;
+canvas.style.cursor = 'pointer';
+checkIfCaliper(x, y);
+if (!dragging) checkIfWlen(x, y);
+}
+function reactionMove(x, y) {
+var r = canvas.getBoundingClientRect(); x -= r.left; y -= r.top;
+if (!dragging) return;
+canvas.style.cursor = 'pointer';
+if (dragging.part === 'j1') xCal.x1 = x;
+else if (dragging.part === 'j2') xCal.x2 = x;
+else if (dragging.part === 'beam') xCal.by = y;
+else if (dragging.part === 'wlen') { wRule.x = x; wRule.y = y; }
+draw();
+}
+function reactionUp() {
+var msg = (dragging && dragging.part !== 'wlen') ? ('Horizontal distance: \u0394x = ' + mWLength + ' m.') : null;
+dragging = null;
+canvas.style.cursor = 'default';
+if (msg) soundA11y0915.narrate(msg);
+}
+function init() {
+buildParticles();
+var row = document.getElementById('tempRow0915');
+if (row) row.style.visibility = (medium[med].ty === 'gas') ? 'visible' : 'hidden';
+canvas.onmousedown = function (e) { reactionDown(e.clientX, e.clientY); };
+canvas.onmouseup   = reactionUp;
+canvas.onmousemove = function (e) { reactionMove(e.clientX, e.clientY); };
+canvas.ontouchstart = function (e) { var o = e.changedTouches[0]; reactionDown(o.clientX, o.clientY); };
+canvas.ontouchend   = reactionUp;
+canvas.ontouchmove  = function (e) { var o = e.changedTouches[0]; reactionMove(o.clientX, o.clientY); e.preventDefault(); };
+draw();
+}
+window.setTimeout(function () { init(); narrate(); }, 0);
+return {
+togglePlay: togglePlay, stepForward: stepForward, stepBack: stepBack, reset: reset, startTimer: startTimer,
+setFreq: setFreq, setAmp: setAmp, setTemp: setTemp, setMedium: setMedium,
+toggleWlen: toggleWlen, toggleVibDir: toggleVibDir, toggleCompress: toggleCompress, toggleRarefaction: toggleRarefaction,
+toggleWaveData: toggleWaveData, toggleAnimData: toggleAnimData, toggleDeltaX: toggleDeltaX, toggleMarker: toggleMarker
+};
+})();
+</script>
+<script>
+soundA11y0915.init();
+soundA11y0915.narrate('Sound wave sim ready. Choose a medium, adjust frequency and amplitude, then press Play. Particle color blends from compressed to rarefied based on the actual pressure variation.');
+</script>
+
+</body></html>

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Waves: Two Ropes</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,Transverse, Longitudinal,Frequency, Amplitude, Tension, Mass,Length,Wave,interference,damping,string, Properties,Rope, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="rrRoot0922">
+<!-- ── Accessibility toolbar ── -->
+<div class="rr_a11y0922" id="rrA11yBar0922" role="toolbar" aria-label="Display options">
+<button type="button" class="rr_a11ybtn0922" id="rrBtnHC0922" onclick="rrA11y0922.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rr_a11ybtn0922" id="rrBtnLM0922" onclick="rrA11y0922.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rr_a11ybtn0922" id="rrBtnCB0922" onclick="rrA11y0922.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rr_a11ybtn0922 rr_a11yon0922" id="rrBtnNR0922" onclick="rrA11y0922.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0922"><h3>Reflection &amp; Refraction &mdash; Two Media</h3></div>
+<div class="mcontent0922">
+<canvas id="rrCanvas0922" style="margin:auto;display:block;border:1px solid #ccc;touch-action:none" width="800" height="500"></canvas>
+</div>
+<div id="rrReadout0922" class="rr_readout0922">&theta;i = 30&deg; | &theta;t = 41&deg; | v1 = 150, v2 = 100 mm/s | &lambda;1 &asymp; 150, &lambda;2 &asymp; 100 mm | R = -0.20, T = 0.80</div>
+<div id="rrNarBar0922" class="rr_narbar0922" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0922">
+<input type="button" id="rrPlay0922" value="Play"
+onclick="if(this.value=='Play'){rrSim0922.pl();this.value='Pause';}else{this.value='Play';rrSim0922.ps();}">
+<input type="button" value="Step Back" onclick="document.getElementById('rrPlay0922').value='Play';rrSim0922.stepBack();">
+<input type="button" value="Step" onclick="document.getElementById('rrPlay0922').value='Play';rrSim0922.step();">
+<input type="button" value="Restart" onclick="document.getElementById('rrPlay0922').value='Play';rrSim0922.rst();">
+</div>
+<div class="footer0922">
+<div class="rr_sectitle0922">Wave</div>
+<div class="rr_ctrlrow0922">
+<div class="rr_ctrlcol0922">
+<div class="rr_ctrltitle0922">Angle of incidence</div>
+&theta;i = <input type="range" id="rrAngle0922" min="0" max="80" value="30" step="1"
+oninput="rrSim0922.setAngle(this.value)">
+<span id="rrAngleVal0922">30</span>&deg;
+</div>
+<div class="rr_ctrlcol0922">
+<div class="rr_ctrltitle0922">Frequency</div>
+&fnof; = <input type="range" id="rrFreq0922" min="0.4" max="3.0" value="1.0" step="0.1"
+oninput="rrSim0922.setFrequency(this.value)">
+<span id="rrFreqVal0922">1.0</span> Hz
+</div>
+<div class="rr_ctrlcol0922">
+<div class="rr_ctrltitle0922">Amplitude</div>
+A = <input type="range" id="rrAmp0922" min="4" max="20" value="10" step="1"
+oninput="rrSim0922.setAmplitude(this.value)">
+<span id="rrAmpVal0922">10</span> mm
+</div>
+</div>
+<div class="rr_sectitle0922">Media</div>
+<div class="rr_ctrlrow0922">
+<div class="rr_ctrlcol0922">
+<div class="rr_ctrltitle0922"><span class="rr_sw0922" style="background:#14508c"></span>Medium 1 speed</div>
+v1 = <input type="range" id="rrV10922" min="60" max="300" value="150" step="10"
+oninput="rrSim0922.setV1(this.value)">
+<span id="rrV1Val0922">150</span> mm/s
+</div>
+<div class="rr_ctrlcol0922">
+<div class="rr_ctrltitle0922"><span class="rr_sw0922" style="background:#5a9bd4"></span>Medium 2 speed</div>
+v2 = <input type="range" id="rrV20922" min="60" max="300" value="100" step="10"
+oninput="rrSim0922.setV2(this.value)">
+<span id="rrV2Val0922">100</span> mm/s
+</div>
+<div class="rr_ctrlcol0922">
+<div class="rr_ctrltitle0922">Boundary position</div>
+<input type="range" id="rrBoundary0922" min="160" max="640" value="360" step="5"
+oninput="rrSim0922.setBoundary(this.value)">
+<span id="rrBoundaryVal0922">360</span> mm
+</div>
+</div>
+<div class="rr_sectitle0922">Display</div>
+<div class="rr_ctrlrow0922">
+<div class="rr_ctrlcol0922 rt_ckcol0922">
+<label><span class="rr_sw0922" style="background:#E69F00"></span><input type="checkbox" id="rrInc0922" checked onclick="rrSim0922.toggleIncident()"> Incident</label>
+</div>
+<div class="rr_ctrlcol0922 rt_ckcol0922">
+<label><span class="rr_sw0922" style="background:#56B4E9"></span><input type="checkbox" id="rrRef0922" checked onclick="rrSim0922.toggleReflected()"> Reflected</label>
+</div>
+<div class="rr_ctrlcol0922 rt_ckcol0922">
+<label><span class="rr_sw0922" style="background:#009E73"></span><input type="checkbox" id="rrTrans0922" checked onclick="rrSim0922.toggleTransmitted()"> Transmitted</label>
+</div>
+<div class="rr_ctrlcol0922 rt_ckcol0922">
+<label><input type="checkbox" id="rrRays0922" checked onclick="rrSim0922.toggleRays()"> Ray diagram</label>
+</div>
+</div>
+<div class="rr_ctrlrow0922">
+<div class="rr_ctrlcol0922">
+<div class="rr_ctrltitle0922">Ray point (Y)</div>
+<input type="range" id="rrRayY0922" min="0" max="500" value="250" step="5"
+oninput="rrSim0922.setRayY(this.value)">
+<span id="rrRayYVal0922">250</span> mm
+</div>
+<div class="rr_ctrlcol0922 rt_hintcol0922">
+<span class="rr_hint0922">You can also drag the boundary line left/right, and drag the small square marker on it up/down.</span>
+</div>
+</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 806px; margin: 0; }
+#rrRoot0922 {
+--rr-water-deep:   #081e3c;
+--rr-water-mid:    #14508c;
+--rr-water-crest:  #bfe3ff;
+--rr-boundary:     #ffffff;
+--rr-text:         #111111;
+--rr-toolbar-bg:   #222;
+}
+#rrRoot0922 .rr_a11y0922 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--rr-toolbar-bg); flex-wrap:wrap; width:806px;
+}
+#rrRoot0922 .rr_a11ybtn0922 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#rrRoot0922 .rr_a11ybtn0922:hover { border-color:#00e8d0; color:#00e8d0; }
+#rrRoot0922 .rr_a11yon0922 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#rrRoot0922 .rr_narbar0922 {
+width:806px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar0922    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; width:806px; }
+.tbar0922 h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent0922 { height:504px; width:806px; background:#0b1830; }
+.rr_readout0922 { width:786px; margin:4px auto 0; color:#222; font-size:.82rem; font-family:monospace; text-align:center; background:#fff6d9; padding:3px 0; }
+.bbar0922    { height:50px; background-color:#df9; padding:10px; text-align:center; width:806px; }
+.bbar0922 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+.footer0922  { width:806px; background-color:#fce4ec; font-size:.85rem; padding:8px 0; }
+.footer0922 .rr_sectitle0922 { width:786px; margin:6px auto 2px; padding-left:12px; font-weight:bold; font-size:.8rem; color:#883355; }
+.footer0922 .rr_ctrlrow0922  { width:806px; display:flex; flex-wrap:wrap; }
+.footer0922 .rr_ctrlcol0922  { width:196px; padding:4px 6px; }
+.footer0922 .rt_ckcol0922    { width:180px; display:flex; align-items:center; }
+.footer0922 .rt_hintcol0922  { width:400px; display:flex; align-items:center; }
+.footer0922 .rr_ctrltitle0922{ width:100%; font-weight:bold; margin-bottom:2px; display:flex; align-items:center; gap:4px; }
+.footer0922 .rr_hint0922     { font-size:.72rem; color:#555; font-style:italic; }
+.rr_sw0922 { display:inline-block; width:10px; height:10px; border:1px solid #000; border-radius:2px; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var rrA11y0922 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--rr-water-deep':'#000000','--rr-water-mid':'#1a1a1a','--rr-water-crest':'#ffffff','--rr-boundary':'#ffff00','--rr-text':'#ffffff','--rr-toolbar-bg':'#000'},
+lm:{'--rr-water-deep':'#2a5f8f','--rr-water-mid':'#5a9bd4','--rr-water-crest':'#eaf6ff','--rr-boundary':'#ffffff','--rr-text':'#222222','--rr-toolbar-bg':'#444'},
+cb:{'--rr-water-deep':'#012a4a','--rr-water-mid':'#0072b2','--rr-water-crest':'#f0f0f0','--rr-boundary':'#e69f00','--rr-text':'#000000','--rr-toolbar-bg':'#222'}
+};
+var DEFS = {'--rr-water-deep':'#081e3c','--rr-water-mid':'#14508c','--rr-water-crest':'#bfe3ff','--rr-boundary':'#ffffff','--rr-text':'#111111','--rr-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('rrNarBar0922');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('rrBtnNR0922');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('rrBtnNR0922',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('rrBtnHC0922',states.hc);
+styleBtn('rrBtnLM0922',states.lm);
+styleBtn('rrBtnCB0922',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('rrRoot0922'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('rrNarBar0922');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+},
+altPalette:function(){ return states.hc || states.cb; }
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VGG / Doppler / Shock-Waves / Ripple-Tank examples.
+- var simObj = function() { ... rst(); return { pl, ps, step, stepBack, rst,
+setAngle, setFrequency, setAmplitude, setV1, setV2, setBoundary, setRayY,
+toggleIncident, toggleReflected, toggleTransmitted, toggleRays }; }
+- var simObj0922 = new simObj();
+- Animation: recursive window.setTimeout(runMotion, trate) guarded by runFlag
+Original build (adapted from the ripple-tank rendering technique built earlier in this project, in place of
+the WebTOP module's rotatable 3D surface plot -- a full 3D perspective/camera engine was judged out of scope
+for reviving just the physics; the top-down lit-height-field trick already used for the ripple tank gives an
+equivalent "3D water" read without that added complexity).
+Physics: a plane wave in medium 1 strikes a straight vertical boundary at angle of incidence theta_i. It
+splits into a reflected wave (medium 1, angle theta_i) and a transmitted wave (medium 2, angle theta_t via
+Snell's law sin(theta_t) = (v2/v1) sin(theta_i)). Amplitude coefficients R, T use the standard string/impedance
+analogy R=(v2-v1)/(v1+v2), T=2v2/(v1+v2) -- a stylized simplification (not full oblique-incidence Fresnel
+equations), same spirit as typical ripple-tank teaching material. Frequency is shared across all three waves
+(a physical requirement, not a simplification) -- only wavelength changes between media. Total internal
+reflection (TIR) is handled: when sin(theta_t) would exceed 1, T=0 and R=1.
+Medium 1 shows incident+reflected superposed (visible interference); medium 2 shows transmitted only, since
+neither incident nor reflected wave exists there.
+-->
+<script>
+var rrGen = function() {
+var canvas = document.getElementById('rrCanvas0922');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;     /* 800 x 500 mm */
+var readoutEl = document.getElementById('rrReadout0922');
+var timer, runFlag = 0;
+function c(prop, def) { return rrA11y0922.col(prop, def); }
+var GW = 200, GH = 125;
+var off = document.createElement('canvas'); off.width = GW; off.height = GH;
+var offCtx = off.getContext('2d');
+var img = offCtx.createImageData(GW, GH);
+var cellW = W/GW, cellH = H/GH;
+var COL_INC = '#E69F00', COL_REF = '#56B4E9', COL_TRANS = '#009E73';
+/* ── physics state ── */
+var thetaI = 30*Math.PI/180, freq = 1.0, amp = 10, v1 = 150, v2 = 100;
+var xb = 360, rayY = 250;
+var incOn = true, refOn = true, transOn = true, raysOn = true;
+var t = 0, dt = 0.04, trate = 40;
+var frameCount = 0, narrationEvery = 75; /* steady-state scene -- narrate every ~3s */
+var Lx=-0.5, Ly=-0.4, Lz=0.75; (function(){ var l=Math.sqrt(Lx*Lx+Ly*Ly+Lz*Lz); Lx/=l; Ly/=l; Lz/=l; })();
+var AMBIENT = 0.35, SLOPE_SCALE = 3;
+/* derived (recomputed by recompute()) */
+var k1,k2,omega,kxi,kyi,kxr,kyr,kxt,kyt,thetaT,TIR,Rcoef,Tcoef,ampClamp;
+/* ── drag state ── */
+var dragMode = 0; /* 0 none, 1 boundary, 2 ray marker */
+function el(id){ return document.getElementById(id); }
+function recompute(){
+k1 = 2*Math.PI*freq/v1;
+k2 = 2*Math.PI*freq/v2;
+omega = 2*Math.PI*freq;
+var sinI = Math.sin(thetaI), cosI = Math.cos(thetaI);
+kxi = k1*cosI; kyi = k1*sinI;
+kxr = -k1*cosI; kyr = k1*sinI;
+var sinT = (v2/v1)*sinI;
+TIR = Math.abs(sinT) > 1;
+if (TIR){ thetaT = NaN; Rcoef = 1; Tcoef = 0; kxt=0; kyt=0; }
+else {
+thetaT = Math.asin(sinT);
+Rcoef = (v2-v1)/(v1+v2);
+Tcoef = 2*v2/(v1+v2);
+kxt = k2*Math.cos(thetaT); kyt = k2*Math.sin(thetaT);
+}
+ampClamp = amp*Math.max(1+Math.abs(Rcoef), Math.abs(Tcoef), 1e-3);
+updateReadout();
+}
+/* ══════════ field math ══════════ */
+function sampleField(px_, py_, time){
+var h=0, gx=0, gy=0;
+var rx = px_-xb, ry = py_;
+if (px_ < xb){
+if (incOn){
+var ph = kxi*rx + kyi*ry - omega*time;
+var sn = Math.sin(ph), cs = Math.cos(ph);
+h += amp*sn; gx += amp*kxi*cs; gy += amp*kyi*cs;
+}
+if (refOn){
+var ph2 = kxr*rx + kyr*ry - omega*time;
+var sn2 = Math.sin(ph2), cs2 = Math.cos(ph2);
+h += Rcoef*amp*sn2; gx += Rcoef*amp*kxr*cs2; gy += Rcoef*amp*kyr*cs2;
+}
+} else {
+if (transOn && !TIR){
+var ph3 = kxt*rx + kyt*ry - omega*time;
+var sn3 = Math.sin(ph3), cs3 = Math.cos(ph3);
+h += Tcoef*amp*sn3; gx += Tcoef*amp*kxt*cs3; gy += Tcoef*amp*kyt*cs3;
+}
+}
+return { h:h, gx:gx, gy:gy };
+}
+function heightAt(px_,py_,time){ return sampleField(px_,py_,time).h; }
+/* ── palettes (shared style with the ripple-tank sim) ── */
+function lerp3(a,b,t2){ return [a[0]+(b[0]-a[0])*t2, a[1]+(b[1]-a[1])*t2, a[2]+(b[2]-a[2])*t2]; }
+function paletteRealistic(tn, shade){
+var trough=[8,40,90], mid=[20,110,170], crest=[190,230,255];
+var col = tn<0 ? lerp3(mid,trough,Math.min(-tn,1)) : lerp3(mid,crest,Math.min(tn,1));
+return [col[0]*shade, col[1]*shade, col[2]*shade];
+}
+function paletteDiverging(tn, shade){
+var neg=[0,114,178], zero=[240,240,240], pos=[230,159,0];
+var col = tn<0 ? lerp3(zero,neg,Math.min(-tn,1)) : lerp3(zero,pos,Math.min(tn,1));
+var s = 0.75+0.25*shade;
+return [col[0]*s, col[1]*s, col[2]*s];
+}
+/* ══════════ render ══════════ */
+function renderTank(){
+var useAlt = rrA11y0922.altPalette();
+var data = img.data;
+var idx = 0;
+for (var gy=0; gy<GH; gy++){
+var wy = (gy+0.5)*cellH;
+for (var gx=0; gx<GW; gx++, idx+=4){
+var wx = (gx+0.5)*cellW;
+var f = sampleField(wx, wy, t);
+var nx = -f.gx*SLOPE_SCALE, ny = -f.gy*SLOPE_SCALE, nz = 1;
+var nlen = Math.sqrt(nx*nx+ny*ny+nz*nz);
+nx/=nlen; ny/=nlen; nz/=nlen;
+var diffuse = Math.max(0, nx*Lx+ny*Ly+nz*Lz);
+var shade = AMBIENT + (1-AMBIENT)*diffuse;
+var tn = Math.max(-1, Math.min(1, f.h/ampClamp));
+var col = useAlt ? paletteDiverging(tn, shade) : paletteRealistic(tn, shade);
+data[idx]=col[0]; data[idx+1]=col[1]; data[idx+2]=col[2]; data[idx+3]=255;
+}
+}
+offCtx.putImageData(img, 0, 0);
+ctx.imageSmoothingEnabled = true;
+ctx.clearRect(0,0,W,H);
+ctx.drawImage(off, 0, 0, GW, GH, 0, 0, W, H);
+}
+function drawBoundary(){
+ctx.save();
+ctx.strokeStyle = c('--rr-boundary','#ffffff'); ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(xb,0); ctx.lineTo(xb,H); ctx.stroke();
+ctx.restore();
+ctx.beginPath(); ctx.rect(xb-6,rayY-6,12,12);
+ctx.fillStyle = '#ffffff'; ctx.fill();
+ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5; ctx.stroke();
+}
+/* ── arrow helper (same routine used in the shock-waves sim) ── */
+function arrow(x1,y1,x2,y2,w,col,txt){
+ctx.fillStyle=col; ctx.strokeStyle=col;
+var dx=x2-x1, dy=y2-y1; var length=Math.sqrt(dx*dx+dy*dy);
+if (length===0) return;
+dx/=length; dy/=length;
+var s=2.5*w+7.5; var xSp=x2-s*dx, ySp=y2-s*dy;
+var hh=0.5*w+3.5; var xSp1=xSp-hh*dy, ySp1=ySp+hh*dx; var xSp2=xSp+hh*dy, ySp2=ySp-hh*dx;
+ctx.beginPath(); ctx.lineWidth=w; ctx.moveTo(x1,y1); ctx.lineTo(xSp,ySp); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(xSp,ySp); ctx.lineTo(xSp1,ySp1); ctx.lineTo(x2,y2); ctx.lineTo(xSp2,ySp2);
+ctx.closePath(); ctx.fill();
+if (txt){
+ctx.font='bold 12px Calibri'; ctx.textAlign = (x2<x1) ? 'right' : 'left'; ctx.textBaseline='middle';
+ctx.fillText(txt, x2+(x2<x1?-8:8), y2);
+}
+}
+function drawRayDiagram(){
+if (!raysOn) return;
+var Lray = 110;
+var sinI=Math.sin(thetaI), cosI=Math.cos(thetaI);
+ctx.save();
+ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=1;
+ctx.beginPath(); ctx.moveTo(xb, rayY-Lray*0.5); ctx.lineTo(xb, rayY+Lray*0.5); ctx.stroke();
+ctx.restore();
+/* incident: arrives AT (xb,rayY) travelling in direction (cosI, sinI) */
+arrow(xb-Lray*cosI, rayY-Lray*sinI, xb, rayY, 3, COL_INC, '\u03b8i='+Math.round(thetaI*180/Math.PI)+'\u00b0');
+/* reflected: leaves the point travelling in direction (-cosI, sinI) */
+arrow(xb, rayY, xb-Lray*cosI, rayY+Lray*sinI, 3, COL_REF, '\u03b8r='+Math.round(thetaI*180/Math.PI)+'\u00b0');
+/* transmitted: leaves the point travelling in direction (cosT, sinT), if it exists */
+if (!TIR){
+var cosT=Math.cos(thetaT), sinT=Math.sin(thetaT);
+arrow(xb, rayY, xb+Lray*cosT, rayY+Lray*sinT, 3, COL_TRANS, '\u03b8t='+Math.round(thetaT*180/Math.PI)+'\u00b0');
+} else {
+ctx.fillStyle = COL_TRANS; ctx.font='bold 12px Calibri'; ctx.textAlign='left'; ctx.textBaseline='middle';
+ctx.fillText('TIR', xb+10, rayY+20);
+}
+}
+function drawFrame(){
+renderTank();
+drawBoundary();
+drawRayDiagram();
+}
+function updateReadout(){
+if (!readoutEl) return;
+var lam1 = v1/freq, lam2 = v2/freq;
+var thetaTxt = TIR ? 'TIR (no transmission)' : (Math.round(thetaT*180/Math.PI)+'\u00b0');
+readoutEl.textContent =
+'\u03b8i = '+Math.round(thetaI*180/Math.PI)+'\u00b0 | \u03b8t = '+thetaTxt+
+' | v1 = '+v1.toFixed(0)+', v2 = '+v2.toFixed(0)+' mm/s | \u03bb1 \u2248 '+lam1.toFixed(0)+
+', \u03bb2 \u2248 '+(TIR?'\u2014':lam2.toFixed(0))+' mm | R = '+Rcoef.toFixed(2)+', T = '+Tcoef.toFixed(2);
+}
+/* ══════════ narration ══════════ */
+function sceneNarration(){
+var bendMsg;
+if (TIR) bendMsg = 'total internal reflection -- all energy reflects, nothing enters medium 2';
+else if (v2<v1) bendMsg = 'the wave slows entering medium 2 and bends toward the normal';
+else if (v2>v1) bendMsg = 'the wave speeds up entering medium 2 and bends away from the normal';
+else bendMsg = 'the two media match, so the wave passes straight through';
+var shown = [];
+if (incOn) shown.push('incident'); if (refOn) shown.push('reflected'); if (transOn) shown.push('transmitted');
+rrA11y0922.narrate('Angle of incidence '+Math.round(thetaI*180/Math.PI)+' degrees. '+bendMsg+'. Showing: '+
+(shown.length?shown.join(', '):'nothing')+'.');
+}
+/* ══════════ physics tick ══════════ */
+function physicsStep(){ t += dt; }
+/* ══════════ drag interaction ══════════ */
+function canvasPos(evt){
+var rect = canvas.getBoundingClientRect();
+var cx = (evt.touches && evt.touches.length) ? evt.touches[0].clientX : evt.clientX;
+var cy = (evt.touches && evt.touches.length) ? evt.touches[0].clientY : evt.clientY;
+var scaleX = W/rect.width, scaleY = H/rect.height;
+return { x:(cx-rect.left)*scaleX, y:(cy-rect.top)*scaleY };
+}
+function onDown(evt){
+var pos = canvasPos(evt);
+if (Math.hypot(pos.x-xb,pos.y-rayY) < 14){ dragMode = 2; }
+else if (Math.abs(pos.x-xb) < 12){ dragMode = 1; }
+else { dragMode = 0; }
+if (dragMode && evt.cancelable) evt.preventDefault();
+}
+function onMove(evt){
+if (!dragMode) return;
+if (evt.cancelable) evt.preventDefault();
+var pos = canvasPos(evt);
+if (dragMode===1){ xb = Math.max(160, Math.min(640, pos.x)); syncBoundaryUI(); }
+else if (dragMode===2){ rayY = Math.max(0, Math.min(H, pos.y)); syncRayYUI(); }
+recompute(); drawFrame();
+}
+function onUp(){
+if (!dragMode) return;
+var msg = (dragMode===1) ? 'Boundary moved.' : 'Ray point moved.';
+dragMode = 0;
+rrA11y0922.narrate(msg);
+}
+canvas.addEventListener('mousedown', onDown);
+canvas.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+canvas.addEventListener('touchstart', onDown, {passive:false});
+canvas.addEventListener('touchmove', onMove, {passive:false});
+window.addEventListener('touchend', onUp);
+function syncBoundaryUI(){
+var s=el('rrBoundary0922'); if(s) s.value=Math.round(xb);
+var l=el('rrBoundaryVal0922'); if(l) l.textContent=Math.round(xb);
+}
+function syncRayYUI(){
+var s=el('rrRayY0922'); if(s) s.value=Math.round(rayY);
+var l=el('rrRayYVal0922'); if(l) l.textContent=Math.round(rayY);
+}
+/* ══════════ public controls ══════════ */
+function setAngle(v){
+thetaI = Math.max(0, Math.min(89, parseFloat(v)||0)) * Math.PI/180;
+var l=el('rrAngleVal0922'); if(l) l.textContent = Math.round(thetaI*180/Math.PI);
+recompute(); drawFrame();
+}
+function setFrequency(v){
+freq = Math.max(0.1, parseFloat(v)||1.0);
+var l=el('rrFreqVal0922'); if(l) l.textContent = freq.toFixed(1);
+recompute(); drawFrame();
+}
+function setAmplitude(v){
+amp = Math.max(1, parseFloat(v)||10);
+var l=el('rrAmpVal0922'); if(l) l.textContent = amp.toFixed(0);
+recompute(); drawFrame();
+}
+function setV1(v){
+v1 = Math.max(10, parseFloat(v)||150);
+var l=el('rrV1Val0922'); if(l) l.textContent = v1.toFixed(0);
+recompute(); drawFrame();
+}
+function setV2(v){
+v2 = Math.max(10, parseFloat(v)||100);
+var l=el('rrV2Val0922'); if(l) l.textContent = v2.toFixed(0);
+recompute(); drawFrame();
+}
+function setBoundary(v){
+xb = Math.max(160, Math.min(640, parseFloat(v)||360));
+var l=el('rrBoundaryVal0922'); if(l) l.textContent = Math.round(xb);
+drawFrame();
+}
+function setRayY(v){
+rayY = Math.max(0, Math.min(H, parseFloat(v)||250));
+var l=el('rrRayYVal0922'); if(l) l.textContent = Math.round(rayY);
+drawFrame();
+}
+function toggleIncident(){
+incOn = !!(el('rrInc0922') && el('rrInc0922').checked);
+drawFrame();
+rrA11y0922.narrate(incOn?'Incident wave shown.':'Incident wave hidden.');
+}
+function toggleReflected(){
+refOn = !!(el('rrRef0922') && el('rrRef0922').checked);
+drawFrame();
+rrA11y0922.narrate(refOn?'Reflected wave shown.':'Reflected wave hidden.');
+}
+function toggleTransmitted(){
+transOn = !!(el('rrTrans0922') && el('rrTrans0922').checked);
+drawFrame();
+rrA11y0922.narrate(transOn?'Transmitted wave shown.':'Transmitted wave hidden.');
+}
+function toggleRays(){
+raysOn = !!(el('rrRays0922') && el('rrRays0922').checked);
+drawFrame();
+rrA11y0922.narrate(raysOn?'Ray diagram shown.':'Ray diagram hidden.');
+}
+/* ══════════ animation loop ══════════ */
+function runMotion(){
+physicsStep();
+drawFrame();
+frameCount++;
+if (frameCount % narrationEvery === 0){ sceneNarration(); }
+if (runFlag===1){ timer = window.setTimeout(runMotion, trate); }
+}
+function pl(){ window.clearTimeout(timer); runFlag = 1; runMotion(); }
+function ps(){ window.clearTimeout(timer); runFlag = 0; }
+function step(){ window.clearTimeout(timer); runFlag = 0; physicsStep(); drawFrame(); sceneNarration(); }
+function stepBack(){ window.clearTimeout(timer); runFlag = 0; t = Math.max(0,t-dt); drawFrame(); sceneNarration(); }
+function rst(){
+window.clearTimeout(timer); runFlag = 0;
+t = 0; frameCount = 0;
+xb = 360; rayY = 250;
+var playBtn = el('rrPlay0922'); if (playBtn) playBtn.value='Play';
+syncBoundaryUI(); syncRayYUI();
+recompute(); drawFrame();
+sceneNarration();
+}
+/* boot */
+recompute(); rst();
+return { pl:pl, ps:ps, step:step, stepBack:stepBack, rst:rst,
+ setAngle:setAngle, setFrequency:setFrequency, setAmplitude:setAmplitude,
+ setV1:setV1, setV2:setV2, setBoundary:setBoundary, setRayY:setRayY,
+ toggleIncident:toggleIncident, toggleReflected:toggleReflected,
+ toggleTransmitted:toggleTransmitted, toggleRays:toggleRays };
+};
+var rrSim0922 = new rrGen();
+</script>
+<script>
+rrA11y0922.init();
+</script>
+
+</body>
+</html>

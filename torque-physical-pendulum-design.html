@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Rotation: Design a Physical Pendulum</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation: build a physical pendulum from a rod, disks (one with an off-centre hole), a thin ring and a thick ring; challenges on the centre of mass and on the moment of inertia (a target period).">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="pdRoot" class="pd_root" role="region" aria-label="Designing a physical pendulum: centre of mass and moment of inertia">
+<div class="pd_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="pd_a11ybtn" id="pdBtnHC" onclick="pdSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="pd_a11ybtn" id="pdBtnLM" onclick="pdSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="pd_a11ybtn" id="pdBtnCB" onclick="pdSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="pd_a11ybtn pd_a11yon" id="pdBtnNR" onclick="pdSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="pd_header"><p class="pd_h1">Design a Physical Pendulum</p><p class="pd_sub">a rod with disks and rings: where is the centre of mass, and what is the moment of inertia?</p></div>
+<div class="pd_tabs" role="tablist" aria-label="Challenges">
+<button type="button" role="tab" class="pd_tab" id="pdTab0" aria-selected="true" onclick="pdSim.tab(0)">Centre of mass</button>
+<button type="button" role="tab" class="pd_tab" id="pdTab1" aria-selected="false" onclick="pdSim.tab(1)">Moment of inertia</button>
+</div>
+<div class="pd_task" id="pdTask" role="status" aria-live="polite"></div>
+<div class="pd_bbar"><button type="button" class="pd_btn" id="pdNew">New challenge</button><button type="button" class="pd_btn" id="pdSwing">&#8634; Swing it</button><button type="button" class="pd_btn" id="pdHang">Let it hang still</button><label>slow motion <input type="range" id="pdSpd" min="0.1" max="1" step="0.05" value="1" style="width:90px"> <span id="pdSpdV">1.00&times;</span></label><label><input type="checkbox" id="pdParts"> show each part&rsquo;s centre of mass</label></div>
+<div class="pd_diag"><div class="pd_dlabel"><b>THE PENDULUM</b><span id="pdHint">drag a disk or a ring along the rod</span></div><canvas id="pdCv" width="780" height="440" role="img" aria-label="The pendulum: a rod on a pivot with the chosen disks and rings, its centre of mass, and the target." aria-describedby="pdStatus"></canvas></div>
+<div class="pd_status" id="pdStatus" role="status" aria-live="polite"></div>
+<div class="pd_panels"><div class="pd_panel"><div class="pd_ptitle">The parts</div><div class="pd_pbody" id="pdCtl"></div></div>
+<div class="pd_panel"><div class="pd_ptitle">Readout</div><div class="pd_pbody" id="pdRead"></div></div></div>
+<div class="pd_eqs" id="pdEq"></div>
+<div id="pdNar" class="pd_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="pd_descwrap">
+<button type="button" class="pd_descbtn" id="pdDescBtn" aria-expanded="false" aria-controls="pdDesc" onclick="pdSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="pd_desc" id="pdDesc" role="region" aria-labelledby="pdDescBtn" style="display:none">
+<p>A physical pendulum is built from a rod (always present) and any of four flat parts, all lying in the plane of the swing and centred on the rod: a solid disk, a disk with an off-centre circular hole, a thin ring, and a thick ring with an inner and an outer radius. Parts can sit at the same place on the rod; the smaller ones are drawn on top.</p>
+<p><b>The centre of mass</b> is the mass-weighted average of the parts' centres: `vec r_"cm" = (sum m_i vec r_i)/(sum m_i)`. A disk with a hole is a full disk minus the disk that was cut out: the hole removes a mass `M (r/R)^2`, and moves the centre of mass away from the hole. If the hole is off to the side, the centre of mass is off the rod, and the pendulum hangs tilted: in equilibrium, the centre of mass is always directly below the pivot.</p>
+<p><b>The moment of inertia</b> about the pivot adds up part by part, each with the parallel-axis theorem: `I = sum (I_"cm,i" + m_i d_i^2)`, where `d_i` is the distance from the part's centre to the pivot, and `I_"cm"` is `1/12 m L^2` for the rod, `1/2 m R^2` for a disk, `m R^2` for a thin ring and `1/2 m (R_1^2 + R_2^2)` for a thick ring. For small swings the period is</p>
+<p class="pd_eq">`T = 2 pi sqrt(I/(M g d))`,</p>
+<p>with `M` the total mass and `d` the distance from the pivot to the centre of mass. Mass far from the pivot adds a lot to `I` (it counts as the square of the distance) but only a little to `M d`, so it lengthens the period.</p>
+<p><b>The challenges.</b> In the centre-of-mass tab, the rod lies across a pivot at a given balance point; change the parts' positions, masses and sizes (without adding or removing parts) until the centre of mass is right above the pivot. Then the gravitational torque about the pivot is zero, and the rod balances; otherwise it tips toward the side of the centre of mass. In the moment-of-inertia tab, choose any parts and settings to build a pendulum with the given period.</p>
+</div></div>
+</div><!-- #pdRoot -->
+<style>
+#pdRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#pdRoot * { box-sizing:border-box; }
+#pdRoot.pd_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#pdRoot.pd_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#pdRoot .pd_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#pdRoot .pd_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#pdRoot .pd_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#pdRoot .pd_header { text-align:center; }
+#pdRoot .pd_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#pdRoot .pd_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#pdRoot .pd_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#pdRoot .pd_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#pdRoot .pd_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#pdRoot .pd_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#pdRoot .pd_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#pdRoot .pd_dlabel b { color:var(--c-accent); }
+#pdRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#pdRoot .pd_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#pdRoot .pd_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#pdRoot .pd_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#pdRoot .pd_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#pdRoot .pd_btn:hover { border-color:var(--c-accent); }
+#pdRoot .pd_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#pdRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#pdRoot .pd_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#pdRoot .pd_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#pdRoot .pd_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#pdRoot .pd_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#pdRoot .pd_ctrl { display:flex; flex-direction:column; gap:3px; }
+#pdRoot .pd_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#pdRoot .pd_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#pdRoot .pd_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#pdRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#pdRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#pdRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#pdRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#pdRoot .pd_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#pdRoot .pd_rkey { color:var(--c-dim); }
+#pdRoot .pd_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#pdRoot .pd_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#pdRoot .pd_eqs b { color:var(--c-val); }
+#pdRoot .pd_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#pdRoot .pd_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#pdRoot .pd_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#pdRoot .pd_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#pdRoot .pd_desc p { margin:0 0 9px; }
+#pdRoot .pd_eq { text-align:center; font-size:1rem; }
+#pdRoot button:focus-visible, #pdRoot input:focus-visible, #pdRoot select:focus-visible, #pdRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #pdRoot .pd_row2, #pdRoot .pd_panels { grid-template-columns:minmax(0,1fr); } #pdRoot .pd_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #pdRoot input[type=range] { height:8px; } #pdRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #pdRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #pdRoot .pd_a11ybtn { min-height:40px; } #pdRoot input[type=checkbox] { width:22px; height:22px; } }
+#pdRoot .pd_status, #pdRoot .pd_task { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#pdRoot .pd_task { border-left:4px solid var(--c-accent); }
+#pdRoot .pd_part { border:1px solid var(--c-bd); border-radius:4px; padding:4px 8px 6px; margin:0 0 6px; }
+#pdRoot .pd_part legend { font-size:.8rem; color:var(--c-text); padding:0 4px; }
+#pdRoot .pd_tbl { width:100%; border-collapse:collapse; font-size:.72rem; }
+#pdRoot .pd_tbl th, #pdRoot .pd_tbl td { padding:3px 4px; border-bottom:1px solid var(--c-bd); text-align:right; color:var(--c-text); }
+#pdRoot #pdCv { touch-action:none; }
+</style>
+<!-- ════════ SIMULATION ════════
+SI units, g = 9.8. Body frame: u along the rod from its top end, downward; w sideways (to the right when the rod hangs straight).
+The swing: theta'' = -(M g d / I) sin(theta - theta_eq), theta_eq: the angle at which the centre of mass is directly below the pivot.
+No dollar signs or backticks in the code.
+-->
+<script>
+var pdSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('pdRoot'), DPR = window.devicePixelRatio || 1, G = 9.8;
+var cv = el('pdCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height; cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var th = { hc:false, lm:false, cb:false, nr:true }, TAB = 0, spd = 1, showParts = false;
+/* the parts */
+var DEF = { rod:{ L:1.0, m:0.5, p:0.05 }, disk:{ on:false, m:1.0, R:0.12, x:0.75 }, hole:{ on:false, m:1.5, R:0.15, r:0.06, e:0.07, phi:90, x:0.6 }, ring:{ on:true, m:0.8, R:0.15, x:0.8 }, thick:{ on:false, m:1.2, R1:0.08, R2:0.16, x:0.7 } };
+var P = JSON.parse(JSON.stringify(DEF));
+var S = { th:0, w:0, held:true, swing:false, t:0, cross:[], Tmeas:null, last:null };
+var CH = { cm:null, T:null, done:false };
+var NAMES = { rod:'rod', disk:'disk', hole:'disk with a hole', ring:'thin ring', thick:'thick ring' };
+/* ══════════ the physics: the parts, the centre of mass, I about the pivot ══════════ */
+function parts(){ /* each: mass, centre (u, w), I about its own centre */ var L = [], r = P.rod;
+  L.push({ k:'rod', m:r.m, u:r.L/2, w:0, Ic:r.m*r.L*r.L/12, R:0 });
+  if (P.disk.on) L.push({ k:'disk', m:P.disk.m, u:P.disk.x, w:0, Ic:0.5*P.disk.m*P.disk.R*P.disk.R, R:P.disk.R });
+  if (P.hole.on){ var h = P.hole, mh = h.m*Math.pow(h.r/h.R, 2), ph = h.phi*Math.PI/180, hu = h.x + h.e*Math.cos(ph), hw = h.e*Math.sin(ph), mn = h.m - mh;
+    L.push({ k:'hole', m:mn, u:(h.m*h.x - mh*hu)/mn, w:(-mh*hw)/mn, R:h.R, full:{ m:h.m, u:h.x, Ic:0.5*h.m*h.R*h.R }, cut:{ m:mh, u:hu, w:hw, Ic:0.5*mh*h.r*h.r } }); }
+  if (P.ring.on) L.push({ k:'ring', m:P.ring.m, u:P.ring.x, w:0, Ic:P.ring.m*P.ring.R*P.ring.R, R:P.ring.R });
+  if (P.thick.on) L.push({ k:'thick', m:P.thick.m, u:P.thick.x, w:0, Ic:0.5*P.thick.m*(P.thick.R1*P.thick.R1 + P.thick.R2*P.thick.R2), R:P.thick.R2 });
+  return L; }
+function Ipiv(q){ var p = P.rod.p; if (q.k === 'hole'){ var f = q.full, c = q.cut; return (f.Ic + f.m*Math.pow(f.u - p, 2)) - (c.Ic + c.m*(Math.pow(c.u - p, 2) + c.w*c.w)); } return q.Ic + q.m*(Math.pow(q.u - p, 2) + q.w*q.w); }
+function sys(){ var L = parts(), M = 0, mu = 0, mw = 0, I = 0; L.forEach(function(q){ M += q.m; mu += q.m*q.u; mw += q.m*q.w; I += Ipiv(q); });
+  var cu = mu/M, cw = mw/M, du = cu - P.rod.p, d = Math.hypot(du, cw), thEq = Math.atan2(-cw, du);   /* so that cw cos(th) + du sin(th) = 0   /* equilibrium: the centre of mass straight below the pivot */
+  return { L:L, M:M, cu:cu, cw:cw, d:d, I:I, thEq:thEq, T:d > 1e-6 ? 2*Math.PI*Math.sqrt(I/(M*G*d)) : null }; }
+/* ══════════ the swing ══════════ */
+function step(dt){ var s = sys();
+  if (TAB === 0){ var lev = Math.PI/2, stop = 20*Math.PI/180, du = s.cu - P.rod.p, c = s.M*G/s.I, h = 0.002;
+    if (S.held){ S.th = lev; S.w = 0; return; }
+    while (dt > 1e-12){ var d = Math.min(h, dt); dt -= d; var X = s.cw*Math.cos(S.th) + du*Math.sin(S.th), a = -c*X - 1.5*S.w; S.w += a*d; S.th += S.w*d;   /* the torque of gravity about the pivot, a little friction */
+      if (S.th > lev + stop){ S.th = lev + stop; S.w = 0; } if (S.th < lev - stop){ S.th = lev - stop; S.w = 0; } }
+    return; }
+  if (!S.swing || !(s.d > 1e-6)){ S.th = s.thEq; S.w = 0; return; }
+  var k = M_G_D(s), h = 0.002;
+  while (dt > 1e-12){ var d = Math.min(h, dt); dt -= d; var a1 = -k*Math.sin(S.th - s.thEq), w1 = S.w + a1*d/2, a2 = -k*Math.sin(S.th + S.w*d/2 - s.thEq); var prev = S.th - s.thEq;
+    S.w += a2*d; S.th += w1*d; S.t += d; var now = S.th - s.thEq;
+    if (prev < 0 && now >= 0){ S.cross.push(S.t - d*now/(now - prev)); if (S.cross.length > 6) S.cross.shift(); if (S.cross.length >= 2) S.Tmeas = (S.cross[S.cross.length - 1] - S.cross[0])/(S.cross.length - 1); } } }
+function M_G_D(s){ return s.M*G*s.d/s.I; }
+function swing(){ if (TAB === 0){ S.held = false; S.w = 0; var du = sys().cu - P.rod.p; narrate(Math.abs(du) < 0.005 ? 'Let go: it stays level. Balanced!' : 'Let go: the centre of mass is ' + f2(Math.abs(du)*100, 1) + ' cm to the ' + (du > 0 ? 'right' : 'left') + ' of the pivot, so the rod tips down on the ' + (du > 0 ? 'right.' : 'left.')); return; } var s = sys(); if (!(s.d > 1e-6)){ narrate('The centre of mass is at the pivot: nothing pulls the pendulum back, it does not swing.'); return; } S.swing = true; S.th = s.thEq + 12*Math.PI/180; S.w = 0; S.t = 0; S.cross = []; S.Tmeas = null; narrate('Released 12 degrees from equilibrium. Watch the period: the theory says ' + f2(s.T, 3) + ' seconds.'); }
+function hang(){ S.swing = false; S.Tmeas = null; S.cross = []; S.held = true; S.th = TAB === 0 ? Math.PI/2 : sys().thEq; }
+/* ══════════ drawing ══════════ */
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.07)', rod:'#8b5a2b', disk:'rgba(31,95,214,0.55)', hole:'rgba(18,128,90,0.55)', ring:'#c0392b', thick:'rgba(125,60,200,0.55)', cm:'#000', tgt:'#e0109a', ok:'#12805a', bad:'#c0392b' };
+  if (th.cb){ p.disk = 'rgba(0,114,178,0.55)'; p.hole = 'rgba(0,158,115,0.55)'; p.ring = '#d55e00'; p.thick = 'rgba(204,121,167,0.6)'; p.tgt = '#e69f00'; p.ok = '#009e73'; p.bad = '#d55e00'; }
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.15)'; p.cm = '#fff'; p.disk = 'rgba(85,170,255,0.6)'; p.hole = 'rgba(0,255,136,0.5)'; p.ring = '#ff5555'; p.thick = 'rgba(255,102,255,0.55)'; p.tgt = '#ffff00'; p.ok = '#00ff88'; }
+  return p; }
+function Tx(t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('pdNar').textContent = m; }
+var CX = 250, CY = 70;
+function kpx(){ return TAB === 0 ? 370/P.rod.L : Math.min(330/Math.max(0.6, P.rod.L), 360/(P.rod.L + 0.35)); }
+function origin(){ if (TAB === 0){ CX = 40 + P.rod.p*kpx(); CY = 230; } else { CX = 250; CY = 70; } }   /* the centre-of-mass tab: the rod across, on a fulcrum at the balance point */
+function toScr(u, w){ origin(); var k = kpx(), bx = w*k, by = (u - P.rod.p)*k, c = Math.cos(S.th), s = Math.sin(S.th); return [CX + bx*c + by*s, CY - bx*s + by*c]; }   /* turned by theta (counterclockwise on screen positive) */
+function fromScr(X, Y){ origin(); var k = kpx(), dx = X - CX, dy = Y - CY, c = Math.cos(S.th), s = Math.sin(S.th), bx = dx*c - dy*s, by = dx*s + dy*c; return { u:by/k + P.rod.p, w:bx/k }; }
+function cm(x, y, r, col){ g.beginPath(); g.arc(x, y, r, 0, 2*Math.PI); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = col; g.lineWidth = 1.5; g.stroke(); g.fillStyle = col; [[0, Math.PI/2], [Math.PI, 1.5*Math.PI]].forEach(function(a){ g.beginPath(); g.moveTo(x, y); g.arc(x, y, r, a[0], a[1]); g.closePath(); g.fill(); }); }
+function draw(){ var p = pal(), s = sys(), k = kpx();
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = p.grid; g.lineWidth = 1; for (var x=0; x<520; x+=20){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } for (var y=0; y<H; y+=20){ g.beginPath(); g.moveTo(0, y); g.lineTo(520, y); g.stroke(); }
+  origin(); g.strokeStyle = p.dim; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(CX, TAB === 0 ? 20 : CY); g.lineTo(CX, H - 6); g.stroke(); g.setLineDash([]);
+  /* the rod, underneath everything */
+  var a = toScr(0, 0), b = toScr(P.rod.L, 0); g.lineCap = 'round'; g.strokeStyle = p.rod; g.lineWidth = 6 + 3*P.rod.m; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); g.lineCap = 'butt';
+  /* the parts: the largest first, so the smaller ones lie on top */
+  s.L.filter(function(q){ return q.k !== 'rod'; }).sort(function(A, B){ return B.R - A.R; }).forEach(function(q){
+    if (q.k === 'disk'){ var c = toScr(P.disk.x, 0); g.beginPath(); g.arc(c[0], c[1], P.disk.R*k, 0, 2*Math.PI); g.fillStyle = p.disk; g.fill(); g.strokeStyle = '#1d2a36'; g.lineWidth = 1; g.stroke(); }
+    if (q.k === 'hole'){ var h = P.hole, c2 = toScr(h.x, 0), ph = h.phi*Math.PI/180, hc = toScr(h.x + h.e*Math.cos(ph), h.e*Math.sin(ph)); g.beginPath(); g.arc(c2[0], c2[1], h.R*k, 0, 2*Math.PI); g.moveTo(hc[0] + h.r*k, hc[1]); g.arc(hc[0], hc[1], h.r*k, 0, 2*Math.PI, true); g.fillStyle = p.hole; g.fill('evenodd'); g.strokeStyle = '#1d2a36'; g.lineWidth = 1; g.stroke(); }
+    if (q.k === 'ring'){ var c3 = toScr(P.ring.x, 0); g.beginPath(); g.arc(c3[0], c3[1], P.ring.R*k, 0, 2*Math.PI); g.strokeStyle = p.ring; g.lineWidth = 2 + 2*P.ring.m; g.stroke(); }
+    if (q.k === 'thick'){ var c4 = toScr(P.thick.x, 0), r1 = Math.min(P.thick.R1, P.thick.R2 - 0.005); g.beginPath(); g.arc(c4[0], c4[1], P.thick.R2*k, 0, 2*Math.PI); g.moveTo(c4[0] + r1*k, c4[1]); g.arc(c4[0], c4[1], r1*k, 0, 2*Math.PI, true); g.fillStyle = p.thick; g.fill('evenodd'); g.strokeStyle = '#1d2a36'; g.lineWidth = 1; g.stroke(); } });
+  /* the rod's centre line on top, so it shows through the stack */
+  g.strokeStyle = p.rod; g.lineWidth = 2; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+  if (showParts) s.L.forEach(function(q){ var c = toScr(q.u, q.w); cm(c[0], c[1], 3.5, '#555'); });
+  /* the target (centre-of-mass challenge) */
+  if (false){ var t = toScr(CH.cm.u, CH.cm.w); g.strokeStyle = p.tgt; g.lineWidth = 2; g.beginPath(); g.arc(t[0], t[1], 11, 0, 2*Math.PI); g.stroke(); g.beginPath(); g.moveTo(t[0] - 16, t[1]); g.lineTo(t[0] + 16, t[1]); g.moveTo(t[0], t[1] - 16); g.lineTo(t[0], t[1] + 16); g.stroke(); Tx('target', t[0] + 18, t[1] - 12, p.tgt, 'left', 'bold 11px Arial'); }
+  /* the centre of mass, and the pivot */
+  var c0 = toScr(s.cu, s.cw); cm(c0[0], c0[1], 7, p.cm); Tx('CM', c0[0] + 10, c0[1] + (TAB === 0 ? 16 : 2), p.text, 'left', 'bold 12px Arial');
+  if (TAB === 0){ g.fillStyle = '#333'; g.beginPath(); g.moveTo(CX, CY); g.lineTo(CX - 26, H - 30); g.lineTo(CX + 26, H - 30); g.closePath(); g.globalAlpha = 0.85; g.fill(); g.globalAlpha = 1; g.fillRect(CX - 60, H - 30, 120, 8);   /* the fulcrum stand */
+    [-1, 1].forEach(function(sg){ var sx = CX + sg*(0.35*P.rod.L*kpx()), sy = CY + Math.tan(20*Math.PI/180)*0.35*P.rod.L*kpx() + 8; g.fillStyle = p.dim; g.fillRect(sx - 6, sy, 12, H - 30 - sy); }); }   /* the stops: the rod rests on them when it tips */
+  else { g.fillStyle = '#333'; g.beginPath(); g.moveTo(CX - 16, CY - 16); g.lineTo(CX + 16, CY - 16); g.lineTo(CX, CY); g.closePath(); g.fill(); g.fillRect(CX - 40, CY - 22, 80, 6); } g.beginPath(); g.arc(CX, CY, 4.5, 0, 2*Math.PI); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = '#000'; g.lineWidth = 1.5; g.stroke(); Tx('pivot', CX + 44, CY - 18, p.dim, 'left', '10px Arial');
+  /* the side panel on the canvas: the numbers that matter for this tab */
+  var X0 = 540; g.fillStyle = th.hc ? '#111' : '#fff'; g.fillRect(X0 - 10, 10, W - X0, H - 20);
+  if (TAB === 0){ var duB = s.cu - P.rod.p; Tx('centre of mass', X0, 34, p.text, 'left', 'bold 13px Arial'); Tx(f2(s.cu*100, 1) + ' cm from the left end', X0, 58, p.text, 'left', '13px Arial');
+    Tx('balance point (the pivot)', X0, 96, p.tgt, 'left', 'bold 13px Arial'); Tx(f2(P.rod.p*100, 1) + ' cm from the left end', X0, 120, p.tgt, 'left', '13px Arial');
+    Tx(Math.abs(duB) < 0.005 ? '\u2713 balanced!' : 'off by ' + f2(Math.abs(duB)*100, 1) + ' cm', X0, 160, Math.abs(duB) < 0.005 ? p.ok : p.bad, 'left', 'bold 16px Arial'); if (Math.abs(duB) >= 0.005) Tx('it tips down on the ' + (duB > 0 ? 'right' : 'left'), X0, 184, p.bad, 'left', '12px Arial');
+    Tx(S.held ? 'held level: press Let go' : 'let go', X0, H - 40, p.dim, 'left', '12px Arial'); }
+  if (false){
+    if (false){ var dd = 0; Tx('target', X0, 116, p.tgt, 'left', 'bold 13px Arial'); Tx(f2(CH.cm.u*100, 1) + ' cm below the top', X0, 138, p.tgt, 'left', '13px Arial'); Tx(f2(Math.abs(CH.cm.w)*100, 1) + ' cm to the ' + (CH.cm.w >= 0 ? 'right' : 'left'), X0, 158, p.tgt, 'left', '13px Arial');
+      Tx('off by ' + f2(dd, 1) + ' cm', X0, 196, dd < 1.5 ? p.ok : p.bad, 'left', 'bold 15px Arial'); if (dd < 1.5) Tx('\u2713 on target!', X0, 222, p.ok, 'left', 'bold 15px Arial'); }
+    }
+  if (TAB === 1){ Tx('period', X0, 34, p.text, 'left', 'bold 13px Arial'); Tx(s.T ? 'T = ' + f2(s.T, 3) + ' s' : 'no swing (CM at the pivot)', X0, 58, p.text, 'left', 'bold 16px Arial');
+    if (S.Tmeas) Tx('timed from the swing: ' + f2(S.Tmeas, 3) + ' s', X0, 82, p.dim, 'left', '12px Arial');
+    if (CH.T){ Tx('target', X0, 120, p.tgt, 'left', 'bold 13px Arial'); Tx('T = ' + f2(CH.T, 2) + ' s', X0, 144, p.tgt, 'left', 'bold 16px Arial'); if (s.T){ var err = 100*(s.T - CH.T)/CH.T; Tx((err >= 0 ? '+' : '') + f2(err, 1) + ' %', X0, 178, Math.abs(err) < 1 ? p.ok : p.bad, 'left', 'bold 15px Arial'); if (Math.abs(err) < 1) Tx('\u2713 on target!', X0, 204, p.ok, 'left', 'bold 15px Arial'); else Tx(err > 0 ? 'too slow: make it swing faster' : 'too fast: make it swing slower', X0, 204, p.bad, 'left', '12px Arial'); } }
+    Tx('I = ' + f2(s.I, 4) + ' kg\u00B7m\u00B2', X0, H - 80, p.text, 'left', '12px Arial'); Tx('M = ' + f2(s.M, 2) + ' kg,  d = ' + f2(s.d*100, 1) + ' cm', X0, H - 60, p.text, 'left', '12px Arial'); }
+  if (S.swing) Tx('t = ' + f2(S.t, 1) + ' s', 10, H - 14, p.dim, 'left', '11px Arial'); }
+/* ══════════ the readout: each part, then the totals ══════════ */
+function readout(){ var s = sys(), p = pal(), rows = s.L.map(function(q){ var dI = q.k === 'hole' ? '\u2014' : f2(q.m*(Math.pow(q.u - P.rod.p, 2) + q.w*q.w), 4);
+    return '<tr><td style="text-align:left">' + NAMES[q.k] + '</td><td>' + f2(q.m, 2) + '</td><td>' + f2(q.u*100, 1) + (Math.abs(q.w) > 1e-4 ? ', ' + f2(q.w*100, 1) : '') + '</td><td>' + (q.k === 'hole' ? 'full \u2212 hole' : f2(q.Ic, 4)) + '</td><td>' + dI + '</td><td>' + f2(Ipiv(q), 4) + '</td></tr>'; }).join('');
+  el('pdRead').innerHTML = '<table class="pd_tbl"><thead><tr><th>part</th><th>m (kg)</th><th>centre (cm)</th><th>I<sub>cm</sub></th><th>m d\u00B2</th><th>I about the pivot</th></tr></thead><tbody>' + rows + '<tr style="font-weight:bold"><td style="text-align:left">total</td><td>' + f2(s.M, 2) + '</td><td>' + f2(s.cu*100, 1) + (Math.abs(s.cw) > 1e-4 ? ', ' + f2(s.cw*100, 1) : '') + '</td><td></td><td></td><td>' + f2(s.I, 4) + '</td></tr></tbody></table>'
+    + '<p style="margin:6px 0 0;font-size:.8rem">Centres: distance below the rod\u2019s top (and sideways). I in kg\u00B7m\u00B2. Pivot at ' + f2(P.rod.p*100, 1) + ' cm; d = ' + f2(s.d*100, 2) + ' cm; T = ' + (s.T ? f2(s.T, 3) + ' s' : '\u2014') + '.</p>';
+  el('pdEq').innerHTML = TAB === 0 ? '<b>x<sub>cm</sub> = \u03A3m\u1D62x\u1D62 / \u03A3m\u1D62</b> = (' + s.L.map(function(q){ return f2(q.m, 2) + '\u00D7' + f2(q.u*100, 1); }).join(' + ') + ') / ' + f2(s.M, 2) + ' = <b>' + f2(s.cu*100, 1) + ' cm</b> from the left end. It balances when this equals the pivot\u2019s position, <b>' + f2(P.rod.p*100, 1) + ' cm</b>.' : '<b>I = \u03A3(I<sub>cm</sub> + m d\u00B2) = ' + f2(s.I, 4) + ' kg\u00B7m\u00B2</b>; <b>T = 2\u03C0\u221A(I/(M g d))</b> = 2\u03C0\u221A(' + f2(s.I, 4) + '/(' + f2(s.M, 2) + '\u00D79.8\u00D7' + f2(s.d, 3) + ')) = <b>' + (s.T ? f2(s.T, 3) + ' s' : '\u2014') + '</b>';
+  var duS = s.cu - P.rod.p, st = TAB === 0 ? (Math.abs(duS) < 0.005 ? '<b style="color:' + p.ok + '">\u2713 Balanced: the centre of mass is right above the pivot.</b> Let go: the rod stays level.' : 'The centre of mass is ' + f2(Math.abs(duS)*100, 1) + ' cm to the ' + (duS > 0 ? 'right' : 'left') + ' of the pivot: the rod would tip down on that side. Move it onto the pivot by changing the parts\u2019 positions, masses and sizes.') : (CH.T ? (s.T && Math.abs(s.T - CH.T)/CH.T < 0.01 ? '<b style="color:' + p.ok + '">\u2713 Your pendulum swings with the target period.</b> Swing it, and check the timed period.' : 'Build a pendulum with a period of ' + f2(CH.T, 2) + ' s: choose the parts and their settings.') : '');
+  el('pdStatus').innerHTML = st; }
+/* ══════════ the challenges ══════════ */
+var SETS = [['ring'], ['disk'], ['thick'], ['hole'], ['disk', 'ring'], ['ring', 'thick'], ['hole', 'ring']];
+function rnd(a, b){ return a + Math.random()*(b - a); }
+function newCM(){ var set = SETS[Math.floor(Math.random()*SETS.length)];
+  /* a hidden configuration fixes the target; then the parts start from their usual settings */
+  P = JSON.parse(JSON.stringify(DEF)); ['disk', 'hole', 'ring', 'thick'].forEach(function(k){ P[k].on = set.indexOf(k) >= 0; });
+  P.rod.L = Math.round(rnd(0.7, 1.3)*20)/20; P.rod.m = Math.round(rnd(0.3, 1.2)*10)/10;
+  set.forEach(function(k){ var q = P[k]; q.x = Math.round(rnd(0.15, 0.95)*P.rod.L*100)/100; if ('m' in q) q.m = Math.round(rnd(0.4, 3)*10)/10; if (k === 'hole'){ q.R = Math.round(rnd(0.1, 0.2)*100)/100; q.r = Math.round(rnd(0.3, 0.6)*q.R*100)/100; q.e = Math.round(rnd(0.3, 0.9)*(q.R - q.r)*100)/100; q.phi = Math.round(rnd(0, 360)/15)*15; } });
+  var s = sys(); CH.cm = { u:s.cu, w:0, set:set, L:P.rod.L };
+  var L = P.rod.L, m = P.rod.m; P = JSON.parse(JSON.stringify(DEF)); P.rod.L = L; P.rod.p = Math.round(s.cu*1000)/1000;   /* the pivot: the balance point */ ['disk', 'hole', 'ring', 'thick'].forEach(function(k){ P[k].on = set.indexOf(k) >= 0; P[k].x = Math.min(P[k].x, L); });
+  hang(); build(); narrate('New challenge: a ' + L + ' m rod with ' + set.map(function(k){ return 'a ' + NAMES[k]; }).join(' and ') + ', on a pivot ' + f2(P.rod.p*100, 1) + ' cm from the left end. Change the parts until it balances there.'); }
+function newT(){ CH.T = Math.round(rnd(1.1, 2.6)*20)/20; hang(); narrate('New challenge: build a pendulum that swings with a period of ' + f2(CH.T, 2) + ' seconds. Choose any parts.'); draw(); readout(); }
+/* ══════════ controls ══════════ */
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+var SL = { rod:[['L', 'length L', 0.5, 1.5, 0.01, 'm'], ['m', 'mass', 0.1, 3, 0.05, 'kg'], ['p', 'pivot: from the rod\u2019s end', 0, 1.5, 0.005, 'm']],
+  disk:[['x', 'position (from the rod\u2019s end)', 0, 1.5, 0.005, 'm'], ['m', 'mass', 0.1, 5, 0.05, 'kg'], ['R', 'radius R', 0.03, 0.3, 0.005, 'm']],
+  hole:[['x', 'position (from the rod\u2019s end)', 0, 1.5, 0.005, 'm'], ['m', 'mass of the uncut disk', 0.2, 5, 0.05, 'kg'], ['R', 'radius R', 0.05, 0.3, 0.005, 'm'], ['r', 'radius of the hole r', 0.01, 0.25, 0.005, 'm'], ['e', 'hole: distance from the centre', 0, 0.25, 0.005, 'm'], ['phi', 'hole: direction (0\u00B0 down the rod, 90\u00B0 to the right)', 0, 360, 5, '\u00B0']],
+  ring:[['x', 'position (from the rod\u2019s end)', 0, 1.5, 0.005, 'm'], ['m', 'mass', 0.1, 5, 0.05, 'kg'], ['R', 'radius R', 0.03, 0.3, 0.005, 'm']],
+  thick:[['x', 'position (from the rod\u2019s end)', 0, 1.5, 0.005, 'm'], ['m', 'mass', 0.1, 5, 0.05, 'kg'], ['R1', 'inner radius R\u2081', 0.01, 0.28, 0.005, 'm'], ['R2', 'outer radius R\u2082', 0.03, 0.3, 0.005, 'm']] };
+function clampAll(){ var L = P.rod.L; P.rod.p = Math.min(P.rod.p, L); ['disk', 'hole', 'ring', 'thick'].forEach(function(k){ P[k].x = Math.min(P[k].x, L); });
+  var h = P.hole; h.r = Math.min(h.r, h.R - 0.01); h.e = Math.min(h.e, h.R - h.r); P.thick.R1 = Math.min(P.thick.R1, P.thick.R2 - 0.01); }
+function fmt(k, key, v){ return key === 'phi' ? f2(v, 0) : key === 'm' ? f2(v, 2) : f2(v*100, 1); }
+function unitOf(u){ return u === 'm' ? 'cm' : u; }
+function build(){ var h = '';
+  Object.keys(SL).forEach(function(k){ var q = P[k], lock = TAB === 0 && k !== 'rod';
+    h += '<fieldset class="pd_part"><legend>' + (k === 'rod' ? '<b>rod</b> (always there)' : '<label><input type="checkbox" id="pdOn_' + k + '"' + (q.on ? ' checked' : '') + (lock ? ' disabled' : '') + '> <b>' + NAMES[k] + '</b></label>') + '</legend>';
+    if (k === 'rod' || q.on) SL[k].forEach(function(sv){ var mx = (sv[0] === 'x' || sv[0] === 'p') ? P.rod.L : sv[3], id = 'pd_' + k + '_' + sv[0], fixed = TAB === 0 && k === 'rod' && (sv[0] === 'p' || sv[0] === 'L');
+      h += '<div class="pd_ctrl"><div class="pd_ctrlhdr"><label class="pd_ctrlname" for="' + id + '">' + sv[1] + '</label><span class="pd_sval" id="' + id + 'v">' + fmt(k, sv[0], q[sv[0]]) + ' ' + unitOf(sv[5]) + '</span></div><input type="range" id="' + id + '" min="' + sv[2] + '" max="' + mx + '" step="' + sv[4] + '" value="' + q[sv[0]] + '"' + (fixed ? ' disabled' : '') + '></div>'; });
+    h += '</fieldset>'; });
+  el('pdCtl').innerHTML = h;
+  Object.keys(SL).forEach(function(k){ SL[k].forEach(function(sv){ var id = 'pd_' + k + '_' + sv[0]; on(id, 'input', function(){ P[k][sv[0]] = +this.value; clampAll(); if (k === 'rod' && sv[0] === 'L') build(); else syncVals(); if (!S.swing && TAB === 1) S.th = sys().thEq; later(); }); });
+    if (k !== 'rod') on('pdOn_' + k, 'change', function(){ P[k].on = this.checked; hang(); build(); later(); }); }); }
+function syncVals(){ Object.keys(SL).forEach(function(k){ SL[k].forEach(function(sv){ var id = 'pd_' + k + '_' + sv[0], e = el(id); if (!e) return; if (Math.abs(+e.value - P[k][sv[0]]) > 1e-9) e.value = P[k][sv[0]]; el(id + 'v').textContent = fmt(k, sv[0], P[k][sv[0]]) + ' ' + unitOf(sv[5]); }); }); }
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ var s = sys();
+  narrate(TAB === 0 ? 'Centre of mass ' + f2(s.cu*100, 1) + ' cm below the top' + (Math.abs(s.cw) > 0.002 ? ', ' + f2(Math.abs(s.cw)*100, 1) + ' cm to the ' + (s.cw > 0 ? 'right' : 'left') : '') + (CH.cm ? '; ' + f2(Math.hypot(s.cu - CH.cm.u, s.cw - CH.cm.w)*100, 1) + ' cm from the target.' : '.') : 'I = ' + f2(s.I, 4) + ', M = ' + f2(s.M, 2) + ' kg, d = ' + f2(s.d*100, 1) + ' cm: the period is ' + (s.T ? f2(s.T, 3) + ' seconds' : 'undefined') + (CH.T ? ', target ' + f2(CH.T, 2) + '.' : '.')); }, 500); }
+/* dragging a part along the rod */
+var drag = null;
+function cpt(e){ var r = cv.getBoundingClientRect(); return [(e.clientX - r.left)*W/r.width, (e.clientY - r.top)*H/r.height]; }
+cv.addEventListener('pointerdown', function(e){ var q = cpt(e), best = null; ['disk', 'hole', 'ring', 'thick'].forEach(function(k){ if (!P[k].on) return; var c = toScr(P[k].x, 0), dd = Math.hypot(q[0] - c[0], q[1] - c[1]), R = (k === 'thick' ? P.thick.R2 : P[k].R)*kpx(); if (dd < Math.max(R, 14) && (!best || R < best.R)) best = { k:k, R:R }; });
+  if (best){ drag = best.k; if (TAB === 1) hang(); else { S.held = true; S.th = Math.PI/2; } try { cv.setPointerCapture(e.pointerId); } catch(err){} e.preventDefault(); } });
+cv.addEventListener('pointermove', function(e){ if (!drag) return; var q = cpt(e), b = fromScr(q[0], q[1]); P[drag].x = Math.max(0, Math.min(P.rod.L, Math.round(b.u*200)/200)); syncVals(); if (TAB === 1) S.th = sys().thEq; e.preventDefault(); });
+cv.addEventListener('pointerup', function(){ if (drag){ drag = null; later(); } });
+on('pdNew', 'click', function(){ if (TAB === 0) newCM(); else newT(); }); on('pdSwing', 'click', swing); on('pdHang', 'click', function(){ hang(); narrate(TAB === 0 ? 'Held level.' : 'Hanging still: the centre of mass is straight below the pivot.'); });
+on('pdSpd', 'input', function(){ spd = +this.value; el('pdSpdV').textContent = f2(spd, 2) + '\u00D7'; }); on('pdParts', 'change', function(){ showParts = this.checked; });
+function tab(k){ TAB = k; for (var i=0; i<2; i++) el('pdTab' + i).setAttribute('aria-selected', i === k ? 'true' : 'false');
+  el('pdSwing').innerHTML = k === 0 ? 'Let go' : '\u21BA Swing it'; el('pdHang').innerHTML = k === 0 ? 'Hold it level' : 'Let it hang still';
+  el('pdTask').innerHTML = k === 0 ? '<b>Centre of mass challenge.</b> The rod rests on a pivot at the balance point. The parts are given: change their positions, masses and sizes (not which parts there are, nor the rod\u2019s length) until the centre of mass is right above the pivot, and the rod balances.' : '<b>Moment of inertia challenge.</b> Design a pendulum with the target period: choose any parts, and any settings, including the pivot.';
+  if (k === 0) newCM(); else { if (!CH.T) newT(); build(); } hang(); }
+var last = 0; function loop(t){ var dt = Math.min(0.05, (t - (last || t))/1000); last = t; step(dt*spd); draw(); readout(); requestAnimationFrame(loop); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('pd_hc', th.hc); ROOT.classList.toggle('pd_lm', th.lm);
+  [['hc', 'pdBtnHC'], ['lm', 'pdBtnLM'], ['cb', 'pdBtnCB'], ['nr', 'pdBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('pd_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('pdBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('pdNar').style.display = th.nr ? '' : 'none'; }
+function toggleDesc(){ var b = el('pdDescBtn'), d = el('pdDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+tab(0); requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, _P:function(){ return P; }, _set:function(np){ P = np; build(); }, _sys:sys, _CH:CH, _S:S, _swing:swing, _step:step, _newCM:newCM, _newT:newT };
+})();
+</script>
+</main>
+</body>
+</html>

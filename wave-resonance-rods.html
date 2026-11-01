@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Waves: Resonance of Six Rods on a Shaking Base</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of resonance: six rods of different lengths, clamped to a base shaken at a chosen frequency; standing waves with L = lambda/4, 3 lambda/4, ... and the response of each rod.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="rrRoot" class="rr_root" role="region" aria-label="Resonance: six rods of different lengths on a shaking base">
+<div class="rr_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="rr_a11ybtn" id="rrBtnHC" onclick="rrSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rr_a11ybtn" id="rrBtnLM" onclick="rrSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rr_a11ybtn" id="rrBtnCB" onclick="rrSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rr_a11ybtn rr_a11yon" id="rrBtnNR" onclick="rrSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="rr_header"><p class="rr_h1">Resonance: Six Rods on a Shaking Base</p><p class="rr_sub">each rod answers only at its own frequencies: L = &lambda;/4, 3&lambda;/4, 5&lambda;/4, &hellip;</p></div>
+<div class="rr_bbar"><span>the rods are</span><label><input type="radio" name="rrOr" value="0" checked> above the base</label><label><input type="radio" name="rrOr" value="90"> sideways</label><label><input type="radio" name="rrOr" value="180"> below the base</label></div>
+<div class="rr_diag"><div class="rr_dlabel"><b>THE RODS</b><span id="rrHint"></span></div><canvas id="rrScene" width="780" height="400" role="img" aria-label="Six rods clamped to a base that shakes; the rod whose length fits the wave pattern swings strongly." aria-describedby="rrStatus"></canvas></div>
+<div class="rr_bbar"><button type="button" class="rr_btn rr_btnon" id="rrPlay">&#10073;&#10073; Pause</button><button type="button" class="rr_btn" id="rrStep">Step &#9656;</button><button type="button" class="rr_btn" id="rrReset">Stop the rods</button><button type="button" class="rr_btn" id="rrSweep">&#8599; Sweep the frequency up</button><label>slow motion <input type="range" id="rrSpd" min="0.02" max="1" step="0.01" value="0.25" style="width:100px"> <span id="rrSpdV">0.25&times;</span></label><label><input type="checkbox" id="rrEnv" checked> envelope and nodes</label></div>
+<div class="rr_status" id="rrStatus" role="status" aria-live="polite"></div>
+<div class="rr_diag"><div class="rr_dlabel"><b>HOW STRONGLY EACH ROD ANSWERS</b><span>steady amplitude of each rod's free end, against the drive frequency</span></div><canvas id="rrResp" width="780" height="250" role="img" aria-label="For each rod, the steady amplitude of its free end against the drive frequency: peaks at its resonant frequencies."></canvas></div>
+<div class="rr_panels"><div class="rr_panel"><div class="rr_ptitle">The drive</div><div class="rr_pbody" id="rrCtlD"></div></div>
+<div class="rr_panel"><div class="rr_ptitle">The rods</div><div class="rr_pbody" id="rrCtlR"></div></div></div>
+<div class="rr_panel" style="width:100%"><div class="rr_ptitle">Each rod's resonant frequencies</div><div class="rr_pbody" id="rrTbl"></div></div>
+<div class="rr_eqs" id="rrEq"></div>
+<div id="rrNar" class="rr_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="rr_descwrap">
+<button type="button" class="rr_descbtn" id="rrDescBtn" aria-expanded="false" aria-controls="rrDesc" onclick="rrSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="rr_desc" id="rrDesc" role="region" aria-labelledby="rrDescBtn" style="display:none">
+<p>Six rods of different lengths are clamped to a base, which a motor shakes back and forth, across the rods, at a frequency `f` you choose. Waves travel along each rod at a speed `v`, from the shaken end to the free end and back.</p>
+<p>At most frequencies the reflected waves do not fit, and a rod barely moves. But the clamped end must be (almost) a node and the free end is an antinode, so a standing wave fits when the length holds an odd number of quarter wavelengths:</p>
+<p class="rr_eq">`L = lambda/4, (3 lambda)/4, (5 lambda)/4, ...`, so `f_n = (2n - 1) v/(4L)`.</p>
+<p>At those frequencies each shake arrives in step with the wave coming back, the motion builds up, and the rod swings strongly: resonance. Each rod answers at its own frequencies only: the longest rod at the lowest. Its first resonance (`L = lambda/4`) has no node except at the base; the next (`L = 3 lambda/4`) has one more node along the rod, a third of the way from the free end; and so on. Damping limits how high the peaks grow and how long the motion takes to build up and to die away.</p>
+<p>The model is a rod (or a string) carrying waves at a fixed speed. Real stiff reeds, which flex like diving boards, follow the same idea, but their frequencies go as `1/L^2` and their overtones are not odd multiples of the first. The displacements are exaggerated in the drawing.</p>
+</div></div>
+</div><!-- #rrRoot -->
+<style>
+#rrRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#rrRoot * { box-sizing:border-box; }
+#rrRoot.rr_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#rrRoot.rr_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#rrRoot .rr_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#rrRoot .rr_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#rrRoot .rr_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#rrRoot .rr_header { text-align:center; }
+#rrRoot .rr_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#rrRoot .rr_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#rrRoot .rr_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#rrRoot .rr_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#rrRoot .rr_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#rrRoot .rr_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#rrRoot .rr_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#rrRoot .rr_dlabel b { color:var(--c-accent); }
+#rrRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#rrRoot .rr_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#rrRoot .rr_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#rrRoot .rr_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#rrRoot .rr_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#rrRoot .rr_btn:hover { border-color:var(--c-accent); }
+#rrRoot .rr_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#rrRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#rrRoot .rr_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#rrRoot .rr_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#rrRoot .rr_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#rrRoot .rr_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#rrRoot .rr_ctrl { display:flex; flex-direction:column; gap:3px; }
+#rrRoot .rr_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#rrRoot .rr_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#rrRoot .rr_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#rrRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#rrRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rrRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rrRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#rrRoot .rr_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#rrRoot .rr_rkey { color:var(--c-dim); }
+#rrRoot .rr_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#rrRoot .rr_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#rrRoot .rr_eqs b { color:var(--c-val); }
+#rrRoot .rr_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#rrRoot .rr_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#rrRoot .rr_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#rrRoot .rr_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#rrRoot .rr_desc p { margin:0 0 9px; }
+#rrRoot .rr_eq { text-align:center; font-size:1rem; }
+#rrRoot button:focus-visible, #rrRoot input:focus-visible, #rrRoot select:focus-visible, #rrRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #rrRoot .rr_row2, #rrRoot .rr_panels { grid-template-columns:minmax(0,1fr); } #rrRoot .rr_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #rrRoot input[type=range] { height:8px; } #rrRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #rrRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #rrRoot .rr_a11ybtn { min-height:40px; } #rrRoot input[type=checkbox] { width:22px; height:22px; } }
+#rrRoot .rr_chk { display:flex; gap:6px; align-items:center; font-size:.8rem; color:var(--c-text); }
+#rrRoot .rr_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#rrRoot .rr_tbl { width:100%; border-collapse:collapse; font-size:.74rem; }
+#rrRoot .rr_tbl th, #rrRoot .rr_tbl td { padding:3px 5px; border-bottom:1px solid var(--c-bd); text-align:right; color:var(--c-text); }
+#rrRoot .rr_tbl th { color:var(--c-dim); font-weight:normal; }
+</style>
+<!-- ════════ SIMULATION ════════
+Each rod: y_tt + 2 beta y_t = v^2 y_xx on 0 < x < L, y(0, t) = A sin(theta) (the base, theta growing at omega), y_x(L, t) = 0 (free end).
+Finite differences, 96 segments per rod, a common time step at 0.9 of the stability limit. Steady response of the free end, in theory:
+|y(L)/A| = 1/|cos(kL)|, k^2 = (omega^2 - 2 i beta omega)/v^2. No dollar signs or backticks in the code.
+-->
+<script>
+var rrSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('rrRoot'), DPR = window.devicePixelRatio || 1, NS = 96;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CS = hi('rrScene'), CR = hi('rrResp');
+var th = { hc:false, lm:false, cb:false, nr:true }, play = true, spd = 0.25, ORI = 0;
+var P = { v:10, beta:0.6, A:1.0, f:4.0, fmax:30, L:[0.80, 0.68, 0.57, 0.48, 0.40, 0.33], sweep:false, sweepRate:0.25 };
+var R = [], T = 0, THETA = 0, ACC = 0, HSTEP = null;   /* a fixed time step (the scheme needs equal steps); ACC: time left over */
+var COL = ['#c0392b', '#e07a10', '#c9a227', '#12805a', '#1f5fd6', '#7d3cc8'];
+function wd(){ return 2*Math.PI*P.f; }
+function initRods(){ ACC = 0; HSTEP = null; R = P.L.map(function(L){ var y = new Float64Array(NS + 1), yo = new Float64Array(NS + 1); return { L:L, y:y, yo:yo, peak:0, pk:[] }; }); }
+function dtMax(){ var m = 1e9; P.L.forEach(function(L){ m = Math.min(m, 0.9*(L/NS)/P.v); }); return m; }
+function advance(Tt){ var h = dtMax(), w = wd();
+  if (HSTEP !== null && Math.abs(h - HSTEP) > 1e-15){ var q = h/HSTEP; R.forEach(function(r){ for (var i=0; i<=NS; i++) r.yo[i] = r.y[i] - (r.y[i] - r.yo[i])*q; }); }   /* a new step: keep the velocities */
+  HSTEP = h; ACC += Tt;
+  while (ACC >= h){ var dt = h; ACC -= h; THETA += w*dt; T += dt; var yb = P.A*Math.sin(THETA);
+    R.forEach(function(r){ var dx = r.L/NS, C2 = Math.pow(P.v*dt/dx, 2), b = P.beta*dt, y = r.y, yo = r.yo, yn = new Float64Array(NS + 1);
+      yn[0] = yb; for (var i=1; i<NS; i++) yn[i] = (2*y[i] - (1 - b)*yo[i] + C2*(y[i + 1] - 2*y[i] + y[i - 1]))/(1 + b);
+      yn[NS] = (2*y[NS] - (1 - b)*yo[NS] + C2*(2*y[NS - 1] - 2*y[NS]))/(1 + b);   /* free end: the slope is zero (a mirror point beyond it) */
+      r.yo = y; r.y = yn; var a = Math.abs(yn[NS]); r.peak = Math.max(r.peak*Math.exp(-dt/(1/P.f*1.5)), a); }); } }
+/* the theory: steady tip amplitude, and the envelope along a rod */
+function kOf(f){ var w = 2*Math.PI*f, re = w*w/(P.v*P.v), im = -2*P.beta*w/(P.v*P.v), mod = Math.sqrt(Math.hypot(re, im)), ang = Math.atan2(im, re)/2; return [mod*Math.cos(ang), mod*Math.sin(ang)]; }
+function ccos(a, b){ return [Math.cos(a)*Math.cosh(b), -Math.sin(a)*Math.sinh(b)]; }
+function cabs(z){ return Math.hypot(z[0], z[1]); }
+function tipRatio(L, f){ var k = kOf(f); return 1/Math.max(1e-9, cabs(ccos(k[0]*L, k[1]*L))); }
+function envelope(L, x, f){ var k = kOf(f), num = cabs(ccos(k[0]*(L - x), k[1]*(L - x))), den = cabs(ccos(k[0]*L, k[1]*L)); return P.A*num/Math.max(1e-9, den); }
+function fn(L, n){ return (2*n - 1)*P.v/(4*L); }
+function nearMode(L){ /* the resonance this rod is near, if its response is strong */ var n = Math.max(1, Math.round((P.f*4*L/P.v + 1)/2)), fr = fn(L, n), peak = tipRatio(L, fr), now = tipRatio(L, P.f); return now > 0.5*peak && now > 3 ? n : 0; }
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.1)', base:'#4d545b', node:'#1d2a36', env:'rgba(0,0,0,0.25)', mark:'#c2185b', ok:'#12805a' };
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.25)'; p.base = '#888'; p.node = '#fff'; p.env = 'rgba(255,255,255,0.35)'; p.mark = '#ff66ff'; p.ok = '#00ff88'; }
+  return p; }
+function cols(){ return th.cb ? ['#d55e00', '#e69f00', '#f0e442', '#009e73', '#56b4e9', '#cc79a7'] : th.hc ? ['#ff5555', '#ffaa00', '#ffff55', '#00ff88', '#55aaff', '#ff66ff'] : COL; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('rrNar').textContent = m; }
+function rrow(k, v){ return '<div class="rr_rrow"><span class="rr_rkey">' + k + '</span><span class="rr_rval">' + v + '</span></div>'; }
+/* ══════════ the scene ══════════ */
+function geom(){ var W = CS.W, H = CS.H, Lmax = Math.max.apply(null, P.L);
+  if (ORI === 0) return { o:function(i){ return { x:110 + i*112, y:H - 50 }; }, d:[0, -1], t:[1, 0], sc:(H - 90)/Lmax, base:[[60, H - 50], [W - 60, H - 50]] };
+  if (ORI === 180) return { o:function(i){ return { x:110 + i*112, y:46 }; }, d:[0, 1], t:[1, 0], sc:(H - 90)/Lmax, base:[[60, 46], [W - 60, 46]] };
+  return { o:function(i){ return { x:70, y:40 + i*64 }; }, d:[1, 0], t:[0, 1], sc:(W - 160)/Lmax, base:[[70, 14], [70, H - 14]] }; }
+function drawScene(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), G = geom(), C = cols(), yb = P.A*Math.sin(THETA), mx = 1e-9;
+  R.forEach(function(r){ for (var i=0; i<=NS; i++) mx = Math.max(mx, Math.abs(r.y[i])); });
+  var maxPx = ORI === 90 ? 26 : 42, gain = Math.min(14/Math.max(P.A, 1e-6), maxPx/mx);   /* px per mm of displacement: the drawing is exaggerated */
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  /* the base, shaking across the rods */
+  var bo = yb*gain, b = G.base; g.fillStyle = p.base; if (ORI === 90) g.fillRect(b[0][0] - 14, b[0][1] + bo, 14, b[1][1] - b[0][1]); else g.fillRect(b[0][0] + bo, b[0][1] + (ORI === 0 ? 0 : -14), b[1][0] - b[0][0], 14);
+  Tx(g, 'base (shaken \u00B1' + f2(P.A, 1) + ' mm at ' + f2(P.f, 2) + ' Hz)', ORI === 90 ? 90 : 64, ORI === 90 ? H - 8 : (ORI === 0 ? H - 18 : 16), p.dim, 'left', '11px Arial');   /* below the base, the caption goes above it */
+  R.forEach(function(r, i){ var o = G.o(i), n = nearMode(r.L), col = C[i];
+    /* the envelope of the steady standing wave, and its nodes */
+    if (el('rrEnv').checked && n){ g.fillStyle = col; g.globalAlpha = 0.13; g.beginPath(); for (var k=0; k<=40; k++){ var x = r.L*k/40, e = envelope(r.L, x, P.f)*gain, px = o.x + G.d[0]*x*G.sc + G.t[0]*e, py = o.y + G.d[1]*x*G.sc + G.t[1]*e; if (k) g.lineTo(px, py); else g.moveTo(px, py); }
+      for (var k2=40; k2>=0; k2--){ var x2 = r.L*k2/40, e2 = envelope(r.L, x2, P.f)*gain; g.lineTo(o.x + G.d[0]*x2*G.sc - G.t[0]*e2, o.y + G.d[1]*x2*G.sc - G.t[1]*e2); } g.fill(); g.globalAlpha = 1;
+      var lam = P.v/P.f; for (var m=1; m<n; m++){ var xn = r.L - (2*m - 1)*lam/4; if (xn <= 0.01*r.L) continue; g.fillStyle = p.node; g.beginPath(); g.arc(o.x + G.d[0]*xn*G.sc, o.y + G.d[1]*xn*G.sc, 4, 0, 2*Math.PI); g.fill(); }
+      var tip = { x:o.x + G.d[0]*r.L*G.sc, y:o.y + G.d[1]*r.L*G.sc }, lab = 'L = ' + (n === 1 ? '' : (2*n - 1)) + '\u03BB/4'; Tx(g, lab, tip.x + (ORI === 90 ? 10 : 0), tip.y + (ORI === 0 ? -20 : ORI === 180 ? 20 : -16), col, ORI === 90 ? 'left' : 'center', 'bold 13px Arial'); }
+    /* the rod */
+    g.strokeStyle = col; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath();
+    for (var j=0; j<=NS; j++){ var x = r.L*j/NS, yy = r.y[j]*gain, px = o.x + G.d[0]*x*G.sc + G.t[0]*yy, py = o.y + G.d[1]*x*G.sc + G.t[1]*yy; if (j) g.lineTo(px, py); else g.moveTo(px, py); } g.stroke(); g.lineCap = 'butt';
+    var lx = o.x + (ORI === 90 ? -50 : 0), ly = o.y + (ORI === 0 ? 22 : ORI === 180 ? 22 : 0); if (ORI !== 90) Tx(g, f2(r.L*100, 0) + ' cm', lx, ly, col, 'center', 'bold 11px Arial'); else Tx(g, f2(r.L*100, 0) + ' cm', lx + 30, ly, col, 'right', 'bold 11px Arial'); });
+  el('rrHint').textContent = 'sideways displacements exaggerated \u00D7' + f2(gain/(G.sc/1000), 0) + ' \u00B7 t = ' + f2(T, 1) + ' s';   /* px per mm across, over px per mm along */
+}
+/* ══════════ the response graph ══════════ */
+function drawResp(){
+  var g = CR.g, W = CR.W, H = CR.H, p = pal(), C = cols(), X0 = 46, X1 = W - 14, Y0 = H - 30, Y1 = 12, ymax = 0;
+  for (var i=0; i<6; i++) ymax = Math.max(ymax, tipRatio(P.L[i], fn(P.L[i], 1)));
+  ymax = Math.min(60, ymax*1.08); function X(f){ return X0 + f/P.fmax*(X1 - X0); } function Y(v){ return Y0 - Math.min(v, ymax)/ymax*(Y0 - Y1); }
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); seg(g, X0, Y0, X1, Y0, p.text, 1); seg(g, X0, Y0, X0, Y1, p.text, 1);
+  for (var f=0; f<=P.fmax; f+=P.fmax > 40 ? 10 : 5){ seg(g, X(f), Y0, X(f), Y1, p.grid, 1); Tx(g, String(f), X(f), Y0 + 12, p.dim, 'center', '10px Arial'); }
+  var st = ymax > 30 ? 10 : 5; for (var v=0; v<=ymax; v+=st){ seg(g, X0, Y(v), X1, Y(v), p.grid, 1); Tx(g, String(v), X0 - 5, Y(v), p.dim, 'right', '10px Arial'); }
+  P.L.forEach(function(L, i){ g.strokeStyle = C[i]; g.lineWidth = 2; g.beginPath(); for (var k=0; k<=600; k++){ var ff = 0.05 + P.fmax*k/600, y = Y(tipRatio(L, ff)); if (k) g.lineTo(X(ff), y); else g.moveTo(X(ff), y); } g.stroke(); });
+  seg(g, X(P.f), Y0, X(P.f), Y1, p.mark, 2); Tx(g, f2(P.f, 2) + ' Hz', X(P.f) + 4, Y1 + 6, p.mark, 'left', 'bold 11px Arial');
+  Tx(g, 'drive frequency (Hz)', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial'); g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'free end / base amplitude', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+}
+function info(){ var C = cols(), act = [];
+  el('rrTbl').innerHTML = '<table class="rr_tbl"><thead><tr><th>rod</th><th>length</th><th>f\u2081 (L = \u03BB/4)</th><th>f\u2082 (3\u03BB/4)</th><th>f\u2083 (5\u03BB/4)</th><th>now: free end / base</th></tr></thead><tbody>' + R.map(function(r, i){ var n = nearMode(r.L), ratio = r.peak/Math.max(1e-9, P.A); if (n) act.push(i);
+    return '<tr' + (n ? ' style="font-weight:bold"' : '') + '><td style="color:' + C[i] + ';text-align:left">\u25A0 ' + (i + 1) + '</td><td>' + f2(r.L*100, 0) + ' cm</td><td>' + f2(fn(r.L, 1), 2) + ' Hz</td><td>' + f2(fn(r.L, 2), 2) + ' Hz</td><td>' + f2(fn(r.L, 3), 2) + ' Hz</td><td>' + f2(ratio, 1) + (n ? ' \u2190 resonating (L = ' + (n === 1 ? '' : 2*n - 1) + '\u03BB/4)' : '') + '</td></tr>'; }).join('') + '</tbody></table>';
+  var lam = P.v/P.f;
+  el('rrStatus').innerHTML = 'At <b>' + f2(P.f, 2) + ' Hz</b> the wavelength on the rods is <b>\u03BB = v/f = ' + f2(lam*100, 1) + ' cm</b>. ' + (act.length ? act.map(function(i){ var n = nearMode(P.L[i]); return '<span style="color:' + C[i] + ';font-weight:bold">rod ' + (i + 1) + '</span> resonates: its ' + f2(P.L[i]*100, 0) + ' cm hold ' + (n === 1 ? 'a quarter wavelength' : (2*n - 1) + ' quarter wavelengths'); }).join('; ') + '.' : 'No rod fits an odd number of quarter wavelengths: they all barely move.');
+  el('rrEq').innerHTML = 'Clamped at the base (a node), free at the tip (an antinode): <b>L = (2n \u2212 1)\u03BB/4</b>, so <b>f\u2099 = (2n \u2212 1)v/(4L)</b>. With v = ' + f2(P.v, 1) + ' m/s, the ' + f2(P.L[0]*100, 0) + ' cm rod resonates at ' + f2(fn(P.L[0], 1), 2) + ', ' + f2(fn(P.L[0], 2), 2) + ', ' + f2(fn(P.L[0], 3), 2) + ' Hz, \u2026';
+  return act; }
+/* ══════════ controls ══════════ */
+function on(id, ev, fn_){ var e = el(id); if (e) e.addEventListener(ev, fn_); }
+function row(id, label, min, max, step, val, txt){ return '<div class="rr_ctrl"><div class="rr_ctrlhdr"><label class="rr_ctrlname" for="' + id + '">' + label + '</label><span class="rr_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+var lastAct = '';
+function setF(v, quiet){ P.f = Math.max(0.2, Math.min(P.fmax, Math.round(v*1000)/1000)); var e = el('rrF'); if (e){ e.value = P.f; el('rrFv').textContent = f2(P.f, 2) + ' Hz'; } if (!quiet) later(); }
+function build(){
+  el('rrCtlD').innerHTML = row('rrF', 'drive frequency f', 0.2, P.fmax, 0.01, P.f, f2(P.f, 2) + ' Hz') + '<div class="rr_ctrl"><span class="rr_ctrlname">fine tuning</span><div><button type="button" class="rr_btn" id="rrFm">\u2212 0.05 Hz</button> <button type="button" class="rr_btn" id="rrFp">+ 0.05 Hz</button></div></div>'
+    + row('rrA', 'amplitude of the base', 0.2, 3, 0.1, P.A, f2(P.A, 1) + ' mm') + row('rrSw', 'sweep rate', 0.05, 1, 0.05, P.sweepRate, f2(P.sweepRate, 2) + ' Hz per second');
+  el('rrCtlR').innerHTML = row('rrV', 'wave speed on the rods v', 2, 30, 0.5, P.v, f2(P.v, 1) + ' m/s') + row('rrB', 'damping \u03B2', 0.1, 5, 0.05, P.beta, f2(P.beta, 2) + ' s\u207B\u00B9')
+    + P.L.map(function(L, i){ return row('rrL' + i, '<span style="color:' + cols()[i] + '">\u25A0</span> length of rod ' + (i + 1), 0.1, 1, 0.01, L, f2(L*100, 0) + ' cm'); }).join('')
+    + '<div class="rr_ctrl"><span class="rr_ctrlname">lengths</span><div><button type="button" class="rr_btn" data-lp="even">evenly spaced</button> <button type="button" class="rr_btn" data-lp="harm">1 : 1/2 : 1/3 \u2026</button> <button type="button" class="rr_btn" data-lp="odd">f\u2081 of each = 3f\u2081 of the next?</button></div></div>';
+  on('rrF', 'input', function(){ P.sweep = false; el('rrSweep').innerHTML = '\u2197 Sweep the frequency up'; setF(+this.value); }); on('rrFm', 'click', function(){ setF(P.f - 0.05); }); on('rrFp', 'click', function(){ setF(P.f + 0.05); });
+  on('rrA', 'input', function(){ P.A = +this.value; el('rrAv').textContent = f2(P.A, 1) + ' mm'; }); on('rrSw', 'input', function(){ P.sweepRate = +this.value; el('rrSwv').textContent = f2(P.sweepRate, 2) + ' Hz per second'; });
+  on('rrV', 'input', function(){ P.v = +this.value; el('rrVv').textContent = f2(P.v, 1) + ' m/s'; later(); }); on('rrB', 'input', function(){ P.beta = +this.value; el('rrBv').textContent = f2(P.beta, 2) + ' s\u207B\u00B9'; });
+  P.L.forEach(function(L, i){ on('rrL' + i, 'input', function(){ P.L[i] = +this.value; el('rrL' + i + 'v').textContent = f2(P.L[i]*100, 0) + ' cm'; R[i].L = P.L[i]; R[i].y = new Float64Array(NS + 1); R[i].yo = new Float64Array(NS + 1); R[i].peak = 0; later(); }); });
+  [].forEach.call(el('rrCtlR').querySelectorAll('button[data-lp]'), function(b){ b.addEventListener('click', function(){ var k = b.getAttribute('data-lp');
+      P.L = k === 'even' ? [0.90, 0.76, 0.62, 0.48, 0.34, 0.20] : k === 'harm' ? [0.90, 0.45, 0.30, 0.225, 0.18, 0.15] : [0.90, 0.30, 0.54, 0.18, 0.72, 0.24];
+      initRods(); build(); narrate(k === 'harm' ? 'Lengths in the ratio 1, 1/2, 1/3, ...: their first resonances are at f, 2f, 3f, ... of the longest one.' : k === 'odd' ? 'The 90 cm rod resonates at 3 times its first frequency exactly where the 30 cm rod has its first: sweep through and both answer together.' : 'Evenly spaced lengths.'); }); }); }
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ var act = info(), C = cols();
+  narrate(f2(P.f, 2) + ' hertz: the wavelength on the rods is ' + f2(P.v/P.f*100, 1) + ' centimetres. ' + (act.length ? act.map(function(i){ var n = nearMode(P.L[i]); return 'Rod ' + (i + 1) + ' (' + f2(P.L[i]*100, 0) + ' cm) resonates, holding ' + (n === 1 ? 'one quarter wavelength' : (2*n - 1) + ' quarter wavelengths'); }).join('. ') + '.' : 'No rod resonates.')); }, 500); }
+on('rrPlay', 'click', function(){ play = !play; el('rrPlay').innerHTML = play ? '\u2759\u2759 Pause' : '\u25B6 Play'; });
+on('rrStep', 'click', function(){ play = false; el('rrPlay').innerHTML = '\u25B6 Play'; advance(1/(8*P.f)); draw(); narrate('One eighth of a drive cycle later: the base is at ' + f2(P.A*Math.sin(THETA), 2) + ' mm.'); });
+on('rrReset', 'click', function(){ initRods(); T = 0; draw(); narrate('The rods are still again: watch the motion build up.'); });
+on('rrSweep', 'click', function(){ P.sweep = !P.sweep; el('rrSweep').innerHTML = P.sweep ? '\u25A0 Stop the sweep' : '\u2197 Sweep the frequency up'; if (P.sweep && P.f >= P.fmax - 0.5) setF(0.5, true); narrate(P.sweep ? 'Sweeping the frequency up slowly: watch the rods answer one after another, the longest first.' : 'Sweep stopped at ' + f2(P.f, 2) + ' Hz.'); });
+on('rrSpd', 'input', function(){ spd = +this.value; el('rrSpdV').textContent = f2(spd, 2) + '\u00D7'; });
+on('rrEnv', 'change', function(){ draw(); });
+[].forEach.call(document.getElementsByName('rrOr'), function(r){ r.addEventListener('change', function(){ ORI = +this.value; draw(); narrate(ORI === 0 ? 'The rods stand above the base.' : ORI === 180 ? 'The rods hang below the base.' : 'The rods stick out sideways from an upright base.'); }); });
+function draw(){ drawScene(); drawResp(); return info(); }
+var last = 0, tick = 0; function loop(t){ var dt = Math.min(0.05, (t - (last || t))/1000); last = t;
+  if (play){ var sim = dt*spd; advance(sim); if (P.sweep){ setF(P.f + P.sweepRate*dt, true);   /* the sweep rate is per second of real time */ if (P.f >= P.fmax){ P.sweep = false; el('rrSweep').innerHTML = '\u2197 Sweep the frequency up'; } } }
+  drawScene(); if (++tick % 6 === 0){ drawResp(); var act = info(), key = act.join(','); if (P.sweep && key !== lastAct && act.length){ narrate('At ' + f2(P.f, 2) + ' Hz: ' + act.map(function(i){ var n = nearMode(P.L[i]); return 'rod ' + (i + 1) + ', L = ' + (n === 1 ? '' : 2*n - 1) + '\u03BB/4'; }).join(', ') + '.'); } lastAct = key; }
+  requestAnimationFrame(loop); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('rr_hc', th.hc); ROOT.classList.toggle('rr_lm', th.lm);
+  [['hc', 'rrBtnHC'], ['lm', 'rrBtnLM'], ['cb', 'rrBtnCB'], ['nr', 'rrBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('rr_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('rrBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('rrNar').style.display = th.nr ? '' : 'none'; build(); draw(); }
+function toggleDesc(){ var b = el('rrDescBtn'), d = el('rrDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+initRods(); build(); draw(); narrate('Ready. Six rods, clamped to a base shaken at ' + f2(P.f, 2) + ' Hz. Change the frequency, or press Sweep, and watch which rod answers.'); requestAnimationFrame(loop);
+return { theme:theme, toggleDesc:toggleDesc, setF:setF, _P:P, _R:function(){ return R; }, _adv:function(t){ advance(t); }, _tip:tipRatio, _fn:fn, _init:initRods, _ori:function(o){ ORI = o; draw(); } };
+})();
+</script>
+</main>
+</body>
+</html>

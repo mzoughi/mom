@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations - Vectors: Graphical Sum</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,vector, graphic, sum,uncertainty, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="vgdRoot0916">
+<!-- ── Accessibility toolbar ── -->
+<div class="vgd_a11y0916" id="vgdA11yBar0916" role="toolbar" aria-label="Display options">
+<button type="button" class="vgd_a11ybtn0916" id="vgdBtnHC0916" onclick="vgdA11y0916.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="vgd_a11ybtn0916" id="vgdBtnLM0916" onclick="vgdA11y0916.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="vgd_a11ybtn0916" id="vgdBtnCB0916" onclick="vgdA11y0916.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="vgd_a11ybtn0916 vgd_a11yon0916" id="vgdBtnNR0916" onclick="vgdA11y0916.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0916"><h3>Dragging Vectors</h3></div>
+<div class="mcontent0916">
+<canvas id="vgdCanvas0916" style="margin:auto;display:block;border:1px solid #ccc;touch-action:none" width="520" height="460"></canvas>
+</div>
+<div id="vgdNarBar0916" class="vgd_narbar0916" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0916">
+<input type="button" value="New Vectors" onclick="vgdSim0916.newVectors();">
+<input type="button" value="Clear Selection" onclick="vgdSim0916.clearSel();">
+<details class="vgd_dir0916">
+<summary>Directions</summary>
+<p>Drag any vector by its shaft or arrowhead to move it around the
+canvas -- its length and direction stay fixed, only its position
+changes. Arrange the vectors tip-to-tail to add them graphically. The
+resultant (sum) is always drawn in red from the origin, no matter how
+you've arranged the vectors, so you can check your graphical addition
+against it.</p>
+<p>Use the measuring tool to read a vector's magnitude and direction:
+drag the tool's anchor (the dot) onto the vector's tail, then drag its
+arrowhead out until it matches the vector's tip. The reading below the
+tool's anchor shows the matched magnitude and angle.</p>
+</details>
+</div>
+<div class="footer0916">
+<!-- number of vectors -->
+<div class="vgd_group0916 vgd_g10916">
+<div class="vgd_row0916">
+<label for="vgdN0916">Number of vectors (1-6):</label>
+<input type="range" id="vgdN0916" min="1" max="6" step="1" value="4"
+oninput="vgdSim0916.setN(this.value)">
+<span id="vgdNVal0916" class="vgd_val0916">4</span>
+</div>
+</div>
+<!-- visibility toggles -->
+<div class="vgd_group0916 vgd_g20916">
+<div class="vgd_row0916 vgd_toggles0916">
+<label><input type="checkbox" id="vgdShowSum0916" checked onchange="vgdSim0916.setFlag('showSum',this.checked)"> Show sum</label>
+<label><input type="checkbox" id="vgdShowTool0916" onchange="vgdSim0916.setFlag('showTool',this.checked)"> Measuring tool</label>
+<label><input type="checkbox" id="vgdShowXTool0916" onchange="vgdSim0916.setFlag('showXTool',this.checked)"> X tool</label>
+<label><input type="checkbox" id="vgdShowYTool0916" onchange="vgdSim0916.setFlag('showYTool',this.checked)"> Y tool</label>
+<label><input type="checkbox" id="vgdShowGrid0916" checked onchange="vgdSim0916.setFlag('showGrid',this.checked)"> Grid</label>
+<label><input type="checkbox" id="vgdShowAxes0916" checked onchange="vgdSim0916.setFlag('showAxes',this.checked)"> XY axes</label>
+</div>
+</div>
+<!-- vector selection + position (translate-only) sliders -->
+<div class="vgd_group0916 vgd_g30916">
+<label for="vgdPosX0916">Vector position:</label><br>
+<div class="vgd_row0916">
+<label for="vgdSel0916">Select vector:</label>
+<select id="vgdSel0916" onchange="vgdSim0916.selectVector(this.value)">
+<option value="-1">None</option>
+</select>
+</div>
+<div class="vgd_row0916">
+<label for="vgdPosX0916">X:</label>
+<input type="range" id="vgdPosX0916" min="-12" max="12" step="0.5" value="0" disabled
+oninput="vgdSim0916.setSelPos('tx',this.value)" onchange="vgdSim0916.narrateSel()">
+<span id="vgdPosXVal0916" class="vgd_val0916">-</span>
+<label for="vgdPosY0916">Y:</label>
+<input type="range" id="vgdPosY0916" min="-9" max="9" step="0.5" value="0" disabled
+oninput="vgdSim0916.setSelPos('ty',this.value)" onchange="vgdSim0916.narrateSel()">
+<span id="vgdPosYVal0916" class="vgd_val0916">-</span>
+</div>
+</div>
+<!-- X measuring tool slider -->
+<div class="vgd_group0916 vgd_g40916">
+<div class="vgd_row0916">
+<label for="vgdXTool0916">X-tool position:</label>
+<input type="range" id="vgdXTool0916" min="-12" max="12" step="0.5" value="3"
+oninput="vgdSim0916.setXTool(this.value)" onchange="vgdSim0916.narrateXTool()">
+<span id="vgdXToolVal0916" class="vgd_val0916">3</span>
+</div>
+</div>
+<!-- Y measuring tool slider -->
+<div class="vgd_group0916 vgd_g50916">
+<div class="vgd_row0916">
+<label for="vgdYTool0916">Y-tool position:</label>
+<input type="range" id="vgdYTool0916" min="-9" max="9" step="0.5" value="-3"
+oninput="vgdSim0916.setYTool(this.value)" onchange="vgdSim0916.narrateYTool()">
+<span id="vgdYToolVal0916" class="vgd_val0916">-3</span>
+</div>
+</div>
+<!-- main measuring tool: anchor (translate whole tool) -->
+<div class="vgd_group0916 vgd_g60916">
+<div class="vgd_row0916"><strong>Measuring tool -- anchor (drag whole tool):</strong></div>
+<div class="vgd_row0916">
+<label for="vgdAx0916">X:</label>
+<input type="range" id="vgdAx0916" min="-12" max="12" step="0.5" value="-4"
+oninput="vgdSim0916.setToolAnchor('x1',this.value)" onchange="vgdSim0916.narrateTool()">
+<span id="vgdAxVal0916" class="vgd_val0916">-4</span>
+<label for="vgdAy0916">Y:</label>
+<input type="range" id="vgdAy0916" min="-9" max="9" step="0.5" value="2"
+oninput="vgdSim0916.setToolAnchor('y1',this.value)" onchange="vgdSim0916.narrateTool()">
+<span id="vgdAyVal0916" class="vgd_val0916">2</span>
+</div>
+</div>
+<!-- main measuring tool: tip (matches a vector) -->
+<div class="vgd_group0916 vgd_g70916">
+<div class="vgd_row0916"><strong>Measuring tool -- tip (drag to match a vector):</strong></div>
+<div class="vgd_row0916">
+<label for="vgdBx0916">X:</label>
+<input type="range" id="vgdBx0916" min="-12" max="12" step="0.5" value="4"
+oninput="vgdSim0916.setToolTip('x2',this.value)" onchange="vgdSim0916.narrateTool()">
+<span id="vgdBxVal0916" class="vgd_val0916">4</span>
+<label for="vgdBy0916">Y:</label>
+<input type="range" id="vgdBy0916" min="-9" max="9" step="0.5" value="-2"
+oninput="vgdSim0916.setToolTip('y2',this.value)" onchange="vgdSim0916.narrateTool()">
+<span id="vgdByVal0916" class="vgd_val0916">-2</span>
+</div>
+</div>
+</div>
+</div>
+<style>
+#vgdRoot0916, #vgdRoot0916 * { box-sizing: border-box; }
+#vgdRoot0916 { width: 522px; margin: 0; font-family: system-ui, sans-serif; }
+#vgdRoot0916 {
+--vgd-bg:      #ffffff;
+--vgd-axis:    #333333;
+--vgd-grid:    #e0e0e0;
+--vgd-text:    #111111;
+--vgd-struct:  #111111;
+--vgd-sum:     #d62728;
+--vgd-tool:    #0f8a8a;
+--vgd-xtool:   #0072b2;
+--vgd-ytool:   #e07b00;
+--vgd-selring: #d4a600;
+--vgd-c0: #1f77b4; --vgd-c1: #2ca02c; --vgd-c2: #9467bd;
+--vgd-c3: #8c564b; --vgd-c4: #17a398; --vgd-c5: #7f7f00;
+--vgd-toolbar-bg: #222;
+}
+#vgdRoot0916 .vgd_a11y0916 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--vgd-toolbar-bg); flex-wrap:wrap; width:100%;
+}
+#vgdRoot0916 .vgd_a11ybtn0916 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#vgdRoot0916 .vgd_a11ybtn0916:hover { border-color:#00e8d0; color:#00e8d0; }
+#vgdRoot0916 .vgd_a11yon0916 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#vgdRoot0916 .vgd_narbar0916 {
+width:100%; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+#vgdRoot0916 .tbar0916    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; }
+#vgdRoot0916 .tbar0916 h3 { font-size:1.1rem; font-weight:bold; margin:0; }
+#vgdRoot0916 .mcontent0916 { height:462px; }
+#vgdRoot0916 .bbar0916 {
+background-color:#df9; padding:10px; text-align:center;
+}
+#vgdRoot0916 .bbar0916 input[type=button] { margin:0 4px 6px; padding:4px 14px; cursor:pointer; }
+#vgdRoot0916 .vgd_dir0916 { text-align:left; font-size:.85rem; margin-top:6px; }
+#vgdRoot0916 .footer0916 { background-color:#f2f2f2; padding:8px; }
+#vgdRoot0916 .vgd_group0916 {
+border-radius:6px; padding:6px 10px; margin-bottom:6px;
+border-left:4px solid transparent;
+}
+#vgdRoot0916 .vgd_g10916 { background:#e3f2fd; border-color:#5a9bd8; }
+#vgdRoot0916 .vgd_g20916 { background:#e8f5e9; border-color:#4caf7d; }
+#vgdRoot0916 .vgd_g30916 { background:#fff3e0; border-color:#e0a94a; }
+#vgdRoot0916 .vgd_g40916 { background:#e1f5fe; border-color:#0072b2; }
+#vgdRoot0916 .vgd_g50916 { background:#fff8e1; border-color:#e07b00; }
+#vgdRoot0916 .vgd_g60916 { background:#f3e5f5; border-color:#8a5aa8; }
+#vgdRoot0916 .vgd_g70916 { background:#ede1f7; border-color:#6a3f96; margin-top:-2px; }
+#vgdRoot0916 .vgd_row0916 {
+display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+padding:4px 0; font-size:.85rem;
+}
+#vgdRoot0916 .vgd_row0916 label { display:flex; align-items:center; gap:4px; }
+#vgdRoot0916 .vgd_toggles0916 label { font-size:.78rem; }
+#vgdRoot0916 .vgd_val0916 { min-width:2.2em; display:inline-block; font-family:monospace; }
+#vgdRoot0916 select { padding:2px 4px; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var vgdA11y0916 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{ '--vgd-bg':'#000','--vgd-axis':'#fff','--vgd-grid':'#333','--vgd-text':'#fff','--vgd-struct':'#fff',
+'--vgd-sum':'#ff4444','--vgd-tool':'#00e8d0','--vgd-xtool':'#66ccff','--vgd-ytool':'#ffaa00','--vgd-selring':'#ffff00',
+'--vgd-c0':'#66ccff','--vgd-c1':'#66ff66','--vgd-c2':'#cc99ff','--vgd-c3':'#ffb366','--vgd-c4':'#00e8d0','--vgd-c5':'#ffff99',
+'--vgd-toolbar-bg':'#000' },
+lm:{ '--vgd-bg':'#f4f4f4','--vgd-axis':'#222','--vgd-grid':'#d8d8d8','--vgd-text':'#000','--vgd-struct':'#000',
+'--vgd-sum':'#aa1100','--vgd-tool':'#0a6e6e','--vgd-xtool':'#00548c','--vgd-ytool':'#a85c00','--vgd-selring':'#a87d00',
+'--vgd-c0':'#155a8a','--vgd-c1':'#1f7a1f','--vgd-c2':'#6b4a96','--vgd-c3':'#6b4232','--vgd-c4':'#12776b','--vgd-c5':'#5c5c00',
+'--vgd-toolbar-bg':'#444' },
+cb:{ '--vgd-bg':'#fff','--vgd-axis':'#000','--vgd-grid':'#ddd','--vgd-text':'#000','--vgd-struct':'#000',
+'--vgd-sum':'#D55E00','--vgd-tool':'#009E73','--vgd-xtool':'#0072B2','--vgd-ytool':'#E69F00','--vgd-selring':'#000000',
+'--vgd-c0':'#E69F00','--vgd-c1':'#56B4E9','--vgd-c2':'#009E73','--vgd-c3':'#CC79A7','--vgd-c4':'#0072B2','--vgd-c5':'#F0E442',
+'--vgd-toolbar-bg':'#222' }
+};
+var DEFS = { '--vgd-bg':'#ffffff','--vgd-axis':'#333333','--vgd-grid':'#e0e0e0','--vgd-text':'#111111','--vgd-struct':'#111111',
+'--vgd-sum':'#d62728','--vgd-tool':'#0f8a8a','--vgd-xtool':'#0072b2','--vgd-ytool':'#e07b00','--vgd-selring':'#d4a600',
+'--vgd-c0':'#1f77b4','--vgd-c1':'#2ca02c','--vgd-c2':'#9467bd','--vgd-c3':'#8c564b','--vgd-c4':'#17a398','--vgd-c5':'#7f7f00',
+'--vgd-toolbar-bg':'#222' };
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('vgdNarBar0916');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('vgdBtnNR0916');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('vgdBtnNR0916',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('vgdBtnHC0916',states.hc);
+styleBtn('vgdBtnLM0916',states.lm);
+styleBtn('vgdBtnCB0916',states.cb);
+if (window.vgdSim0916 && window.vgdSim0916.redraw) window.vgdSim0916.redraw();
+}
+return {
+init:function(){ ROOT=document.getElementById('vgdRoot0916'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('vgdNarBar0916');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════ -->
+<script>
+var vgdGen = function() {
+var canvas = document.getElementById('vgdCanvas0916');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+/* ── layout ── */
+var scale = 18;                 /* px per unit           */
+var orgX  = 260, orgY = 280;    /* screen px of (0,0)    */
+var HR    = 9;                  /* handle hit radius px  */
+function c(prop, def) { return vgdA11y0916.col(prop, def); }
+function P(x,y){ return { x: orgX + x*scale, y: orgY - y*scale }; }
+function U(px,py){ return { x: (px-orgX)/scale, y: (orgY-py)/scale }; }
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function mag(x,y){ return Math.sqrt(x*x+y*y); }
+function ang(x,y){ var a = Math.atan2(y,x)*180/Math.PI; return (a+360)%360; }
+function distToSeg(px,py,x1,y1,x2,y2){
+var A=px-x1,B=py-y1,C=x2-x1,D=y2-y1;
+var lenSq=C*C+D*D, t = lenSq!==0 ? (A*C+B*D)/lenSq : -1;
+t = clamp(t,0,1);
+var xx=x1+t*C, yy=y1+t*D, dx=px-xx, dy=py-yy;
+return Math.sqrt(dx*dx+dy*dy);
+}
+/* ── state ── */
+var N, vecs, sel;                          /* vecs[i] = {tx,ty,vx,vy}  */
+var showSum, showTool, showXTool, showYTool, showGrid, showAxes;
+var tool, xtool, ytool;                     /* tool = {x1,y1,x2,y2}    */
+var dragging = null;
+function randVec() {
+var m = 2 + Math.random()*4;
+var a = Math.random()*2*Math.PI;
+var vx = Math.round(m*Math.cos(a)*10)/10, vy = Math.round(m*Math.sin(a)*10)/10;
+var tx = Math.round((-7 + Math.random()*14)*10)/10;
+var ty = Math.round((-5 + Math.random()*10)*10)/10;
+/* keep the tip comfortably on-canvas */
+tx = clamp(tx, -12 - Math.min(vx,0), 12 - Math.max(vx,0));
+ty = clamp(ty, -9 - Math.min(vy,0), 9 - Math.max(vy,0));
+return { tx:tx, ty:ty, vx:vx, vy:vy };
+}
+function vecColor(i) { return c('--vgd-c'+(i%6), '#1f77b4'); }
+function sumVec() {
+var sx=0, sy=0;
+for (var i=0;i<N;i++){ sx+=vecs[i].vx; sy+=vecs[i].vy; }
+return { vx: sx, vy: sy };
+}
+/* ── drawing helpers ── */
+function drawArrow(p0, p1, color, lw) {
+ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw || 2.5;
+ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+var theta = Math.atan2(p1.y-p0.y, p1.x-p0.x);
+var hlen = 10;
+ctx.beginPath();
+ctx.moveTo(p1.x, p1.y);
+ctx.lineTo(p1.x - hlen*Math.cos(theta-Math.PI/7), p1.y - hlen*Math.sin(theta-Math.PI/7));
+ctx.lineTo(p1.x - hlen*Math.cos(theta+Math.PI/7), p1.y - hlen*Math.sin(theta+Math.PI/7));
+ctx.closePath(); ctx.fill();
+}
+function drawDot(p, color, filled) {
+ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 2*Math.PI);
+if (filled) ctx.fill(); else ctx.stroke();
+}
+function drawGrid() {
+ctx.strokeStyle = c('--vgd-grid','#e0e0e0'); ctx.lineWidth = 1;
+var xu0 = Math.ceil((0-orgX)/scale), xu1 = Math.floor((W-orgX)/scale);
+var yu0 = Math.ceil((orgY-H)/scale), yu1 = Math.floor(orgY/scale);
+for (var xu=xu0; xu<=xu1; xu++){ var p=P(xu, 0); ctx.beginPath(); ctx.moveTo(p.x,50); ctx.lineTo(p.x,H); ctx.stroke(); }
+for (var yu=yu0; yu<=yu1; yu++){ var q=P(0, yu); ctx.beginPath(); ctx.moveTo(0,q.y); ctx.lineTo(W,q.y); ctx.stroke(); }
+}
+function drawAxes() {
+ctx.strokeStyle = c('--vgd-axis','#333'); ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(0,orgY); ctx.lineTo(W,orgY); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(orgX,50); ctx.lineTo(orgX,H); ctx.stroke();
+ctx.fillStyle = c('--vgd-axis','#333'); ctx.font = '10px monospace';
+for (var xu=-14; xu<=14; xu+=2){ if(xu===0) continue; var p=P(xu,0); ctx.fillText(String(xu), p.x-6, orgY+12); }
+for (var yu=-10; yu<=10; yu+=2){ if(yu===0) continue; var q=P(0,yu); ctx.fillText(String(yu), orgX+4, q.y+3); }
+}
+function drawReadout() {
+ctx.fillStyle = c('--vgd-text','#111'); ctx.font = '13px monospace'; ctx.textAlign='left';
+var y = 16, dy = 15;
+ctx.fillText('Vectors: '+N, 6, y); y+=dy;
+if (sel>=0 && sel<N) {
+var v = vecs[sel];
+ctx.fillText('Selected V'+(sel+1)+':  |V|='+mag(v.vx,v.vy).toFixed(1)+'  \u03B8='+ang(v.vx,v.vy).toFixed(0)+'\u00B0  (fixed)', 6, y); y+=dy;
+}
+if (showSum) {
+var s = sumVec();
+ctx.fillStyle = c('--vgd-sum','#d62728');
+ctx.fillText('Sum R:  |R|='+mag(s.vx,s.vy).toFixed(1)+'  \u03B8='+ang(s.vx,s.vy).toFixed(0)+'\u00B0', 6, y); y+=dy;
+ctx.fillStyle = c('--vgd-text','#111');
+}
+if (showXTool) { ctx.fillStyle=c('--vgd-xtool','#0072b2'); ctx.fillText('X-tool: x='+xtool.toFixed(1), 6, y); y+=dy; ctx.fillStyle=c('--vgd-text','#111'); }
+if (showYTool) { ctx.fillStyle=c('--vgd-ytool','#e07b00'); ctx.fillText('Y-tool: y='+ytool.toFixed(1), 6, y); ctx.fillStyle=c('--vgd-text','#111'); }
+}
+function drawFrame() {
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle = c('--vgd-bg','#fff'); ctx.fillRect(0,0,W,H);
+if (showGrid) drawGrid();
+if (showAxes) drawAxes();
+/* individually-positioned vectors */
+for (var i=0;i<N;i++) {
+var v = vecs[i];
+var tail = P(v.tx, v.ty), tip = P(v.tx+v.vx, v.ty+v.vy);
+var selected = (i===sel);
+drawDot(tail, vecColor(i), false);
+drawArrow(tail, tip, vecColor(i), selected?4:2.5);
+if (selected) {
+ctx.strokeStyle = c('--vgd-selring','#d4a600'); ctx.lineWidth = 2;
+ctx.beginPath(); ctx.arc(tip.x, tip.y, 9, 0, 2*Math.PI); ctx.stroke();
+}
+ctx.fillStyle = vecColor(i); ctx.font = '12px monospace';
+ctx.fillText('V'+(i+1), tip.x+8, tip.y-8);
+}
+/* resultant, always from the true origin */
+if (showSum) {
+var s = sumVec();
+var origin = P(0,0), stip = P(s.vx, s.vy);
+drawArrow(origin, stip, c('--vgd-sum','#d62728'), 3);
+ctx.fillStyle = c('--vgd-sum','#d62728'); ctx.font = '12px monospace';
+ctx.fillText('R', stip.x+8, stip.y+14);
+}
+/* X / Y projection tools (full-span guide lines) */
+if (showXTool) {
+var xp = P(xtool, 0);
+ctx.strokeStyle = c('--vgd-xtool','#0072b2'); ctx.lineWidth = 1.5;
+ctx.setLineDash([4,4]);
+ctx.beginPath(); ctx.moveTo(xp.x,50); ctx.lineTo(xp.x,H); ctx.stroke();
+ctx.setLineDash([]);
+drawDot(xp, c('--vgd-xtool','#0072b2'), true);
+}
+if (showYTool) {
+var yp = P(0, ytool);
+ctx.strokeStyle = c('--vgd-ytool','#e07b00'); ctx.lineWidth = 1.5;
+ctx.setLineDash([4,4]);
+ctx.beginPath(); ctx.moveTo(0,yp.y); ctx.lineTo(W,yp.y); ctx.stroke();
+ctx.setLineDash([]);
+drawDot(yp, c('--vgd-ytool','#e07b00'), true);
+}
+/* main measuring tool: anchor + arrow-tip + horizontal reference leg */
+if (showTool) {
+var A = P(tool.x1, tool.y1), B = P(tool.x2, tool.y2);
+var baseEnd = { x: B.x, y: A.y };
+var toolCol = c('--vgd-tool','#0f8a8a');
+/* horizontal reference leg */
+ctx.strokeStyle = toolCol; ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(baseEnd.x,baseEnd.y); ctx.stroke();
+/* hypotenuse arrow (matches the vector once aligned) */
+drawArrow(A, B, toolCol, 2.5);
+/* anchor dot */
+drawDot(A, toolCol, true);
+/* reading label, mimicking the (magnitude, angleDeg) style */
+var dx = tool.x2-tool.x1, dy = tool.y2-tool.y1;
+var m = mag(dx,dy), a = ang(dx,dy);
+ctx.fillStyle = toolCol; ctx.font = 'bold 13px monospace'; ctx.textAlign='left';
+ctx.fillText('('+m.toFixed(0)+', '+a.toFixed(0)+'deg)', A.x, A.y+22);
+}
+drawReadout();
+}
+/* ── UI sync helpers ── */
+function syncNSlider(){ document.getElementById('vgdN0916').value=N; document.getElementById('vgdNVal0916').textContent=N; }
+function syncSelOptions(){
+var sel$ = document.getElementById('vgdSel0916');
+sel$.innerHTML = '<option value="-1">None</option>';
+for (var i=0;i<N;i++){ var o=document.createElement('option'); o.value=i; o.textContent='Vector '+(i+1); sel$.appendChild(o); }
+sel$.value = sel;
+}
+function syncPosSliders(){
+var xEl=document.getElementById('vgdPosX0916'), yEl=document.getElementById('vgdPosY0916');
+var xVal=document.getElementById('vgdPosXVal0916'), yVal=document.getElementById('vgdPosYVal0916');
+if (sel>=0 && sel<N) {
+xEl.disabled=false; yEl.disabled=false;
+xEl.value=vecs[sel].tx; yEl.value=vecs[sel].ty;
+xVal.textContent=vecs[sel].tx.toFixed(1); yVal.textContent=vecs[sel].ty.toFixed(1);
+} else {
+xEl.disabled=true; yEl.disabled=true;
+xVal.textContent='-'; yVal.textContent='-';
+}
+}
+function syncToolSliders(){
+document.getElementById('vgdAx0916').value=tool.x1; document.getElementById('vgdAxVal0916').textContent=tool.x1.toFixed(1);
+document.getElementById('vgdAy0916').value=tool.y1; document.getElementById('vgdAyVal0916').textContent=tool.y1.toFixed(1);
+document.getElementById('vgdBx0916').value=tool.x2; document.getElementById('vgdBxVal0916').textContent=tool.x2.toFixed(1);
+document.getElementById('vgdBy0916').value=tool.y2; document.getElementById('vgdByVal0916').textContent=tool.y2.toFixed(1);
+}
+function syncXYToolSliders(){
+document.getElementById('vgdXTool0916').value=xtool; document.getElementById('vgdXToolVal0916').textContent=xtool.toFixed(1);
+document.getElementById('vgdYTool0916').value=ytool; document.getElementById('vgdYToolVal0916').textContent=ytool.toFixed(1);
+}
+/* ── narration ── */
+function narrateVec(i){
+var v = vecs[i];
+vgdA11y0916.narrate('Vector '+(i+1)+' moved to position ('+v.tx.toFixed(1)+', '+v.ty.toFixed(1)+'). It still points '+mag(v.vx,v.vy).toFixed(1)+' units at '+ang(v.vx,v.vy).toFixed(0)+' degrees -- its length and direction do not change.');
+}
+function narrateToolMsg(){
+var dx=tool.x2-tool.x1, dy=tool.y2-tool.y1;
+vgdA11y0916.narrate('Measuring tool anchored at ('+tool.x1.toFixed(1)+', '+tool.y1.toFixed(1)+'), tip at ('+tool.x2.toFixed(1)+', '+tool.y2.toFixed(1)+'). Reading: '+mag(dx,dy).toFixed(1)+' units at '+ang(dx,dy).toFixed(0)+' degrees.');
+}
+function narrateXToolMsg(){ vgdA11y0916.narrate('X measuring tool set to x = '+xtool.toFixed(1)+'.'); }
+function narrateYToolMsg(){ vgdA11y0916.narrate('Y measuring tool set to y = '+ytool.toFixed(1)+'.'); }
+/* ── public setters ── */
+function setN(val){
+var newN = clamp(parseInt(val,10)||1, 1, 6);
+if (newN > N) { for (var i=N;i<newN;i++) vecs[i] = randVec(); }
+N = newN;
+if (sel >= N) sel = -1;
+syncNSlider(); syncSelOptions(); syncPosSliders(); drawFrame();
+vgdA11y0916.narrate('Now showing '+N+' vectors.');
+}
+function newVectors(){
+for (var i=0;i<N;i++) vecs[i] = randVec();
+sel = -1;
+syncSelOptions(); syncPosSliders(); drawFrame();
+vgdA11y0916.narrate('Generated '+N+' new vectors at random positions. Drag any vector to move it, or use the measuring tool to check its magnitude and direction.');
+}
+function clearSel(){
+sel = -1; syncSelOptions(); syncPosSliders(); drawFrame();
+vgdA11y0916.narrate('Selection cleared.');
+}
+function selectVector(v){
+sel = parseInt(v,10);
+syncPosSliders(); drawFrame();
+if (sel>=0) narrateVec(sel); else vgdA11y0916.narrate('Selection cleared.');
+}
+function setSelPos(axis, val){
+if (sel<0 || sel>=N) return;
+vecs[sel][axis] = parseFloat(val);
+document.getElementById(axis==='tx'?'vgdPosXVal0916':'vgdPosYVal0916').textContent = parseFloat(val).toFixed(1);
+drawFrame();
+}
+function setFlag(name, val){
+eval(name+'='+(val?'true':'false'));
+drawFrame();
+var labels = { showSum:'Sum vector', showTool:'Measuring tool', showXTool:'X measuring tool', showYTool:'Y measuring tool', showGrid:'Grid', showAxes:'Axes' };
+vgdA11y0916.narrate((labels[name]||name)+(val?' shown.':' hidden.'));
+}
+/* translate the whole tool (anchor + tip move together) */
+function setToolAnchor(key, val){
+var newVal = parseFloat(val);
+var delta = newVal - tool[key];
+tool[key] += delta;
+var pairKey = (key==='x1') ? 'x2' : 'y2';
+tool[pairKey] += delta;
+syncToolSliders(); drawFrame();
+}
+/* move only the tip: changes the tool's own magnitude/angle */
+function setToolTip(key, val){
+tool[key] = parseFloat(val);
+document.getElementById(key==='x2'?'vgdBxVal0916':'vgdByVal0916').textContent = parseFloat(val).toFixed(1);
+drawFrame();
+}
+function setXTool(val){ xtool = parseFloat(val); document.getElementById('vgdXToolVal0916').textContent = xtool.toFixed(1); drawFrame(); }
+function setYTool(val){ ytool = parseFloat(val); document.getElementById('vgdYToolVal0916').textContent = ytool.toFixed(1); drawFrame(); }
+/* ── pointer / drag handling ── */
+function canvasPt(evt){
+var r = canvas.getBoundingClientRect();
+var cx = (evt.touches ? evt.touches[0].clientX : evt.clientX) - r.left;
+var cy = (evt.touches ? evt.touches[0].clientY : evt.clientY) - r.top;
+return { x: cx * (canvas.width/r.width), y: cy * (canvas.height/r.height) };
+}
+function hit(p, target){ var dx=p.x-target.x, dy=p.y-target.y; return (dx*dx+dy*dy) <= HR*HR; }
+function onDown(evt){
+var p = canvasPt(evt);
+if (showTool) {
+var A=P(tool.x1,tool.y1), B=P(tool.x2,tool.y2);
+if (hit(p,A)) {
+dragging = {kind:'toolMove', startClick:U(p.x,p.y), startAnchor:{x:tool.x1,y:tool.y1}, startTip:{x:tool.x2,y:tool.y2}};
+return;
+}
+if (hit(p,B)) { dragging={kind:'toolTip'}; return; }
+}
+if (showXTool && hit(p, P(xtool,0))) { dragging={kind:'xtool'}; return; }
+if (showYTool && hit(p, P(0,ytool))) { dragging={kind:'ytool'}; return; }
+for (var i=N-1;i>=0;i--) {
+var tail = P(vecs[i].tx, vecs[i].ty), tip = P(vecs[i].tx+vecs[i].vx, vecs[i].ty+vecs[i].vy);
+if (distToSeg(p.x,p.y, tail.x,tail.y, tip.x,tip.y) <= HR) {
+var u = U(p.x,p.y);
+dragging = {kind:'vecMove', i:i, offset:{x: u.x - vecs[i].tx, y: u.y - vecs[i].ty}};
+sel = i; syncSelOptions(); syncPosSliders(); drawFrame();
+return;
+}
+}
+}
+function onMove(evt){
+if (!dragging) return;
+evt.preventDefault();
+var p = canvasPt(evt); var u = U(p.x,p.y);
+if (dragging.kind==='vecMove') {
+var v = vecs[dragging.i];
+v.tx = clamp(Math.round((u.x - dragging.offset.x)*10)/10, -13, 13);
+v.ty = clamp(Math.round((u.y - dragging.offset.y)*10)/10, -10, 10);
+syncPosSliders();
+} else if (dragging.kind==='toolMove') {
+var dx = u.x - dragging.startClick.x, dy = u.y - dragging.startClick.y;
+tool.x1 = clamp(Math.round((dragging.startAnchor.x+dx)*10)/10, -13, 13);
+tool.y1 = clamp(Math.round((dragging.startAnchor.y+dy)*10)/10, -10, 10);
+tool.x2 = clamp(Math.round((dragging.startTip.x+dx)*10)/10, -13, 13);
+tool.y2 = clamp(Math.round((dragging.startTip.y+dy)*10)/10, -10, 10);
+syncToolSliders();
+} else if (dragging.kind==='toolTip') {
+tool.x2 = clamp(Math.round(u.x*10)/10, -13, 13);
+tool.y2 = clamp(Math.round(u.y*10)/10, -10, 10);
+syncToolSliders();
+} else if (dragging.kind==='xtool') {
+xtool = clamp(Math.round(u.x*10)/10, -12, 12); syncXYToolSliders();
+} else if (dragging.kind==='ytool') {
+ytool = clamp(Math.round(u.y*10)/10, -9, 9); syncXYToolSliders();
+}
+drawFrame();
+}
+function onUp(){
+if (!dragging) return;
+if (dragging.kind==='vecMove') narrateVec(dragging.i);
+else if (dragging.kind==='toolMove'||dragging.kind==='toolTip') narrateToolMsg();
+else if (dragging.kind==='xtool') narrateXToolMsg();
+else if (dragging.kind==='ytool') narrateYToolMsg();
+dragging = null;
+}
+canvas.addEventListener('mousedown', onDown);
+canvas.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+canvas.addEventListener('touchstart', onDown, {passive:true});
+canvas.addEventListener('touchmove', onMove, {passive:false});
+window.addEventListener('touchend', onUp);
+/* ── init ── */
+function rst() {
+N = 4; vecs = []; for (var i=0;i<N;i++) vecs[i]=randVec();
+sel = -1;
+showSum=true; showTool=false; showXTool=false; showYTool=false; showGrid=true; showAxes=true;
+tool = {x1:-4,y1:2,x2:4,y2:-2}; xtool=3; ytool=-3;
+syncNSlider(); syncSelOptions(); syncPosSliders(); syncToolSliders(); syncXYToolSliders();
+drawFrame();
+vgdA11y0916.narrate('Ready. '+N+' vectors generated at random positions. Drag any vector to move it around, or use the measuring tool to check its magnitude and direction.');
+}
+rst();
+return {
+redraw: drawFrame,
+setN: setN, newVectors: newVectors, clearSel: clearSel, selectVector: selectVector,
+setSelPos: setSelPos, setFlag: setFlag,
+setToolAnchor: setToolAnchor, setToolTip: setToolTip,
+setXTool: setXTool, setYTool: setYTool,
+narrateSel: function(){ if (sel>=0) narrateVec(sel); },
+narrateTool: narrateToolMsg, narrateXTool: narrateXToolMsg, narrateYTool: narrateYToolMsg
+};
+};
+var vgdSim0916 = new vgdGen();
+</script>
+<script>
+vgdA11y0916.init();
+</script>
+</body></html>

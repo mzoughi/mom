@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Waves: Two Ropes</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,Transverse, Longitudinal,Frequency, Amplitude, Tension, Mass,Length,Wave,interference,sound,drinking straw,flute,trombone,music, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="st1Root0922">
+<!-- ── Accessibility toolbar ── -->
+<div class="st1_a11y0922" id="st1A11yBar0922" role="toolbar" aria-label="Display options">
+<button type="button" class="st1_a11ybtn0922" id="st1BtnHC0922" onclick="st1A11y0922.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="st1_a11ybtn0922" id="st1BtnLM0922" onclick="st1A11y0922.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="st1_a11ybtn0922" id="st1BtnCB0922" onclick="st1A11y0922.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="st1_a11ybtn0922 st1_a11yon0922" id="st1BtnNR0922" onclick="st1A11y0922.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0922"><h3>Straw Reed &mdash; Cut It Shorter</h3></div>
+<div class="mcontent0922">
+<canvas id="st1Canvas0922" style="margin:auto;display:block;border:1px solid #ccc" width="800" height="260"></canvas>
+</div>
+<div id="st1Readout0922" class="st1_readout0922">Length: 11.0 cm | Frequency &asymp; 780 Hz | Note &asymp; G5 | &lambda; &asymp; 44.0 cm</div>
+<div id="st1NarBar0922" class="st1_narbar0922" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0922">
+<input type="button" id="st1Play0922" value="Play"
+onclick="if(this.value=='Play'){st1Sim0922.pl();this.value='Pause';}else{this.value='Play';st1Sim0922.ps();}">
+<input type="button" value="Step" onclick="document.getElementById('st1Play0922').value='Play';st1Sim0922.step();">
+<input type="button" value="Restart" onclick="document.getElementById('st1Play0922').value='Play';st1Sim0922.rst();">
+</div>
+<div class="footer0922">
+<div class="st1_ctrlrow0922">
+<div class="st1_ctrlcol0922">
+<div class="st1_ctrltitle0922">Straw length (like cutting it with scissors)</div>
+L = <input type="range" id="st1Len0922" min="2" max="20" value="11" step="0.5"
+oninput="st1Sim0922.setLength(this.value)">
+<span id="st1LenVal0922">11.0</span> cm
+</div>
+<div class="st1_ctrlcol0922 rt_hintcol0922">
+<span class="st1_hint0922">The reed end (left) acts closed; the open end (right) is open &mdash; a quarter-wavelength pipe, just like the cut-straw demo.</span>
+</div>
+</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 806px; margin: 0; }
+#st1Root0922 {
+--st1-tube:      #d8d2c4;
+--st1-tube-dark: #a8a190;
+--st1-reed:      #e8c468;
+--st1-wave:      #4fd1ff;
+--st1-text:      #111111;
+--st1-toolbar-bg:#222;
+--st1-bg:        #eef1f5;
+}
+#st1Root0922 .st1_a11y0922 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--st1-toolbar-bg); flex-wrap:wrap; width:806px;
+}
+#st1Root0922 .st1_a11ybtn0922 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#st1Root0922 .st1_a11ybtn0922:hover { border-color:#00e8d0; color:#00e8d0; }
+#st1Root0922 .st1_a11yon0922 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#st1Root0922 .st1_narbar0922 {
+width:806px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar0922    { padding:2px; height:30px; background-color:#f90; text-align:center; line-height:28px; width:806px; }
+.tbar0922 h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent0922 { height:264px; width:806px; background:var(--st1-bg); }
+.st1_readout0922 { width:786px; margin:4px auto 0; color:#222; font-size:.82rem; font-family:monospace; text-align:center; background:#fff6d9; padding:3px 0; }
+.bbar0922    { height:50px; background-color:#df9; padding:10px; text-align:center; width:806px; }
+.bbar0922 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+.footer0922  { width:806px; background-color:#fce4ec; font-size:.85rem; padding:8px 0; }
+.footer0922 .st1_ctrlrow0922  { width:806px; display:flex; flex-wrap:wrap; }
+.footer0922 .st1_ctrlcol0922  { width:360px; padding:4px 10px; }
+.footer0922 .rt_hintcol0922   { width:400px; display:flex; align-items:center; }
+.footer0922 .st1_ctrltitle0922{ width:100%; font-weight:bold; margin-bottom:2px; }
+.footer0922 .st1_hint0922     { font-size:.75rem; color:#555; font-style:italic; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var st1A11y0922 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--st1-tube':'#ffffff','--st1-tube-dark':'#aaaaaa','--st1-reed':'#ffff00','--st1-wave':'#00e8d0','--st1-text':'#ffffff','--st1-toolbar-bg':'#000','--st1-bg':'#000000'},
+lm:{'--st1-tube':'#f2efe6','--st1-tube-dark':'#c9c2b0','--st1-reed':'#f0cf7a','--st1-wave':'#0072b2','--st1-text':'#222222','--st1-toolbar-bg':'#444','--st1-bg':'#f7f9fb'},
+cb:{'--st1-tube':'#e0e0e0','--st1-tube-dark':'#9a9a9a','--st1-reed':'#e69f00','--st1-wave':'#0072b2','--st1-text':'#000000','--st1-toolbar-bg':'#222','--st1-bg':'#eef1f5'}
+};
+var DEFS = {'--st1-tube':'#d8d2c4','--st1-tube-dark':'#a8a190','--st1-reed':'#e8c468','--st1-wave':'#4fd1ff','--st1-text':'#111111','--st1-toolbar-bg':'#222','--st1-bg':'#eef1f5'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('st1NarBar0922');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('st1BtnNR0922');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('st1BtnNR0922',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('st1BtnHC0922',states.hc);
+styleBtn('st1BtnLM0922',states.lm);
+styleBtn('st1BtnCB0922',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('st1Root0922'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('st1NarBar0922');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VGG / Doppler / Shock-Waves / Ripple-Tank / Reflection-Refraction examples.
+- var simObj = function() { ... rst(); return { pl, ps, step, rst, setLength }; }
+- var simObj0922 = new simObj();
+- Animation: recursive window.setTimeout(runMotion, trate) guarded by runFlag; here it also drives real
+audio via the Web Audio API (started/stopped by pl()/ps(), frequency updated live as length changes).
+Original build. Physics: a reed acts acoustically like a CLOSED end (pressure antinode / displacement node);
+the open end is a displacement antinode. That makes the straw a quarter-wave resonator:
+f = v_sound / (4 * L)
+with v_sound = 34300 cm/s. This is the same relationship that governs the classic "cut the straw shorter to
+raise the pitch" reed demo. The on-canvas standing-wave line shows the displacement mode shape
+u(x,t) = A * sin(pi*x / (2L)) * cos(omega t) -- node at the reed, antinode at the open end -- exaggerated in
+height for visibility, not drawn to physical scale.
+-->
+<script>
+var st1Gen = function() {
+var canvas = document.getElementById('st1Canvas0922');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;   /* 800 x 260 */
+var readoutEl = document.getElementById('st1Readout0922');
+var timer, runFlag = 0;
+function c(prop, def) { return st1A11y0922.col(prop, def); }
+var V_SOUND = 34300; /* cm/s */
+var PX_PER_CM = 26, X0 = 110, MIDY = 110, TUBE_H = 46;
+var length = 11, freq = 0, t = 0, dt = 0.04, trate = 40;
+var frameCount = 0, narrationEvery = 50;
+var NOTE_NAMES = ['C','C\u266f','D','D\u266f','E','F','F\u266f','G','G\u266f','A','A\u266f','B'];
+function el(id){ return document.getElementById(id); }
+function noteName(f){
+if (!(f>0) || !isFinite(f)) return '--';
+var midi = Math.round(69+12*Math.log2(f/440));
+var name = NOTE_NAMES[((midi%12)+12)%12];
+var octave = Math.floor(midi/12)-1;
+return name+octave;
+}
+function recompute(){
+freq = V_SOUND/(4*length);
+updateReadout();
+updateAudioFrequency();
+}
+function updateReadout(){
+if (!readoutEl) return;
+var lam = V_SOUND/freq;
+readoutEl.textContent = 'Length: '+length.toFixed(1)+' cm | Frequency \u2248 '+freq.toFixed(0)+
+' Hz | Note \u2248 '+noteName(freq)+' | \u03bb \u2248 '+lam.toFixed(1)+' cm';
+}
+/* ══════════ Web Audio ══════════ */
+var audioCtx, oscNode, filterNode, gainNode;
+function ensureAudio(){
+if (audioCtx) return;
+try{
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+audioCtx = new AudioContext();
+} catch(e){ /* Web Audio unsupported */ }
+}
+function startTone(){
+ensureAudio(); if (!audioCtx) return;
+if (audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} }
+stopTone();
+oscNode = audioCtx.createOscillator();
+oscNode.type = 'sawtooth';
+oscNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
+filterNode = audioCtx.createBiquadFilter();
+filterNode.type = 'lowpass';
+filterNode.frequency.setValueAtTime(2400, audioCtx.currentTime);
+gainNode = audioCtx.createGain();
+gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+gainNode.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime+0.03);
+oscNode.connect(filterNode); filterNode.connect(gainNode); gainNode.connect(audioCtx.destination);
+try{ oscNode.start(); }catch(e){}
+}
+function updateAudioFrequency(){
+if (oscNode && audioCtx){ try{ oscNode.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.02); }catch(e){} }
+}
+function stopTone(){
+if (gainNode && audioCtx){
+try{
+gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
+gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime+0.05);
+}catch(e){}
+}
+if (oscNode){ var o=oscNode; oscNode=null; try{ setTimeout(function(){ try{o.stop();}catch(e){} }, 80); }catch(e){} }
+}
+/* ══════════ drawing ══════════ */
+function lengthPx(){ return length*PX_PER_CM; }
+function drawStraw(){
+var Lpx = lengthPx();
+var top = MIDY-TUBE_H/2, bot = MIDY+TUBE_H/2;
+var grad = ctx.createLinearGradient(0,top,0,bot);
+grad.addColorStop(0, c('--st1-tube-dark','#a8a190'));
+grad.addColorStop(0.5, c('--st1-tube','#d8d2c4'));
+grad.addColorStop(1, c('--st1-tube-dark','#a8a190'));
+ctx.fillStyle = grad;
+ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+roundRect(X0, top, Lpx, TUBE_H, 6);
+ctx.fill(); ctx.stroke();
+/* open end cap (ellipse suggesting a tube opening) */
+ctx.beginPath(); ctx.ellipse(X0+Lpx, MIDY, 6, TUBE_H/2, 0, 0, 2*Math.PI);
+ctx.fillStyle = c('--st1-tube-dark','#a8a190'); ctx.fill(); ctx.stroke();
+/* reed notch at mouth end */
+ctx.fillStyle = c('--st1-reed','#e8c468'); ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+ctx.beginPath();
+ctx.moveTo(X0, top); ctx.lineTo(X0-16, top-14); ctx.lineTo(X0+6, top+6); ctx.closePath();
+ctx.fill(); ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(X0, bot); ctx.lineTo(X0-16, bot+14); ctx.lineTo(X0+6, bot-6); ctx.closePath();
+ctx.fill(); ctx.stroke();
+}
+function roundRect(x,y,w,h,r){
+ctx.beginPath();
+ctx.moveTo(x+r,y);
+ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+ctx.closePath();
+}
+function drawStandingWave(){
+var Lpx = lengthPx();
+var amp = Math.min(38, TUBE_H*0.9);
+var omega = 2*Math.PI*freq;
+ctx.save();
+ctx.strokeStyle = c('--st1-wave','#4fd1ff'); ctx.lineWidth = 2.5; ctx.globalAlpha=0.9;
+ctx.beginPath();
+var N=80;
+for (var i=0;i<=N;i++){
+var xf = i/N; var x = X0+xf*Lpx;
+var y = MIDY - amp*Math.sin(Math.PI*xf/2)*Math.cos(omega*t);
+if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+}
+ctx.stroke();
+ctx.restore();
+}
+function drawRuler(){
+ctx.strokeStyle = c('--st1-text','#111'); ctx.fillStyle = c('--st1-text','#111');
+ctx.lineWidth = 1; ctx.font = '11px Calibri'; ctx.textAlign='center';
+var y0 = MIDY+TUBE_H/2+18;
+ctx.beginPath(); ctx.moveTo(X0,y0); ctx.lineTo(X0+20*PX_PER_CM,y0); ctx.stroke();
+for (var cm=0; cm<=20; cm+=2){
+var x = X0+cm*PX_PER_CM;
+ctx.beginPath(); ctx.moveTo(x,y0-4); ctx.lineTo(x,y0+4); ctx.stroke();
+ctx.fillText(String(cm), x, y0+16);
+}
+}
+function drawBreath(){
+if (runFlag!==1) return;
+var phase = (t*4)%1;
+ctx.save();
+ctx.strokeStyle = c('--st1-text','#111'); ctx.globalAlpha = 0.5; ctx.lineWidth=1.5;
+for (var i=0;i<2;i++){
+var r = 4+ (phase+i*0.5)%1 * 14;
+ctx.beginPath(); ctx.arc(X0-24, MIDY, r, -0.6, 0.6); ctx.stroke();
+}
+ctx.restore();
+}
+function drawFrame(){
+ctx.clearRect(0,0,W,H);
+drawStraw();
+drawStandingWave();
+drawRuler();
+drawBreath();
+}
+/* ══════════ narration ══════════ */
+function sceneNarration(){
+st1A11y0922.narrate('Length '+length.toFixed(1)+' cm. Frequency about '+freq.toFixed(0)+' Hz, note '+
+noteName(freq)+'. '+(runFlag===1?'Sounding now.':'Paused.'));
+}
+/* ══════════ public controls ══════════ */
+function setLength(v){
+length = Math.max(0.5, parseFloat(v)||11);
+var l=el('st1LenVal0922'); if(l) l.textContent = length.toFixed(1);
+recompute();
+drawFrame();
+}
+/* ══════════ animation loop ══════════ */
+function runMotion(){
+t += dt;
+drawFrame();
+frameCount++;
+if (frameCount % narrationEvery === 0){ sceneNarration(); }
+if (runFlag===1){ timer = window.setTimeout(runMotion, trate); }
+}
+function pl(){ window.clearTimeout(timer); runFlag = 1; startTone(); runMotion(); sceneNarration(); }
+function ps(){ window.clearTimeout(timer); runFlag = 0; stopTone(); drawFrame(); sceneNarration(); }
+function step(){ window.clearTimeout(timer); runFlag = 0; t += dt; drawFrame(); }
+function rst(){
+window.clearTimeout(timer); runFlag = 0; stopTone();
+length = 11; t = 0; frameCount = 0;
+var lEl=el('st1Len0922'); if(lEl) lEl.value = length;
+var lLbl=el('st1LenVal0922'); if(lLbl) lLbl.textContent = length.toFixed(1);
+var playBtn = el('st1Play0922'); if (playBtn) playBtn.value='Play';
+recompute();
+drawFrame();
+st1A11y0922.narrate('Ready. Straw length 11.0 cm. Press Play to hear it, or drag the length slider.');
+}
+/* boot */
+rst();
+return { pl:pl, ps:ps, step:step, rst:rst, setLength:setLength };
+};
+var st1Sim0922 = new st1Gen();
+</script>
+<script>
+st1A11y0922.init();
+</script>
+</body>
+</html>

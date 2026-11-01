@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Waves: A Single Pulse on One Rope: Reflection at a Fixed or Free End</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, waves, pulse, rope, wave speed, reflection, transmission, interference, lesson, scientific">
+<meta name="description" content="A Single Pulse on One Rope: Reflection at a Fixed or Free End -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobw1675" class="mob_wrap">
+<div id="pulseEndRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y" id="snBar" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn" id="snBtnHC" onclick="pulseEndA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn" id="snBtnLM" onclick="pulseEndA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn" id="snBtnCB" onclick="pulseEndA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sn_a11ybtn sn_a11yon" id="snBtnNR" onclick="pulseEndA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar"><h3>A Single Pulse on One Rope: Reflection at a Fixed or Free End</h3></div>
+<div class="mcontent"><canvas id="pulseEndCanvas" style="margin:auto;border:1px solid" width="660" height="320"></canvas></div>
+<div id="pulseEndNarBar" class="sn_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="playbar" role="group" aria-label="Animation playback controls">
+<button type="button" class="wv_btn wv_btnmain" onclick="pulseEndPol.sendPulse()">&#128276; Send Pulse</button>
+<button type="button" class="wv_btn" id="pulseEndPlayBtn" onclick="pulseEndPol.togglePlay()" aria-pressed="false">&#9654; Resume</button>
+<button type="button" class="wv_btn" onclick="pulseEndPol.stepBack()">&#10073;&#9664; Step back</button>
+<button type="button" class="wv_btn" onclick="pulseEndPol.stepForward()">&#9654;&#10073; Step forward</button>
+<button type="button" class="wv_btn" onclick="pulseEndPol.reset()">&#8635; Reset (clear rope)</button>
+</div>
+<div class="bbar" role="group" aria-label="Show or hide measurement tools and overlays">
+<label class="chk"><input type="checkbox" id="showMarker" onchange="pulseEndPol.toggleMarker(this)"> <span id="markerLbl">Show tracked-point markers</span></label>
+<label class="chk"><input type="checkbox" id="showDX" onchange="pulseEndPol.toggleDeltaX(this)"> <span id="dxLbl">Show horizontal caliper (&#916;x)</span></label>
+<label class="chk"><input type="checkbox" id="showDY" onchange="pulseEndPol.toggleDeltaY(this)"> <span id="dyLbl">Show vertical caliper (&#916;y)</span></label>
+<label class="chk"><input type="checkbox" id="showLabels" checked onchange="pulseEndPol.toggleLabels(this)"> <span id="labelsLbl">Hide pulse labels</span></label>
+<label class="chk"><input type="checkbox" id="showWaveData" checked onchange="pulseEndPol.toggleWaveData(this)"> <span id="waveDataLbl">Hide wave-data panel</span></label>
+</div>
+<div class="footer">
+<div class="left">Far end:</div>
+<div class="center" role="radiogroup" aria-label="Far-end boundary condition">
+<label><input type="radio" name="end" value="fixed" id="endFixed" checked onchange="pulseEndPol.setEnd('fixed')"> Fixed (wall)</label>
+&nbsp;&nbsp;
+<label><input type="radio" name="end" value="free" id="endFree" onchange="pulseEndPol.setEnd('free')"> Free (ring on a pole)</label>
+</div>
+</div>
+<div class="footer">
+<div class="left">Pulse direction:</div>
+<div class="center" role="radiogroup" aria-label="Pulse direction">
+<label><input type="radio" name="dir" value="up" id="dirUp" checked onchange="pulseEndPol.setDirection('up')"> Upward &#9650;</label>
+&nbsp;&nbsp;
+<label><input type="radio" name="dir" value="down" id="dirDown" onchange="pulseEndPol.setDirection('down')"> Downward &#9660;</label>
+</div>
+</div>
+<div class="footer">
+<div class="left">Amplitude:</div>
+<div class="center">`A:\ ` <input class=islide type="range" id="ampSlider" min="5" max="25" value="20" step="5" oninput="pulseEndPol.setAmp(this.value)" onchange="pulseEndPol.setAmp(this.value)"> <span id="ampValue">20</span> cm</div>
+</div>
+<div class="footer">
+<div class="left">Tension:</div>
+<div class="center">`T:\ ` <input class=islide type="range" id="tensionSlider" min="50" max="250" value="100" step="25" oninput="pulseEndPol.setTension(this.value)" onchange="pulseEndPol.setTension(this.value)"> <span id="tensionValue">100</span> N</div>
+</div>
+<div class="footer">
+<div class="left">Mass/length:</div>
+<div class="center">`mu:\ ` <input class=islide type="range" id="muSlider" min="10" max="40" value="20" step="5" oninput="pulseEndPol.setMu(this.value)" onchange="pulseEndPol.setMu(this.value)"> <span id="muValue">20</span> g/m</div>
+</div>
+<div class="footer">
+<div class="left">Damping:</div>
+<div class="center">`gamma:\ ` <input class=islide type="range" id="dampSlider" min="0" max="0.3" value="0.15" step="0.02" oninput="pulseEndPol.setDamping(this.value)" onchange="pulseEndPol.setDamping(this.value)"> <span id="dampValue">0.15</span> per meter</div>
+</div>
+<hr>
+
+<hr>
+<ol type="a">
+<li>Set the far end to Fixed and send an upward pulse. Is the reflected pulse upright or upside-down?</li>
+<li>Now set the far end to Free and send the same upward pulse. Is the reflected pulse upright or upside-down this time?</li>
+<li>At a Free end, step through the animation to the moment the pulse reaches the ring. How does the rope's displacement there compare to the incident pulse's own amplitude?</li>
+<li>At a Fixed end, what is the rope's displacement exactly at the wall, at every instant? Why must it always be that value?</li>
+<li>Does changing the tension or mass/length affect whether the reflection is inverted, or only how fast the pulse travels there and back?</li>
+<li>Turn on the tracked-point markers. Does a marked point ever reach the wall or ring itself, or does only the pulse's shape travel that far?</li>
+<li>A fixed end reflects with `r=-1`. What does that remind you of, if you imagine joining this rope to a second, enormously heavy rope instead?</li>
+<li>A free end reflects with `r=+1`. What would a second rope need to be like, physically, to produce nearly the same result at a real two-rope junction?</li>
+<li>Turn on damping and send a pulse. Compare the reflected pulse's height to what you'd see with no damping. Does damping change <em>when</em> the reflection happens, or only <em>how big</em> it is by the time it gets back to the hand?</li>
+</ol>
+</div><!-- #pulseEndRoot -->
+<style>:where(#mobw1675) * { margin: 0; box-sizing: border-box; }
+:where(#mobw1675) div { width: 663px; margin: 0; }
+#pulseEndRoot {
+--sn-toolbar-bg: #222;
+--sn-rope:     #cc0000;
+--sn-axis:     #000000;
+--sn-vrule:    #cd853f;
+--sn-hrule:    #2e8b57;
+--sn-hand:     #9b7550;
+--sn-marker:   #1a1a2e;
+--sn-end:      #555555;
+}
+#pulseEndRoot .sn_a11y {
+display: flex; gap: 6px; padding: 6px 8px;
+background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 663px;
+}
+#pulseEndRoot .sn_a11ybtn {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+}
+#pulseEndRoot .sn_a11ybtn:hover { border-color: #00e8d0; color: #00e8d0; }
+#pulseEndRoot .sn_a11yon { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#pulseEndRoot .sn_narbar {
+width: 663px; min-height: 28px; padding: 5px 10px;
+background: #ffefc0; border-left: 4px solid #e0b040;
+font-size: .88rem; color: #333; font-style: italic;
+}
+.tbar { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+.mcontent { height: 322px; }
+.islide { width: 220px; }
+.playbar {
+height: auto; min-height: 40px; background-color: #cfe8ff; padding: 6px;
+text-align: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+}
+.wv_btn {
+padding: 6px 10px; font-size: .82rem; border-radius: 4px; cursor: pointer;
+background: #fff; border: 1px solid #557; color: #223;
+}
+.wv_btn:hover { background: #eef4ff; }
+.wv_btnmain { background: #ffd94a; border-color: #a8850a; font-weight: bold; }
+.wv_btnmain:hover { background: #ffe97a; }
+.bbar {
+background-color: #df9; padding: 8px; text-align: left;
+display: flex; flex-wrap: wrap; gap: 4px 16px;
+}
+.bbar .chk { width: auto; font-size: .84rem; white-space: nowrap; }
+.footer { height: 60px; text-align: center; font-size: normal; display: flex; }
+.footer .left { width: 136px; padding: 2px; }
+.footer .center { width: 527px; padding: 4px; }
+.footer:nth-of-type(odd) { background-color: #fce4ec; }
+.footer:nth-of-type(even) { background-color: #e8f5e9; }</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var pulseEndA11y = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+var THEMES = {
+hc: { '--sn-rope':'#ffaa00','--sn-axis':'#ffffff','--sn-vrule':'#ffaa00','--sn-hrule':'#00ff88',
+'--sn-hand':'#ffcc88','--sn-marker':'#ffffff','--sn-end':'#ffffff','--sn-toolbar-bg':'#000' },
+lm: { '--sn-rope':'#aa3311','--sn-axis':'#222222','--sn-vrule':'#996622','--sn-hrule':'#226622',
+'--sn-hand':'#8a6440','--sn-marker':'#000000','--sn-end':'#333333','--sn-toolbar-bg':'#333' },
+cb: { '--sn-rope':'#d55e00','--sn-axis':'#000000','--sn-vrule':'#e69f00','--sn-hrule':'#009e73',
+'--sn-hand':'#e69f00','--sn-marker':'#000000','--sn-end':'#000000' }
+};
+var DEFAULTS = { '--sn-rope':'#cc0000','--sn-axis':'#000000','--sn-vrule':'#cd853f','--sn-hrule':'#2e8b57',
+'--sn-hand':'#9b7550','--sn-marker':'#1a1a2e','--sn-end':'#555555','--sn-toolbar-bg':'#222' };
+function applyVars(theme, on) {
+if (!ROOT) return;
+var vars = THEMES[theme];
+for (var p in vars) ROOT.style.setProperty(p, on ? vars[p] : DEFAULTS[p]);
+}
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a'; b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('pulseEndCanvas');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('pulseEndNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR', states.nr); }
+}
+function apply() {
+if (!ROOT) return;
+applyVars('hc', states.hc); applyVars('lm', states.lm); applyVars('cb', states.cb);
+applyCanvas(); applyNarBar();
+styleBtn('snBtnHC', states.hc);
+styleBtn('snBtnLM', states.lm);
+styleBtn('snBtnCB', states.cb);
+}
+function getCol(prop) {
+if (!ROOT) return DEFAULTS[prop];
+return getComputedStyle(ROOT).getPropertyValue(prop).trim() || DEFAULTS[prop];
+}
+return {
+init: function() { ROOT = document.getElementById('pulseEndRoot'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+},
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('pulseEndNarBar');
+if (nb) nb.textContent = msg;
+},
+col: function(role) { return getCol('--sn-' + role); }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var pulseEndPol = (function(){
+var canvas  = document.getElementById('pulseEndCanvas');
+var ctx     = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var xBase = 80, yBase = 75, centerY = yBase + 90;
+var varFont = '12pt Calibri';
+var yScale = 4;
+var xFar = xBase + 500;                           /* the wall / pole, well out on the canvas */
+var dotStep = 3;
+var halfWidthT = 0.4;
+var Amag = 20, direction = 'up', endType = 'fixed';
+var Tension = 100, mu = 20;
+var damping = 0.15;                              /* 1/m, exponential amplitude decay per metre travelled */
+var t = 0.0, tactual = 25.0, runRate = 30;
+var index = -1, stopIndex = 400;
+var timer = null, runFlag = 0;
+var mx = CW / 2, my = CH / 2 + 50;
+var px = 0, py = 0;
+var hw = 40, hh = (41 / 65) * hw;
+var v, r, tb;
+function recompute() {
+v = Math.sqrt(1000 * Tension / mu);
+r = (endType === 'fixed') ? -1 : 1;              /* Z2->infinity (wall) or Z2->0 (free ring):
+exact limits of r=(Z1-Z2)/(Z1+Z2) */
+tb = (xFar - xBase) / v;
+var tEnd = 2 * tb + halfWidthT;                   /* round trip: out to the end and back to xBase */
+stopIndex = Math.ceil(tEnd * tactual) + 10;
+}
+function dirSign() { return (direction === 'up') ? -1 : 1; }
+function pulseShape(s) {
+if (Math.abs(s) > halfWidthT) return 0;
+return 0.5 * (1 + Math.cos(Math.PI * s / halfWidthT));
+}
+/* Exponential amplitude decay with distance travelled (100 px = 1 m, matching
+the caliper's on-screen scale). Both pulses pick up exactly the same
+envelope factor at x=xFar, so damping never disturbs the exact fixed/free
+boundary conditions -- verified before wiring this in. */
+function envelope(distPx) { return Math.exp(-damping * (distPx / 100)); }
+/* Incident pulse: launched at xBase at t=0, decaying with distance travelled. */
+function yIncident(x) {
+var s = t - (x - xBase) / v;
+var dist = Math.max(0, x - xBase);
+return dirSign() * Amag * envelope(dist) * pulseShape(s);
+}
+/* Reflected pulse: the standard "image pulse" construction. Its argument
+is built so that yIncident + yReflected is EXACTLY zero at x=xFar for
+all t (fixed end), or has zero slope there (free end) -- not just at
+the moment of peak overlap. Its envelope accounts for the FULL path
+travelled so far: out to the end, then back to x. */
+function yReflected(x) {
+var s = (t - tb) - (xFar - x) / v;
+var dist = (xFar - xBase) + (xFar - x);
+return dirSign() * Amag * r * envelope(dist) * pulseShape(s);
+}
+function displacement(x) { return yIncident(x) + yReflected(x); }
+var addXCalFlag = 0, addYCalFlag = 0, showMarkerFlag = 0, showLabelsFlag = 1, showWaveDataFlag = 1;
+var xCal = { by: 260, x1: xBase + 40, x2: xBase + 190, jawH: 22, box: null };
+var yCal = { bx: xBase + 380, y1: centerY - 60, y2: centerY + 60, jawW: 22, box: null };
+var dragging = null;
+var mWLength = '0.00', m2Amp = '0.0';
+var markedXs = [xBase + 100, xBase + 250, xBase + 400];
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function arrow(x1, y1, x2, y2, w, col, txt, spc) {
+if (!w) w = 1;
+if (!txt) txt = '';
+if (!spc) spc = 5;
+if (!col) col = ctx.strokeStyle;
+ctx.fillStyle = col; ctx.strokeStyle = col;
+var dx = x2 - x1, dy = y2 - y1;
+var length = Math.sqrt(dx * dx + dy * dy);
+if (length === 0) return;
+dx /= length; dy /= length;
+var s = 2.5 * w + 7.5;
+var xSp = x2 - s * dx, ySp = y2 - s * dy;
+var h = 0.5 * w + 3.5;
+var xSp1 = xSp - h * dy, ySp1 = ySp + h * dx;
+var xSp2 = xSp + h * dy, ySp2 = ySp - h * dx;
+xSp = x2 - 0.6 * s * dx; ySp = y2 - 0.6 * s * dy;
+ctx.beginPath(); ctx.lineWidth = w; ctx.moveTo(x1, y1);
+if (length < 5) ctx.lineTo(x2, y2); else ctx.lineTo(xSp, ySp);
+ctx.stroke();
+if (length < 5) return;
+ctx.beginPath(); ctx.fillStyle = ctx.strokeStyle;
+ctx.moveTo(xSp, ySp); ctx.lineTo(xSp1, ySp1); ctx.lineTo(x2, y2); ctx.lineTo(xSp2, ySp2);
+ctx.closePath(); ctx.fill();
+}
+function arrowDraw(r0, phiA) {
+var xf = px + r0 * Math.cos(phiA);
+var yf = py - r0 * Math.sin(phiA);
+arrow(px, py, xf, yf, 3);
+}
+function addGrid(h, w, dh, dw, x0, y0, col) {
+if (!x0) x0 = 0; if (!y0) y0 = 0; if (!col) col = '#ccc';
+ctx.strokeStyle = col; ctx.lineWidth = 0.3;
+var maxV = parseInt(h / dh), maxH = parseInt(w / dw);
+for (var i = 1; i < maxV; i++) { ctx.beginPath(); ctx.moveTo(x0, y0 + dw * i); ctx.lineTo(x0 + w, y0 + dw * i); ctx.stroke(); }
+for (var j = 1; j < maxH; j++) { ctx.beginPath(); ctx.moveTo(x0 + dw * j, y0); ctx.lineTo(x0 + dw * j, y0 + h); ctx.stroke(); }
+}
+function addXYaxis(h, w, x0, y0, col) {
+if (!col) col = 'black';
+ctx.strokeStyle = col; ctx.font = '16pt Calibri'; ctx.fillStyle = col; ctx.textAlign = 'left';
+px = 0; py = y0; arrowDraw(0.99 * w, 0); ctx.fillText('x', 0.95 * w, 1.1 * y0);
+px = x0; py = h; arrowDraw(0.99 * h, Math.PI / 2); ctx.fillText('y', 0.8 * x0, 0.05 * h);
+}
+function drawDot(cx, cy, r0, col) {
+ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1;
+ctx.beginPath(); ctx.arc(cx, cy, r0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+}
+function drawRope() {
+var col = pulseEndA11y.col('rope');
+var markerCol = pulseEndA11y.col('marker');
+var rr = clamp(mu / 10, 1.5, 4);
+for (var x = xBase; x <= xFar; x += dotStep) {
+var y = centerY + yScale * displacement(x);
+drawDot(x, y, rr, col);
+if (showMarkerFlag) {
+for (var m = 0; m < markedXs.length; m++) {
+if (Math.abs(x - markedXs[m]) < dotStep / 2) {
+ctx.beginPath(); ctx.arc(x, y, rr + 4, 0, 2 * Math.PI);
+ctx.lineWidth = 2; ctx.strokeStyle = markerCol; ctx.stroke();
+}
+}
+}
+}
+}
+/* ── The far-end fixture: a hatched wall for a fixed end, or a ring
+sliding on a frictionless pole (tracking the rope's own endpoint
+height) for a free end. ── */
+function drawEnd(col) {
+ctx.strokeStyle = col; ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(xFar, yBase - 40); ctx.lineTo(xFar, yBase + 200); ctx.stroke();
+if (endType === 'fixed') {
+ctx.lineWidth = 3;
+for (var yy = yBase - 40; yy < yBase + 200; yy += 14) {
+ctx.beginPath(); ctx.moveTo(xFar, yy); ctx.lineTo(xFar + 12, yy + 14); ctx.stroke();
+}
+ctx.font = varFont; ctx.fillStyle = col; ctx.textAlign = 'center';
+ctx.fillText('fixed end', xFar, yBase - 46);
+} else {
+var endY = centerY + yScale * displacement(xFar);
+ctx.beginPath(); ctx.arc(xFar, endY, 8, 0, 2 * Math.PI); ctx.lineWidth = 3; ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = col; ctx.textAlign = 'center';
+ctx.fillText('free end', xFar, yBase - 46);
+}
+ctx.textAlign = 'left';
+}
+function drawLabels() {
+if (!showLabelsFlag) return;
+ctx.font = 'bold 11pt Calibri'; ctx.textAlign = 'center';
+if (t < tb) {
+var xi = xBase + v * t;
+if (xi >= xBase && xi <= xFar) {
+ctx.fillStyle = pulseEndA11y.col('rope');
+ctx.fillText('incident', xi, centerY - yScale * Amag - 18);
+}
+} else {
+var xr = xFar - v * (t - tb);
+if (xr >= xBase && xr <= xFar) {
+ctx.fillStyle = pulseEndA11y.col('vrule');
+ctx.fillText('reflected', xr, centerY - yScale * Amag * Math.abs(r) - 18);
+}
+}
+ctx.textAlign = 'left';
+}
+/* ── The hand, flicking once to launch the pulse ── */
+function handR(hx, hy, hw0, hh0, col) {
+ctx.fillStyle = col; ctx.strokeStyle = col;
+ctx.beginPath();
+ctx.moveTo(hx + (36 - 65) * hw0 / 65, hy + 0 * hh0 / 41);
+ctx.lineTo(hx + (44 - 65) * hw0 / 65, hy + 0 * hh0 / 41);
+ctx.lineTo(hx + (46 - 65) * hw0 / 65, hy + 1 * hh0 / 41);
+ctx.lineTo(hx + (51 - 65) * hw0 / 65, hy + 1 * hh0 / 41);
+ctx.lineTo(hx + (56 - 65) * hw0 / 65, hy + 2 * hh0 / 41);
+ctx.lineTo(hx + (62 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (63 - 65) * hw0 / 65, hy + 10 * hh0 / 41);
+ctx.lineTo(hx + (64 - 65) * hw0 / 65, hy + 12 * hh0 / 41);
+ctx.lineTo(hx + (65 - 65) * hw0 / 65, hy + 16 * hh0 / 41);
+ctx.lineTo(hx + (61 - 65) * hw0 / 65, hy + 17 * hh0 / 41);
+ctx.lineTo(hx + (56 - 65) * hw0 / 65, hy + 17 * hh0 / 41);
+ctx.lineTo(hx + (57 - 65) * hw0 / 65, hy + 20 * hh0 / 41);
+ctx.lineTo(hx + (56 - 65) * hw0 / 65, hy + 22 * hh0 / 41);
+ctx.lineTo(hx + (54 - 65) * hw0 / 65, hy + 24 * hh0 / 41);
+ctx.lineTo(hx + (51 - 65) * hw0 / 65, hy + 24 * hh0 / 41);
+ctx.lineTo(hx + (50 - 65) * hw0 / 65, hy + 27 * hh0 / 41);
+ctx.lineTo(hx + (49 - 65) * hw0 / 65, hy + 27 * hh0 / 41);
+ctx.lineTo(hx + (48 - 65) * hw0 / 65, hy + 28 * hh0 / 41);
+ctx.lineTo(hx + (47 - 65) * hw0 / 65, hy + 28 * hh0 / 41);
+ctx.lineTo(hx + (47 - 65) * hw0 / 65, hy + 33 * hh0 / 41);
+ctx.lineTo(hx + (46 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.lineTo(hx + (43 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.lineTo(hx + (42 - 65) * hw0 / 65, hy + 36 * hh0 / 41);
+ctx.lineTo(hx + (38 - 65) * hw0 / 65, hy + 36 * hh0 / 41);
+ctx.lineTo(hx + (38 - 65) * hw0 / 65, hy + 37 * hh0 / 41);
+ctx.lineTo(hx + (37 - 65) * hw0 / 65, hy + 36 * hh0 / 41);
+ctx.lineTo(hx + (36 - 65) * hw0 / 65, hy + 37 * hh0 / 41);
+ctx.lineTo(hx + (34 - 65) * hw0 / 65, hy + 38 * hh0 / 41);
+ctx.lineTo(hx + (32 - 65) * hw0 / 65, hy + 39 * hh0 / 41);
+ctx.lineTo(hx + (30 - 65) * hw0 / 65, hy + 39 * hh0 / 41);
+ctx.lineTo(hx + (27 - 65) * hw0 / 65, hy + 38 * hh0 / 41);
+ctx.lineTo(hx + (20 - 65) * hw0 / 65, hy + 34 * hh0 / 41);
+ctx.lineTo(hx + (15 - 65) * hw0 / 65, hy + 33 * hh0 / 41);
+ctx.lineTo(hx + (11 - 65) * hw0 / 65, hy + 33 * hh0 / 41);
+ctx.lineTo(hx + (0 - 65) * hw0 / 65, hy + 32 * hh0 / 41);
+ctx.lineTo(hx + (0 - 65) * hw0 / 65, hy + 9 * hh0 / 41);
+ctx.lineTo(hx + (4 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (17 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (25 - 65) * hw0 / 65, hy + 4 * hh0 / 41);
+ctx.lineTo(hx + (27 - 65) * hw0 / 65, hy + 3 * hh0 / 41);
+ctx.lineTo(hx + (35 - 65) * hw0 / 65, hy + 0 * hh0 / 41);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+ctx.beginPath();
+ctx.moveTo(hx + (0 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.lineTo(hx + (0 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (10 - 65) * hw0 / 65, hy + 8 * hh0 / 41);
+ctx.lineTo(hx + (10 - 65) * hw0 / 65, hy + 35 * hh0 / 41);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+}
+function displayWaveData(x, y, w, h) {
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#cc99cc'; ctx.strokeStyle = '#000'; ctx.lineWidth = 0;
+ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = '#000'; ctx.textAlign = 'left';
+ctx.fillText('T=' + Tension.toFixed(0) + ' N, \u03BC=' + mu.toFixed(0) + ' g/m, v=' + v.toFixed(0) + ' m/s, \u03B3=' + damping.toFixed(2) + '/m', x + 6, y + 10);
+var endNote = (endType === 'fixed') ? 'Fixed end: r = -1 (always inverted, full reflection)' : 'Free end: r = +1 (always upright, full reflection)';
+ctx.fillText(endNote, x + 6, y + 26);
+var Ai = dirSign() * Amag, Aarrive = Ai * envelope(xFar - xBase), Ar = Aarrive * r;
+ctx.fillText('Incident A=' + Ai.toFixed(1) + ' cm,  Reflected A at the end=' + Ar.toFixed(1) + ' cm (decays further on the way back)', x + 6, y + 42);
+}
+function displayEnd(x, y, w, h) {
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffff66'; ctx.strokeStyle = '#00f'; ctx.lineWidth = 0;
+ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+ctx.font = varFont; ctx.fillStyle = '#cc0000'; ctx.textAlign = 'left';
+ctx.fillText('Pulse has returned home.', x + 6, y + 10);
+ctx.fillText('Press Send Pulse', x + 6, y + 30);
+ctx.fillText('to send another.', x + 6, y + 50);
+}
+function drawCaliperReadout(cx, cy, text, col) {
+ctx.font = varFont;
+var padX = 6, padY = 4;
+var tw = ctx.measureText(text).width;
+var boxW = tw + 2 * padX, boxH = 16 + 2 * padY;
+var bx0 = cx - boxW / 2, by0 = cy - boxH / 2;
+ctx.fillStyle = '#ffffff'; ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.rect(bx0, by0, boxW, boxH); ctx.fill(); ctx.stroke();
+ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(text, cx, cy + 1);
+ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+return { x: bx0, y: by0, w: boxW, h: boxH };
+}
+function drawXCaliper(col) {
+var y = xCal.by, x1 = xCal.x1, x2 = xCal.x2, h = xCal.jawH;
+var lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 3;
+ctx.beginPath(); ctx.moveTo(lo, y); ctx.lineTo(hi, y); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x1, y - h / 2); ctx.lineTo(x1, y + h / 2); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x2, y - h / 2); ctx.lineTo(x2, y + h / 2); ctx.stroke();
+drawDot(x1, y, 5, col); drawDot(x2, y, 5, col);
+mWLength = (Math.abs(x2 - x1) / 100).toFixed(2);
+xCal.box = drawCaliperReadout((x1 + x2) / 2, y - h / 2 - 16, '\u0394x = ' + mWLength + ' m', col);
+}
+function drawYCaliper(col) {
+var x = yCal.bx, y1 = yCal.y1, y2 = yCal.y2, w = yCal.jawW;
+var lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 3;
+ctx.beginPath(); ctx.moveTo(x, lo); ctx.lineTo(x, hi); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x - w / 2, y1); ctx.lineTo(x + w / 2, y1); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x - w / 2, y2); ctx.lineTo(x + w / 2, y2); ctx.stroke();
+drawDot(x, y1, 5, col); drawDot(x, y2, 5, col);
+m2Amp = (Math.abs(y2 - y1) / yScale).toFixed(1);
+yCal.box = drawCaliperReadout(x + w / 2 + 34, (y1 + y2) / 2, '\u0394y = ' + m2Amp + ' cm', col);
+}
+function hitTest(px0, py0, x, y, r0) { var dx = px0 - x, dy = py0 - y; return (dx * dx + dy * dy) <= r0 * r0; }
+function pointInBox(px0, py0, box) { return box && px0 >= box.x && px0 <= box.x + box.w && py0 >= box.y && py0 <= box.y + box.h; }
+function checkIfCalipers(x, y) {
+var jawR = 9;
+if (addXCalFlag) {
+if (hitTest(x, y, xCal.x1, xCal.by, jawR)) { dragging = { tool: 'x', part: 'j1' }; return; }
+if (hitTest(x, y, xCal.x2, xCal.by, jawR)) { dragging = { tool: 'x', part: 'j2' }; return; }
+if (pointInBox(x, y, xCal.box)) { dragging = { tool: 'x', part: 'beam' }; return; }
+}
+if (addYCalFlag) {
+if (hitTest(x, y, yCal.bx, yCal.y1, jawR)) { dragging = { tool: 'y', part: 'j1' }; return; }
+if (hitTest(x, y, yCal.bx, yCal.y2, jawR)) { dragging = { tool: 'y', part: 'j2' }; return; }
+if (pointInBox(x, y, yCal.box)) { dragging = { tool: 'y', part: 'beam' }; return; }
+}
+}
+function draw() {
+if (index >= stopIndex) { runFlag = 0; setPlayLabel(false); }
+ctx.clearRect(0, 0, CW, CH);
+if (runFlag === 1) index = index + 1;
+var axisCol = pulseEndA11y.col('axis');
+ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, CW, CH);
+addGrid(2 * CH, CW, 10, 10, 0, 0, '#dddddd');
+addXYaxis(CH, CW, CH / 4, CW / 4, axisCol);
+t = index / tactual;
+drawEnd(pulseEndA11y.col('end'));
+drawRope();
+drawLabels();
+if (showWaveDataFlag) displayWaveData(0.02 * mx, 0, 1.15 * mx, 56);
+if (runFlag === 0 && index >= stopIndex) displayEnd(1.6 * mx, my + 45, 0.4 * mx, 64);
+handR(xBase - 2, centerY + yScale * yIncident(xBase) - 4, hw, hh, pulseEndA11y.col('hand'));
+if (addXCalFlag) drawXCaliper(pulseEndA11y.col('vrule'));
+if (addYCalFlag) drawYCaliper(pulseEndA11y.col('hrule'));
+}
+function narrate() {
+var endNote = (endType === 'fixed') ? 'a fixed wall: the reflection is always inverted (r=-1)' : 'a free ring on a pole: the reflection is always upright (r=+1)';
+var msg = 'T=' + Tension.toFixed(0) + ' N, \u03BC=' + mu.toFixed(0) + ' g/m, v=' + v.toFixed(0) + ' m/s. ';
+msg += 'The far end is ' + endNote + '.';
+if (damping > 0) msg += ' Damping is on (\u03B3=' + damping.toFixed(2) + ' per metre), so the pulse loses height as it travels.';
+pulseEndA11y.narrate(msg);
+}
+function setPlayLabel(isPlaying) {
+var b = document.getElementById('pulseEndPlayBtn'); if (!b) return;
+b.innerHTML = isPlaying ? '\u23F8 Pause' : '\u25B6 Resume';
+b.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+}
+function runSim() { draw(); if (runFlag === 1) timer = window.setTimeout(runSim, runRate); }
+function play() {
+window.clearTimeout(timer);
+runFlag = 1; setPlayLabel(true);
+runSim();
+}
+function pause() {
+window.clearTimeout(timer);
+runFlag = 0; setPlayLabel(false);
+pulseEndA11y.narrate('Paused.');
+}
+function togglePlay() { if (runFlag === 1) pause(); else play(); }
+function stepForward() { window.clearTimeout(timer); runFlag = 1; draw(); runFlag = 0; setPlayLabel(false); }
+function stepBack() {
+window.clearTimeout(timer);
+index = index - 2; if (index < -1) index = -1;
+runFlag = 1; draw(); runFlag = 0; setPlayLabel(false);
+}
+function reset() {
+window.clearTimeout(timer);
+index = -1; t = 0;
+recompute(); runFlag = 0; setPlayLabel(false);
+draw();
+pulseEndA11y.narrate('Rope cleared. Press Send Pulse when ready.');
+}
+function sendPulse() {
+window.clearTimeout(timer);
+index = -1; t = 0;
+recompute();
+runFlag = 1; setPlayLabel(true);
+pulseEndA11y.narrate('Pulse sent.');
+runSim();
+}
+function setEnd(e)       { endType = e; recompute(); reset(); narrate(); }
+function setDirection(d) { direction = d; draw(); narrate(); }
+function setAmp(val)     { Amag = parseFloat(val); document.getElementById('ampValue').innerHTML = Amag.toFixed(0); draw(); narrate(); }
+function setTension(val) { Tension = parseFloat(val); document.getElementById('tensionValue').innerHTML = Tension.toFixed(0); recompute(); reset(); narrate(); }
+function setMu(val)      { mu = parseFloat(val); document.getElementById('muValue').innerHTML = mu.toFixed(0); recompute(); reset(); narrate(); }
+function setDamping(val) { damping = parseFloat(val); document.getElementById('dampValue').innerHTML = damping.toFixed(2); draw(); narrate(); }
+function setLabel(spanId, checked, baseText) {
+var el = document.getElementById(spanId);
+if (el) el.textContent = (checked ? 'Hide ' : 'Show ') + baseText;
+}
+function toggleMarker(cb) {
+showMarkerFlag = cb.checked ? 1 : 0; draw();
+setLabel('markerLbl', cb.checked, 'tracked-point markers');
+pulseEndA11y.narrate('Tracked-point markers ' + (cb.checked ? 'shown. Watch them \u2014 they move up and down as the pulse passes, then settle back; they never travel with the pulse.' : 'hidden.'));
+}
+function toggleDeltaX(cb) {
+addXCalFlag = cb.checked ? 1 : 0; draw();
+setLabel('dxLbl', cb.checked, 'horizontal caliper (\u0394x)');
+pulseEndA11y.narrate('Horizontal-distance caliper ' + (cb.checked ? 'shown, with a live reading.' : 'hidden.'));
+}
+function toggleDeltaY(cb) {
+addYCalFlag = cb.checked ? 1 : 0; draw();
+setLabel('dyLbl', cb.checked, 'vertical caliper (\u0394y)');
+pulseEndA11y.narrate('Vertical-distance caliper ' + (cb.checked ? 'shown, with a live reading.' : 'hidden.'));
+}
+function toggleLabels(cb) { showLabelsFlag = cb.checked ? 1 : 0; draw(); setLabel('labelsLbl', cb.checked, 'pulse labels'); }
+function toggleWaveData(cb) { showWaveDataFlag = cb.checked ? 1 : 0; draw(); setLabel('waveDataLbl', cb.checked, 'wave-data panel'); }
+function reactionDown(x, y) {
+var r0 = canvas.getBoundingClientRect(); x = (x - r0.left)*canvas.width/r0.width; y = (y - r0.top)*canvas.height/r0.height;   /* canvas units, whatever its displayed size */
+canvas.style.cursor = 'pointer';
+checkIfCalipers(x, y);
+}
+function reactionMove(x, y) {
+var r0 = canvas.getBoundingClientRect(); x = (x - r0.left)*canvas.width/r0.width; y = (y - r0.top)*canvas.height/r0.height;   /* canvas units, whatever its displayed size */
+if (!dragging) return;
+canvas.style.cursor = 'pointer';
+if (dragging.tool === 'x') {
+if (dragging.part === 'j1') xCal.x1 = x;
+else if (dragging.part === 'j2') xCal.x2 = x;
+else if (dragging.part === 'beam') xCal.by = y;
+} else if (dragging.tool === 'y') {
+if (dragging.part === 'j1') yCal.y1 = y;
+else if (dragging.part === 'j2') yCal.y2 = y;
+else if (dragging.part === 'beam') yCal.bx = x;
+}
+draw();
+}
+function reactionUp() {
+var msg = null;
+if (dragging && dragging.tool === 'x') msg = 'Horizontal distance: \u0394x = ' + mWLength + ' m.';
+if (dragging && dragging.tool === 'y') msg = 'Vertical distance: \u0394y = ' + m2Amp + ' cm.';
+dragging = null;
+canvas.style.cursor = 'default';
+if (msg) pulseEndA11y.narrate(msg);
+}
+function init() {
+canvas.onmousedown = function (e) { reactionDown(e.clientX, e.clientY); };
+canvas.onmouseup   = reactionUp;
+canvas.onmousemove = function (e) { reactionMove(e.clientX, e.clientY); };
+canvas.ontouchstart = function (e) { var o = e.changedTouches[0]; reactionDown(o.clientX, o.clientY);
+  /* only a touch on a tool takes over the finger; elsewhere the page scrolls */
+  canvas._grab = (typeof dragging !== 'undefined' && !!dragging) || (typeof wrf !== 'undefined' && wrf === 1) || (typeof arf !== 'undefined' && arf === 1) || (typeof drf !== 'undefined' && drf === 1);
+  if (canvas._grab) e.preventDefault(); };
+canvas.ontouchend   = function () { canvas._grab = false; reactionUp(); };
+canvas.ontouchmove  = function (e) { if (!canvas._grab) return; var o = e.changedTouches[0]; reactionMove(o.clientX, o.clientY); e.preventDefault(); };
+recompute();
+draw();
+}
+window.setTimeout(function () { init(); narrate(); }, 0);
+return {
+togglePlay: togglePlay, stepForward: stepForward, stepBack: stepBack, reset: reset, sendPulse: sendPulse,
+setEnd: setEnd, setDirection: setDirection, setAmp: setAmp, setTension: setTension, setMu: setMu, setDamping: setDamping,
+toggleMarker: toggleMarker, toggleDeltaX: toggleDeltaX, toggleDeltaY: toggleDeltaY,
+toggleLabels: toggleLabels, toggleWaveData: toggleWaveData
+};
+})();
+</script>
+<script>
+pulseEndA11y.init();
+pulseEndA11y.narrate('Pulse sim ready. Choose a fixed or free far end, set direction, amplitude, tension, and mass per length, then press Send Pulse.');
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation sends a single pulse along a rope and watches it reflect at the far end. The far end can be fixed (tied to a wall) or free (a light ring that slides on a pole). The pulse can be sent upward or downward, and the amplitude, the tension and the mass per unit length of the rope can be changed.</p>
+<p>On a real rope some energy is lost as the pulse travels, so its amplitude shrinks along the way. Here the amplitude decays exponentially with the distance travelled, `A(x) = A_0 e^(-gamma x)`, with an adjustable damping constant `gamma` (per metre).</p>
+<p>A pulse on a rope travels at the speed</p>
+<p class="mob_eq">`v = sqrt(T/mu)`,</p>
+<p>where `T` is the tension and `mu` the mass per unit length: a tighter or lighter rope carries the pulse faster. The speed does not depend on the amplitude.</p>
+<p>At a fixed end, the rope cannot move, so the wall pulls back and the pulse comes back upside down (inverted). At a free end, the ring overshoots and the pulse comes back the same way up. Either way, the reflected pulse travels back at the same speed.</p>
+<p>The calipers measure distances on the rope: the horizontal caliper gives how far the pulse has moved, and with the time, its speed; the vertical caliper gives its height.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobw1675 { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (663 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:703px) {
+#mobw1675 div, #mobw1675 p, #mobw1675 fieldset, #mobw1675 form, #mobw1675 section, #mobw1675 ol, #mobw1675 ul, #mobw1675 table { max-width:100%; box-sizing:border-box; }
+#mobw1675 canvas, #mobw1675 img, #mobw1675 svg { max-width:100%; height:auto !important; }
+#mobw1675 input[type=range], #mobw1675 select { max-width:100%; min-width:0; }
+#mobw1675 #pulseEndRoot .sn_a11y, #mobw1675 .playbar, #mobw1675 .bbar, #mobw1675 .footer { flex-wrap:wrap; }
+#mobw1675 #pulseEndRoot .sn_a11y > div, #mobw1675 .playbar > div, #mobw1675 .bbar > div, #mobw1675 .footer > div { min-width:min(100%, 260px); }
+#mobw1675 div[style*="height"] { height:auto !important; }
+#mobw1675 .tbar, #mobw1675 .mcontent, #mobw1675 .footer { height:auto; min-height:0; }
+#mobw1675 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:723px) {
+#mobw1675 div, #mobw1675 p, #mobw1675 fieldset, #mobw1675 form, #mobw1675 section, #mobw1675 ol, #mobw1675 ul, #mobw1675 table { max-width:100%; box-sizing:border-box; }
+#mobw1675 canvas, #mobw1675 img, #mobw1675 svg { max-width:100%; height:auto !important; }
+#mobw1675 input[type=range], #mobw1675 select { max-width:100%; min-width:0; }
+#mobw1675 #pulseEndRoot .sn_a11y, #mobw1675 .playbar, #mobw1675 .bbar, #mobw1675 .footer { flex-wrap:wrap; }
+#mobw1675 #pulseEndRoot .sn_a11y > div, #mobw1675 .playbar > div, #mobw1675 .bbar > div, #mobw1675 .footer > div { min-width:min(100%, 260px); }
+#mobw1675 div[style*="height"] { height:auto !important; }
+#mobw1675 .tbar, #mobw1675 .mcontent, #mobw1675 .footer { height:auto; min-height:0; }
+#mobw1675 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobw1675 button, #mobw1675 input[type=button], #mobw1675 input[type=submit], #mobw1675 input[type=reset] { min-height:40px; }
+#mobw1675 input[type=range] { height:28px; }
+#mobw1675 input[type=checkbox], #mobw1675 input[type=radio] { width:22px; height:22px; }
+#mobw1675 select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobw1675 .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobw1675 .mob_a11ytop input[type=button], #mobw1675 .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobw1675 .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobw1675 .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobw1675 .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobw1675 .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobw1675 .mob_desc p { margin:0 0 9px 0; }
+#mobw1675 .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobw1675 -->
+</main>
+</body>
+</html>
