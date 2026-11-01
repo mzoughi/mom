@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Snell's Law: Light Through a Trapezoid</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, Snell's law, refraction, index of refraction, total internal reflection, critical angle, dispersion, slab, prism, trapezoid, lesson, scientific">
+<meta name="description" content="Snell's Law: Light Through a Trapezoid -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobsTr" class="mob_wrap">
+<div id="slabRoot">
+  <!-- ── Accessibility toolbar ── -->
+  <div class="sb_a11y" id="slabA11yBar" role="toolbar" aria-label="Display options">
+    <button type="button" class="sb_a11ybtn" id="sbBtnHC" onclick="slabA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+    <button type="button" class="sb_a11ybtn" id="sbBtnLM" onclick="slabA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+    <button type="button" class="sb_a11ybtn" id="sbBtnCB" onclick="slabA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+    <button type="button" class="sb_a11ybtn sb_a11yon" id="sbBtnNR" onclick="slabA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+  </div>
+  <div class="tbar"><h3>Light Through a Trapezoidal Slab</h3></div>
+  <div class="mcontent">
+    <canvas id="slabCanvas" style="margin:auto;display:block;border:1px solid" width="760" height="520"></canvas>
+  </div>
+  <!--
+<div class="tbar">
+<p class="REM">The left face stays vertical and the top/bottom faces stay horizontal (and parallel to each
+other), but the right face is now slanted, so the slab is a right trapezoid rather than a rectangle -- set its
+two parallel base lengths independently with the width sliders below. A beam that exits through the top or
+bottom face still travels parallel to the original incident ray -- only shifted sideways. A beam that reaches
+the slanted right face (or the left face) instead refracts at a different angle, following Snell's law
+relative to that face's own normal (shown as a dashed gray guide line). The simulation traces as many internal
+bounces -- off any of the four faces -- as remain meaningfully bright (typically 2-5, depending on the indices
+and angle you choose). Dashed light segments are reflections; the solid path is the main, directly-transmitted
+beam. Each beam keeps its true wavelength hue at every intensity level -- fainter beams are shown as a paler
+tint of that hue (never washed to grey or black), and line thickness gives a second, redundant cue to relative
+intensity, computed from the Fresnel equations. The slab's index of refraction also depends mildly on
+wavelength (the surrounding medium does not), via an approximate Cauchy dispersion model -- so shorter (bluer)
+wavelengths bend a little more than longer (redder) ones, the same physical effect a real prism uses to split
+white light into colors. The two interior angles at the slanted face are shown in the readouts below.</p>
+</div>
+-->
+  <!-- Narration bar -->
+  <div id="sbNarBar" class="sb_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+  <!-- Readouts -->
+  <div class="stats" id="sbStats"></div>
+  <!-- Sliders -->
+  <div class="footer">
+    <div class="left">Top base width:</div>
+    <div class="center"><input style="width:220px;" type="range" id="sbWidth" min="150" max="420" value="300" step="5" oninput="slabSim.chWidth(this.value)" onchange="slabSim.chWidth(this.value)"><span id="sbWidthV">300</span> mm</div>
+  </div>
+  <div class="footer">
+    <div class="left">Bottom base width:</div>
+    <div class="center"><input style="width:220px;" type="range" id="sbWidth2" min="80" max="420" value="200" step="5" oninput="slabSim.chWidth2(this.value)" onchange="slabSim.chWidth2(this.value)"><span id="sbWidth2V">200</span> mm</div>
+  </div>
+  <div class="footer">
+    <div class="left">Slab thickness:</div>
+    <div class="center"><input style="width:220px;" type="range" id="sbThick" min="30" max="220" value="120" step="5" oninput="slabSim.chThick(this.value)" onchange="slabSim.chThick(this.value)"><span id="sbThickV">120</span> mm</div>
+  </div>
+  <div class="footer">
+    <div class="left">Move beam entry point along top face:</div>
+    <div class="center"><input style="width:220px;" type="range" id="sbEntry" min="0.08" max="0.92" value="0.50" step="0.01" oninput="slabSim.chEntry(this.value)" onchange="slabSim.chEntry(this.value)"><span id="sbEntryV">0.50</span></div>
+  </div>
+  <div class="footer">
+    <div class="left">Angle of incidence:</div>
+    <div class="center">`i[1]\ =\ `<input style="width:220px;" type="range" id="sbAngle" min="0" max="85" value="40" step="1" oninput="slabSim.chAngle(this.value)" onchange="slabSim.chAngle(this.value)"><span id="sbAngleV">40</span>&deg;</div>
+  </div>
+  <div class="footer">
+    <div class="left">Wavelength of incident light:</div>
+    <div class="center"><input style="width:220px;" type="range" id="sbWL" min="380" max="700" value="550" step="1" oninput="slabSim.chWL(this.value)" onchange="slabSim.chWL(this.value)"><span id="sbWLV">550</span> nm <span id="sbWLSwatch" class="swatch"></span></div>
+  </div>
+  <div class="footer">
+    <div class="left">Index of refraction of surrounding medium:</div>
+    <div class="center">`n_m\ =\ `<input style="width:220px;" type="range" id="sbNm" min="1" max="2" value="1.00" step="0.01" oninput="slabSim.chNm(this.value)" onchange="slabSim.chNm(this.value)"><span id="sbNmV">1.00</span></div>
+  </div>
+  <div class="footer">
+    <div class="left">Index of refraction of slab (at 589&nbsp;nm reference):</div>
+    <div class="center">`n_s\ =\ `<input style="width:220px;" type="range" id="sbNs" min="1" max="2.5" value="1.50" step="0.01" oninput="slabSim.chNs(this.value)" onchange="slabSim.chNs(this.value)"><span id="sbNsV">1.50</span></div>
+  </div>
+  <div class="footer">
+    <div class="left">or select the material of the slab:</div>
+    <div class="center"><select name="sbMat" id="sbMat" onchange="slabSim.chMat(this.value)">
+      <option value="0">Select Material</option>
+      <option value="1.544">Gemstones: Agate (1.544)</option>
+      <option value="1.746">Gemstones: Alexandrite (1.746)</option>
+      <option value="1.532">Gemstones: Amethyst (1.532)</option>
+      <option value="1.567">Gemstones: Aquamarine (1.567)</option>
+      <option value="1.57">Gemstones: Beryl (1.57)</option>
+      <option value="2.417">Gemstones: Diamond (2.417)</option>
+      <option value="1.56">Gemstones: Emerald (1.56)</option>
+      <option value="1.434">Gemstones: Flourite (1.434)</option>
+      <option value="1.757">Gemstones: Ruby / Sapphire (1.757)</option>
+      <option value="1.607">Gemstones: Topaz (1.607)</option>
+      <option value="1.777">Gemstones: Zircon (1.777)</option>
+      <option value="1.36">Common Liquids: Alcohol, Ethyl (1.36)</option>
+      <option value="1.473">Common Liquids: Glycerin (1.473)</option>
+      <option value="1.309">Common Liquids: Ice (1.309)</option>
+      <option value="1.33283">Common Liquids: Water 20&deg;C (1.33283)</option>
+      <option value="1.52">Common Transparent Materials: Glass, Crown (1.52)</option>
+      <option value="1.669">Common Transparent Materials: Glass, Flint 55% lead (1.669)</option>
+      <option value="1.459">Common Transparent Materials: Glass, Fused Silica (1.459)</option>
+      <option value="1.495">Common Transparent Materials: Lucite (1.495)</option>
+      <option value="1.46">Common Transparent Materials: Plastic (1.46)</option>
+      <option value="1.516">Common Transparent Materials: Salt (1.516)</option>
+      </select>
+    </div>
+  </div>
+</div>
+ 
+<!-- #slabRoot -->
+<style>:where(#mobsTr) * { margin: 0; box-sizing: border-box; }
+:where(#mobsTr) div { width: 763px; margin: 0; }
+#slabRoot { --sb-toolbar-bg: #222; }
+#slabRoot .sb_a11y {
+    display: flex; gap: 6px; padding: 6px 8px;
+    background: var(--sb-toolbar-bg); flex-wrap: wrap; width: 763px;
+  }
+#slabRoot .sb_a11ybtn {
+    padding: 4px 10px; font-size: .72rem; font-family: monospace;
+    letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+    background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+    transition: border-color .15s, color .15s;
+  }
+#slabRoot .sb_a11ybtn:hover { border-color: #00e8d0; color: #00e8d0; }
+#slabRoot .sb_a11yon { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#slabRoot .sb_narbar {
+    width: 763px; min-height: 28px; padding: 5px 10px;
+    background: #ffefc0; border-left: 4px solid #e0b040;
+    font-size: .88rem; color: #333; font-style: italic;
+  }
+.REM { font-weight: normal; text-align: left; padding: 0 20px; font-size: small; color: blue; }
+.tbar { padding: 4px; height: auto; min-height:30px; background-color: #f90; text-align: center; }
+.mcontent { height: 522px; }
+.stats {
+    width: 763px; padding: 8px 12px; background: #eef3fb; border-left: 4px solid #6699cc;
+    font-family: monospace; font-size: .82rem; color: #14293d; line-height: 1.5;
+    display: flex; flex-wrap: wrap; gap: 4px 22px;
+  }
+.stats b { color: #0a3d62; }
+.footer { height: 40px; text-align: center; font-size: normal; display: flex; align-items:center; }
+.footer .left { width: 300px; padding: 2px; text-align:right; padding-right:8px; }
+.footer .center { width: 463px; padding: 4px; text-align:left; }
+.footer:nth-child(6) { background-color: #fce4ec; }
+.footer:nth-child(7) { background-color: #e8f5e9; }
+.footer:nth-child(8) { background-color: #e3f2fd; }
+.footer:nth-child(9) { background-color: #fff3cd; }
+.footer:nth-child(10) { background-color: #f3e5f5; }
+.footer:nth-child(11) { background-color: #aff; }
+.footer:nth-child(12) { background-color: #ff9; }
+.footer:nth-child(13) { background-color: #dfd; }
+.footer:nth-child(14) { background-color: #ffe0cc; }
+.swatch { display:inline-block; width:16px; height:16px; border:1px solid #333; vertical-align:middle; margin-left:4px; border-radius:2px; }</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+  var slabA11y = (function(){
+    var ROOT = null;
+    var states = { hc:false, lm:false, cb:false, nr:true };
+    function styleBtn(id, active) {
+      var b = document.getElementById(id); if (!b) return;
+      if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+      else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    function applyCanvas() {
+      var cv = document.getElementById('slabRoot').querySelector('canvas');
+      if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+    }
+    function applyNarBar() {
+      var nb = document.getElementById('sbNarBar');
+      if (nb) nb.style.display = states.nr ? 'block' : 'none';
+      var btn = document.getElementById('sbBtnNR');
+      if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('sbBtnNR', states.nr); }
+    }
+    function applyToolbar() {
+      if (ROOT) ROOT.style.setProperty('--sb-toolbar-bg', (states.hc || states.lm) ? '#111' : '#222');
+    }
+    function apply() {
+      if (!ROOT) return;
+      applyCanvas(); applyNarBar(); applyToolbar();
+      styleBtn('sbBtnHC', states.hc);
+      styleBtn('sbBtnLM', states.lm);
+      styleBtn('sbBtnCB', states.cb);
+    }
+    return {
+      init: function(){ ROOT = document.getElementById('slabRoot'); apply(); },
+      toggle: function(k){
+        states[k] = !states[k];
+        if (k==='hc' && states.hc) states.lm = false;
+        if (k==='lm' && states.lm) states.hc = false;
+        apply();
+        if (typeof slabSim !== 'undefined') slabSim.redraw();
+      },
+      narrate: function(msg){
+        if (!states.nr) return;
+        var nb = document.getElementById('sbNarBar');
+        if (nb) nb.textContent = msg;
+      },
+      /* CB mode: use dash patterns instead of relying on opacity alone (already default) */
+      isCB: function(){ return states.cb; },
+      isHC: function(){ return states.hc; }
+    };
+  })();
+</script>
+<!-- ════════════════ SIMULATION ════════════════
+Geometry: a right trapezoid -- left face vertical, top and bottom faces
+horizontal and parallel (independently sized: top base = slabWidth, bottom
+base = botWidth), right face slanted between them. Because top and bottom
+stay parallel, a beam that exits through either still travels parallel to
+the incident ray. The slanted (and left) faces are handled by generic
+vector Snell's law / reflection using each face's own outward normal,
+computed straight from the polygon geometry.
+Intensity at every interface uses the (unpolarized-average) Fresnel
+equations; R + T = 1 at each interface (no absorption modeled).
+-->
+<script>
+  var trapSlab = function() {
+    const canvas = document.getElementById('slabCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    var slabWidth   = 300;      /* top base width */
+    var botWidth    = 200;     /* bottom base width -- makes the slab a trapezoid */
+    var slabThick   = 120;
+    var entryFrac   = 0.50;
+    var incAngleDeg = 40;
+    var wavelength  = 550;
+    var nm = 1.00;
+    var ns = 1.50;
+    var sTop = 130;              /* fixed y of top face */
+    function toRad(d){ return d*Math.PI/180; }
+    function toDeg(r){ return r*180/Math.PI; }
+    /* ── wavelength (nm, 380-700) -> {r,g,b} 0-255 ── */
+    function wavelengthToColor(wl){
+      var r=0,g=0,b=0;
+      if (wl>=380 && wl<440){ r=-(wl-440)/(440-380); g=0; b=1; }
+      else if (wl<490){ r=0; g=(wl-440)/(490-440); b=1; }
+      else if (wl<510){ r=0; g=1; b=-(wl-510)/(510-490); }
+      else if (wl<580){ r=(wl-510)/(580-510); g=1; b=0; }
+      else if (wl<645){ r=1; g=-(wl-645)/(645-580); b=0; }
+      else if (wl<=700){ r=1; g=0; b=0; }
+      var factor = (wl<420) ? 0.35+0.65*(wl-380)/(420-380) :
+      (wl>645) ? 0.35+0.65*(700-wl)/(700-645) : 1.0;
+      function adj(c){ return c<=0 ? 0 : Math.round(255*Math.pow(c*factor,0.85)); }
+      return { r:adj(r), g:adj(g), b:adj(b) };
+    }
+    /* ── Fresnel: unpolarized-average reflectance ── */
+    function fresnelR(n1, n2, thI, thT){
+      var ci = Math.cos(thI), ct = Math.cos(thT);
+      var Rs = Math.pow((n1*ci - n2*ct)/(n1*ci + n2*ct), 2);
+      var Rp = Math.pow((n1*ct - n2*ci)/(n1*ct + n2*ci), 2);
+      return (Rs+Rp)/2;
+    }
+    /* Colours never fade toward transparency (which can visually read as
+grey/black); instead low-intensity beams are tinted toward white,
+so the wavelength hue stays recognisable at every intensity level. */
+    function shade(col, intensity){
+      var amt = 1 - Math.pow(Math.max(Math.min(intensity,1),0), 0.33);
+      amt = Math.min(amt, 0.88);
+      var r = Math.round(col.r + (255-col.r)*amt);
+      var g = Math.round(col.g + (255-col.g)*amt);
+      var b = Math.round(col.b + (255-col.b)*amt);
+      return 'rgb('+r+','+g+','+b+')';
+    }
+    /* ── Prism-style index-based tinting, reused for both the slab and the
+surrounding medium: higher index -> darker, lower index -> lighter. ── */
+    var pcolor = '#00eeff';
+    var lumK   = 0.0105;
+    function ColorLuminance(hex, lum) {
+      hex = String(hex).replace(/[^0-9a-f]/gi, '');
+      if (hex.length < 6) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+      lum = lum || 0;
+      var rgb = '#', c, i;
+      for (i = 0; i < 3; i++) {
+        c = parseInt(hex.substr(i*2, 2), 16);
+        c = Math.round(Math.min(Math.max(0, c + 255*lum), 255)).toString(16);
+        rgb += ('00'+c).substr(c.length);
+      }
+      return rgb;
+    }
+    function mediumFillColor(nVal){
+      var ilum = parseInt(50*(-nVal+1.5), 10);
+      if (ilum > 0) ilum *= 2;
+      return ColorLuminance(pcolor, ilum*lumK);
+    }
+    function labelText(text, x, y){
+      ctx.font = '12px monospace'; ctx.textAlign = 'center';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = '#222';
+      ctx.fillText(text, x, y);
+    }
+    /* ── Generic convex-quadrilateral geometry: builds the trapezoid's four
+vertices and, for each edge, an outward-pointing normal computed
+directly from the geometry (rather than assumed axis-aligned). This
+lets the exact same ray-tracing code handle a slanted face just as
+well as a horizontal or vertical one. ── */
+    function buildSlab(sLeft, sTop, topW, botW, thick){
+      var sRight  = sLeft+topW;
+      var sBot    = sTop+thick;
+      var sRight2 = sLeft+botW;
+      var A = {x:sLeft,  y:sTop};   /* top-left */
+      var B = {x:sRight, y:sTop};   /* top-right */
+      var C = {x:sRight2,y:sBot};   /* bottom-right */
+      var D = {x:sLeft,  y:sBot};   /* bottom-left */
+      var verts = [A,B,C,D];
+      var names = ['top','right','bottom','left'];
+      var centroid = { x:(A.x+B.x+C.x+D.x)/4, y:(A.y+B.y+C.y+D.y)/4 };
+      var edges = [];
+      for (var i=0; i<4; i++){
+        var P = verts[i], Q = verts[(i+1)%4];
+        var ex = Q.x-P.x, ey = Q.y-P.y;
+        var elen = Math.sqrt(ex*ex+ey*ey) || 1;
+        var ux = ex/elen, uy = ey/elen;
+        var n1 = {x:uy, y:-ux}, n2 = {x:-uy, y:ux};
+        var mid = {x:(P.x+Q.x)/2, y:(P.y+Q.y)/2};
+        var toMid = {x:mid.x-centroid.x, y:mid.y-centroid.y};
+        var normal = (n1.x*toMid.x+n1.y*toMid.y > 0) ? n1 : n2;
+        edges.push({ P:P, Q:Q, normal:normal, name:names[i] });
+      }
+      return { A:A, B:B, C:C, D:D, verts:verts, edges:edges, sLeft:sLeft, sTop:sTop, sBot:sBot, sRight:sRight, sRight2:sRight2 };
+    }
+    function vecAngleDeg(u,v){
+      var lu = Math.sqrt(u.x*u.x+u.y*u.y), lv = Math.sqrt(v.x*v.x+v.y*v.y);
+      var cosA = (u.x*v.x+u.y*v.y)/(lu*lv);
+      cosA = Math.max(-1, Math.min(1, cosA));
+      return Math.acos(cosA)*180/Math.PI;
+    }
+    /* Ray vs. line-segment intersection (t along the ray, s along the segment). */
+    function raySegmentIntersect(start, dir, P, Q){
+      var x1=start.x, y1=start.y, x2=start.x+dir.x, y2=start.y+dir.y;
+      var x3=P.x, y3=P.y, x4=Q.x, y4=Q.y;
+      var d = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
+      if (Math.abs(d) < 1e-9) return null;
+      var px = ((x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4))/d;
+      var py = ((x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4))/d;
+      var t = (Math.abs(dir.x) > Math.abs(dir.y)) ? (px-x1)/dir.x : (py-y1)/dir.y;
+      if (t < 1e-6) return null;
+      var qx=Q.x-P.x, qy=Q.y-P.y;
+      var s = (Math.abs(qx) > Math.abs(qy)) ? (px-P.x)/qx : (py-P.y)/qy;
+      if (s < -1e-6 || s > 1+1e-6) return null;
+      return { pt:{x:px,y:py}, t:t };
+    }
+    /* Trace a ray from start in direction dir until it hits the closest edge
+of the slab polygon. Returns the hit point, which named face it was,
+and that face's outward normal (works for the slanted face too). */
+    function traceToBoundary(start, dir, edges){
+      var best = null;
+      for (var i=0; i<edges.length; i++){
+        var res = raySegmentIntersect(start, dir, edges[i].P, edges[i].Q);
+        if (res && (!best || res.t < best.t)){
+          best = { pt:res.pt, t:res.t, side:edges[i].name, normal:edges[i].normal };
+        }
+      }
+      if (!best){ return { pt:{x:start.x+dir.x, y:start.y+dir.y}, side:'top', normal:{x:0,y:-1} }; }
+      return best;
+    }
+    var TOP_NORMAL = {x:0,y:-1};  /* the top face stays horizontal regardless of trapezoid shape */
+    function vDot(a,b){ return a.x*b.x+a.y*b.y; }
+    function reflectVec(I,N){ var d=vDot(I,N); return { x:I.x-2*d*N.x, y:I.y-2*d*N.y }; }
+    function refractVec(I,N,eta){
+      /* eta = n_incident-side / n_transmitted-side. Returns {dir,cosI,cosT}
+ normally, or {tir:true,cosI} on total internal reflection. Auto-flips
+ N to face the incoming ray, so it works whether entering or exiting. */
+      var Nn = N, e = eta;
+      var cosI = -vDot(Nn,I);
+      if (cosI < 0){ cosI = -cosI; Nn = {x:-Nn.x,y:-Nn.y}; }
+      var sin2t = e*e*(1-cosI*cosI);
+      if (sin2t > 1) return { tir:true, cosI:cosI };
+      var cosT = Math.sqrt(1-sin2t);
+      var k = e*cosI-cosT;
+      return { dir:{ x:e*I.x+k*Nn.x, y:e*I.y+k*Nn.y }, cosI:cosI, cosT:cosT };
+    }
+    /* ── Chromatic dispersion for the SLAB only (medium stays non-dispersive).
+Cauchy's equation: n(lambda) = A + B/lambda^2 (lambda in micrometres).
+The n_s slider/material dropdown is treated as n_d, the index at the
+sodium D-line (589.3 nm) -- the standard reference wavelength that
+published glass/gem indices (including the ones in the dropdown) are
+quoted at. B is not a free physical constant here; it's approximated
+as scaling mildly with (n_d-1)^2, so higher-index materials show a
+visibly larger chromatic spread, tuned so an n_d~1.52 crown-glass-like
+value gives a realistic Delta-n(F,C) of about 0.008. This is a
+simplification (real dispersion depends on more than n_d alone, e.g.
+Abbe number varies material to material) but captures the right
+qualitative trend for a teaching tool. ── */
+    var CAUCHY_LAMBDA_D = 0.5893;  /* micrometres, sodium D-line */
+    var CAUCHY_K = 0.0159;         /* micrometres^2, tuned to crown-glass dispersion */
+    function slabIndexAt(nD, wavelengthNm){
+      var lam = wavelengthNm/1000;              /* nm -> micrometres */
+      var B = CAUCHY_K*(nD-1)*(nD-1);
+      var A = nD - B/(CAUCHY_LAMBDA_D*CAUCHY_LAMBDA_D);
+      return A + B/(lam*lam);
+    }
+    var geo = {};   /* last computed geometry, for stats/narration reuse */
+    function compute(){
+      var sLeft  = (W-Math.max(slabWidth,botWidth))/2 - 40;
+      var entryX = sLeft + entryFrac*slabWidth;
+      var entryY = sTop;
+      var thI = toRad(incAngleDeg);
+      var dIn = { x: Math.sin(thI), y: Math.cos(thI) };
+      var slab = buildSlab(sLeft, sTop, slabWidth, botWidth, slabThick);
+      var nd = ns;                              /* reference index, at 589.3 nm */
+      var nsEff = slabIndexAt(nd, wavelength);   /* actual index used, at the chosen wavelength */
+      /* interior angles of the trapezoid at the two ends of the slanted face */
+      var angleTopRight = vecAngleDeg(
+        { x: slab.A.x-slab.B.x, y: slab.A.y-slab.B.y },
+        { x: slab.C.x-slab.B.x, y: slab.C.y-slab.B.y }
+      );
+      var angleBotRight = vecAngleDeg(
+        { x: slab.B.x-slab.C.x, y: slab.B.y-slab.C.y },
+        { x: slab.D.x-slab.C.x, y: slab.D.y-slab.C.y }
+      );
+      var g = {
+        slab:slab, sLeft:slab.sLeft, sRight:slab.sRight, sBot:slab.sBot,
+        entryX:entryX, entryY:entryY, P1:{x:entryX,y:entryY}, nd:nd, nsEff:nsEff,
+        angleTopRight:angleTopRight, angleBotRight:angleBotRight
+      };
+      /* ── surface 1: medium -> slab, always entered through the top face ── */
+      var ref0 = refractVec(dIn, TOP_NORMAL, nm/nsEff);
+      if (ref0.tir){
+        g.tir1 = true;
+        g.thI = incAngleDeg;
+        var reflOut = reflectVec(dIn, TOP_NORMAL);
+        g.extReflEnd = { x: entryX+140*reflOut.x, y: entryY+140*reflOut.y };
+        return g;
+      }
+      var thT1 = Math.acos(ref0.cosT);
+      var R1 = fresnelR(nm, nsEff, thI, thT1);
+      var T1 = 1-R1;
+      g.tir1=false; g.thI=incAngleDeg; g.thT1=toDeg(thT1); g.R1=R1; g.T1=T1;
+      var extRefl = reflectVec(dIn, TOP_NORMAL);
+      g.extReflEnd = { x: entryX+90*extRefl.x, y: entryY+90*extRefl.y };
+      var bounces = [];
+      var current = g.P1;
+      var dirIntern = ref0.dir;
+      var internalIntensity = T1;
+      var maxBounces = 8;      /* hard safety cap */
+      var minVisible = 0.004;  /* stop tracing once a bounce carries <0.4% */
+      for (var i=1; i<=maxBounces; i++){
+        var hit = traceToBoundary(current, dirIntern, slab.edges);
+        var Nf  = hit.normal;
+        var ref = refractVec(dirIntern, Nf, nsEff/nm);
+        var bounce = { point: hit.pt, side: hit.side, segIntensity: internalIntensity };
+        if (ref.tir){
+          /* total internal reflection at this face: everything stays inside */
+          bounce.tirHere = true;
+          bounce.thetaI = toDeg(Math.acos(ref.cosI));
+          bounces.push(bounce);
+          current = hit.pt;
+          dirIntern = reflectVec(dirIntern, Nf);
+          continue;
+        }
+        bounce.thetaI = toDeg(Math.acos(ref.cosI));
+        bounce.thetaT = toDeg(Math.acos(ref.cosT));
+        var Rloc = fresnelR(nsEff, nm, toRad(bounce.thetaI), toRad(bounce.thetaT));
+        var Tloc = 1-Rloc;
+        bounce.exitDir = ref.dir;
+        bounce.exitPt  = { x: hit.pt.x+85*ref.dir.x, y: hit.pt.y+85*ref.dir.y };
+        bounce.exitIntensity   = internalIntensity*Tloc;
+        bounce.remainIntensity = internalIntensity*Rloc;
+        bounces.push(bounce);
+        current = hit.pt;
+        dirIntern = reflectVec(dirIntern, Nf);
+        internalIntensity = bounce.remainIntensity;
+        if (internalIntensity < minVisible) break;
+      }
+      g.bounces = bounces;
+      return g;
+    }
+    function drawNormal(pt, normal, len){
+      ctx.save();
+      ctx.setLineDash([3,3]);
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pt.x+len*normal.x, pt.y+len*normal.y);
+      ctx.lineTo(pt.x-len*normal.x, pt.y-len*normal.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    function drawRay(p1,p2,col,intensity,dashed){
+      ctx.save();
+      if (dashed) ctx.setLineDash([7,5]);
+      ctx.strokeStyle = shade(col, intensity);
+      ctx.lineWidth = 1 + 4*Math.sqrt(Math.max(intensity,0));
+      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+      ctx.restore();
+    }
+    function drawArrowHead(p1,p2,col,intensity){
+      var ang = Math.atan2(p2.y-p1.y, p2.x-p1.x);
+      var len = 9;
+      ctx.save();
+      ctx.fillStyle = shade(col, intensity);
+      ctx.beginPath();
+      ctx.moveTo(p2.x, p2.y);
+      ctx.lineTo(p2.x-len*Math.cos(ang-0.4), p2.y-len*Math.sin(ang-0.4));
+      ctx.lineTo(p2.x-len*Math.cos(ang+0.4), p2.y-len*Math.sin(ang+0.4));
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    /* ── prism-style on-canvas readout box: i[k] (incidence), r[k] (reflection,
+always equal to i[k]), t[k] (transmission/refraction, or "TIR" if the
+beam is totally internally reflected there), one group per interface
+encountered, in order: [1] = entry face, [2] = first internal bounce,
+[3] = second internal bounce, and so on. ── */
+    function fmtAng(v){ return v.toFixed(2)+'\u00B0'; }
+    function buildAngleGroups(g){
+      var groups = [ { idx:1, i:g.thI, r:g.thI, t: g.tir1 ? null : g.thT1 } ];
+      if (!g.tir1){
+        for (var k=0; k<g.bounces.length; k++){
+          var b = g.bounces[k];
+          groups.push({ idx:k+2, i:b.thetaI, r:b.thetaI, t: b.tirHere ? null : b.thetaT });
+        }
+      }
+      return groups;
+    }
+    function drawAngleBox(g){
+      var groups = buildAngleGroups(g);
+      var lineH = 15;
+      var padTop = 22, padBottom = 10;
+      var extraLines = 3; /* top-slant angle, bottom-slant angle, blank spacer */
+      var innerLines = extraLines + groups.length*3 + (groups.length-1)*1; /* 3 rows per group + 1 blank between groups */
+      var boxW = 150;
+      var boxH = Math.min(H-16, padTop+padBottom + innerLines*lineH);
+      var boxX = W-boxW-8;
+      var boxY = 8;
+      ctx.save();
+      ctx.fillStyle = '#ffe94d';
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.rect(boxX, boxY, boxW, boxH); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('ANGLES', boxX+boxW/2, boxY+14);
+      ctx.font = '11px monospace'; ctx.textAlign = 'left';
+      var x = boxX+10;
+      var y = boxY+padTop+lineH*0.5;
+      var maxY = boxY+boxH-6;
+      /* slanted-face-to-base angles, shown first */
+      ctx.fillText('\u2220top-slant = '+fmtAng(g.angleTopRight), x, y); y += lineH;
+      ctx.fillText('\u2220bot-slant = '+fmtAng(g.angleBotRight), x, y); y += lineH*2;
+      for (var gi=0; gi<groups.length; gi++){
+        if (y > maxY) { ctx.fillText('\u2026', x, y); break; }
+        var gr = groups[gi];
+        ctx.fillText('i['+gr.idx+'] = '+fmtAng(gr.i), x, y); y += lineH;
+        ctx.fillText('r['+gr.idx+'] = '+fmtAng(gr.r), x, y); y += lineH;
+        ctx.fillText('t['+gr.idx+'] = '+(gr.t===null ? 'TIR' : fmtAng(gr.t)), x, y); y += lineH;
+        if (gi < groups.length-1) y += lineH;
+      }
+      ctx.restore();
+    }
+    function drawFrame(){
+      ctx.clearRect(0,0,W,H);
+      geo = compute();
+      var col = wavelengthToColor(wavelength);
+      var slab = geo.slab;
+      /* ── backgrounds tinted by refractive index, prism-style ── */
+      ctx.fillStyle = mediumFillColor(nm);
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = mediumFillColor(ns);
+      ctx.beginPath();
+      ctx.moveTo(slab.A.x, slab.A.y);
+      ctx.lineTo(slab.B.x, slab.B.y);
+      ctx.lineTo(slab.C.x, slab.C.y);
+      ctx.lineTo(slab.D.x, slab.D.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+      ctx.stroke();
+      /* Index labels on the canvas are disabled -- they didn't render well
+ against the tinted backgrounds. The same n_m / n_s values are shown
+ in the readouts panel below the canvas instead. */
+      drawNormal(geo.P1, TOP_NORMAL, 45);
+      if (geo.tir1){
+        var thI = toRad(incAngleDeg);
+        var dIn = { x: Math.sin(thI), y: Math.cos(thI) };
+        var rayStart = { x: geo.entryX-140*dIn.x, y: geo.entryY-140*dIn.y };
+        drawRay(rayStart, geo.P1, col, 1, false);
+        drawArrowHead(rayStart, geo.P1, col, 1);
+        drawRay(geo.P1, geo.extReflEnd, col, 1, true);
+        drawArrowHead(geo.P1, geo.extReflEnd, col, 1);
+        drawAngleBox(geo);
+        updateStats(geo);
+        return;
+      }
+      var thI = toRad(incAngleDeg);
+      var dIn = { x: Math.sin(thI), y: Math.cos(thI) };
+      var rayStart = { x: geo.entryX-140*dIn.x, y: geo.entryY-140*dIn.y };
+      /* incident beam */
+      drawRay(rayStart, geo.P1, col, 1, false);
+      drawArrowHead(rayStart, geo.P1, col, 1);
+      /* external reflection off the entry face */
+      drawRay(geo.P1, geo.extReflEnd, col, geo.R1, true);
+      drawArrowHead(geo.P1, geo.extReflEnd, col, geo.R1);
+      /* ── walk the chain of internal bounces, now including the slanted face ── */
+      var prevPoint = geo.P1;
+      for (var i=0; i<geo.bounces.length; i++){
+        var b = geo.bounces[i];
+        var edge = slab.edges.filter(function(e){ return e.name===b.side; })[0];
+        drawRay(prevPoint, b.point, col, b.segIntensity, false);
+        if (edge) drawNormal(b.point, edge.normal, 40);
+        if (b.tirHere){
+          /* total internal reflection at this face: nothing exits here */
+          prevPoint = b.point;
+          continue;
+        }
+        var dashedExit = (i > 0);   /* only the very first exit is the direct/main beam */
+        drawRay(b.point, b.exitPt, col, b.exitIntensity, dashedExit);
+        drawArrowHead(b.point, b.exitPt, col, b.exitIntensity);
+        prevPoint = b.point;
+      }
+      drawAngleBox(geo);
+      updateStats(geo);
+    }
+    function pct(x){ return (100*x).toFixed(1)+'%'; }
+    function updateStats(g){
+      var box = document.getElementById('sbStats');
+      if (!box) return;
+      var html = '';
+      html += '<span><b>Interior angle at top-right</b> (top face &harr; slanted face) = '+g.angleTopRight.toFixed(1)+'&deg;</span>';
+      html += '<span><b>Interior angle at bottom-right</b> (slanted face &harr; bottom face) = '+g.angleBotRight.toFixed(1)+'&deg;</span>';
+      html += '<span><b>n\u209B(\u03BB)</b> = '+g.nsEff.toFixed(4)+' at '+wavelength+' nm (n\u2091 = '+g.nd.toFixed(2)+' at 589 nm, via Cauchy approximation)</span>';
+      if (g.tir1){
+        html += '<span><b>Total internal reflection</b> at the top surface -- n\u2098 &gt; n\u209B(\u03BB) and \u03B8\u1D62 exceeds the critical angle \u03B8_c = '
+          + toDeg(Math.asin(g.nsEff/nm)).toFixed(1) + '&deg;. All light (100%) reflects; nothing enters the slab.</span>';
+      } else {
+        html += '<span><b>\u03B8\u1D62</b> (incidence) = '+g.thI.toFixed(1)+'&deg;</span>';
+        html += '<span><b>\u03B8\u209C</b> (inside slab) = '+g.thT1.toFixed(1)+'&deg;</span>';
+        html += '<span><b>R/T</b> at the entry face = '+pct(g.R1)+' / '+pct(g.T1)+'</span>';
+        html += '<span><b>External reflection</b> (off entry face) = '+pct(g.R1)+'</span>';
+        var total = g.R1;
+        for (var i=0; i<g.bounces.length; i++){
+          var b = g.bounces[i];
+          var faceLabel = b.side.charAt(0).toUpperCase()+b.side.slice(1)+' face';
+          if (b.tirHere){
+            html += '<span>Bounce '+(i+1)+' (' + faceLabel + '): total internal reflection here (local \u03B8 = '
+              + b.thetaI.toFixed(1) + '&deg;) -- stays fully inside, continues bouncing.</span>';
+          } else {
+            var label = (i===0) ? 'Main transmitted beam' : ('Bounce '+(i+1)+' leak');
+            html += '<span><b>'+label+'</b> (' + faceLabel + ', local \u03B8 = '+b.thetaI.toFixed(1)+'&deg;) = '+pct(b.exitIntensity)+'</span>';
+            total += b.exitIntensity;
+          }
+        }
+        html += '<span>Total accounted for: '+pct(Math.min(total,1))+' of the incident intensity'
+          + (total < 0.998 ? ' (the remainder is still bouncing internally, below the display threshold)' : '') + '</span>';
+      }
+      box.innerHTML = html;
+    }
+    function narrateNow(){
+      var g = geo;
+      var msg;
+      if (g.tir1){
+        msg = 'Total internal reflection at the top surface. The medium is optically denser than the slab, '
+          + 'and the incidence angle of ' + g.thI.toFixed(1) + ' degrees exceeds the critical angle. '
+          + 'All of the light reflects; none enters the slab.';
+      } else {
+        msg = 'Light enters the slab at ' + g.thI.toFixed(1) + ' degrees and bends to '
+          + g.thT1.toFixed(1) + ' degrees from the normal inside the slab, using an index of '
+          + g.nsEff.toFixed(3) + ' at this wavelength. '
+          + pct(g.R1) + ' reflects at the entry surface, and ' + pct(g.T1) + ' continues in. ';
+        var real = g.bounces.filter(function(b){ return !b.tirHere; });
+        var trapped = g.bounces.filter(function(b){ return b.tirHere; });
+        if (real.length){
+          msg += 'The main beam exits through the ' + real[0].side + ' face carrying '
+            + pct(real[0].exitIntensity) + ' of the original intensity. ';
+          if (real.length > 1){
+            msg += 'The simulation also traces ' + (real.length-1) + ' further internal bounce'
+              + (real.length-1>1?'s':'') + ', each leaking a smaller, fainter beam back out until the remaining light is negligible. ';
+          }
+        }
+        if (trapped.length){
+          msg += 'Along the way, ' + trapped.length + ' bounce' + (trapped.length>1?'s hit':' hits')
+            + ' a face at an angle steep enough to totally internally reflect, keeping the light trapped inside a little longer.';
+        }
+      }
+      slabA11y.narrate(msg);
+    }
+    function chWidth(v){ slabWidth = Number(v); document.getElementById('sbWidthV').textContent=v; drawFrame(); narrateNow(); }
+    function chWidth2(v){ botWidth = Number(v); document.getElementById('sbWidth2V').textContent=v; drawFrame(); narrateNow(); }
+    function chThick(v){ slabThick = Number(v); document.getElementById('sbThickV').textContent=v; drawFrame(); narrateNow(); }
+    function chEntry(v){ entryFrac = Number(v); document.getElementById('sbEntryV').textContent=v; drawFrame(); narrateNow(); }
+    function chAngle(v){ incAngleDeg = Number(v); document.getElementById('sbAngleV').textContent=v; drawFrame(); narrateNow(); }
+    function chNm(v){ nm = Number(v); document.getElementById('sbNmV').textContent=v; drawFrame(); narrateNow(); }
+    function chNs(v){ ns = Number(v); document.getElementById('sbNsV').textContent=v; document.getElementById('sbMat').value='0'; drawFrame(); narrateNow(); }
+    function chMat(v){
+      if (Number(v) !== 0){
+        ns = Number(v);
+        document.getElementById('sbNs').value = ns.toFixed(2);
+        document.getElementById('sbNsV').textContent = ns.toFixed(2);
+        drawFrame(); narrateNow();
+      }
+    }
+    function chWL(v){
+      wavelength = Number(v);
+      document.getElementById('sbWLV').textContent = v;
+      var c = wavelengthToColor(wavelength);
+      var sw = document.getElementById('sbWLSwatch');
+      if (sw) sw.style.background = 'rgb('+c.r+','+c.g+','+c.b+')';
+      drawFrame();
+      var nsNow = slabIndexAt(ns, wavelength);
+      slabA11y.narrate('Wavelength set to ' + wavelength + ' nm. '
+                             + (wavelength<490?'This appears blue/violet.':wavelength<580?'This appears green/yellow.':'This appears orange/red.')
+                             + ' The slab\u2019s index at this wavelength is ' + nsNow.toFixed(3) + ' (versus ' + ns.toFixed(2) + ' at the 589 nm reference) -- '
+                             + 'shorter wavelengths refract slightly more, per the Cauchy dispersion approximation.');
+    }
+    function boot(){
+      drawFrame();
+      var c = wavelengthToColor(wavelength);
+      var sw = document.getElementById('sbWLSwatch');
+      if (sw) sw.style.background = 'rgb('+c.r+','+c.g+','+c.b+')';
+      slabA11y.narrate('Ready. Trapezoidal slab, top base '+slabWidth+' mm, bottom base '+botWidth+' mm, n_d='+ns.toFixed(2)+' (at 589 nm, dispersive), medium n_m='+nm.toFixed(2)+' (non-dispersive), incidence='+incAngleDeg+'\u00B0, wavelength='+wavelength+' nm.');
+    }
+    boot();
+    return {
+      chWidth:chWidth, chWidth2:chWidth2, chThick:chThick, chEntry:chEntry, chAngle:chAngle,
+      chNm:chNm, chNs:chNs, chMat:chMat, chWL:chWL,
+      redraw: function(){ drawFrame(); }
+    };
+  };
+</script>
+<script>
+  var slabSim = new trapSlab();
+  slabA11y.init();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation sends a ray of light through a block shaped like a trapezoid, surrounded by a medium of index `n_s`. The top and bottom faces can have different widths, so the side faces are tilted.</p>
+<p>At each surface, the light obeys Snell's law,</p>
+<p class="mob_eq">`n_1 sin theta_1 = n_2 sin theta_2`,</p>
+<p>where the angles are measured from the normal to the surface. Going into a denser medium (larger `n`), the ray bends toward the normal; coming out, away from it. If the light inside would have to leave at more than 90&deg;, that is beyond the critical angle `theta_c = arcsin(n_2/n_1)`, it is totally reflected instead.</p>
+<p>The index of refraction depends slightly on the wavelength (dispersion): violet light bends more than red. Choose the wavelength, the angle of incidence, the indices of the medium and of the block (or a common transparent material), and the block's size and the point where the light enters.</p>
+<p>Through the parallel top and bottom faces the ray leaves parallel to its original direction, shifted sideways. Through a tilted side face it is deviated, as in a prism, and inside the block it can be totally reflected from a side face.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobsTr { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (763 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:803px) {
+#mobsTr div, #mobsTr p, #mobsTr fieldset, #mobsTr form, #mobsTr section, #mobsTr ol, #mobsTr ul, #mobsTr table { max-width:100%; box-sizing:border-box; }
+#mobsTr canvas, #mobsTr img, #mobsTr svg { max-width:100%; height:auto !important; }
+#mobsTr input[type=range], #mobsTr select { max-width:100%; min-width:0; }
+#mobsTr #slabRoot .sb_a11y, #mobsTr .stats, #mobsTr .footer { flex-wrap:wrap; }
+#mobsTr #slabRoot .sb_a11y > div, #mobsTr .stats > div, #mobsTr .footer > div { min-width:min(100%, 260px); }
+#mobsTr div[style*="height"] { height:auto !important; }
+#mobsTr .mcontent, #mobsTr .footer { height:auto; min-height:0; }
+#mobsTr table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:823px) {
+#mobsTr div, #mobsTr p, #mobsTr fieldset, #mobsTr form, #mobsTr section, #mobsTr ol, #mobsTr ul, #mobsTr table { max-width:100%; box-sizing:border-box; }
+#mobsTr canvas, #mobsTr img, #mobsTr svg { max-width:100%; height:auto !important; }
+#mobsTr input[type=range], #mobsTr select { max-width:100%; min-width:0; }
+#mobsTr #slabRoot .sb_a11y, #mobsTr .stats, #mobsTr .footer { flex-wrap:wrap; }
+#mobsTr #slabRoot .sb_a11y > div, #mobsTr .stats > div, #mobsTr .footer > div { min-width:min(100%, 260px); }
+#mobsTr div[style*="height"] { height:auto !important; }
+#mobsTr .mcontent, #mobsTr .footer { height:auto; min-height:0; }
+#mobsTr table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobsTr button, #mobsTr input[type=button], #mobsTr input[type=submit], #mobsTr input[type=reset] { min-height:40px; }
+#mobsTr input[type=range] { height:28px; }
+#mobsTr input[type=checkbox], #mobsTr input[type=radio] { width:22px; height:22px; }
+#mobsTr select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobsTr .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobsTr .mob_a11ytop input[type=button], #mobsTr .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobsTr .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobsTr .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobsTr .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobsTr .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobsTr .mob_desc p { margin:0 0 9px 0; }
+#mobsTr .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobsTr -->
+</main>
+</body>
+</html>

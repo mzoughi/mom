@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<meta charset="UTF-8">
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations - Relative Motion - Boat in River</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,motion, kinematics, projectile,2d, acceleration, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="brivRoot$briv">
+<!-- ── Accessibility toolbar ── -->
+<div class="briv_a11y$briv" id="brivA11yBar$briv" role="toolbar" aria-label="Display options">
+<button type="button" class="briv_a11ybtn$briv" id="brivBtnHC$briv" onclick="brivA11y$briv.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="briv_a11ybtn$briv" id="brivBtnLM$briv" onclick="brivA11y$briv.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="briv_a11ybtn$briv" id="brivBtnCB$briv" onclick="brivA11y$briv.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="briv_a11ybtn$briv briv_a11yon$briv" id="brivBtnNR$briv" onclick="brivA11y$briv.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar$briv"><h3>Boat &amp; River — Relative Velocity</h3></div>
+<div class="mcontent$briv">
+<canvas id="brivCanvas$briv" style="margin:auto;display:block;border:1px solid #ccc" width="500" height="420"></canvas>
+</div>
+<div id="brivNarBar$briv" class="briv_narbar$briv" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar$briv">
+<input type="button" id="brivPlay$briv" value="Play"
+onclick="if(this.value=='Play'){brivSim$briv.pl();this.value='Pause';}else{this.value='Play';brivSim$briv.ps();}">
+<input type="button" value="Step" onclick="document.getElementById('brivPlay$briv').value='Play';brivSim$briv.step();">
+<input type="button" value="Restart" onclick="document.getElementById('brivPlay$briv').value='Play';brivSim$briv.rst();">
+</div>
+<div class="footer$briv">
+<div class="frow$briv">
+<label>River width (20-100 m):
+<input type="range" id="brivW$briv" min="20" max="100" value="50" step="5" onchange="brivSim$briv.rst()" oninput="document.getElementById('brivWVal$briv').textContent=this.value">
+<span id="brivWVal$briv">50</span> m
+</label>
+<label>Current speed (-4 to 4 m/s, ± = direction):
+<input type="range" id="brivVw$briv" min="-4" max="4" value="1.5" step="0.1" onchange="brivSim$briv.rst()" oninput="document.getElementById('brivVwVal$briv').textContent=this.value">
+<span id="brivVwVal$briv">1.5</span> m/s
+</label>
+</div>
+<div class="frow$briv">
+<label>Boat speed in still water (1-5 m/s):
+<input type="range" id="brivVb$briv" min="1" max="5" value="3" step="0.1" onchange="brivSim$briv.rst()" oninput="document.getElementById('brivVbVal$briv').textContent=this.value">
+<span id="brivVbVal$briv">3</span> m/s
+</label>
+<label>Heading angle (-70° to 70°, − left / + right):
+<input type="range" id="brivTh$briv" min="-70" max="70" value="0" step="1" onchange="brivSim$briv.rst()" oninput="document.getElementById('brivThVal$briv').textContent=this.value">
+<span id="brivThVal$briv">0</span>°
+</label>
+</div>
+<div class="fnote$briv">Heading angle is measured from "straight across" the river: negative points the bow left, positive points it right. Current speed can be positive (flows right) or negative (flows left) — aim the bow opposite the current to fight drift.</div>
+<div class="frow$briv">
+<label style="flex:2">Target landing point (-80 to 80 m from straight across, − left / + right):
+<input type="range" id="brivTgt$briv" min="-80" max="80" value="0" step="5" onchange="brivSim$briv.rst()" oninput="document.getElementById('brivTgtVal$briv').textContent=this.value">
+<span id="brivTgtVal$briv">0</span> m
+</label>
+</div>
+<div class="fnote$briv">The destination doesn't have to be straight across — set a target point on the far bank and the sim will report the heading needed to actually land on it.</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 503px; margin: 0; }
+#brivRoot$briv {
+--br-bg:      #ffffff;
+--br-water:   #1565c0;
+--br-boat:    #2e7d32;
+--br-result:  #cc2200;
+--br-text:    #111111;
+--br-struct:  #111111;
+--br-bank:    #6d4c26;
+--br-grass:   #4a8c3c;
+--br-toolbar-bg: #222;
+}
+#brivRoot$briv .briv_a11y$briv {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--br-toolbar-bg); flex-wrap:wrap; width:503px;
+}
+#brivRoot$briv .briv_a11ybtn$briv {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#brivRoot$briv .briv_a11ybtn$briv:hover { border-color:#00e8d0; color:#00e8d0; }
+#brivRoot$briv .briv_a11yon$briv { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#brivRoot$briv .briv_narbar$briv {
+width:503px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar$briv    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; }
+.tbar$briv h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent$briv { height:422px; }
+.bbar$briv    { height:50px; background-color:#df9; padding:10px; text-align:center; }
+.bbar$briv input[type=button] { margin:0 4px; padding:4px 14px; cursor:pointer; }
+.footer$briv  { width:503px; background-color:#fce4ec; padding:8px; font-size:.82rem; }
+.frow$briv    { display:flex; justify-content:space-between; gap:10px; margin-bottom:6px; width:100%; }
+.frow$briv label { width:auto; flex:1; }
+.frow$briv input[type=range] { width:120px; vertical-align:middle; }
+.fnote$briv   { width:100%; font-size:.72rem; color:#555; font-style:italic; margin-top:2px; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var brivA11y$briv = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--br-bg':'#000','--br-water':'#3fa9ff','--br-boat':'#ffff00','--br-result':'#ff4400','--br-text':'#fff','--br-struct':'#fff','--br-bank':'#c8a060','--br-grass':'#2e5c26','--br-toolbar-bg':'#000'},
+lm:{'--br-bg':'#f0f0f0','--br-water':'#1565c0','--br-boat':'#2e7d32','--br-result':'#aa1100','--br-text':'#000','--br-struct':'#000','--br-bank':'#6d4c26','--br-grass':'#5a9c4a','--br-toolbar-bg':'#444'},
+cb:{'--br-bg':'#fff','--br-water':'#0072b2','--br-boat':'#009e73','--br-result':'#d55e00','--br-text':'#000','--br-struct':'#333','--br-bank':'#a89060','--br-grass':'#5c8c3c','--br-toolbar-bg':'#222'}
+};
+var DEFS = {'--br-bg':'#fff','--br-water':'#1565c0','--br-boat':'#2e7d32','--br-result':'#cc2200','--br-text':'#111','--br-struct':'#111','--br-bank':'#6d4c26','--br-grass':'#4a8c3c','--br-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('brivNarBar$briv');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('brivBtnNR$briv');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('brivBtnNR$briv',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('brivBtnHC$briv',states.hc);
+styleBtn('brivBtnLM$briv',states.lm);
+styleBtn('brivBtnCB$briv',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('brivRoot$briv'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('brivNarBar$briv');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+},
+isHC:function(){ return states.hc; }
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════ -->
+<script>
+var brivGen = function() {
+var canvas  = document.getElementById('brivCanvas$briv');
+var ctx     = canvas.getContext('2d');
+var W       = canvas.width;   /* 500 */
+var H       = canvas.height;  /* 420 */
+var timer;
+var runFlag = 0;
+var FH = 14;
+var FRAMES_TOTAL = 100;
+var NOMINAL_T = 5; /* seconds used to visualise drift when the boat can't cross */
+/* physics state */
+var riverWidth, Vw, Vb, thetaDeg, theta, vbx, vby, rx, ry, crossPossible, Tcross, drift;
+var targetOffset;
+var scale, yTop, yBottom, startXPx;
+var progress, frameCount;
+var narrationEvery = 20;
+var arrived = false;
+function c(prop, def) { return brivA11y$briv.col(prop, def); }
+function readSliders() {
+riverWidth = parseFloat(document.getElementById('brivW$briv').value);
+Vw         = parseFloat(document.getElementById('brivVw$briv').value);
+Vb         = parseFloat(document.getElementById('brivVb$briv').value);
+thetaDeg   = parseFloat(document.getElementById('brivTh$briv').value);
+targetOffset = parseFloat(document.getElementById('brivTgt$briv').value);
+}
+function computePhysics() {
+theta = thetaDeg * Math.PI / 180;
+vbx = Vb * Math.sin(theta);
+vby = Vb * Math.cos(theta);
+rx = vbx + Vw;
+ry = vby;
+crossPossible = ry > 0.001;
+if (crossPossible) {
+Tcross = riverWidth / ry;
+drift  = rx * Tcross;
+} else {
+Tcross = null;
+drift  = rx * NOMINAL_T;
+}
+}
+function computeLayout() {
+var bandMaxPx = 175;
+var halfWidthPx = 175;
+var scaleY = bandMaxPx / riverWidth;
+var reqX = crossPossible ? Math.max(Math.abs(drift) * 1.4, Math.abs(targetOffset) * 1.3, riverWidth * 0.5) : Math.max(Math.abs(drift) * 1.4, Math.abs(targetOffset) * 1.3, 10);
+var scaleX = (2 * halfWidthPx) / reqX;
+scale = Math.min(scaleY, scaleX);
+yTop = 36;
+yBottom = yTop + riverWidth * scale;
+startXPx = 220;
+}
+/* Scan heading across its valid range and find (by linear interpolation)
+the heading whose landing offset matches the target. Works for any
+target point, not just straight across (target=0). */
+function computeHeadingForTarget(target) {
+if (Vb <= 0) return null;
+var steps = 340, loDeg = -85, hiDeg = 85;
+var prevTh = null, prevDiff = null, found = null;
+for (var i = 0; i <= steps; i++) {
+var th = loDeg + i * (hiDeg - loDeg) / steps;
+var rad = th * Math.PI / 180;
+var vy = Vb * Math.cos(rad);
+if (vy <= 0.001) { prevTh = null; prevDiff = null; continue; }
+var vx = Vb * Math.sin(rad) + Vw;
+var d = vx * (riverWidth / vy);
+var diff = d - target;
+if (prevDiff !== null && ((prevDiff <= 0 && diff >= 0) || (prevDiff >= 0 && diff <= 0))) {
+var frac = (diff === prevDiff) ? 0 : (0 - prevDiff) / (diff - prevDiff);
+found = prevTh + frac * (th - prevTh);
+break;
+}
+prevTh = th; prevDiff = diff;
+}
+return found;
+}
+/* ── decorative scenery, adapted from props_5UbA.js (tree/tree2/cloud/bird/person) ──
+Purely cosmetic: drawn first so the physics diagram always sits on top, and
+skipped entirely in high-contrast mode to keep that view as clean as possible. */
+function tree(x, y, h1, h2) {
+ctx.strokeStyle = '#550000'; ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(x + h2/5 - 1, y + h1);
+ctx.lineTo(x + h2/5 - 1, y + h2);
+ctx.lineTo(x + h2/2 - 3, y + h2);
+ctx.lineTo(x + h2/3, y + h1);
+ctx.closePath(); ctx.stroke();
+ctx.fillStyle = '#5F0000'; ctx.fill();
+ctx.fillStyle = '#006600';
+ctx.beginPath();
+ctx.arc(x, y, 9, 0, 2*Math.PI);
+ctx.arc(x+4, y+2, 7, 0, 2*Math.PI);
+ctx.arc(x+11, y-2, 7, 0, 2*Math.PI);
+ctx.arc(x+6, y-3, 7, 0, 2*Math.PI);
+ctx.arc(x+8, y+4, 7, 0, 2*Math.PI);
+ctx.arc(x-2, y+4, 7, 0, 2*Math.PI);
+ctx.fill();
+}
+function tree2(x, y, h1, h2) {
+ctx.strokeStyle = '#550000'; ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(x + h2/6, y + h1);
+ctx.lineTo(x + h2/5, y + h2 + h1);
+ctx.lineTo(x - h2/4, y + h2 + h1);
+ctx.lineTo(x - h2/5.5, y + h1);
+ctx.closePath(); ctx.stroke();
+ctx.fillStyle = '#5F0000'; ctx.fill();
+ctx.fillStyle = '#006600';
+ctx.beginPath();
+ctx.moveTo(x, y);
+ctx.lineTo(x-h1/5, y+h1/2); ctx.lineTo(x-h1/5+h1/10, y+h1/2); ctx.lineTo(x-h1/3, y+h1);
+ctx.lineTo(x+h1/3, y+h1); ctx.lineTo(x+h1/5-h1/10, y+h1/2); ctx.lineTo(x+h1/5, y+h1/2);
+ctx.closePath(); ctx.stroke(); ctx.fill();
+}
+function sceneCloud(x, y, s) {
+ctx.fillStyle = '#ffffff';
+ctx.beginPath();
+ctx.arc(x, y, 9*s, 0, 2*Math.PI);
+ctx.arc(x+4*s, y+2*s, 9*s, 0, 2*Math.PI);
+ctx.arc(x+11*s, y-2*s, 9*s, 0, 2*Math.PI);
+ctx.arc(x+8*s, y+4*s, 9*s, 0, 2*Math.PI);
+ctx.arc(x-2*s, y+4*s, 9*s, 0, 2*Math.PI);
+ctx.arc(x+13*s, y+2*s, 9*s, 0, 2*Math.PI);
+ctx.fill();
+}
+function sceneBird(bx, by, s, dirx) {
+var flapUp = (Math.floor(frameCount/4) % 2) === 0;
+ctx.strokeStyle = '#333'; ctx.lineWidth = 1.3;
+ctx.beginPath();
+var wy = flapUp ? -5*s : 4*s;
+ctx.moveTo(bx - dirx*8*s, by);
+ctx.lineTo(bx - dirx*3*s, by + wy);
+ctx.lineTo(bx, by);
+ctx.lineTo(bx + dirx*3*s, by + wy);
+ctx.lineTo(bx + dirx*8*s, by);
+ctx.stroke();
+}
+function scenePerson(color, x, y) {
+ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.arc(x, y-14, 3, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(x, y-12); ctx.lineTo(x-2, y);
+ctx.moveTo(x, y-12); ctx.lineTo(x+2, y);
+ctx.moveTo(x, y-12); ctx.lineTo(x-5, y-5);
+ctx.moveTo(x, y-12); ctx.lineTo(x+5, y-5);
+ctx.stroke();
+}
+/* small weed tuft growing away from the water at a bank; dir=-1 grows up (near bank), dir=1 grows down (far bank) */
+function weed(x, y, dir, color) {
+ctx.strokeStyle = color; ctx.lineWidth = 1.2;
+ctx.beginPath();
+ctx.moveTo(x-2, y); ctx.quadraticCurveTo(x-3, y+dir*6, x-1, y+dir*9);
+ctx.moveTo(x,   y); ctx.quadraticCurveTo(x,   y+dir*7, x+1, y+dir*10);
+ctx.moveTo(x+2, y); ctx.quadraticCurveTo(x+3, y+dir*6, x+2, y+dir*9);
+ctx.stroke();
+}
+function drawScenery() {
+if (brivA11y$briv.isHC()) return;
+/* grass strips along both banks, drawn under the (later) bank line */
+var grassCol = c('--br-grass', '#4a8c3c');
+ctx.fillStyle = grassCol;
+ctx.fillRect(0, Math.max(0, yTop - 16), W, 16);
+ctx.fillRect(0, yBottom, W, Math.min(H - yBottom, 30));
+/* weed tufts along both banks */
+for (var wx = 14; wx < W - 10; wx += 22) {
+weed(wx, yTop, -1, grassCol);
+weed(wx + 11, yBottom, 1, grassCol);
+}
+var skyY = Math.max(9, yTop - 20);
+sceneCloud(65, skyY, 0.65);
+sceneCloud(310, skyY - 3, 0.55);
+/* birds roam freely across the whole scene, not just a thin sky strip */
+var birds = [
+{ baseY: 14,  speed: 1.3, dir: 1,  s: 0.55 },
+{ baseY: 70,  speed: 0.9, dir: -1, s: 0.5  },
+{ baseY: 160, speed: 1.1, dir: 1,  s: 0.5  },
+{ baseY: 210, speed: 0.7, dir: -1, s: 0.45 }
+];
+for (var k = 0; k < birds.length; k++) {
+var b = birds[k];
+var bx = b.dir > 0 ? (frameCount * b.speed) % (W + 60) - 30
+ : W - ((frameCount * b.speed) % (W + 60) - 30);
+var by = b.baseY + 6 * Math.sin((frameCount + k*17) / 14);
+sceneBird(bx, by, b.s, b.dir);
+}
+var nearXs = [38, 130, 320, 400, 472];
+for (var i = 0; i < nearXs.length; i++) {
+if (Math.abs(nearXs[i] - startXPx) < 32) continue;
+(i % 2 === 0 ? tree : tree2)(nearXs[i], yTop - 14, 8, 15);
+}
+var targetXPxScenery = startXPx + targetOffset * scale;
+var farXs = [38, 150, 260, 380, 460];
+for (var j = 0; j < farXs.length; j++) {
+if (Math.abs(farXs[j] - targetXPxScenery) < 30) continue;
+(j % 2 === 0 ? tree2 : tree)(farXs[j], yBottom, 6, 12);
+}
+scenePerson(c('--br-struct', '#111'), startXPx - 22, yTop);
+scenePerson(c('--br-struct', '#111'), targetXPxScenery + 22, yBottom);
+}
+/* light fill for the water itself, under the current chevrons */
+function drawWaterFill() {
+if (brivA11y$briv.isHC()) return;
+ctx.save();
+ctx.globalAlpha = 0.28;
+ctx.fillStyle = c('--br-water', '#1565c0');
+ctx.fillRect(0, yTop, W, yBottom - yTop);
+ctx.restore();
+}
+/* draw water flow chevrons across the band, pointing whichever way the current flows */
+function drawCurrent() {
+ctx.strokeStyle = c('--br-water', '#1565c0');
+ctx.lineWidth = 1.5;
+var dir = Vw >= 0 ? 1 : -1;
+for (var yy = yTop + 14; yy < yBottom - 6; yy += 26) {
+for (var xx = 20; xx < W - 20; xx += 55) {
+var x0 = xx, x1 = xx + 12*dir, xm = xx + 8*dir;
+ctx.beginPath();
+ctx.moveTo(x0, yy);
+ctx.lineTo(x1, yy);
+ctx.lineTo(xm, yy - 4);
+ctx.moveTo(x1, yy);
+ctx.lineTo(xm, yy + 4);
+ctx.stroke();
+}
+}
+}
+function drawBanks() {
+ctx.strokeStyle = c('--br-bank', '#6d4c26');
+ctx.lineWidth = 4;
+ctx.beginPath(); ctx.moveTo(0, yTop); ctx.lineTo(W, yTop); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(0, yBottom); ctx.lineTo(W, yBottom); ctx.stroke();
+ctx.fillStyle = c('--br-text', '#111');
+ctx.font = '11px monospace'; ctx.textAlign = 'left';
+ctx.fillText('near bank', 6, yTop - 6);
+ctx.fillText('far bank', 6, yBottom + 14);
+}
+function drawBoatAndPath(worldX, worldY) {
+var bx = startXPx + worldX * scale;
+var by = yTop + worldY * scale;
+/* start marker */
+ctx.fillStyle = c('--br-text', '#111');
+ctx.beginPath(); ctx.arc(startXPx, yTop, 3, 0, 2*Math.PI); ctx.fill();
+ctx.font = '11px monospace';
+ctx.fillText('start', startXPx - 12, yTop - 6);
+/* straight-across reference (dashed) */
+ctx.save();
+ctx.setLineDash([4,4]);
+ctx.strokeStyle = '#999';
+ctx.beginPath(); ctx.moveTo(startXPx, yTop); ctx.lineTo(startXPx, yBottom); ctx.stroke();
+ctx.restore();
+/* traced path: dashed trail from start to the boat's CURRENT position, growing as it moves */
+ctx.save();
+ctx.setLineDash([2,3]);
+ctx.strokeStyle = c('--br-result', '#cc2200');
+ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(startXPx, yTop); ctx.lineTo(bx, by); ctx.stroke();
+ctx.restore();
+/* target landing point on the far bank (flag marker) */
+var targetXPx = startXPx + targetOffset * scale;
+ctx.strokeStyle = c('--br-struct', '#111'); ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.moveTo(targetXPx, yBottom); ctx.lineTo(targetXPx, yBottom - 16); ctx.stroke();
+ctx.fillStyle = c('--br-result', '#cc2200');
+ctx.beginPath();
+ctx.moveTo(targetXPx, yBottom - 16);
+ctx.lineTo(targetXPx + 10, yBottom - 12);
+ctx.lineTo(targetXPx, yBottom - 8);
+ctx.closePath(); ctx.fill();
+/* landing marker only appears once the boat has actually arrived */
+if (arrived) {
+ctx.fillStyle = c('--br-result', '#cc2200');
+ctx.beginPath(); ctx.arc(bx, by, 3, 0, 2*Math.PI); ctx.fill();
+}
+/* canoe icon: pointed hull (bow/stern) oriented along heading relative to water */
+ctx.save();
+ctx.translate(bx, by);
+ctx.rotate(theta);
+var hullCol = c('--br-boat', '#2e7d32');
+ctx.fillStyle = hullCol; ctx.strokeStyle = hullCol; ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(0, -11);
+ctx.quadraticCurveTo(4, -4, 3, 4);
+ctx.quadraticCurveTo(2, 9, 0, 11);
+ctx.quadraticCurveTo(-2, 9, -3, 4);
+ctx.quadraticCurveTo(-4, -4, 0, -11);
+ctx.closePath();
+ctx.fill(); ctx.stroke();
+ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 0.8;
+ctx.beginPath(); ctx.moveTo(-2.4, -2); ctx.lineTo(2.4, -2); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(-2.2, 2.5); ctx.lineTo(2.2, 2.5); ctx.stroke();
+ctx.restore();
+}
+/* small vector-addition inset: water + boat(rel water) = resultant.
+Placed in the destination area (bottom-right), alongside the readouts. */
+var VP_X = 340, VP_Y = 240, VP_W = 154, VP_H = 168;
+function drawVectorInset() {
+var ox = VP_X + VP_W/2, oy = VP_Y + 62;
+var vscale = 7.5; /* px per m/s, sized so max slider values still fit the box */
+ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+ctx.strokeRect(VP_X, VP_Y, VP_W, VP_H);
+ctx.fillStyle = c('--br-text', '#111');
+ctx.font = '10px monospace'; ctx.textAlign = 'center';
+ctx.fillText('vector sum', ox, VP_Y + 12);
+function arrow(x1,y1,x2,y2,color){
+ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+var ang = Math.atan2(y2-y1, x2-x1);
+ctx.beginPath();
+ctx.moveTo(x2,y2);
+ctx.lineTo(x2 - 7*Math.cos(ang-0.4), y2 - 7*Math.sin(ang-0.4));
+ctx.lineTo(x2 - 7*Math.cos(ang+0.4), y2 - 7*Math.sin(ang+0.4));
+ctx.closePath(); ctx.fill();
+}
+/* water vector from origin */
+var wx = ox + Vw*vscale, wy = oy;
+arrow(ox, oy, wx, wy, c('--br-water','#1565c0'));
+/* boat-relative-water vector, tip to tail from water tip */
+var vbxTip = wx + vbx*vscale, vbyTip = wy - vby*vscale;
+arrow(wx, wy, vbxTip, vbyTip, c('--br-boat','#2e7d32'));
+/* resultant, origin to final tip */
+arrow(ox, oy, ox + rx*vscale, oy - ry*vscale, c('--br-result','#cc2200'));
+ctx.font = '9px monospace'; ctx.textAlign = 'left';
+ctx.fillStyle = c('--br-water','#1565c0'); ctx.fillText('current', VP_X + 6, VP_Y + VP_H - 34);
+ctx.fillStyle = c('--br-boat','#2e7d32');  ctx.fillText('boat hdg', VP_X + 6, VP_Y + VP_H - 20);
+ctx.fillStyle = c('--br-result','#cc2200'); ctx.fillText('resultant', VP_X + 6, VP_Y + VP_H - 6);
+}
+function drawReadouts(elapsed) {
+var x = 6, w = VP_X - 14; /* readout column stops just before the vector panel */
+var Rmag = Math.sqrt(rx*rx + ry*ry);
+var Rang = Math.atan2(rx, ry) * 180 / Math.PI;
+ctx.fillStyle = c('--br-text', '#111');
+ctx.font = '12px monospace'; ctx.textAlign = 'left';
+ctx.fillText('Resultant: ' + Rmag.toFixed(2) + ' m/s @ ' + Rang.toFixed(1) + '\u00B0', x, 258);
+if (crossPossible) {
+var miss = drift - targetOffset;
+ctx.fillText('Cross time: ' + Tcross.toFixed(1) + ' s', x, 276);
+ctx.fillText('Target: ' + targetOffset.toFixed(0) + ' m   Miss: ' + Math.abs(miss).toFixed(1) + 'm ' + (miss >= 0 ? 'R' : 'L'), x, 294);
+ctx.fillText('Elapsed: ' + elapsed.toFixed(1) + '/' + Tcross.toFixed(1) + ' s', x, 312);
+} else {
+ctx.fillStyle = c('--br-result', '#cc2200');
+ctx.font = 'bold 12px monospace';
+ctx.fillText('No forward progress \u2014', x, 276);
+ctx.fillText('boat can\'t reach the far bank.', x, 294);
+}
+var reqAngle = computeHeadingForTarget(targetOffset);
+ctx.fillStyle = c('--br-text', '#111');
+ctx.font = '11px monospace';
+if (reqAngle !== null) {
+ctx.fillText('Heading to hit target: ' + reqAngle.toFixed(1) + '\u00B0', x, 335);
+} else {
+ctx.fillText('Target unreachable at this', x, 335);
+ctx.fillText('boat speed / current.', x, 350);
+}
+}
+function drawFrame(elapsed, worldX, worldY) {
+ctx.clearRect(0, 0, W, H);
+ctx.fillStyle = c('--br-bg', '#fff');
+ctx.fillRect(0, 0, W, H);
+drawScenery();
+drawWaterFill();
+drawCurrent();
+drawBanks();
+drawBoatAndPath(worldX, worldY);
+drawVectorInset();
+drawReadouts(elapsed);
+}
+function currentWorldPos() {
+var p = Math.min(progress, 1);
+if (crossPossible) {
+return { x: p * drift, y: p * riverWidth, t: p * Tcross };
+} else {
+return { x: p * drift, y: 0, t: p * NOMINAL_T };
+}
+}
+function sceneNarration(final) {
+var pos = currentWorldPos();
+var msg = '';
+if (final && crossPossible) {
+var miss = drift - targetOffset;
+msg = 'The boat reached the far bank after ' + Tcross.toFixed(1) + ' seconds, ' +
+'landing ' + Math.abs(drift).toFixed(1) + ' m to the ' + (drift >= 0 ? 'right' : 'left') + ' of straight-across. ' +
+(Math.abs(miss) < 1 ? 'That\'s right on target!' :
+'It missed the target by ' + Math.abs(miss).toFixed(1) + ' m to the ' + (miss >= 0 ? 'right' : 'left') + '.');
+} else if (final && !crossPossible) {
+msg = 'The boat could not make progress across the river with this heading and speed \u2014 ' +
+'try reducing the heading angle or increasing the boat speed.';
+} else if (crossPossible) {
+var pct = Math.round(Math.min(progress,1)*100);
+msg = 'The boat is ' + pct + '% of the way across, having drifted ' +
+Math.abs(pos.x).toFixed(1) + ' m to the ' + (pos.x >= 0 ? 'right' : 'left') + ' so far.';
+} else {
+msg = 'The boat is being carried sideways by the current without making progress toward the far bank.';
+}
+brivA11y$briv.narrate(msg);
+}
+function physicsStep() {
+if (arrived) return;
+progress += 1 / FRAMES_TOTAL;
+frameCount++;
+if (progress >= 1) {
+progress = 1;
+arrived = true;
+}
+if (frameCount % narrationEvery === 0 || arrived) {
+sceneNarration(arrived);
+}
+}
+function renderCurrent() {
+var pos = currentWorldPos();
+drawFrame(pos.t, pos.x, pos.y);
+}
+function runMotion() {
+physicsStep();
+renderCurrent();
+if (runFlag === 1 && !arrived) {
+timer = window.setTimeout(runMotion, 40);
+} else {
+runFlag = 0;
+var pb = document.getElementById('brivPlay$briv');
+if (pb) pb.value = 'Play';
+}
+}
+function pl() {
+window.clearTimeout(timer);
+if (arrived) return;
+runFlag = 1;
+runMotion();
+}
+function ps() {
+window.clearTimeout(timer);
+runFlag = 0;
+}
+function step() {
+window.clearTimeout(timer);
+runFlag = 0;
+physicsStep();
+renderCurrent();
+sceneNarration(arrived);
+}
+function rst() {
+window.clearTimeout(timer);
+runFlag = 0;
+readSliders();
+computePhysics();
+computeLayout();
+progress = 0;
+frameCount = 0;
+arrived = false;
+renderCurrent();
+brivA11y$briv.narrate('Ready. River width ' + riverWidth + ' m, current ' + Vw + ' m/s, boat speed ' + Vb + ' m/s, heading ' + thetaDeg + '\u00B0, target ' + targetOffset + ' m. Press Play.');
+}
+rst();
+return { pl:pl, ps:ps, step:step, rst:rst };
+};
+var brivSim$briv = new brivGen();
+</script>
+<script>
+brivA11y$briv.init();
+</script>
+
+</body>
+</html>

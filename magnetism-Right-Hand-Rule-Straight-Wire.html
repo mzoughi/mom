@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Right-Hand Rule -- Field of a Straight Current</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, magnetism, magnetic field, physics simulation, lesson, scientific">
+<meta name="description" content="Right-Hand Rule -- Field of a Straight Current -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="rhroot" role="region" aria-label="Right-hand rule: magnetic field around a straight current">
+<!-- Accessibility toolbar -->
+<div class="rh_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="rh_a11ybtn" id="rhBtnHC" onclick="rightHandSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rh_a11ybtn" id="rhBtnLM" onclick="rightHandSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rh_a11ybtn" id="rhBtnCB" onclick="rightHandSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rh_a11ybtn rh_a11yon" id="rhBtnNarr" onclick="rightHandSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="rh_header">
+<p class="rh_h1">Right-Hand Rule -- Field of a Straight Current</p>
+<p class="rh_sub">Thumb along the current, fingers curl along B -- move the field sensor around the wire</p>
+</div>
+<!-- Instrument grid -->
+<div class="rh_instrument">
+<!-- Diagram panel -->
+<div class="rh_diagpanel">
+<div class="rh_diaglabel">
+<span class="rh_viewtgl" role="group" aria-label="Choose view">
+<button type="button" class="rh_viewbtn rh_viewon" id="rhView3D" onclick="rightHandSim.setView('3d')" aria-pressed="true">3D VIEW</button>
+<button type="button" class="rh_viewbtn" id="rhViewTop" onclick="rightHandSim.setView('top')" aria-pressed="false">TOP VIEW</button>
+</span>
+<span id="rhCaption">wire vertical · board horizontal</span>
+</div>
+<canvas id="rhCanvas" width="560" height="440" tabindex="0" role="img" aria-label="Straight wire with field lines and a field sensor" aria-describedby="rhDesc"></canvas>
+<p id="rhDesc" class="rh_sronly">A vertical wire through a horizontal board, with circular field lines and a movable sensor arrow.</p>
+<div class="rh_hoverbar" id="rhHover">Drag the sensor arrow, or click the map and use the arrow keys to move it</div>
+<div class="rh_dispbar">
+<label class="rh_chk"><input type="checkbox" id="rhShowLines" checked onchange="rightHandSim.setShow()"> Field lines</label>
+<label class="rh_chk"><input type="checkbox" id="rhShowHand" checked onchange="rightHandSim.setShow()"> Right hand</label>
+<label class="rh_chk"><input type="checkbox" id="rhScaleArrow" onchange="rightHandSim.setShow()"> Sensor arrow length ∝ |B|</label>
+</div>
+</div>
+<!-- Right column -->
+<div class="rh_rightcol">
+<!-- Current -->
+<div class="rh_panel" role="group" aria-labelledby="rhCurHd">
+<div class="rh_paneltitle" id="rhCurHd">Current in the wire</div>
+<div class="rh_panelbody">
+<div class="rh_btnrow2" role="group" aria-label="Current direction">
+<button type="button" class="rh_btn" id="rhUp" onclick="rightHandSim.setDir(0)" aria-pressed="true">Up ↑</button>
+<button type="button" class="rh_btn" id="rhDown" onclick="rightHandSim.setDir(1)" aria-pressed="false">Down ↓</button>
+</div>
+<div class="rh_ctrlhdr"><label for="rhI" class="rh_ctrlname">Current I</label><span class="rh_sval" id="rhIval">10.0 A</span></div>
+<input type="range" id="rhI" min="1" max="20" step="0.5" value="10" aria-label="Current in amperes" oninput="rightHandSim.setI(this.value)">
+</div>
+</div>
+<!-- Sensor -->
+<div class="rh_panel" role="group" aria-labelledby="rhSenHd">
+<div class="rh_paneltitle" id="rhSenHd">Field sensor (on the board)</div>
+<div class="rh_panelbody">
+<div class="rh_srow"><label for="rhSx" class="rh_slbl">x</label>
+<input type="range" id="rhSx" min="-22" max="22" step="1" value="10" aria-label="Sensor x position in centimetres, positive to the right" oninput="rightHandSim.setSensor('x',this.value)">
+<span class="rh_sval" id="rhSxval">+10 cm</span></div>
+<div class="rh_srow"><label for="rhSz" class="rh_slbl">z</label>
+<input type="range" id="rhSz" min="-18" max="18" step="1" value="0" aria-label="Sensor z position in centimetres, positive toward the front" oninput="rightHandSim.setSensor('z',this.value)">
+<span class="rh_sval" id="rhSzval">+0 cm</span></div>
+<p class="rh_hint">x: to the right · z: toward the front (toward you). The sensor stays at least 2 cm from the wire.</p>
+</div>
+</div>
+<!-- Readout -->
+<div class="rh_panel" role="region" aria-labelledby="rhReadHd">
+<div class="rh_paneltitle" id="rhReadHd">Readout at the sensor</div>
+<div class="rh_rinner">
+<div class="rh_rrow"><span class="rh_rkey">Distance r</span><span class="rh_rval" id="rhR">--</span></div>
+<div class="rh_rrow"><span class="rh_rkey" style="text-transform:none">|B| = μ₀I/(2πr)</span><span class="rh_rval rh_hi" id="rhB">--</span></div>
+<div class="rh_rrow"><span class="rh_rkey">(Bx, Bz)</span><span class="rh_rval" id="rhBxz">--</span></div>
+<div class="rh_rrow"><span class="rh_rkey">B points</span><span class="rh_rval" id="rhBdir">--</span></div>
+<div class="rh_rrow"><span class="rh_rkey">Circulation</span><span class="rh_rval" id="rhCirc">--</span></div>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="rh_formulastrip">
+<span class="rh_formulatxt">Right-hand rule: thumb along I, fingers curl along B &nbsp;|&nbsp; B = μ₀I / (2πr), μ₀ = 4π×10⁻⁷ T·m/A &nbsp;|&nbsp; B is tangent to circles around the wire &nbsp;|&nbsp; ⊙ current toward you · ⊗ away</span>
+<span class="rh_formulalive" id="rhLive">--</span>
+</div>
+</div><!-- instrument -->
+<div id="rhNarrBox" class="rh_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="rhNarration">--</span></div>
+<div id="rhSrAnnounce" class="rh_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="rh_credit">Simulation by Taha Mzoughi © 2025</p>
+</div><!-- #rhroot -->
+
+
+<style>
+
+/* ════════ All simulator rules scoped to #rhroot ════════ */
+#rhroot {
+--rh-chassis:#1a1c1f; --rh-panel:#22262b; --rh-panel-hi:#2c3138; --rh-panel-lo:#14161a;
+--rh-border:#3a4048; --rh-border-hi:#525c66; --rh-text:#c8d0d8; --rh-dim:#8a94a3; --rh-bright:#e8eef5;
+--rh-accent:#e8a020; --rh-green:#3ad08f; --rh-val:#ffdd66;
+--rh-focus:#e8a020; --rh-nar-bg:#2a2410; --rh-nar-border:#e0b040; --rh-nar-text:#f0e2b8;
+background:var(--rh-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--rh-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#rhroot.rh_lm {
+--rh-chassis:#e9edf1; --rh-panel:#ffffff; --rh-panel-hi:#f1f4f7; --rh-panel-lo:#f4f6f9;
+--rh-border:#c3cad3; --rh-border-hi:#9aa3ae; --rh-text:#1d232a; --rh-dim:#556070; --rh-bright:#000000;
+--rh-accent:#a8620a; --rh-green:#12805a; --rh-val:#8a4a00;
+--rh-focus:#a8620a; --rh-nar-bg:#ffefc0; --rh-nar-border:#e0b040; --rh-nar-text:#333333;
+background-image:none;
+}
+#rhroot.rh_hc {
+--rh-chassis:#000000; --rh-panel:#000000; --rh-panel-hi:#111111; --rh-panel-lo:#000000;
+--rh-border:#ffffff; --rh-border-hi:#ffffff; --rh-text:#ffffff; --rh-dim:#e0e0e0; --rh-bright:#ffffff;
+--rh-accent:#ffd700; --rh-green:#00ff88; --rh-val:#ffff00;
+--rh-focus:#ffff00; --rh-nar-bg:#000000; --rh-nar-border:#ffd700; --rh-nar-text:#ffffff;
+background-image:none;
+}
+#rhroot.rh_hc .rh_panel, #rhroot.rh_hc .rh_diagpanel { border-width:2px; }
+#rhroot *, #rhroot *::before, #rhroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#rhroot input:focus-visible, #rhroot button:focus-visible { outline:2px solid var(--rh-focus); outline-offset:2px; }
+/* toolbar */
+#rhroot .rh_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#rhroot .rh_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--rh-panel-hi); border:1px solid var(--rh-border-hi); color:var(--rh-dim); }
+#rhroot .rh_a11ybtn:hover { border-color:var(--rh-accent); color:var(--rh-accent); }
+#rhroot .rh_a11yon { background:rgba(58,208,143,.14); border-color:var(--rh-green); color:var(--rh-green); font-weight:bold; }
+/* header */
+#rhroot .rh_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#rhroot .rh_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--rh-accent); text-align:center; }
+#rhroot .rh_sub { font-size:.7rem; color:var(--rh-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#rhroot .rh_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--rh-panel); border:1px solid var(--rh-border); border-radius:4px; color:var(--rh-dim); }
+/* grid */
+#rhroot .rh_instrument { display:grid; grid-template-columns:1fr auto; gap:12px; width:100%; }
+#rhroot .rh_diagpanel { background:var(--rh-panel); border:1px solid var(--rh-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; align-self:start; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#rhroot .rh_diaglabel { background:var(--rh-panel-lo); border-bottom:1px solid var(--rh-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--rh-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#rhroot #diagLabel { color:var(--rh-accent); font-weight:bold; }
+#rhroot .rh_diagnote { text-transform:none; letter-spacing:.02em; }
+#rhroot #fieldCanvas { display:block; max-width:100%; cursor:crosshair; margin:0 auto; }
+#rhroot .rh_hoverbar { background:var(--rh-panel-lo); border-top:1px solid var(--rh-border); padding:6px 12px; font-family:monospace; font-size:.74rem; color:var(--rh-val); min-height:28px; }
+/* right column */
+#rhroot .rh_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#rhroot .rh_panel { background:var(--rh-panel); border:1px solid var(--rh-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#rhroot .rh_paneltitle { background:var(--rh-panel-lo); border-bottom:1px solid var(--rh-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--rh-dim); }
+#rhroot .rh_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#rhroot .rh_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#rhroot .rh_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--rh-panel-hi); border:1px solid var(--rh-border-hi); color:var(--rh-dim); border-radius:3px; }
+#rhroot .rh_srcbtn:hover { border-color:var(--rh-accent); color:var(--rh-text); }
+#rhroot .rh_srcon { background:var(--rh-accent); color:#111; border-color:var(--rh-accent); font-weight:bold; }
+#rhroot .rh_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#rhroot .rh_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--rh-dim); text-transform:uppercase; }
+#rhroot .rh_srow { display:flex; align-items:center; gap:6px; }
+#rhroot .rh_slbl { font-size:.72rem; color:var(--rh-dim); min-width:14px; font-weight:600; }
+#rhroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--rh-panel-lo); border:1px solid var(--rh-border); }
+#rhroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--rh-accent); border:2px solid var(--rh-panel); cursor:pointer; }
+#rhroot .rh_sval { font-family:monospace; font-size:.74rem; color:var(--rh-val); min-width:56px; text-align:right; }
+#rhroot .rh_hint { font-size:.66rem; color:var(--rh-dim); line-height:1.4; }
+#rhroot .rh_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#rhroot .rh_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--rh-panel-lo); border:1px solid var(--rh-border); border-radius:3px; }
+#rhroot .rh_rkey { font-family:monospace; font-size:.6rem; color:var(--rh-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#rhroot .rh_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--rh-text); }
+#rhroot .rh_hi { color:var(--rh-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#rhroot .rh_formulastrip { grid-column:1 / 3; background:var(--rh-panel-lo); border:1px solid var(--rh-border); border-radius:4px; padding:7px 14px; }
+#rhroot .rh_formulatxt { font-family:monospace; font-size:.66rem; color:var(--rh-dim); letter-spacing:.04em; }
+#rhroot .rh_formulatxt kbd { border:1px solid var(--rh-border-hi); border-radius:2px; padding:0 4px; color:var(--rh-accent); font-family:monospace; }
+#rhroot .rh_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--rh-nar-bg); border-left:4px solid var(--rh-nar-border); font-size:.82rem; color:var(--rh-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#rhroot .rh_credit { font-size:.62rem; color:var(--rh-dim); text-align:center; }
+#rhroot .rh_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* extra controls shared by the magnetism sims */
+#rhroot .rh_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--rh-text); cursor:pointer; }
+#rhroot .rh_chk input { accent-color:var(--rh-accent); width:14px; height:14px; }
+#rhroot .rh_dispbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:6px 12px; background:var(--rh-panel-lo); border-top:1px solid var(--rh-border); }
+#rhroot select { width:100%; background:var(--rh-panel-hi); color:var(--rh-text); border:1px solid var(--rh-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#rhroot .rh_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#rhroot .rh_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#rhroot .rh_btn { padding:5px 3px; font-family:monospace; font-size:.62rem; letter-spacing:.04em; cursor:pointer; background:var(--rh-panel-hi); border:1px solid var(--rh-border-hi); color:var(--rh-text); border-radius:3px; text-transform:uppercase; }
+#rhroot .rh_btn:hover { border-color:var(--rh-accent); }
+#rhroot .rh_btn:disabled { opacity:.4; cursor:default; }
+#rhroot .rh_warn { color:#e0605a; border-color:#a04040; }
+#rhroot.rh_lm .rh_warn { color:#b02020; border-color:#c06060; }
+#rhroot .rh_sub2 { border-top:1px dashed var(--rh-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#rhroot .rh_maghead { display:flex; align-items:center; gap:6px; font-family:monospace; font-size:.72rem; font-weight:bold; color:var(--rh-text); }
+#rhroot .rh_magdot { width:11px; height:11px; border-radius:2px; display:inline-block; border:1px solid var(--rh-border-hi); }
+#rhroot .rh_derived { font-family:monospace; font-size:.68rem; color:var(--rh-dim); }
+#rhroot .rh_derived b { color:var(--rh-val); font-weight:bold; }
+/* question section below the simulator */
+.rh_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.rh_qwrap ol { padding-left:24px; }
+.rh_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+
+#rhroot .rh_viewtgl { display:flex; }
+#rhroot .rh_viewbtn { padding:3px 10px; font-size:.62rem; font-family:monospace; letter-spacing:.08em; cursor:pointer; background:var(--rh-panel-hi); border:1px solid var(--rh-border-hi); color:var(--rh-dim); }
+#rhroot .rh_viewbtn:first-child { border-radius:3px 0 0 3px; }
+#rhroot .rh_viewbtn:last-child { border-radius:0 3px 3px 0; border-left:none; }
+#rhroot .rh_viewon { background:var(--rh-accent); color:#111; border-color:var(--rh-accent); font-weight:bold; }
+#rhroot #rhCaption { color:var(--rh-accent); text-transform:none; }
+#rhroot .rh_btnon { background:var(--rh-accent); color:#111; border-color:var(--rh-accent); font-weight:bold; }
+#rhroot #rhCanvas:focus-visible { outline:2px solid var(--rh-focus); outline-offset:-2px; }
+#rhroot .rh_formulalive { font-family:monospace; font-size:.68rem; color:var(--rh-accent); display:block; margin-top:4px; }
+/* ════════ Mobile-friendly layout (same template as the Hall effect sim) ════════ */
+#rhroot .rh_instrument { grid-template-columns:minmax(0,1fr) 250px; }
+#rhroot .rh_diagpanel { min-width:0; }
+#rhroot canvas#rhCanvas { display:block; width:100%; max-width:560px; height:auto; margin:0 auto; flex:none; }
+#rhroot .rh_formulatxt { line-height:1.6; }
+#rhroot .rh_hoverbar { line-height:1.4; }
+#rhroot select:focus-visible { outline:2px solid var(--rh-focus); outline-offset:2px; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#rhroot .rh_instrument { grid-template-columns:minmax(0,1fr); }
+#rhroot .rh_instrument > * { grid-column:auto; grid-row:auto; }
+#rhroot .rh_rightcol { width:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#rhroot input[type=range] { height:8px; }
+#rhroot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#rhroot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#rhroot button, #rhroot input[type=button] { min-height:40px; }
+#rhroot select { min-height:36px; font-size:.9rem; }
+#rhroot input[type=checkbox] { width:22px; height:22px; }
+#rhroot .rh_panelbody { gap:10px; }
+}
+@media (max-width:560px) {
+#rhroot { padding:10px 6px 14px; }
+#rhroot .rh_rrow { flex-wrap:wrap; }
+#rhroot .rh_rkey { white-space:normal; }
+#rhroot .rh_hoverbar { font-size:.68rem; }
+}
+
+/* ════ layout by the width the sim actually gets (in a MOM column it can be much narrower than the window);
+   the @media rules above stay as the fallback for browsers without container queries ════ */
+#rhroot { container-type:inline-size; }
+@container (max-width:820px) {
+#rhroot .rh_instrument { grid-template-columns:minmax(0,1fr); }
+#rhroot .rh_instrument > * { grid-column:auto; grid-row:auto; }
+#rhroot .rh_rightcol { width:auto; }
+}
+@container (max-width:560px) {
+#rhroot { padding:10px 6px 14px; }
+#rhroot .rh_rrow { flex-wrap:wrap; }
+#rhroot .rh_rkey { white-space:normal; }
+#rhroot .rh_hoverbar { font-size:.68rem; }
+}
+</style>
+<script>
+var rightHandSim = function() {
+var ROOT = document.getElementById('rhroot');
+var canvas = document.getElementById('rhCanvas');
+var ctx = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var DPR = window.devicePixelRatio || 1;   /* sharp on phones: draw at device resolution, CSS scales the canvas to the panel */
+canvas.width = CW*DPR; canvas.height = CH*DPR; ctx.scale(DPR, DPR);
+function el(id) { return document.getElementById(id); }
+function set(id, t) { var e = el(id); if (e) e.textContent = t; }
+/* ── State ── */
+var fl = 0;                 /* 0 = current up, 1 = current down (as in the hand drawing) */
+var I = 10;                 /* A */
+var sensor = { x: 10, z: 0 };   /* cm, on the board: x to the right, z toward the viewer */
+var view = '3d';
+var showLines = true, showHand = true, scaleArrow = false;
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true;
+var dragging = false;
+/* ── Geometry ── */
+var CX = 280;                          /* wire position on screen */
+var S3 = 10, K3 = 0.35, BOARD_Y = 340; /* 3D view: 10 px per cm across, depth foreshortened by K3 */
+var BX = 25, BZ = 20;                  /* board half-size (cm) */
+var ST = 9.5, TOP_CY = 220;            /* top view: px per cm, centre */
+var RMIN = 2;                          /* sensor kept at least 2 cm from the wire */
+function proj(x, z) { return view === '3d' ? [CX + x*S3, BOARD_Y + z*S3*K3] : [CX + x*ST, TOP_CY + z*ST]; }
+function unproj(X, Y) { return view === '3d' ? [(X - CX)/S3, (Y - BOARD_Y)/(S3*K3)] : [(X - CX)/ST, (Y - TOP_CY)/ST]; }
+/* ── Physics: B = mu0 I /(2 pi r), tangent to circles around the wire.
+   Current up (+y): B is along y-hat x r-hat, i.e. (Bx, Bz) proportional to (z, -x)/r
+   = counterclockwise seen from above. Current down reverses it.                     */
+function fieldAt(xcm, zcm) {
+var r = Math.sqrt(xcm*xcm + zcm*zcm)/100;          /* m */
+if (r < 1e-6) return { Bx:0, Bz:0, B:0, r:0 };
+var B = 2e-7*I/r, sgn = (fl === 0) ? 1 : -1;
+var ux = sgn*zcm/(r*100), uz = -sgn*xcm/(r*100);
+return { Bx:B*ux, Bz:B*uz, B:B, r:r };
+}
+/* ── Palette ── */
+function pal() {
+var p;
+if (hcMode) p = { bg:'#000000', board:'rgba(255,255,255,0.08)', boardEdge:'#ffffff', line:'#ffffff', lineHead:'#ffffff', wire:'#ffb060', wireEdge:'#ffffff', text:'#ffffff', dim:'#e0e0e0',
+  sensHead:'#ff5555', sensTail:'#bbbbbb', sensRim:'#ffffff', curr:'#ffd700', grid:'#262626', out:'#66aaff', into:'#ff5555', sym:'#000000' };
+else if (lightMode) p = { bg:'#ffffff', board:'rgba(170,190,215,0.35)', boardEdge:'#7a8696', line:'rgba(31,95,192,0.8)', lineHead:'#1f5fc0', wire:'#c87533', wireEdge:'#6e3b12', text:'#1d232a', dim:'#556070',
+  sensHead:'#c0262a', sensTail:'#7a828c', sensRim:'#1d232a', curr:'#a8620a', grid:'#eef1f4', out:'#1f5fc0', into:'#c0262a', sym:'#ffffff' };
+else p = { bg:'#0d0f12', board:'rgba(90,110,140,0.28)', boardEdge:'#6a7480', line:'rgba(90,160,255,0.75)', lineHead:'#5aa0ff', wire:'#d08840', wireEdge:'#f0c090', text:'#c8d0d8', dim:'#8a94a3',
+  sensHead:'#ff4a4a', sensTail:'#8a94a3', sensRim:'#e8eef5', curr:'#ffd166', grid:'#1b2027', out:'#4a8bff', into:'#ff4a4a', sym:'#ffffff' };
+if (cbMode && !hcMode) { p.sensHead = '#D55E00'; p.line = lightMode ? 'rgba(0,114,178,0.85)' : 'rgba(86,180,233,0.8)'; p.lineHead = lightMode ? '#0072B2' : '#56B4E9'; p.out = lightMode ? '#0072B2' : '#56B4E9'; p.into = '#D55E00'; p.curr = lightMode ? '#8a6a00' : '#F0E442'; }
+return p;
+}
+/* ── Small drawing helpers ── */
+function arrowHead(X, Y, dx, dy, size, col) {
+var L = Math.sqrt(dx*dx + dy*dy); if (L < 1e-9) return;
+var ux = dx/L, uy = dy/L;
+ctx.fillStyle = col; ctx.beginPath();
+ctx.moveTo(X + ux*size, Y + uy*size);
+ctx.lineTo(X - ux*size*0.6 - uy*size*0.6, Y - uy*size*0.6 + ux*size*0.6);
+ctx.lineTo(X - ux*size*0.6 + uy*size*0.6, Y - uy*size*0.6 - ux*size*0.6);
+ctx.closePath(); ctx.fill();
+}
+function lineArrow(x0, y0, x1, y1, col, lw) {
+ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+arrowHead(x1, y1, x1 - x0, y1 - y0, 7, col);
+}
+/* ── Field circles on the board, with direction marks ── */
+var RADII = [4, 8, 12, 16, 20];
+function drawFieldLines(p) {
+if (!showLines) return;
+ctx.lineWidth = hcMode ? 1.8 : 1.4;
+for (var i = 0; i < RADII.length; i++) {
+var r = RADII[i];
+ctx.strokeStyle = p.line; ctx.beginPath();
+for (var k = 0; k <= 96; k++) { var th = 2*Math.PI*k/96, q = proj(r*Math.cos(th), r*Math.sin(th)); if (k === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
+ctx.stroke();
+/* arrowheads at 4 places (staggered from circle to circle) */
+for (var m = 0; m < 4; m++) {
+var t = 2*Math.PI*(m/4 + i*0.07), x = r*Math.cos(t), z = r*Math.sin(t), f = fieldAt(x, z);
+var a = proj(x, z), b = proj(x + f.Bx/f.B*0.8, z + f.Bz/f.B*0.8);
+arrowHead(a[0], a[1], b[0] - a[0], b[1] - a[1], 6, p.lineHead);
+}
+}
+}
+/* ── The sensor: an arrow lying on the board, pointing along B ── */
+function drawSensor(p) {
+var f = fieldAt(sensor.x, sensor.z); if (f.B <= 0) return;
+var ux = f.Bx/f.B, uz = f.Bz/f.B, vx = -uz, vz = ux;
+var L = 7;   /* cm */
+if (scaleArrow) { var Bref = 2e-7*10/0.10; L = Math.max(1.5, Math.min(12, 7*f.B/Bref)); }
+var w = 1.0, hw = 2.0, hl = Math.min(3.2, L*0.45);
+function P(a, b) { return proj(sensor.x + ux*a + vx*b, sensor.z + uz*a + vz*b); }
+/* tail half (grey) and head half (red), like a compass needle */
+var t1 = P(-L/2, -w/2), t2 = P(0, -w/2), t3 = P(0, w/2), t4 = P(-L/2, w/2);
+ctx.fillStyle = p.sensTail; ctx.beginPath(); ctx.moveTo(t1[0],t1[1]); ctx.lineTo(t2[0],t2[1]); ctx.lineTo(t3[0],t3[1]); ctx.lineTo(t4[0],t4[1]); ctx.closePath(); ctx.fill();
+var h1 = P(0, -w/2), h2 = P(L/2 - hl, -w/2), h3 = P(L/2 - hl, -hw), h4 = P(L/2, 0), h5 = P(L/2 - hl, hw), h6 = P(L/2 - hl, w/2), h7 = P(0, w/2);
+ctx.fillStyle = p.sensHead; ctx.beginPath(); ctx.moveTo(h1[0],h1[1]); ctx.lineTo(h2[0],h2[1]); ctx.lineTo(h3[0],h3[1]); ctx.lineTo(h4[0],h4[1]); ctx.lineTo(h5[0],h5[1]); ctx.lineTo(h6[0],h6[1]); ctx.lineTo(h7[0],h7[1]); ctx.closePath(); ctx.fill();
+ctx.strokeStyle = p.sensRim; ctx.lineWidth = hcMode ? 1.6 : 1;
+ctx.beginPath(); ctx.moveTo(t1[0],t1[1]); ctx.lineTo(h2[0],h2[1]); ctx.lineTo(h3[0],h3[1]); ctx.lineTo(h4[0],h4[1]); ctx.lineTo(h5[0],h5[1]); ctx.lineTo(h6[0],h6[1]); ctx.lineTo(t4[0],t4[1]); ctx.closePath(); ctx.stroke();
+/* pivot */
+var c = proj(sensor.x, sensor.z);
+ctx.beginPath(); ctx.arc(c[0], c[1], 3, 0, Math.PI*2); ctx.fillStyle = p.sensRim; ctx.fill();
+}
+/* ── The right hand (drawing by T. Mzoughi): fl = 0 thumb up, fl = 1 rotated 180 degrees ── */
+var HAND = {
+outline: [49,2,59,3,66,25,73,33,82,46,104,57,133,70,150,77,200,124,200,223,187,218,176,218,154,224,134,224,109,221,103,220,95,216,84,218,74,214,64,223,52,227,41,227,31,217,31,205,24,199,22,189,20,178,12,173,5,154,4,148,6,135,2,127,1,121,4,108,11,97,20,89,34,86,68,84,50,67,45,58,40,46,41,17,44,10],
+fingers: [68,219,64,223,52,227,41,227,31,217,31,205,24,199,22,189,20,178,12,173,5,154,4,148,6,135,2,127,1,121,4,108,11,97,20,89,34,86,68,84,61,100,59,116,52,127,57,132,55,145,52,152,60,158,62,166,61,177,57,184,70,183,77,189,80,198,73,208,66,212,68,220],
+palm: [[92,217,91,201,94,190,94,178,91,166,88,158],[83,148,76,141],[75,148,65,148],[75,145,64,145],[95,217,94,199,96,192,96,176,94,167],[93,164,91,154],[88,149,75,136],[35,144,31,134,27,130,16,125],[44,130,45,138,42,145,40,151],[69,85,76,93],[79,96,84,99]],
+creases: [[6,141,33,152,51,152],[22,88,32,99,38,116,38,122,44,128,53,127],[5,106,17,107,25,109,32,115,39,122],[6,143,35,155],[21,179,30,183,42,184,55,184],[31,206,42,209,54,210,68,211]],
+nails: [[52,210,67,211,66,218,60,218,52,214],[70,207,71,196,66,190,57,191,53,196,53,201,59,205],[45,163,49,171,53,178,52,183,46,181,39,179,34,175,34,170,36,167,40,165],[34,152,32,153,21,143,21,137,23,136,28,135,29,139,33,148]]
+};
+function thumbsup(tx, ty, tz, f) {
+var pw = 200, ph = 229, flax = -20, s = (f === 1) ? -1 : 1;
+function X(x) { return tx + flax*f + (pw*f + s*x)/tz; }
+function Y(y) { return ty + (ph*f + s*y)/tz; }
+function path(a, close) { ctx.beginPath(); ctx.moveTo(X(a[0]), Y(a[1])); for (var i = 2; i < a.length; i += 2) ctx.lineTo(X(a[i]), Y(a[i+1])); if (close) ctx.closePath(); }
+ctx.lineWidth = 1;
+path(HAND.outline, true); ctx.fillStyle = '#a76'; ctx.strokeStyle = '#96C'; ctx.fill(); ctx.stroke();
+path(HAND.fingers, true); ctx.fillStyle = '#a76'; ctx.strokeStyle = '#411'; ctx.fill(); ctx.stroke();
+ctx.strokeStyle = '#743';
+for (var i = 0; i < HAND.palm.length; i++) { path(HAND.palm[i], false); ctx.stroke(); }
+for (var j = 0; j < HAND.creases.length; j++) { path(HAND.creases[j], false); ctx.stroke(); }
+ctx.fillStyle = '#BE9198'; ctx.strokeStyle = '#9E6C65';
+for (var k = 0; k < HAND.nails.length; k++) { path(HAND.nails[k], true); ctx.fill(); ctx.stroke(); }
+}
+var HAND_TZ = 1.6, THUMB_X = 52;   /* image x of the thumb's centre line: placed on the wire */
+function drawHand() {
+if (!showHand || view !== '3d') return;
+var tx = (fl === 0) ? CX - THUMB_X/HAND_TZ : CX + 59 - (200 - THUMB_X)/HAND_TZ;
+thumbsup(tx-20, 40, HAND_TZ, fl);
+}
+/* ── 3D view ── */
+function drawWireSegment(p, y0, y1) {
+ctx.strokeStyle = p.wireEdge; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(CX, y0); ctx.lineTo(CX, y1); ctx.stroke();
+ctx.strokeStyle = p.wire; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(CX, y0); ctx.lineTo(CX, y1); ctx.stroke();
+}
+function drawCurrentArrows(p, ys) {
+for (var i = 0; i < ys.length; i++) {
+var y = ys[i], d = (fl === 0) ? -1 : 1;
+arrowHead(CX + 16, y, 0, d, 8, p.curr);
+ctx.strokeStyle = p.curr; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(CX + 16, y - d*14); ctx.lineTo(CX + 16, y + d*2); ctx.stroke();
+}
+ctx.fillStyle = p.curr; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'left';
+ctx.fillText('I = ' + I.toFixed(1) + ' A ' + (fl === 0 ? '\u2191' : '\u2193'), CX + 28, 228);
+}
+function draw3D(p) {
+/* lower part of the wire, behind/below the board */
+drawWireSegment(p, BOARD_Y, CH - 6);
+/* board */
+var c1 = proj(-BX, -BZ), c2 = proj(BX, -BZ), c3 = proj(BX, BZ), c4 = proj(-BX, BZ);
+ctx.fillStyle = p.board; ctx.beginPath(); ctx.moveTo(c1[0],c1[1]); ctx.lineTo(c2[0],c2[1]); ctx.lineTo(c3[0],c3[1]); ctx.lineTo(c4[0],c4[1]); ctx.closePath(); ctx.fill();
+ctx.strokeStyle = p.boardEdge; ctx.lineWidth = 1.2; ctx.stroke();
+ctx.fillStyle = p.dim; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+ctx.fillText('front (toward you)', c4[0] + 4, c4[1] + 14);
+drawFieldLines(p);
+/* hole where the wire goes through */
+ctx.beginPath(); ctx.ellipse(CX, BOARD_Y, 6, 6*K3, 0, 0, Math.PI*2); ctx.fillStyle = p.bg; ctx.fill();
+drawHand();
+/* upper part of the wire */
+drawWireSegment(p, 8, BOARD_Y);
+drawCurrentArrows(p, [300, 180]);
+drawSensor(p);
+}
+/* ── Top view ── */
+function drawTop(p) {
+ctx.strokeStyle = p.grid; ctx.lineWidth = 1;
+for (var g = -20; g <= 20; g += 5) { var a = proj(g, -22), b = proj(g, 22); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); var c = proj(-28, g), d = proj(28, g); ctx.beginPath(); ctx.moveTo(c[0],c[1]); ctx.lineTo(d[0],d[1]); ctx.stroke(); }
+drawFieldLines(p);
+/* wire seen end-on */
+var w = proj(0, 0), out = (fl === 0), col = out ? p.out : p.into;
+ctx.beginPath(); ctx.arc(w[0], w[1], 12, 0, Math.PI*2); ctx.fillStyle = col; ctx.fill();
+ctx.strokeStyle = hcMode ? '#ffffff' : p.text; ctx.lineWidth = 1.6; ctx.stroke();
+ctx.strokeStyle = p.sym; ctx.fillStyle = p.sym; ctx.lineWidth = 2.4;
+if (out) { ctx.beginPath(); ctx.arc(w[0], w[1], 3.6, 0, Math.PI*2); ctx.fill(); }
+else { var d2 = 6; ctx.beginPath(); ctx.moveTo(w[0]-d2, w[1]-d2); ctx.lineTo(w[0]+d2, w[1]+d2); ctx.moveTo(w[0]+d2, w[1]-d2); ctx.lineTo(w[0]-d2, w[1]+d2); ctx.stroke(); }
+ctx.fillStyle = p.text; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'left';
+ctx.fillText(out ? 'I \u2299 toward you (up)' : 'I \u2297 away from you (down)', 10, 20);
+ctx.fillStyle = p.dim; ctx.font = '10px monospace';
+ctx.fillText('looking down the wire from above \u00b7 front of the board at the bottom', 10, CH - 10);
+drawSensor(p);
+}
+function redraw() {
+var p = pal();
+ctx.clearRect(0, 0, CW, CH); ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+if (view === '3d') draw3D(p); else drawTop(p);
+}
+/* ── Readouts & narration ── */
+function dirWords(Bx, Bz) {
+var ang = Math.atan2(-Bz, Bx)*180/Math.PI;   /* 0 = right, 90 = toward the back */
+var names = ['to the right', 'right and toward the back', 'toward the back', 'left and toward the back', 'to the left', 'left and toward the front', 'toward the front', 'right and toward the front'];
+return names[(((Math.round(ang/45) % 8) + 8) % 8)];
+}
+function fmtB(B) { return B >= 1e-3 ? (B*1e3).toFixed(3) + ' mT' : (B*1e6).toFixed(2) + ' \u00b5T'; }
+function update() {
+var f = fieldAt(sensor.x, sensor.z);
+set('rhR', (f.r*100).toFixed(1) + ' cm');
+set('rhB', fmtB(f.B));
+set('rhBxz', '(' + (f.Bx*1e6).toFixed(2) + ', ' + (f.Bz*1e6).toFixed(2) + ') \u00b5T');
+set('rhBdir', dirWords(f.Bx, f.Bz));
+set('rhCirc', fl === 0 ? 'counterclockwise (from above)' : 'clockwise (from above)');
+set('rhLive', 'B = (4\u03c0\u00d710\u207b\u2077)(' + I.toFixed(1) + ' A) / (2\u03c0 \u00b7 ' + f.r.toFixed(3) + ' m) = ' + fmtB(f.B));
+set('rhIval', I.toFixed(1) + ' A');
+set('rhSxval', (sensor.x >= 0 ? '+' : '\u2212') + Math.abs(sensor.x).toFixed(0) + ' cm');
+set('rhSzval', (sensor.z >= 0 ? '+' : '\u2212') + Math.abs(sensor.z).toFixed(0) + ' cm');
+var d = 'Current ' + I.toFixed(1) + ' A flowing ' + (fl === 0 ? 'up' : 'down') + '. Point the right thumb ' + (fl === 0 ? 'up' : 'down') + ' along the current: the fingers curl ' + (fl === 0 ? 'counterclockwise' : 'clockwise') + ' as seen from above, and so do the field lines. '
++ 'The sensor is ' + (f.r*100).toFixed(1) + ' cm from the wire (x = ' + sensor.x.toFixed(0) + ' cm, z = ' + sensor.z.toFixed(0) + ' cm). It reads ' + fmtB(f.B) + ', pointing ' + dirWords(f.Bx, f.Bz) + ', tangent to the circle around the wire.';
+canvas.setAttribute('aria-label', d); set('rhDesc', d);
+if (showNarr) set('rhNarration', d);
+redraw();
+}
+/* ── Controls ── */
+function setDir(f) {
+fl = f;
+var u = el('rhUp'), dn = el('rhDown');
+u.classList.toggle('rh_btnon', f === 0); u.setAttribute('aria-pressed', f === 0 ? 'true' : 'false');
+dn.classList.toggle('rh_btnon', f === 1); dn.setAttribute('aria-pressed', f === 1 ? 'true' : 'false');
+update(); srAnnounce('Current ' + (f === 0 ? 'up' : 'down') + '. Field circulates ' + (f === 0 ? 'counterclockwise' : 'clockwise') + ' seen from above.');
+}
+function setI(v) { I = parseFloat(v); update(); }
+function keepOut() {   /* keep the sensor on the board and off the wire */
+sensor.x = Math.max(-22, Math.min(22, sensor.x)); sensor.z = Math.max(-18, Math.min(18, sensor.z));
+var r = Math.sqrt(sensor.x*sensor.x + sensor.z*sensor.z);
+if (r < RMIN) { if (r < 1e-6) { sensor.x = RMIN; sensor.z = 0; } else { sensor.x *= RMIN/r; sensor.z *= RMIN/r; } }
+}
+function syncSliders() { el('rhSx').value = Math.round(sensor.x); el('rhSz').value = Math.round(sensor.z); }
+function setSensor(axis, v) { sensor[axis] = parseFloat(v); keepOut(); syncSliders(); update(); }   /* sliders show where the sensor really is */
+function setShow() { showLines = el('rhShowLines').checked; showHand = el('rhShowHand').checked; scaleArrow = el('rhScaleArrow').checked; update(); }
+function setView(v) {
+view = v;
+el('rhView3D').classList.toggle('rh_viewon', v === '3d'); el('rhView3D').setAttribute('aria-pressed', v === '3d' ? 'true' : 'false');
+el('rhViewTop').classList.toggle('rh_viewon', v === 'top'); el('rhViewTop').setAttribute('aria-pressed', v === 'top' ? 'true' : 'false');
+set('rhCaption', v === '3d' ? 'wire vertical \u00b7 board horizontal' : 'looking down the wire \u00b7 front at the bottom');
+update(); srAnnounce(v === '3d' ? '3D view.' : 'Top view, looking down along the wire.');
+}
+/* ── Dragging the sensor (anywhere near it) ── */
+function canvasXY(cx, cy) { var r = canvas.getBoundingClientRect(); return [(cx - r.left)*(CW/r.width), (cy - r.top)*(CH/r.height)]; }
+function nearSensor(c) { var q = proj(sensor.x, sensor.z); return Math.abs(c[0]-q[0]) < 45 && Math.abs(c[1]-q[1]) < (view === '3d' ? 22 : 45); }
+function moveTo(c) { var q = unproj(c[0], c[1]); sensor.x = q[0]; sensor.z = q[1]; keepOut(); syncSliders(); update(); }
+canvas.addEventListener('mousedown', function(e) { var c = canvasXY(e.clientX, e.clientY); if (nearSensor(c)) { dragging = true; canvas.style.cursor = 'grabbing'; e.preventDefault(); } });
+canvas.addEventListener('mousemove', function(e) {
+var c = canvasXY(e.clientX, e.clientY);
+if (dragging) { moveTo(c); return; }
+canvas.style.cursor = nearSensor(c) ? 'grab' : 'default';
+});
+document.addEventListener('mouseup', function() { if (dragging) { dragging = false; canvas.style.cursor = 'grab'; } });
+canvas.addEventListener('touchstart', function(e) { var t = e.touches[0], c = canvasXY(t.clientX, t.clientY); if (nearSensor(c)) { dragging = true; e.preventDefault(); } }, { passive:false });
+canvas.addEventListener('touchmove', function(e) { if (!dragging) return; e.preventDefault(); var t = e.touches[0]; moveTo(canvasXY(t.clientX, t.clientY)); }, { passive:false });
+document.addEventListener('touchend', function() { dragging = false; });
+/* keyboard: arrow keys move the sensor 1 cm (in the top view "up" = toward the back) */
+canvas.addEventListener('keydown', function(e) {
+var dx = 0, dz = 0;
+if (e.key === 'ArrowLeft') dx = -1; else if (e.key === 'ArrowRight') dx = 1; else if (e.key === 'ArrowUp') dz = -1; else if (e.key === 'ArrowDown') dz = 1; else return;
+e.preventDefault(); sensor.x += dx; sensor.z += dz; keepOut(); syncSliders(); update();
+var f = fieldAt(sensor.x, sensor.z);
+srAnnounce('Sensor at ' + (f.r*100).toFixed(0) + ' centimetres from the wire, field ' + dirWords(f.Bx, f.Bz) + '.');
+});
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('rh_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+ROOT.classList.toggle('rh_hc', hcMode); ROOT.classList.toggle('rh_lm', lightMode); ROOT.classList.toggle('rh_cb', cbMode);
+setBtnOn('rhBtnHC', hcMode); setBtnOn('rhBtnLM', lightMode); setBtnOn('rhBtnCB', cbMode); setBtnOn('rhBtnNarr', showNarr);
+el('rhBtnNarr').textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+el('rhNarrBox').style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); update(); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); update(); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); update(); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); update(); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e2 = el('rhSrAnnounce'); if (!e2) return; e2.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e2.textContent = msg; }, 60); }
+/* ── Boot ── */
+applyDisplay();
+setDir(0);
+return { setDir:setDir, setI:setI, setSensor:setSensor, setShow:setShow, setView:setView, toggleHC:toggleHC, toggleLight:toggleLight, toggleCB:toggleCB, toggleNarr:toggleNarr };
+};
+</script>
+<script>
+var rightHandSim = new rightHandSim();
+</script>
+</main>
+</body>
+</html>

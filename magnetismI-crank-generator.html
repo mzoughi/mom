@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: The Hand-Crank Generator</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, generator, hand crank, Lenz law, back torque, induction, light bulb, energy conservation, short circuit, lesson, scientific">
+<meta name="description" content="Interactive hand-crank generator: why it is easy to turn with the switch open and hard with a bulb connected. Lenz's law, back-torque and energy flow.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="genroot" role="region" aria-label="Hand-crank generator simulator">
+<!-- Accessibility toolbar -->
+<div class="gen_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="gen_a11ybtn" id="btnHC" onclick="genSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="gen_a11ybtn" id="btnLight" onclick="genSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="gen_a11ybtn" id="btnCB" onclick="genSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="gen_a11ybtn gen_a11yon" id="btnNarr" onclick="genSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="gen_header">
+<p class="gen_h1">The Hand-Crank Generator</p>
+<p class="gen_sub">Why is it hard to turn when the bulb is connected? Current in the coil means a magnetic force that pushes back</p>
+</div>
+<div id="genMotionNotice" class="gen_motionnotice" role="status">Reduced motion is enabled. The fast-spinning coil is drawn as a blur rather than animated.</div>
+<!-- Instrument grid -->
+<div class="gen_instrument">
+<!-- Left column -->
+<div class="gen_leftcol">
+<div class="gen_diagpanel">
+<div class="gen_diaglabel"><span id="diagLabel">GENERATOR</span><span class="gen_diagnote">drag the red handle around in circles to turn the crank yourself</span></div>
+<canvas id="genCanvas" width="560" height="420" role="img" aria-label="Hand-crank generator connected to a light bulb" aria-describedby="genCanvasDesc"></canvas>
+<p id="genCanvasDesc" class="gen_sronly">Hand-crank generator with a switch and light bulbs.</p>
+<div class="gen_hoverbar" id="genHoverReadout" role="status" aria-live="polite" aria-atomic="true">Hover over the generator, the circuit or the meters to read values</div>
+</div>
+<!-- Readout -->
+<div class="gen_panel" role="region" aria-labelledby="readHd">
+<div class="gen_paneltitle" id="readHd">Readout (averaged)</div>
+<div class="gen_rinner gen_rgrid">
+<div class="gen_rrow"><span class="gen_rkey">Crank speed</span><span class="gen_rval gen_hi" id="r_w">--</span></div>
+<div class="gen_rrow"><span class="gen_rkey">Force on handle</span><span class="gen_rval gen_hi" id="r_F">--</span></div>
+<div class="gen_rrow"><span class="gen_rkey">emf (rms)</span><span class="gen_rval" id="r_emf">--</span></div>
+<div class="gen_rrow"><span class="gen_rkey">Current (rms)</span><span class="gen_rval" id="r_I">--</span></div>
+<div class="gen_rrow"><span class="gen_rkey">Your power</span><span class="gen_rval" id="r_Ph">--</span></div>
+<div class="gen_rrow"><span class="gen_rkey">Power to the load</span><span class="gen_rval" id="r_PL">--</span></div>
+<div class="gen_rrow"><span class="gen_rkey">Magnetic back-torque</span><span class="gen_rval" id="r_tq">--</span></div>
+<div class="gen_rrow" id="r_effrow"><span class="gen_rkey">Load</span><span class="gen_rval" id="r_load">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="gen_rightcol">
+<!-- Circuit -->
+<div class="gen_panel" role="group" aria-labelledby="cirHd">
+<div class="gen_paneltitle" id="cirHd">Circuit</div>
+<div class="gen_panelbody">
+<button type="button" class="gen_btn gen_switch" id="btnSwitch" onclick="genSim.toggleSwitch()" aria-pressed="false">Switch: OPEN</button>
+<label for="selLoad" class="gen_ctrlname">Load</label>
+<select id="selLoad" aria-label="Electrical load" onchange="genSim.onSlider('Load', this.value)">
+<option value="b1" selected>1 bulb (6 V, 0.5 A)</option>
+<option value="b2">2 bulbs in parallel</option>
+<option value="b3">3 bulbs in parallel</option>
+<option value="res">Resistor (adjustable)</option>
+<option value="short">Short circuit (a bare wire!)</option>
+</select>
+<div class="gen_ctrlhdr"><label for="slR" class="gen_ctrlname">Resistor</label><span class="gen_sval" id="vR">20 &Omega;</span></div>
+<input type="range" id="slR" min="1" max="200" step="1" value="20" aria-label="Load resistance in ohms" oninput="genSim.onSlider('R', this.value)">
+<p class="gen_hint">The switch is the classic demo: crank, then close it. Coil resistance 2 &Omega;.</p>
+</div>
+</div>
+<!-- Crank -->
+<div class="gen_panel" role="group" aria-labelledby="crkHd">
+<div class="gen_paneltitle" id="crkHd">How the Crank Is Turned</div>
+<div class="gen_panelbody">
+<div class="gen_srcbtns3" role="group" aria-label="Cranking mode">
+<button type="button" class="gen_srcbtn gen_srcon" id="btnDrag" onclick="genSim.setMode('drag')" aria-pressed="true">YOUR HAND</button>
+<button type="button" class="gen_srcbtn" id="btnPush" onclick="genSim.setMode('push')" aria-pressed="false">STEADY PUSH</button>
+<button type="button" class="gen_srcbtn" id="btnMotor" onclick="genSim.setMode('motor')" aria-pressed="false">STEADY SPEED</button>
+</div>
+<div class="gen_ctrlhdr"><label for="slF" class="gen_ctrlname">Push on handle</label><span class="gen_sval" id="vF">2.5 N</span></div>
+<input type="range" id="slF" min="0" max="15" step="0.1" value="2.5" aria-label="Steady force on the handle in newtons" oninput="genSim.onSlider('F', this.value)">
+<div class="gen_ctrlhdr"><label for="slW" class="gen_ctrlname">Crank speed</label><span class="gen_sval" id="vW">2.0 rev/s</span></div>
+<input type="range" id="slW" min="0" max="4" step="0.05" value="2" aria-label="Crank speed in revolutions per second" oninput="genSim.onSlider('W', this.value)">
+<p class="gen_hint" id="modeHint">--</p>
+</div>
+</div>
+<!-- Generator -->
+<div class="gen_panel" role="group" aria-labelledby="genHd">
+<div class="gen_paneltitle" id="genHd">Generator</div>
+<div class="gen_panelbody">
+<div class="gen_srcbtns" role="group" aria-label="Output type">
+<button type="button" class="gen_srcbtn gen_srcon" id="btnAC" onclick="genSim.setOut('ac')" aria-pressed="true">AC (SLIP RINGS)</button>
+<button type="button" class="gen_srcbtn" id="btnDC" onclick="genSim.setOut('dc')" aria-pressed="false">DC (COMMUTATOR)</button>
+</div>
+<div class="gen_ctrlhdr"><label for="slB" class="gen_ctrlname">Magnet field B</label><span class="gen_sval" id="vB">0.30 T</span></div>
+<input type="range" id="slB" min="0" max="0.6" step="0.01" value="0.3" aria-label="Magnetic field in tesla" oninput="genSim.onSlider('B', this.value)">
+<div class="gen_ctrlhdr"><label for="slN" class="gen_ctrlname">Coil turns N</label><span class="gen_sval" id="vN">200</span></div>
+<input type="range" id="slN" min="50" max="400" step="10" value="200" aria-label="Number of turns on the coil" oninput="genSim.onSlider('N', this.value)">
+<div class="gen_ctrlhdr"><label for="slG" class="gen_ctrlname">Gear ratio</label><span class="gen_sval" id="vG">1 : 20</span></div>
+<input type="range" id="slG" min="5" max="30" step="1" value="20" aria-label="Gear ratio: coil turns per crank turn" oninput="genSim.onSlider('G', this.value)">
+<p class="gen_derived" id="genInfo">--</p>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="gen_formulastrip">
+<span class="gen_formulatxt">emf = NBA&omega; sin(&omega;t) &nbsp;|&nbsp; I = emf/(R<sub>coil</sub> + R) &nbsp;|&nbsp; Back-torque &tau; = NBA I sin(&omega;t) (Lenz) &nbsp;|&nbsp; &tau;&omega; = emf&middot;I: your mechanical power becomes electrical power &nbsp;|&nbsp; Switch open: I = 0, so no back-torque &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>S</kbd> switch <kbd>&larr;</kbd><kbd>&rarr;</kbd> crank</span>
+</div>
+</div><!-- instrument -->
+<div id="genNarrBox" class="gen_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="genNarration">--</span></div>
+<div id="genSrAnnounce" class="gen_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="gen_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows a hand-crank generator: a coil of `N` turns turned in a magnetic field `B` by a crank and a belt. Turning the coil changes the flux through it and induces an emf,</p>
+<p class="mob_eq">`epsilon = N B A omega cos(phi)`,</p>
+<p>where `A` is the area of the coil, `omega` its angular speed and `phi` its angle. Drag the red handle in circles to turn the crank.</p>
+<p>With the switch open, no current flows and the crank turns easily. Close the switch, and the emf drives a current `I` through the bulb. A current-carrying coil in a magnetic field feels a torque, and by Lenz's law this torque always opposes the rotation: suddenly the crank is hard to turn. The work your hand does is exactly the electrical energy delivered, `P = tau omega = epsilon I`. A cold bulb filament has a low resistance, so the current surges when the switch first closes.</p>
+<p>In AC mode the current reverses every half turn; in DC mode a commutator flips the connections every half turn, so the current in the bulb keeps one direction, while the coil and the effort at the crank are the same.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+.mob_descwrap { width:100%; max-width:860px; margin:8px auto 10px; display:flex; flex-direction:column; align-items:center; gap:8px; box-sizing:border-box; font-family:Arial, sans-serif; }
+.mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+.mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+.mob_desc { width:100%; box-sizing:border-box; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+.mob_desc p { margin:0 0 9px; } .mob_desc p:last-child { margin-bottom:0; }
+.mob_eq { text-align:center; font-size:1rem; }
+</style>
+<!-- #genroot -->
+<style>
+/* ════════ All simulator rules scoped to #genroot ════════ */
+#genroot {
+--gen-chassis:#1a1c1f; --gen-panel:#22262b; --gen-panel-hi:#2c3138; --gen-panel-lo:#14161a;
+--gen-border:#3a4048; --gen-border-hi:#525c66; --gen-text:#c8d0d8; --gen-dim:#8a94a3; --gen-bright:#e8eef5;
+--gen-accent:#e8a020; --gen-green:#3ad08f; --gen-val:#ffdd66; --gen-warnc:#ff6a5a;
+--gen-focus:#e8a020; --gen-nar-bg:#2a2410; --gen-nar-border:#e0b040; --gen-nar-text:#f0e2b8;
+background:var(--gen-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--gen-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#genroot.gen_lm {
+--gen-chassis:#e9edf1; --gen-panel:#ffffff; --gen-panel-hi:#f1f4f7; --gen-panel-lo:#f4f6f9;
+--gen-border:#c3cad3; --gen-border-hi:#9aa3ae; --gen-text:#1d232a; --gen-dim:#556070; --gen-bright:#000000;
+--gen-accent:#a8620a; --gen-green:#12805a; --gen-val:#8a4a00; --gen-warnc:#b02020;
+--gen-focus:#a8620a; --gen-nar-bg:#ffefc0; --gen-nar-border:#e0b040; --gen-nar-text:#333333;
+background-image:none;
+}
+#genroot.gen_hc {
+--gen-chassis:#000000; --gen-panel:#000000; --gen-panel-hi:#111111; --gen-panel-lo:#000000;
+--gen-border:#ffffff; --gen-border-hi:#ffffff; --gen-text:#ffffff; --gen-dim:#e0e0e0; --gen-bright:#ffffff;
+--gen-accent:#ffd700; --gen-green:#00ff88; --gen-val:#ffff00; --gen-warnc:#ff5555;
+--gen-focus:#ffff00; --gen-nar-bg:#000000; --gen-nar-border:#ffd700; --gen-nar-text:#ffffff;
+background-image:none;
+}
+#genroot.gen_cb { --gen-warnc:#D55E00; }
+#genroot.gen_hc .gen_panel, #genroot.gen_hc .gen_diagpanel { border-width:2px; }
+#genroot *, #genroot *::before, #genroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#genroot input:focus-visible, #genroot button:focus-visible, #genroot select:focus-visible { outline:2px solid var(--gen-focus); outline-offset:2px; }
+/* toolbar */
+#genroot .gen_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#genroot .gen_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--gen-panel-hi); border:1px solid var(--gen-border-hi); color:var(--gen-dim); }
+#genroot .gen_a11ybtn:hover { border-color:var(--gen-accent); color:var(--gen-accent); }
+#genroot .gen_a11yon { background:rgba(58,208,143,.14); border-color:var(--gen-green); color:var(--gen-green); font-weight:bold; }
+/* header */
+#genroot .gen_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#genroot .gen_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--gen-accent); text-align:center; }
+#genroot .gen_sub { font-size:.7rem; color:var(--gen-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#genroot .gen_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--gen-panel); border:1px solid var(--gen-border); border-radius:4px; color:var(--gen-dim); }
+/* grid */
+#genroot .gen_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#genroot .gen_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#genroot .gen_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#genroot .gen_diagpanel { background:var(--gen-panel); border:1px solid var(--gen-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#genroot .gen_diaglabel { background:var(--gen-panel-lo); border-bottom:1px solid var(--gen-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--gen-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#genroot #diagLabel { color:var(--gen-accent); font-weight:bold; }
+#genroot .gen_diagnote { text-transform:none; letter-spacing:.02em; }
+#genroot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#genroot .gen_hoverbar { background:var(--gen-panel-lo); border-top:1px solid var(--gen-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--gen-val); min-height:28px; line-height:1.4; }
+/* right column */
+#genroot .gen_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#genroot .gen_panel { background:var(--gen-panel); border:1px solid var(--gen-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#genroot .gen_paneltitle { background:var(--gen-panel-lo); border-bottom:1px solid var(--gen-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--gen-dim); }
+#genroot .gen_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#genroot .gen_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#genroot .gen_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--gen-panel-hi); border:1px solid var(--gen-border-hi); color:var(--gen-dim); border-radius:3px; }
+#genroot .gen_srcbtn:hover { border-color:var(--gen-accent); color:var(--gen-text); }
+#genroot .gen_srcon { background:var(--gen-accent); color:#111; border-color:var(--gen-accent); font-weight:bold; }
+#genroot .gen_srcon:hover { color:#111; }
+#genroot .gen_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#genroot .gen_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--gen-dim); text-transform:uppercase; }
+#genroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--gen-panel-lo); border:1px solid var(--gen-border); }
+#genroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--gen-accent); border:2px solid var(--gen-panel); cursor:pointer; }
+#genroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--gen-accent); border:2px solid var(--gen-panel); cursor:pointer; }
+#genroot input[type=range]:disabled { opacity:.35; cursor:default; }
+#genroot .gen_sval { font-family:monospace; font-size:.74rem; color:var(--gen-val); min-width:56px; text-align:right; }
+#genroot .gen_hint { font-size:.66rem; color:var(--gen-dim); line-height:1.4; }
+#genroot .gen_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#genroot .gen_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--gen-panel-lo); border:1px solid var(--gen-border); border-radius:3px; }
+#genroot .gen_rrow.gen_alert { border-color:var(--gen-warnc); }
+#genroot .gen_rrow.gen_alert .gen_rval { color:var(--gen-warnc); font-weight:bold; }
+#genroot .gen_rkey { font-family:monospace; font-size:.6rem; color:var(--gen-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#genroot .gen_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--gen-text); }
+#genroot .gen_hi { color:var(--gen-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#genroot .gen_formulastrip { grid-column:1 / 3; background:var(--gen-panel-lo); border:1px solid var(--gen-border); border-radius:4px; padding:7px 14px; }
+#genroot .gen_formulatxt { font-family:monospace; font-size:.66rem; color:var(--gen-dim); letter-spacing:.04em; line-height:1.6; }
+#genroot .gen_formulatxt kbd { border:1px solid var(--gen-border-hi); border-radius:2px; padding:0 4px; color:var(--gen-accent); font-family:monospace; }
+#genroot .gen_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--gen-nar-bg); border-left:4px solid var(--gen-nar-border); font-size:.82rem; color:var(--gen-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#genroot .gen_credit { font-size:.62rem; color:var(--gen-dim); text-align:center; }
+#genroot .gen_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#genroot .gen_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--gen-text); cursor:pointer; }
+#genroot .gen_chk input { accent-color:var(--gen-accent); width:14px; height:14px; }
+#genroot .gen_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--gen-panel-lo); border-top:1px solid var(--gen-border); }
+#genroot select { width:100%; background:var(--gen-panel-hi); color:var(--gen-text); border:1px solid var(--gen-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#genroot .gen_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#genroot .gen_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#genroot .gen_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--gen-panel-hi); border:1px solid var(--gen-border-hi); color:var(--gen-text); border-radius:3px; text-transform:uppercase; }
+#genroot .gen_btn:hover { border-color:var(--gen-accent); }
+#genroot .gen_btn:disabled { opacity:.4; cursor:default; }
+#genroot .gen_btn.gen_active { background:var(--gen-green); border-color:var(--gen-green); color:#111; font-weight:bold; }
+#genroot .gen_warn { color:#e0605a; border-color:#a04040; }
+#genroot.gen_lm .gen_warn { color:#b02020; border-color:#c06060; }
+#genroot .gen_sub2 { border-top:1px dashed var(--gen-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#genroot .gen_derived { font-family:monospace; font-size:.68rem; color:var(--gen-dim); line-height:1.4; }
+#genroot .gen_derived b { color:var(--gen-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#genroot .gen_instrument { grid-template-columns:minmax(0,1fr); }
+#genroot .gen_rightcol { width:auto; }
+#genroot .gen_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #genroot .gen_row2 { grid-template-columns:1fr; } }
+#genroot .gen_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#genroot .gen_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#genroot .gen_small { padding:3px 8px; margin-left:auto; }
+@media (max-width:560px) { #genroot .gen_rgrid { grid-template-columns:1fr; } }
+#genroot .gen_scalebtns { display:flex; gap:5px; margin-left:auto; }
+#genroot .gen_small { padding:3px 8px; margin-left:0; }
+#genroot .gen_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#genroot .gen_srcbtns3 .gen_srcbtn { font-size:.6rem; padding:6px 2px; }
+#genroot .gen_switch { font-size:.78rem; padding:9px 4px; font-weight:bold; letter-spacing:.08em; }
+#genroot .gen_switch.gen_active { background:#e8a020; border-color:#e8a020; color:#111; }
+/* question section below the simulator */
+.gen_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.gen_qwrap ol { padding-left:24px; }
+.gen_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<script>
+/* ════════ SIMULATION ════════
+Pattern: mirrors the solenoid (magnetism) example:
+var simObj = function() { ... return { public methods }; };  var simObj = new simObj();
+Physics (SI units):
+  Crank (handle radius 8 cm) drives the coil through a belt with gear ratio g: coil angle phi = g theta, omega_c = g omega.
+  emf = N B A omega_c cos(phi)  (coil of N turns, area A = 6 cm^2, in field B).
+  Switch closed: coil current I = emf / (R_coil + R_load); open: I = 0.
+  The current-carrying coil in the field feels a torque N B A I cos(phi) that always opposes the rotation (Lenz's law);
+  at the crank it is g times larger. Mechanical power in = tau omega = emf I = electrical power out.
+  Crank: J d(omega)/dt = tau_hand - tau_magnetic - tau_friction.
+  "Your hand" pulls the handle toward the mouse with a limited strength (spring-like grip, max 20 N).
+  Bulb filament: resistance rises from 1.2 ohm (cold) to 12 ohm (hot, 6 V 0.5 A), so a cold bulb draws a surge.
+  DC mode: a commutator flips the connections every half turn, so the external current keeps one direction;
+  the coil current and the back-torque are the same as for AC.
+*/
+var genGen = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('genroot');
+var canvas = document.getElementById('genCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function el(id) { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function fmtW(P) { var a = Math.abs(P); if (a < 0.001) return '0 W'; if (a < 1) return (a*1000).toFixed(0) + ' mW'; return a.toFixed(2) + ' W'; }
+
+/* ── Parameters ── */
+var AREA = 6e-4, RCOIL = 2, RH = 0.08, J = 0.01, TF0 = 0.015, BF = 0.006, KP = 4, KD = 0.15, TMAX = 1.6;
+var RCOLD = 1.2, RHOT = 12, PRATED = 3;
+var Bf = 0.3, Nt = 200, gear = 20, out = 'ac', closed = false, loadKey = 'b1', Rres = 20, mode = 'drag', Fpush = 2.5, revSet = 2;
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true;
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* ── State ── */
+var th = 0, w = 0, heat = 0, dragging = false, thTarget = 0, mPrev = 0, keyTq = 0;
+var inst = { emf: 0, I: 0, Iext: 0, tq: 0, tqHand: 0 };
+var avg = { w: 0, F: 0, Ph: 0, PL: 0, Pc: 0, Pf: 0, e2: 0, i2: 0, tq: 0 };
+var scope = [], SC_N = 300, scAcc = 0;
+
+/* ── Physics ── */
+function NBA() { return Nt*Bf*AREA; }
+function nBulbs() { return loadKey === 'b1' ? 1 : loadKey === 'b2' ? 2 : loadKey === 'b3' ? 3 : 0; }
+function Rbulb() { return RCOLD + (RHOT - RCOLD)*Math.sqrt(clamp(heat, 0, 1.4)); }
+function Rload() { if (loadKey === 'res') return Rres; if (loadKey === 'short') return 0.05; return Rbulb()/nBulbs(); }
+function substep(h) {
+  var phi = gear*th, wc = gear*w, k = NBA(), e = k*wc*Math.cos(phi);
+  var I = closed ? e/(RCOIL + Rload()) : 0;
+  var tqm = gear*k*I*Math.cos(phi);                       /* magnetic torque at the crank, opposes w (tqm has the sign of w) */
+  var tqf = (Math.abs(w) > 1e-4 ? (w > 0 ? 1 : -1)*TF0 : 0) + BF*w;
+  var tqh;
+  if (mode === 'motor') { var wt = 2*Math.PI*revSet; tqh = tqm + tqf + J*(wt - w)/0.05; w += (wt - w)*Math.min(1, h/0.05); }
+  else {
+    if (mode === 'push') tqh = Fpush*RH;
+    else if (dragging) tqh = clamp(KP*(thTarget - th) - KD*w, -TMAX, TMAX);
+    else tqh = keyTq;
+    var net = tqh - tqm - tqf;
+    if (Math.abs(w) < 1e-3 && Math.abs(tqh - tqm) <= TF0) { w = 0; } else w += net/J*h;
+  }
+  th += w*h;
+  /* bulb filament temperature */
+  var pl = I*I*Rload();
+  if (nBulbs() > 0) heat += (pl/nBulbs()/PRATED - heat)*Math.min(1, h/0.08); else heat += (0 - heat)*Math.min(1, h/0.08);
+  inst.emf = out === 'dc' ? Math.abs(e)*(w >= 0 ? 1 : -1) : e;
+  inst.I = I; inst.Iext = out === 'dc' ? Math.abs(I)*(w >= 0 ? 1 : -1) : I; inst.tq = tqm; inst.tqHand = tqh;
+  var a = Math.min(1, h/0.3);
+  avg.w += (w - avg.w)*a; avg.F += (tqh/RH - avg.F)*a; avg.Ph += (tqh*w - avg.Ph)*a; avg.PL += (pl - avg.PL)*a; avg.Pc += (I*I*RCOIL - avg.Pc)*a;
+  avg.Pf += (tqf*w - avg.Pf)*a; avg.e2 += (e*e - avg.e2)*a; avg.i2 += (I*I - avg.i2)*a; avg.tq += (tqm - avg.tq)*a;
+  scAcc += h; if (scAcc >= 0.0005) { scAcc = 0; scope.push({ e: inst.emf, i: inst.Iext }); if (scope.length > SC_N) scope.shift(); }
+}
+
+/* ── Animation loop ── */
+var rafId = null, lastTs = null, roTimer = 0, wasHard = false;
+function advance(dt) { var n = Math.max(1, Math.ceil(dt/0.0005)), h = dt/n; for (var i = 0; i < n; i++) substep(h); }
+function frame(ts) {
+  rafId = null;
+  if (lastTs === null) lastTs = ts;
+  var dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+  advance(dt); redraw();
+  roTimer += dt; if (roTimer > 0.2) { roTimer = 0; updateReadouts(); }
+  if (!document.hidden) rafId = window.requestAnimationFrame(frame);
+}
+function startLoop() { if (!rafId && window.requestAnimationFrame) { lastTs = null; rafId = window.requestAnimationFrame(frame); } }
+
+/* ── Palette ── */
+function pal() {
+  var p;
+  if (hcMode) p = { bg:'#000000', edge:'#ffffff', panel:'#000000', text:'#ffffff', dim:'#e0e0e0', wheel:'#555555', spoke:'#ffffff', handle:'#ff4444', belt:'#bbbbbb', iron:'#777777', magN:'#ff4444', magS:'#4499ff', copper:'#ffaa00', field:'rgba(255,255,255,0.5)', wire:'#ffffff', glass:'rgba(255,255,255,0.15)', glow:'255,255,120', force:'#00ff88', e:'#ffd700', i:'#55aaff', warn:'#ff5555', ok:'#00ff88', skin:'#ffcc99', sym:'#000000', symBg:'#ffffff', lw:1.6 };
+  else if (lightMode) p = { bg:'#ffffff', edge:'#9aa3ae', panel:'#f4f6f9', text:'#1d232a', dim:'#556070', wheel:'#c3cad3', spoke:'#556070', handle:'#c0262a', belt:'#3a4048', iron:'#9aa3ae', magN:'#c0262a', magS:'#1f5fc0', copper:'#b8702a', field:'rgba(60,60,170,0.45)', wire:'#3a4048', glass:'rgba(120,160,200,0.18)', glow:'255,200,60', force:'#12805a', e:'#a8620a', i:'#1f5fc0', warn:'#c0262a', ok:'#12805a', skin:'#e8b890', sym:'#1d232a', symBg:'#ffffff', lw:1.1 };
+  else p = { bg:'#0d0f12', edge:'#3a4048', panel:'#0a0c0f', text:'#c8d0d8', dim:'#8a94a3', wheel:'#3a4048', spoke:'#8a94a3', handle:'#e24b4a', belt:'#1a1a1a', iron:'#5b636d', magN:'#c9433d', magS:'#3d6cc9', copper:'#c8813a', field:'rgba(180,180,255,0.45)', wire:'#9aa3ae', glass:'rgba(200,220,255,0.12)', glow:'255,220,120', force:'#3ad08f', e:'#e8a020', i:'#5aa0ff', warn:'#ff5a52', ok:'#3ad08f', skin:'#e8b890', sym:'#ffffff', symBg:'#1a1c1f', lw:1.1 };
+  if (cbMode && !hcMode) { p.magN = '#D55E00'; p.magS = '#0072B2'; p.handle = '#D55E00'; p.force = lightMode ? '#009E73' : '#F0E442'; p.e = '#E69F00'; p.i = lightMode ? '#0072B2' : '#56B4E9'; p.warn = '#D55E00'; }
+  return p;
+}
+function rect(x, y, w2, h2, fill, stroke, lw) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w2, h2); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.strokeRect(x + 0.5, y + 0.5, w2 - 1, h2 - 1); }
+}
+function arrow(x1, y1, x2, y2, col, lw) {
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  var a = Math.atan2(y2 - y1, x2 - x1), hs = 6;
+  ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - hs*Math.cos(a - 0.45), y2 - hs*Math.sin(a - 0.45)); ctx.lineTo(x2 - hs*Math.cos(a + 0.45), y2 - hs*Math.sin(a + 0.45)); ctx.closePath(); ctx.fill();
+}
+
+/* ── Geometry ── */
+var CX = 100, CY = 118, RW = 58, RHP = 48, AX = 232, AY = 118, RC = 30;
+function handlePos() { return [CX + RHP*Math.cos(th), CY - RHP*Math.sin(th)]; }
+
+/* ── Drawing ── */
+function effortFrac() { return clamp(Math.abs(avg.F)/20, 0, 1); }
+function drawCrank(p) {
+  /* belt */
+  ctx.strokeStyle = p.belt; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(CX, CY - RW); ctx.lineTo(AX, AY - 9); ctx.moveTo(CX, CY + RW); ctx.lineTo(AX, AY + 9); ctx.stroke();
+  /* wheel */
+  ctx.fillStyle = p.wheel; ctx.beginPath(); ctx.arc(CX, CY, RW, 0, 2*Math.PI); ctx.fill(); ctx.strokeStyle = p.edge; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = p.spoke; ctx.lineWidth = 3;
+  for (var k = 0; k < 4; k++) { var a = th + k*Math.PI/2; ctx.beginPath(); ctx.moveTo(CX + 8*Math.cos(a), CY - 8*Math.sin(a)); ctx.lineTo(CX + (RW - 6)*Math.cos(a), CY - (RW - 6)*Math.sin(a)); ctx.stroke(); }
+  ctx.fillStyle = p.spoke; ctx.beginPath(); ctx.arc(CX, CY, 7, 0, 2*Math.PI); ctx.fill();
+  /* handle and hand */
+  var hp = handlePos(), ef = effortFrac();
+  ctx.strokeStyle = p.handle; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(CX, CY); ctx.lineTo(hp[0], hp[1]); ctx.stroke();
+  ctx.fillStyle = p.handle; ctx.beginPath(); ctx.arc(hp[0], hp[1], 9, 0, 2*Math.PI); ctx.fill();
+  var handOn = dragging || mode !== 'drag' || keyTq !== 0;
+  if (handOn) {
+    ctx.globalAlpha = 0.85; ctx.fillStyle = p.skin; ctx.beginPath(); ctx.arc(hp[0], hp[1], 12, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgb(' + Math.round(80 + 175*ef) + ',' + Math.round(200 - 150*ef) + ',60)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(hp[0], hp[1], 14, 0, 2*Math.PI); ctx.stroke();
+    if (ef > 0.4) { ctx.fillStyle = '#7fc4ff'; for (var s = 0; s < Math.round(ef*4); s++) { var sx = hp[0] + 16 + 5*s, sy = hp[1] - 14 + ((Date.now()/120 + s*7) % 14); ctx.beginPath(); ctx.moveTo(sx, sy - 4); ctx.quadraticCurveTo(sx + 3, sy + 1, sx, sy + 3); ctx.quadraticCurveTo(sx - 3, sy + 1, sx, sy - 4); ctx.fill(); } }
+    /* force arrow along the handle's path */
+    var F = avg.F; if (Math.abs(F) > 0.3) { var tdir = F > 0 ? 1 : -1, tx = -Math.sin(th)*tdir, ty = -Math.cos(th)*tdir, L = clamp(Math.abs(F)*2.4, 8, 46); arrow(hp[0] + tx*14, hp[1] + ty*14, hp[0] + tx*(14 + L), hp[1] + ty*(14 + L), p.force, 2.5); }
+  } else if (mode === 'drag' && Math.abs(w) < 0.05) {
+    ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center'; ctx.fillText('drag me', hp[0], hp[1] - 16);
+  }
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+  ctx.textAlign = 'left'; ctx.fillText('crank (handle r = 8 cm)', 6, CY + RW + 16); ctx.textAlign = 'center'; ctx.fillText('belt 1 : ' + gear, (CX + AX)/2 + 10, CY - RW + 4);
+}
+function drawArmature(p) {
+  var phi = gear*th, wc = gear*w, fast = Math.abs(wc) > 25 || (reducedMotion && Math.abs(wc) > 0.5);
+  /* pole pieces */
+  ctx.fillStyle = p.magN; ctx.beginPath(); ctx.moveTo(176, AY - 52); ctx.lineTo(196, AY - 52); ctx.arc(AX, AY, 40, Math.PI + 0.85, Math.PI - 0.85, true); ctx.lineTo(196, AY + 52); ctx.lineTo(176, AY + 52); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = p.magS; ctx.beginPath(); ctx.moveTo(288, AY - 52); ctx.lineTo(268, AY - 52); ctx.arc(AX, AY, 40, -0.85, 0.85); ctx.lineTo(268, AY + 52); ctx.lineTo(288, AY + 52); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.fillText('N', 184, AY - 36); ctx.fillText('S', 280, AY - 36);
+  /* field lines N -> S */
+  if (Bf > 0.01) { ctx.strokeStyle = p.field; ctx.lineWidth = 1; for (var k = -2; k <= 2; k++) { var yy = AY + k*13; ctx.beginPath(); ctx.moveTo(196, yy); ctx.lineTo(268, yy); ctx.stroke(); ctx.fillStyle = p.field; ctx.beginPath(); ctx.moveTo(262, yy); ctx.lineTo(256, yy - 3); ctx.lineTo(256, yy + 3); ctx.closePath(); ctx.fill(); } }
+  /* rotor */
+  ctx.fillStyle = 'rgba(120,128,138,0.35)'; ctx.beginPath(); ctx.arc(AX, AY, 36, 0, 2*Math.PI); ctx.fill();
+  function coilAt(ph, alpha, showI) {
+    var ax = AX + RC*Math.cos(ph), ay = AY - RC*Math.sin(ph), bx = AX - RC*Math.cos(ph), by = AY + RC*Math.sin(ph);
+    ctx.globalAlpha = alpha; ctx.strokeStyle = p.copper; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    var Ic = showI === 'snap' ? Math.sqrt(avg.i2)*1.414*(avg.w >= 0 ? 1 : -1)*Math.cos(ph)/Math.max(1e-9, Math.abs(Math.cos(ph))) : inst.I;
+    [[ax, ay, 1], [bx, by, -1]].forEach(function(c) {
+      ctx.fillStyle = p.symBg; ctx.beginPath(); ctx.arc(c[0], c[1], 7, 0, 2*Math.PI); ctx.fill(); ctx.strokeStyle = p.copper; ctx.lineWidth = 2; ctx.stroke();
+      var cur = Ic*c[2];
+      if (Math.abs(cur) > 0.01) {
+        ctx.strokeStyle = p.sym; ctx.fillStyle = p.sym; ctx.lineWidth = 1.5;
+        if (cur > 0) { ctx.beginPath(); ctx.moveTo(c[0] - 3.5, c[1] - 3.5); ctx.lineTo(c[0] + 3.5, c[1] + 3.5); ctx.moveTo(c[0] + 3.5, c[1] - 3.5); ctx.lineTo(c[0] - 3.5, c[1] + 3.5); ctx.stroke(); }   /* into the page */
+        else { ctx.beginPath(); ctx.arc(c[0], c[1], 2, 0, 2*Math.PI); ctx.fill(); }
+        /* magnetic force on this side: opposite to its velocity */
+        var vdir = (showI === 'snap' ? (avg.w >= 0 ? 1 : -1) : (wc >= 0 ? 1 : -1))*c[2], vx = -Math.sin(ph)*vdir, vy = -Math.cos(ph)*vdir;
+        var mag = clamp(Math.abs(cur*Math.cos(ph))*Bf*Nt*0.06, 0, 1);
+        if (mag > 0.04) arrow(c[0] - vx*9, c[1] - vy*9, c[0] - vx*(9 + 26*mag), c[1] - vy*(9 + 26*mag), p.force, 2.5);
+      }
+    });
+    ctx.globalAlpha = 1;
+  }
+  if (fast) {
+    ctx.strokeStyle = p.copper; ctx.globalAlpha = 0.35; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(AX, AY, RC, 0, 2*Math.PI); ctx.stroke(); ctx.globalAlpha = 1;
+    coilAt(0, 1, 'snap');
+    ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText('strobe view (spinning fast)', AX, AY + 64);
+  } else coilAt(phi, 1, 'live');
+  ctx.fillStyle = p.spoke; ctx.beginPath(); ctx.arc(AX, AY, 8, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('coil: ' + Nt + ' turns, ' + (Math.abs(wc)/(2*Math.PI)).toFixed(1) + ' rev/s', AX, AY + 78);
+  ctx.fillText('\u2297 into page  \u2299 out', AX, 16); ctx.fillStyle = p.force; ctx.fillText('\u2192 force on the wires', AX, 28);
+}
+function drawCircuit(p) {
+  var x0 = 300, x1 = 550, yT = 44, yB = 186, sw = 352;
+  ctx.strokeStyle = p.wire; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(288, AY - 20); ctx.lineTo(x0, AY - 20); ctx.lineTo(x0, yT); ctx.lineTo(sw, yT); ctx.moveTo(sw + 40, yT); ctx.lineTo(x1 - 10, yT);
+  ctx.moveTo(288, AY + 20); ctx.lineTo(x0, AY + 20); ctx.lineTo(x0, yB); ctx.lineTo(x1 - 10, yB); ctx.stroke();
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText(out === 'dc' ? 'brushes + commutator' : 'brushes + slip rings', 300, AY + 4);
+  /* knife switch */
+  ctx.fillStyle = p.text; ctx.beginPath(); ctx.arc(sw, yT, 3.5, 0, 2*Math.PI); ctx.arc(sw + 40, yT, 3.5, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle = closed ? p.ok : p.warn; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sw, yT);
+  if (closed) ctx.lineTo(sw + 40, yT); else ctx.lineTo(sw + 34, yT - 22); ctx.stroke();
+  ctx.fillStyle = closed ? p.ok : p.warn; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center'; ctx.fillText(closed ? 'switch CLOSED' : 'switch OPEN', sw + 20, yT - 26);
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText('(click)', sw + 20, yT + 14);
+  /* ammeter */
+  var amx = 420; ctx.fillStyle = p.panel; ctx.beginPath(); ctx.arc(amx, yT, 11, 0, 2*Math.PI); ctx.fill(); ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = p.text; ctx.font = 'bold 10px monospace'; ctx.fillText('A', amx, yT + 4);
+  ctx.font = '9px monospace'; ctx.fillText(Math.sqrt(avg.i2).toFixed(2) + ' A', amx, yT - 16);
+  /* loads in parallel between the rails */
+  var nb = nBulbs(), xs = nb === 1 ? [490] : nb === 2 ? [470, 520] : nb === 3 ? [455, 495, 535] : [495];
+  var bright = clamp(Math.pow(Math.max(0, heat), 1.8), 0, 1.4);
+  xs.forEach(function(bx) {
+    ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, yT); ctx.lineTo(bx, 82); ctx.moveTo(bx, 140); ctx.lineTo(bx, yB); ctx.stroke();
+    if (nb > 0) {
+      if (bright > 0.02) { var g = ctx.createRadialGradient(bx, 100, 2, bx, 100, 20 + 30*bright); g.addColorStop(0, 'rgba(' + p.glow + ',' + clamp(0.9*bright, 0, 0.95) + ')'); g.addColorStop(1, 'rgba(' + p.glow + ',0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, 100, 20 + 30*bright, 0, 2*Math.PI); ctx.fill(); }
+      ctx.fillStyle = p.glass; ctx.strokeStyle = p.dim; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(bx, 100, 15, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+      rect(bx - 7, 114, 14, 14, p.iron, p.edge);
+      ctx.strokeStyle = bright > 0.05 ? 'rgb(255,' + Math.round(140 + 100*clamp(bright, 0, 1)) + ',' + Math.round(60*clamp(bright, 0, 1)) + ')' : p.dim; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(bx - 5, 114); ctx.lineTo(bx - 5, 100); ctx.lineTo(bx - 3, 96); ctx.lineTo(bx - 1, 100); ctx.lineTo(bx + 1, 96); ctx.lineTo(bx + 3, 100); ctx.lineTo(bx + 5, 96); ctx.lineTo(bx + 5, 114); ctx.stroke();
+      ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, 82); ctx.lineTo(bx, 85); ctx.moveTo(bx, 128); ctx.lineTo(bx, 140); ctx.stroke();
+    } else if (loadKey === 'res') {
+      ctx.strokeStyle = p.copper; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, 82);
+      for (var z = 0; z < 8; z++) ctx.lineTo(bx + (z % 2 ? -8 : 8), 86 + z*7); ctx.lineTo(bx, 140); ctx.stroke();
+      ctx.fillStyle = p.text; ctx.font = '9px monospace'; ctx.textAlign = 'left'; ctx.fillText(Rres + ' \u03a9', bx + 12, 114);
+      var ph = avg.PL; if (ph > 0.3) { ctx.fillStyle = p.warn; ctx.fillText('warm', bx + 12, 126); }
+    } else {
+      ctx.strokeStyle = p.wire; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, 82); ctx.lineTo(bx, 140); ctx.stroke();
+      ctx.fillStyle = p.warn; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('SHORT', bx + 6, 108); ctx.fillText('CIRCUIT', bx + 6, 119);
+      if (closed && Math.sqrt(avg.i2) > 1) { ctx.strokeStyle = '#ffff66'; ctx.lineWidth = 1.5; for (var q = 0; q < 4; q++) { var a = Math.random()*6.3; ctx.beginPath(); ctx.moveTo(bx, 110); ctx.lineTo(bx + 10*Math.cos(a), 110 + 10*Math.sin(a)); ctx.stroke(); } }
+    }
+  });
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+  ctx.fillText(nb ? (nb === 1 ? 'bulb' : nb + ' bulbs in parallel') : loadKey === 'res' ? 'resistor' : 'bare wire', 495, 200);
+}
+function drawEffort(p) {
+  var x0 = 8, y0 = 214, w2 = 136, h2 = 200, ef = Math.abs(avg.F);
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('YOUR EFFORT', x0 + 6, y0 + 13);
+  /* spring-scale style gauge */
+  var gx = x0 + 34, gy = y0 + 26, gh = 150;
+  var zones = [[0, 4, '#3ad08f'], [4, 10, '#e8c020'], [10, 20, '#e24b4a']];
+  zones.forEach(function(z) { ctx.fillStyle = z[2]; ctx.globalAlpha = 0.35; ctx.fillRect(gx, gy + gh*z[0]/20, 18, gh*(z[1] - z[0])/20); }); ctx.globalAlpha = 1;
+  rect(gx, gy, 18, gh, null, p.edge);
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+  for (var k = 0; k <= 20; k += 5) { ctx.fillText(k + ' N', gx - 3, gy + gh*k/20 + 3); }
+  var py = gy + gh*clamp(ef, 0, 20)/20;
+  ctx.fillStyle = p.text; ctx.beginPath(); ctx.moveTo(gx + 18, py); ctx.lineTo(gx + 28, py - 5); ctx.lineTo(gx + 28, py + 5); ctx.closePath(); ctx.fill();
+  ctx.textAlign = 'left'; ctx.font = 'bold 11px monospace'; ctx.fillText(ef.toFixed(1) + ' N', gx + 31, py + 4);
+  ctx.font = '9px monospace'; ctx.fillStyle = ef < 4 ? '#3ad08f' : ef < 10 ? '#e8c020' : '#e24b4a';
+  ctx.fillText(ef < 1.5 ? 'very easy' : ef < 4 ? 'easy' : ef < 10 ? 'hard work' : 'very hard!', x0 + 6, y0 + h2 - 8);
+}
+function drawPower(p) {
+  var x0 = 150, y0 = 214, w2 = 146, h2 = 200;
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('WHERE YOUR ENERGY GOES', x0 + 6, y0 + 13);
+  var rows = [['your hand', avg.Ph, p.handle], ['friction', avg.Pf, '#8a94a3'], ['coil (heat)', avg.Pc, p.copper], [nBulbs() ? 'bulb light+heat' : (loadKey === 'res' ? 'resistor heat' : 'wire heat'), avg.PL, '#e8c020']];
+  var mx = Math.max(0.5, Math.abs(avg.Ph), avg.Pf + avg.Pc + avg.PL);
+  rows.forEach(function(r, i) {
+    var yy = y0 + 34 + i*40, bw = clamp(Math.abs(r[1])/mx, 0, 1)*(w2 - 16);
+    ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.fillText(r[0], x0 + 8, yy);
+    ctx.fillStyle = r[2]; ctx.fillRect(x0 + 8, yy + 4, bw, 12);
+    ctx.fillStyle = p.text; ctx.fillText(fmtW(r[1]), x0 + 8 + Math.min(bw + 4, w2 - 60), yy + 14);
+    if (i === 0) { ctx.strokeStyle = p.dim; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x0 + 6, yy + 24); ctx.lineTo(x0 + w2 - 6, yy + 24); ctx.stroke(); ctx.setLineDash([]); }
+  });
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText('in = friction + coil + load', x0 + 8, y0 + h2 - 8);
+}
+function drawScope(p) {
+  var x0 = 302, y0 = 214, w2 = 252, h2 = 200, mid = y0 + h2/2 + 8, amp = h2/2 - 22;
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + 4, mid + 0.5); ctx.lineTo(x0 + w2 - 4, mid + 0.5); ctx.stroke();
+  var eMax = 15, iMax = Math.max(1, closed && loadKey === 'short' ? 6 : 1.5);
+  function tr(key, col, sc) {
+    var n = scope.length; if (n < 2) return; ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath();
+    for (var i = 0; i < n; i++) { var x = x0 + w2 - 4 - (n - 1 - i)*(w2 - 8)/SC_N, y = mid - clamp(scope[i][key]/sc, -1.1, 1.1)*amp; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  tr('e', p.e, eMax); tr('i', p.i, iMax);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('SCOPE (last 0.15 s, real time)', x0 + 6, y0 + 13);
+  ctx.font = '8px monospace'; ctx.fillStyle = p.e; ctx.fillText('\u2014 emf (\u00b1' + eMax + ' V)', x0 + 6, y0 + 25); ctx.fillStyle = p.i; ctx.fillText('\u2014 current (\u00b1' + iMax + ' A)', x0 + 120, y0 + 25);
+  if (!closed) { ctx.fillStyle = p.dim; ctx.textAlign = 'center'; ctx.fillText('switch open: emf but no current', x0 + w2/2, y0 + h2 - 8); }
+}
+function redraw() {
+  var p = pal();
+  ctx.clearRect(0, 0, CW, CH); ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+  drawCircuit(p); drawCrank(p); drawArmature(p); drawEffort(p); drawPower(p); drawScope(p);
+}
+
+/* ── Readouts & narration ── */
+function loadName() { return loadKey === 'res' ? Rres + ' \u03a9 resistor' : loadKey === 'short' ? 'short circuit' : nBulbs() + (nBulbs() > 1 ? ' bulbs' : ' bulb'); }
+function updateReadouts() {
+  set('r_w', (avg.w/(2*Math.PI)).toFixed(2) + ' rev/s');
+  set('r_F', Math.abs(avg.F).toFixed(1) + ' N');
+  set('r_emf', Math.sqrt(avg.e2).toFixed(2) + ' V');
+  set('r_I', Math.sqrt(avg.i2).toFixed(2) + ' A');
+  set('r_Ph', fmtW(avg.Ph));
+  set('r_PL', fmtW(avg.PL));
+  set('r_tq', (Math.abs(avg.tq)*1000).toFixed(0) + ' mN\u00b7m');
+  set('r_load', (closed ? 'connected: ' : 'switch open: ') + loadName());
+  var r = el('r_effrow'); if (r) r.classList.toggle('gen_alert', closed && loadKey === 'short');
+}
+function statusText() {
+  var s = '', rev = avg.w/(2*Math.PI);
+  s += 'Crank ' + Math.abs(rev).toFixed(2) + ' rev/s, coil ' + Math.abs(rev*gear).toFixed(1) + ' rev/s, emf ' + Math.sqrt(avg.e2).toFixed(1) + ' V rms. ';
+  if (!closed) s += 'The switch is open: no current can flow, so the coil feels no magnetic force. Only friction resists: the crank is easy to turn (' + Math.abs(avg.F).toFixed(1) + ' N on the handle). ';
+  else {
+    s += 'The switch is closed: ' + Math.sqrt(avg.i2).toFixed(2) + ' A flows through the coil and the ' + loadName() + '. ';
+    s += 'In the magnetic field the current-carrying wires feel forces that oppose the rotation (Lenz\'s law): the force needed on the handle is ' + Math.abs(avg.F).toFixed(1) + ' N. ';
+    s += 'Your ' + fmtW(avg.Ph) + ' becomes ' + fmtW(avg.PL) + ' in the load, ' + fmtW(avg.Pc) + ' heating the coil and ' + fmtW(avg.Pf) + ' of friction. ';
+    if (nBulbs()) s += 'The bulb' + (nBulbs() > 1 ? 's glow ' : ' glows ') + (heat > 0.8 ? 'brightly' : heat > 0.3 ? 'dimly' : heat > 0.05 ? 'faintly' : 'not at all') + '. ';
+    if (loadKey === 'short') s += 'A short circuit has almost no resistance: a large current, a large back-torque, and the crank is very hard to turn. ';
+  }
+  return s;
+}
+var narrTimer = null;
+function updateNarration(prefix) {
+  if (!showNarr) return;
+  clearTimeout(narrTimer);
+  var go = function() { set('genNarration', (prefix ? prefix + ' ' : '') + statusText()); };
+  if (prefix) go(); else narrTimer = setTimeout(go, 450);
+}
+function updateCanvasDesc() { var d = 'Hand-crank generator. ' + statusText(); set('genCanvasDesc', d); canvas.setAttribute('aria-label', d); }
+function updateLabels() {
+  set('vR', Rres + ' \u03a9'); set('vF', Fpush.toFixed(1) + ' N'); set('vW', revSet.toFixed(2) + ' rev/s');
+  set('vB', Bf.toFixed(2) + ' T'); set('vN', String(Nt)); set('vG', '1 : ' + gear);
+  set('genInfo', 'NBA = ' + (NBA()*1000).toFixed(1) + ' mWb \u00b7 peak emf at 2 rev/s \u2248 ' + (NBA()*gear*4*Math.PI).toFixed(1) + ' V');
+  set('modeHint', mode === 'drag' ? 'Drag the red handle in circles (or hold the \u2190 \u2192 keys). Feel it lag when the switch is closed.' : mode === 'push' ? 'A steady push on the handle: watch the crank slow down when you close the switch.' : 'A motor keeps the speed fixed: read the force it needs.');
+  var r = el('slR'); if (r) r.disabled = loadKey !== 'res';
+  var f = el('slF'); if (f) f.disabled = mode !== 'push';
+  var ww = el('slW'); if (ww) ww.disabled = mode !== 'motor';
+  set('diagLabel', 'GENERATOR -- switch ' + (closed ? 'CLOSED, ' + loadName() : 'OPEN'));
+}
+function updateButtons() {
+  var sb = el('btnSwitch'); if (sb) { sb.textContent = 'Switch: ' + (closed ? 'CLOSED' : 'OPEN'); sb.classList.toggle('gen_active', closed); sb.setAttribute('aria-pressed', closed ? 'true' : 'false'); }
+  [['drag', 'btnDrag'], ['push', 'btnPush'], ['motor', 'btnMotor']].forEach(function(q) { var b = el(q[1]); if (b) { b.classList.toggle('gen_srcon', q[0] === mode); b.setAttribute('aria-pressed', q[0] === mode ? 'true' : 'false'); } });
+  [['ac', 'btnAC'], ['dc', 'btnDC']].forEach(function(q) { var b = el(q[1]); if (b) { b.classList.toggle('gen_srcon', q[0] === out); b.setAttribute('aria-pressed', q[0] === out ? 'true' : 'false'); } });
+}
+var pending = false;
+function scheduleUpdate(narrate) {
+  if (pending) return; pending = true;
+  var go = function() { pending = false; updateLabels(); updateButtons(); redraw(); updateReadouts(); updateCanvasDesc(); if (narrate !== false) updateNarration(); };
+  if (window.requestAnimationFrame) window.requestAnimationFrame(go); else setTimeout(go, 16);
+}
+
+/* ── Controls ── */
+function toggleSwitch() {
+  closed = !closed; updateButtons(); scheduleUpdate(false);
+  updateNarration(closed ? (Math.abs(w) > 1 ? 'Switch closed! Current flows and the crank suddenly gets heavier.' : 'Switch closed. Now turn the crank and compare.') : 'Switch opened: the current stops and the crank becomes easy again.');
+}
+function onSlider(key, raw) {
+  var v = parseFloat(raw);
+  if (key === 'Load') { loadKey = raw; heat = 0; }
+  else if (key === 'R') Rres = Math.round(v);
+  else if (key === 'F') Fpush = v;
+  else if (key === 'W') revSet = v;
+  else if (key === 'B') Bf = v;
+  else if (key === 'N') Nt = Math.round(v);
+  else if (key === 'G') gear = Math.round(v);
+  scheduleUpdate();
+}
+function setMode(m) { mode = m; dragging = false; keyTq = 0; scheduleUpdate(false); updateNarration(m === 'drag' ? 'Your hand: drag the handle.' : m === 'push' ? 'Steady push of ' + Fpush.toFixed(1) + ' N on the handle.' : 'Steady speed of ' + revSet.toFixed(2) + ' rev/s.'); }
+function setOut(o) { out = o; scheduleUpdate(false); updateNarration(o === 'dc' ? 'DC: the commutator keeps the outside current in one direction. The crank feels the same.' : 'AC: slip rings pass on the alternating current.'); }
+
+/* ── Mouse / touch dragging of the handle ── */
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function angAt(c) { return Math.atan2(-(c[1] - CY), c[0] - CX); }
+function wrap(a) { while (a > Math.PI) a -= 2*Math.PI; while (a < -Math.PI) a += 2*Math.PI; return a; }
+function startDrag(c) {
+  var d = Math.sqrt((c[0] - CX)*(c[0] - CX) + (c[1] - CY)*(c[1] - CY));
+  if (mode !== 'drag' || d > RW + 14) return false;
+  dragging = true; thTarget = th; mPrev = angAt(c); return true;
+}
+function moveDrag(c) { if (!dragging) return; var a = angAt(c); thTarget += wrap(a - mPrev); mPrev = a; if (thTarget - th > 1.2) thTarget = th + 1.2; if (thTarget - th < -1.2) thTarget = th - 1.2; }
+function endDrag() { dragging = false; }
+canvas.addEventListener('mousedown', function(e) { var c = canvasXY(e.clientX, e.clientY); if (c[0] > 340 && c[0] < 410 && c[1] < 70) { toggleSwitch(); return; } if (startDrag(c)) e.preventDefault(); });
+window.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); moveDrag(c); });
+window.addEventListener('mouseup', endDrag);
+canvas.addEventListener('touchstart', function(e) { var t = e.touches[0], c = canvasXY(t.clientX, t.clientY); if (c[0] > 340 && c[0] < 410 && c[1] < 70) { toggleSwitch(); e.preventDefault(); return; } if (startDrag(c)) e.preventDefault(); }, { passive: false });
+canvas.addEventListener('touchmove', function(e) { if (!dragging) return; e.preventDefault(); var t = e.touches[0]; moveDrag(canvasXY(t.clientX, t.clientY)); }, { passive: false });
+window.addEventListener('touchend', endDrag);
+canvas.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); set('genHoverReadout', describePoint(c[0], c[1])); canvas.style.cursor = (mode === 'drag' && Math.hypot(c[0] - CX, c[1] - CY) < RW + 14) ? (dragging ? 'grabbing' : 'grab') : (c[0] > 340 && c[0] < 410 && c[1] < 70 ? 'pointer' : 'default'); });
+canvas.addEventListener('mouseleave', function() { set('genHoverReadout', 'Hover over the generator, the circuit or the meters to read values'); });
+function describePoint(x, y) {
+  if (y < 210) {
+    if (Math.hypot(x - CX, y - CY) < RW + 14) return 'Crank: drag the handle around. Force on the handle now ' + Math.abs(avg.F).toFixed(1) + ' N.';
+    if (x < 292) return 'Coil between the magnet poles (seen end-on). Moving through the field, its wires get an emf; when current flows, the field pushes on them against the motion (green arrows).';
+    if (x > 340 && x < 410 && y < 70) return 'Knife switch: click it. Open means no complete circuit, so no current.';
+    return 'Circuit: ' + loadName() + '. ' + (closed ? Math.sqrt(avg.i2).toFixed(2) + ' A rms.' : 'No current: the switch is open.');
+  }
+  if (x < 146) return 'Effort gauge: the average force your hand applies to the handle.';
+  if (x < 298) return 'Energy: the power you put in equals friction + coil heating + power in the load (energy conservation).';
+  return 'Scope: the emf (amber) and the current (blue). With the switch open there is an emf but no current.';
+}
+
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('gen_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+  ROOT.classList.toggle('gen_hc', hcMode); ROOT.classList.toggle('gen_lm', lightMode); ROOT.classList.toggle('gen_cb', cbMode);
+  setBtnOn('btnHC', hcMode); setBtnOn('btnLight', lightMode); setBtnOn('btnCB', cbMode); setBtnOn('btnNarr', showNarr);
+  var nb = el('btnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+  var box = el('genNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate(false); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(''); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e = el('genSrAnnounce'); if (!e) return; e.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e.textContent = msg; }, 60); }
+
+/* ── Keyboard: shortcuts, and arrow keys turn the crank with a 10 N push ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+  var tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  switch (e.key) {
+    case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+    case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+    case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+    case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+    case 's': case 'S': toggleSwitch(); e.preventDefault(); break;
+    case 'ArrowLeft': if (mode === 'drag') { keyTq = 10*RH; e.preventDefault(); } break;
+    case 'ArrowRight': if (mode === 'drag') { keyTq = -10*RH; e.preventDefault(); } break;
+  }
+});
+ROOT.addEventListener('keyup', function(e) { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') keyTq = 0; });
+document.addEventListener('visibilitychange', function() { if (!document.hidden) startLoop(); else { dragging = false; keyTq = 0; } });
+if (reducedMotion) { var mn = el('genMotionNotice'); if (mn) mn.style.display = 'block'; }
+
+/* ── Boot ── */
+applyDisplay(); scheduleUpdate(false);
+updateNarration('Ready. Drag the red handle in circles to turn the crank with the switch open, then close the switch while you keep cranking.');
+startLoop();
+return { onSlider: onSlider, toggleSwitch: toggleSwitch, setMode: setMode, setOut: setOut,
+         toggleHC: toggleHC, toggleLight: toggleLight, toggleCB: toggleCB, toggleNarr: toggleNarr };
+};
+</script>
+<script>
+var genSim = new genGen();
+</script>
+</main>
+</body>
+</html>

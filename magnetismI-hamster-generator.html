@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Hamster Power! A Hamster-Wheel Generator</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, generator, hamster wheel, Lenz law, back torque, induction, light bulb, LED, energy conservation, lesson, scientific">
+<meta name="description" content="Hamsters in a wheel drive a generator: closing the switch makes the wheel harder to turn, and more hamsters are needed to light the bulb. Lenz's law and energy.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="hamroot" role="region" aria-label="Hamster wheel generator simulator">
+<!-- Accessibility toolbar -->
+<div class="ham_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="ham_a11ybtn" id="btnHC" onclick="hamSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ham_a11ybtn" id="btnLight" onclick="hamSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ham_a11ybtn" id="btnCB" onclick="hamSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ham_a11ybtn ham_a11yon" id="btnNarr" onclick="hamSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="ham_header">
+<p class="ham_h1">Hamster Power!</p>
+<p class="ham_sub">A hamster wheel turns a generator -- how many hamsters does it take to light the bulb?</p>
+</div>
+<div id="hamMotionNotice" class="ham_motionnotice" role="status">Reduced motion is enabled. The hamsters' legs and the fast-spinning coil are not animated.</div>
+<!-- Instrument grid -->
+<div class="ham_instrument">
+<!-- Left column -->
+<div class="ham_leftcol">
+<div class="ham_diagpanel">
+<div class="ham_diaglabel"><span id="diagLabel">HAMSTER GENERATOR</span><span class="ham_diagnote">each hamster pushes with at most 0.35 N and runs at most 1 m/s</span></div>
+<canvas id="hamCanvas" width="560" height="420" role="img" aria-label="Hamsters in a wheel driving a generator" aria-describedby="hamCanvasDesc"></canvas>
+<p id="hamCanvasDesc" class="ham_sronly">Hamsters running in a wheel connected to a generator and light bulbs.</p>
+<div class="ham_hoverbar" id="hamHoverReadout" role="status" aria-live="polite" aria-atomic="true">Hover over the wheel, the generator, the circuit or the meters to read values</div>
+</div>
+<!-- Readout -->
+<div class="ham_panel" role="region" aria-labelledby="readHd">
+<div class="ham_paneltitle" id="readHd">Readout (averaged)</div>
+<div class="ham_rinner ham_rgrid">
+<div class="ham_rrow"><span class="ham_rkey">Running speed</span><span class="ham_rval ham_hi" id="r_v">--</span></div>
+<div class="ham_rrow"><span class="ham_rkey">Push per hamster</span><span class="ham_rval ham_hi" id="r_F">--</span></div>
+<div class="ham_rrow"><span class="ham_rkey">emf (rms)</span><span class="ham_rval" id="r_emf">--</span></div>
+<div class="ham_rrow"><span class="ham_rkey">Current (rms)</span><span class="ham_rval" id="r_I">--</span></div>
+<div class="ham_rrow"><span class="ham_rkey">Hamster power</span><span class="ham_rval" id="r_Ph">--</span></div>
+<div class="ham_rrow"><span class="ham_rkey">Power to the load</span><span class="ham_rval" id="r_PL">--</span></div>
+<div class="ham_rrow"><span class="ham_rkey">Brightness</span><span class="ham_rval ham_hi" id="r_lit">--</span></div>
+<div class="ham_rrow" id="r_effrow"><span class="ham_rkey">Load</span><span class="ham_rval" id="r_load">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="ham_rightcol">
+<!-- Team -->
+<div class="ham_panel" role="group" aria-labelledby="teamHd">
+<div class="ham_paneltitle" id="teamHd">Hamster Team</div>
+<div class="ham_panelbody">
+<div class="ham_teamrow">
+<button type="button" class="ham_btn ham_big" onclick="hamSim.addHamster(-1)" aria-label="Remove a hamster">&minus;</button>
+<span class="ham_count" id="vCount" aria-live="polite">1 hamster</span>
+<button type="button" class="ham_btn ham_big" onclick="hamSim.addHamster(1)" aria-label="Add a hamster">+</button>
+</div>
+<p class="ham_hint">Up to 8 hamsters fit in the wheel. Each one pushes harder when the wheel turns slowly, and can't push at all at 1 m/s.</p>
+</div>
+</div>
+<!-- Circuit -->
+<div class="ham_panel" role="group" aria-labelledby="cirHd">
+<div class="ham_paneltitle" id="cirHd">Circuit</div>
+<div class="ham_panelbody">
+<button type="button" class="ham_btn ham_switch" id="btnSwitch" onclick="hamSim.toggleSwitch()" aria-pressed="false">Switch: OPEN</button>
+<label for="selLoad" class="ham_ctrlname">Load</label>
+<select id="selLoad" aria-label="Electrical load" onchange="hamSim.onSlider('Load', this.value)">
+<option value="b1" selected>1 flashlight bulb (1.5 V, 0.2 A)</option>
+<option value="b2">2 bulbs in parallel</option>
+<option value="b3">3 bulbs in parallel</option>
+<option value="led">LED (needs 1.8 V to light)</option>
+<option value="short">Short circuit (a bare wire!)</option>
+</select>
+<p class="ham_hint">Coil resistance 1 &Omega;. Try: close the switch and watch the hamsters slow down.</p>
+</div>
+</div>
+<!-- Generator -->
+<div class="ham_panel" role="group" aria-labelledby="genHd">
+<div class="ham_paneltitle" id="genHd">Generator</div>
+<div class="ham_panelbody">
+<div class="ham_srcbtns" role="group" aria-label="Output type">
+<button type="button" class="ham_srcbtn ham_srcon" id="btnAC" onclick="hamSim.setOut('ac')" aria-pressed="true">AC (SLIP RINGS)</button>
+<button type="button" class="ham_srcbtn" id="btnDC" onclick="hamSim.setOut('dc')" aria-pressed="false">DC (COMMUTATOR)</button>
+</div>
+<div class="ham_ctrlhdr"><label for="slB" class="ham_ctrlname">Magnet field B</label><span class="ham_sval" id="vB">0.30 T</span></div>
+<input type="range" id="slB" min="0" max="0.6" step="0.01" value="0.3" aria-label="Magnetic field in tesla" oninput="hamSim.onSlider('B', this.value)">
+<div class="ham_ctrlhdr"><label for="slN" class="ham_ctrlname">Coil turns N</label><span class="ham_sval" id="vN">200</span></div>
+<input type="range" id="slN" min="50" max="400" step="10" value="200" aria-label="Number of turns on the coil" oninput="hamSim.onSlider('N', this.value)">
+<div class="ham_ctrlhdr"><label for="slG" class="ham_ctrlname">Gear ratio</label><span class="ham_sval" id="vG">1 : 30</span></div>
+<input type="range" id="slG" min="10" max="60" step="1" value="30" aria-label="Gear ratio: coil turns per wheel turn" oninput="hamSim.onSlider('G', this.value)">
+<p class="ham_derived" id="genInfo">--</p>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="ham_formulastrip">
+<span class="ham_formulatxt">emf = NBA&omega; sin(&omega;t) &nbsp;|&nbsp; Current &rarr; magnetic back-force on the coil (Lenz) &nbsp;|&nbsp; Hamster: F = F&#8320;(1 &minus; v/v&#8344;&#8336;&#8339;), F&#8320; = 0.35 N, v&#8344;&#8336;&#8339; = 1 m/s &nbsp;|&nbsp; Power = F&middot;v = emf&middot;I + losses &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>S</kbd> switch <kbd>+</kbd> <kbd>&minus;</kbd> hamsters</span>
+</div>
+</div><!-- instrument -->
+<div id="hamNarrBox" class="ham_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="hamNarration">--</span></div>
+<div id="hamSrAnnounce" class="ham_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="ham_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation powers a generator with hamsters. Each hamster runs in a wheel that turns, through a belt, a coil of `N` turns in a magnetic field `B`, inducing an emf</p>
+<p class="mob_eq">`epsilon = N B A g omega cos(phi)`,</p>
+<p>where `g` is the gear ratio of the belt. A hamster pushes hardest when the wheel turns slowly; at full speed it can only just keep up.</p>
+<p>With the switch open, the wheel spins freely. Close the switch, and the current that lights the bulb also makes a magnetic torque on the coil that opposes the rotation (Lenz's law): the hamsters have to work harder, and the wheel slows. The electrical power delivered comes from the hamsters' work. How many hamsters does it take to light a flashlight bulb? An LED needs less power, but conducts only above about 1.8 V, and only in one direction.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+.mob_descwrap { width:100%; max-width:860px; margin:8px auto 10px; display:flex; flex-direction:column; align-items:center; gap:8px; box-sizing:border-box; font-family:Arial, sans-serif; }
+.mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+.mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+.mob_desc { width:100%; box-sizing:border-box; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+.mob_desc p { margin:0 0 9px; } .mob_desc p:last-child { margin-bottom:0; }
+.mob_eq { text-align:center; font-size:1rem; }
+</style>
+<!-- #hamroot -->
+<style>
+/* ════════ All simulator rules scoped to #hamroot ════════ */
+#hamroot {
+--ham-chassis:#1a1c1f; --ham-panel:#22262b; --ham-panel-hi:#2c3138; --ham-panel-lo:#14161a;
+--ham-border:#3a4048; --ham-border-hi:#525c66; --ham-text:#c8d0d8; --ham-dim:#8a94a3; --ham-bright:#e8eef5;
+--ham-accent:#e8a020; --ham-green:#3ad08f; --ham-val:#ffdd66; --ham-warnc:#ff6a5a;
+--ham-focus:#e8a020; --ham-nar-bg:#2a2410; --ham-nar-border:#e0b040; --ham-nar-text:#f0e2b8;
+background:var(--ham-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--ham-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#hamroot.ham_lm {
+--ham-chassis:#e9edf1; --ham-panel:#ffffff; --ham-panel-hi:#f1f4f7; --ham-panel-lo:#f4f6f9;
+--ham-border:#c3cad3; --ham-border-hi:#9aa3ae; --ham-text:#1d232a; --ham-dim:#556070; --ham-bright:#000000;
+--ham-accent:#a8620a; --ham-green:#12805a; --ham-val:#8a4a00; --ham-warnc:#b02020;
+--ham-focus:#a8620a; --ham-nar-bg:#ffefc0; --ham-nar-border:#e0b040; --ham-nar-text:#333333;
+background-image:none;
+}
+#hamroot.ham_hc {
+--ham-chassis:#000000; --ham-panel:#000000; --ham-panel-hi:#111111; --ham-panel-lo:#000000;
+--ham-border:#ffffff; --ham-border-hi:#ffffff; --ham-text:#ffffff; --ham-dim:#e0e0e0; --ham-bright:#ffffff;
+--ham-accent:#ffd700; --ham-green:#00ff88; --ham-val:#ffff00; --ham-warnc:#ff5555;
+--ham-focus:#ffff00; --ham-nar-bg:#000000; --ham-nar-border:#ffd700; --ham-nar-text:#ffffff;
+background-image:none;
+}
+#hamroot.ham_cb { --ham-warnc:#D55E00; }
+#hamroot.ham_hc .ham_panel, #hamroot.ham_hc .ham_diagpanel { border-width:2px; }
+#hamroot *, #hamroot *::before, #hamroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#hamroot input:focus-visible, #hamroot button:focus-visible, #hamroot select:focus-visible { outline:2px solid var(--ham-focus); outline-offset:2px; }
+/* toolbar */
+#hamroot .ham_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#hamroot .ham_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--ham-panel-hi); border:1px solid var(--ham-border-hi); color:var(--ham-dim); }
+#hamroot .ham_a11ybtn:hover { border-color:var(--ham-accent); color:var(--ham-accent); }
+#hamroot .ham_a11yon { background:rgba(58,208,143,.14); border-color:var(--ham-green); color:var(--ham-green); font-weight:bold; }
+/* header */
+#hamroot .ham_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#hamroot .ham_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--ham-accent); text-align:center; }
+#hamroot .ham_sub { font-size:.7rem; color:var(--ham-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#hamroot .ham_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--ham-panel); border:1px solid var(--ham-border); border-radius:4px; color:var(--ham-dim); }
+/* grid */
+#hamroot .ham_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#hamroot .ham_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#hamroot .ham_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#hamroot .ham_diagpanel { background:var(--ham-panel); border:1px solid var(--ham-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#hamroot .ham_diaglabel { background:var(--ham-panel-lo); border-bottom:1px solid var(--ham-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ham-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#hamroot #diagLabel { color:var(--ham-accent); font-weight:bold; }
+#hamroot .ham_diagnote { text-transform:none; letter-spacing:.02em; }
+#hamroot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#hamroot .ham_hoverbar { background:var(--ham-panel-lo); border-top:1px solid var(--ham-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--ham-val); min-height:28px; line-height:1.4; }
+/* right column */
+#hamroot .ham_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#hamroot .ham_panel { background:var(--ham-panel); border:1px solid var(--ham-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#hamroot .ham_paneltitle { background:var(--ham-panel-lo); border-bottom:1px solid var(--ham-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--ham-dim); }
+#hamroot .ham_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#hamroot .ham_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#hamroot .ham_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--ham-panel-hi); border:1px solid var(--ham-border-hi); color:var(--ham-dim); border-radius:3px; }
+#hamroot .ham_srcbtn:hover { border-color:var(--ham-accent); color:var(--ham-text); }
+#hamroot .ham_srcon { background:var(--ham-accent); color:#111; border-color:var(--ham-accent); font-weight:bold; }
+#hamroot .ham_srcon:hover { color:#111; }
+#hamroot .ham_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#hamroot .ham_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--ham-dim); text-transform:uppercase; }
+#hamroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--ham-panel-lo); border:1px solid var(--ham-border); }
+#hamroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--ham-accent); border:2px solid var(--ham-panel); cursor:pointer; }
+#hamroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--ham-accent); border:2px solid var(--ham-panel); cursor:pointer; }
+#hamroot input[type=range]:disabled { opacity:.35; cursor:default; }
+#hamroot .ham_sval { font-family:monospace; font-size:.74rem; color:var(--ham-val); min-width:56px; text-align:right; }
+#hamroot .ham_hint { font-size:.66rem; color:var(--ham-dim); line-height:1.4; }
+#hamroot .ham_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#hamroot .ham_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--ham-panel-lo); border:1px solid var(--ham-border); border-radius:3px; }
+#hamroot .ham_rrow.ham_alert { border-color:var(--ham-warnc); }
+#hamroot .ham_rrow.ham_alert .ham_rval { color:var(--ham-warnc); font-weight:bold; }
+#hamroot .ham_rkey { font-family:monospace; font-size:.6rem; color:var(--ham-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#hamroot .ham_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--ham-text); }
+#hamroot .ham_hi { color:var(--ham-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#hamroot .ham_formulastrip { grid-column:1 / 3; background:var(--ham-panel-lo); border:1px solid var(--ham-border); border-radius:4px; padding:7px 14px; }
+#hamroot .ham_formulatxt { font-family:monospace; font-size:.66rem; color:var(--ham-dim); letter-spacing:.04em; line-height:1.6; }
+#hamroot .ham_formulatxt kbd { border:1px solid var(--ham-border-hi); border-radius:2px; padding:0 4px; color:var(--ham-accent); font-family:monospace; }
+#hamroot .ham_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--ham-nar-bg); border-left:4px solid var(--ham-nar-border); font-size:.82rem; color:var(--ham-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#hamroot .ham_credit { font-size:.62rem; color:var(--ham-dim); text-align:center; }
+#hamroot .ham_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#hamroot .ham_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--ham-text); cursor:pointer; }
+#hamroot .ham_chk input { accent-color:var(--ham-accent); width:14px; height:14px; }
+#hamroot .ham_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--ham-panel-lo); border-top:1px solid var(--ham-border); }
+#hamroot select { width:100%; background:var(--ham-panel-hi); color:var(--ham-text); border:1px solid var(--ham-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#hamroot .ham_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#hamroot .ham_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#hamroot .ham_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--ham-panel-hi); border:1px solid var(--ham-border-hi); color:var(--ham-text); border-radius:3px; text-transform:uppercase; }
+#hamroot .ham_btn:hover { border-color:var(--ham-accent); }
+#hamroot .ham_btn:disabled { opacity:.4; cursor:default; }
+#hamroot .ham_btn.ham_active { background:var(--ham-green); border-color:var(--ham-green); color:#111; font-weight:bold; }
+#hamroot .ham_warn { color:#e0605a; border-color:#a04040; }
+#hamroot.ham_lm .ham_warn { color:#b02020; border-color:#c06060; }
+#hamroot .ham_sub2 { border-top:1px dashed var(--ham-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#hamroot .ham_derived { font-family:monospace; font-size:.68rem; color:var(--ham-dim); line-height:1.4; }
+#hamroot .ham_derived b { color:var(--ham-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#hamroot .ham_instrument { grid-template-columns:minmax(0,1fr); }
+#hamroot .ham_rightcol { width:auto; }
+#hamroot .ham_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #hamroot .ham_row2 { grid-template-columns:1fr; } }
+#hamroot .ham_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#hamroot .ham_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#hamroot .ham_small { padding:3px 8px; margin-left:auto; }
+@media (max-width:560px) { #hamroot .ham_rgrid { grid-template-columns:1fr; } }
+#hamroot .ham_scalebtns { display:flex; gap:5px; margin-left:auto; }
+#hamroot .ham_small { padding:3px 8px; margin-left:0; }
+#hamroot .ham_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#hamroot .ham_srcbtns3 .ham_srcbtn { font-size:.6rem; padding:6px 2px; }
+#hamroot .ham_switch { font-size:.78rem; padding:9px 4px; font-weight:bold; letter-spacing:.08em; }
+#hamroot .ham_switch.ham_active { background:#e8a020; border-color:#e8a020; color:#111; }
+#hamroot .ham_teamrow { display:grid; grid-template-columns:44px 1fr 44px; gap:8px; align-items:center; }
+#hamroot .ham_big { font-size:1.2rem; padding:4px 0; font-weight:bold; }
+#hamroot .ham_count { text-align:center; font-family:monospace; font-size:.95rem; font-weight:bold; color:var(--ham-val); }
+/* question section below the simulator */
+.ham_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.ham_qwrap ol { padding-left:24px; }
+.ham_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<script>
+/* ════════ SIMULATION ════════
+Pattern: mirrors the solenoid (magnetism) example:
+var simObj = function() { ... return { public methods }; };  var simObj = new simObj();
+Physics (SI units) -- the same generator physics as the hand-crank simulation, driven by hamsters:
+  Wheel radius 10 cm; hamster running speed v = omega r. Each hamster pushes with F = F0 (1 - v/vmax),
+  F0 = 0.35 N, vmax = 1 m/s (it pushes hardest when the wheel is slow; at full speed it just keeps up).
+  Wheel -> belt (gear ratio g) -> coil: emf = N B A g omega cos(phi).
+  Switch closed: current I through the coil and the load; the magnetic torque on the coil, g N B A I cos(phi),
+  opposes the rotation (Lenz's law). Wheel: J d(omega)/dt = n F r - tau_magnetic - tau_friction.
+  Flashlight bulbs (1.5 V, 0.2 A): filament 1 ohm cold, 7.5 ohm hot. LED: conducts only above 1.8 V
+  (with a 10 ohm series resistor), and only in one direction.
+*/
+var hamGen = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('hamroot');
+var canvas = document.getElementById('hamCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function el(id) { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function fmtW(P) { var a = Math.abs(P); if (a < 0.0005) return '0 W'; if (a < 1) return (a*1000).toFixed(0) + ' mW'; return a.toFixed(2) + ' W'; }
+
+/* ── Parameters ── */
+var RWm = 0.10, AREA = 1.97e-4, RCOIL = 1, J = 0.002, TF0 = 0.002, BF = 0.0004, F0 = 0.35, VMAX = 1.0;
+var RCOLD = 1.0, RHOT = 7.5, PRATED = 0.3, VF = 1.8, RLED = 10, ILED = 0.02;
+var Bf = 0.3, Nt = 200, gear = 30, out = 'ac', closed = false, loadKey = 'b1', nHam = 1;
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true;
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var HAMS = [
+  { name: 'Hammy',   fur: '#c8955a', belly: '#f0dcc0' }, { name: 'Peanut', fur: '#e8d8b8', belly: '#ffffff' },
+  { name: 'Mochi',   fur: '#9a8a7a', belly: '#e0d8d0' }, { name: 'Biscuit', fur: '#d8a060', belly: '#f8e8d0' },
+  { name: 'Pepper',  fur: '#5a4a40', belly: '#c8b8a8' }, { name: 'Nibbles', fur: '#f0e8e0', belly: '#ffffff' },
+  { name: 'Ziggy',   fur: '#b06a3a', belly: '#f0d0b0' }, { name: 'Cookie', fur: '#7a5a3a', belly: '#e8d0b0' }
+];
+
+/* ── State ── */
+var th = 0, w = 0, heat = 0, ledGlow = 0, litOnce = false, dist = 0;
+var inst = { emf: 0, Iext: 0 };
+var avg = { w: 0, F: 0, Ph: 0, PL: 0, Pc: 0, Pf: 0, e2: 0, i2: 0, lit: 0 };
+var scope = [], SC_N = 300, scAcc = 0;
+
+/* ── Physics ── */
+function NBA() { return Nt*Bf*AREA; }
+function nBulbs() { return loadKey === 'b1' ? 1 : loadKey === 'b2' ? 2 : loadKey === 'b3' ? 3 : 0; }
+function Rbulb() { return RCOLD + (RHOT - RCOLD)*Math.sqrt(clamp(heat, 0, 1.5)); }
+function hamForce(v) { return Math.min(F0, F0*(1 - v/VMAX)); }     /* per hamster, along the running direction */
+function loadCurrent(eExt) {
+  if (!closed) return 0;
+  if (loadKey === 'led') return eExt > VF ? (eExt - VF)/(RCOIL + RLED) : 0;
+  var R = loadKey === 'short' ? 0.05 : Rbulb()/nBulbs();
+  return eExt/(RCOIL + R);
+}
+function substep(h) {
+  var phi = gear*th, wc = gear*w, cs = Math.cos(phi), e = NBA()*wc*cs;
+  var eExt = out === 'dc' ? Math.abs(e)*(w >= 0 ? 1 : -1) : e;
+  var Iext = loadCurrent(eExt), Icoil = out === 'dc' ? Iext*(cs >= 0 ? 1 : -1) : Iext;
+  var tqm = gear*NBA()*Icoil*cs;
+  var v = w*RWm, Fh = nHam*hamForce(v), tqh = Fh*RWm;
+  var tqf = (Math.abs(w) > 1e-4 ? (w > 0 ? 1 : -1)*TF0 : 0) + BF*w;
+  if (Math.abs(w) < 1e-3 && Math.abs(tqh - tqm) <= TF0) w = 0; else w += (tqh - tqm - tqf)/J*h;
+  th += w*h; dist += Math.abs(w)*RWm*h;
+  var pl;
+  if (loadKey === 'led') { pl = Iext*VF; ledGlow += (clamp(Iext/ILED, 0, 1.5) - ledGlow)*Math.min(1, h/0.01); }
+  else { var R = loadKey === 'short' ? 0.05 : Rbulb()/nBulbs(); pl = Iext*Iext*R; }
+  if (nBulbs() > 0) heat += (pl/nBulbs()/PRATED - heat)*Math.min(1, h/0.08); else heat += (0 - heat)*Math.min(1, h/0.08);
+  inst.emf = eExt; inst.Iext = Iext;
+  var a = Math.min(1, h/0.3), litNow = loadKey === 'led' ? ledGlow : (nBulbs() ? clamp(heat, 0, 1.5) : 0);
+  avg.w += (w - avg.w)*a; avg.F += (hamForce(v) - avg.F)*a; avg.Ph += (tqh*w - avg.Ph)*a; avg.PL += (pl - avg.PL)*a; avg.Pc += (Icoil*Icoil*RCOIL - avg.Pc)*a;
+  avg.Pf += (tqf*w - avg.Pf)*a; avg.e2 += (e*e - avg.e2)*a; avg.i2 += (Iext*Iext - avg.i2)*a; avg.lit += (litNow - avg.lit)*a;
+  scAcc += h; if (scAcc >= 0.0005) { scAcc = 0; scope.push({ e: inst.emf, i: Iext }); if (scope.length > SC_N) scope.shift(); }
+}
+
+/* ── Animation loop ── */
+var rafId = null, lastTs = null, roTimer = 0;
+function advance(dt) { var n = Math.max(1, Math.ceil(dt/0.0005)), h = dt/n; for (var i = 0; i < n; i++) substep(h); }
+function frame(ts) {
+  rafId = null;
+  if (lastTs === null) lastTs = ts;
+  var dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+  advance(dt); redraw();
+  roTimer += dt; if (roTimer > 0.2) { roTimer = 0; updateReadouts(); checkLit(); }
+  if (!document.hidden) rafId = window.requestAnimationFrame(frame);
+}
+function startLoop() { if (!rafId && window.requestAnimationFrame) { lastTs = null; rafId = window.requestAnimationFrame(frame); } }
+function checkLit() {
+  var lit = closed && avg.lit > 0.8 && loadKey !== 'short';
+  if (lit && !litOnce) { litOnce = true; updateNarration('\u2728 Lit! ' + nHam + ' hamster' + (nHam > 1 ? 's' : '') + ' can light ' + loadName() + ' at full brightness.'); }
+  if (!lit && avg.lit < 0.5) litOnce = false;
+}
+
+/* ── Palette ── */
+function pal() {
+  var p;
+  if (hcMode) p = { bg:'#000000', edge:'#ffffff', panel:'#000000', text:'#ffffff', dim:'#e0e0e0', wheel:'#ffffff', rung:'#bbbbbb', stand:'#888888', belt:'#bbbbbb', iron:'#777777', magN:'#ff4444', magS:'#4499ff', copper:'#ffaa00', field:'rgba(255,255,255,0.5)', wire:'#ffffff', glass:'rgba(255,255,255,0.15)', glow:'255,255,120', force:'#00ff88', e:'#ffd700', i:'#55aaff', warn:'#ff5555', ok:'#00ff88', sym:'#000000', symBg:'#ffffff', led:'255,60,60', lw:1.6 };
+  else if (lightMode) p = { bg:'#ffffff', edge:'#9aa3ae', panel:'#f4f6f9', text:'#1d232a', dim:'#556070', wheel:'#556070', rung:'#9aa3ae', stand:'#8a6a4a', belt:'#3a4048', iron:'#9aa3ae', magN:'#c0262a', magS:'#1f5fc0', copper:'#b8702a', field:'rgba(60,60,170,0.45)', wire:'#3a4048', glass:'rgba(120,160,200,0.18)', glow:'255,200,60', force:'#12805a', e:'#a8620a', i:'#1f5fc0', warn:'#c0262a', ok:'#12805a', sym:'#1d232a', symBg:'#ffffff', led:'230,30,30', lw:1.1 };
+  else p = { bg:'#0d0f12', edge:'#3a4048', panel:'#0a0c0f', text:'#c8d0d8', dim:'#8a94a3', wheel:'#9aa3ae', rung:'#5b636d', stand:'#6b4a2a', belt:'#1a1a1a', iron:'#5b636d', magN:'#c9433d', magS:'#3d6cc9', copper:'#c8813a', field:'rgba(180,180,255,0.45)', wire:'#9aa3ae', glass:'rgba(200,220,255,0.12)', glow:'255,220,120', force:'#3ad08f', e:'#e8a020', i:'#5aa0ff', warn:'#ff5a52', ok:'#3ad08f', sym:'#ffffff', symBg:'#1a1c1f', led:'255,60,60', lw:1.1 };
+  if (cbMode && !hcMode) { p.magN = '#D55E00'; p.magS = '#0072B2'; p.force = lightMode ? '#009E73' : '#F0E442'; p.e = '#E69F00'; p.i = lightMode ? '#0072B2' : '#56B4E9'; p.warn = '#D55E00'; }
+  return p;
+}
+function rect(x, y, w2, h2, fill, stroke, lw) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w2, h2); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.strokeRect(x + 0.5, y + 0.5, w2 - 1, h2 - 1); }
+}
+function arrow(x1, y1, x2, y2, col, lw) {
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  var a = Math.atan2(y2 - y1, x2 - x1), hs = 6;
+  ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - hs*Math.cos(a - 0.45), y2 - hs*Math.sin(a - 0.45)); ctx.lineTo(x2 - hs*Math.cos(a + 0.45), y2 - hs*Math.sin(a + 0.45)); ctx.closePath(); ctx.fill();
+}
+
+/* ── Geometry ── */
+var CX = 98, CY = 98, RW = 80, AX = 236, AY = 98, RC = 28;
+
+/* ── Drawing: wheel and hamsters ── */
+function effortOf() { return clamp(hamForce(avg.w*RWm)/F0, 0, 1); }
+function drawHamster(p, x, y, ang, k, effort) {
+  var hm = HAMS[k], legPh = reducedMotion ? 0 : dist/0.025*2*Math.PI;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(1.4, 1.4);
+  /* the hamster faces left (runs toward -x in its own frame) */
+  ctx.fillStyle = hm.fur;
+  /* legs */
+  ctx.strokeStyle = hm.fur; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  [[-7, 0], [6, Math.PI]].forEach(function(l) { var sw = 4*Math.sin(legPh + l[1]); ctx.beginPath(); ctx.moveTo(l[0], 4); ctx.lineTo(l[0] + sw, 10); ctx.stroke(); ctx.beginPath(); ctx.moveTo(l[0] + 2, 4); ctx.lineTo(l[0] + 2 - sw, 10); ctx.stroke(); });
+  ctx.lineCap = 'butt';
+  /* body, belly, head */
+  ctx.beginPath(); ctx.ellipse(0, -2, 13, 9, 0, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = hm.belly; ctx.beginPath(); ctx.ellipse(-1, 2, 9, 4.5, 0, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = hm.fur; ctx.beginPath(); ctx.arc(-12, -5, 7, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = '#e8a0a0'; ctx.beginPath(); ctx.arc(-9, -12, 3, 0, 2*Math.PI); ctx.fill();               /* ear */
+  ctx.fillStyle = '#111111'; ctx.beginPath(); ctx.arc(-14, -7, 1.6, 0, 2*Math.PI); ctx.fill();              /* eye */
+  ctx.fillStyle = '#e07080'; ctx.beginPath(); ctx.arc(-19, -4, 1.6, 0, 2*Math.PI); ctx.fill();              /* nose */
+  ctx.strokeStyle = '#555555'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(-18, -3); ctx.lineTo(-24, -5); ctx.moveTo(-18, -3); ctx.lineTo(-24, -1); ctx.stroke();  /* whiskers */
+  ctx.fillStyle = hm.fur; ctx.beginPath(); ctx.arc(13, -3, 2.5, 0, 2*Math.PI); ctx.fill();                 /* tail */
+  /* effort: cheeks redden, sweat drops, tongue */
+  if (effort > 0.55) { ctx.fillStyle = 'rgba(255,80,80,' + (effort - 0.5) + ')'; ctx.beginPath(); ctx.arc(-14, -2, 2.5, 0, 2*Math.PI); ctx.fill(); }
+  if (effort > 0.75) {
+    ctx.fillStyle = '#ff7090'; ctx.beginPath(); ctx.ellipse(-19, 0, 1.5, 2.5, 0, 0, 2*Math.PI); ctx.fill();
+    ctx.fillStyle = '#7fc4ff'; var t = (Date.now()/150 + k*3) % 10;
+    ctx.beginPath(); ctx.moveTo(-6, -18 + t); ctx.quadraticCurveTo(-3, -13 + t, -6, -11 + t); ctx.quadraticCurveTo(-9, -13 + t, -6, -18 + t); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawWheel(p) {
+  /* stand */
+  ctx.strokeStyle = p.stand; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(CX - 50, 196); ctx.lineTo(CX, CY); ctx.lineTo(CX + 50, 196); ctx.stroke();
+  /* belt from the axle pulley to the generator */
+  ctx.strokeStyle = p.belt; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(CX, CY - 14); ctx.lineTo(AX, AY - 8); ctx.moveTo(CX, CY + 14); ctx.lineTo(AX, AY + 8); ctx.stroke();
+  /* wheel rim with rungs */
+  ctx.strokeStyle = p.wheel; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(CX, CY, RW, 0, 2*Math.PI); ctx.stroke();
+  ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(CX, CY, RW - 6, 0, 2*Math.PI); ctx.stroke();
+  ctx.strokeStyle = p.rung; ctx.lineWidth = 1;
+  for (var k = 0; k < 36; k++) { var a = th + k*Math.PI/18; ctx.beginPath(); ctx.moveTo(CX + (RW - 6)*Math.cos(a), CY - (RW - 6)*Math.sin(a)); ctx.lineTo(CX + RW*Math.cos(a), CY - RW*Math.sin(a)); ctx.stroke(); }
+  for (var s = 0; s < 6; s++) { var b = th + s*Math.PI/3; ctx.beginPath(); ctx.moveTo(CX + 14*Math.cos(b), CY - 14*Math.sin(b)); ctx.lineTo(CX + (RW - 6)*Math.cos(b), CY - (RW - 6)*Math.sin(b)); ctx.stroke(); }
+  ctx.fillStyle = p.wheel; ctx.beginPath(); ctx.arc(CX, CY, 14, 0, 2*Math.PI); ctx.fill(); ctx.fillStyle = p.panel; ctx.beginPath(); ctx.arc(CX, CY, 5, 0, 2*Math.PI); ctx.fill();
+  /* hamsters along the bottom of the wheel, a little up the side they run toward */
+  var ef = effortOf(), spread = 0.3;
+  for (var i = 0; i < nHam; i++) {
+    var a2 = -Math.PI/2 - 0.3 + (i - (nHam - 1)/2)*spread, r2 = RW - 23;
+    var hx = CX + r2*Math.cos(a2), hy = CY - r2*Math.sin(a2), tilt = -(a2 + Math.PI/2);
+    drawHamster(p, hx, hy, tilt, i, ef);
+  }
+  if (nHam === 0) { ctx.fillStyle = p.dim; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.fillText('no hamsters!', CX, CY + 40); }
+  /* push arrow */
+  if (nHam > 0 && avg.F > 0.02) { var L = clamp(avg.F*nHam*40, 8, 60); arrow(CX - 10, CY + RW + 10, CX - 10 + L, CY + RW + 10, p.force, 2.5); ctx.fillStyle = p.force; ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText('rungs pushed back', CX - 8 + L, CY + RW + 13); }
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.fillText('belt 1 : ' + gear, (CX + AX)/2 + 14, CY - 18);
+}
+function drawArmature(p) {
+  var phi = gear*th, wc = gear*w, fast = Math.abs(wc) > 25 || (reducedMotion && Math.abs(wc) > 0.5);
+  ctx.fillStyle = p.magN; ctx.beginPath(); ctx.moveTo(182, AY - 48); ctx.lineTo(200, AY - 48); ctx.arc(AX, AY, 36, Math.PI + 0.85, Math.PI - 0.85, true); ctx.lineTo(200, AY + 48); ctx.lineTo(182, AY + 48); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = p.magS; ctx.beginPath(); ctx.moveTo(290, AY - 48); ctx.lineTo(272, AY - 48); ctx.arc(AX, AY, 36, -0.85, 0.85); ctx.lineTo(272, AY + 48); ctx.lineTo(290, AY + 48); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.fillText('N', 190, AY - 32); ctx.fillText('S', 282, AY - 32);
+  if (Bf > 0.01) { ctx.strokeStyle = p.field; ctx.lineWidth = 1; for (var k = -2; k <= 2; k++) { var yy = AY + k*12; ctx.beginPath(); ctx.moveTo(200, yy); ctx.lineTo(272, yy); ctx.stroke(); } }
+  ctx.fillStyle = 'rgba(120,128,138,0.35)'; ctx.beginPath(); ctx.arc(AX, AY, 32, 0, 2*Math.PI); ctx.fill();
+  function coilAt(ph, snap) {
+    var Irms = Math.sqrt(avg.i2), Ic = snap ? Irms*1.414*(avg.w >= 0 ? 1 : -1) : inst.Iext*(out === 'dc' ? (Math.cos(ph) >= 0 ? 1 : -1) : 1);
+    var ax = AX + RC*Math.cos(ph), ay = AY - RC*Math.sin(ph), bx = AX - RC*Math.cos(ph), by = AY + RC*Math.sin(ph);
+    ctx.strokeStyle = p.copper; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    [[ax, ay, 1], [bx, by, -1]].forEach(function(c) {
+      ctx.fillStyle = p.symBg; ctx.beginPath(); ctx.arc(c[0], c[1], 7, 0, 2*Math.PI); ctx.fill(); ctx.strokeStyle = p.copper; ctx.lineWidth = 2; ctx.stroke();
+      var cur = Ic*c[2];
+      if (Math.abs(cur) > 0.003) {
+        ctx.strokeStyle = p.sym; ctx.fillStyle = p.sym; ctx.lineWidth = 1.5;
+        if (cur > 0) { ctx.beginPath(); ctx.moveTo(c[0] - 3.5, c[1] - 3.5); ctx.lineTo(c[0] + 3.5, c[1] + 3.5); ctx.moveTo(c[0] + 3.5, c[1] - 3.5); ctx.lineTo(c[0] - 3.5, c[1] + 3.5); ctx.stroke(); }
+        else { ctx.beginPath(); ctx.arc(c[0], c[1], 2, 0, 2*Math.PI); ctx.fill(); }
+        var vdir = (snap ? (avg.w >= 0 ? 1 : -1) : (wc >= 0 ? 1 : -1))*c[2], vx = -Math.sin(ph)*vdir, vy = -Math.cos(ph)*vdir;
+        var mag = clamp(Math.abs(cur*Math.cos(ph))*4, 0, 1);
+        if (mag > 0.04) arrow(c[0] - vx*9, c[1] - vy*9, c[0] - vx*(9 + 24*mag), c[1] - vy*(9 + 24*mag), p.force, 2.5);
+      }
+    });
+  }
+  if (fast) { ctx.strokeStyle = p.copper; ctx.globalAlpha = 0.35; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(AX, AY, RC, 0, 2*Math.PI); ctx.stroke(); ctx.globalAlpha = 1; coilAt(0, true); }
+  else coilAt(phi, false);
+  ctx.fillStyle = p.wheel; ctx.beginPath(); ctx.arc(AX, AY, 7, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+  ctx.fillText(fast ? 'strobe view (spinning fast)' : 'coil seen end-on', AX, AY + 62);
+  ctx.fillText('coil ' + (Math.abs(wc)/(2*Math.PI)).toFixed(1) + ' rev/s', AX, AY + 74);
+  ctx.fillText('\u2297 into page  \u2299 out', AX, 12); ctx.fillStyle = p.force; ctx.fillText('\u2192 magnetic force on the wires', AX, 24);
+}
+function drawCircuit(p) {
+  var x0 = 304, x1 = 550, yT = 40, yB = 170, sw = 352;
+  ctx.strokeStyle = p.wire; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(290, AY - 20); ctx.lineTo(x0, AY - 20); ctx.lineTo(x0, yT); ctx.lineTo(sw, yT); ctx.moveTo(sw + 40, yT); ctx.lineTo(x1 - 10, yT);
+  ctx.moveTo(290, AY + 20); ctx.lineTo(x0, AY + 20); ctx.lineTo(x0, yB); ctx.lineTo(x1 - 10, yB); ctx.stroke();
+  ctx.fillStyle = p.text; ctx.beginPath(); ctx.arc(sw, yT, 3.5, 0, 2*Math.PI); ctx.arc(sw + 40, yT, 3.5, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle = closed ? p.ok : p.warn; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sw, yT); if (closed) ctx.lineTo(sw + 40, yT); else ctx.lineTo(sw + 34, yT - 22); ctx.stroke();
+  ctx.fillStyle = closed ? p.ok : p.warn; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center'; ctx.fillText(closed ? 'switch CLOSED' : 'switch OPEN', sw + 20, yT - 26);
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText('(click)', sw + 20, yT + 14);
+  var amx = 425; ctx.fillStyle = p.panel; ctx.beginPath(); ctx.arc(amx, yT, 11, 0, 2*Math.PI); ctx.fill(); ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = p.text; ctx.font = 'bold 10px monospace'; ctx.fillText('A', amx, yT + 4); ctx.font = '9px monospace'; ctx.fillText((Math.sqrt(avg.i2)*1000).toFixed(0) + ' mA', amx, yT - 16);
+  var nb = nBulbs(), xs = nb === 1 ? [490] : nb === 2 ? [470, 520] : nb === 3 ? [455, 495, 535] : [495], bright = clamp(Math.pow(Math.max(0, heat), 1.8), 0, 1.4);
+  xs.forEach(function(bx) {
+    ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, yT); ctx.lineTo(bx, 74); ctx.moveTo(bx, 128); ctx.lineTo(bx, yB); ctx.stroke();
+    if (nb > 0) {
+      if (bright > 0.02) { var g = ctx.createRadialGradient(bx, 92, 2, bx, 92, 18 + 28*bright); g.addColorStop(0, 'rgba(' + p.glow + ',' + clamp(0.9*bright, 0, 0.95) + ')'); g.addColorStop(1, 'rgba(' + p.glow + ',0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, 92, 18 + 28*bright, 0, 2*Math.PI); ctx.fill(); }
+      ctx.fillStyle = p.glass; ctx.strokeStyle = p.dim; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(bx, 92, 13, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+      rect(bx - 6, 104, 12, 12, p.iron, p.edge);
+      ctx.strokeStyle = bright > 0.05 ? 'rgb(255,' + Math.round(140 + 100*clamp(bright, 0, 1)) + ',' + Math.round(60*clamp(bright, 0, 1)) + ')' : p.dim; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(bx - 4, 104); ctx.lineTo(bx - 4, 92); ctx.lineTo(bx - 2, 88); ctx.lineTo(bx, 92); ctx.lineTo(bx + 2, 88); ctx.lineTo(bx + 4, 92); ctx.lineTo(bx + 4, 104); ctx.stroke();
+      ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, 74); ctx.lineTo(bx, 79); ctx.moveTo(bx, 116); ctx.lineTo(bx, 128); ctx.stroke();
+    } else if (loadKey === 'led') {
+      var gl = clamp(ledGlow, 0, 1.3);
+      if (gl > 0.03) { var g2 = ctx.createRadialGradient(bx, 98, 2, bx, 98, 12 + 26*gl); g2.addColorStop(0, 'rgba(' + p.led + ',' + clamp(0.9*gl, 0, 0.95) + ')'); g2.addColorStop(1, 'rgba(' + p.led + ',0)'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(bx, 98, 12 + 26*gl, 0, 2*Math.PI); ctx.fill(); }
+      ctx.fillStyle = gl > 0.1 ? 'rgb(255,' + Math.round(80 + 80*clamp(gl, 0, 1)) + ',80)' : '#7a2020';
+      ctx.beginPath(); ctx.moveTo(bx - 9, 88); ctx.lineTo(bx + 9, 88); ctx.lineTo(bx, 104); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx - 9, 105); ctx.lineTo(bx + 9, 105); ctx.moveTo(bx, 74); ctx.lineTo(bx, 88); ctx.moveTo(bx, 105); ctx.lineTo(bx, 128); ctx.stroke();
+      ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText('+10 \u03a9', bx + 10, 118);
+    } else {
+      ctx.strokeStyle = p.wire; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, 74); ctx.lineTo(bx, 128); ctx.stroke();
+      ctx.fillStyle = p.warn; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('SHORT', bx + 6, 98); ctx.fillText('CIRCUIT', bx + 6, 109);
+    }
+  });
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+  ctx.fillText(nb ? (nb === 1 ? 'flashlight bulb' : nb + ' bulbs in parallel') : loadKey === 'led' ? 'LED' : 'bare wire', 495, 186);
+  if (closed && avg.lit > 0.8 && loadKey !== 'short') { ctx.fillStyle = p.ok; ctx.font = 'bold 11px monospace'; ctx.fillText('\u2728 LIT! \u2728', 495, 62); }
+}
+function drawTeam(p) {
+  var x0 = 8, y0 = 204, w2 = 140, h2 = 210, ef = effortOf();
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('HAMSTER EFFORT', x0 + 6, y0 + 13);
+  if (nHam === 0) { ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.fillText('add a hamster!', x0 + 6, y0 + 40); return; }
+  for (var i = 0; i < nHam; i++) {
+    var yy = y0 + 24 + i*22, hm = HAMS[i];
+    ctx.fillStyle = hm.fur; ctx.beginPath(); ctx.arc(x0 + 13, yy + 6, 6, 0, 2*Math.PI); ctx.fill();
+    ctx.fillStyle = '#111111'; ctx.beginPath(); ctx.arc(x0 + 11, yy + 5, 1.2, 0, 2*Math.PI); ctx.fill();
+    ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText(hm.name, x0 + 23, yy + 4);
+    var bw = w2 - 30; rect(x0 + 23, yy + 7, bw, 6, null, p.edge);
+    ctx.fillStyle = ef < 0.5 ? '#3ad08f' : ef < 0.8 ? '#e8c020' : '#e24b4a'; ctx.fillRect(x0 + 24, yy + 8, (bw - 2)*ef, 4);
+  }
+  ctx.fillStyle = ef < 0.5 ? '#3ad08f' : ef < 0.8 ? '#e8c020' : '#e24b4a'; ctx.font = 'bold 9px monospace';
+  ctx.fillText(ef < 0.35 ? 'easy jogging' : ef < 0.6 ? 'working' : ef < 0.85 ? 'straining!' : 'barely moving!', x0 + 6, y0 + h2 - 8);
+}
+function drawPower(p) {
+  var x0 = 152, y0 = 204, w2 = 146, h2 = 210;
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('WHERE THE ENERGY GOES', x0 + 6, y0 + 13);
+  var rows = [['hamsters', avg.Ph, '#c8955a'], ['friction', avg.Pf, '#8a94a3'], ['coil (heat)', avg.Pc, p.copper], [nBulbs() ? 'bulb light+heat' : (loadKey === 'led' ? 'LED light' : 'wire heat'), avg.PL, '#e8c020']];
+  var mx = Math.max(0.05, Math.abs(avg.Ph), avg.Pf + avg.Pc + avg.PL);
+  rows.forEach(function(r, i) {
+    var yy = y0 + 36 + i*42, bw = clamp(Math.abs(r[1])/mx, 0, 1)*(w2 - 16);
+    ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.fillText(r[0], x0 + 8, yy);
+    ctx.fillStyle = r[2]; ctx.fillRect(x0 + 8, yy + 4, bw, 12);
+    ctx.fillStyle = p.text; ctx.fillText(fmtW(r[1]), x0 + 8 + Math.min(bw + 4, w2 - 60), yy + 14);
+    if (i === 0) { ctx.strokeStyle = p.dim; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x0 + 6, yy + 25); ctx.lineTo(x0 + w2 - 6, yy + 25); ctx.stroke(); ctx.setLineDash([]); }
+  });
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText('in = friction + coil + load', x0 + 8, y0 + h2 - 8);
+}
+function drawScope(p) {
+  var x0 = 302, y0 = 204, w2 = 252, h2 = 210, mid = y0 + h2/2 + 8, amp = h2/2 - 24;
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + 4, mid + 0.5); ctx.lineTo(x0 + w2 - 4, mid + 0.5); ctx.stroke();
+  var eMax = 4, iMax = closed && loadKey === 'short' ? 3 : 0.5;
+  function tr(key, col, sc) {
+    var n = scope.length; if (n < 2) return; ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath();
+    for (var i = 0; i < n; i++) { var x = x0 + w2 - 4 - (n - 1 - i)*(w2 - 8)/SC_N, y = mid - clamp(scope[i][key]/sc, -1.1, 1.1)*amp; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  tr('e', p.e, eMax); tr('i', p.i, iMax);
+  if (loadKey === 'led') { ctx.setLineDash([3, 3]); ctx.strokeStyle = p.dim; ctx.beginPath(); ctx.moveTo(x0 + 4, mid - VF/eMax*amp); ctx.lineTo(x0 + w2 - 4, mid - VF/eMax*amp); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'right'; ctx.fillText('LED needs 1.8 V', x0 + w2 - 6, mid - VF/eMax*amp - 3); }
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('SCOPE (last 0.15 s, real time)', x0 + 6, y0 + 13);
+  ctx.font = '8px monospace'; ctx.fillStyle = p.e; ctx.fillText('\u2014 emf (\u00b1' + eMax + ' V)', x0 + 6, y0 + 25); ctx.fillStyle = p.i; ctx.fillText('\u2014 current (\u00b1' + (iMax*1000) + ' mA)', x0 + 110, y0 + 25);
+  if (!closed) { ctx.fillStyle = p.dim; ctx.textAlign = 'center'; ctx.fillText('switch open: emf but no current', x0 + w2/2, y0 + h2 - 8); }
+}
+function redraw() {
+  var p = pal();
+  ctx.clearRect(0, 0, CW, CH); ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+  drawCircuit(p); drawWheel(p); drawArmature(p); drawTeam(p); drawPower(p); drawScope(p);
+}
+
+/* ── Readouts & narration ── */
+function loadName() { return loadKey === 'led' ? 'the LED' : loadKey === 'short' ? 'a short circuit' : nBulbs() === 1 ? 'one bulb' : nBulbs() + ' bulbs'; }
+function litPct() { return Math.round(clamp(avg.lit, 0, 1.5)*100); }
+function updateReadouts() {
+  var v = avg.w*RWm;
+  set('r_v', v.toFixed(2) + ' m/s (' + (avg.w/(2*Math.PI)).toFixed(2) + ' rev/s)');
+  set('r_F', avg.F.toFixed(2) + ' N of 0.35');
+  set('r_emf', Math.sqrt(avg.e2).toFixed(2) + ' V');
+  set('r_I', (Math.sqrt(avg.i2)*1000).toFixed(0) + ' mA');
+  set('r_Ph', fmtW(avg.Ph) + (nHam ? ' (' + fmtW(avg.Ph/nHam) + ' each)' : ''));
+  set('r_PL', fmtW(avg.PL));
+  set('r_lit', !closed || loadKey === 'short' ? '--' : litPct() + '%' + (avg.lit > 0.8 ? ' \u2728' : ''));
+  set('r_load', (closed ? 'connected: ' : 'switch open: ') + loadName());
+}
+function statusText() {
+  var s = '', v = avg.w*RWm, ef = effortOf();
+  s += nHam + (nHam === 1 ? ' hamster runs' : ' hamsters run') + ' at ' + v.toFixed(2) + ' m/s, each pushing ' + avg.F.toFixed(2) + ' N (' + Math.round(ef*100) + '% of its strength). emf ' + Math.sqrt(avg.e2).toFixed(2) + ' V rms. ';
+  if (nHam === 0) return 'There are no hamsters in the wheel. Add one!';
+  if (!closed) s += 'The switch is open, so no current flows and the generator does not push back: the hamsters only fight friction and run fast. ';
+  else {
+    s += 'The switch is closed: ' + (Math.sqrt(avg.i2)*1000).toFixed(0) + ' mA flows. The current in the coil feels a magnetic force against the rotation (Lenz\'s law), so the hamsters must push harder and slow down. ';
+    if (loadKey === 'short') s += 'A short circuit makes a huge current and a huge back-force: the hamsters can hardly move the wheel, and no light comes out. ';
+    else s += (loadKey === 'led' ? 'The LED' : 'The light') + ' is at ' + litPct() + '% brightness' + (avg.lit > 0.8 ? ' -- lit!' : avg.lit > 0.3 ? '; more hamsters needed for full brightness.' : '; far too dim: add hamsters.') + ' ';
+  }
+  s += 'The hamsters supply ' + fmtW(avg.Ph) + '; ' + fmtW(avg.PL) + ' reaches the load.';
+  return s;
+}
+var narrTimer = null;
+function updateNarration(prefix) {
+  if (!showNarr) return;
+  clearTimeout(narrTimer);
+  var go = function() { set('hamNarration', (prefix ? prefix + ' ' : '') + statusText()); };
+  if (prefix) go(); else narrTimer = setTimeout(go, 600);
+}
+function updateCanvasDesc() { var d = 'Hamster wheel generator. ' + statusText(); set('hamCanvasDesc', d); canvas.setAttribute('aria-label', d); }
+function updateLabels() {
+  set('vCount', nHam + (nHam === 1 ? ' hamster' : ' hamsters'));
+  set('vB', Bf.toFixed(2) + ' T'); set('vN', String(Nt)); set('vG', '1 : ' + gear);
+  set('genInfo', 'peak emf at 0.5 m/s \u2248 ' + (NBA()*gear*0.5/RWm).toFixed(2) + ' V');
+  set('diagLabel', 'HAMSTER GENERATOR -- ' + nHam + (nHam === 1 ? ' hamster' : ' hamsters') + ', switch ' + (closed ? 'closed: ' + loadName() : 'open'));
+}
+function updateButtons() {
+  var sb = el('btnSwitch'); if (sb) { sb.textContent = 'Switch: ' + (closed ? 'CLOSED' : 'OPEN'); sb.classList.toggle('ham_active', closed); sb.setAttribute('aria-pressed', closed ? 'true' : 'false'); }
+  [['ac', 'btnAC'], ['dc', 'btnDC']].forEach(function(q) { var b = el(q[1]); if (b) { b.classList.toggle('ham_srcon', q[0] === out); b.setAttribute('aria-pressed', q[0] === out ? 'true' : 'false'); } });
+}
+var pending = false;
+function scheduleUpdate(narrate) {
+  if (pending) return; pending = true;
+  var go = function() { pending = false; updateLabels(); updateButtons(); redraw(); updateReadouts(); updateCanvasDesc(); if (narrate !== false) updateNarration(); };
+  if (window.requestAnimationFrame) window.requestAnimationFrame(go); else setTimeout(go, 16);
+}
+
+/* ── Controls ── */
+function toggleSwitch() {
+  closed = !closed; litOnce = false; updateButtons(); scheduleUpdate(false);
+  updateNarration(closed ? 'Switch closed! The wheel suddenly gets heavier and the hamsters slow down.' : 'Switch opened: no current, the wheel is easy again and the hamsters speed up.');
+}
+function addHamster(d) {
+  var n0 = nHam; nHam = clamp(nHam + d, 0, 8); if (nHam === n0) return; litOnce = false;
+  scheduleUpdate(false);
+  updateNarration(d > 0 ? HAMS[nHam - 1].name + ' joins the team!' : HAMS[n0 - 1].name + ' takes a nap.');
+}
+function onSlider(key, raw) {
+  var v = parseFloat(raw);
+  if (key === 'Load') { loadKey = raw; heat = 0; ledGlow = 0; litOnce = false; }
+  else if (key === 'B') Bf = v;
+  else if (key === 'N') Nt = Math.round(v);
+  else if (key === 'G') gear = Math.round(v);
+  scheduleUpdate();
+}
+function setOut(o) { out = o; scheduleUpdate(false); updateNarration(o === 'dc' ? 'DC: the commutator keeps the outside current in one direction, so the LED can light on every half turn.' : 'AC: the current reverses every half turn of the coil.'); }
+
+/* ── Canvas interaction ── */
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function onSwitchArea(c) { return c[0] > 340 && c[0] < 410 && c[1] < 66; }
+canvas.addEventListener('mousedown', function(e) { var c = canvasXY(e.clientX, e.clientY); if (onSwitchArea(c)) toggleSwitch(); else if (Math.hypot(c[0] - CX, c[1] - CY) < RW) addHamster(1); });
+canvas.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); set('hamHoverReadout', describePoint(c[0], c[1])); canvas.style.cursor = onSwitchArea(c) || Math.hypot(c[0] - CX, c[1] - CY) < RW ? 'pointer' : 'default'; });
+canvas.addEventListener('mouseleave', function() { set('hamHoverReadout', 'Hover over the wheel, the generator, the circuit or the meters to read values'); });
+function describePoint(x, y) {
+  if (y < 200) {
+    if (Math.hypot(x - CX, y - CY) < RW) return 'Hamster wheel (radius 10 cm): click to add a hamster. ' + nHam + ' running at ' + (avg.w*RWm).toFixed(2) + ' m/s.';
+    if (x < 296) return 'Generator coil between magnet poles, seen end-on. When current flows, the green arrows show the magnetic force on the wires, always against the motion.';
+    if (onSwitchArea([x, y])) return 'Knife switch: click it.';
+    return 'Circuit: ' + loadName() + '. ' + (closed ? (Math.sqrt(avg.i2)*1000).toFixed(0) + ' mA rms.' : 'Switch open: no current.');
+  }
+  if (x < 150) return 'Hamster effort: how hard each hamster pushes, compared with its strongest push (0.35 N).';
+  if (x < 300) return 'Energy: the hamsters\' power = friction + coil heating + power to the load.';
+  return 'Scope: the emf (amber) and the current (blue).';
+}
+
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('ham_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+  ROOT.classList.toggle('ham_hc', hcMode); ROOT.classList.toggle('ham_lm', lightMode); ROOT.classList.toggle('ham_cb', cbMode);
+  setBtnOn('btnHC', hcMode); setBtnOn('btnLight', lightMode); setBtnOn('btnCB', cbMode); setBtnOn('btnNarr', showNarr);
+  var nb = el('btnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+  var box = el('hamNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate(false); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(''); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e = el('hamSrAnnounce'); if (!e) return; e.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e.textContent = msg; }, 60); }
+
+/* ── Keyboard shortcuts ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+  var tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  switch (e.key) {
+    case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+    case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+    case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+    case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+    case 's': case 'S': toggleSwitch(); e.preventDefault(); break;
+    case '+': case '=': addHamster(1); e.preventDefault(); break;
+    case '-': case '_': addHamster(-1); e.preventDefault(); break;
+  }
+});
+document.addEventListener('visibilitychange', function() { if (!document.hidden) startLoop(); });
+if (reducedMotion) { var mn = el('hamMotionNotice'); if (mn) mn.style.display = 'block'; }
+
+/* ── Boot ── */
+applyDisplay(); scheduleUpdate(false);
+updateNarration('Ready. Hammy is running in the wheel with the switch open. Close the switch and see what happens, then add hamsters until the bulb lights.');
+startLoop();
+return { addHamster: addHamster, toggleSwitch: toggleSwitch, onSlider: onSlider, setOut: setOut,
+         toggleHC: toggleHC, toggleLight: toggleLight, toggleCB: toggleCB, toggleNarr: toggleNarr };
+};
+</script>
+<script>
+var hamSim = new hamGen();
+</script>
+</main>
+</body>
+</html>

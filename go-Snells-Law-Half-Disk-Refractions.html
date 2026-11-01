@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Refraction in an Inverted Half Disk</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, geometrical optics, lenses, Snell law, refraction, half disk, critical angle, total internal reflection, protractor, lesson, scientific">
+<meta name="description" content="This simulation shows a beam of light in medium 1 striking the center of the flat face of a half-disk made of medium 2 (the half-disk is inverted: its flat face is on top). The indices of refraction of the two media and the angle of incidence can be changed. A protractor centered where the beam meet">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="snellRoot" class="sn_root" role="region" aria-label="Refraction in an Inverted Half Disk simulator">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y" id="snellA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn" id="snBtnHC" onclick="snellA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn" id="snBtnLM" onclick="snellA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn" id="snBtnCB" onclick="snellA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sn_a11ybtn sn_a11yon" id="snBtnNR" onclick="snellA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="sn_header">
+<div id="canvasesdiv" class="tbar"><H3>Snell's Law: Half Disk Refractions</H3></div>
+<p class="sn_sub">A beam strikes the flat face of an inverted half disk -- Snell’s law and total internal reflection</p>
+</div>
+<!-- Ray diagram -->
+<div class="sn_diagpanel">
+<div class="sn_diaglabel"><b>RAY DIAGRAM</b><span class="sn_diagnote">drag the light source to change the angle &middot; drag the entry point along the flat face &middot; drag the protractor sideways</span></div>
+<div class="mcontent"><canvas id="myCanvas" style="margin:auto;border:1px solid;touch-action:none;cursor:grab" width="500" height="440" role="img" aria-label="A beam in medium 1 strikes the flat face of a half disk of medium 2. The light source, the entry point on the flat face and the protractor can be dragged."></canvas>
+</div>
+</div>
+<div class="sn_grid">
+<div class="sn_leftcol">
+<!-- Narration bar -->
+<div id="snNarBar" class="sn_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+</div>
+<div class="sn_rightcol">
+<div class="sn_panel" role="group" aria-label="Controls">
+<div class="sn_paneltitle">Controls</div>
+<div class="sn_panelbody">
+<!-- Repeated 80px sections -->
+<div class="footer">
+<div class="left">Light source incidence angle in medium 1:</div>
+<div class="center sn_cell">`theta_i`: <input style=width:270px type="range" id="incidentAngleSlider" min="-90" max="90" value="30" step=".1" oninput="snell.setIncidentAngle(this.value)" onchange="snell.setIncidentAngle(this.value)"> <span id="incidentAngleValue">30</span>`""^@`</div>
+</div>
+<div class="footer">
+<div class="left">Entry point on the flat face (from the centre):</div>
+<div class="center sn_cell"><input style=width:200px type="range" id="entrySlider" min="-9" max="9" value="0" step="0.1" aria-label="Entry point, in centimetres from the centre of the flat face" oninput="snell.setEntry(this.value)" onchange="snell.setEntry(this.value)"> <span id="entryValue">0.0 cm</span> <button type="button" class="sn_a11ybtn" onclick="snell.setEntry(0, true)">Back to the centre</button></div>
+</div>
+<div class="footer">
+<div class="left">Protractor:</div>
+<div class="center sn_cell"><button type="button" class="sn_a11ybtn" onclick="snell.protTo('entry')">Centre it on the entry point</button> <button type="button" class="sn_a11ybtn" onclick="snell.protTo('centre')">On the centre of the disk</button></div>
+</div>
+<div class="footer">
+<div class="left">Index of refraction of medium 1:</div>
+<div class="center sn_cell">`n_1:\ ` <input style=width:270px type="range" id="n1Value" min="1.00" max="2.50" value="1.00" step="0.05" oninput="snell.shown1(this.value)" onchange="snell.shown1(this.value)"> <span id="initialn1Value">1.00</span></div>
+</div>
+<div class="footer">
+<div class="left">Index of refraction of medium 2:</div>
+<div class="center sn_cell">`n_2:\ ` <input style=width:270px type="range" id="n2Value" min="1.00" max="2.50" value="1.50" step="0.05" oninput="snell.shown2(this.value)" onchange="snell.shown2(this.value)"> <span id="initialn2Value">1.50</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="sn_descwrap">
+<button type="button" class="sn_descbtn" id="snDescBtn" aria-expanded="false" aria-controls="snDesc" onclick="snDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="sn_desc" id="snDesc" role="region" aria-labelledby="snDescBtn" style="display:none">
+<p>This simulation shows a beam of light in medium 1 striking the flat face of a half-disk made of medium 2 (the half-disk is inverted: its flat face is on top). The indices of refraction of the two media and the angle of incidence can be changed. A protractor centered where the beam meets the flat face measures the angles from the normal.</p>
+<p>At the flat face the beam obeys Snell's law,</p>
+<p class="sn_eq">`n_1 sin theta_1 = n_2 sin theta_2`,</p>
+<p>and part of the light is reflected at an angle equal to the angle of incidence. Inside the half-disk, the refracted beam travels along a radius, so it meets the curved surface along its normal and leaves without bending: only the flat face bends the light, which makes the angles easy to measure.</p>
+<p>When medium 1 has the higher index (`n_1 > n_2`), the refracted beam bends away from the normal. At the critical angle `theta_c`, given by</p>
+<p class="sn_eq">`sin theta_c = n_2/n_1`,</p>
+<p>the refracted beam runs along the flat face; beyond it there is no refracted beam at all and all the light is reflected: total internal reflection.</p>
+<p><b>Why the centre is special.</b> Drag the entry point away from the centre of the flat face. The refracted beam no longer travels along a radius: it meets the curved surface at an angle to its normal (a radius, shown dashed) and bends a second time as it leaves, or is totally reflected inside if that angle is too large. Only a beam entering at the centre leaves the curved face undeviated, which is why the protractor and the beam are lined up on the centre for measurements. The light source and the protractor can be dragged; the protractor slides along the flat face, so that its centre can be put on any entry point.</p>
+<p>This simulation is useful for studying Snell's law, reflection, the critical angle and total internal reflection.</p>
+</div>
+</div>
+<script>
+function snDesc(){
+var b = document.getElementById('snDescBtn'), d = document.getElementById('snDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+</div><!-- #snellRoot -->
+<div class="sn_qwrap">
+<hr>
+
+<hr>
+<ol type="a">
+<p>Start with the `n_2=1.50` for the index of refraction of Medium 2 and `n_1=1.00` for the index of refraction of Medium 1. Set the angle of incidence of the incident beam to `theta_i=30^@`.</p><li>What do you observe?</li>
+<li>Use the protractor reading to estimate the angle the transmitted beam makes with the perpendicular to the interface. What is the transmitted angle `theta_t` for an incidence angle of `theta_i=30^@`? <br />`theta_t\ =\ ` _____ </li>
+<li>Visually estimate the angle the reflected beam makes with the perpendicular to the interface.<br />`theta_r\ =\ ` _____ </li>
+<li>In which medium is the light slower in this case?</li>
+<li>Change the angle of incidence of the beam to `0^@` (that is called normal incidence). Use the protractor reading to estimate the angle the transmitted beam makes with the perpendicular to the interface. (if you experience difficulty setting the slider at a particular value, use the arrow keys)<br />`theta_t\ =\ ` _____ </li>
+<li>As the refracted beam exits the block, the angle of incidence it makes with the normal is:<br />`theta_{i}\ =\ ` _____ </li>
+<li>As the refracted beam exits the block, the angle of refraction it makes with the normal is:<br />`theta_{t}\ =\ ` _____ </li>
+</ol>
+</div>
+
+<!--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-->
+<style>
+/* ════════ Hall effect template, scoped to #snellRoot (mobile friendly) ════════ */
+#snellRoot {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--tp-text);
+display:flex; flex-direction:column; gap:12px; padding:16px 10px 20px; box-sizing:border-box;
+width:100%; max-width:880px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#snellRoot.sn_lm {
+--tp-chassis:#e9edf1; --tp-panel:#ffffff; --tp-panel-hi:#f1f4f7; --tp-panel-lo:#f4f6f9;
+--tp-border:#c3cad3; --tp-border-hi:#9aa3ae; --tp-text:#1d232a; --tp-dim:#556070;
+--tp-accent:#a8620a; --tp-green:#12805a; --tp-val:#8a4a00;
+--tp-focus:#a8620a; --tp-nar-bg:#ffefc0; --tp-nar-border:#e0b040; --tp-nar-text:#333333; background-image:none;
+}
+#snellRoot.sn_hc {
+--tp-chassis:#000000; --tp-panel:#000000; --tp-panel-hi:#111111; --tp-panel-lo:#000000;
+--tp-border:#ffffff; --tp-border-hi:#ffffff; --tp-text:#ffffff; --tp-dim:#e0e0e0;
+--tp-accent:#ffd700; --tp-green:#00ff88; --tp-val:#ffff00;
+--tp-focus:#ffff00; --tp-nar-bg:#000000; --tp-nar-border:#ffd700; --tp-nar-text:#ffffff; background-image:none;
+}
+#snellRoot.sn_hc .sn_panel, #snellRoot.sn_hc .sn_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#snellRoot :not(mjx-container):not(mjx-container *), #snellRoot :not(mjx-container):not(mjx-container *)::before, #snellRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; }
+#snellRoot input:focus-visible, #snellRoot button:focus-visible, #snellRoot select:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+/* display options */
+#snellRoot .sn_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; padding:0; background:none; }
+#snellRoot .sn_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-dim); }
+#snellRoot .sn_a11ybtn:hover { border-color:var(--tp-accent); color:var(--tp-accent); }
+#snellRoot .sn_a11ybtn[aria-pressed="true"] { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* header */
+#snellRoot .tbar { height:auto; padding:0 4px; background:none; text-align:center; }
+#snellRoot .tbar h3 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent); }
+#snellRoot .sn_sub { font-size:.7rem; color:var(--tp-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; margin-top:3px; }
+/* the ray diagram */
+#snellRoot .sn_diagpanel { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#snellRoot .sn_diaglabel, #snellRoot .sn_paneltitle { background:var(--tp-panel-lo); border-bottom:1px solid var(--tp-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--tp-dim); }
+#snellRoot .sn_diaglabel { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#snellRoot .sn_diaglabel b { color:var(--tp-accent); }
+#snellRoot .sn_diagnote { text-transform:none; letter-spacing:.02em; }
+#snellRoot .mcontent { height:auto; }
+#snellRoot canvas { display:block; height:auto; margin:0 auto; }
+#snellRoot .mcontent canvas { width:100%; max-width:820px; }
+/* below the diagram: views and narration on the left, controls on the right */
+#snellRoot .sn_grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:12px; }
+#snellRoot .sn_leftcol, #snellRoot .sn_rightcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#snellRoot .sn_panel { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#snellRoot .sn_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#snellRoot .sn_views { display:flex; gap:8px; padding:9px; justify-content:center; }
+#snellRoot .sn_view { flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
+#snellRoot .sn_view canvas { width:100%; max-width:192px; border:2px solid var(--tp-border-hi); border-radius:3px; background:#fff; }
+#snellRoot .sn_view figcaption { font-family:monospace; font-size:.6rem; letter-spacing:.06em; text-transform:uppercase; color:var(--tp-dim); text-align:center; }
+/* narration */
+#snellRoot .sn_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--tp-nar-bg); border:none; border-left:4px solid var(--tp-nar-border); font-size:.82rem; color:var(--tp-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* slider rows */
+#snellRoot .bbbar, #snellRoot .bbbar2, #snellRoot .sbbar, #snellRoot .bbar, #snellRoot .footer { height:auto !important; width:auto; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:8px 10px; background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border); border-left:3px solid var(--tp-accent); border-radius:4px; text-align:left; font-size:.8rem; color:var(--tp-text); }
+#snellRoot .bbbar > div, #snellRoot .bbbar2 > div, #snellRoot .sbbar > div, #snellRoot .bbar > div, #snellRoot .footer > div { width:auto !important; padding:0 !important; background:none !important; flex:1 1 auto; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; }
+#snellRoot .left, #snellRoot .centerR { font-weight:bold; color:var(--tp-dim); font-size:.74rem; flex:0 0 auto !important; }
+#snellRoot .sn_cell { flex:1 1 100% !important; font-weight:normal; color:var(--tp-text); font-size:.8rem; }
+#snellRoot .sn_br { flex-basis:100%; height:0; }
+#snellRoot .bbar > .left, #snellRoot .bbar > .centerR, #snellRoot .sbbar > .left, #snellRoot .sbbar > .centerR { flex-basis:100% !important; }
+#snellRoot .slider, #snellRoot .zslider, #snellRoot .Bslider { flex:1 1 120px; width:auto !important; min-width:0; height:auto; accent-color:var(--tp-accent); }
+#snellRoot .bbbar input[type=range], #snellRoot .bbbar2 input[type=range], #snellRoot .sbbar input[type=range], #snellRoot .bbar input[type=range], #snellRoot .footer input[type=range] { flex:1 1 120px; width:auto !important; min-width:0; max-width:100%; accent-color:var(--tp-accent); }   /* sliders without a class, or with a fixed width */
+#snellRoot .txtDPL { background:var(--tp-panel-hi); color:var(--tp-val); border:1px solid var(--tp-border); border-radius:3px; font-family:monospace; font-size:.76rem; width:auto; min-width:58px; height:auto; padding:2px 6px; margin-left:0; text-align:right; }
+#snellRoot input[type=checkbox] { accent-color:var(--tp-accent); width:16px; height:16px; }
+#snellRoot select { width:100%; background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.78rem; }
+#snellRoot .sn_objrow { display:flex; flex-direction:column; gap:4px; padding:8px 10px; background:var(--tp-panel-lo); border:1px solid var(--tp-border); border-left:3px solid #e31836; border-radius:4px; }
+#snellRoot .sn_objrow label { font-size:.74rem; font-weight:bold; color:var(--tp-dim); }
+/* SIM description (toggle) */
+#snellRoot .sn_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#snellRoot .sn_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-accent); color:var(--tp-accent); border-radius:3px; font-weight:bold; }
+#snellRoot .sn_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#snellRoot .sn_desc { width:100%; background:var(--tp-panel); border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:4px; padding:12px 16px; color:var(--tp-text); font-size:.86rem; line-height:1.55; }
+#snellRoot .sn_desc p { margin:0 0 9px 0; }
+#snellRoot .sn_desc p:last-child { margin-bottom:0; }
+#snellRoot .sn_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.sn_qwrap { width:100%; max-width:880px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.sn_qwrap li { margin:0 0 10px 0; line-height:1.5; }
+/* narrow screens */
+@media (max-width:760px) {
+#snellRoot .sn_grid { grid-template-columns:minmax(0,1fr); }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#snellRoot input[type=range] { height:28px; }
+#snellRoot .sn_a11ybtn, #snellRoot .sn_descbtn { min-height:40px; }
+#snellRoot select { min-height:36px; font-size:16px; }
+#snellRoot input[type=checkbox] { width:22px; height:22px; }
+}
+@media (max-width:560px) {
+#snellRoot { padding:10px 6px 14px; }
+#snellRoot .sn_views { gap:5px; padding:6px; }
+}
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var snellA11y = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+/* Colour-blind safe palette (Okabe-Ito) for rays */
+var THEMES = {
+hc: {
+'--sn-incident': '#ffff00',
+'--sn-reflect':  '#ffaa00',
+'--sn-refract':  '#00ffff',
+'--sn-dot':      '#ffff00',
+'--sn-normal':   '#00ff88',
+'--sn-toolbar-bg': '#000'
+},
+lm: {
+'--sn-incident': '#cc0000',
+'--sn-reflect':  '#cc0000',
+'--sn-refract':  '#6600cc',
+'--sn-dot':      '#cc0000',
+'--sn-normal':   '#226622',
+'--sn-toolbar-bg': '#333'
+},
+cb: {
+/* Okabe-Ito: incident=vermilion, reflect=orange, refract=sky-blue */
+'--sn-incident': '#d55e00',
+'--sn-reflect':  '#e69f00',
+'--sn-refract':  '#0072b2',
+'--sn-dot':      '#d55e00',
+'--sn-normal':   '#009e73'
+}
+};
+var DEFAULTS = {
+'--sn-incident': 'red',
+'--sn-reflect':  'red',
+'--sn-refract':  'purple',
+'--sn-dot':      'red',
+'--sn-normal':   '#494',
+'--sn-toolbar-bg': '#222'
+};
+function applyVars(theme, on) {
+if (!ROOT) return;
+var vars = THEMES[theme];
+for (var p in vars) ROOT.style.setProperty(p, on ? vars[p] : DEFAULTS[p]);
+}
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('snellRoot').querySelector('canvas');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('snNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR', states.nr); }
+}
+function apply() {
+if (!ROOT) return;
+ROOT.classList.toggle('sn_hc', states.hc); ROOT.classList.toggle('sn_lm', states.lm); ROOT.classList.toggle('sn_cb', states.cb);
+applyVars('hc', states.hc);
+applyVars('lm', states.lm);
+applyVars('cb', states.cb);
+applyCanvas();
+styleBtn('snBtnHC', states.hc);
+styleBtn('snBtnLM', states.lm);
+styleBtn('snBtnCB', states.cb);
+applyNarBar();
+}
+/* Read a CSS custom property from the root element */
+function getCol(prop) {
+if (!ROOT) return DEFAULTS[prop];
+return getComputedStyle(ROOT).getPropertyValue(prop).trim() || DEFAULTS[prop];
+}
+return {
+init: function() {
+ROOT = document.getElementById('snellRoot');
+apply();
+},
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+},
+isNarOn: function() { return states.nr; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('snNarBar');
+if (nb) nb.textContent = msg;
+},
+/* Return current colour for a role -- used by snell drawing code */
+col: function(role) { return getCol('--sn-' + role); }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var snell = function() {
+function shown1(newValue) {
+var display = document.getElementById("initialn1Value");
+display.innerHTML = newValue;
+n1 = Number(newValue);
+redraw();
+/* Narration */
+var msg = 'n\u2081 = ' + n1.toFixed(2) + '. ';
+if (n1 > n2) {
+var sinC = n2/n1;
+msg += 'Critical angle \u03B8\u1D04 = ' + ((180/Math.PI)*Math.asin(sinC)).toFixed(1) + '\u00B0 (TIR possible above this angle).';
+} else {
+msg += 'n\u2081 \u2264 n\u2082 \u2014 no total internal reflection.';
+}
+snellA11y.narrate(msg);
+}
+function shown2(newValue) {
+var display = document.getElementById("initialn2Value");
+display.innerHTML = newValue;
+n2 = Number(newValue);
+redraw();
+/* Narration */
+var msg = 'n\u2082 = ' + n2.toFixed(2) + '. ';
+if (n1 > n2) {
+var sinC = n2/n1;
+msg += 'Critical angle \u03B8\u1D04 = ' + ((180/Math.PI)*Math.asin(sinC)).toFixed(1) + '\u00B0 (TIR possible above this angle).';
+} else {
+msg += 'n\u2081 \u2264 n\u2082 \u2014 no total internal reflection.';
+}
+snellA11y.narrate(msg);
+}
+function setSource(newValue) {
+source = Number(newValue);
+drawMotion();
+}
+var canvas = document.getElementById('myCanvas');
+var ctx = canvas.getContext('2d');
+var index = 0;
+var xBase = 250;
+var xBfy = 40, xBtw = 250, xW = 500;
+var yBase = 220;
+var yBfy = 40, yBtw = 220, yW = 220;
+var rStart = 300, aMag = 65;
+var radius = 6;
+var runFlag = 1;
+var time = 0.0;
+var timer;
+var n1 = 1.00;
+var n2 = 1.50;
+var redness, greenness, blueness;
+var redString = "0", greenString = "0", blueString = "0", colorString = "0";
+var x1 = -2.5;
+var y1 = 4.3301;
+var x2 = 0.0, y2 = 0.0;   /* the entry point on the flat face (units of 40 px from the centre) */
+var thI = Math.atan2(-x1, y1)*180/Math.PI;   /* the angle of incidence, degrees */
+var x3 = 5.5, y3 = -5.5;
+var x4, y4;
+var xMin = x2, xMax = x2;
+var source = 1;
+/* the protractor of the three-media simulation, built in code (no external image);
+   it opens downward over the half-disk, its center on the center of the flat face */
+var protractorWidth  = 420;
+var protractorHeight = 220;
+var protR  = 200;               /* radius of the scale */
+var protCx = 210;               /* center x inside the SVG */
+function protCy(dirY) { return (dirY < 0) ? 212 : 8; }
+function f1(v) { return (Math.round(v*100)/100).toString(); }
+function makeProtractorSVG(dirY) {
+var W = protractorWidth, H = protractorHeight, R = protR;
+var cx = protCx, cy = protCy(dirY);
+var sweep = (dirY < 0) ? 1 : 0;
+var s = [];
+s.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">');
+/* Body */
+s.push('<path d="M ' + (cx-R) + ' ' + cy + ' A ' + R + ' ' + R + ' 0 0 ' + sweep + ' ' + (cx+R) + ' ' + cy + ' Z" fill="rgba(255,255,255,0.35)" stroke="#222" stroke-width="1.2"/>');
+/* Inner reading arc */
+var Ri = 120;
+s.push('<path d="M ' + (cx-Ri) + ' ' + cy + ' A ' + Ri + ' ' + Ri + ' 0 0 ' + sweep + ' ' + (cx+Ri) + ' ' + cy + '" fill="none" stroke="#444" stroke-width="0.8"/>');
+/* Baseline */
+s.push('<line x1="' + (cx-R) + '" y1="' + cy + '" x2="' + (cx+R) + '" y2="' + cy + '" stroke="#222" stroke-width="1"/>');
+for (var a = 0; a <= 90; a++) {
+for (var side = -1; side <= 1; side += 2) {
+if (a === 0 && side === 1) continue;     /* draw the normal only once */
+var rad = a * Math.PI / 180;
+var ux = side * Math.sin(rad);
+var uy = dirY * Math.cos(rad);
+var len = (a % 10 === 0) ? 18 : ((a % 5 === 0) ? 11 : 6);
+var w   = (a % 10 === 0) ? 1.2 : 0.7;
+/* Outer scale ticks */
+s.push('<line x1="' + f1(cx + R*ux) + '" y1="' + f1(cy + R*uy) + '" x2="' + f1(cx + (R-len)*ux) + '" y2="' + f1(cy + (R-len)*uy) + '" stroke="#222" stroke-width="' + w + '"/>');
+/* Inner arc ticks every 5 degrees */
+if (a % 5 === 0) {
+var il = (a % 10 === 0) ? 8 : 5;
+s.push('<line x1="' + f1(cx + Ri*ux) + '" y1="' + f1(cy + Ri*uy) + '" x2="' + f1(cx + (Ri+il)*ux) + '" y2="' + f1(cy + (Ri+il)*uy) + '" stroke="#444" stroke-width="0.8"/>');
+}
+if (a % 10 === 0) {
+/* Faint guide line from near the center out to the labels */
+s.push('<line x1="' + f1(cx + 14*ux) + '" y1="' + f1(cy + 14*uy) + '" x2="' + f1(cx + (R-44)*ux) + '" y2="' + f1(cy + (R-44)*uy) + '" stroke="rgba(0,0,0,0.22)" stroke-width="0.6" stroke-dasharray="3 3"/>');
+/* Degree label (90 is left off: it sits on the interface line) */
+if (a < 90) {
+var lr = R - 31;
+s.push('<text x="' + f1(cx + lr*ux) + '" y="' + f1(cy + lr*uy) + '" dy="0.35em" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#111">' + a + '\u00B0</text>');
+}
+}
+}
+}
+/* Center crosshair */
+s.push('<circle cx="' + cx + '" cy="' + cy + '" r="3.5" fill="none" stroke="#222" stroke-width="1"/>');
+s.push('<line x1="' + (cx-8) + '" y1="' + cy + '" x2="' + (cx+8) + '" y2="' + cy + '" stroke="#222" stroke-width="1"/>');
+s.push('<line x1="' + cx + '" y1="' + (cy-8) + '" x2="' + cx + '" y2="' + (cy+8) + '" stroke="#222" stroke-width="1"/>');
+/* Caption */
+s.push('<text x="' + cx + '" y="' + f1(cy + dirY*62) + '" dy="0.35em" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" fill="#333">angle from normal</text>');
+s.push('</svg>');
+return s.join('');
+}
+function svgToImage(svgText) {
+var img = new Image();
+img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
+return img;
+}
+var protractorImg = svgToImage(makeProtractorSVG(1));
+var imgX = canvas.width/2 - protCx;
+var imgY = canvas.height/2 - protCy(1);
+protractorImg.onload = function () { redraw(); };
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = "#ffd";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.strokeStyle = '#999';
+drawMotion();
+function draw(img, imgX, imgY) {
+ctx.drawImage(img, imgX, imgY);
+}
+function drawDisk() {
+const DR = 200;
+const DX = canvas.width/2, DY = canvas.height/2;
+ctx.beginPath();
+ctx.arc(DX, DY, DR, 0, Math.PI, false);
+ctx.closePath();
+ctx.fill();
+}
+function drawMotion() {
+runFlag = 1;
+if (runFlag == 1) {
+index = index + 1;
+ctx.fillStyle = "#ffd";
+ctx.strokeStyle = '#999';
+/* ── Medium 1 background colour (physically meaningful, unchanged by a11y) ── */
+redness = Math.floor(220 - 50*(n1 - 1.0));
+redString = redness.toString(16); if (redString.length == 1) redString = "0" + redString;
+greenString = redString;
+blueness = Math.floor(255);
+blueString = blueness.toString(16); if (blueString.length == 1) blueString = "0" + blueString;
+colorString = "#" + redString + greenString + blueString;
+ctx.strokeStyle = colorString;
+ctx.fillStyle = colorString;
+ctx.fillRect(xBase - xBtw, yBase - yBtw, xW, 2*yW);
+/* ── Normal line -- colour from CSS custom property ── */
+ctx.beginPath();
+ctx.strokeStyle = snellA11y.col('normal');
+ctx.lineWidth = 1;
+ctx.moveTo(xBase + xBfy*x2, yBase - yW);
+ctx.lineTo(xBase + xBfy*x2, yBase + yW);
+ctx.stroke();
+ctx.lineWidth = 1;
+/* ── Medium 2 disk colour (physically meaningful) ── */
+redness = Math.floor(220 - 50*(n2 - 1.0));
+redString = redness.toString(16); if (redString.length == 1) redString = "0" + redString;
+greenString = redString;
+blueness = Math.floor(255);
+blueString = blueness.toString(16); if (blueString.length == 1) blueString = "0" + blueString;
+colorString = "#" + redString + greenString + blueString;
+ctx.strokeStyle = colorString;
+ctx.fillStyle = colorString;
+drawDisk();
+ctx.font = '16pt Calibri';
+ctx.fillStyle = "blue";
+if (source == 1) {
+var sinc, cosc;
+if (n2 > n1) {
+sinc = n1/n2; cosc = Math.sqrt(1 - sinc*sinc);
+} else {
+sinc = n2/n1; cosc = Math.sqrt(1 - sinc*sinc);
+}
+/* Incident ray */
+drawArrow(8*(x2-x1), 8*(y2-y1), xBase + xBfy*x1, yBase - yBfy*y1,
+snellA11y.col('incident'), 4);
+var normalize = Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+/* Reflected ray */
+drawArrow(aMag*(x2-x1)/normalize, aMag*(y1-y2)/normalize, xBase + xBfy*x2, yBase,
+snellA11y.col('reflect'), 2);
+var theta1 = (180.0/Math.PI) * Math.atan2((x2-x1), (y1-y2));
+var sin2 = n1*(x2-x1) / (n2*normalize);
+var isTIR = false;
+if (n2 > n1 || Math.abs((x2-x1)/normalize) < sinc) {
+var cos2 = Math.sqrt(1 - sin2*sin2);
+traceInside(xBase + xBfy*x2, yBase, sin2, cos2);   /* through the disk, and out through the curved face */
+var theta2 = (180.0/Math.PI) * Math.atan2(sin2, cos2);
+} else {
+isTIR = true;
+}
+}
+/* Source dot */
+ctx.beginPath();
+ctx.arc(xBase + xBfy*x1, yBase - yBfy*y1, radius, 0, 2*Math.PI, false);
+ctx.fillStyle = snellA11y.col('dot');
+ctx.fill();
+ctx.font = '16pt Calibri';
+}
+}
+var exitInfo = null;   /* what happens at the curved face, for the narration */
+function traceInside(Px, Py, sx, cy_) {
+  /* the refracted ray, from the entry point (Px, Py) down into the disk, to the curved face; then Snell's law there */
+  var C = { x:canvas.width/2, y:canvas.height/2 }, Rd = 200, dx = sx, dy = cy_, ox = Px - C.x, oy = Py - C.y;
+  var b = ox*dx + oy*dy, c = ox*ox + oy*oy - Rd*Rd, t = -b + Math.sqrt(Math.max(0, b*b - c)), Ex = Px + t*dx, Ey = Py + t*dy;
+  var col = snellA11y.col('refract'); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(Px, Py); ctx.lineTo(Ex, Ey); ctx.stroke();
+  var nx = (Ex - C.x)/Rd, ny = (Ey - C.y)/Rd, cosi = dx*nx + dy*ny, sini = dx*ny - dy*nx;   /* the outward normal there; the angle to it */
+  /* the normal of the curved face: a radius, dashed */
+  ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = snellA11y.col('normal'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(Ex - 45*nx, Ey - 45*ny); ctx.lineTo(Ex + 45*nx, Ey + 45*ny); ctx.stroke(); ctx.restore();
+  var alpha = Math.asin(Math.min(1, Math.abs(sini)))*180/Math.PI, eta = n2/n1, k = 1 - eta*eta*(1 - cosi*cosi);
+  if (k < 0) {   /* total internal reflection at the curved face */
+    var rx = dx - 2*cosi*nx, ry = dy - 2*cosi*ny, ox2 = Ex - C.x, oy2 = Ey - C.y, b2 = ox2*rx + oy2*ry, c2 = ox2*ox2 + oy2*oy2 - Rd*Rd, t2 = -b2 + Math.sqrt(Math.max(0, b2*b2 - c2));
+    if (ry < 0) t2 = Math.min(t2, (Py - Ey)/ry);   /* or the flat face, whichever comes first */
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([6, 3]); ctx.beginPath(); ctx.moveTo(Ex, Ey); ctx.lineTo(Ex + t2*rx, Ey + t2*ry); ctx.stroke(); ctx.setLineDash([]);
+    exitInfo = { tir:true, alpha:alpha }; return; }
+  var tx = eta*dx - (eta*cosi - Math.sqrt(k))*nx, ty = eta*dy - (eta*cosi - Math.sqrt(k))*ny, tl = Math.hypot(tx, ty); tx /= tl; ty /= tl;
+  drawArrow(tx*30, -ty*30, Ex, Ey, col, 2);   /* out into medium 1 */
+  var beta = Math.asin(Math.min(1, Math.abs(tx*ny - ty*nx)))*180/Math.PI, dev = Math.acos(Math.max(-1, Math.min(1, dx*tx + dy*ty)))*180/Math.PI;
+  exitInfo = { tir:false, alpha:alpha, beta:beta, dev:dev };
+}
+function drawHandles() {
+  /* the light source and the entry point, on top of the protractor */
+  var Sx = xBase + xBfy*x1, Sy = yBase - yBfy*y1, Px = xBase + xBfy*x2;
+  ctx.beginPath(); ctx.arc(Sx, Sy, radius + 2, 0, 2*Math.PI); ctx.fillStyle = snellA11y.col('dot'); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#c2185b'; ctx.beginPath(); ctx.moveTo(Px, yBase - 9); ctx.lineTo(Px + 8, yBase); ctx.lineTo(Px, yBase + 9); ctx.lineTo(Px - 8, yBase); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#c2185b'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.fillText('entry point', Px, yBase - 14); ctx.textAlign = 'left';
+  if (Math.abs(x2) > 0.01){ ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(xBase, yBase, 3, 0, 2*Math.PI); ctx.fill(); ctx.font = '11px Arial'; ctx.textAlign = 'center'; ctx.fillText('centre', xBase, yBase + 16); ctx.textAlign = 'left'; }
+}
+function redraw(){ drawMotion(); draw(protractorImg, imgX, imgY); drawHandles(); }
+function setEntry(v, say){
+  x2 = Math.max(-4.5, Math.min(4.5, Number(v)/2));   /* the disk is 20 cm across: 1 unit = 2 cm */
+  var r = thI*Math.PI/180; x1 = x2 - 5*Math.sin(r); y1 = 5*Math.cos(r);
+  var sl = document.getElementById('entrySlider'); if (sl) sl.value = (2*x2).toFixed(1); var vv = document.getElementById('entryValue'); if (vv) vv.textContent = (2*x2).toFixed(1) + ' cm';
+  redraw(); if (say !== false) narrateExit();
+}
+function narrateExit(){
+  var e = exitInfo, at = Math.abs(x2) < 0.01;
+  var m = at ? 'The beam enters at the centre of the flat face: inside, it travels along a radius, meets the curved face along its normal and leaves without bending.' : 'The beam enters ' + (2*Math.abs(x2)).toFixed(1) + ' cm ' + (x2 < 0 ? 'left' : 'right') + ' of the centre. ';
+  if (!at && e) m += e.tir ? 'It meets the curved face ' + e.alpha.toFixed(1) + ' degrees from its normal, beyond the critical angle: it is totally reflected inside.' : 'It meets the curved face ' + e.alpha.toFixed(1) + ' degrees from its normal (the dashed radius), so it bends again as it leaves, to ' + e.beta.toFixed(1) + ' degrees: only at the centre does it leave unbent.';
+  snellA11y.narrate(m);
+}
+/* ── dragging: the light source (rotation about the entry point), the entry point, the protractor (sideways) ── */
+var drag = null;
+function cpt(e){ var r = canvas.getBoundingClientRect(); return { x:(e.clientX - r.left)*canvas.width/r.width, y:(e.clientY - r.top)*canvas.height/r.height }; }
+canvas.addEventListener('pointerdown', function(e){
+  var p = cpt(e), Sx = xBase + xBfy*x1, Sy = yBase - yBfy*y1, Px = xBase + xBfy*x2, pcx = imgX + protCx, pcy = imgY + protCy(1);
+  if (Math.hypot(p.x - Sx, p.y - Sy) < 18) drag = { t:'src' };
+  else if (Math.hypot(p.x - Px, p.y - yBase) < 14) drag = { t:'pt' };
+  else if (Math.hypot(p.x - pcx, p.y - pcy) <= protR && p.y >= pcy - 6) drag = { t:'prot', x0:p.x, i0:imgX };
+  if (drag){ try { canvas.setPointerCapture(e.pointerId); } catch(err){} canvas.style.cursor = 'grabbing'; e.preventDefault(); } });
+canvas.addEventListener('pointermove', function(e){
+  if (!drag) return; var p = cpt(e), Px = xBase + xBfy*x2;
+  if (drag.t === 'src'){ var vx = p.x - Px, vy = Math.min(-1, p.y - yBase), a = Math.atan2(-vx, -vy)*180/Math.PI; a = Math.max(-89.9, Math.min(89.9, a));
+    var sl = document.getElementById('incidentAngleSlider'); if (sl) sl.value = a.toFixed(1); setIncidentAngle(a.toFixed(1), true); }
+  if (drag.t === 'pt'){ setEntry(2*(p.x - xBase)/xBfy, false); }
+  if (drag.t === 'prot'){ imgX = Math.max(-protCx + 30, Math.min(canvas.width - protCx - 30, drag.i0 + (p.x - drag.x0))); redraw(); }
+  e.preventDefault(); });
+canvas.addEventListener('pointerup', function(){ if (!drag) return; var t = drag.t; drag = null; canvas.style.cursor = 'grab';
+  if (t === 'pt') narrateExit(); else if (t === 'src') setIncidentAngle(thI.toFixed(1)); else snellA11y.narrate('The protractor is centred ' + ((imgX + protCx - xBase)/20).toFixed(1) + ' cm from the centre of the flat face.'); });
+function protTo(w){ imgX = (w === 'entry' ? xBase + xBfy*x2 : xBase) - protCx; redraw(); snellA11y.narrate(w === 'entry' ? 'The protractor is centred on the entry point.' : 'The protractor is centred on the centre of the disk.'); }
+function drawArrow(Fx, Fy, Px, Py, arrowColor, lineW) {
+var theta = Math.atan2(Fy, Fx);
+ctx.strokeStyle = arrowColor;
+if (!lineW) lineW = 4;
+ctx.lineWidth = lineW;
+ctx.beginPath();
+ctx.moveTo(Px, Py);
+ctx.lineTo(Px + 5*Fx, Py - 5*Fy);
+ctx.stroke();
+ctx.lineWidth = 2;
+var Fmag = Math.sqrt(Fx*Fx + Fy*Fy);
+if (Fmag > 5) Fmag = 5;
+ctx.fillStyle = arrowColor;
+ctx.beginPath();
+ctx.moveTo(Px + 5*Fx - 3*Fmag*Math.cos(theta + 0.25*(3.1416/2)),
+ Py - 5*Fy + 3*Fmag*Math.sin(theta + 0.25*(3.1416/2)));
+ctx.lineTo(Px + 5*Fx, Py - 5*Fy);
+ctx.lineTo(Px + 5*Fx - 3*Fmag*Math.cos(theta - 0.25*(3.1416/2)),
+ Py - 5*Fy + 3*Fmag*Math.sin(theta - 0.25*(3.1416/2)));
+ctx.stroke();
+ctx.fill();
+}
+function runMotion() {
+drawMotion();
+if (runFlag == 1) timer = window.setTimeout(runMotion, 1000/30);
+}
+function setIncidentAngle(degrees, quiet) {
+document.getElementById("incidentAngleValue").innerHTML = degrees;
+thI = Number(degrees);
+var radians = degrees * Math.PI / 180;
+var length = 5;
+x1 = x2 - length * Math.sin(radians);
+y1 =  length * Math.cos(radians);
+redraw();
+if (quiet) return;
+/* ── Narration ── */
+var normalize = Math.sqrt((x2 - x1)*(x2 - x1) + y1*y1);
+var sin2 = n1*(x2 - x1) / (n2 * normalize);
+var thetaI = Math.abs(parseFloat(degrees));
+var msg = '\u03B8\u1D35 = ' + thetaI.toFixed(1) + '\u00B0. ';
+msg += '\u03B8\u1D63 = ' + thetaI.toFixed(1) + '\u00B0 (reflection). ';
+if (n2 > n1) {
+/* always transmits */
+var theta2 = (180/Math.PI) * Math.asin(Math.abs(sin2));
+msg += '\u03B8\u209C = ' + theta2.toFixed(1) + '\u00B0 (refraction, bends toward normal).';
+} else {
+var sinc = n2/n1;
+if (Math.abs(sin2) <= 1) {
+var theta2 = (180/Math.PI) * Math.asin(Math.abs(sin2));
+msg += '\u03B8\u209C = ' + theta2.toFixed(1) + '\u00B0 (refraction, bends away from normal).';
+} else {
+msg += 'Total internal reflection \u2014 no transmitted beam.';
+}
+}
+if (Math.abs(x2) > 0.01 && exitInfo) msg += exitInfo.tir ? ' Off-centre, the beam is totally reflected at the curved face.' : ' Off-centre, it bends again at the curved face, to ' + exitInfo.beta.toFixed(1) + '\u00B0 from its normal.';
+snellA11y.narrate(msg);
+}
+return { shown1, shown2, setIncidentAngle, setEntry, protTo, redraw, _state:function(){ return { x1:x1, y1:y1, x2:x2, thI:thI, imgX:imgX, exit:exitInfo, n1:n1, n2:n2 }; } };
+};
+</script>
+<script>
+var snell = new snell();
+snellA11y.init();
+/* Initial narration */
+snellA11y.narrate('Ready. n\u2081 = 1.00, n\u2082 = 1.50, \u03B8\u1D35 = 30\u00B0. Adjust sliders to explore Snell\u2019s law.');
+</script>
+</main>
+</body>
+</html>

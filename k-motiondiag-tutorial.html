@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // Configure MathJax to load the AsciiMath input component
+  window.MathJax = {
+    loader: { load: ['input/asciimath', 'output/chtml'] }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<title>Physics Simulations-Kinematics-Motion Diagrams: Velocity and Acceleration Tutorial</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,kinematics, motion diagram, velocity, acceleration, centripetal, tangential, tutorial, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<h1 style="font-family:'Noto Sans','Segoe UI',Arial,sans-serif;font-size:1.5em;max-width:940px;margin:0 auto 6px">Motion Diagrams: Velocity and Acceleration</h1>
+<p style="font-family:'Noto Sans','Segoe UI',Arial,sans-serif;max-width:940px;margin:0 auto 14px">Work through the eight stages in order. Each stage opens below the previous one when you answer its questions correctly.</p>
+<!-- Motion Diagrams tutorial: velocity, acceleration, and their directions.
+8 stages chained via the ctStageComplete event.
+Stages 1-6: one-dimensional motion diagrams. Stages 7-8: perpendicular and
+tangential + perpendicular acceleration in two dimensions.
+CSS/JS hosted on GitHub Pages. -->
+<div id="ctRoot1010"></div>
+<div id="ct2Root1010" style="display:none"></div>
+<div id="ct3Root1010" style="display:none"></div>
+<div id="ct4Root1010" style="display:none"></div>
+<div id="ct5Root1010" style="display:none"></div>
+<div id="ct6Root1010" style="display:none"></div>
+<div id="ct7Root1010" style="display:none"></div>
+<div id="ct8Root1010" style="display:none"></div>
+<script>
+  window.ctThisq = '1010';
+  // Plain (non-MOM) version: features that call MOM answer boxes are off.
+  window['mdConfig_1010'] = {
+    momSubmit: false,
+    lockBoxes: false,
+    answerMap: { score: '001', percent: '002' }
+  };
+</script>
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/motiondiag-core.css">
+<script src="https://mzoughi.github.io/mom/motiondiag-core.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st1.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st2.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st3.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st4.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st5.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st6.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st7.js"></script>
+<script src="https://mzoughi.github.io/mom/motiondiag-st8.js"></script>
+<script>
+  document.addEventListener('ctStageComplete', function(e){
+    if (e.detail.thisq !== window.ctThisq) return;
+    var nextId = ['ct2Root','ct3Root','ct4Root','ct5Root','ct6Root','ct7Root','ct8Root'][e.detail.stage-1];
+    if (nextId) {
+      var el = document.getElementById(nextId + window.ctThisq);
+      if (el) {
+        el.style.display = 'block';
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'start'});
+      }
+    }
+  });
+</script>
+</body>
+</html>

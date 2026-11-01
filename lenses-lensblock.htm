@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Simulations</title>
+</head>
+<body>
+<p>The simulation below shows a convergent double-convex lens at the middle of the screen. Two filled circles on the optical axis indicate the focal points; two open circles indicate twice the focal length. The object is a vertical arrow to the left of the lens. A movable block can partially obstruct the lens from the front or back.</p>
+<div id="snellRoot819">
+  <!-- ── Accessibility toolbar ── -->
+  <div class="sn_a11y819" id="snellA11yBar819" role="toolbar" aria-label="Display options">
+    <button type="button" class="sn_a11ybtn819" id="snBtnHC819" onclick="snellA11y819.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+    <button type="button" class="sn_a11ybtn819" id="snBtnLM819" onclick="snellA11y819.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+    <button type="button" class="sn_a11ybtn819" id="snBtnCB819" onclick="snellA11y819.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+    <button type="button" class="sn_a11ybtn819 sn_a11yon819" id="snBtnNR819" onclick="snellA11y819.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+  </div>
+  <div id="canvasesdiv" class="tbar819"><H3>Blocking the Light</H3></div>
+  <div class="mcontent819">
+    <canvas id="cv819" width="820" height="380"><span style="color:red;">This browser doesn't support HTML 5 canvas!</span></canvas>
+  </div>
+  <div class="mcontent2819">
+    <div style="border:2px solid black;"><canvas id="cvo819" width="192" height="192"></canvas></div>
+    <div>&nbsp;</div>
+    <div style="border:2px solid black;"><canvas id="cvi819" width="192" height="192"></canvas></div>
+  </div>
+  <!-- Narration bar -->
+  <div id="snNarBar819" class="sn_narbar819" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div class="bbbar819">
+    <div class="left819">Change Block:</div>
+    <div class="center819">
+      T-<input class="Bslider819" type="range" id="obsTValue" min="0" max="130" value="30" step="1"
+               oninput="CLens819.obsT(this.value)" onchange="CLens819.obsT(this.value)">
+      M-<input class="Bslider819" type="range" id="obsMValue" min="0" max="10" value="0" step="1"
+               oninput="CLens819.obsM(this.value)" onchange="CLens819.obsM(this.value)">
+      B-<input class="Bslider819" type="range" id="obsBValue" min="0" max="75" value="20" step="1"
+               oninput="CLens819.obsB(this.value)" onchange="CLens819.obsB(this.value)">
+    </div>
+    <div class="right819">
+      <input type="checkbox" id="myCheck819" onchange="CLens819.rst();" checked>
+      <label for="myCheck819"><span>Front/Back</span></label>
+    </div>
+  </div>
+  <div class="bbbar819">
+    <div class="left819">Move Screen:</div>
+    <div class="center819">
+      <input class="slider819" type="range" id="zoomSlider" min="18" max="200" step="1" value="150"
+             oninput="CLens819.moveScreen(this.value)" onchange="CLens819.moveScreen(this.value)">
+      <span class="txtDPL819"><span id="screenPositionValue">150</span> cm</span>
+    </div>
+    <div class="right819"></div>
+  </div>
+  <div class="bbar819">
+    <div class="left819">Object</div>
+    <div class="centerL819">
+      po = <input class="slider819" type="range" id="dObjectValue" min="-200" max="-18" value="-100" step="1"
+                     oninput="CLens819.showdObject(this.value)" onchange="CLens819.showdObject(this.value)">
+      <span class="txtDPL819"><span id="initialdObjectValue">-100</span> cm</span>
+      <br>ho = <input class="slider819" type="range" id="hObjectValue" min="-50" max="50" value="20" step="2"
+                         oninput="CLens819.showhObject(this.value)" onchange="CLens819.showhObject(this.value)">
+      <span class="txtDPL819"><span id="initialhObjectValue">20</span> mm</span>
+    </div>
+    <div class="centerR819">Lens</div>
+    <div class="right819">
+      df = <input class="slider819" type="range" id="fValue" min="50" max="100" value="55" step="1"
+                     oninput="CLens819.showf(this.value)" onchange="CLens819.showf(this.value)">
+      <span class="txtDPL819"><span id="initialfValue">55</span> cm</span>
+    </div>
+  </div>
+  <div class="footer819 footer-pink819">
+    <div class="left819">Move Light Source</div>
+    <div class="center819">
+      <input class="slider819" type="range" id="opValue" min="0" max="1" value="1" step="0.1"
+             oninput="CLens819.moveSpot(this.value)" onchange="CLens819.moveSpot(this.value)">
+    </div>
+    <div class="right819"></div>
+  </div>
+  <hr><p>&nbsp;</p>
+  <ol type="a">
+    <p>First place the screen so that the image is sharp.</p>
+    <li>Increase the top Block (T) to a maximum and the Bottom Block to zero so that only the top of the lens is blocked. What is the effect of the block on the image?<br />[AB0]</li>
+    <li>Increase now both blocks, what is the effect of the block on the image?<br />[AB1]</li>
+    <li>Move the blocks now to the back, what is the effect of the block on the image?<br />[AB2]</li>
+  </ol>
+</div><!-- #snellRoot819 -->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  div { width: 823px; margin: 0; }
+  /* ── CSS custom properties ── */
+  #snellRoot819 { --sn-toolbar-bg: #222; }
+  /* ── Accessibility toolbar ── */
+  #snellRoot819 .sn_a11y819 {
+    display: flex; gap: 6px; padding: 6px 8px;
+    background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 823px;
+  }
+  #snellRoot819 .sn_a11ybtn819 {
+    padding: 4px 10px; font-size: .72rem; font-family: monospace;
+    letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+    background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+    transition: border-color .15s, color .15s;
+  }
+  #snellRoot819 .sn_a11ybtn819:hover { border-color: #00e8d0; color: #00e8d0; }
+  #snellRoot819 .sn_a11yon819 { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+  /* ── Narration bar ── */
+  #snellRoot819 .sn_narbar819 {
+    width: 823px; min-height: 28px; padding: 5px 10px;
+    background: #ffefc0; border-left: 4px solid #e0b040;
+    font-size: .88rem; color: #333; font-style: italic;
+  }
+  .slider819  { width: 195px; height: 14px; display: inline-block; }
+  .Bslider819 { width: 145px; height: 14px; display: inline-block; }
+  .txtDPL819  { background-color: blue; color: yellow; margin-left: 10px; padding-top: 2px;
+    display: inline-block; font-size: 14px; text-align: center; height: 20px; width: 58px; }
+  .tbar819     { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+  .mcontent819  { height: 382px; }
+  .mcontent2819 { height: 192px; text-align: center; display: flex; }
+  .bbbar819 { height: 45px; padding: 5px; background-color: #6a9; text-align: left; display: flex; }
+  .bbbar819 .left819   { background-color: #6a9; width: 120px; font-weight: bold; padding: 5px; }
+  .bbbar819 .center819 { background-color: #6a9; width: 550px; padding: 5px; }
+  .bbbar819 .right819  { background-color: #6a9; width: 180px; padding: 5px; }
+  .bbar819 { height: 60px; text-align: center; display: flex; }
+  .bbar819 .left819    { background-color: #df9; font-weight: bold; text-align: left; width: 80px; padding: 10px; }
+  .bbar819 .centerL819 { background-color: #df9; width: 332px; padding: 5px; }
+  .bbar819 .centerR819 { background-color: #df9; font-weight: bold; width: 80px; padding: 5px; }
+  .bbar819 .right819   { background-color: #df9; width: 332px; padding: 5px; }
+  .footer819 { height: 45px; text-align: left; display: flex; }
+  .footer819 .left819   { width: 206px; font-weight: bold; padding: 10px; }
+  .footer819 .center819 { width: 206px; padding: 10px; }
+  .footer819 .right819  { width: 206px; padding: 4px; }
+  .footer-pink819 { background-color: #fce4ec; }
+  .flex819 { min-height: 100px; background-color: #fec; padding: 4px; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+  var snellA11y819 = (function(){
+    var ROOT = null;
+    var states = { hc: false, lm: false, cb: false, nr: true };
+    var CSETS = {
+      def: {
+        bg: '#ffd', axis: '#000', focal: 'purple',
+        rayR: 'red',     rayB: 'blue',    rayG: 'green',
+        obj:  '#933',    img:  '#339',
+        multi: '#bbb',   text: 'black'
+      },
+      hc: {
+        bg: '#111', axis: '#fff', focal: '#ff88ff',
+        rayR: '#ff6600', rayB: '#44aaff', rayG: '#00ff88',
+        obj:  '#ff6600', img:  '#44aaff',
+        multi: '#555',   text: '#fff'
+      },
+      cb: { /* Okabe-Ito */
+        bg: '#ffd', axis: '#000', focal: '#cc79a7',
+        rayR: '#d55e00', rayB: '#0072b2', rayG: '#009e73',
+        obj:  '#d55e00', img:  '#0072b2',
+        multi: '#bbb',   text: 'black'
+      }
+    };
+    function styleBtn(id, active) {
+      var b = document.getElementById(id); if (!b) return;
+      if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+      else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    function applyCanvas() {
+      var filt = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+      ['cv819','cvo819','cvi819'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.style.filter = filt;
+      });
+    }
+    function applyNarBar() {
+      var nb = document.getElementById('snNarBar819');
+      if (nb) nb.style.display = states.nr ? 'block' : 'none';
+      var btn = document.getElementById('snBtnNR819');
+      if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR819', states.nr); }
+    }
+    function applyToolbar() {
+      if (ROOT) ROOT.style.setProperty('--sn-toolbar-bg', (states.hc || states.lm) ? '#111' : '#222');
+    }
+    function apply() {
+      if (!ROOT) return;
+      applyCanvas(); applyNarBar(); applyToolbar();
+      styleBtn('snBtnHC819', states.hc);
+      styleBtn('snBtnLM819', states.lm);
+      styleBtn('snBtnCB819', states.cb);
+    }
+    return {
+      init: function() { ROOT = document.getElementById('snellRoot819'); apply(); },
+      toggle: function(k) {
+        states[k] = !states[k];
+        if (k === 'hc' && states.hc) states.lm = false;
+        if (k === 'lm' && states.lm) states.hc = false;
+        apply();
+        if (typeof CLens819 !== 'undefined') CLens819.rst();
+      },
+      isNarOn: function() { return states.nr; },
+      narrate: function(msg) {
+        if (!states.nr) return;
+        var nb = document.getElementById('snNarBar819');
+        if (!nb) return;
+        nb.innerHTML = msg;
+        if (window.MathJax) {
+          if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+          else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+        }
+      },
+      getColors: function() {
+        if (states.cb) return CSETS.cb;
+        if (states.hc) return CSETS.hc;
+        return CSETS.def;
+      }
+    };
+  })();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+  var CLens = function() {
+    var xBase=310, yBase=110, xInit=20;
+    var graphType=1, graphTitle='Converging lens';
+    var slope=0.4, yIncrement=3, yNumDecimals=1;
+    var yStart=yBase+120, plotColor='#ff00ff', maxTime=10.0;
+    var x1Init=0, x1Old=xBase+x1Init, x1=xBase+x1Init, v1=1.0;
+    var dObject=-75, hObject=-30;
+    var objectColor='#933';
+    var f=55;
+    var dImage, hImage, imageColor='#339';
+    var lensKind=1, y1=yBase+80, time=0.0;
+    var deltat=1/20.0, timer, runFlag=1, spot=1;
+    var oT=30, oB=20, oM=0;
+    var lensRadius=160, radius=150;
+    var screenP=150, dash=false, px, py;
+    function _narrate(msg) { snellA11y819.narrate(msg); }
+    function _imageMsg() {
+      var pi = -dObject*f/(-dObject-f);
+      var msg = 'p<sub>o</sub>=' + Math.abs(dObject).toFixed(0) + ' cm, f=' + f.toFixed(0) + ' cm. ';
+      if (!isFinite(pi) || Math.abs(pi) > 1e6) {
+        msg += 'Image at &infin; (object at focal point).';
+      } else if (pi > 0) {
+        var m = pi/dObject;
+        msg += 'Real image at p<sub>i</sub>=' + pi.toFixed(1) + ' cm. ';
+        msg += 'm=' + m.toFixed(2) + '. ' + (m < 0 ? 'Inverted.' : 'Upright.');
+      } else {
+        msg += 'Virtual image at p<sub>i</sub>=' + pi.toFixed(1) + ' cm.';
+      }
+      return msg;
+    }
+    function _blockMsg() {
+      var frac = (2*lensRadius - 1.5*(oT+oB-2*oM)) / (2*lensRadius);
+      frac = Math.max(0, Math.min(1, frac));
+      var pct = Math.round(frac * 100);
+      var pos = document.getElementById('myCheck819') && document.getElementById('myCheck819').checked ? 'front' : 'back';
+      var msg = 'Block (' + pos + '): T=' + oT + ', M=' + oM + ', B=' + oB + '. ';
+      msg += 'Approx. ' + pct + '% of lens clear. ';
+      if (pct === 100) msg += 'Image unchanged.';
+      else if (pct > 50) msg += 'Image dimmer but still formed.';
+      else if (pct > 0)  msg += 'Image much dimmer -- most of lens blocked.';
+      else               msg += 'Lens fully blocked -- no image.';
+      return msg;
+    }
+    function showdObject(v) {
+      document.getElementById("initialdObjectValue").innerHTML = v;
+      dObject = Number(v); rst();
+      _narrate(_imageMsg());
+    }
+    function showhObject(v) {
+      document.getElementById("initialhObjectValue").innerHTML = v;
+      hObject = Number(v); rst();
+      _narrate('Object height h<sub>o</sub>=' + hObject + ' mm.');
+    }
+    function showf(v) {
+      document.getElementById("initialfValue").innerHTML = v;
+      f = Number(v);
+      var newpoMax = -f;
+      var sliderPo = document.getElementById("dObjectValue");
+      sliderPo.max = newpoMax;
+      if (Math.abs(sliderPo.value) <= Math.abs(newpoMax)) {
+        document.getElementById("initialdObjectValue").innerHTML = newpoMax;
+        sliderPo.value = newpoMax;
+        dObject = newpoMax;
+      }
+      rst();
+      _narrate('f=' + f.toFixed(0) + ' cm. ' + _imageMsg());
+    }
+    function moveScreen(v) {
+      document.getElementById("screenPositionValue").innerHTML = v;
+      screenP = Number(v); rst();
+      var pi = -dObject*f/(-dObject-f);
+      var diff = Math.abs(screenP - pi);
+      if (diff < 3) _narrate('Screen at ' + screenP + ' cm &mdash; image is sharp! (p<sub>i</sub>&approx;' + pi.toFixed(1) + ' cm)');
+      else          _narrate('Screen at ' + screenP + ' cm. Sharp image at p<sub>i</sub>=' + pi.toFixed(1) + ' cm (off by ' + diff.toFixed(0) + ' cm).');
+    }
+    function moveSpot(v) { spot = Number(v); rst(); }
+    function obsT(v) { oT = Number(v); rst(); _narrate(_blockMsg()); }
+    function obsB(v) { oB = Number(v); rst(); _narrate(_blockMsg()); }
+    function obsM(v) { oM = Number(v); rst(); _narrate(_blockMsg()); }
+    function lensType(lens) {
+      lensKind = Number(lens);
+      if (lensKind==1) { f=Math.abs(f);  graphTitle='Converging lens'; }
+      if (lensKind==2) { f=-Math.abs(f); graphTitle='Diverging lens';  }
+      rst();
+    }
+    function drawClippedRay(x1,y1,x2,y2,x3,y3,color) {
+      ctx.strokeStyle=color; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(x1,y1);
+      var hit=clipRayAtObstacle(x1,y1,x2,y2);
+      ctx.lineTo(hit.x,hit.y); ctx.stroke();
+      if (hit.x!==x2 || hit.y!==y2) return;
+      ctx.beginPath(); ctx.moveTo(x2,y2);
+      hit=clipRayAtObstacle(x2,y2,x3,y3);
+      ctx.lineTo(hit.x,hit.y); ctx.stroke();
+    }
+    function clipRayAtObstacle(x1,y1,x2,y2) {
+      var xo=px, yMidT=py-oM, yMidB=py+oM, yTop=py-oT, yBot=py+oB;
+      if ((x1<xo&&x2>xo)||(x1>xo&&x2<xo)) {
+        var yHit=y1+(y2-y1)*(xo-x1)/(x2-x1);
+        if ((yHit>=yTop&&yHit<=yMidT)||(yHit>=yMidB&&yHit<=yBot)) {
+          return {x:xo, y:yHit};
+        }
+      }
+      return {x:x2, y:y2};
+    }
+    function rst() {
+      window.clearTimeout(timer);
+      index=-1; time=0.0;
+      x1=xBase+x1Init; runFlag=1;
+      drawMotion();
+    }
+    var canvas,ctx,width,height,mx,my;
+    canvas = document.getElementById("cv819");
+    ctx    = canvas.getContext("2d");
+    var myCheck = document.getElementById("myCheck819");
+    var cvo=document.getElementById("cvo819");
+    var cvi=document.getElementById("cvi819");
+    var ctxo=cvo.getContext("2d");
+    var ctxi=cvi.getContext("2d");
+    var index=-1;
+    /* initial draw deferred to after snellA11y819.init() */
+    function drawMotion() {
+      if (index>=400) runFlag=0;
+      if (runFlag==1) {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        index+=1;
+        var C = snellA11y819.getColors();
+        objectColor = C.obj;
+        imageColor  = C.img;
+        ctx.fillStyle=C.bg;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        /* Lens */
+        ctx.strokeStyle=C.axis; ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(x1+0.71*radius,y1+lensRadius);
+        ctx.quadraticCurveTo(x1+0.71*radius-(110-f),y1,x1+0.71*radius,y1-lensRadius);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x1+0.71*radius,y1+lensRadius);
+        ctx.quadraticCurveTo(x1+0.71*radius+(110-f),y1,x1+0.71*radius,y1-lensRadius);
+        ctx.stroke();
+        /* Principal axis */
+        ctx.beginPath(); ctx.moveTo(0,y1); ctx.lineTo(canvas.width,y1); ctx.stroke();
+        /* Focal points */
+        ctx.strokeStyle=C.focal; ctx.lineWidth=2;
+        [x1+radius-0.29*radius-2*f, x1+radius-0.29*radius-4*f,
+         x1+radius-0.29*radius+2*f, x1+radius-0.29*radius+4*f].forEach(function(fx){
+          ctx.beginPath(); ctx.arc(fx,y1,4,0,2*Math.PI,false);
+          ctx.fillStyle=C.focal; ctx.fill(); ctx.stroke();
+        });
+        dImage = -dObject*f/(-dObject-f);
+        hImage = dImage*hObject/dObject;
+        const nrays=10;
+        /* Obstacle position */
+        if (myCheck.checked) { px=x1+radius-0.6*radius; py=y1; }
+        else                  { px=x1+radius+0.02*radius; py=y1; }
+        obstacleDraw(oT,oB);
+        /* Multiple grey rays */
+        for (var i=-nrays; i<=nrays; i++) {
+          ctx.strokeStyle=C.multi; ctx.lineWidth=2;
+          ctx.beginPath();
+          var xRs=x1+radius-0.29*radius+2*dObject, yRs=y1-2*spot*hObject;
+          ctx.moveTo(xRs,yRs);
+          var xMid=x1+radius-0.29*radius, yMid=y1-16*i;
+          var hit=clipRayAtObstacle(xRs,yRs,xMid,yMid);
+          ctx.lineTo(hit.x,hit.y);
+          if (hit.x!==xMid) { ctx.stroke(); continue; }
+          if (Math.abs(hImage)<1e10) slope=-(2*spot*hImage-16*i)/(2*dImage);
+          else slope=hObject/f;
+          var xEnd=x1+radius-0.29*radius+2*dImage, yEnd=y1-16*i+slope*2*dImage;
+          hit=clipRayAtObstacle(xMid,yMid,xEnd,yEnd);
+          ctx.lineTo(hit.x,hit.y); ctx.stroke();
+        }
+        var hLObject=spot*hObject;
+        /* Parallel ray */
+        var xRStart=x1+radius-0.29*radius+2*dObject, yRStart=y1-2*hLObject;
+        var xRLens=x1+radius-0.29*radius, yRLens=yRStart;
+        var slopeR2=hLObject/f;
+        var xREnd=x1+radius-0.29*radius+2*dImage, yREnd=y1-2*hLObject+slopeR2*2*dImage;
+        drawClippedRay(xRStart,yRStart,xRLens,yRLens,xREnd,yREnd, C.rayR);
+        /* Chief ray */
+        var xBLens=xRLens, yBLens=y1;
+        var slopeB=(yBLens-yRStart)/(xBLens-xRStart);
+        var xBEnd=xREnd, yBEnd=yRStart+slopeB*(xBEnd-xRStart);
+        drawClippedRay(xRStart,yRStart,xBLens,yBLens,xBEnd,yBEnd, C.rayB);
+        /* Focal ray */
+        var slopeG1=-hLObject/(dObject+f);
+        var yGLens=y1-2*hLObject+slopeG1*(xRLens-xRStart);
+        var xGEnd=xREnd, yGEnd=yGLens;
+        drawClippedRay(xRStart,yRStart,xRLens,yGLens,xGEnd,yGEnd, C.rayG);
+        /* Object arrow */
+        if (hObject>0) { px=x1+radius-0.29*radius+2*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(2*hObject,Math.PI/2); }
+        if (hObject<0) { px=x1+radius-0.29*radius+2*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(-2*hObject,Math.PI*1.5); }
+        /* Image arrow */
+        if (hImage>0) { if(dImage<0)dash=true; px=x1+radius-0.29*radius+2*dImage; py=y1; ctx.strokeStyle=imageColor; arrowDraw(2*hImage,Math.PI*0.5);  if(dash)dash=false; }
+        if (hImage<0) { if(dImage<0)dash=true; px=x1+radius-0.29*radius+2*dImage; py=y1; ctx.strokeStyle=imageColor; arrowDraw(-2*hImage,Math.PI*1.5); if(dash)dash=false; }
+        /* Screen */
+        ctx.strokeStyle='gray'; ctx.lineWidth=1;
+        ctx.beginPath();
+        ctx.moveTo(x1+0.71*radius+2*screenP,10);
+        ctx.lineTo(x1+0.71*radius+2*screenP,canvas.height-10);
+        ctx.stroke();
+        /* Canvas text labels */
+        ctx.font='16pt Calibri'; ctx.fillStyle=C.text; ctx.textAlign='left';
+        ctx.fillText('d\u2092 = ' + (-dObject).toFixed(2) + ' cm',  20, 330);
+        ctx.fillText('h\u2092 = ' + hObject.toFixed(2) + ' mm',     20, 360);
+        ctx.fillText('d\u1D62 = ' + dImage.toFixed(2) + ' cm',     250, 330);
+        ctx.fillText('h\u1D62 = ' + hImage.toFixed(2) + ' mm',     250, 360);
+        /* Sub-canvases */
+        /* Object canvas */
+        ctxo.clearRect(0,0,cvo.width,cvo.height);
+        ctxo.fillStyle="black";
+        drawF(ctxo,cvo.width/2,cvo.height/2,Math.abs(hObject)*4);
+        /* label outside the transform */
+        ctxo.fillStyle="blue"; ctxo.font="12px Arial"; ctxo.textAlign="left";
+        ctxo.fillText("object",2,14);
+        /* Image canvas -- gray level set by obstacle fraction */
+        var obstacleFraction = (2*lensRadius - 1.5*(oT+oB-2*oM)) / (2*lensRadius);
+        obstacleFraction = Math.max(0, Math.min(1, obstacleFraction));
+        var grayLevel = Math.floor(255 * (1 - 0.95 * obstacleFraction));
+        var grayColor = "rgb("+grayLevel+","+grayLevel+","+grayLevel+")";
+        ctxi.clearRect(0,0,cvi.width,cvi.height);
+        ctxi.save(); ctxi.translate(cvi.width/2,cvi.height/2); ctxi.scale(-1,-1);
+        if (dImage>0) {
+          ctxi.filter = "blur(" + (Math.abs(screenP-dImage)/5) + "px)";
+          ctxi.fillStyle = grayColor;   /* set BEFORE fill() is called in drawF */
+          drawF(ctxi,0,0,Math.abs(hImage)*4);
+        }
+        ctxi.restore(); ctxi.filter="none";
+        /* label after restore so it is not flipped */
+        ctxi.fillStyle="blue"; ctxi.font="12px Arial"; ctxi.textAlign="left";
+        ctxi.fillText("screen image",2,14);
+      }
+    }
+    function drawF(c,x,y,size) {
+      c.beginPath();
+      var s=(hObject/Math.abs(hObject))*size/100;
+      c.moveTo(x-20*s,y-50*s); c.lineTo(x+20*s,y-50*s); c.lineTo(x+20*s,y-35*s);
+      c.lineTo(x,y-35*s); c.lineTo(x,y-10*s); c.lineTo(x+15*s,y-10*s);
+      c.lineTo(x+15*s,y+5*s); c.lineTo(x,y+5*s); c.lineTo(x,y+50*s);
+      c.lineTo(x-20*s,y+50*s); c.closePath(); c.fill();
+    }
+    function obstacleDraw(r1,r2) {
+      ctx.strokeStyle="black"; ctx.lineWidth=6;
+      ctx.beginPath(); ctx.moveTo(px,py-r1); ctx.lineTo(px,py-oM); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px,py+oM); ctx.lineTo(px,py+r2); ctx.stroke();
+      ctx.lineWidth=2;
+    }
+    function arrowDraw(r,phi) {
+      var xf=px+r*Math.cos(phi), yf=py-r*Math.sin(phi);
+      arrow(px,py,xf,yf,3);
+    }
+    function arrow(x1,y1,x2,y2,w,col,txt,spc) {
+      if(!w)w=1; if(!txt)txt=""; if(!spc)spc=5;
+      if(!col)col=ctx.strokeStyle;
+      if(dash){ctx.setLineDash([5,3]);}
+      ctx.fillStyle=col; ctx.strokeStyle=col;
+      var dx=x2-x1,dy=y2-y1,length=Math.sqrt(dx*dx+dy*dy);
+      if(length===0)return;
+      dx/=length; dy/=length;
+      var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;
+      var h=0.5*w+3.5;
+      var xSp1=xSp-h*dy,ySp1=ySp+h*dx,xSp2=xSp+h*dy,ySp2=ySp-h*dx;
+      xSp=x2-0.6*s*dx; ySp=y2-0.6*s*dy;
+      ctx.beginPath(); ctx.lineWidth=w;
+      ctx.moveTo(x1,y1);
+      if(length<5)ctx.lineTo(x2,y2); else ctx.lineTo(xSp,ySp);
+      ctx.stroke();
+      if(length<5)return;
+      ctx.beginPath(); ctx.fillStyle=ctx.strokeStyle;
+      ctx.moveTo(xSp,ySp); ctx.lineTo(xSp1,ySp1); ctx.lineTo(x2,y2); ctx.lineTo(xSp2,ySp2);
+      ctx.closePath(); ctx.fill();
+      var tspc=x2<=x1?-(3*spc):2*spc;
+      ctx.fillText(txt,x2+tspc,y2+spc);
+      if(dash){ctx.setLineDash([5,0]);}
+    }
+    function runMotion() { drawMotion(); }
+    return {
+      rst, showdObject, moveSpot, obsB, obsM, obsT, moveScreen, showhObject, showf,
+      redraw: function(){ rst(); }
+    };
+  };
+</script>
+<script>
+  var CLens819 = new CLens();
+  snellA11y819.init();
+  window.setTimeout(function(){
+    CLens819.rst();
+    snellA11y819.narrate('Blocking the Light ready. p<sub>o</sub>=-75 cm, h<sub>o</sub>=-30 mm, f=$df cm. Move the screen to the image position, then explore the block sliders.');
+  }, 0);
+</script>
+
+</body>
+</html>

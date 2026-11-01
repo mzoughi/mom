@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Simulations</title>
+</head>
+<body>
+<div id="snellRoot819">
+  <!-- ── Accessibility toolbar ── -->
+  <div class="sn_a11y819" id="snellA11yBar819" role="toolbar" aria-label="Display options">
+  </div>
+  <hr><h2>Convergent Lenses</h2><hr>
+<button type="button" class="sn_a11ybtn819" id="snBtnHC819" onclick="snellA11y819.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+  <button type="button" class="sn_a11ybtn819" id="snBtnLM819" onclick="snellA11y819.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+  <button type="button" class="sn_a11ybtn819" id="snBtnCB819" onclick="snellA11y819.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+  <button type="button" class="sn_a11ybtn819 sn_a11yon819" id="snBtnNR819" onclick="snellA11y819.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+  <hr>
+  <div id="canvasesdiv" class="tbar819"><H3>Convergent Lenses</H3></div>
+  <div class="mcontent819">
+    <canvas id="cv819" width="820" height="380"><span style="color:red;">This browser doesn't support HTML 5 canvas!</span></canvas>
+  </div>
+  <div class="mcontent2819">
+    <div style="border:2px solid gray;"><canvas id="cvo819" width="192" height="192"></canvas></div>
+    <div style="border:2px solid black;"><canvas id="cve819" width="192" height="192"></canvas></div>
+    <div style="border:2px solid gray;"><canvas id="cvi819" width="192" height="192"></canvas></div>
+  </div>
+  <!-- Narration bar -->
+  <div id="snNarBar819" class="sn_narbar819" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div class="bbbar819 bbbar-pink819">
+    <div class="left819">
+      Move Screen:
+      <input class="zslider819" type="range" id="screenSlider" min="18" max="200" step="1" value="150"
+             oninput="CLens819.moveScreen(this.value)" onchange="CLens819.moveScreen(this.value)">
+      <span class="txtDPL819"><span id="screenPositionValue">150</span> cm</span>
+      Move Eye:
+      <input class="zslider819" type="range" id="eyeSlider" min="18" max="200" step="1" value="190"
+             oninput="CLens819.moveEye(this.value)" onchange="CLens819.moveEye(this.value)">
+      <span class="txtDPL819"><span id="EyePositionValue">190</span> cm</span>
+    </div>
+    <div class="right819">
+      <input type="checkbox" id="myCheck819" onchange="CLens819.rst();">
+      <label for="myCheck819"><span>More rays</span></label>
+    </div>
+  </div>
+  <div class="sbbar819 sbbar-green819">
+    <div class="left819">Measure x</div>
+    <div class="centerL819">
+      <input class="slider819" type="range" id="MeasXSlider" min="-200" max="200" step="1" value="180"
+             oninput="CLens819.moveMeasX(this.value)" onchange="CLens819.moveMeasX(this.value)">
+      <span class="txtDPL819"><span id="MeasXValue">180</span> cm</span>
+    </div>
+    <div class="centerR819">Measure y</div>
+    <div class="right819">
+      <input class="slider819" type="range" id="MeasYSlider" min="-100" max="100" step="1" value="90"
+             oninput="CLens819.moveMeasY(this.value)" onchange="CLens819.moveMeasY(this.value)">
+      <span class="txtDPL819"><span id="MeasYValue">95</span> mm</span>
+    </div>
+  </div>
+  <div class="bbar819 bbar-blue819">
+    <div class="left819">Object</div>
+    <div class="centerL819">
+      po = <input class="slider819" type="range" id="dObjectValue" min="-200" max="-18" value="-100" step="1"
+                     oninput="CLens819.showdObject(this.value)" onchange="CLens819.showdObject(this.value)">
+      <span class="txtDPL819"><span id="initialdObjectValue">-100</span> cm</span>
+      <br>ho = <input class="slider819" type="range" id="hObjectValue" min="-50" max="50" value="20" step="2"
+                         oninput="CLens819.showhObject(this.value)" onchange="CLens819.showhObject(this.value)">
+      <span class="txtDPL819"><span id="initialhObjectValue">20</span> mm</span>
+    </div>
+    <div class="centerR819">Lens</div>
+    <div class="right819">
+      df = <input class="slider819" type="range" id="fValue" min="50" max="100" value="75" step="1"
+                     oninput="CLens819.showf(this.value)" onchange="CLens819.showf(this.value)">
+      <span class="txtDPL819"><span id="initialfValue">75</span> cm</span>
+    </div>
+  </div>
+  <hr><p>&nbsp;</p>
+  <ol type="a">
+    <li>At what positions of the screen is the image sharp?<br /></li>
+    <li>At what positions of the eye is the image sharp?<br /></li>
+    <li>Move the object until it is closer to the lens than the focal point. At what positions of the screen is the image sharp?<br /></li>
+    <li>At what positions of the eye is the image sharp?<br /></li>
+  </ol>
+</div><!-- #snellRoot819 -->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  div { width: 823px; margin: 0; }
+  /* ── CSS custom properties ── */
+  #snellRoot819 { --sn-toolbar-bg: #222; }
+  /* ── Accessibility toolbar ── */
+  #snellRoot819 .sn_a11y819 {
+    display: flex; gap: 6px; padding: 6px 8px;
+    background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 823px;
+  }
+  #snellRoot819 .sn_a11ybtn819 {
+    padding: 4px 10px; font-size: .72rem; font-family: monospace;
+    letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+    /* background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa; */
+    /* transition: border-color .15s, color .15s; */
+  }
+  /* #snellRoot819 .sn_a11ybtn819:hover { border-color: #00e8d0; color: #00e8d0; } */
+  /* #snellRoot819 .sn_a11yon819 { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; } */
+  /* ── Narration bar ── */
+  #snellRoot819 .sn_narbar819 {
+    width: 823px; min-height: 28px; padding: 5px 10px;
+    background: #ffefc0; border-left: 4px solid #e0b040;
+    font-size: .88rem; color: #333; font-style: italic;
+  }
+  /* Sliders */
+  .slider819  { width: 195px; height: 14px; display: inline-block; }
+  .zslider819 { width: 145px; height: 14px; display: inline-block; }
+  .txtDPL819  { background-color: blue; color: yellow; margin-left: 10px; padding-top: 2px;
+    display: inline-block; font-size: 14px; text-align: center; height: 20px; width: 58px; }
+  .tbar819     { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+  .mcontent819  { height: 382px; }
+  .mcontent2819 { height: 192px; text-align: center; display: flex; }
+  /* Bar rows -- explicit colour classes (no fragile nth-child) */
+  .bbbar819 { height: 45px; padding: 5px; text-align: left; display: flex; }
+  .bbbar819 .left819  { width: 723px; padding: 5px; }
+  .bbbar819 .right819 { width:  95px; padding: 5px; }
+  .bbbar-pink819 { background-color: #fce4ec; }
+  .sbbar819 { height: 45px; text-align: center; display: flex; }
+  .sbbar819 .left819    { width:  80px; padding: 5px; }
+  .sbbar819 .centerL819 { width: 332px; padding: 5px; }
+  .sbbar819 .centerR819 { width:  80px; padding: 5px; }
+  .sbbar819 .right819   { width: 332px; padding: 5px; }
+  .sbbar-green819 { background-color: #e8f5e9; }
+  .bbar819 { height: 60px; text-align: center; display: flex; }
+  .bbar819 .left819    { width:  80px; padding: 5px; }
+  .bbar819 .centerL819 { width: 332px; padding: 5px; }
+  .bbar819 .centerR819 { width:  80px; padding: 5px; }
+  .bbar819 .right819   { width: 332px; padding: 5px; }
+  .bbar-blue819 { background-color: #e3f2fd; }
+  .footer819 { height: 60px; text-align: center; font-size: larger; display: flex; }
+  .footer819 .left819   { width: 206px; padding: 2px; }
+  .footer819 .center819 { width: 206px; padding: 4px; }
+  .footer819 .right819  { width: 206px; padding: 4px; }
+  .flex819 { min-height: 100px; background-color: #fec; padding: 4px; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+  var snellA11y819 = (function(){
+    var ROOT = null;
+    var states = { hc: false, lm: false, cb: false, nr: true };
+    /* Complete colour sets for the canvas */
+    var CSETS = {
+      def: {
+        bg: '#ffd', axis: '#000', focal: 'purple',
+        rayR: 'red',    rayRg: '#fbb',
+        rayB: 'blue',   rayBg: '#bbf',
+        rayG: 'green',  rayGg: '#bfb',
+        obj: '#933', img: '#339',
+        screen: 'lightgrey', meas: 'darkgreen', eye: '#000',
+        multi1: '#ddd', multi2: '#bbb'
+      },
+      hc: {
+        bg: '#111', axis: '#fff', focal: '#ff88ff',
+        rayR: '#ff6600', rayRg: '#7b3300',
+        rayB: '#44aaff', rayBg: '#1a4466',
+        rayG: '#00ff88', rayGg: '#005533',
+        obj: '#ff6600', img: '#44aaff',
+        screen: '#888', meas: '#00ff88', eye: '#fff',
+        multi1: '#444', multi2: '#666'
+      },
+      cb: { /* Okabe-Ito */
+        bg: '#ffd', axis: '#000', focal: '#cc79a7',  /* pink */
+        rayR: '#d55e00', rayRg: '#e8b49e',           /* vermilion */
+        rayB: '#0072b2', rayBg: '#99c4e0',           /* blue */
+        rayG: '#009e73', rayGg: '#99d9c3',           /* teal */
+        obj: '#d55e00', img: '#0072b2',
+        screen: '#aaaaaa', meas: '#009e73', eye: '#000',
+        multi1: '#ddd', multi2: '#bbb'
+      }
+    };
+    function styleBtn(id, active) {
+      var b = document.getElementById(id); if (!b) return;
+      //if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+      //else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    function applyCanvas() {
+      var ids = ['cv819','cvo819','cvi819','cve819'];
+      var filt = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+      ids.forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.style.filter = filt;
+      });
+    }
+    function applyNarBar() {
+      var nb = document.getElementById('snNarBar819');
+      if (nb) nb.style.display = states.nr ? 'block' : 'none';
+      var btn = document.getElementById('snBtnNR819');
+      if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR819', states.nr); }
+    }
+    function applyToolbar() {
+      if (ROOT) ROOT.style.setProperty('--sn-toolbar-bg', (states.hc || states.lm) ? '#111' : '#222');
+    }
+    function apply() {
+      if (!ROOT) return;
+      applyCanvas(); applyNarBar(); applyToolbar();
+      styleBtn('snBtnHC819', states.hc);
+      styleBtn('snBtnLM819', states.lm);
+      styleBtn('snBtnCB819', states.cb);
+    }
+    return {
+      init: function() { ROOT = document.getElementById('snellRoot819'); apply(); },
+      toggle: function(k) {
+        states[k] = !states[k];
+        if (k === 'hc' && states.hc) states.lm = false;
+        if (k === 'lm' && states.lm) states.hc = false;
+        apply();
+        if (typeof CLens819 !== 'undefined') CLens819.rst();
+      },
+      isNarOn: function() { return states.nr; },
+      narrate: function(msg) {
+        if (!states.nr) return;
+        var nb = document.getElementById('snNarBar819');
+        if (!nb) return;
+        nb.innerHTML = msg;
+        if (window.MathJax) {
+          if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+          else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+        }
+      },
+      getColors: function() {
+        if (states.cb) return CSETS.cb;
+        if (states.hc) return CSETS.hc;
+        return CSETS.def;
+      }
+    };
+  })();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+  var CLens = function() {
+    var xBase=310, yBase=110, xInit=20;
+    var graphType=1, graphTitle='Converging lens';
+    var slope=0.4, yIncrement=3, yNumDecimals=1;
+    var yStart=yBase+120, plotColor='#ff00ff', maxTime=10.0;
+    var x1Init=0, x1Old=xBase+x1Init, x1=xBase+x1Init, v1=1.0;
+    var dObject = (typeof $po !== 'undefined') ? $po : -80;
+    var hObject = (typeof $ho !== 'undefined') ? $ho : 20;
+    var f       = (typeof $df !== 'undefined') ? $df : 50;
+    var objectColor='#933', dImage, hImage, imageColor='#339';
+    var lensKind=1, y1=yBase+80, time=0.0, spot=1;
+    var oT=0,oB=0,oM=0, deltat=1/20.0, timer, runFlag=1;
+    var lensRadius=160, radius=150;
+    var screenP=150,measXP=180,measYP=95,eyeP=190;
+    var screenV=0,measXV=0,measYV=0,eyeV=0;
+    var dash=false, px,py;
+    var scaleFactor=1.0;
+    /* ── Narration helper ── */
+    function _narrate(msg) { snellA11y819.narrate(msg); }
+    function _imageMsg() {
+      var pi = -dObject*f/(-dObject-f);
+      var m  = isFinite(pi) ? (pi/dObject) : 0;
+      var msg = 'p<sub>o</sub>='+Math.abs(dObject).toFixed(0)+' cm, f='+f.toFixed(0)+' cm. ';
+      if (!isFinite(pi) || Math.abs(pi) > 1e6) {
+        msg += 'Image at &infin; (object at focal point).';
+      } else if (pi > 0) {
+        msg += 'Real image at p<sub>i</sub>='+pi.toFixed(1)+' cm. ';
+        msg += 'm='+m.toFixed(2)+'. ';
+        msg += (m < 0 ? 'Inverted.' : 'Upright.');
+      } else {
+        msg += 'Virtual image at p<sub>i</sub>='+pi.toFixed(1)+' cm (same side as object). ';
+        msg += 'Magnification = '+m.toFixed(2)+'. Upright.';
+      }
+      return msg;
+    }
+    function showdObject(v) {
+      document.getElementById("initialdObjectValue").innerHTML = v;
+      dObject = Number(v); rst();
+      _narrate(_imageMsg());
+    }
+    function showhObject(v) {
+      document.getElementById("initialhObjectValue").innerHTML = v;
+      hObject = Number(v); rst();
+      _narrate('Object height h<sub>o</sub>='+hObject+' mm.');
+    }
+    function showf(v) {
+      document.getElementById("initialfValue").innerHTML = v;
+      f = Number(v);
+      if (lensKind==2) f=-f;
+      rst();
+      _narrate('f='+f.toFixed(0)+' cm &mdash; '+(f>0?'converging.':'diverging.'));
+    }
+    function moveMeasX(v) {
+      document.getElementById("MeasXValue").innerHTML = v;
+      measXP = Number(v); measXV=1; rst();
+    }
+    function moveMeasY(v) {
+      document.getElementById("MeasYValue").innerHTML = v;
+      measYP = Number(v); measYV=1; rst();
+    }
+    function moveScreen(v) {
+      document.getElementById("screenPositionValue").innerHTML = v;
+      screenP = Number(v); screenV=1; rst();
+      var pi = -dObject*f/(-dObject-f);
+      var diff = Math.abs(screenP - pi);
+      if (diff < 3) _narrate('Screen at '+screenP+' cm &mdash; image is sharp! (p<sub>i</sub>&approx;'+pi.toFixed(1)+' cm)');
+      else          _narrate('Screen at '+screenP+' cm. Sharp image at p<sub>i</sub>='+pi.toFixed(1)+' cm (off by '+diff.toFixed(0)+' cm).');
+    }
+    function moveEye(v) {
+      document.getElementById("EyePositionValue").innerHTML = v;
+      eyeP = Number(v); eyeV=1; rst();
+      var pi = -dObject*f/(-dObject-f);
+      if (pi > 0 && eyeP > pi) _narrate('Eye at '+eyeP+' cm &mdash; past real image at p<sub>i</sub>='+pi.toFixed(1)+' cm. Image visible.');
+      else if (pi < 0)         _narrate('Eye at '+eyeP+' cm &mdash; virtual image at p<sub>i</sub>='+pi.toFixed(1)+' cm. Look back through lens.');
+      else                     _narrate('Eye at '+eyeP+' cm, p<sub>i</sub>='+pi.toFixed(1)+' cm.');
+    }
+    function lensType(lens) {
+      lensKind = Number(lens);
+      if (lensKind==1) { f=Math.abs(f);    graphTitle='Converging lens'; }
+      if (lensKind==2) { f=-Math.abs(f);   graphTitle='Diverging lens';  }
+      rst();
+    }
+    function drawRay(x1,y1,x2,y2,x3,y3,x4,y4,color,color2) {
+      ctx.strokeStyle=color; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      if (dImage<0) ctx.strokeStyle=color2;
+      ctx.beginPath(); ctx.moveTo(x3,y3); ctx.lineTo(x2,y2); ctx.stroke();
+      if (dImage<0) {
+        ctx.strokeStyle=color;
+        ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x4,y4); ctx.stroke();
+      }
+      ctx.strokeStyle=color;
+    }
+    function rst() {
+      window.clearTimeout(timer);
+      index=-1; time=0.0;
+      x1=xBase+x1Init; runFlag=1;
+      drawMotion();
+    }
+    var canvas,ctx,width,height,mx,my;
+    canvas = document.getElementById("cv819");
+    ctx    = canvas.getContext("2d");
+    var myCheck = document.getElementById("myCheck819");
+    var cvo=document.getElementById("cvo819");
+    var cvi=document.getElementById("cvi819");
+    var cve=document.getElementById("cve819");
+    var ctxo=cvo.getContext("2d");
+    var ctxi=cvi.getContext("2d");
+    var ctxe=cve.getContext("2d");
+    var index=-1;
+    //rst();
+    function drawMotion() {
+      if (index>=400) runFlag=0;
+      if (runFlag==1) {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.save(); ctx.scale(scaleFactor,scaleFactor);
+        index+=1;
+        var C = snellA11y819.getColors();
+        objectColor = C.obj;
+        imageColor  = C.img;
+        ctx.fillStyle = C.bg;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        /* Lens */
+        ctx.strokeStyle=C.axis; ctx.lineWidth=2;
+        if (lensKind==1) {
+          ctx.beginPath();
+          ctx.moveTo(x1+0.71*radius,y1+lensRadius);
+          ctx.quadraticCurveTo(x1+0.71*radius-(110-f),y1,x1+0.71*radius,y1-lensRadius);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x1+0.71*radius,y1+lensRadius);
+          ctx.quadraticCurveTo(x1+0.71*radius+(110-f),y1,x1+0.71*radius,y1-lensRadius);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(x1+0.71*radius-30,y1+lensRadius);
+          ctx.lineTo(x1+0.71*radius+30,y1+lensRadius);
+          ctx.quadraticCurveTo(x1+0.71*radius+30-(0.40*f+60),y1,x1+0.71*radius+30,y1-lensRadius);
+          ctx.lineTo(x1+0.71*radius-30,y1-lensRadius);
+          ctx.quadraticCurveTo(x1+0.71*radius-30+(0.4*f+60),y1,x1+0.71*radius-30,y1+lensRadius);
+          ctx.stroke();
+        }
+        /* Principal axis */
+        ctx.beginPath(); ctx.moveTo(0,y1); ctx.lineTo(canvas.width,y1); ctx.stroke();
+        /* Focal points */
+        ctx.strokeStyle=C.focal; ctx.lineWidth=2;
+        [x1+radius-0.29*radius-2*f, x1+radius-0.29*radius-4*f,
+         x1+radius-0.29*radius+2*f, x1+radius-0.29*radius+4*f].forEach(function(fx){
+          ctx.beginPath(); ctx.arc(fx,y1,4,0,2*Math.PI,false);
+          ctx.fillStyle=C.focal; ctx.fill(); ctx.stroke();
+        });
+        dImage = -dObject*f/(-dObject-f);
+        hImage = dImage*hObject/dObject;
+        const nrays=10;
+        if (myCheck.checked) {
+          if (dImage<0) {
+            ctx.strokeStyle=C.multi1;
+            for (var i=-nrays; i<=nrays; i++) {
+              ctx.beginPath();
+              if (Math.abs(hImage)<1e10) slope=-(2*hImage-16*i)/(2*dImage);
+              else slope=hObject/f;
+              ctx.moveTo(x1+radius-0.29*radius,y1-16*i);
+              if (lensKind==1) ctx.lineTo(x1+radius-0.29*radius+420,y1-16*i+slope*420);
+              if (lensKind==2) ctx.lineTo(x1+radius-0.29*radius+2*dImage,y1-16*i+slope*2*dImage);
+              ctx.stroke();
+            }
+          }
+          for (var i=-nrays; i<=nrays; i++) {
+            ctx.strokeStyle=C.multi2; ctx.lineWidth=2;
+            ctx.beginPath();
+            ctx.moveTo(x1+radius-0.29*radius+2*dObject,y1-2*hObject);
+            ctx.lineTo(x1+radius-0.29*radius,y1-16*i);
+            if (Math.abs(hImage)<1e10) slope=-(2*hImage-16*i)/(2*dImage);
+            else slope=hObject/f;
+            ctx.lineTo(x1+radius-0.29*radius+2*dImage,y1-16*i+slope*2*dImage);
+            ctx.stroke();
+          }
+        }
+        var hLObject=spot*hObject;
+        var xRStart=x1+radius-0.29*radius+2*dObject, yRStart=y1-2*hLObject;
+        var xRLens=x1+radius-0.29*radius, yRLens=yRStart;
+        var slopeR2=hLObject/f;
+        var xREnd=x1+radius-0.29*radius+2*dImage, yREnd=y1-2*hLObject+slopeR2*2*dImage;
+        var xREnd2=x1+radius-0.29*radius+420, yREnd2=y1-2*hLObject+slopeR2*420;
+        drawRay(xRStart,yRStart,xRLens,yRLens,xREnd,yREnd,xREnd2,yREnd2, C.rayR,C.rayRg);
+        var xBStart=xRStart,yBStart=yRStart;
+        var xBLens=xRLens,yBLens=y1;
+        var slopeB=(yBLens-yBStart)/(xBLens-xBStart);
+        var xBEnd=xREnd,yBEnd=yBStart+slopeB*(xBEnd-xBStart);
+        var xBEnd2=xREnd2,yBEnd2=yBStart+slopeB*(xBEnd2-xBStart);
+        drawRay(xBStart,yBStart,xBLens,yBLens,xBEnd,yBEnd,xBEnd2,yBEnd2, C.rayB,C.rayBg);
+        var xGStart=xRStart,yGStart=yRStart;
+        var xGLens=xRLens;
+        var slopeG1=-hLObject/(dObject+f);
+        var yGLens=y1-2*hLObject+slopeG1*(xGLens-xGStart);
+        var xGEnd=xREnd,yGEnd=yGLens;
+        var xGEnd2=xREnd2,yGEnd2=yGLens;
+        drawRay(xGStart,yGStart,xGLens,yGLens,xGEnd,yGEnd,xGEnd2,yGEnd2, C.rayG,C.rayGg);
+        /* Object arrow */
+        if (hObject>0)  { px=x1+radius-0.29*radius+2*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(2*hObject,Math.PI/2); }
+        if (hObject<0)  { px=x1+radius-0.29*radius+2*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(-2*hObject,Math.PI*1.5); }
+        /* Image arrow */
+        if (hImage>0) { if(dImage<0)dash=true; px=x1+radius-0.29*radius+2*dImage;py=y1; ctx.strokeStyle=imageColor; arrowDraw(2*hImage,Math.PI*0.5); if(dash)dash=false; }
+        if (hImage<0) { if(dImage<0)dash=true; px=x1+radius-0.29*radius+2*dImage;py=y1; ctx.strokeStyle=imageColor; arrowDraw(-2*hImage,Math.PI*1.5); if(dash)dash=false; }
+        /* Screen */
+        if (screenV) {
+          ctx.strokeStyle=C.screen; ctx.lineWidth=1;
+          ctx.beginPath();
+          ctx.moveTo(x1+0.71*radius+2*screenP,10);
+          ctx.lineTo(x1+0.71*radius+2*screenP,canvas.height-10);
+          ctx.stroke();
+        }
+        /* Eye */
+        if (eyeV) { drawSideEye(ctx,x1+0.71*radius+2*eyeP,190,15,'left',C.eye); }
+        /* Measure X */
+        if (measXV) {
+          ctx.strokeStyle=C.meas;
+          px=x1+radius-0.29*radius+2*measXP; py=y1+canvas.height/2-10;
+          arrowDraw(canvas.height-10,Math.PI*0.5);
+          ctx.font='14pt Calibri'; ctx.fillStyle=C.meas;
+          var xSgn=measXP/Math.abs(measXP);
+          ctx.textAlign='left';
+          ctx.fillText((xSgn*measXP).toFixed(0)+' cm', px-xSgn*(xSgn<0?5:60), 30);
+        }
+        /* Measure Y */
+        if (measYV) {
+          ctx.strokeStyle=C.meas;
+          px=10; py=y1+2*measYP; arrowDraw(canvas.width-10,0);
+          ctx.font='14pt Calibri'; ctx.fillStyle=C.meas;
+          var ySgn=0;
+          if(measYP!=0){ySgn=measYP/Math.abs(measYP)};
+          ctx.textAlign='left';
+          ctx.fillText((ySgn*measYP).toFixed(0)+' mm', 30, py-(ySgn<0?10:10));
+        }
+        /* Sub-canvases */
+        ctxo.clearRect(0,0,cvo.width,cvo.height);
+        ctxo.fillStyle="black";
+        drawF(ctxo,cvo.width/2,cvo.height/2,Math.abs(hObject)*4);
+        ctxi.clearRect(0,0,cvi.width,cvi.height);
+        ctxi.save(); ctxi.translate(cvi.width/2,cvi.height/2); ctxi.scale(-1,-1);
+        if (dImage>0) {
+          ctxi.filter="blur("+(Math.abs(screenP-dImage)/5)+"px)";
+          drawF(ctxi,0,0,Math.abs(hImage)*4);
+        }
+        ctxi.restore(); ctxi.filter="none";
+        ctxe.fillStyle="black";
+        ctxe.clearRect(0,0,cve.width,cve.height);
+        ctxe.save(); ctxe.translate(cve.width/2,cve.height/2); ctxe.scale(-1,-1);
+        if (dImage>0) {
+          if (dImage>eyeP) ctxe.filter="blur("+(Math.abs(eyeP-dImage)/5)+"px)";
+          drawF(ctxe,0,0,Math.abs(hImage)*4);
+        } else {
+          drawF(ctxe,0,0,hImage*(-hObject)*4/Math.abs(hObject));
+        }
+        ctxe.restore(); ctxe.filter="none";
+      }
+      ctx.restore();
+    }
+    function drawF(c,x,y,size) {
+      c.beginPath();
+      var s=(hObject/Math.abs(hObject))*size/100;
+      c.moveTo(x-20*s,y-50*s); c.lineTo(x+20*s,y-50*s); c.lineTo(x+20*s,y-35*s);
+      c.lineTo(x,y-35*s); c.lineTo(x,y-10*s); c.lineTo(x+15*s,y-10*s);
+      c.lineTo(x+15*s,y+5*s); c.lineTo(x,y+5*s); c.lineTo(x,y+50*s);
+      c.lineTo(x-20*s,y+50*s); c.closePath(); c.fill();
+    }
+    function arrowDraw(r,phi) {
+      var xf=px+r*Math.cos(phi), yf=py-r*Math.sin(phi);
+      arrow(px,py,xf,yf,3);
+    }
+    function arrow(x1,y1,x2,y2,w,col,txt,spc) {
+      if(!w)w=1; if(!txt)txt=""; if(!spc)spc=5;
+      if(!col)col=ctx.strokeStyle;
+      if(dash){ctx.setLineDash([5,3]);}
+      ctx.fillStyle=col; ctx.strokeStyle=col;
+      var dx=x2-x1,dy=y2-y1, length=Math.sqrt(dx*dx+dy*dy);
+      if(length===0)return;
+      dx/=length; dy/=length;
+      var s=2.5*w+7.5, xSp=x2-s*dx, ySp=y2-s*dy;
+      var h=0.5*w+3.5;
+      var xSp1=xSp-h*dy,ySp1=ySp+h*dx, xSp2=xSp+h*dy,ySp2=ySp-h*dx;
+      xSp=x2-0.6*s*dx; ySp=y2-0.6*s*dy;
+      ctx.beginPath(); ctx.lineWidth=w;
+      ctx.moveTo(x1,y1);
+      if(length<5)ctx.lineTo(x2,y2); else ctx.lineTo(xSp,ySp);
+      ctx.stroke();
+      if(length<5)return;
+      ctx.beginPath(); ctx.fillStyle=ctx.strokeStyle;
+      ctx.moveTo(xSp,ySp); ctx.lineTo(xSp1,ySp1); ctx.lineTo(x2,y2); ctx.lineTo(xSp2,ySp2);
+      ctx.closePath(); ctx.fill();
+      var tspc=x2<=x1?-(3*spc):2*spc;
+      ctx.fillText(txt,x2+tspc,y2+spc);
+      if(dash){ctx.setLineDash([5,0]);}
+    }
+    /* Eye drawing functions (unchanged from original) */
+    function drawSideEye(ctx,cx,cy,scale,look,color) {
+      look=look||'left'; color=color||'#000';
+      var sign=(look==='left')?1:-1;
+      var tipX=cx+scale*1.2*sign, leftX=cx-scale*1.2*sign;
+      var topY=cy-scale*0.9, botY=cy+scale*0.9;
+      var ctrlOffsetX=cx+scale*0.6*sign, topCtrlY=cy-scale*0.15, botCtrlY=cy+scale*0.15;
+      ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.strokeStyle=color; ctx.lineWidth=Math.max(1,scale*0.2);
+      ctx.imageSmoothingEnabled=true;
+      ctx.beginPath(); ctx.moveTo(leftX,botY);
+      ctx.quadraticCurveTo(ctrlOffsetX,topCtrlY,tipX,cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(leftX,topY);
+      ctx.quadraticCurveTo(ctrlOffsetX,botCtrlY,tipX,cy); ctx.stroke();
+      var irisCX=cx-sign*(scale*0.6+5), irisCY=cy;
+      var irisRX=scale*0.25, irisRY=scale*0.7;
+      ctx.beginPath(); ctx.ellipse(irisCX,irisCY,irisRX,irisRY,0,0,Math.PI*2);
+      ctx.fillStyle=color; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx-sign*(scale*0.6+6),cy-5,scale*0.1,scale*0.14,0,0,Math.PI*2);
+      ctx.fillStyle="white"; ctx.fill();
+    }
+    function runMotion() { drawMotion(); }
+    function setZoom(v) {
+      scaleFactor=parseFloat(v);
+      var el=document.getElementById("zoomValue");
+      if(el) el.textContent=scaleFactor.toFixed(2)+"×";
+      rst();
+    }
+    return {
+      rst, showdObject, setZoom, moveScreen, moveMeasX, moveMeasY, moveEye, showhObject, showf,
+      redraw: function(){ rst(); }
+    };
+  };
+</script>
+<script>
+  var CLens819 = new CLens();
+  snellA11y819.init();
+  CLens819.rst();
+  snellA11y819.narrate('Convergent Lens ready. p<sub>o</sub>=$po cm, h<sub>o</sub>=$ho mm, f=$df cm. Adjust sliders to explore image formation.');
+</script>
+</body>
+</html>

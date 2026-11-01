@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: The Room-Sized Pinhole Camera -- Camera Obscura</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, geometrical optics, pinhole camera, camera obscura, straight-line propagation of light, real image, inverted image, magnification, aperture, blur, diffraction, brightness, lesson, scientific">
+<meta name="description" content="Interactive room-sized pinhole camera: light from the street enters a dark room through a small hole and forms an upside-down image on the back wall; explore hole size, blur, diffraction and brightness.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="pcRoot" class="pc_root" role="region" aria-label="Room-sized pinhole camera simulator">
+<!-- Display options -->
+<div class="pc_a11y" id="pcA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="pc_a11ybtn" id="pcBtnHC" onclick="pcA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="pc_a11ybtn" id="pcBtnLM" onclick="pcA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="pc_a11ybtn" id="pcBtnCB" onclick="pcA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="pc_a11ybtn pc_a11yon" id="pcBtnNR" onclick="pcA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="pc_header">
+<p class="pc_h1">The Room-Sized Pinhole Camera</p>
+<p class="pc_sub">Camera obscura -- a dark room, a small hole, and an upside-down picture of the street on the back wall</p>
+</div>
+<!-- Instrument grid -->
+<div class="pc_instrument">
+<!-- Left column -->
+<div class="pc_leftcol">
+<div class="pc_diagpanel">
+<div class="pc_diaglabel"><b>SIDE VIEW</b><span class="pc_diagnote">outside and inside are drawn at different scales -- the rays stay straight (similar triangles)</span></div>
+<canvas id="pcSide" width="640" height="340" role="img" aria-label="Side view: an object outside, the dark room's front wall with a small hole, and the back wall. Rays from three colored points of the object pass through the hole and land on the back wall upside down."></canvas>
+<div class="pc_runbar">
+<button type="button" class="pc_btn pc_primary" onclick="pcSim.preset('small')">Small hole</button>
+<button type="button" class="pc_btn pc_primary" onclick="pcSim.preset('large')">Large hole</button>
+<button type="button" class="pc_btn pc_primary" onclick="pcSim.preset('best')">Sharpest hole</button>
+<button type="button" class="pc_btn" onclick="pcSim.describe()">Describe</button>
+<button type="button" class="pc_btn pc_warn" onclick="pcSim.preset('reset')">Reset</button>
+</div>
+</div>
+<div class="pc_diagpanel">
+<div class="pc_diaglabel"><b>ON THE BACK WALL</b><span class="pc_diagnote">what the students see when they face the back wall</span></div>
+<canvas id="pcWall" width="432" height="312" role="img" aria-label="The back wall of the dark room with the image of the street: sky, a tree, a person and a car, upside down."></canvas>
+</div>
+<!-- Readout -->
+<div class="pc_panel" role="region" aria-labelledby="pcReadHd">
+<div class="pc_paneltitle" id="pcReadHd">Readout</div>
+<div class="pc_rgrid">
+<div class="pc_rrow"><span class="pc_rkey">Magnification m = &minus;d<sub>i</sub>/d<sub>o</sub></span><span class="pc_rval pc_hi" id="pcRoM">--</span></div>
+<div class="pc_rrow"><span class="pc_rkey">Image height</span><span class="pc_rval pc_hi" id="pcRoH">--</span></div>
+<div class="pc_rrow"><span class="pc_rkey">Blur from the hole size</span><span class="pc_rval" id="pcRoBg">--</span></div>
+<div class="pc_rrow"><span class="pc_rkey">Blur from diffraction</span><span class="pc_rval" id="pcRoBd">--</span></div>
+<div class="pc_rrow"><span class="pc_rkey">Total blur spot</span><span class="pc_rval pc_hi" id="pcRoB">--</span></div>
+<div class="pc_rrow"><span class="pc_rkey">Sharpest hole for this room</span><span class="pc_rval" id="pcRoBest">--</span></div>
+<div class="pc_rrow pc_wide"><span class="pc_rkey">Image brightness (proportional to a<sup>2</sup>/d<sub>i</sub><sup>2</sup>)</span><span class="pc_rval" id="pcRoBr">--</span></div>
+<div class="pc_rrow pc_wide"><span class="pc_rkey">The image</span><span class="pc_rval" id="pcRoType">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="pc_rightcol">
+<div class="pc_panel" role="group" aria-labelledby="pcApHd">
+<div class="pc_paneltitle" id="pcApHd">The hole</div>
+<div class="pc_panelbody">
+<div class="pc_ctrl">
+<div class="pc_ctrlhdr"><label for="pcA" class="pc_ctrlname">Hole diameter a</label><span class="pc_sval"><span id="pcAVal">10</span> mm</span></div>
+<input type="range" id="pcA" min="0" max="1000" step="1" value="500" oninput="pcSim.setA(this.value)" aria-valuetext="10 millimeters">
+</div>
+<label class="pc_chk"><input type="checkbox" id="pcDiff" checked onchange="pcSim.set('diff',this.checked)"> Include diffraction (wave spreading)</label>
+</div>
+</div>
+<div class="pc_panel" role="group" aria-labelledby="pcDistHd">
+<div class="pc_paneltitle" id="pcDistHd">Distances</div>
+<div class="pc_panelbody">
+<div class="pc_ctrl">
+<div class="pc_ctrlhdr"><label for="pcDo" class="pc_ctrlname">Street to hole d<sub>o</sub></label><span class="pc_sval"><span id="pcDoVal">12.0</span> m</span></div>
+<input type="range" id="pcDo" min="3" max="40" step="0.5" value="12" oninput="pcSim.set('dO',this.value)">
+</div>
+<div class="pc_ctrl">
+<div class="pc_ctrlhdr"><label for="pcDi" class="pc_ctrlname">Hole to back wall d<sub>i</sub></label><span class="pc_sval"><span id="pcDiVal">4.0</span> m</span></div>
+<input type="range" id="pcDi" min="1" max="8" step="0.1" value="4" oninput="pcSim.set('di',this.value)">
+</div>
+</div>
+</div>
+<div class="pc_panel" role="group" aria-labelledby="pcRayHd">
+<div class="pc_paneltitle" id="pcRayHd">Rays in the side view</div>
+<div class="pc_panelbody">
+<div class="pc_ctrl">
+<label for="pcMode" class="pc_ctrlname">From each colored point</label>
+<select id="pcMode" onchange="pcSim.set('mode',this.value)">
+<option value="single">A single ray (through the center of the hole)</option>
+<option value="spread">A spread of rays (most are stopped by the wall)</option>
+</select>
+</div>
+<div class="pc_ctrl">
+<label for="pcObj" class="pc_ctrlname">Object to follow</label>
+<select id="pcObj" onchange="pcSim.set('obj',this.value)">
+<option value="person">The person (red cap, green shirt, blue jeans)</option>
+<option value="tree">The tree (orange top, green leaves, brown trunk)</option>
+<option value="car">The taxi (yellow sign, red door, gray wheel)</option>
+</select>
+</div>
+</div>
+</div>
+<div class="pc_panel" role="group" aria-labelledby="pcRoomHd">
+<div class="pc_paneltitle" id="pcRoomHd">The room and the eyes</div>
+<div class="pc_panelbody">
+<div class="pc_ctrl">
+<div class="pc_ctrlhdr"><label for="pcLeak" class="pc_ctrlname">Light leaking into the room</label><span class="pc_sval"><span id="pcLeakVal">0</span> %</span></div>
+<input type="range" id="pcLeak" min="0" max="100" step="1" value="0" oninput="pcSim.set('leak',this.value)">
+</div>
+<div class="pc_ctrl">
+<div class="pc_ctrlhdr"><label for="pcSens" class="pc_ctrlname">Eyes' sensitivity (adaptation)</label><span class="pc_sval">&times;<span id="pcSensVal">1</span></span></div>
+<input type="range" id="pcSens" min="-200" max="300" step="1" value="0" oninput="pcSim.setSens(this.value)">
+</div>
+<label class="pc_chk"><input type="checkbox" id="pcInset" checked onchange="pcSim.set('inset',this.checked)"> Show the street as seen looking out of the hole</label>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="pc_formulastrip">
+<span class="pc_formulatxt">m = &minus;d<sub>i</sub>/d<sub>o</sub> &nbsp;|&nbsp; blur from the hole b = a(1 + d<sub>i</sub>/d<sub>o</sub>) &nbsp;|&nbsp; diffraction blur &asymp; 2.44 &lambda; d<sub>i</sub>/a &nbsp;|&nbsp; sharpest hole a = &radic;(2.44 &lambda; d<sub>i</sub> /(1 + d<sub>i</sub>/d<sub>o</sub>)) &nbsp;|&nbsp; brightness &prop; a<sup>2</sup>/d<sub>i</sub><sup>2</sup></span>
+</div>
+</div><!-- instrument -->
+<div id="pcNarBar" class="pc_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="pc_descwrap">
+<button type="button" class="pc_descbtn" id="pcDescBtn" aria-expanded="false" aria-controls="pcDesc" onclick="pcA11y.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="pc_desc" id="pcDesc" role="region" aria-labelledby="pcDescBtn" style="display:none">
+<p>This simulation turns a whole room into a pinhole camera, a camera obscura. The room is dark, and light from the street enters only through a small hole in the front wall. An upside-down picture of the street -- the sky, a tree, a person and a car -- appears on the back wall.</p>
+<p>Every point of the street sends light in all directions. Almost all of it is stopped by the front wall; only the narrow bundle of rays that passes through the hole reaches the back wall. Because light travels in straight lines, the rays from a high point arrive low on the back wall and the rays from a low point arrive high, so the image is upside down. Left and right are not swapped: an object on your right when you look out through the hole also appears on your right when you face the back wall.</p>
+<p>The side view follows three colored points of one object. Each point can send a single ray through the center of the hole, or a spread of rays, most of which are stopped by the wall. The street and the room are drawn at different scales so that both fit; the rays still go straight through the hole because the triangles on both sides are similar.</p>
+<p>A point at a distance `d_o` in front of the hole is imaged at a distance `d_i` behind it, with the magnification</p>
+<p class="pc_eq">`m = -d_i/d_o`,</p>
+<p>so an object of height `h_o` has an image of height `h_i = |m| h_o`. The minus sign means the image is inverted.</p>
+<p>A hole of diameter `a` lets through a cone of rays from each point, which lands as a small spot rather than a point. Its diameter is</p>
+<p class="pc_eq">`b = a (1 + d_i/d_o)`,</p>
+<p>so a larger hole gives a blurrier image. A very small hole runs into diffraction: light spreads out after passing through it, by an angle of about `1.22 lambda/a`, which adds a blur spot of diameter about</p>
+<p class="pc_eq">`b_d ~~ 2.44 lambda d_i/a`.</p>
+<p>The two effects pull in opposite directions, so there is a sharpest hole size,</p>
+<p class="pc_eq">`a_"best" = sqrt(2.44 lambda d_i/(1 + d_i/d_o))`,</p>
+<p>which is only about 2 mm for a room 4 m deep. The brightness of the image is proportional to the area of the hole and falls off with the square of the distance to the back wall,</p>
+<p class="pc_eq">`E prop a^2/d_i^2`,</p>
+<p>so the sharpest image is also a dim one. That is why the room must be really dark, and why the image seems to appear slowly as the eyes adapt to the dark.</p>
+<p>Users can change the size of the hole, the distance to the street and the depth of the room, choose single rays or a spread of rays from each point, follow the person, the tree or the taxi, let light leak into the room, and change the sensitivity of the eyes to see how a dim image becomes visible after dark adaptation.</p>
+<p>This simulation is useful for studying the straight-line propagation of light, pinhole cameras and the camera obscura, real and inverted images, magnification, the trade-off between sharpness and brightness, and diffraction.</p>
+</div>
+</div>
+</div><!-- #pcRoot -->
+<!-- Questions -->
+<div class="pc_qwrap">
+<hr>
+<ol type="a">
+<li>Choose <b>a single ray</b> from each point. Explain, using the rays, why the image on the back wall is upside down.</li>
+<li>Use the readout to find the magnification. How tall is the image of the 1.78 m person? Check with `h_i = |m| h_o`.</li>
+<li>Press <b>Large hole</b> and choose <b>a spread of rays</b>. Why is the image blurry now? Compare the blur in the readout with `b = a (1 + d_i/d_o)`.</li>
+<li>Press <b>Small hole</b>. The image is sharper but darker. By what factor did the brightness change? Raise the eyes' sensitivity to see the image again.</li>
+<li>Turn diffraction on and make the hole smaller and smaller. What happens to the sharpness? Explain why there is a sharpest hole size.</li>
+<li>Let light leak into the room. What happens to the image, and why must the room be dark?</li>
+</ol>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #pcRoot (Hall effect template) ════════ */
+#pcRoot {
+--pc-chassis:#1a1c1f; --pc-panel:#22262b; --pc-panel-hi:#2c3138; --pc-panel-lo:#14161a;
+--pc-border:#3a4048; --pc-border-hi:#525c66; --pc-text:#c8d0d8; --pc-dim:#8a94a3;
+--pc-accent:#e8a020; --pc-green:#3ad08f; --pc-val:#ffdd66;
+--pc-focus:#e8a020; --pc-nar-bg:#2a2410; --pc-nar-border:#e0b040; --pc-nar-text:#f0e2b8;
+background:var(--pc-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--pc-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:900px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#pcRoot.pc_lm {
+--pc-chassis:#e9edf1; --pc-panel:#ffffff; --pc-panel-hi:#f1f4f7; --pc-panel-lo:#f4f6f9;
+--pc-border:#c3cad3; --pc-border-hi:#9aa3ae; --pc-text:#1d232a; --pc-dim:#556070;
+--pc-accent:#a8620a; --pc-green:#12805a; --pc-val:#8a4a00;
+--pc-focus:#a8620a; --pc-nar-bg:#ffefc0; --pc-nar-border:#e0b040; --pc-nar-text:#333333;
+background-image:none;
+}
+#pcRoot.pc_hc {
+--pc-chassis:#000000; --pc-panel:#000000; --pc-panel-hi:#111111; --pc-panel-lo:#000000;
+--pc-border:#ffffff; --pc-border-hi:#ffffff; --pc-text:#ffffff; --pc-dim:#e0e0e0;
+--pc-accent:#ffd700; --pc-green:#00ff88; --pc-val:#ffff00;
+--pc-focus:#ffff00; --pc-nar-bg:#000000; --pc-nar-border:#ffd700; --pc-nar-text:#ffffff;
+background-image:none;
+}
+#pcRoot.pc_hc .pc_panel, #pcRoot.pc_hc .pc_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#pcRoot :not(mjx-container):not(mjx-container *), #pcRoot :not(mjx-container):not(mjx-container *)::before, #pcRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; padding:0; }
+#pcRoot input:focus-visible, #pcRoot button:focus-visible, #pcRoot select:focus-visible { outline:2px solid var(--pc-focus); outline-offset:2px; }
+/* toolbar */
+#pcRoot .pc_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#pcRoot .pc_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--pc-panel-hi); border:1px solid var(--pc-border-hi); color:var(--pc-dim); }
+#pcRoot .pc_a11ybtn:hover { border-color:var(--pc-accent); color:var(--pc-accent); }
+#pcRoot .pc_a11yon { background:rgba(58,208,143,.14); border-color:var(--pc-green); color:var(--pc-green); font-weight:bold; }
+/* header */
+#pcRoot .pc_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#pcRoot .pc_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--pc-accent); text-align:center; }
+#pcRoot .pc_sub { font-size:.7rem; color:var(--pc-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* grid */
+#pcRoot .pc_instrument { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:12px; width:100%; }
+#pcRoot .pc_leftcol, #pcRoot .pc_rightcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#pcRoot .pc_diagpanel { background:var(--pc-panel); border:1px solid var(--pc-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#pcRoot .pc_diaglabel { background:var(--pc-panel-lo); border-bottom:1px solid var(--pc-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--pc-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#pcRoot .pc_diaglabel b { color:var(--pc-accent); }
+#pcRoot .pc_diagnote { text-transform:none; letter-spacing:.02em; }
+#pcRoot canvas { display:block; width:100%; height:auto; margin:0 auto; background:#000; }
+#pcRoot #pcSide { max-width:640px; }
+#pcRoot #pcWall { max-width:432px; }
+#pcRoot .pc_runbar { display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:6px; padding:8px 10px; background:var(--pc-panel-lo); border-top:1px solid var(--pc-border); }
+#pcRoot .pc_btn { padding:8px 4px; font-family:monospace; font-size:.7rem; letter-spacing:.04em; cursor:pointer; background:var(--pc-panel-hi); border:1px solid var(--pc-border-hi); color:var(--pc-text); border-radius:3px; text-transform:uppercase; }
+#pcRoot .pc_btn:hover { border-color:var(--pc-accent); }
+#pcRoot .pc_primary { font-weight:bold; border-color:var(--pc-accent); color:var(--pc-accent); }
+#pcRoot .pc_warn { color:#e0605a; border-color:#a04040; }
+#pcRoot.pc_lm .pc_warn { color:#b02020; border-color:#c06060; }
+/* panels */
+#pcRoot .pc_panel { background:var(--pc-panel); border:1px solid var(--pc-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#pcRoot .pc_paneltitle { background:var(--pc-panel-lo); border-bottom:1px solid var(--pc-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--pc-dim); }
+#pcRoot .pc_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#pcRoot .pc_ctrl { display:flex; flex-direction:column; gap:4px; }
+#pcRoot .pc_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#pcRoot .pc_ctrlname { font-size:.72rem; font-weight:600; color:var(--pc-dim); }
+#pcRoot .pc_sval { font-family:monospace; font-size:.74rem; color:var(--pc-val); white-space:nowrap; }
+#pcRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--pc-panel-lo); border:1px solid var(--pc-border); }
+#pcRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--pc-accent); border:2px solid var(--pc-panel); cursor:pointer; }
+#pcRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--pc-accent); border:2px solid var(--pc-panel); cursor:pointer; }
+#pcRoot select { width:100%; background:var(--pc-panel-hi); color:var(--pc-text); border:1px solid var(--pc-border-hi); border-radius:3px; padding:4px 6px; font-size:.76rem; }
+#pcRoot .pc_chk { display:flex; align-items:center; gap:7px; font-size:.76rem; color:var(--pc-text); cursor:pointer; }
+#pcRoot .pc_chk input { accent-color:var(--pc-accent); width:15px; height:15px; flex-shrink:0; }
+/* readout */
+#pcRoot .pc_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px 10px; }
+#pcRoot .pc_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--pc-panel-lo); border:1px solid var(--pc-border); border-radius:3px; }
+#pcRoot .pc_rkey { font-family:monospace; font-size:.64rem; color:var(--pc-dim); letter-spacing:.02em; }
+#pcRoot .pc_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--pc-text); }
+#pcRoot .pc_hi { color:var(--pc-val); font-weight:bold; }
+#pcRoot .pc_wide { grid-column:1 / 3; }
+/* formula strip, narration */
+#pcRoot .pc_formulastrip { grid-column:1 / 3; background:var(--pc-panel-lo); border:1px solid var(--pc-border); border-radius:4px; padding:7px 14px; }
+#pcRoot .pc_formulatxt { font-family:monospace; font-size:.66rem; color:var(--pc-dim); letter-spacing:.04em; line-height:1.6; }
+#pcRoot .pc_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--pc-nar-bg); border-left:4px solid var(--pc-nar-border); font-size:.82rem; color:var(--pc-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* SIM description (toggle) */
+#pcRoot .pc_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#pcRoot .pc_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--pc-panel-hi); border:1px solid var(--pc-accent); color:var(--pc-accent); border-radius:3px; font-weight:bold; }
+#pcRoot .pc_descbtn:hover { background:var(--pc-panel); }
+#pcRoot .pc_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#pcRoot .pc_desc { width:100%; background:var(--pc-panel); border:1px solid var(--pc-border); border-left:4px solid var(--pc-accent); border-radius:4px; padding:12px 16px; color:var(--pc-text); font-size:.86rem; line-height:1.55; }
+#pcRoot .pc_desc p { margin:0 0 9px 0; }
+#pcRoot .pc_desc p:last-child { margin-bottom:0; }
+#pcRoot .pc_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.pc_qwrap { width:100%; max-width:900px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.pc_qwrap ol { padding-left:24px; }
+.pc_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+/* narrow screens: stack the columns */
+@media (max-width:840px) {
+#pcRoot .pc_instrument { grid-template-columns:minmax(0,1fr); }
+#pcRoot .pc_formulastrip { grid-column:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#pcRoot input[type=range] { height:8px; }
+#pcRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#pcRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#pcRoot .pc_btn, #pcRoot .pc_a11ybtn, #pcRoot .pc_descbtn { min-height:40px; }
+#pcRoot select { min-height:36px; font-size:16px; }
+#pcRoot .pc_chk input { width:22px; height:22px; }
+#pcRoot .pc_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#pcRoot { padding:10px 6px 14px; }
+#pcRoot .pc_rgrid { grid-template-columns:1fr; }
+#pcRoot .pc_wide { grid-column:auto; }
+}
+</style>
+<!-- ════════ DISPLAY OPTIONS ════════ -->
+<script>
+var pcA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var DEFS = {
+'--pcc-sky':'#9cc7ef','--pcc-sky2':'#dcecfb','--pcc-ground':'#5d8a3c','--pcc-road':'#7a7a7a','--pcc-wall':'#4a4038','--pcc-room':'#08090b',
+'--pcc-screen':'#cfcfcf','--pcc-text':'#d8dde3','--pcc-dim':'#8a94a3','--pcc-blocked':'rgba(255,255,255,0.18)',
+'--pcc-p1':'#e0302a','--pcc-p2':'#2fa84f','--pcc-p3':'#3a6ee0'
+};
+var THEMES = {
+cb:{ '--pcc-p1':'#d55e00','--pcc-p2':'#009e73','--pcc-p3':'#0072b2' },
+hc:{ '--pcc-wall':'#ffffff','--pcc-room':'#000000','--pcc-text':'#ffffff','--pcc-dim':'#ffffff','--pcc-blocked':'rgba(255,255,255,0.45)' }
+};
+var cur = {};
+function applyVars(){
+var p, order = ['cb','hc'];
+cur = {}; for (p in DEFS) cur[p] = DEFS[p];
+for (var i=0; i<order.length; i++){ if (states[order[i]]){ var t = THEMES[order[i]]; for (p in t) cur[p] = t[p]; } }
+ROOT.classList.toggle('pc_hc', states.hc); ROOT.classList.toggle('pc_lm', states.lm); ROOT.classList.toggle('pc_cb', states.cb);
+}
+function styleBtn(id, on){
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('pc_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function apply(){
+if (!ROOT) return;
+applyVars();
+var nb = document.getElementById('pcNarBar'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('pcBtnNR'); if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('pcBtnNR', states.nr); styleBtn('pcBtnHC', states.hc); styleBtn('pcBtnLM', states.lm); styleBtn('pcBtnCB', states.cb);
+}
+return {
+init:function(){ ROOT = document.getElementById('pcRoot'); apply(); },
+toggle:function(k){
+states[k] = !states[k];
+if (k==='hc' && states.hc) states.lm = false;
+if (k==='lm' && states.lm) states.hc = false;
+apply();
+if (typeof pcSim !== 'undefined' && pcSim.refresh) pcSim.refresh();
+},
+cb:function(){ return states.cb; },
+narrate:function(msg){ if (!states.nr) return; var nb = document.getElementById('pcNarBar'); if (nb) nb.textContent = msg; },
+/* SIM description: show or hide it; typeset its AsciiMath when it opens (MathJax 3 or 2, whichever the page has) */
+toggleDesc:function(){
+var b = document.getElementById('pcDescBtn'), d = document.getElementById('pcDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+},
+col:function(p){ return cur[p] || DEFS[p]; }
+};
+})();
+pcA11y.init();
+</script>
+<!-- ════════ SIMULATION ════════
+Geometry: the hole is at the origin, 1.4 m above the floor; the street is a distance do in front of it and the
+back wall a distance di behind it. A street point at lateral position x and height y is imaged on the back wall at
+lateral position x di/do (same side for a viewer facing the wall) and height 1.4 - (y - 1.4) di/do: upside down,
+magnification m = -di/do. Each point makes a blur spot: geometric b_g = a (1 + di/do), diffraction b_d = 2.44 lambda di/a
+(per color channel), combined as sqrt(b_g^2 + b_d^2). The back-wall picture is the street picture, flipped and scaled,
+blurred by a Gaussian of standard deviation b/4 (that of a uniform disc of diameter b), with brightness proportional to
+a^2/di^2 times the eyes' sensitivity, plus the light leaking into the room.
+-->
+<script>
+var pcSim = (function(){
+function el(id){ return document.getElementById(id); }
+var cv = el('pcSide'), g = cv.getContext('2d'), wc = el('pcWall'), gw = wc.getContext('2d');
+var LW = cv.width, LH = cv.height, WW = wc.width, WH = wc.height, DPR = window.devicePixelRatio || 1;
+cv.width = LW*DPR; cv.height = LH*DPR; g.scale(DPR, DPR);
+wc.width = WW*DPR; wc.height = WH*DPR; gw.scale(DPR, DPR);
+var FONT = 'Calibri, Arial, sans-serif';
+var HOLE_Y = 1.4, ROOM_H = 2.6, WALL_W = 3.6, LAM = [620e-9, 540e-9, 460e-9], LAMG = 550e-9;
+/* the street, drawn once as a picture: x from -7 to 7 m, height y from -1 to 7 m */
+var SX0 = -7, SX1 = 7, SY0 = -1, SY1 = 7, SW = 560, SH = 320;
+var street = document.createElement('canvas'); street.width = SW; street.height = SH;
+var buf = document.createElement('canvas'), BW = 288, BH = 208; buf.width = BW; buf.height = BH;
+var gb = buf.getContext('2d');
+var PPM = BW/WALL_W;   /* back-wall buffer pixels per meter */
+/* objects followed in the side view: three colored points each (height, color, name) */
+var TRACE = {
+person:{ name:'person', x:0.4, pts:[[1.76,'#e0302a','red cap'],[1.15,'#2fa84f','green shirt'],[0.3,'#3a6ee0','blue jeans']] },
+tree:{ name:'tree', x:-3.2, pts:[[5.1,'#f08a24','orange top'],[3.4,'#2f9a3a','green leaves'],[0.4,'#7a4a22','brown trunk']] },
+car:{ name:'taxi', x:3.1, pts:[[1.58,'#f2d000','yellow sign'],[0.85,'#d22b2b','red door'],[0.3,'#9a9a9a','gray wheel']] }
+};
+var DEF = { a:10, dO:12, di:4, mode:'single', obj:'person', diff:true, leak:0, sens:1, inset:true };
+var P = {}, idleT = null, narrT = null;
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function f1(v){ return v.toFixed(1); }
+function col(p){ return pcA11y.col(p); }
+/* ══════════ optics ══════════ */
+function optics(){
+var r = P.di/P.dO, aM = P.a/1000;
+var bg = aM*(1 + r), bdG = P.diff ? 2.44*LAMG*P.di/aM : 0;
+var bc = LAM.map(function(l){ var bd = P.diff ? 2.44*l*P.di/aM : 0; return Math.sqrt(bg*bg + bd*bd); });
+return { m:-r, bg:bg, bd:bdG, b:Math.sqrt(bg*bg + bdG*bdG), bc:bc,
+best:Math.sqrt(2.44*LAMG*P.di/(1 + r)), bright:(aM/0.01)*(aM/0.01)*(4/P.di)*(4/P.di) };
+}
+function fmtLen(m){ return m >= 0.1 ? (100*m).toFixed(1) + ' cm' : (1000*m < 1 ? (1000*m).toFixed(2) : (1000*m).toFixed(1)) + ' mm'; }
+/* ══════════ the street picture (as seen looking out of the hole) ══════════ */
+function drawStreet(){
+var s = street.getContext('2d');
+function X(x){ return (x - SX0)/(SX1 - SX0)*SW; } function Y(y){ return (SY1 - y)/(SY1 - SY0)*SH; } function L(m){ return m/(SX1 - SX0)*SW; }
+var sk = s.createLinearGradient(0, 0, 0, Y(HOLE_Y)); sk.addColorStop(0, '#6fa7e6'); sk.addColorStop(1, '#d6e9fb');
+s.fillStyle = sk; s.fillRect(0, 0, SW, Y(HOLE_Y));
+s.fillStyle = '#fff3a8'; s.beginPath(); s.arc(X(5.3), Y(6.1), L(0.45), 0, 2*Math.PI); s.fill();
+s.fillStyle = 'rgba(255,255,255,0.85)'; [[-4.5,6.2,0.5],[-3.9,6.35,0.6],[-3.3,6.2,0.45],[1.2,5.6,0.4],[1.7,5.75,0.5]].forEach(function(c){ s.beginPath(); s.arc(X(c[0]), Y(c[1]), L(c[2]), 0, 2*Math.PI); s.fill(); });
+s.fillStyle = '#8fa9b8'; [[-7,-5.6,2.2],[-5.6,-4.6,3.0],[4.6,5.8,2.6],[5.8,7,1.9]].forEach(function(b){ s.fillRect(X(b[0]), Y(b[2]), L(b[1]-b[0]), Y(HOLE_Y) - Y(b[2])); });
+var gr = s.createLinearGradient(0, Y(HOLE_Y), 0, SH); gr.addColorStop(0, '#7aa35a'); gr.addColorStop(1, '#4f7a34');
+s.fillStyle = gr; s.fillRect(0, Y(HOLE_Y), SW, SH - Y(HOLE_Y));
+s.fillStyle = '#6b6b6b'; s.fillRect(0, Y(0.15), SW, Y(-0.55) - Y(0.15));
+s.fillStyle = '#e6e6e6'; for (var dx=-7; dx<7; dx+=1.4) s.fillRect(X(dx), Y(-0.18), L(0.7), Y(-0.24) - Y(-0.18));
+/* tree */
+s.fillStyle = '#7a4a22'; s.fillRect(X(-3.4), Y(2.4), L(0.4), Y(0) - Y(2.4));
+s.fillStyle = '#2f9a3a'; [[-3.2,3.1,1.2],[-3.9,3.4,0.9],[-2.5,3.4,0.9],[-3.2,3.9,1.0]].forEach(function(c){ s.beginPath(); s.arc(X(c[0]), Y(c[1]), L(c[2]), 0, 2*Math.PI); s.fill(); });
+s.fillStyle = '#f08a24'; [[-3.2,4.6,0.75],[-3.6,4.3,0.6],[-2.8,4.3,0.6]].forEach(function(c){ s.beginPath(); s.arc(X(c[0]), Y(c[1]), L(c[2]), 0, 2*Math.PI); s.fill(); });
+/* person */
+var px = 0.4;
+s.fillStyle = '#3a6ee0'; s.fillRect(X(px-0.17), Y(0.85), L(0.15), Y(0) - Y(0.85)); s.fillRect(X(px+0.02), Y(0.85), L(0.15), Y(0) - Y(0.85));
+s.fillStyle = '#2fa84f'; s.fillRect(X(px-0.22), Y(1.45), L(0.44), Y(0.85) - Y(1.45)); s.fillRect(X(px-0.32), Y(1.42), L(0.1), Y(0.95) - Y(1.42)); s.fillRect(X(px+0.22), Y(1.42), L(0.1), Y(0.95) - Y(1.42));
+s.fillStyle = '#e8b88f'; s.beginPath(); s.arc(X(px), Y(1.57), L(0.12), 0, 2*Math.PI); s.fill();
+s.fillStyle = '#e0302a'; s.fillRect(X(px-0.13), Y(1.78), L(0.26), Y(1.66) - Y(1.78)); s.fillRect(X(px+0.05), Y(1.69), L(0.16), Y(1.66) - Y(1.69));
+/* taxi */
+var cx = 3.1;
+s.fillStyle = '#d22b2b'; s.fillRect(X(cx-1.9), Y(1.0), L(3.8), Y(0.25) - Y(1.0));
+s.beginPath(); s.moveTo(X(cx-1.2), Y(1.0)); s.lineTo(X(cx-0.75), Y(1.42)); s.lineTo(X(cx+0.85), Y(1.42)); s.lineTo(X(cx+1.3), Y(1.0)); s.closePath(); s.fill();
+s.fillStyle = '#bfe0f5'; s.fillRect(X(cx-0.7), Y(1.36), L(0.68), Y(1.04) - Y(1.36)); s.fillRect(X(cx+0.08), Y(1.36), L(0.7), Y(1.04) - Y(1.36));
+s.fillStyle = '#f2d000'; s.fillRect(X(cx-0.25), Y(1.62), L(0.5), Y(1.42) - Y(1.62));
+s.fillStyle = '#2a2a2a'; [cx-1.2, cx+1.2].forEach(function(w){ s.beginPath(); s.arc(X(w), Y(0.3), L(0.3), 0, 2*Math.PI); s.fill(); });
+s.fillStyle = '#9a9a9a'; [cx-1.2, cx+1.2].forEach(function(w){ s.beginPath(); s.arc(X(w), Y(0.3), L(0.13), 0, 2*Math.PI); s.fill(); });
+}
+/* ══════════ the back wall: flip, scale, blur, brightness ══════════ */
+function boxes(sigma){ /* three box widths that together approximate a Gaussian of this sigma */
+var wI = Math.floor(Math.sqrt(12*sigma*sigma/3 + 1)); if (wI % 2 === 0) wI--; var wu = wI + 2;
+var mI = Math.round((12*sigma*sigma - 3*wI*wI - 12*wI - 9)/(-4*wI - 4));
+return [0,1,2].map(function(i){ return i < mI ? wI : wu; });
+}
+function boxPass(src, dst, w, h, r, horiz){
+var n = horiz ? w : h, lines = horiz ? h : w, inv = 1/(2*r + 1);
+for (var l=0; l<lines; l++){
+var acc = 0, idx = function(i){ i = i < 0 ? 0 : (i >= n ? n - 1 : i); return horiz ? l*w + i : i*w + l; };
+for (var i=-r; i<=r; i++) acc += src[idx(i)];
+for (var j=0; j<n; j++){ dst[idx(j)] = acc*inv; acc += src[idx(j + r + 1)] - src[idx(j - r)]; }
+}
+}
+function blur(ch, w, h, sigma){
+if (sigma < 0.35) return ch;
+var tmp = new Float32Array(ch.length), bx = boxes(sigma);
+for (var k=0; k<3; k++){ var r = (bx[k] - 1)/2; if (r < 1) continue; boxPass(ch, tmp, w, h, r, true); boxPass(tmp, ch, w, h, r, false); }
+return ch;
+}
+function renderWall(){
+var o = optics(), r = P.di/P.dO;
+/* everything outside the street picture: sky below the horizon line on the wall, ground above it */
+gb.setTransform(1,0,0,1,0,0);
+var hv = (ROOM_H - HOLE_Y)*PPM;
+gb.fillStyle = '#d6e9fb'; gb.fillRect(0, hv, BW, BH - hv);
+gb.fillStyle = '#4f7a34'; gb.fillRect(0, 0, BW, hv);
+/* the street picture, flipped top to bottom and scaled by di/do (left and right keep their sides) */
+var k = r*PPM*(SX1 - SX0)/SW;
+gb.setTransform(k, 0, 0, -k, (WALL_W/2 + SX0*r)*PPM, (ROOM_H - HOLE_Y - HOLE_Y*r + SY1*r)*PPM);
+gb.drawImage(street, 0, 0);
+gb.setTransform(1,0,0,1,0,0);
+var img = gb.getImageData(0, 0, BW, BH), d = img.data, n = BW*BH;
+var X = 1.4*o.bright*P.sens, S = P.leak/100*0.6*P.sens;
+for (var c=0; c<3; c++){
+var ch = new Float32Array(n);
+for (var i=0; i<n; i++){ var v = d[i*4 + c]/255; ch[i] = v*v; }   /* to linear light */
+blur(ch, BW, BH, o.bc[c]/4*PPM);                                   /* disc of diameter b: standard deviation b/4 */
+for (var j=0; j<n; j++) d[j*4 + c] = 255*Math.sqrt(1 - Math.exp(-(X*ch[j] + S)));
+}
+gb.putImageData(img, 0, 0);
+gw.save(); gw.imageSmoothingEnabled = true; gw.drawImage(buf, 0, 0, WW, WH); gw.restore();
+if (P.inset){
+var iw = 132, ih = iw*SH/SW, ix = WW - iw - 8, iy = 8;
+gw.drawImage(street, ix, iy, iw, ih); gw.strokeStyle = 'rgba(255,255,255,0.8)'; gw.lineWidth = 1; gw.strokeRect(ix - 0.5, iy - 0.5, iw + 1, ih + 1);
+gw.fillStyle = 'rgba(0,0,0,0.6)'; gw.fillRect(ix, iy + ih, iw, 15); gw.fillStyle = '#fff'; gw.font = '10px ' + FONT; gw.textAlign = 'center';
+gw.fillText('looking out of the hole', ix + iw/2, iy + ih + 11);
+}
+var lbl = 'eyes \u00D7' + fmtSens(P.sens) + (P.leak ? ' \u00B7 light leak ' + P.leak + ' %' : '');
+gw.font = '11px ' + FONT; gw.textAlign = 'left'; gw.fillStyle = 'rgba(0,0,0,0.6)'; gw.fillRect(4, 4, gw.measureText(lbl).width + 10, 17);
+gw.fillStyle = 'rgba(255,255,255,0.85)'; gw.fillText(lbl, 9, 16);
+}
+function fmtSens(s){ if (s >= 10) return Math.round(s).toString(); if (s < 0.1) return s.toFixed(2); var t = s.toFixed(1); return t.slice(-2) === '.0' ? t.slice(0, -2) : t; }
+/* ══════════ side view ══════════ */
+function drawSide(){
+var o = optics(), T = TRACE[P.obj], top = Math.max.apply(null, T.pts.map(function(p){ return p[0]; })) + 0.3;
+var HX = 330, HY = 170;
+var ko = Math.min(270/P.dO, 140/Math.max(top - HOLE_Y, HOLE_Y), 140/HOLE_Y);   /* outside: px per m */
+var ki = Math.min(275/P.di, 150/HOLE_Y, 150/(ROOM_H - HOLE_Y));                 /* inside: px per m */
+function ox(x){ return HX - x*ko; } function oy(y){ return HY - (y - HOLE_Y)*ko; }
+function ix(x){ return HX + x*ki; } function iy(y){ return HY - (y - HOLE_Y)*ki; }
+/* outside: sky and ground */
+var sk = g.createLinearGradient(0, 0, 0, HY); sk.addColorStop(0, '#5f8fc8'); sk.addColorStop(1, '#b9d6f2');
+g.fillStyle = sk; g.fillRect(0, 0, HX, LH);
+g.fillStyle = '#4f7a34'; g.fillRect(0, oy(0), HX, LH - oy(0));
+/* the room: dark inside, front wall with the hole, back wall */
+g.fillStyle = col('--pcc-room'); g.fillRect(HX, iy(ROOM_H), ix(P.di) - HX, iy(0) - iy(ROOM_H));
+g.fillStyle = '#2b2622'; g.fillRect(HX, iy(0), ix(P.di) - HX + 8, LH - iy(0)); g.fillRect(HX, 0, ix(P.di) - HX + 8, iy(ROOM_H));
+var hpx = Math.max(1.5, P.a/1000*ki);
+g.fillStyle = col('--pcc-wall'); g.fillRect(HX - 5, iy(ROOM_H) - 6, 10, HY - hpx/2 - iy(ROOM_H) + 6); g.fillRect(HX - 5, HY + hpx/2, 10, iy(0) - HY - hpx/2 + 6);
+g.fillStyle = col('--pcc-screen'); g.fillRect(ix(P.di), iy(ROOM_H) - 6, 6, iy(0) - iy(ROOM_H) + 12);
+/* the object followed */
+drawObject(T, ox(P.dO), oy, ko);
+/* rays from the three colored points */
+var cbCols = [col('--pcc-p1'), col('--pcc-p2'), col('--pcc-p3')];
+T.pts.forEach(function(pt, i){
+var y = pt[0], c = pcA11y.cb() ? cbCols[i] : pt[1], Px = ox(P.dO), Py = oy(y);
+var yImg = HOLE_Y - (y - HOLE_Y)*P.di/P.dO;
+if (P.mode === 'spread'){
+/* a fan of rays toward the wall; only the ones that meet the hole get through */
+var n = 17, spanTop = HOLE_Y + 1.15, spanBot = Math.max(0.05, HOLE_Y - 1.15);
+g.lineWidth = 1; g.strokeStyle = c; g.globalAlpha = 0.35;
+for (var k=0; k<n; k++){ var yw = spanBot + (spanTop - spanBot)*k/(n - 1); if (Math.abs(yw - HOLE_Y) < P.a/2000) continue;
+g.beginPath(); g.moveTo(Px, Py); g.lineTo(HX - 5, oy(yw)); g.stroke(); }
+g.globalAlpha = 1;
+/* the bundle through the hole: its edges and center */
+var edges = [HOLE_Y + P.a/2000, HOLE_Y, HOLE_Y - P.a/2000];
+edges.forEach(function(yw, j){
+var ys = yw + (yw - y)*P.di/P.dO;
+g.strokeStyle = c; g.lineWidth = j === 1 ? 1.6 : 1.2; g.globalAlpha = j === 1 ? 1 : 0.8;
+g.beginPath(); g.moveTo(Px, Py); g.lineTo(HX, iy(yw)); g.lineTo(ix(P.di), iy(ys)); g.stroke();
+});
+g.globalAlpha = 1;
+} else {
+g.strokeStyle = c; g.lineWidth = 1.6; g.beginPath(); g.moveTo(Px, Py); g.lineTo(HX, HY); g.lineTo(ix(P.di), iy(yImg)); g.stroke();
+}
+/* the spot on the back wall (true size of the blur, at least a few pixels) */
+var sp = Math.max(4, o.b*ki);
+g.fillStyle = c; g.fillRect(ix(P.di) - 2, iy(yImg) - sp/2, 8, sp);
+g.beginPath(); g.arc(Px, Py, 4, 0, 2*Math.PI); g.fill();
+});
+/* labels and distances */
+g.fillStyle = '#ffffff'; g.font = '11px ' + FONT; g.textAlign = 'center';
+g.fillText('street', ox(P.dO) + 10, 14); g.fillText('dark room', (HX + ix(P.di))/2, iy(ROOM_H) - 10);
+g.fillText('hole a = ' + fmtLen(P.a/1000), HX, Math.max(28, iy(ROOM_H) - 24));
+g.fillStyle = col('--pcc-text');
+var yb = LH - 10;
+g.strokeStyle = col('--pcc-text'); g.lineWidth = 1;
+g.beginPath(); g.moveTo(ox(P.dO), yb - 12); g.lineTo(HX, yb - 12); g.moveTo(HX, yb - 26); g.lineTo(ix(P.di), yb - 26); g.stroke();
+g.fillStyle = '#ffffff'; g.fillText('d\u2092 = ' + f1(P.dO) + ' m', (ox(P.dO) + HX)/2, yb); g.fillText('d\u1D62 = ' + f1(P.di) + ' m', (HX + ix(P.di))/2, yb - 30);
+}
+function drawObject(T, x0, oy, ko){
+function L(m){ return m*ko; }
+if (P.obj === 'person'){
+g.fillStyle = '#3a6ee0'; g.fillRect(x0 - L(0.08), oy(0.85), L(0.16), oy(0) - oy(0.85));
+g.fillStyle = '#2fa84f'; g.fillRect(x0 - L(0.12), oy(1.45), L(0.24), oy(0.85) - oy(1.45));
+g.fillStyle = '#e8b88f'; g.beginPath(); g.arc(x0, oy(1.57), L(0.11), 0, 2*Math.PI); g.fill();
+g.fillStyle = '#e0302a'; g.fillRect(x0 - L(0.12), oy(1.78), L(0.24), oy(1.66) - oy(1.78)); g.fillRect(x0 + L(0.05), oy(1.69), L(0.15), oy(1.66) - oy(1.69));
+} else if (P.obj === 'tree'){
+g.fillStyle = '#7a4a22'; g.fillRect(x0 - L(0.2), oy(2.4), L(0.4), oy(0) - oy(2.4));
+g.fillStyle = '#2f9a3a'; g.beginPath(); g.arc(x0, oy(3.4), L(1.1), 0, 2*Math.PI); g.fill();
+g.fillStyle = '#f08a24'; g.beginPath(); g.arc(x0, oy(4.5), L(0.75), 0, 2*Math.PI); g.fill();
+} else {
+g.fillStyle = '#d22b2b'; g.fillRect(x0 - L(0.6), oy(1.42), L(1.2), oy(0.25) - oy(1.42));
+g.fillStyle = '#f2d000'; g.fillRect(x0 - L(0.25), oy(1.62), L(0.5), oy(1.42) - oy(1.62));
+g.fillStyle = '#2a2a2a'; g.beginPath(); g.arc(x0, oy(0.3), L(0.3), 0, 2*Math.PI); g.fill();
+g.fillStyle = '#9a9a9a'; g.beginPath(); g.arc(x0, oy(0.3), L(0.13), 0, 2*Math.PI); g.fill();
+}
+}
+/* ══════════ readout and narration ══════════ */
+function readouts(){
+var o = optics(), T = TRACE[P.obj], h = T.pts[0][0];
+function set(id, t){ var e = el(id); if (e) e.textContent = t; }
+set('pcRoM', o.m.toFixed(3));
+set('pcRoH', fmtLen(Math.abs(o.m)*h) + ' (' + T.name + ' ' + h.toFixed(2) + ' m)');
+set('pcRoBg', fmtLen(o.bg));
+set('pcRoBd', P.diff ? fmtLen(o.bd) : 'not included');
+set('pcRoB', fmtLen(o.b));
+set('pcRoBest', P.diff ? (1000*o.best).toFixed(1) + ' mm' : '(turn on diffraction)');
+set('pcRoBr', (o.bright >= 0.1 ? o.bright.toFixed(2) : o.bright.toExponential(1)) + ' \u00D7 that of a 10 mm hole 4 m from the wall');
+set('pcRoType', 'real, upside down, ' + Math.abs(o.m).toFixed(2) + ' \u00D7 life size; left and right stay on their sides');
+}
+function summary(){
+var o = optics(), T = TRACE[P.obj], h = T.pts[0][0];
+var s = 'Hole ' + fmtLen(P.a/1000) + ', back wall ' + f1(P.di) + ' m behind it, street ' + f1(P.dO) + ' m away. ';
+s += 'The image is upside down and ' + Math.abs(o.m).toFixed(2) + ' times life size: the ' + h.toFixed(2) + ' m ' + T.name + ' is ' + fmtLen(Math.abs(o.m)*h) + ' tall on the wall. ';
+s += 'Each point of the street makes a blur spot ' + fmtLen(o.b) + ' across';
+s += P.diff ? ' (' + fmtLen(o.bg) + ' from the hole size, ' + fmtLen(o.bd) + ' from diffraction). ' : '. ';
+if (P.diff) s += 'The sharpest hole for this room is ' + (1000*o.best).toFixed(1) + ' mm. ';
+s += 'The image is ' + (o.bright >= 1 ? o.bright.toFixed(1) + ' times as bright as' : (100*o.bright).toFixed(o.bright < 0.1 ? 1 : 0) + ' % as bright as') + ' with a 10 mm hole 4 m from the wall.';
+if (P.leak) s += ' Light leaking into the room washes the image out.';
+return s;
+}
+function later(){ clearTimeout(narrT); narrT = setTimeout(function(){ pcA11y.narrate(summary()); }, 400); }
+/* ══════════ update ══════════ */
+var pending = false;
+function refresh(){ drawSide(); readouts(); if (!pending){ pending = true; requestAnimationFrame(function(){ pending = false; renderWall(); }); } }
+function aToSlider(a){ return Math.round(1000*Math.log(a/0.5)/Math.log(400)); }
+function syncInputs(){
+el('pcA').value = aToSlider(P.a); el('pcAVal').textContent = P.a < 1 ? P.a.toFixed(2) : (P.a < 10 ? P.a.toFixed(1) : Math.round(P.a));
+el('pcA').setAttribute('aria-valuetext', el('pcAVal').textContent + ' millimeters');
+el('pcDo').value = P.dO; el('pcDoVal').textContent = f1(P.dO);
+el('pcDi').value = P.di; el('pcDiVal').textContent = f1(P.di);
+el('pcLeak').value = P.leak; el('pcLeakVal').textContent = P.leak;
+el('pcSens').value = Math.round(100*Math.log(P.sens)/Math.LN10); el('pcSensVal').textContent = fmtSens(P.sens);
+el('pcSens').setAttribute('aria-valuetext', 'times ' + fmtSens(P.sens));
+el('pcMode').value = P.mode; el('pcObj').value = P.obj;
+el('pcDiff').checked = P.diff; el('pcInset').checked = P.inset;
+}
+function set(k, v){ if (typeof v === 'string' && k !== 'mode' && k !== 'obj') v = parseFloat(v); P[k] = v; syncInputs(); refresh(); later(); }
+function setA(v){ P.a = 0.5*Math.pow(400, parseFloat(v)/1000); P.a = P.a < 1 ? Math.round(P.a*100)/100 : (P.a < 10 ? Math.round(P.a*10)/10 : Math.round(P.a)); syncInputs(); refresh(); later(); }
+function setSens(v){ P.sens = Math.pow(10, parseFloat(v)/100); P.sens = P.sens < 0.1 ? Math.round(P.sens*1000)/1000 : (P.sens < 10 ? Math.round(P.sens*10)/10 : Math.round(P.sens)); syncInputs(); refresh(); later(); }
+function preset(name){
+if (name === 'reset'){ for (var k in DEF) P[k] = DEF[k]; }
+else if (name === 'small'){ P.a = 1; P.mode = 'spread'; P.sens = 1; }
+else if (name === 'large'){ P.a = 120; P.mode = 'spread'; P.sens = 0.02; }
+else if (name === 'best'){ P.diff = true; P.a = Math.round(10000*optics().best)/10; P.mode = 'spread'; }
+syncInputs(); refresh();
+var msg = { reset:'Reset. ', small:'A small hole: sharp but dim -- raise the eyes\u2019 sensitivity to see it. ', large:'A large hole lets in 144 times as much light: the eyes have adapted to the bright image (sensitivity \u00D70.02), which is now blurry. ', best:'The sharpest hole for this room, where the blur from the hole size and from diffraction are balanced. ' }[name] || '';
+pcA11y.narrate(msg + summary());
+}
+function describe(){
+var T = TRACE[P.obj];
+var msg = 'Side view: the ' + T.name + ' outside, the front wall with a hole ' + fmtLen(P.a/1000) + ' across, and the back wall. ';
+msg += P.mode === 'single' ? 'One ray from each of three colored points (' + T.pts.map(function(p){ return p[2]; }).join(', ') + ') goes straight through the center of the hole and lands on the other side of the axis: the top lands at the bottom. '
+: 'Each colored point sends a spread of rays; the wall stops all but a narrow bundle, which lands as a small spot. ';
+msg += 'On the back wall the students see the sky at the bottom, the ground at the top, and the tree, the person and the taxi upside down. ';
+msg += summary();
+pcA11y.narrate(msg);
+}
+/* boot */
+drawStreet();
+for (var k0 in DEF) P[k0] = DEF[k0];
+syncInputs(); refresh();
+pcA11y.narrate('Ready. ' + summary());
+return { set:set, setA:setA, setSens:setSens, preset:preset, describe:describe, refresh:refresh,
+_state:function(){ var o = optics(); return { P:JSON.parse(JSON.stringify(P)), m:o.m, bg:o.bg, bd:o.bd, b:o.b, best:o.best, bright:o.bright, bc:o.bc }; },
+_render:function(){ var t0 = performance.now(); renderWall(); return performance.now() - t0; } };
+})();
+</script>
+</main>
+</body>
+</html>

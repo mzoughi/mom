@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Magnetic Hysteresis</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, hysteresis, B-H loop, remanence, coercivity, domains, Barkhausen, Rowland ring, transformer, lesson, scientific">
+<meta name="description" content="Interactive Rowland-ring simulation of magnetic hysteresis: B-H loop, remanence, coercivity, domains, demagnetization and hysteresis loss.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="hysroot" role="region" aria-label="Magnetic hysteresis simulator">
+<!-- Accessibility toolbar -->
+<div class="hys_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="hys_a11ybtn" id="btnHC" onclick="hysSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="hys_a11ybtn" id="btnLight" onclick="hysSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="hys_a11ybtn" id="btnCB" onclick="hysSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="hys_a11ybtn hys_a11yon" id="btnNarr" onclick="hysSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="hys_header">
+<p class="hys_h1">Magnetic Hysteresis</p>
+<p class="hys_sub">A Rowland ring: the primary coil sets H = NI/2&pi;r, a search coil measures B, and the scope draws the B&ndash;H loop</p>
+</div>
+<div id="hysMotionNotice" class="hys_motionnotice" role="status">Reduced motion is enabled. Domain flips are not highlighted and the trace does not fade.</div>
+<!-- Instrument grid -->
+<div class="hys_instrument">
+<!-- Left column -->
+<div class="hys_leftcol">
+<div class="hys_diagpanel">
+<div class="hys_diaglabel"><span id="diagLabel">ROWLAND RING</span><span class="hys_diagnote">the domain grid is a magnified, simplified view of the core</span></div>
+<canvas id="hysCanvas" width="560" height="420" role="img" aria-label="Rowland ring and B-H loop" aria-describedby="hysCanvasDesc"></canvas>
+<p id="hysCanvasDesc" class="hys_sronly">Ring core with coils, a domain view and an oscilloscope showing B against H.</p>
+<div class="hys_dispbar">
+<label class="hys_chk"><input type="checkbox" id="chkClick" onchange="hysSim.onOpt('click', this.checked)"> Barkhausen clicks (sound)</label>
+<label class="hys_chk"><input type="checkbox" id="chkFade" checked onchange="hysSim.onOpt('fade', this.checked)"> Fading trace</label>
+<span class="hys_scalebtns">
+<button type="button" class="hys_btn hys_small" onclick="hysSim.zoomH(0.5)" aria-label="Zoom in on H">H &times;2</button>
+<button type="button" class="hys_btn hys_small" onclick="hysSim.zoomH(2)" aria-label="Zoom out on H">H &divide;2</button>
+<button type="button" class="hys_btn hys_small" onclick="hysSim.clearScreen()">Clear screen</button>
+</span>
+</div>
+<div class="hys_hoverbar" id="hysHoverReadout" role="status" aria-live="polite" aria-atomic="true">Hover over the ring, the domains or the scope to read values</div>
+</div>
+<!-- Readout -->
+<div class="hys_panel" role="region" aria-labelledby="readHd">
+<div class="hys_paneltitle" id="readHd">Readout</div>
+<div class="hys_rinner hys_rgrid">
+<div class="hys_rrow"><span class="hys_rkey">Current I</span><span class="hys_rval" id="r_I">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">State</span><span class="hys_rval hys_hi" id="r_state">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">H = NI/2&pi;r</span><span class="hys_rval hys_hi" id="r_H">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">B = &mu;&#8320;(H + M)</span><span class="hys_rval hys_hi" id="r_B">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">M / M&#8347;</span><span class="hys_rval" id="r_M">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">&mu;&#7523; = B/&mu;&#8320;H</span><span class="hys_rval" id="r_mur">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">Remanence B&#7523;</span><span class="hys_rval" id="r_Br">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">Coercivity H&#7580;</span><span class="hys_rval" id="r_Hc">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">Loss per cycle</span><span class="hys_rval" id="r_W">--</span></div>
+<div class="hys_rrow"><span class="hys_rkey">Loss at 50 Hz</span><span class="hys_rval" id="r_P">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="hys_rightcol">
+<!-- Drive -->
+<div class="hys_panel" role="group" aria-labelledby="drvHd">
+<div class="hys_paneltitle" id="drvHd">Power Supply</div>
+<div class="hys_panelbody">
+<div class="hys_srcbtns" role="group" aria-label="Drive mode">
+<button type="button" class="hys_srcbtn hys_srcon" id="btnDC" onclick="hysSim.setMode('dc')" aria-pressed="true">DC (MANUAL)</button>
+<button type="button" class="hys_srcbtn" id="btnAC" onclick="hysSim.setMode('ac')" aria-pressed="false">AC (SINE)</button>
+</div>
+<div class="hys_ctrlhdr"><label for="slI" class="hys_ctrlname">DC current I</label><span class="hys_sval" id="vI">+0.00 A</span></div>
+<input type="range" id="slI" min="-100" max="100" step="0.5" value="0" aria-label="DC current as a percentage of the current range" oninput="hysSim.onSlider('I', this.value)">
+<div class="hys_ctrlhdr"><label for="slA" class="hys_ctrlname">Range / AC amplitude I&#8320;</label><span class="hys_sval" id="vA">--</span></div>
+<input type="range" id="slA" min="0" max="100" step="0.5" value="50" aria-label="Current range and AC amplitude, 0.01 to 10 amperes, logarithmic" oninput="hysSim.onSlider('A', this.value)">
+<div class="hys_ctrlhdr"><label for="slF" class="hys_ctrlname">Cycles per second</label><span class="hys_sval" id="vF">0.25</span></div>
+<input type="range" id="slF" min="0.05" max="1" step="0.05" value="0.25" aria-label="AC cycles per second, slow motion" oninput="hysSim.onSlider('F', this.value)">
+<div class="hys_btnrow">
+<button type="button" class="hys_btn" id="btnPlay" onclick="hysSim.togglePlay()">&#9654; Run</button>
+<button type="button" class="hys_btn" id="btnDemag" onclick="hysSim.demagnetize()">Demag</button>
+<button type="button" class="hys_btn hys_warn" onclick="hysSim.resetCore()">New core</button>
+</div>
+<button type="button" class="hys_btn" onclick="hysSim.autoRange()">Auto range: drive to saturation</button>
+<p class="hys_hint">DC: the slider spans &plusmn;I&#8320;; drag it slowly and watch B lag behind. AC: the supply cycles the current (slow motion) and the scope draws the loop.</p>
+</div>
+</div>
+<!-- Coil -->
+<div class="hys_panel" role="group" aria-labelledby="coilHd">
+<div class="hys_paneltitle" id="coilHd">Primary Coil</div>
+<div class="hys_panelbody">
+<div class="hys_ctrlhdr"><label for="slN" class="hys_ctrlname">Turns N</label><span class="hys_sval" id="vN">200</span></div>
+<input type="range" id="slN" min="10" max="2000" step="10" value="200" aria-label="Number of turns on the primary coil" oninput="hysSim.onSlider('N', this.value)">
+<div class="hys_ctrlhdr"><label for="slR" class="hys_ctrlname">Ring radius r</label><span class="hys_sval" id="vR">5.0 cm</span></div>
+<input type="range" id="slR" min="2" max="10" step="0.5" value="5" aria-label="Mean radius of the ring in centimetres" oninput="hysSim.onSlider('R', this.value)">
+<p class="hys_derived">H per ampere = N/2&pi;r = <b id="vHpA">--</b></p>
+</div>
+</div>
+<!-- Core -->
+<div class="hys_panel" role="group" aria-labelledby="coreHd">
+<div class="hys_paneltitle" id="coreHd">Core</div>
+<div class="hys_panelbody">
+<label for="selMat" class="hys_ctrlname">Material</label>
+<select id="selMat" aria-label="Core material" onchange="hysSim.onMatChange(this.value)">
+<option value="air">Air (no core)</option>
+<option value="sisteel" selected>Silicon steel (transformer)</option>
+<option value="iron">Soft iron</option>
+<option value="ferrite">MnZn ferrite</option>
+<option value="steel">Hardened carbon steel</option>
+<option value="alnico">Alnico 5 (permanent magnet)</option>
+</select>
+<p class="hys_hint" id="matDesc">--</p>
+<p class="hys_derived" id="matInfo">--</p>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="hys_formulastrip">
+<span class="hys_formulatxt">H = NI/2&pi;r (Amp&egrave;re's law around the ring) &nbsp;|&nbsp; B = &mu;&#8320;(H + M) &nbsp;|&nbsp; B&#7523;: B at H = 0 &nbsp;|&nbsp; H&#7580;: H at B = 0 &nbsp;|&nbsp; Loss per cycle = &#8750;H dB = loop area &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>R</kbd> run <kbd>D</kbd> demagnetize <kbd>A</kbd> auto range</span>
+</div>
+</div><!-- instrument -->
+<div id="hysNarrBox" class="hys_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="hysNarration">--</span></div>
+<div id="hysSrAnnounce" class="hys_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="hys_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div><!-- #hysroot -->
+<style>
+/* ════════ All simulator rules scoped to #hysroot ════════ */
+#hysroot {
+--hys-chassis:#1a1c1f; --hys-panel:#22262b; --hys-panel-hi:#2c3138; --hys-panel-lo:#14161a;
+--hys-border:#3a4048; --hys-border-hi:#525c66; --hys-text:#c8d0d8; --hys-dim:#8a94a3; --hys-bright:#e8eef5;
+--hys-accent:#e8a020; --hys-green:#3ad08f; --hys-val:#ffdd66; --hys-warnc:#ff6a5a;
+--hys-focus:#e8a020; --hys-nar-bg:#2a2410; --hys-nar-border:#e0b040; --hys-nar-text:#f0e2b8;
+background:var(--hys-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--hys-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#hysroot.hys_lm {
+--hys-chassis:#e9edf1; --hys-panel:#ffffff; --hys-panel-hi:#f1f4f7; --hys-panel-lo:#f4f6f9;
+--hys-border:#c3cad3; --hys-border-hi:#9aa3ae; --hys-text:#1d232a; --hys-dim:#556070; --hys-bright:#000000;
+--hys-accent:#a8620a; --hys-green:#12805a; --hys-val:#8a4a00; --hys-warnc:#b02020;
+--hys-focus:#a8620a; --hys-nar-bg:#ffefc0; --hys-nar-border:#e0b040; --hys-nar-text:#333333;
+background-image:none;
+}
+#hysroot.hys_hc {
+--hys-chassis:#000000; --hys-panel:#000000; --hys-panel-hi:#111111; --hys-panel-lo:#000000;
+--hys-border:#ffffff; --hys-border-hi:#ffffff; --hys-text:#ffffff; --hys-dim:#e0e0e0; --hys-bright:#ffffff;
+--hys-accent:#ffd700; --hys-green:#00ff88; --hys-val:#ffff00; --hys-warnc:#ff5555;
+--hys-focus:#ffff00; --hys-nar-bg:#000000; --hys-nar-border:#ffd700; --hys-nar-text:#ffffff;
+background-image:none;
+}
+#hysroot.hys_cb { --hys-warnc:#D55E00; }
+#hysroot.hys_hc .hys_panel, #hysroot.hys_hc .hys_diagpanel { border-width:2px; }
+#hysroot *, #hysroot *::before, #hysroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#hysroot input:focus-visible, #hysroot button:focus-visible, #hysroot select:focus-visible { outline:2px solid var(--hys-focus); outline-offset:2px; }
+/* toolbar */
+#hysroot .hys_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#hysroot .hys_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--hys-panel-hi); border:1px solid var(--hys-border-hi); color:var(--hys-dim); }
+#hysroot .hys_a11ybtn:hover { border-color:var(--hys-accent); color:var(--hys-accent); }
+#hysroot .hys_a11yon { background:rgba(58,208,143,.14); border-color:var(--hys-green); color:var(--hys-green); font-weight:bold; }
+/* header */
+#hysroot .hys_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#hysroot .hys_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--hys-accent); text-align:center; }
+#hysroot .hys_sub { font-size:.7rem; color:var(--hys-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#hysroot .hys_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--hys-panel); border:1px solid var(--hys-border); border-radius:4px; color:var(--hys-dim); }
+/* grid */
+#hysroot .hys_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#hysroot .hys_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#hysroot .hys_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#hysroot .hys_diagpanel { background:var(--hys-panel); border:1px solid var(--hys-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#hysroot .hys_diaglabel { background:var(--hys-panel-lo); border-bottom:1px solid var(--hys-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--hys-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#hysroot #diagLabel { color:var(--hys-accent); font-weight:bold; }
+#hysroot .hys_diagnote { text-transform:none; letter-spacing:.02em; }
+#hysroot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#hysroot .hys_hoverbar { background:var(--hys-panel-lo); border-top:1px solid var(--hys-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--hys-val); min-height:28px; line-height:1.4; }
+/* right column */
+#hysroot .hys_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#hysroot .hys_panel { background:var(--hys-panel); border:1px solid var(--hys-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#hysroot .hys_paneltitle { background:var(--hys-panel-lo); border-bottom:1px solid var(--hys-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--hys-dim); }
+#hysroot .hys_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#hysroot .hys_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#hysroot .hys_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--hys-panel-hi); border:1px solid var(--hys-border-hi); color:var(--hys-dim); border-radius:3px; }
+#hysroot .hys_srcbtn:hover { border-color:var(--hys-accent); color:var(--hys-text); }
+#hysroot .hys_srcon { background:var(--hys-accent); color:#111; border-color:var(--hys-accent); font-weight:bold; }
+#hysroot .hys_srcon:hover { color:#111; }
+#hysroot .hys_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#hysroot .hys_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--hys-dim); text-transform:uppercase; }
+#hysroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--hys-panel-lo); border:1px solid var(--hys-border); }
+#hysroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--hys-accent); border:2px solid var(--hys-panel); cursor:pointer; }
+#hysroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--hys-accent); border:2px solid var(--hys-panel); cursor:pointer; }
+#hysroot input[type=range]:disabled { opacity:.35; cursor:default; }
+#hysroot .hys_sval { font-family:monospace; font-size:.74rem; color:var(--hys-val); min-width:56px; text-align:right; }
+#hysroot .hys_hint { font-size:.66rem; color:var(--hys-dim); line-height:1.4; }
+#hysroot .hys_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#hysroot .hys_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--hys-panel-lo); border:1px solid var(--hys-border); border-radius:3px; }
+#hysroot .hys_rrow.hys_alert { border-color:var(--hys-warnc); }
+#hysroot .hys_rrow.hys_alert .hys_rval { color:var(--hys-warnc); font-weight:bold; }
+#hysroot .hys_rkey { font-family:monospace; font-size:.6rem; color:var(--hys-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#hysroot .hys_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--hys-text); }
+#hysroot .hys_hi { color:var(--hys-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#hysroot .hys_formulastrip { grid-column:1 / 3; background:var(--hys-panel-lo); border:1px solid var(--hys-border); border-radius:4px; padding:7px 14px; }
+#hysroot .hys_formulatxt { font-family:monospace; font-size:.66rem; color:var(--hys-dim); letter-spacing:.04em; line-height:1.6; }
+#hysroot .hys_formulatxt kbd { border:1px solid var(--hys-border-hi); border-radius:2px; padding:0 4px; color:var(--hys-accent); font-family:monospace; }
+#hysroot .hys_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--hys-nar-bg); border-left:4px solid var(--hys-nar-border); font-size:.82rem; color:var(--hys-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#hysroot .hys_credit { font-size:.62rem; color:var(--hys-dim); text-align:center; }
+#hysroot .hys_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#hysroot .hys_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--hys-text); cursor:pointer; }
+#hysroot .hys_chk input { accent-color:var(--hys-accent); width:14px; height:14px; }
+#hysroot .hys_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--hys-panel-lo); border-top:1px solid var(--hys-border); }
+#hysroot select { width:100%; background:var(--hys-panel-hi); color:var(--hys-text); border:1px solid var(--hys-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#hysroot .hys_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#hysroot .hys_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#hysroot .hys_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--hys-panel-hi); border:1px solid var(--hys-border-hi); color:var(--hys-text); border-radius:3px; text-transform:uppercase; }
+#hysroot .hys_btn:hover { border-color:var(--hys-accent); }
+#hysroot .hys_btn:disabled { opacity:.4; cursor:default; }
+#hysroot .hys_btn.hys_active { background:var(--hys-green); border-color:var(--hys-green); color:#111; font-weight:bold; }
+#hysroot .hys_warn { color:#e0605a; border-color:#a04040; }
+#hysroot.hys_lm .hys_warn { color:#b02020; border-color:#c06060; }
+#hysroot .hys_sub2 { border-top:1px dashed var(--hys-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#hysroot .hys_derived { font-family:monospace; font-size:.68rem; color:var(--hys-dim); line-height:1.4; }
+#hysroot .hys_derived b { color:var(--hys-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#hysroot .hys_instrument { grid-template-columns:minmax(0,1fr); }
+#hysroot .hys_rightcol { width:auto; }
+#hysroot .hys_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #hysroot .hys_row2 { grid-template-columns:1fr; } }
+#hysroot .hys_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#hysroot .hys_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#hysroot .hys_small { padding:3px 8px; margin-left:auto; }
+@media (max-width:560px) { #hysroot .hys_rgrid { grid-template-columns:1fr; } }
+#hysroot .hys_scalebtns { display:flex; gap:5px; margin-left:auto; }
+#hysroot .hys_small { padding:3px 8px; margin-left:0; }
+/* question section below the simulator */
+.hys_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.hys_qwrap ol { padding-left:24px; }
+.hys_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<script>
+/* ════════ SIMULATION ════════
+Pattern: mirrors the solenoid (magnetism) example:
+var simObj = function() { ... return { public methods }; };  var simObj = new simObj();
+Physics (SI units):
+  Rowland ring: Ampere's law around the mean path gives H = N I / (2 pi r).  B = mu0 (H + M).
+  The core is modelled with a Preisach model: 288 "hysterons" (one per cell of the domain grid). Each switches up
+  at its own field alpha and down at beta < alpha; alpha, beta are drawn from a distribution set by the material's
+  coercivity Hc (spread sc) and the interactions between domains (spread su). A small reversible part (domain rotation)
+  is added:  M = Ms [ (1 - rev) <s> + rev tanh(H/Hk) ].
+  The model gives the virgin curve, saturation, remanence Br, coercivity Hc, minor loops and AC demagnetization,
+  and the discrete flips are a simplified picture of Barkhausen jumps.
+  Loss per cycle (J/m^3) = loop area = closed integral of H dB.
+*/
+var hysGen = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('hysroot');
+var canvas = document.getElementById('hysCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function el(id) { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function sgnTxt(v, d, u) { return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(d) + ' ' + u; }
+function fmtH(H) { var a = Math.abs(H), s = H < 0 ? '\u2212' : '+'; if (a >= 1e5) return s + (a/1e3).toFixed(0) + ' kA/m'; if (a >= 1e3) return s + (a/1e3).toFixed(2) + ' kA/m'; return s + a.toFixed(a < 10 ? 2 : 1) + ' A/m'; }
+function fmtB(B) { var a = Math.abs(B), s = B < 0 ? '\u2212' : '+'; if (a >= 0.1) return s + a.toFixed(3) + ' T'; if (a >= 1e-4) return s + (a*1e3).toFixed(2) + ' mT'; return s + (a*1e6).toFixed(2) + ' \u00b5T'; }
+function fmtI(I) { var a = Math.abs(I); return (I < 0 ? '\u2212' : '+') + (a < 0.1 ? (a*1e3).toFixed(1) + ' mA' : a.toFixed(2) + ' A'); }
+function fmtE(W) { var a = Math.abs(W); if (a >= 1e6) return (a/1e6).toFixed(2) + ' MJ/m\u00b3'; if (a >= 1e3) return (a/1e3).toFixed(2) + ' kJ/m\u00b3'; return a.toFixed(a < 10 ? 2 : 1) + ' J/m\u00b3'; }
+function fmtP(P) { var a = Math.abs(P); if (a >= 1e3) return (a/1e3).toFixed(1) + ' kW/kg'; if (a >= 1) return a.toFixed(2) + ' W/kg'; return (a*1e3).toFixed(1) + ' mW/kg'; }
+var MU0 = 4e-7*Math.PI;
+
+/* ── Core materials (Bs = mu0 Ms) ── */
+var MATS = {
+  air:     { label:'Air (no core)', air:true, desc:'No core: B = \u03bc\u2080H, a straight line through the origin. No hysteresis, no remanence, and B stays tiny.' },
+  sisteel: { label:'Silicon steel', Bs:2.0, Hc:40, sc:0.4, su:1.0, rev:0.12, Hk:150, rho:7650, desc:'Transformer and motor laminations: very soft, a thin loop, so little energy is lost each cycle.' },
+  iron:    { label:'Soft iron', Bs:2.15, Hc:80, sc:0.45, su:1.0, rev:0.15, Hk:400, rho:7870, desc:'Electromagnet cores and relays: easy to magnetize, keeps little magnetization once the current stops.' },
+  ferrite: { label:'MnZn ferrite', Bs:0.5, Hc:15, sc:0.4, su:1.2, rev:0.2, Hk:60, rho:4800, desc:'A ceramic used in high-frequency transformers and chargers: very soft and low-loss, but it saturates at only about 0.5 T.' },
+  steel:   { label:'Hardened carbon steel', Bs:1.8, Hc:4000, sc:0.35, su:0.7, rev:0.12, Hk:15000, rho:7850, desc:'Magnetically hard: a wide loop with a large remanence. Old compass needles and magnetized screwdrivers.' },
+  alnico:  { label:'Alnico 5', Bs:1.35, Hc:50000, sc:0.12, su:0.25, rev:0.06, Hk:150000, rho:7300, desc:'A permanent-magnet alloy: a wide, square loop. It needs a large H to magnetize, and resists demagnetization.' }
+};
+
+/* ── State ── */
+var matKey = 'sisteel', mode = 'dc', N = 200, rRing = 0.05, Idc = 0, Iamp = 1, fvis = 0.25;
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true, clickOn = false, fadeOn = true;
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var running = false, phase = 0, demag = { on: false, t: 0, amp0: 0 };
+var Hcur = 0, Bcur = 0, Mcur = 0, Hax = 1000, Bax = 2.4;
+var trace = [], tbuf = [], TB_N = 280;
+var meas = { Br: null, Hc: null, W: null, acc: 0, cycles: 0 };
+var flips = 0, nowT = 0;
+
+/* ── Preisach hysterons (one per domain cell) ── */
+var GC = 24, GR = 12, NH = GC*GR;
+var hy = [], sumS = 0, H98 = 1000;
+function rng(seed) { return function() { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; }; }
+function buildCore() {
+  var m = MATS[matKey], R = rng(20260611), i;
+  hy = [];
+  function gauss() { var u = Math.max(1e-9, R()), v = R(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+  /* spatially smooth noise -> cells sorted by it receive hysterons sorted by interaction field, so domains form patches */
+  var p = [R()*6.3, R()*6.3, R()*6.3, R()*6.3], cells = [];
+  for (i = 0; i < NH; i++) { var cx = i % GC, cy = Math.floor(i/GC); cells.push({ c: i, v: Math.sin(0.45*cx + p[0]) + Math.sin(0.6*cy + p[1]) + 0.7*Math.sin(0.3*(cx + cy) + p[2]) + 0.7*Math.sin(0.38*(cx - cy) + p[3]) + 0.3*R() }); }
+  cells.sort(function(a, b) { return a.v - b.v; });
+  if (m.air) { for (i = 0; i < NH; i++) hy.push({ a: 0, b: 0, s: 0, cell: cells[i].c, ft: -9 }); sumS = 0; H98 = 1000; return; }
+  var raw = [];
+  for (i = 0; i < NH; i++) { var hc = m.Hc*Math.exp(m.sc*gauss()), hu = m.su*m.Hc*gauss(); raw.push({ a: hu + hc, b: hu - hc, hu: hu }); }
+  raw.sort(function(x, y) { return x.hu - y.hu; });
+  sumS = 0;
+  for (i = 0; i < NH; i++) { var s0 = raw[i].hu < 0 ? 1 : -1; hy.push({ a: raw[i].a, b: raw[i].b, s: s0, cell: cells[i].c, ft: -9 }); sumS += s0; }   /* demagnetized (virgin) state */
+  var al = hy.map(function(h) { return h.a; }).sort(function(x, y) { return x - y; });
+  H98 = al[Math.floor(0.98*(NH - 1))];
+}
+function mat() { return MATS[matKey]; }
+function Ms() { var m = mat(); return m.air ? 0 : m.Bs/MU0; }
+function HperA() { return N/(2*Math.PI*rRing); }
+function Mof(H) { var m = mat(); if (m.air) return 0; return Ms()*((1 - m.rev)*sumS/NH + m.rev*Math.tanh(H/m.Hk)); }
+function preisachTo(H, Hprev) {
+  if (mat().air) return;
+  var i, h;
+  if (H > Hprev) { for (i = 0; i < NH; i++) { h = hy[i]; if (h.s < 0 && H >= h.a) { h.s = 1; sumS += 2; h.ft = nowT; flips++; } } }
+  else if (H < Hprev) { for (i = 0; i < NH; i++) { h = hy[i]; if (h.s > 0 && H <= h.b) { h.s = -1; sumS -= 2; h.ft = nowT; flips++; } } }
+}
+/* move H to a new value in small steps so the trace follows the true path */
+function applyH(Hnew) {
+  var steps = Math.max(1, Math.min(400, Math.ceil(Math.abs(Hnew - Hcur)/(Hax/120))));
+  var H0 = Hcur;
+  for (var k = 1; k <= steps; k++) {
+    var h = H0 + (Hnew - H0)*k/steps, hp = Hcur;
+    preisachTo(h, hp);
+    var M = Mof(h), B = MU0*(h + M);
+    /* measurements from crossings */
+    if ((hp < 0 && h >= 0) || (hp > 0 && h <= 0)) { var t = (0 - hp)/(h - hp || 1); meas.Br = Math.abs(Bcur + (B - Bcur)*t); }
+    if ((Bcur < 0 && B >= 0) || (Bcur > 0 && B <= 0)) { var t2 = (0 - Bcur)/(B - Bcur || 1); meas.Hc = Math.abs(hp + (h - hp)*t2); }
+    meas.acc += 0.5*(h + hp)*(B - Bcur);
+    Hcur = h; Mcur = M; Bcur = B;
+    trace.push({ H: h, B: B, t: nowT }); if (trace.length > 4000) trace.shift();
+  }
+}
+function curI() { return Hcur/HperA(); }
+
+/* ── Ranges ── */
+function setAxes(Hrange) {
+  Hax = Math.max(Hrange, 1e-3);
+  var m = mat();
+  Bax = m.air ? 1.15*MU0*Hax : Math.max(1.15*m.Bs, 1.05*(m.Bs + MU0*Hax));
+}
+function ampFromSlider(v) { return 0.01*Math.pow(1000, v/100); }
+function sliderFromAmp(I) { return 100*Math.log(I/0.01)/Math.log(1000); }
+function autoRange(quiet) {
+  var m = mat(), Hneed = m.air ? 1000 : 1.6*Math.max(H98, 1.5*m.Hc), I = Hneed/HperA();
+  if (I > 10) { N = 2000; rRing = 0.02; syncCoilSliders(); I = Hneed/HperA(); }
+  I = clamp(I, 0.01, 10); var pct = Iamp > 0 ? Idc/Iamp : 0; Iamp = I; Idc = pct*Iamp;
+  var s = el('slA'); if (s) s.value = sliderFromAmp(I).toFixed(1);
+  set('vA', fmtI(Iamp).replace('+', ''));
+  setAxes(1.15*Iamp*HperA());
+  clearScreen(true); scheduleUpdate(false);
+  if (quiet !== true) updateNarration('Auto range: AC amplitude ' + fmtI(Iamp).replace('+', '') + ' drives the core to about ' + fmtH(Iamp*HperA()).replace('+', '') + ', enough to saturate it.');
+}
+function syncCoilSliders() {
+  var a = el('slN'), b = el('slR'); if (a) a.value = N; if (b) b.value = (rRing*100).toFixed(1);
+  set('vN', String(N)); set('vR', (rRing*100).toFixed(1) + ' cm'); set('vHpA', fmtH(HperA()).replace('+', '') + ' per A');
+}
+
+/* ── Time stepping ── */
+var rafId = null, lastTs = null, roTimer = 0, clickTimer = 0;
+function advance(dt) {
+  nowT += dt;
+  var wasRunning = running || demag.on;
+  if (demag.on) {
+    demag.t += dt;
+    var amp = demag.amp0*Math.exp(-demag.t/2.5);
+    phase += 2*Math.PI*1.5*dt;
+    applyH(amp*Math.sin(phase));
+    if (amp < 0.004*demag.amp0) { demag.on = false; applyH(0); meas.Br = null; meas.Hc = null; updateButtons(); scheduleUpdate(false); updateNarration('Demagnetized: the alternating field shrank to zero and left the domains mixed, so M \u2248 0.'); }
+  } else if (mode === 'ac' && running) {
+    var Ha = Iamp*HperA();
+    phase += 2*Math.PI*fvis*dt;
+    if (phase >= 2*Math.PI) { phase -= 2*Math.PI; meas.cycles++; if (meas.cycles > 1) meas.W = Math.abs(meas.acc); meas.acc = 0; }
+    applyH(Ha*Math.sin(phase));
+  }
+  if (wasRunning) { tbuf.push({ h: Hcur/Hax, b: Bcur/Bax }); if (tbuf.length > TB_N) tbuf.shift(); }
+  if (flips > 0) { if (clickOn) click(flips); flips = 0; }
+}
+function frame(ts) {
+  rafId = null;
+  if (lastTs === null) lastTs = ts;
+  var dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+  advance(dt); redraw();
+  roTimer += dt; if (roTimer > 0.15) { roTimer = 0; updateReadouts(); }
+  if (!document.hidden) rafId = window.requestAnimationFrame(frame);
+}
+function startLoop() { if (!rafId && window.requestAnimationFrame) { lastTs = null; rafId = window.requestAnimationFrame(frame); } }
+
+/* ── Barkhausen clicks (Web Audio noise bursts) ── */
+var actx = null, noiseBuf = null, lastClick = 0;
+function ensureAudio() {
+  if (!actx) { try { var AC = window.AudioContext || window.webkitAudioContext; actx = new AC(); var n = Math.floor(actx.sampleRate*0.012); noiseBuf = actx.createBuffer(1, n, actx.sampleRate); var d = noiseBuf.getChannelData(0); for (var i = 0; i < n; i++) d[i] = (Math.random()*2 - 1)*Math.exp(-i/(n/4)); } catch (e) { actx = null; } }
+  if (actx && actx.state === 'suspended') { try { actx.resume(); } catch (e) {} }
+  return !!actx;
+}
+function click(n) {
+  if (!actx || !noiseBuf) return;
+  var now = actx.currentTime; if (now - lastClick < 0.02) return; lastClick = now;
+  var src = actx.createBufferSource(), g = actx.createGain();
+  src.buffer = noiseBuf; g.gain.value = Math.min(0.5, 0.08*Math.sqrt(n));
+  src.connect(g); g.connect(actx.destination); src.start(now);
+}
+
+/* ── Canvas palette ── */
+function pal() {
+  var p;
+  if (hcMode) p = { bg:'#000000', edge:'#ffffff', core:'#555555', copper:'#ffaa00', copper2:'#00e8d0', text:'#ffffff', dim:'#e0e0e0', up:'#ff5555', down:'#55aaff',
+    flash:'#ffffff', box:'#000000', lcd:'#00ff88', lcdBg:'#001a00', bezel:'#333333', screen:'#000000', sgrid:'#2a5a2a', trace:'#00ff66', dot:'#ffffff', h:'#ffd700', b:'#00ff66', mark:'#ffff00', lw:1.6 };
+  else if (lightMode) p = { bg:'#ffffff', edge:'#9aa3ae', core:'#aab2bc', copper:'#b8702a', copper2:'#127a8a', text:'#1d232a', dim:'#556070', up:'#c0262a', down:'#1f5fc0',
+    flash:'#ffd700', box:'#f1f4f7', lcd:'#0f5132', lcdBg:'#dff3e4', bezel:'#c3cad3', screen:'#0b1a10', sgrid:'#1f4a2a', trace:'#3dff7a', dot:'#ffffff', h:'#e8a020', b:'#3dff7a', mark:'#ffd700', lw:1.1 };
+  else p = { bg:'#0d0f12', edge:'#3a4048', core:'#5b636d', copper:'#c8813a', copper2:'#3ac0d0', text:'#c8d0d8', dim:'#8a94a3', up:'#ff6a5a', down:'#5aa0ff',
+    flash:'#ffffff', box:'#22262b', lcd:'#7dffb0', lcdBg:'#0b2016', bezel:'#2c3138', screen:'#05110a', sgrid:'#163a22', trace:'#3dff7a', dot:'#ffffff', h:'#e8a020', b:'#3dff7a', mark:'#ffd700', lw:1.1 };
+  if (cbMode && !hcMode) { p.up = '#D55E00'; p.down = lightMode ? '#0072B2' : '#56B4E9'; p.trace = '#56B4E9'; p.b = '#56B4E9'; p.h = '#E69F00'; p.copper2 = '#009E73'; }
+  return p;
+}
+function colorFn(t) {
+  t = clamp(t, 0, 1);
+  if (hcMode) { var v = Math.round(90 + 165*t); return 'rgb(' + v + ',' + v + ',' + v + ')'; }
+  if (cbMode) { var s = t, rr, gg, bb;
+    if (s < .5) { var u = s*2; rr = Math.round(68 + u*(33-68)); gg = Math.round(1 + u*(145-1)); bb = Math.round(84 + u*(140-84)); }
+    else { var u2 = (s-.5)*2; rr = Math.round(33 + u2*(253-33)); gg = Math.round(145 + u2*(231-145)); bb = Math.round(140 + u2*(37-140)); }
+    if (s < 0.25) { rr += 60; gg += 60; bb += 60; } return 'rgb(' + rr + ',' + gg + ',' + bb + ')'; }
+  return 'hsl(' + ((1-t)*240|0) + ',100%,' + (lightMode ? '40%' : '58%') + ')';
+}
+function rect(x, y, w, h, fill, stroke, lw) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
+}
+
+/* ── Drawing: ring, coils, supply, fluxmeter ── */
+var RC = { x: 132, y: 112, ro: 84, ri: 50 };
+function drawRing(p) {
+  var m = mat(), mm = m.air ? 0 : Mcur/Ms();
+  /* core */
+  ctx.beginPath(); ctx.arc(RC.x, RC.y, RC.ro, 0, 2*Math.PI); ctx.arc(RC.x, RC.y, RC.ri, 0, 2*Math.PI, true);
+  if (m.air) { ctx.setLineDash([4, 4]); ctx.strokeStyle = p.dim; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]); }
+  else {
+    ctx.fillStyle = p.core; ctx.fill();
+    ctx.globalAlpha = 0.55*Math.min(1, Math.abs(mm)); ctx.fillStyle = mm >= 0 ? p.up : p.down; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.stroke();
+  }
+  /* B arrows around the mean path (counter-clockwise for B > 0) */
+  var bn = Math.abs(Bcur)/Math.max(Bax/1.15, 1e-12);
+  if (bn > 0.01) {
+    var rm = (RC.ro + RC.ri)/2, col = colorFn(bn), dir = Bcur > 0 ? -1 : 1;
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1 + 2*Math.min(1, bn);
+    for (var k = 0; k < 8; k++) {
+      var a0 = k*Math.PI/4 + Math.PI/8, a1 = a0 + dir*0.32*Math.min(1, 0.3 + bn);
+      ctx.beginPath(); ctx.arc(RC.x, RC.y, rm, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+      var hx = RC.x + rm*Math.cos(a1), hy2 = RC.y + rm*Math.sin(a1), tang = a1 + dir*Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(hx + 5*Math.cos(tang), hy2 + 5*Math.sin(tang));
+      ctx.lineTo(hx + 4*Math.cos(tang + 2.4), hy2 + 4*Math.sin(tang + 2.4)); ctx.lineTo(hx + 4*Math.cos(tang - 2.4), hy2 + 4*Math.sin(tang - 2.4)); ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.fillStyle = p.text; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+  ctx.fillText(m.air ? 'air' : m.label.split(' ')[0].toLowerCase(), RC.x, RC.y - 4);
+  ctx.font = '9px monospace'; ctx.fillStyle = p.dim; ctx.fillText('core', RC.x, RC.y + 8);
+  /* primary winding: left half */
+  var nd = clamp(Math.round(N/40), 4, 26);
+  ctx.strokeStyle = p.copper; ctx.lineWidth = 2;
+  for (var i = 0; i < nd; i++) {
+    var ang = Math.PI*0.62 + i*(Math.PI*0.76)/(nd - 1);
+    ctx.beginPath(); ctx.moveTo(RC.x + (RC.ri - 4)*Math.cos(ang), RC.y + (RC.ri - 4)*Math.sin(ang)); ctx.lineTo(RC.x + (RC.ro + 4)*Math.cos(ang), RC.y + (RC.ro + 4)*Math.sin(ang)); ctx.stroke();
+  }
+  /* secondary (search) coil: right side */
+  ctx.strokeStyle = p.copper2; ctx.lineWidth = 1.5;
+  for (var j = 0; j < 6; j++) {
+    var a2 = -0.35 + j*0.14;
+    ctx.beginPath(); ctx.moveTo(RC.x + (RC.ri - 3)*Math.cos(a2), RC.y + (RC.ri - 3)*Math.sin(a2)); ctx.lineTo(RC.x + (RC.ro + 3)*Math.cos(a2), RC.y + (RC.ro + 3)*Math.sin(a2)); ctx.stroke();
+  }
+  /* leads */
+  ctx.strokeStyle = p.copper; ctx.lineWidth = 1.2; ctx.beginPath();
+  var la = Math.PI*0.62, lb = Math.PI*1.38;
+  ctx.moveTo(RC.x + (RC.ro + 4)*Math.cos(la), RC.y + (RC.ro + 4)*Math.sin(la)); ctx.lineTo(40, 214);
+  ctx.moveTo(RC.x + (RC.ro + 4)*Math.cos(lb), RC.y + (RC.ro + 4)*Math.sin(lb)); ctx.lineTo(20, 60); ctx.lineTo(16, 214);
+  ctx.stroke();
+  ctx.strokeStyle = p.copper2; ctx.beginPath();
+  ctx.moveTo(RC.x + (RC.ro + 3)*Math.cos(-0.35), RC.y + (RC.ro + 3)*Math.sin(-0.35)); ctx.lineTo(248, 70); ctx.lineTo(240, 214);
+  ctx.moveTo(RC.x + (RC.ro + 3)*Math.cos(0.35), RC.y + (RC.ro + 3)*Math.sin(0.35)); ctx.lineTo(222, 214);
+  ctx.stroke();
+  /* power supply */
+  rect(8, 214, 100, 38, p.box, p.edge); rect(14, 220, 62, 16, p.lcdBg);
+  ctx.fillStyle = p.lcd; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'; ctx.fillText(fmtI(curI()), 17, 232);
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText(mode === 'ac' ? 'SUPPLY  AC \u223f' : 'SUPPLY  DC', 14, 247);
+  ctx.beginPath(); ctx.arc(92, 228, 8, 0, 2*Math.PI); ctx.fillStyle = p.bezel; ctx.fill(); ctx.strokeStyle = p.edge; ctx.stroke();
+  var ka = -Math.PI/2 + clamp(curI()/10, -1, 1)*2.3; ctx.strokeStyle = p.text; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(92, 228); ctx.lineTo(92 + 6*Math.cos(ka), 228 + 6*Math.sin(ka)); ctx.stroke();
+  /* fluxmeter */
+  rect(156, 214, 100, 38, p.box, p.edge); rect(162, 220, 88, 16, p.lcdBg);
+  ctx.fillStyle = p.lcd; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'; ctx.fillText('B ' + fmtB(Bcur), 165, 232);
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText('FLUXMETER (\u222b emf dt)', 162, 247);
+  /* labels */
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'left';
+  ctx.fillText('primary, N = ' + N, 4, 14); ctx.textAlign = 'right'; ctx.fillText('search coil', 256, 14);
+  ctx.textAlign = 'center'; ctx.fillText('mean path 2\u03c0r = ' + (2*Math.PI*rRing*100).toFixed(1) + ' cm', RC.x, RC.y + RC.ro + 14);
+}
+function drawDomains(p) {
+  var x0 = 12, y0 = 284, cs = 10, m = mat();
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('DOMAINS IN THE CORE (magnified)', 8, 272);
+  ctx.fillStyle = p.up; ctx.fillText('\u25a0 along +H', 182, 272);
+  rect(x0 - 2, y0 - 2, GC*cs + 4, GR*cs + 4, null, p.edge);
+  if (m.air) { ctx.fillStyle = p.dim; ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.fillText('air: no domains', x0 + GC*cs/2, y0 + GR*cs/2 + 4); return; }
+  for (var i = 0; i < NH; i++) {
+    var h = hy[i], cx = h.cell % GC, cy = Math.floor(h.cell/GC), x = x0 + cx*cs, y = y0 + cy*cs;
+    ctx.fillStyle = h.s > 0 ? p.up : p.down; ctx.fillRect(x, y, cs - 1, cs - 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText(h.s > 0 ? '\u2192' : '\u2190', x + 4.5, y + 7.5);
+    if (!reducedMotion && nowT - h.ft < 0.35) { ctx.strokeStyle = p.flash; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.5, y + 0.5, cs - 2, cs - 2); }
+  }
+  ctx.fillStyle = p.down; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'right'; ctx.fillText('\u25a0 along \u2212H', 254, 418);
+  ctx.fillStyle = p.dim; ctx.textAlign = 'left'; ctx.font = '8px monospace'; ctx.fillText('each cell flips at its own field', 8, 418);
+}
+function drawScope(p) {
+  var X = 270, Y = 6, W = 284, Hh = 290, sx = X + 12, sy = Y + 12, sw = W - 24, sh = 250;
+  rect(X, Y, W, Hh, p.bezel, p.edge);
+  rect(sx, sy, sw, sh, p.screen);
+  ctx.strokeStyle = p.sgrid; ctx.lineWidth = 1; ctx.beginPath();
+  for (var i = 1; i < 10; i++) { var gx = sx + i*sw/10, gy = sy + i*sh/10; ctx.moveTo(gx + 0.5, sy); ctx.lineTo(gx + 0.5, sy + sh); ctx.moveTo(sx, gy + 0.5); ctx.lineTo(sx + sw, gy + 0.5); }
+  ctx.stroke();
+  ctx.strokeStyle = p.sgrid; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx + sw/2, sy); ctx.lineTo(sx + sw/2, sy + sh); ctx.moveTo(sx, sy + sh/2); ctx.lineTo(sx + sw, sy + sh/2); ctx.stroke();
+  var cx = sx + sw/2, cy = sy + sh/2;
+  function px(H) { return cx + clamp(H/Hax, -1.02, 1.02)*sw/2; }
+  function py(B) { return cy - clamp(B/Bax, -1.02, 1.02)*sh/2; }
+  /* phosphor trace */
+  ctx.save(); ctx.beginPath(); ctx.rect(sx, sy, sw, sh); ctx.clip();
+  ctx.lineWidth = 1.6; ctx.strokeStyle = p.trace;
+  var n = trace.length, seg = 40;
+  for (var s0 = 1; s0 < n; s0 += seg) {
+    var s1 = Math.min(n - 1, s0 + seg), age = nowT - trace[s1].t;
+    ctx.globalAlpha = fadeOn && !reducedMotion ? clamp(1 - age/12, 0.12, 1) : 1;
+    ctx.beginPath(); ctx.moveTo(px(trace[s0 - 1].H), py(trace[s0 - 1].B));
+    for (var k = s0; k <= s1; k++) ctx.lineTo(px(trace[k].H), py(trace[k].B));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  /* Br and Hc markers */
+  ctx.fillStyle = p.mark; ctx.font = 'bold 9px monospace';
+  if (meas.Br !== null && meas.Br > Bax*0.01) { [1, -1].forEach(function(sg) { ctx.fillRect(cx - 5, py(sg*meas.Br) - 1, 10, 2); }); ctx.textAlign = 'left'; ctx.fillText('B\u1d63', cx + 7, py(meas.Br) + 3); }
+  if (meas.Hc !== null && meas.Hc > Hax*0.005) { [1, -1].forEach(function(sg) { ctx.fillRect(px(sg*meas.Hc) - 1, cy - 5, 2, 10); }); ctx.textAlign = 'center'; ctx.fillText('H\u1d9c', px(-meas.Hc), cy + 16); }
+  ctx.fillStyle = p.dot; ctx.beginPath(); ctx.arc(px(Hcur), py(Bcur), 3.5, 0, 2*Math.PI); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#8fd8a8'; ctx.font = '9px monospace'; ctx.textAlign = 'right'; ctx.fillText('H \u2192', sx + sw - 4, cy - 4); ctx.textAlign = 'left'; ctx.fillText('B \u2191', cx + 4, sy + 11);
+  ctx.fillStyle = p.text; ctx.font = '9px monospace'; ctx.textAlign = 'left';
+  ctx.fillText('X: ' + fmtH(Hax/5).replace('+', '') + '/div', X + 12, Y + Hh - 16);
+  ctx.fillText('Y: ' + fmtB(Bax/5).replace('+', '') + '/div', X + 12, Y + Hh - 5);
+  ctx.textAlign = 'right'; ctx.fillText('X-Y MODE: B vs H', X + W - 12, Y + Hh - 5);
+  if (Math.abs(Hcur) > Hax*1.02) { ctx.fillStyle = p.mark; ctx.fillText('H off screen: zoom out', X + W - 12, Y + Hh - 16); }
+}
+function drawTimeTrace(p) {
+  var X = 270, Y = 302, W = 284, Hh = 114, mid = Y + Hh/2 + 6, amp = Hh/2 - 14;
+  rect(X, Y, W, Hh, p.screen, p.edge);
+  ctx.strokeStyle = p.sgrid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X + 4, mid + 0.5); ctx.lineTo(X + W - 4, mid + 0.5); ctx.stroke();
+  function tr(key, col) {
+    var n = tbuf.length; if (n < 2) return;
+    ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath();
+    for (var i = 0; i < n; i++) { var x = X + W - 4 - (n - 1 - i)*(W - 8)/TB_N, y = mid - clamp(tbuf[i][key], -1.05, 1.05)*amp; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  tr('h', p.h); tr('b', p.b);
+  ctx.font = '9px monospace'; ctx.textAlign = 'left';
+  ctx.fillStyle = p.h; ctx.fillText('\u2014 H(t)', X + 6, Y + 12); ctx.fillStyle = p.b; ctx.fillText('\u2014 B(t)', X + 62, Y + 12);
+  ctx.fillStyle = '#8fd8a8'; ctx.textAlign = 'right'; ctx.fillText('vs time (slow motion)', X + W - 6, Y + 12);
+  if (tbuf.length < 2) { ctx.textAlign = 'center'; ctx.fillText('Run AC to record H and B against time', X + W/2, mid + 16); }
+}
+function redraw() {
+  var p = pal();
+  ctx.clearRect(0, 0, CW, CH); ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+  drawRing(p); drawDomains(p); drawScope(p); drawTimeTrace(p);
+}
+
+/* ── Readouts & narration ── */
+function stateText() {
+  var m = mat(); if (m.air) return 'no core (linear)';
+  var mm = Mcur/Ms(), h = Hcur/Math.max(H98, 1e-9);
+  if (Math.abs(mm) > 0.9) return 'near saturation ' + (mm > 0 ? '+' : '\u2212');
+  if (Math.abs(Hcur) < 0.02*H98 && Math.abs(mm) > 0.05) return 'remanent ' + (mm > 0 ? '+' : '\u2212');
+  if (Math.abs(mm) < 0.03 && Math.abs(h) < 0.05) return 'demagnetized';
+  if (Mcur*Hcur < 0) return 'reversing';
+  return 'magnetizing';
+}
+function updateReadouts() {
+  var m = mat();
+  set('r_I', fmtI(curI()));
+  set('r_state', stateText());
+  set('r_H', fmtH(Hcur));
+  set('r_B', fmtB(Bcur));
+  set('r_M', m.air ? '0' : sgnTxt(Mcur/Ms(), 3, '').trim());
+  set('r_mur', Math.abs(Hcur) > 1e-6 ? (Bcur/(MU0*Hcur)).toFixed(Math.abs(Bcur/(MU0*Hcur)) < 100 ? 2 : 0) : '--');
+  set('r_Br', meas.Br === null ? '-- (cross H = 0)' : fmtB(meas.Br).replace('+', ''));
+  set('r_Hc', meas.Hc === null ? '-- (cross B = 0)' : fmtH(meas.Hc).replace('+', ''));
+  set('r_W', meas.W === null ? (m.air ? '0' : '-- (run AC)') : fmtE(meas.W));
+  set('r_P', meas.W === null || m.air ? (m.air ? '0' : '--') : fmtP(meas.W*50/m.rho));
+}
+function statusText() {
+  var m = mat(), s = '';
+  s += (m.air ? 'An air-cored ring' : 'A ring of ' + m.label.toLowerCase()) + ' with ' + N + ' primary turns on a mean radius of ' + (rRing*100).toFixed(1) + ' cm. ';
+  s += 'Current ' + fmtI(curI()) + ', so H = ' + fmtH(Hcur) + ' and B = ' + fmtB(Bcur) + '. ';
+  if (m.air) s += 'With no core B = \u03bc\u2080H: a straight line, no hysteresis. ';
+  else {
+    s += 'State: ' + stateText() + ', M/M\u209b = ' + (Mcur/Ms()).toFixed(2) + '. ';
+    if (meas.Br !== null) s += 'Measured remanence ' + fmtB(meas.Br).replace('+', '') + '. ';
+    if (meas.Hc !== null) s += 'Measured coercivity ' + fmtH(meas.Hc).replace('+', '') + '. ';
+    if (meas.W !== null) s += 'The loop area, the energy lost each cycle, is ' + fmtE(meas.W) + '. ';
+  }
+  s += demag.on ? 'Demagnetizing.' : (mode === 'ac' ? (running ? 'AC running in slow motion.' : 'AC paused.') : 'DC: move the current slider.');
+  return s;
+}
+var narrTimer = null;
+function updateNarration(prefix) {
+  if (!showNarr) return;
+  clearTimeout(narrTimer);
+  var go = function() { set('hysNarration', (prefix ? prefix + ' ' : '') + statusText()); };
+  if (prefix) go(); else narrTimer = setTimeout(go, 450);
+}
+function updateCanvasDesc() {
+  var d = 'Ring core of ' + mat().label + '. H = ' + fmtH(Hcur) + ', B = ' + fmtB(Bcur) + '. ' + (meas.Br !== null ? 'Remanence ' + fmtB(meas.Br) + '. ' : '') + (meas.Hc !== null ? 'Coercivity ' + fmtH(meas.Hc) + '.' : '');
+  set('hysCanvasDesc', d); canvas.setAttribute('aria-label', d);
+}
+function updateLabels() {
+  var m = mat();
+  set('vI', fmtI(Idc)); set('vA', fmtI(Iamp).replace('+', '')); set('vF', fvis.toFixed(2));
+  syncCoilSliders();
+  set('matDesc', m.desc);
+  set('matInfo', m.air ? 'B = \u03bc\u2080H only' : '\u03bc\u2080M\u209b \u2248 ' + m.Bs + ' T \u00b7 typical H\u1d9c \u2248 ' + fmtH(m.Hc).replace('+', ''));
+  set('diagLabel', 'ROWLAND RING -- ' + m.label);
+  var sI = el('slI'), sA = el('slA'), sF = el('slF');
+  if (sI) sI.disabled = mode !== 'dc' || demag.on; if (sA) sA.disabled = mode !== 'ac'; if (sF) sF.disabled = mode !== 'ac';
+}
+function updateButtons() {
+  var d = el('btnDC'), a = el('btnAC');
+  if (d) { d.classList.toggle('hys_srcon', mode === 'dc'); d.setAttribute('aria-pressed', mode === 'dc' ? 'true' : 'false'); }
+  if (a) { a.classList.toggle('hys_srcon', mode === 'ac'); a.setAttribute('aria-pressed', mode === 'ac' ? 'true' : 'false'); }
+  var pb = el('btnPlay'); if (pb) { pb.innerHTML = running ? '&#10074;&#10074; Pause' : '&#9654; Run'; pb.classList.toggle('hys_active', running); pb.disabled = mode !== 'ac'; }
+  var db = el('btnDemag'); if (db) db.classList.toggle('hys_active', demag.on);
+}
+var pending = false;
+function scheduleUpdate(narrate) {
+  if (pending) return; pending = true;
+  var go = function() { pending = false; updateLabels(); updateButtons(); redraw(); updateReadouts(); updateCanvasDesc(); if (narrate !== false) updateNarration(); };
+  if (window.requestAnimationFrame) window.requestAnimationFrame(go); else setTimeout(go, 16);
+}
+
+/* ── Controls ── */
+function onSlider(key, raw) {
+  var v = parseFloat(raw);
+  if (key === 'I') { Idc = Iamp*v/100; if (mode === 'dc' && !demag.on) applyH(Idc*HperA()); }
+  else if (key === 'A') { var pct = Iamp > 0 ? Idc/Iamp : 0; Iamp = ampFromSlider(v); Idc = pct*Iamp; if (mode === 'dc' && !demag.on) applyH(Idc*HperA()); }
+  else if (key === 'F') { fvis = v; }
+  else if (key === 'N' || key === 'R') {
+    if (key === 'N') N = Math.round(v); else rRing = v/100;
+    if (mode === 'dc' && !demag.on) applyH(Idc*HperA());
+  }
+  scheduleUpdate();
+}
+function setMode(m) {
+  if (demag.on) return;
+  if (m === mode) return;
+  mode = m;
+  if (m === 'dc') { running = false; Idc = clamp(curI(), -Iamp, Iamp); var s = el('slI'); if (s) s.value = (100*Idc/Iamp).toFixed(1); }
+  else { phase = Math.asin(clamp(Hcur/(Iamp*HperA() || 1), -1, 1)); meas.acc = 0; meas.cycles = 0; }
+  updateButtons(); scheduleUpdate(false);
+  updateNarration(m === 'dc' ? 'DC mode: set the current by hand.' : 'AC mode: press Run to cycle the current.');
+}
+function togglePlay() {
+  if (mode !== 'ac' || demag.on) return;
+  running = !running; if (running) { meas.acc = 0; meas.cycles = 0; }
+  updateButtons(); updateNarration(running ? 'Running.' : 'Paused.');
+}
+function demagnetize() {
+  if (mat().air) { updateNarration('An air core has nothing to demagnetize.'); return; }
+  running = false; demag.on = true; demag.t = 0; demag.amp0 = Math.max(1.6*H98, Math.abs(Hcur));
+  if (demag.amp0 > Hax) setAxes(demag.amp0*1.05);
+  updateButtons(); scheduleUpdate(false); updateNarration('Demagnetizing with an alternating field that slowly shrinks to zero.');
+}
+function resetCore() {
+  demag.on = false; running = false; buildCore(); Hcur = 0; Mcur = Mof(0); Bcur = MU0*Mcur; Idc = 0;
+  var s = el('slI'); if (s) s.value = 0;
+  if (mode === 'dc') applyH(0);
+  clearScreen(true); updateButtons(); scheduleUpdate(false);
+  updateNarration('A fresh, unmagnetized core. Raise the current to trace the initial magnetization curve.');
+}
+function clearScreen(quiet) { trace = [{ H: Hcur, B: Bcur, t: nowT }]; tbuf = []; meas.Br = null; meas.Hc = null; meas.W = null; meas.acc = 0; meas.cycles = 0; if (quiet !== true) scheduleUpdate(false); }
+function onMatChange(v) {
+  matKey = v; var sl = el('selMat'); if (sl) sl.value = v;
+  resetCore(); autoRange(true);
+  updateNarration('New core: ' + mat().label + '. The AC amplitude was set to saturate it.');
+}
+function zoomH(f) { setAxes(Hax*f); scheduleUpdate(false); }
+function onOpt(k, on) { if (k === 'click') { clickOn = on; if (on) ensureAudio(); } else if (k === 'fade') fadeOn = on; scheduleUpdate(false); }
+
+/* ── Canvas interaction: hover readout ── */
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function describePoint(x, y) {
+  if (x >= 282 && x <= 542 && y >= 18 && y <= 268) {
+    var H = ((x - 412)/130)*Hax, B = -((y - 143)/125)*Bax;
+    return 'Scope: cursor at H = ' + fmtH(H) + ', B = ' + fmtB(B) + '. The loop is traced counter-clockwise.';
+  }
+  if (x >= 270 && y >= 302) return 'H(t) and B(t): B follows H but lags behind it, and flattens at saturation.';
+  if (x >= 10 && x <= 254 && y >= 282 && y <= 406) {
+    if (mat().air) return 'Air has no domains.';
+    var c = Math.floor((x - 12)/10) + GC*Math.floor((y - 284)/10);
+    for (var i = 0; i < NH; i++) if (hy[i].cell === c) return 'Domain cell: switches to +H at ' + fmtH(hy[i].a) + ' and back to \u2212H at ' + fmtH(hy[i].b) + '. Now pointing ' + (hy[i].s > 0 ? 'along +H.' : 'along \u2212H.');
+  }
+  var d = Math.sqrt((x - RC.x)*(x - RC.x) + (y - RC.y)*(y - RC.y));
+  if (d >= RC.ri && d <= RC.ro) return (x < RC.x ? 'Core under the primary coil' : 'Core under the search coil') + ': B = ' + fmtB(Bcur) + ', H = ' + fmtH(Hcur) + '.';
+  if (x <= 110 && y >= 212) return 'Power supply: drives ' + fmtI(curI()) + ' through ' + N + ' turns.';
+  if (x >= 154 && y >= 212 && y <= 254) return 'Fluxmeter: integrates the emf of the search coil to give B in the core.';
+  return 'Rowland ring: a closed ring has no poles, so H inside is set only by the current: H = NI/2\u03c0r.';
+}
+canvas.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); set('hysHoverReadout', describePoint(c[0], c[1])); });
+canvas.addEventListener('mouseleave', function() { set('hysHoverReadout', 'Hover over the ring, the domains or the scope to read values'); });
+canvas.addEventListener('touchstart', function(e) { var t = e.touches[0], c = canvasXY(t.clientX, t.clientY); set('hysHoverReadout', describePoint(c[0], c[1])); }, { passive: true });
+
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('hys_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+  ROOT.classList.toggle('hys_hc', hcMode); ROOT.classList.toggle('hys_lm', lightMode); ROOT.classList.toggle('hys_cb', cbMode);
+  setBtnOn('btnHC', hcMode); setBtnOn('btnLight', lightMode); setBtnOn('btnCB', cbMode); setBtnOn('btnNarr', showNarr);
+  var nb = el('btnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+  var box = el('hysNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate(false); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(''); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e = el('hysSrAnnounce'); if (!e) return; e.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e.textContent = msg; }, 60); }
+
+/* ── Keyboard shortcuts ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+  var tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  switch (e.key) {
+    case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+    case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+    case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+    case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+    case 'r': case 'R': if (mode !== 'ac') setMode('ac'); togglePlay(); e.preventDefault(); break;
+    case 'd': case 'D': demagnetize(); e.preventDefault(); break;
+    case 'a': case 'A': autoRange(); e.preventDefault(); break;
+  }
+});
+document.addEventListener('visibilitychange', function() { if (!document.hidden) startLoop(); });
+if (reducedMotion) { var mn = el('hysMotionNotice'); if (mn) mn.style.display = 'block'; }
+
+/* ── Boot ── */
+applyDisplay(); buildCore(); autoRange(true); clearScreen(true);
+updateButtons(); scheduleUpdate(false);
+updateNarration('Ready. The core starts unmagnetized. In DC mode, slowly raise the current to trace the initial magnetization curve, then bring it back to zero and reverse it. Or switch to AC and press Run.');
+startLoop();
+return { onSlider: onSlider, setMode: setMode, togglePlay: togglePlay, demagnetize: demagnetize, resetCore: resetCore, autoRange: autoRange,
+         clearScreen: clearScreen, onMatChange: onMatChange, zoomH: zoomH, onOpt: onOpt,
+         toggleHC: toggleHC, toggleLight: toggleLight, toggleCB: toggleCB, toggleNarr: toggleNarr };
+};
+</script>
+<script>
+var hysSim = new hysGen();
+</script>
+</main>
+</body>
+</html>

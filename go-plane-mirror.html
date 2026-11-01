@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: The Plane Mirror -- Where Is the Image, and Can You See It?</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, geometrical optics, plane mirror, flat mirror, law of reflection, virtual image, image distance, ray diagram, field of view, how tall a mirror, half your height, lesson, scientific">
+<meta name="description" content="Interactive plane mirror simulation: find the image with rays, see why light must reach the eye, and discover why a full-length mirror only needs to be half your height.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="fmRoot" class="fm_root" role="region" aria-label="Plane mirror simulator">
+<!-- Display options -->
+<div class="fm_a11y" id="fmA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="fm_a11ybtn" id="fmBtnHC" onclick="fmA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fm_a11ybtn" id="fmBtnLM" onclick="fmA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fm_a11ybtn" id="fmBtnCB" onclick="fmA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fm_a11ybtn fm_a11yon" id="fmBtnNR" onclick="fmA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="fm_header">
+<p class="fm_h1">The Plane Mirror</p>
+<p class="fm_sub">Where the image is, why light must reach the eye, and how tall a mirror needs to be</p>
+</div>
+<!-- Side view -->
+<div class="fm_diagpanel">
+<div class="fm_diaglabel"><b>SIDE VIEW</b><span class="fm_diagnote">drag the object, the eye, the light point, or the mirror (its ends or its middle)</span></div>
+<canvas id="fmCv" width="900" height="440" role="img" aria-label="Side view of a plane mirror on a wall: the object and the eye on the left, the image behind the mirror on the right, with rays. The readout and narration describe the result."></canvas>
+<div class="fm_runbar">
+<button type="button" class="fm_btn fm_primary" onclick="fmSim.preset('where')">Where is the image?</button>
+<button type="button" class="fm_btn fm_primary" onclick="fmSim.preset('fan')">A fan of rays</button>
+<button type="button" class="fm_btn fm_primary" onclick="fmSim.preset('eye')">Can the eye see it?</button>
+<button type="button" class="fm_btn fm_primary" onclick="fmSim.preset('tall')">How tall a mirror?</button>
+<button type="button" class="fm_btn" onclick="fmSim.describe()">Describe</button>
+<button type="button" class="fm_btn fm_warn" onclick="fmSim.preset('reset')">Reset</button>
+</div>
+</div>
+<!-- Eye view, readout -->
+<div class="fm_grid">
+<div class="fm_panel" role="group" aria-labelledby="fmEyeHd">
+<div class="fm_paneltitle" id="fmEyeHd">What the eye sees in the mirror</div>
+<canvas id="fmEye" width="300" height="300" role="img" aria-label="The mirror as seen by the eye, with the part of the image that the eye can see."></canvas>
+</div>
+<div class="fm_panel" role="region" aria-labelledby="fmReadHd">
+<div class="fm_paneltitle" id="fmReadHd">Readout</div>
+<div class="fm_rgrid">
+<div class="fm_rrow"><span class="fm_rkey">Object in front of the mirror</span><span class="fm_rval" id="fmRoDo">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">Image behind the mirror</span><span class="fm_rval fm_hi" id="fmRoDi">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">Object height</span><span class="fm_rval" id="fmRoHo">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">Image height</span><span class="fm_rval fm_hi" id="fmRoHi">--</span></div>
+<div class="fm_rrow fm_wide"><span class="fm_rkey">Mirror</span><span class="fm_rval" id="fmRoMir">--</span></div>
+<div class="fm_rrow fm_wide"><span class="fm_rkey">Mirror needed to see all of the object</span><span class="fm_rval fm_hi" id="fmRoNeed">--</span></div>
+<div class="fm_rrow fm_wide"><span class="fm_rkey">The eye sees</span><span class="fm_rval fm_hi" id="fmRoSee">--</span></div>
+</div>
+</div>
+</div>
+<!-- Controls -->
+<div class="fm_controls">
+<div class="fm_panel" role="group" aria-labelledby="fmModeHd">
+<div class="fm_paneltitle" id="fmModeHd">What to show</div>
+<div class="fm_panelbody">
+<div class="fm_ctrl">
+<label for="fmMode" class="fm_ctrlname">Rays</label>
+<select id="fmMode" onchange="fmSim.set('mode',this.value)">
+<option value="where">Where is the image? (two rays from the top and the bottom)</option>
+<option value="fan">A fan of rays from the light point</option>
+<option value="eye">The light that reaches the eye</option>
+</select>
+</div>
+<div class="fm_ctrl">
+<label for="fmObj" class="fm_ctrlname">Object</label>
+<select id="fmObj" onchange="fmSim.set('obj',this.value)">
+<option value="clown">The clown</option>
+<option value="arrow">An arrow</option>
+<option value="self">The clown looks at itself (its eye is the viewer)</option>
+</select>
+</div>
+<label class="fm_chk"><input type="checkbox" id="fmNorm" checked onchange="fmSim.set('normals',this.checked)"> Normals at the mirror</label>
+<label class="fm_chk"><input type="checkbox" id="fmVirt" checked onchange="fmSim.set('virtual',this.checked)"> Rays traced back behind the mirror</label>
+<label class="fm_chk"><input type="checkbox" id="fmTrace" onchange="fmSim.set('trace',this.checked)"> Leave a trace when the light point is dragged</label>
+</div>
+</div>
+<div class="fm_panel" role="group" aria-labelledby="fmMirHd">
+<div class="fm_paneltitle" id="fmMirHd">The mirror</div>
+<div class="fm_panelbody">
+<div class="fm_ctrl">
+<div class="fm_ctrlhdr"><label for="fmMt" class="fm_ctrlname">Top edge</label><span class="fm_sval"><span id="fmMtVal">2.20</span> m</span></div>
+<input type="range" id="fmMt" min="0" max="5" step="0.01" value="2.2" oninput="fmSim.set('mt',this.value)">
+</div>
+<div class="fm_ctrl">
+<div class="fm_ctrlhdr"><label for="fmMb" class="fm_ctrlname">Bottom edge</label><span class="fm_sval"><span id="fmMbVal">0.40</span> m</span></div>
+<input type="range" id="fmMb" min="0" max="5" step="0.01" value="0.4" oninput="fmSim.set('mb',this.value)">
+</div>
+<button type="button" class="fm_btn" onclick="fmSim.fitMirror()">Make it just tall enough</button>
+</div>
+</div>
+<div class="fm_panel" role="group" aria-labelledby="fmPosHd">
+<div class="fm_paneltitle" id="fmPosHd">Positions</div>
+<div class="fm_panelbody">
+<div class="fm_ctrl">
+<div class="fm_ctrlhdr"><label for="fmOx" class="fm_ctrlname">Object: distance from the mirror</label><span class="fm_sval"><span id="fmOxVal">3.00</span> m</span></div>
+<input type="range" id="fmOx" min="0.4" max="5.6" step="0.01" value="3" oninput="fmSim.set('ox',-this.value)">
+</div>
+<div class="fm_ctrl">
+<div class="fm_ctrlhdr"><label for="fmEx" class="fm_ctrlname">Eye: distance from the mirror</label><span class="fm_sval"><span id="fmExVal">1.40</span> m</span></div>
+<input type="range" id="fmEx" min="0.2" max="5.8" step="0.01" value="1.4" oninput="fmSim.set('ex',-this.value)">
+</div>
+<div class="fm_ctrl">
+<div class="fm_ctrlhdr"><label for="fmEy" class="fm_ctrlname">Eye: height</label><span class="fm_sval"><span id="fmEyVal">1.50</span> m</span></div>
+<input type="range" id="fmEy" min="0" max="5" step="0.01" value="1.5" oninput="fmSim.set('ey',this.value)">
+</div>
+</div>
+</div>
+</div>
+<!-- Formula strip -->
+<div class="fm_formulastrip">
+<span class="fm_formulatxt">Law of reflection &theta;<sub>r</sub> = &theta;<sub>i</sub> &nbsp;|&nbsp; image distance = object distance, image height = object height (m = 1) &nbsp;|&nbsp; to see yourself from head to toe, the mirror must be half your height, whatever your distance</span>
+</div>
+<div id="fmNarBar" class="fm_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="fm_descwrap">
+<button type="button" class="fm_descbtn" id="fmDescBtn" aria-expanded="false" aria-controls="fmDesc" onclick="fmA11y.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="fm_desc" id="fmDesc" role="region" aria-labelledby="fmDescBtn" style="display:none">
+<p>This simulation shows, in a side view, a plane mirror on a wall. The object (a clown or an arrow) and an eye are in front of the mirror, on the left; the region behind the mirror, on the right, is where the image appears. No light ever goes there: the image is virtual.</p>
+<p>At the mirror every ray obeys the law of reflection: the reflected ray makes the same angle with the normal (the line perpendicular to the mirror) as the incident ray,</p>
+<p class="fm_eq">`theta_r = theta_i`.</p>
+<p>The rays that leave one point of the object and reflect from the mirror spread out again, as if they came from a single point behind the mirror. Tracing them back finds that point: the image. For a plane mirror the image is as far behind the mirror as the object is in front of it, and it has the same size:</p>
+<p class="fm_eq">`d_i = d_o`,&nbsp;&nbsp; `h_i = h_o`.</p>
+<p>An image can only be seen if light from the object actually reaches the eye. For each point of the object, the light that reaches the eye leaves the mirror along the line from the image point to the eye. That line must cross the mirror itself; where it would cross the wall beside the mirror, the light simply is not there. The lines from the eye through the top and bottom of the mirror enclose the part of the region behind the mirror that the eye can see; only the part of the image inside it is visible.</p>
+<p>When you look at yourself, the light from the top of your head and the light from your feet must both reach your eye. By similar triangles, the light from your head reflects halfway between your eye and the top of your head, and the light from your feet halfway between your eye and your feet. So the smallest mirror in which you can see all of yourself is</p>
+<p class="fm_eq">`h_"mirror" = h/2`,</p>
+<p>half your height, with its top halfway between your eyes and the top of your head. Remarkably, this does not depend on how far from the mirror you stand.</p>
+<p>The rays can show where the image is (two rays from the top and two from the bottom of the object, with the normals and the rays traced back), a fan of rays from a light point that can be dragged anywhere (leave a trace to write with the light, and watch the mirror image of your writing appear), or only the light that reaches the eye. The panel on the right of the readout shows what the eye actually sees in the mirror.</p>
+<p>This simulation is useful for studying the law of reflection, how a plane mirror forms a virtual image, why light has to reach the eye for an image to be seen, and how tall a mirror needs to be.</p>
+</div>
+</div>
+</div><!-- #fmRoot -->
+<!-- Questions -->
+<div class="fm_qwrap">
+<hr>
+<ol type="a">
+<li>Press <b>Where is the image?</b> Move the object closer to the mirror and farther away. How does the distance of the image behind the mirror compare with the distance of the object in front of it? How do their heights compare?</li>
+<li>Press <b>A fan of rays</b> and drag the light point. Where do the reflected rays seem to come from? What happens to the rays that miss the mirror?</li>
+<li>Press <b>Can the eye see it?</b> Make the mirror shorter, or move the eye. Which parts of the clown can the eye still see, and why?</li>
+<li>Press <b>How tall a mirror?</b> How tall must the mirror be for the clown to see itself from head to toe? Compare with the clown's height.</li>
+<li>Move the clown closer to the mirror and farther away. Does the mirror it needs change? Explain with `h_"mirror" = h/2`.</li>
+<li>Turn on the trace and write your name with the light point. What does its image look like?</li>
+</ol>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #fmRoot (Hall effect template) ════════ */
+#fmRoot {
+--fm-chassis:#1a1c1f; --fm-panel:#22262b; --fm-panel-hi:#2c3138; --fm-panel-lo:#14161a;
+--fm-border:#3a4048; --fm-border-hi:#525c66; --fm-text:#c8d0d8; --fm-dim:#8a94a3;
+--fm-accent:#e8a020; --fm-green:#3ad08f; --fm-val:#ffdd66;
+--fm-focus:#e8a020; --fm-nar-bg:#2a2410; --fm-nar-border:#e0b040; --fm-nar-text:#f0e2b8;
+background:var(--fm-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--fm-text);
+display:flex; flex-direction:column; align-items:stretch;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:940px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#fmRoot.fm_lm {
+--fm-chassis:#e9edf1; --fm-panel:#ffffff; --fm-panel-hi:#f1f4f7; --fm-panel-lo:#f4f6f9;
+--fm-border:#c3cad3; --fm-border-hi:#9aa3ae; --fm-text:#1d232a; --fm-dim:#556070;
+--fm-accent:#a8620a; --fm-green:#12805a; --fm-val:#8a4a00;
+--fm-focus:#a8620a; --fm-nar-bg:#ffefc0; --fm-nar-border:#e0b040; --fm-nar-text:#333333;
+background-image:none;
+}
+#fmRoot.fm_hc {
+--fm-chassis:#000000; --fm-panel:#000000; --fm-panel-hi:#111111; --fm-panel-lo:#000000;
+--fm-border:#ffffff; --fm-border-hi:#ffffff; --fm-text:#ffffff; --fm-dim:#e0e0e0;
+--fm-accent:#ffd700; --fm-green:#00ff88; --fm-val:#ffff00;
+--fm-focus:#ffff00; --fm-nar-bg:#000000; --fm-nar-border:#ffd700; --fm-nar-text:#ffffff;
+background-image:none;
+}
+#fmRoot.fm_hc .fm_panel, #fmRoot.fm_hc .fm_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#fmRoot :not(mjx-container):not(mjx-container *), #fmRoot :not(mjx-container):not(mjx-container *)::before, #fmRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; padding:0; }
+#fmRoot input:focus-visible, #fmRoot button:focus-visible, #fmRoot select:focus-visible { outline:2px solid var(--fm-focus); outline-offset:2px; }
+/* toolbar */
+#fmRoot .fm_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#fmRoot .fm_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--fm-panel-hi); border:1px solid var(--fm-border-hi); color:var(--fm-dim); }
+#fmRoot .fm_a11ybtn:hover { border-color:var(--fm-accent); color:var(--fm-accent); }
+#fmRoot .fm_a11yon { background:rgba(58,208,143,.14); border-color:var(--fm-green); color:var(--fm-green); font-weight:bold; }
+/* header */
+#fmRoot .fm_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#fmRoot .fm_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--fm-accent); text-align:center; }
+#fmRoot .fm_sub { font-size:.7rem; color:var(--fm-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* picture */
+#fmRoot .fm_diagpanel { background:var(--fm-panel); border:1px solid var(--fm-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#fmRoot .fm_diaglabel { background:var(--fm-panel-lo); border-bottom:1px solid var(--fm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--fm-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#fmRoot .fm_diaglabel b { color:var(--fm-accent); }
+#fmRoot .fm_diagnote { text-transform:none; letter-spacing:.02em; }
+#fmRoot canvas { display:block; width:100%; height:auto; margin:0 auto; }
+#fmRoot #fmCv { max-width:900px; }
+#fmRoot #fmEye { max-width:300px; }
+#fmRoot .fm_runbar { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:6px; padding:8px 10px; background:var(--fm-panel-lo); border-top:1px solid var(--fm-border); }
+#fmRoot .fm_btn { padding:8px 4px; font-family:monospace; font-size:.7rem; letter-spacing:.04em; cursor:pointer; background:var(--fm-panel-hi); border:1px solid var(--fm-border-hi); color:var(--fm-text); border-radius:3px; text-transform:uppercase; line-height:1.25; }
+#fmRoot .fm_btn:hover { border-color:var(--fm-accent); }
+#fmRoot .fm_primary { font-weight:bold; border-color:var(--fm-accent); color:var(--fm-accent); }
+#fmRoot .fm_warn { color:#e0605a; border-color:#a04040; }
+#fmRoot.fm_lm .fm_warn { color:#b02020; border-color:#c06060; }
+/* panels */
+#fmRoot .fm_grid { display:grid; grid-template-columns:320px minmax(0,1fr); gap:12px; }
+#fmRoot .fm_controls { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
+#fmRoot .fm_panel { background:var(--fm-panel); border:1px solid var(--fm-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#fmRoot .fm_paneltitle { background:var(--fm-panel-lo); border-bottom:1px solid var(--fm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--fm-dim); }
+#fmRoot .fm_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#fmRoot .fm_ctrl { display:flex; flex-direction:column; gap:4px; }
+#fmRoot .fm_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#fmRoot .fm_ctrlname { font-size:.72rem; font-weight:600; color:var(--fm-dim); }
+#fmRoot .fm_sval { font-family:monospace; font-size:.74rem; color:var(--fm-val); white-space:nowrap; }
+#fmRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--fm-panel-lo); border:1px solid var(--fm-border); }
+#fmRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--fm-accent); border:2px solid var(--fm-panel); cursor:pointer; }
+#fmRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--fm-accent); border:2px solid var(--fm-panel); cursor:pointer; }
+#fmRoot input[type=range]:disabled { opacity:.4; }
+#fmRoot select { width:100%; background:var(--fm-panel-hi); color:var(--fm-text); border:1px solid var(--fm-border-hi); border-radius:3px; padding:4px 6px; font-size:.76rem; }
+#fmRoot .fm_chk { display:flex; align-items:center; gap:7px; font-size:.76rem; color:var(--fm-text); cursor:pointer; }
+#fmRoot .fm_chk input { accent-color:var(--fm-accent); width:15px; height:15px; flex-shrink:0; }
+/* readout */
+#fmRoot .fm_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px 10px; }
+#fmRoot .fm_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--fm-panel-lo); border:1px solid var(--fm-border); border-radius:3px; }
+#fmRoot .fm_rkey { font-family:monospace; font-size:.64rem; color:var(--fm-dim); letter-spacing:.02em; }
+#fmRoot .fm_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--fm-text); }
+#fmRoot .fm_hi { color:var(--fm-val); font-weight:bold; }
+#fmRoot .fm_wide { grid-column:1 / -1; }
+/* formula strip, narration */
+#fmRoot .fm_formulastrip { background:var(--fm-panel-lo); border:1px solid var(--fm-border); border-radius:4px; padding:7px 14px; }
+#fmRoot .fm_formulatxt { font-family:monospace; font-size:.66rem; color:var(--fm-dim); letter-spacing:.04em; line-height:1.6; }
+#fmRoot .fm_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--fm-nar-bg); border-left:4px solid var(--fm-nar-border); font-size:.82rem; color:var(--fm-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* SIM description (toggle) */
+#fmRoot .fm_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#fmRoot .fm_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--fm-panel-hi); border:1px solid var(--fm-accent); color:var(--fm-accent); border-radius:3px; font-weight:bold; }
+#fmRoot .fm_descbtn:hover { background:var(--fm-panel); }
+#fmRoot .fm_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#fmRoot .fm_desc { width:100%; background:var(--fm-panel); border:1px solid var(--fm-border); border-left:4px solid var(--fm-accent); border-radius:4px; padding:12px 16px; color:var(--fm-text); font-size:.86rem; line-height:1.55; }
+#fmRoot .fm_desc p { margin:0 0 9px 0; }
+#fmRoot .fm_desc p:last-child { margin-bottom:0; }
+#fmRoot .fm_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.fm_qwrap { width:100%; max-width:940px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.fm_qwrap ol { padding-left:24px; }
+.fm_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+/* narrow screens */
+@media (max-width:820px) {
+#fmRoot .fm_controls, #fmRoot .fm_grid { grid-template-columns:minmax(0,1fr); }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#fmRoot input[type=range] { height:8px; }
+#fmRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#fmRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#fmRoot .fm_btn, #fmRoot .fm_a11ybtn, #fmRoot .fm_descbtn { min-height:40px; }
+#fmRoot select { min-height:36px; font-size:16px; }
+#fmRoot .fm_chk input { width:22px; height:22px; }
+#fmRoot .fm_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#fmRoot { padding:10px 6px 14px; }
+#fmRoot .fm_rgrid { grid-template-columns:1fr; }
+}
+</style>
+<!-- ════════ DISPLAY OPTIONS ════════ -->
+<script>
+var fmA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+function styleBtn(id, on){
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('fm_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function apply(){
+if (!ROOT) return;
+ROOT.classList.toggle('fm_hc', states.hc); ROOT.classList.toggle('fm_lm', states.lm); ROOT.classList.toggle('fm_cb', states.cb);
+var nb = document.getElementById('fmNarBar'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('fmBtnNR'); if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('fmBtnNR', states.nr); styleBtn('fmBtnHC', states.hc); styleBtn('fmBtnLM', states.lm); styleBtn('fmBtnCB', states.cb);
+}
+return {
+init:function(){ ROOT = document.getElementById('fmRoot'); apply(); },
+toggle:function(k){
+states[k] = !states[k];
+if (k==='hc' && states.hc) states.lm = false;
+if (k==='lm' && states.lm) states.hc = false;
+apply();
+if (typeof fmSim !== 'undefined' && fmSim.refresh) fmSim.refresh();
+},
+cb:function(){ return states.cb; }, hc:function(){ return states.hc; }, lm:function(){ return states.lm; },
+narrate:function(msg){ if (!states.nr) return; var nb = document.getElementById('fmNarBar'); if (nb) nb.textContent = msg; },
+/* SIM description: show or hide it; typeset its AsciiMath when it opens (MathJax 3 or 2, whichever the page has) */
+toggleDesc:function(){
+var b = document.getElementById('fmDescBtn'), d = document.getElementById('fmDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+};
+})();
+fmA11y.init();
+</script>
+<!-- ════════ SIMULATION ════════
+Side view, meters: the mirror is the segment x = 0, mb <= y <= mt, on a wall; the object and the eye are at x < 0.
+A point (x, y) has its image at (-x, y). The light from that point that reaches the eye at (xe, ye) leaves the mirror
+on the line from the image to the eye; it crosses x = 0 at  ym = ye + (y - ye) xe/(xe + x)  (with x < 0, xe < 0).
+It exists only if mb <= ym <= mt. The lines from the eye through the mirror's two edges bound the region behind the
+mirror that the eye can see. For an eye looking at its own body (x = xe), ym = (ye + y)/2: half the height.
+-->
+<script>
+var fmSim = (function(){
+function el(id){ return document.getElementById(id); }
+var cv = el('fmCv'), g = cv.getContext('2d'), ec = el('fmEye'), ge = ec.getContext('2d');
+var LW = cv.width, LH = cv.height, EW = ec.width, EH = ec.height, DPR = window.devicePixelRatio || 1;
+cv.width = LW*DPR; cv.height = LH*DPR; g.scale(DPR, DPR);
+ec.width = EW*DPR; ec.height = EH*DPR; ge.scale(DPR, DPR);
+var FONT = 'Calibri, Arial, sans-serif';
+/* ── layout: 75 px per meter, mirror at the center, floor near the bottom ── */
+var S = 75, X0 = LW/2, Y0 = LH - 30, XMIN = -X0/S, XMAX = X0/S, YTOP = Y0/S, YBOT = -(LH - Y0)/S;
+function X(x){ return X0 + x*S; } function Y(y){ return Y0 - y*S; }
+function WX(px){ return (px - X0)/S; } function WY(py){ return (Y0 - py)/S; }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function f2(v){ return v.toFixed(2); }
+/* ── the clown, and where its eyes are on the drawing ── */
+var CLOWN_H = 1.7, CLOWN_W = CLOWN_H*465.92/985.88, EYE_U = 0.47, EYE_V = 0.185;
+var clownImg = new Image(), clownReady = false;
+clownImg.onload = function(){ clownReady = true; refresh(); };
+clownImg.src = 'data:image/svg+xml;base64,' + 'PHN2ZyB3aWR0aD0iNDY1LjkyM3B0IiBoZWlnaHQ9Ijk4NS44NzZwdCIgdmlld0JveD0iMCAwIDQ2NS45MjMgOTg1Ljg3NiIgdmVyc2lvbj0iMS4yIiBpZD0ic3ZnNzAzIiB4bWw6c3BhY2U9InByZXNlcnZlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzIGlkPSJkZWZzNTI4IiAvPjxnIGNsaXAtcnVsZT0iZXZlbm9kZCIgZmlsbC1ydWxlPSJldmVub2RkIiBpZD0iZzYxMTgyLTctMS0zLTAiIHRyYW5zZm9ybT0ibWF0cml4KDAuNjk1LDAsMCwxLjM2OCw1Ny45MzQsMjA2LjQyMikiIHN0eWxlPSJmaWxsLXJ1bGU6ZXZlbm9kZDtzdHJva2Utd2lkdGg6Mi4zMzA7aW1hZ2UtcmVuZGVyaW5nOm9wdGltaXplUXVhbGl0eTtzaGFwZS1yZW5kZXJpbmc6Z2VvbWV0cmljUHJlY2lzaW9uO3RleHQtcmVuZGVyaW5nOmdlb21ldHJpY1ByZWNpc2lvbiIgPjxnIGlkPSJnNjExODAtNy0yLTktOSIgdHJhbnNmb3JtPSJtYXRyaXgoMS4zMzEsMCwwLDEuMzMxLC04My4zMjAsLTE1MC44NzgpIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjEuNzUxIj48cGF0aCBkPSJtIDIyMy45OSw1MS4wMjkgYyA0LjU0Myw0LjQ1NSA2LjExOSwxMS44NzggOC45OTksMTcuOTk4IC01LjY1MSwtMC4zNDggLTYuNDI5LC01LjU2OSAtMTAuOTk5LC02Ljk5OSAtNy4yMiwxLjExMiAtMTEuNTkyLDUuMDczIC0xOS45OTgsNC45OTkgNi4zNywtNi4yOSAxNC4zNSwtMTAuOTgxIDIyLC0xNS45OTggeiBtIC0xMiwxMS45OTggYyAzLjY4OCwtMS42NDYgOC4xNzQsLTIuNDkxIDExLjk5OSwtNCAtMC4xNTYsMi44MjEgMi44MjYsMi41MDYgMy45OTksNCAtMS4xNDQsLTMuNTIyIC0yLjE5NywtNy4xMzUgLTQuOTk5LC04Ljk5OSAtMi44NiwzLjE2MiAtMTEsNi4zMDUgLTExLDguOTk5IHoiIGlkPSJwYXRoNjEwODQtNi03LTctNCIgc3R5bGU9InN0cm9rZS13aWR0aDoxLjc1MSIgLz48cGF0aCBkPSJtIDI1MS45OCw1MS4wMjkgYyA4LjQ5Miw0LjE3MyAxNC40OTIsMTAuODM4IDIyLjk5NywxNC45OTggLTYuNjA5LDIuNTkxIC0xMy44MzQsLTIuODE1IC0xOS45OTcsLTQgLTQuODAxLDEuMTk4IC02LjA2LDUuOTM5IC0xMC45OTksNi45OTkgMS42OCwtNi45OTIgNC42LC0xMi43MzcgOCwtMTcuOTk3IHogbSAtMiwxMS45OTggYyAxLjI4NiwtMS43MTQgMi4wNjgsLTMuOTMyIDUsLTQgMS45ODYsMS43MjMgOC4wMTIsNC41OTUgOS45OTksMyAtNC44ODcsLTIuMTEzIC03LjU4NSwtNi40MTQgLTEyLjk5OSwtNy45OTkgMC4xMSwzLjE2MiAtNC40MSw2LjgzOSAtMiw4Ljk5OSB6IiBpZD0icGF0aDYxMDg2LTktMi0xLTgiIHN0eWxlPSJzdHJva2Utd2lkdGg6MS43NTEiIC8+PHBhdGggZmlsbD0iI2ZmZWE1MyIgZD0ibSAyNTEuOTgsNTQuMDI4IGMgNS40MTQsMS41ODUgOC4xMTIsNS44ODYgMTIuOTk5LDcuOTk5IC0xLjk4NywxLjU5NSAtOC4wMTMsLTEuMjc3IC05Ljk5OSwtMyAtMi45MzIsMC4wNjcgLTMuNzE0LDIuMjg2IC01LDQgLTIuNDEsLTIuMTYgMi4xMSwtNS44MzcgMiwtOC45OTkgeiIgaWQ9InBhdGg2MTA4OC0yLTUtNC04IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0gMjMzLjk5LDk4LjAyMyBjIC0xLjg5NSwtMi43NzIgLTIuNTM4LC02Ljc5NCAtNiwtNy45OTkgLTYuMjA0LDEuNzk0IC02LjMxMyw5LjY4NCAtNi45OTksMTYuOTk4IC01LjEsMC4yMzMgLTcuOTU4LDIuNzA3IC0xMS45OTksNCAwLjM1NCwtMTYuOTggMS45MzQsLTM4LjA1NyAxMy45OTksLTM5Ljk5NSA4LjY0LDQuMDIgOS4xNCwxNi4xOTIgMTEsMjYuOTk4IHoiIGlkPSJwYXRoNjEwOTAtMy0yLTAtMiIgc3R5bGU9InN0cm9rZS13aWR0aDo1LjMzNSIgLz48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJtIDI2Ni45OCwxMTEuMDIgYyAtMy40NzksLTIuMTg3IC03Ljk4MSwtMy4zNSAtMTEuOTk4LC00Ljk5OSAzLjU1NiwtMTIuOTM5IC0xMS45MDYsLTIxLjcyMiAtMTEuOTk5LC02IC0xLjI4NSwtMTAuOTU3IDIuOTIxLC0yNS4wNjkgMTAuOTk5LC0yOS45OTYgMTEuNzQsNi4yNjEgMTIuNjksMjMuMzExIDEzLDQwLjk5NiB6IiBpZD0icGF0aDYxMDkyLTYtNy00LTQiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iIzAwMDBmZiIgZD0ibSAyMjguOTksOTQuMDIzIGMgMi4zNzksMi4yODcgMi44OTgsNi40MzQgMywxMC45OTkgLTQuMDIxLC0wLjY4OCAtNS43MDgsMC45NTggLTguOTk5LDEgMS4zMTQsLTMuMDE5IDAuNjg2LC03Ljk4IDIsLTEwLjk5OSAxLjU4LC0wLjA4MSAzLjgxLDAuNDgzIDQsLTAuOTk4IHoiIGlkPSJwYXRoNjEwOTQtNy0wLTMtNSIgc3R5bGU9InN0cm9rZS13aWR0aDo1LjMzNSIgLz48cGF0aCBmaWxsPSIjMDAwMGZmIiBkPSJtIDI1MC45OCw5NC4wMjMgYyAwLjY4MiwzLjk4NSAyLjUyOSw2LjgwMyAyLDExLjk5OSAtMy4yOTEsLTAuMDQyIC00Ljk3OCwtMS42ODggLTguOTk5LC0xIDAuODQsLTUuMTU3IDAuNjksLTExLjMxMiA3LC0xMC45OTcgeiIgaWQ9InBhdGg2MTA5Ni01LTAtMS01IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGQ9Im0gMjk3Ljk4LDEyNy4wMiBjIDI3LjgxLC0zLjIzOCA0MC4xNTksMTUuNzU5IDMyLjk5NiwzNy45OTUgLTIuNzU3LDguNTU5IC0xNi4yMTcsMjEuNjk0IC0yNS45OTcsMjguOTk3IC0yMS4yMjcsMTUuODQ5IC02MS44ODIsMjguMzUyIC05OC45ODcsMTYuOTk4IC0xOC4yOTQsLTUuNTk4IC0zOS44ODQsLTE5LjUxNSAtNTAuOTk0LC0zMS45OTYgLTQuMzM1LC00Ljg3MSAtMTAuMTM5LC0xMy40NDIgLTEwLjk5OSwtMTcuOTk4IC00LjUzLC0yNC4wMTQgMTQuMzY2LC00MC4zMzggMzYuOTk1LC0zMi45OTYgMTEuMzY0LDMuNjg4IDE1LjQ4LDE3LjUwOCAyNC45OTcsMjMuOTk3IDE1LjcyOSwxMC43MjUgNDEuMTM2LDExLjk0MyA1OS45OTIsMiAxNC4wNywtNy40MyAxNC40OSwtMTguMjkgMzEuOTksLTI3IHogbSAtMTUxLjk4LDMyIGMgMy4xOTgsMTQuMjY0IDE4LjgxMSwyNy4yNzEgMzMuOTk2LDM2Ljk5NiAzMC4yMDYsMTkuMzQyIDcxLjUzNywyNC4wNjEgMTA1Ljk5LDYuOTk5IDEzLjkwNCwtNi44ODYgNDUuNTQ4LC0yNi41ODMgNDQuOTk0LC00OS45OTQgLTAuMzQ3LC0xNC42NTMgLTEzLjIxMSwtMjkuNTk4IC0zMi45OTYsLTIzLjk5NyAtMTQuODA4LDQuMTkyIC0xNi4wMSwxOSAtMzAuOTk2LDI2Ljk5NyAtMjEuMzU5LDExLjM5NiAtNTAuMjU2LDcuMDMzIC02NC45OTIsLTQgLTExLjgxMSwtOC44NDMgLTE1LjYwNCwtMjUuMDAyIC0zMy45OTYsLTIyLjk5NyAtMTUuNjEsMS42OSAtMjUuMTgsMTUuNzcgLTIxLjk5LDI5Ljk5IHoiIGlkPSJwYXRoNjEwOTgtMi0yLTktMSIgc3R5bGU9InN0cm9rZS13aWR0aDoxLjc1MSIgLz48cGF0aCBkPSJtIDI1OC45OCwyMDUuMDEgYyAtMy4zMjcsNi42OCAtMTYuNyw4LjYxOSAtMjUuOTk3LDYgLTAuMTQyLC00LjE0MSA2Ljk1OCwtMS4wNDIgOS45OTksLTIgLTguNTczLDMuMjk4IDMuNTc4LDEuMzg0IDYuOTk5LDAgMC41NSwtMi43OSAxLjUyLC0yLjcxIDksLTQgeiIgaWQ9InBhdGg2MTEwMC05LTUtNi03IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjEuNzUxIiAvPjxwYXRoIGZpbGw9IiNmZmVhNTMiIGQ9Im0gMjUxLjk4LDM1Ni45OSBjIDExLjEzMiwzLjQxIDAuMjg1LDE5Ljg1NCAtNi45OTksOS45OTkgLTAuOTMsLTYuNiAyLjI5LC05LjA1IDcsLTEwIHoiIGlkPSJwYXRoNjExMDItNy02LTYtMSIgc3R5bGU9InN0cm9rZS13aWR0aDo1LjMzNSIgLz48cGF0aCBkPSJtIDE2Ny45OSwzODQuOTkgYyA0LjMzOSwyLjY4NSAxLjM4OCwxNC40NjcgMSwxOC45OTcgLTMuMzEsLTMuNTEgMS4yLC0xMi4yOSAtMSwtMTkgeiIgaWQ9InBhdGg2MTEwNC0wLTYtOS0xIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjEuNzUxIiAvPjxwYXRoIGQ9Im0gMTc3Ljk5LDM5OS45OCBjIDQuODI0LDEuNjk2IDQuMjEzLDEwLjA1OSAzLDE0Ljk5OCAtMS43OSwtNC4yMSAtMC45NiwtMTEuMDMgLTMsLTE1IHoiIGlkPSJwYXRoNjExMDYtMC05LTItNSIgc3R5bGU9InN0cm9rZS13aWR0aDoxLjc1MSIgLz48cGF0aCBkPSJtIDQ1NS45NiwyNzEgYyAxMy4yODIsOS43MTYgMzQuODM4LDExLjE1NiA0NC45OTQsMjMuOTk3IDMuMzAzLDQ2LjUxMSAtMzYuNzA3LDExLjc0MSAtNTEuOTkzLDQgNS4xNjIsMTEuNzk5IDE2LjA0NywzNS4zMjYgLTQsMzYuOTk1IC00Ljc5MSwwLjM5OCAtNy43MjksLTMuOTMxIC0xMS45OTgsLTQgLTIuNjk0LC0wLjA0MyAtNi40MDcsMy40MDMgLTguOTk5LDMgLTguMjkzLC0xLjI5MSAtMTAuNzg1LC0xMC4xNzYgLTE3Ljk5OCwtMTMuOTk4IC0yMS42OTQsMy4zNjMgLTMxLjY1NSwtNS4wMDcgLTM1Ljk5NSwtMTguOTk4IC0xMy42ODksMi4zNTcgLTE2LjM4OCwtNi4yNzYgLTIyLjk5NywtMTAuOTk4IC0xMi45MzcsMS41MSAtMjIuNDQyLC00LjI5MyAtMzEuOTk2LC0zIC00LjU2OSwtNC4wOTYgLTQuNTQ2LC0xMi43ODUgLTE1Ljk5OCwtOS45OTkgMy41MjgsMjEuNTY2IDEyLjI5OSw0NC43NTQgMTcuOTk4LDY1Ljk5MiAzLjcyOCwxMy44OSA0LjkwMywyNS40MDQgMTEuOTk4LDM2Ljk5NSA5LjQ0LDE1LjQyNCAzNC4xNiwzNS41MDUgMTguOTk4LDYwLjk5MiAtNi4wNDksMTAuMTY4IC0yMC44LDEwLjIxMSAtMjMuOTk3LDI0Ljk5NyAyMS43Niw1LjYyNiAzMi4xNDksLTcuOTgzIDQ2Ljk5NCwtMTUuOTk4IDE0LjQzNSwtNy43OTMgMzkuODgzLC0xMi40MDcgNjEuOTkyLC02Ljk5OSAyNS4xNTUsNi4xNTIgNDQuNTI3LDI3LjA3NiA1My45OTMsNTEuOTkzIC0xMi42MDYsMTMuMzAxIC0zNS43NTksMTQuODUzIC02MC45OTIsMTUuOTk4IC01OS44MjksMi43MTggLTEyNi4xNSwtOC4yNDEgLTE2Ny45OCwtMjQuOTk3IC0yNy44NSwxNC4yNzUgLTU2Ljk1NSw0My42MzkgLTkxLjk4OCw1MS45OTQgLTkuMTA5LDIuMTcyIC0xOS4wNCwxLjUwNCAtMjguOTk2LDIgLTI3LjE2MSwxLjM1MyAtNjIuMDU5LC0xLjMxNyAtNjUuOTkyLC0yNi45OTcgLTAuNzU4LC00Ljk0NyAwLjM4NCwtMTEuNzYyIDIsLTE1Ljk5OCA4Ljc5NCwtMjMuMDYgNDEuMTIsLTM3LjkzMyA2OS45OTEsLTM3Ljk5NSA1Ljg4MywtNS4yNDYgNS45MzMsLTkuOTQ1IDMsLTE3Ljk5OCA4LjA1LC05LjQyNSAxNi4xMTgsLTE2LjY3MSAxNy45OTgsLTMwLjk5NiAzLjcyNCwtMjguMzg5IC03LjYyNSwtNjEuMzk4IC01LC05MC45ODggLTMuMTczLC0xLjQ3MSAtNi43NjcsNS4yMDQgLTExLjk5OSw0Ljk5OSA1Ljc4NywyNC45ODggLTIwLjc4MSwyMC4wMiAtMzAuOTk2LDI3Ljk5NyAtNi44MjgsNS4zMzIgLTQuNDQzLDEzLjYxIC04Ljk5OSwyMS45OTcgLTkuNDA2LC0yLjY2IC05LjgyNiw3LjY1NyAtMTYuOTk4LDguOTk5IC0xNC43MDQsMi43NDkgLTE5LjU3MywtMTMuNzU0IC0xOS45OTgsLTI5Ljk5NiAtNy40NCw0LjQ3OSAtMTguNDYsMjMuNzMzIC0zMi45OTYsMjQuOTk2IC04LjUyMSwwLjc0MSAtMTUuNDk0LC0yLjY4MSAtMTYuOTk4LC05Ljk5OCBDIDE2LjM3OCwzNTEuMzA0IDM2LjEyOCwzNDQuMjMxIDQ0LjAxLDMzNC45OTIgMzEuMTIsMzM5LjExNCAwLjg5NSwzNTEuMjE5IDAuMDE1LDMyOC45OTMgLTAuNjgsMzExLjQxOSAyMi44NzcsMzA2LjM0NyAzOS4wMSwzMDEuOTk2IDIxLjAyOCwyOTMuMDE3IDMzLjg5OSwyNjMuNzggNjIuMDA3LDI3NiA1OC44NDcsMjYyLjM2NiA2NC41ODMsMjQ4Ljc4IDc0LjAwNiwyNDguMDAzIDg2LjQ1LDI0Ni45NzcgODUuNzIsMjYxLjQ5OSA5MC4wMDQsMjcyIGMgMzIuMjU0LC05LjQwNyA2MS41NDIsLTIxLjc4MSA4MC45OSwtNDMuOTk1IC0xMy42NzcsLTQuODk0IC0zNi42NTgsLTUuMDU5IC01NC45OTMsLTUuOTk5IC02LjQ5MiwtMC4zMzMgLTE1LjI5NCwyLjY1NCAtMTguOTk4LC0zIDI0LjcsLTIuMjg1IDQ3Ljk1MiwtOS40NjYgNjQuOTkyLC0yMC45OTggQyAxNTAuMTkzLDE4Ni40NzkgMTM1LjExLDE3OC4yMzMgMTI1LDE2NS4wMTIgYyAtOC40NzksMy43OCAtMTkuOTk4LDQuMzcyIC0yNS45OTcsLTIgLTcuNzU1LC04LjIzNiAtMS4xNjIsLTE3LjU2NiAtMiwtMjguOTk3IEMgOTYuMjE3LDEyMy4yOTYgODcuOTUzLDExNC4wMDIgODAuMDA1LDExMC4wMTggNzMuMTg2LDEwNi42IDY1LjE2OSwxMDYuNjc1IDU5LjAwOCwxMDEuMDE5IDM2LjUyNiw4MC4zODEgMzcuNTA1LDM5Ljk5OSA1Mi4wMDksMTUuMDMgNjQuMzY0LDYuMTMxIDc5LjM1NywtMC41MDUgOTcuMDQzLDAuMDc0IGMgMzMuNzcsMS4xMDUgNTMuODY3LDI2LjQwNiA2MS45OTIsNTIuOTkzIDcuMjg2LC01LjUxNyAyMC4yODMsLTIuNTkzIDIwLjk5OCw2Ljk5OSAyMi45NDksLTI5LjcxNCA5NC42MTMsLTMxLjE1NiAxMTUuOTksMSAxLjAxNCwtOS45OTEgMTMuNjA1LC0xMy44NjEgMjEuOTk3LC03Ljk5OSA4LjQxLC0zMC43MTcgMzMuMjQ3LC01Ni44MzYgNzQuOTksLTUxLjk5MyAxMy40MjgsMS41NTggMjEuOTIsOC4yNTEgMzEuOTk2LDE0Ljk5OCAxNy45OSwzMS41NjggMTAuOTk2LDc3LjI3IC0xNi45OTgsOTAuOTg4IC0xMS4xMzUsNS40NTcgLTI1LjQxMyw4LjExMSAtMjcuOTk2LDIyLjk5NyAtMS4zOTQsOC4wMjcgMi41ODIsMTQuNTM1IDEuOTk5LDIwLjk5OCAtMS4yNTQsMTMuOTE2IC0xNS4xMDUsMjEuODk2IC0yOS45OTYsMTMuOTk4IC0xMC4wMzMsOC42MzEgLTE4LjIxOCwxOS4xMTEgLTI5Ljk5NiwyNS45OTcgMTcuOTk3LDkuMTE3IDQ0LjA1MSwxNS44OTIgNjUuOTkyLDkuOTk5IDAuODAxLDUuMTM0IC0xLjA3Miw3LjU5NCAtMiwxMC45OTkgLTEyLjc0Niw1LjkxOCAtMzUuOTE4LDEuNDExIC0zNy45OTUsMTcuOTk4IDkuNTUyLDIuNzc5IDIyLjA2MSwyLjYwMyAyOC45OTYsNy45OTkgOC42NzUsLTMuNzkyIDE5LjE2MSwtMy40OTUgMjkuOTk2LC0zIC01Ljc1NywtMjMuNDE1IDI0LjY0OSwtMzUuNDM5IDIyLjk5NywtNiA3LjY4NiwtMy45NDMgMTkuMjc3LC0xLjgxMSAyMi45OTcsNCAxLjM2OSw2LjA3MiAtNy4wNTQsNi40MzEgLTIuOTk5LDExLjk5OSAyMC4xNDgsMC43NzQgNTcuOTg0LC00LjI4OSA1Mi45OTMsMTcuOTk4IC0zLjM1LDE0Ljg2IC0zMC4wNCwxMS42MSAtNDcuMDEsNy45OCB6IE0gMjg2Ljk4LDU2LjAzIGMgMC42MjUsMC41MDQgMC44MTcsLTEuMzUxIDAsLTIgLTI5Ljc4MiwtMjMuNjMzIC05NC45MDksLTE4LjY5MSAtMTA5Ljk5LDE1Ljk5OCAzLjg0OCw1Ljk3NiAxLjMzLDE0LjU0MiAtMywxNy45OTggMy4yMzksMS40MjcgNC4xMzUsNS4xOTggNCw5Ljk5OSAtNC4yMDgsNi42MDcgLTcuMDgsMTcuMDc2IC0xNS45OTgsMTYuOTk4IC02LjkwNCwtMC4wNjEgLTcuMzQzLC01LjAyOSAtMTIuOTk4LC04Ljk5OSAtMjEuNzY0LDEuNjggLTM5LjQyOSwyMC40MTEgLTMxLjk5Niw0My45OTQgMy45NTUsMTIuNTQ5IDIzLjk3OSwyOC45MDggMzkuOTk1LDM5Ljk5NSAxNi42NzUsMTEuNTQ0IDM3LjQzNCwyMS4yNzMgNTUuOTkzLDI0Ljk5NyA0MC40MTYsOC4xMDkgNzUuOTEsLTYuMDM4IDk5Ljk4NywtMjAuOTk4IDEuNzgsLTAuNDg1IC0wLjQzNCwtMS4wNjYgLTAuOTk5LC0yIDYuMDU4LDIuMjMgMTAuMzUyLC00LjM3MSAxMS45OTgsLTYuOTk5IC0wLjIyLDEuMjU3IC0xLjU1OCwyLjA0MyAxLDIgMC40MzgsLTIuMzIzIDQuNDE1LC0yLjY3NyAyLC01IDUuNjY3LC0wLjA4MyAxMy4xMDIsLTcuNTI0IDE4Ljk5NywtMTMuOTk4IDUuNTcsLTYuMTE4IDEyLjE5MiwtMTQuMjU5IDEzLjk5OCwtMjAuOTk4IDUuNzg4LC0yMS41OTUgLTExLjU2NSwtMzguOTM4IC0zMi45OTUsLTQwLjk5NSAtMTAuNjM3LDIyLjUxOSAtMzguMzczLC02LjI4NSAtMjQuOTk3LC0xOC45OTggLTUuMjczLC0xLjM0IC01LjA3OSwtMTMuMjI4IC0yLC0xNi45OTggLTIuMzMsLTUuODY1IC04LjU2LC0xMC40MTggLTEyLjk4LC0xMy45NzYgeiBNIDEzMywxNS4wMzUgYyAtMjEuNTc4LC0xNi42MjQgLTYyLjEwMSwtMTcuNzU2IC03OC45OSwyIC0xOS45MTEsMjMuMjkgLTEwLjcxNCw2OC43ODEgOC45OTksODMuOTkgNi4zODMsNC45MjQgMTQuMzMxLDQuOTMxIDE5Ljk5OCw3Ljk5OSA3LjEwMSwzLjg0NSAxMy43NywxMi4zNzQgMTQuOTk4LDE5Ljk5OCAxLjQ1OSw5LjA2MSAtMi42NTgsMTYuNzcxIC0yLDIxLjk5NyAxLjI5NywxMC4yOTEgMTQuMTIsMjAuMDA0IDI1Ljk5NywxMS45OTkgLTE1Ljk5NiwtMTkuODkzIC01LjM4NSwtNTYuOTE1IDIwLjk5NywtNTcuOTkzIC01LjU3NiwtNS4zNjUgMS43MTIsLTE2LjkyMiAtNCwtMjIuOTk3IEMgMTQ3LjAwMyw0NS43NDggMTEyLjc0NiwxOC42ODkgNzkuMDA3LDIxLjAzNSA3NC4yNCw0Mi44MTEgODguMDU4LDUzLjcyNyA5OS4wMDUsNjMuMDMgODMuMzk5LDU3LjMwNSA3NC44NTgsNDQuNTE2IDc3LjAwNywyMS4wMzUgYyAtMy40OTEsLTAuNzU4IC03LjU0OSwzLjAyNiAtOS45OTksMCAyNi40ODksLTkuNzA5IDYzLjE4Nyw3LjUzNCA3Mi45OTEsMzQuOTk2IDIuOTgyLDAuMjg5IDYuODU2LC03LjEyMiAxNC45OTgsLTQuOTk5IC01LjI3LC0xNS45NDggLTEwLjA5LC0yNi44MjYgLTIyLC0zNi4wMDQgeiBtIDI0Ni45NywxMzguOTkgYyAxLjA1LC00LjU4OSAtMS44NzgsLTExLjQ1MyAtMiwtMTYuOTk4IC0wLjIzMiwtMTAuNTQxIDQuNjYzLC0yMC42MzcgMTIuOTk4LC0yNS45OTcgOS41NjgsLTYuMTUzIDE5LjExMywtNi4zODMgMjQuOTk3LC0xMS45OTkgMTYuNDc4LC0xNS43MjQgMjQuNzgyLC02My4wMTUgNS45OTksLTgyLjk4OSAtMTEuNjEsLTEyLjMzMyAtNDAuNTEsLTE3LjY3MSAtNjAsLTEwLjk5OCAtMjIuMjUxLDcuNjE3IC0zMy4yNTUsMjQuNjE2IC00MC45OTUsNDUuOTk1IDguMDA0LC0xLjAwNSAxMS44ODgsMi4xMTEgMTQuOTk4LDUuOTk5IDkuMzA1LC0yNi4wMDEgNDQuNCwtNDYuNzg4IDcyLjk5MSwtMzQuOTk2IC00LjM2NywwLjcwMSAtNS42MzIsLTEuNzAxIC05Ljk5OSwtMSAzLjkwNSwyMS40MzggLTUuODQ4LDM3LjMzMiAtMjEuOTk3LDQxLjk5NSAxMS42MjgsLTguNzU4IDI2LjE5MiwtMjEuNjE4IDE5Ljk5OCwtNDEuOTk1IC0zMi4yMDUsLTIuMTA2IC01Ni4xNzUsMjAuMTY2IC02Mi45OTIsNDkuOTk0IDAuNTIsNC4xNDYgNS4wNDYsNC4yODUgMy45OTksOS45OTkgLTYuMjUsNi43NyAxLjIxMiwxNi4yOSAtNC45OTksMjMuOTk3IDE5Ljg2MywxLjk1NCAzNC43MTcsMjMuNzQxIDI3Ljk5Niw0NS45OTQgLTEuMzksNC42MDIgLTcuNDI4LDguMTU1IC02Ljk5OSwxMi45OTkgMTEuNTMsNS4yNyAyMy45OCwtMS4yMSAyNS45OSwtOS45OSB6IE0gMTYwLDU1LjAzMyBjIC03LjcyMSwtNS4yNDcgLTE3LjI4NSwwLjEwNSAtMTguOTk4LDYuOTk5IDAuMjU5LDUuMDczIDMuNzE0LDYuOTUxIDUsMTAuOTk5IC0zLjk5NCwwLjY3MyAtNC45ODcsNC4zNDUgLTYsNy45OTkgMC45NjEsMy43MDUgNC42NjcsNC42NjYgNiw3Ljk5OSAtMS44MTQsMi44NTMgLTQuODk3LDQuNDM1IC00LDkuOTk5IDcuMTk2LDIuNzEzIDE0LjI2NCwxNS4xNTQgMjEuOTk4LDEzLjk5OSA2LjYxOSwtMC45ODkgNy4yNywtMTAuNTM4IDExLjk5OSwtMTUuOTk4IDAuNzc5LC02LjExMiAtNC4zMjksLTYuMzM2IC01LC0xMC45OTkgNi44OTYsLTEuNzgxIDYuNzg4LC0xMC45OTIgMywtMTUuOTk4IDExLjM4LC04LjI5MiAtMy44NSwtMjUuMTU3IC0xNCwtMTQuOTk3IHogbSAxNTUuOTgsMCBjIC0xMC44ODcsLTkuNTk5IC0yNC4wODMsNy4wMDEgLTEzLjk5OCwxNS45OTggLTAuODUyLDIuODE0IC0zLjIzLDQuMTAyIC0zLDcuOTk5IDEuMDU1LDMuOTQ0IDMuODcxLDYuMTI4IDYuOTk5LDcuOTk5IC0yLjEyNCwyLjg3NSAtNS41MzMsNC40NjUgLTUuOTk5LDguOTk5IDQuOTgzLDcuMjcyIDYuNjc4LDE4LjMwNiAxNS45OTgsMTYuOTk4IDMuOTQsLTAuNTUzIDQuNjkyLC01LjUyIDcuOTk5LC03Ljk5OSA0LjQ0MSwtMy4zMyAxMi4zNzIsLTIuODkxIDEwLjk5OSwtOC45OTkgLTAuOTksLTMuMzQzIC00LjAxLC00LjY1NiAtNSwtNy45OTkgMi42OTksLTEuOTY3IDYuNDA1LC0yLjkyNyA1Ljk5OSwtNy45OTkgMC4yNjksLTQuNjAxIC00LjE5MywtNC40NzIgLTQuOTk5LC03Ljk5OSA2LjAyOCwtNS4zNjUgNC4wMjIsLTE2LjE4NSAtMywtMTguOTk4IC01Ljc0LC0xLjA2NiAtNy45NSwxLjM5NCAtMTIsMi4wMDIgeiBtIDMsMTM3Ljk4IGMgLTM0LjIzMiwzMC4wMzcgLTExNS41NCwzMy45OTggLTE1My45OCw1IC0xNi40NzYsMTIuODU0IC0zOC43MTYsMTkuOTQ0IC02NS45OTIsMjEuOTk3IDIyLjYwNywtMy4yMTIgNzMuMDQ2LDE0LjI3MSA4Ny45ODksLTguOTk5IC0wLjYxMSw5LjcyMSAtOS41NjMsMTEuMTAxIC0xNi45OTgsMTMuOTk4IDExLjc1OSwzLjk5NyAxMy43NjQsMTQuMjEgMjEuOTk4LDE5Ljk5OCAyNi45OTksMTguOTc4IDQ5LjM1MywtMTIuMzQzIDc5Ljk5LC0xMi45OTkgMS4zMDQsLTIuNjg1IC05LjA1MSwtNy41NjYgLTYsLTExLjk5OSA2LjM1OCwxNC42MTggMzUuMjY0LDE0Ljc0MiA1NC45OTMsMTcuOTk4IDEyLjU3OCwyLjA3NiAyNy4xODMsMC42ODIgMjUuOTk3LC0xMi45OTkgLTAuNzc2LC04Ljk2NiAtMTMuMTM0LC0xMi4zMDUgLTIxLjk5NywtMTMuOTk4IC05LjMzMiwtMS43ODMgLTIwLjUsLTAuNDA2IC0yMy45OTcsLTQgMTcuNDU5LDAuODg4IDM4LjgwNCwwLjk4IDQ2Ljk5NCwxNC45OTggNi44OTEsLTEyLjQ0IDM3Ljg2OCwtMC43OTMgMzcuOTk1LC0xOS45OTggLTI1LjQyLDguOCAtNTEuMjQsLTMuODIgLTY2Ljk4LC05IHogbSA4OC45OCw0OC45OSBjIC0zLjU2MSw2LjY1NyAtMTQuNzQ3LDEwLjMwOSAtMTcuOTk3LDE1Ljk5OCAtMTUuNzQ3LDI3LjU1NyAxMi45NDgsNTYuOTE5IDM5Ljk5NCw0OC45OTQgLTguMDI5LDIwLjEzMyAxNC40NTcsMzYuMDk5IDI0Ljk5NywxOS45OTcgLTAuMjEzLC0xMy4zODUgLTcuNDM1LC0yNy4yNTYgLTEyLjk5OCwtMjguOTk2IDExLjE0OCwtOC45MDkgNy45MTMsLTI4LjE4MyAwLC0zNy45OTYgNS41NDYsMTMuMzg5IDU4LjU3MiwxOS4wOTkgNTkuOTkyLDEgMC4yMzYsLTMuMDEgLTIuNzExLC04LjA4NSAtNC45OTksLTkuOTk5IC0xNS4yODksLTEyLjc4NiAtNTYuODIzLDMuOTc5IC03NS45OSwtMyA1LjA1MSwxMi42IC0wLjc3MSwyOC4zNDIgLTkuOTk5LDI4Ljk5NiA3LjMxMywtNS45ODQgMTIuNjU3LC0xNS40NiA3Ljk5OSwtMjcuOTk2IDcuOTIzLC02LjM5NiAxMy41NywtMjYuNjggMy45OTksLTM1Ljk5NiAtMTkuMzUsLTIuMjMgLTkuMzUsMTguNDggLTE0Ljk5LDI5LjAxIHogbSAyMiwtOS45OSBjIDAuMTUyLDYuMzgzIC01LjgzMiwxMS4xODIgLTQuOTk5LDE0Ljk5OCA3LjU0NCwxLjU4MyAxNC4xMjUsMC41MzQgMjEuOTk3LDAgLTEuMjIzLC0zLjY2NiAwLjgyNiwtOC42ODUgNCwtMTIuOTk4IC0zLjg4LC01LjI0IC0xNS4zNSwtNi42OSAtMjEsLTIgeiBtIC0yNTYuOTcsLTIgYyAtMTQuMTQ4LDE0Ljg0OSAtMzMuMDQxLDI0Ljk1MiAtNTEuOTk0LDM0Ljk5NiAxNS41NzEsMy4zMzkgNS4wMjksMjUuNzA2IDguOTk5LDM3Ljk5NSAzLjQwOSwxMC41NTQgMTIuOTAzLDEwLjY4MyAxNy45OTgsMTkuOTk4IDQuMzQyLC0xLjY1NyA2Ljc5NSwtNS4yMDMgMTAuOTk5LC03IDMuMTk1LC0zMC4xMzQgMTMuNDkxLC01My4xNjcgMjIuOTk3LC03Ni45OSAtMS43NiwtNC4yNSAtNC43NiwtNy4yNSAtOS4wMSwtOSB6IG0gMTIzLjk5LDUuOTkgYyAtMy45NywxMi4wNjIgLTIuNzAxLDI4LjE2NCAxLDM5Ljk5NiAzLjkwMSwwLjQxMyA5LjA4OSwwLjMgMTMuOTk5LDEuOTk5IDIuNjcxLDEuMzI5IDEuMzEyLDYuNjg3IDIuOTk5LDguOTk5IDEwLjI3NiwtMi4wMTYgMjAuMjc0LDMuMjk1IDMyLjk5NiwyIDYuMjM4LDQuNTY1IDExLjAzNCwxNC4zMDUgMjEuOTk3LDEwLjk5OCAyLjQzOCwtMTMuNjUyIDEwLjE1NywtMjAuMTEzIDYuOTk5LC0zMS45OTYgLTEuMzk2LC01LjI1MyAtNy4xMTEsLTguNDA4IC03Ljk5OSwtMTMuOTk4IC0xLjUzMywtOS42NTkgMy41MiwtMTAuNzczIDUuOTk5LC0xNS45OTggLTguNzQzLC0yLjI1NSAtMTcuNTg3LC00LjQxIC0yNi45OTYsLTYgLTcuNjYsMTcuMjkgLTM0LjgyLDYuNDkgLTUxLDQgeiBtIDUyLjk5LDE4MC45OCBjIC0yLjIyNiwtMTEuNzkzIC0xNC44NDYsLTIzLjEwNCAtMjAuOTk4LC0yOS45OTYgLTAuMTQsLTMuNTk1IC02LjA4LC0xNC4wMzcgLTguOTk5LC0xNC45OTggLTIuMDAyLC0xOC41NzYgLTkuNTc2LC0zNy4wMDUgLTEzLjk5OCwtNTYuOTkzIC02LjAyOCwtMjcuMjUyIC0xOC42NTksLTU1LjA5MSAtMTAuOTk4LC03OC45OSAtMTQuNjE1LC0zIC0zNy43NTYsLTYuNzE2IC00NC45OTUsNyAyLjA3MiwwLjU5NSA2LjU2OSwtMS4yMzYgNywxIDAuOTcyLDQuMDk2IC0yLjQ3Niw2LjQwNiAwLDguOTk5IDE5Ljk2NiwtNS43OTUgMjEuMzM3LDE0LjMyNSAxMi45OTgsMjIuOTk4IDAuNTc1LDIuMDkgMi40NzksMi44NTQgMiw1Ljk5OSAtMy45Niw0LjIxMSAtNS4xMTMsMTAuMDg3IC01LDE1Ljk5OCAtNS4xMywwLjc5NyAtNi41NiwtMi4xMDUgLTEwLjk5OCwtMiAtMS40MDYsNy4yNiAtMTAuNzEyLDYuNjE5IC03Ljk5OSwxNy45OTggMTIuNjU2LC04LjY0OCAyNy41MTksNC4wNTYgMTcuOTk3LDE2Ljk5NyA4LjI4NCwxNS4yNDEgLTcuNDE0LDE2Ljg5NiAtMTQuOTk4LDIwLjk5OCAwLjcwNyw1LjcxNSA3LjEyMSwzLjc2OCA3Ljk5OSw5Ljk5OCAwLjc1NCw1LjM0MyAtMS42MzUsNy4wNjUgLTUuOTk5LDEwLjk5OSAtMS40NCwxMS4yMDMgMTkuNzM4LDE0LjM5OCAxOC45OTgsMjMuOTk3IC0wLjI1NiwzLjMxMiAtMy4zMzEsOC41NjIgLTkuOTk5LDQuOTk5IC0yLjAyMSwxMy4wMjcgNC42MDksMjcuMTA5IDQuOTk5LDQxLjk5NSAwLjQzNywxNi42NTIgLTcuNTU2LDI3LjQ2NCAtMTIuOTk4LDM5Ljk5NSA3LjE0OSwtNi4yNzkgNy43MjcsLTE0LjM1NyAxNi45OTgsLTE2Ljk5OCAxNC4zNDEsLTQuMDg1IDMzLjY1OSw3LjA3MiA1MC45OTMsMiA0LjE5LC0yMS43OSAzMy40NSwtMjMuMTYgMjgsLTUyLjAyIHogbSAyMSwtMTY3Ljk4IGMgLTEuMDkzLDguMjg3IDYuMzg1LDExLjczNyA3Ljk5OSwxOS45OTggMi42MTUsMTMuMzc5IC02LjExMiwyMC42NDkgLTYuOTk5LDMyLjk5NiA0LjU5MiwxMi43MzkgMTQuMjQ1LDIwLjQxNyAzNC45OTUsMTYuOTk4IDguMTA1LDMuNDQ4IDExLjAyMywxNi42NzEgMjIuOTk3LDEyLjk5OCAwLjkwNywtNS40MTMgLTYuMDM1LC0xNC4yMzggLTEuOTk5LC0yMi45OTcgLTIyLjgyNCwzLjYyOCAtMzkuODgzLC04LjE4NCAtNDIuOTk1LC0yNS45OTYgLTQuMjAzLC0yNC4wNiAxMS42NzUsLTMyLjUzMyAyMS45OTcsLTQ1Ljk5NSAtMTYuMSwtMS41OCAtMzQuNCwtMC4wNiAtMzUuOTksMTIgeiBNIDE2MCwzMjQuOTkzIGMgMC4xMTEsMzMuNzE0IDE1LjgwOSw4NC45MDIgLTIsMTA3Ljk5IC0yLjk0OCwzLjgyMiAtMTMuOTA5LDYuNzQ0IC03Ljk5OSwxNS45OTggMTcuMzgzLC00LjYxNCAxOC43NDUsLTI1LjI0OSAyMy45OTcsLTQxLjk5NCAtMS45NywxMy43MTkgLTIuMDM5LDI0LjQzNSAtNy45OTksMzIuOTk1IC01LjM0MSw3LjY3MyAtMTYuNzMsOS43NzkgLTE4Ljk5OCwxOS45OTggOS45ODcsMC42NzkgMTYuMDA4LDUuMzIzIDIyLjk5Nyw4Ljk5OSA3LjcwMSwtMi44MTcgMTYuMDQsLTUuNDgxIDIzLjk5NywtMyA1LjM5NCwxLjY4MyA4Ljc3Miw5LjU2MyAxNS45OTgsMTAuOTk5IDkuNzg3LDEuOTQzIDE5LjM0MSwtMi4wODIgMjguOTk3LC0yIDAuMjE0LDYuMTE4IDcuMTQ2LDUuNTE5IDQuOTk5LDEzLjk5OCAyMi4xNCwtMTQuNTM1IDI1LjYzMywtNTQuNzU1IDEzLjk5OCwtODEuOTg5IC00LjUxNCwwLjg0OCAtNS42NDEsLTEuNjkyIC02Ljk5OSwtNCAtMS4yMTgsMi43ODEgLTYuMTQxLDEuODU3IC05Ljk5OSwyIC0xLjgzLC00LjUwMyAtNC4zNDcsLTguMzE3IC01LC0xMy45OTggNS41MTQsLTQuNDg1IDkuNDMsLTEwLjU2OCAxNC45OTgsLTE0Ljk5OCAtMS42NjMsLTYuNjA3IC05LjMzMywtNi4wMzkgLTguOTk5LC0xMi45OTkgMC4yNDgsLTUuMTU1IDQuODExLC01LjIxNyA3Ljk5OSwtOS45OTggLTAuODUsLTIuOTM0IC0yLjUxNiwxLjMgLTQuOTk5LDAgdiAtNiBjIC0zLjIyLC0wLjIyIC00LjIzLDEuNzY5IC03Ljk5OSwxIDIuNTY3LC0xMC41NjUgLTEwLjI5MywtNS43MDUgLTguOTk5LC0xNC45OTggMC4wMjEsLTMuNjg4IDEwLjA4OCwtMi41MTkgNy45OTksLTQuOTk5IC0yLjgwMSwxLjE0OSAtNS4xOTgsMS4xNDkgLTcuOTk5LDAgLTMuMjc2LC05LjYzNSAwLjgyMSwtMTUuNDcxIDcuOTk5LC0xNC45OTggNS45NTMsMC4zOTIgNS4xNTYsNy4xMyA5Ljk5OSw1Ljk5OSAyLjE3NSwtNC40NjMgLTAuOTk0LC04Ljc2OSAwLC0xNC45OTggLTcuMTYyLC02LjE3IC0xNS44NDcsLTEwLjgxNiAtMjQuOTk3LC0xNC45OTggLTIuNzIsLTUuOTQ3IDIuMDc3LC0xMC42MTkgNCwtMTQuOTk4IC0zLjcwNSwtMC42MjggLTcuOTcsLTAuNjk1IC04Ljk5OSwtNCAtMS4yODksLTE2Ljc5IDE0Ljc3NywtMTguMTg3IDI2Ljk5NywtMTUuOTk4IDIuODk2LC0yLjAwMyAtMi44ODMsLTMuNzA0IC0yLC03IDIuMjExLC0yLjEyMiA5LjE3NCwwLjUwOSA4LC00Ljk5OSAtMTIuMTk0LDIuODIxIC0zMS4yOTgsMTQuNjQ1IC00OS45OTQsOC45OTkgLTYuNjc5LC0yLjAxNyAtOS42MzEsLTguMjA0IC0xNS45OTgsLTEwLjk5OSAtNi45LDI1LjQxIC0yMy4xMyw1MS4wMyAtMjMuMDEsODUgeiBtIDg0Ljk4LC03Ny45OSBjIC0yLjI3NiwyLjM5NCAyLjE5MywzLjY4MiAxLDcuOTk5IC02Ljg5OCwyLjk1NSAtMTAuODEzLDMuMDkgLTE0Ljk5OCwtMSAtOC4wOTYsMS41NjkgLTEyLjM5NCw2LjkzOCAtMTIuOTk5LDE1Ljk5OCAyLjE5OCwyLjEzNSA3Ljg3NSwwLjc5MSA4Ljk5OSw0IC0xLjQ4NSw1Ljg5NiAtNy4wNzQsMTAuMDMyIC0zLDE1Ljk5OCAxMi45OTMsLTAuNjYxIDE0LjkxMSw5Ljc1MiAyNC45OTcsMTEuOTk4IDMuMjY2LC0yLjA2NiAzLjMxNiwtNy4zNDggNy45OTksLTcuOTk5IDIuNjc1LDAuOTkxIDUuMjcxLDIuMDYxIDguOTk4LDIgLTMuMjksLTYuNTE3IDIuMDM0LC0xMC42NjIgNCwtMTQuOTk4IC02LjY0NiwtOC41MjMgOC4zMTEsLTE1LjU5NyAxLC0yNC45OTcgLTUuMjM3LC0zLjUyNiAtMTMuNTYsMS43NTkgLTE2Ljk5OCwtNCAyLjY3LC0xMC45NCAtMS4zNiwtNS44IC05LC01IHogbSAtMTc3Ljk3LDM1IGMgNS44NjIsNy45MDQgMTQuMyw1LjMyIDE4Ljk5OCwxMS45OTggMC41OTgsNS45MzEgLTEuNzU0LDguOTExIC0xLDE0Ljk5OCAyLjAyNSwzLjk3NSA2LjU5Miw1LjQwNyA5Ljk5OSw3Ljk5OSAtMTYuOTczLDEuODIxIC04LjM4NywtMTguOTk1IC0xMi45OTksLTI0Ljk5NyAtOS4xOTYsMS45ODMgLTE3LjgzNCw5LjI3MSAtMjkuOTk2LDEwLjk5OSAtMTkuNDM4LDIuNzYxIC01MS4wMDQsNi45NzcgLTQ5Ljk5NCwyNS45OTcgMS4zNzUsMjUuOTAzIDQ4Ljg3MiwtMC42OTkgNTguOTkzLC00IDAuNjEsLTUuMzg5IC0xLjc5OSwtMTMuNzk3IDMsLTE0Ljk5OCAtMy45MjEsMTcuNzI3IDMuODA3LDMxLjE4IDE1Ljk5OCwzNS45OTYgSCA3NC4wMSBjIC01LjQzOCwxNS43MjcgMS44MDgsNDIuMDQ2IDE5Ljk5OCwzMy45OTUgOC4wMDgsLTEwLjI2OSAzLjMzNCwtMjUuMTM1IC00LC0zMi45OTYgMzMuOTYzLDIuNDU4IDQyLjY4OSwtNDcuMDE2IDE2Ljk5OCwtNTkuOTkyIGggLTcuOTk5IGMgLTExLjcwNSwtNi42MjYgLTExLjgyNiwtMjQuODM2IC0xOC45OTgsLTM1Ljk5NiAtMTcuNTk1LC0zLjY0IC0yMS4wMDgsMjAuMTkgLTEyLjk5NiwzMC45OSB6IG0gNDMuOTkzLDcyLjk5IGMgNi4yNjksLTkuMzg3IDIxLjc1OCwtNS41NDYgMjguOTk3LC0xMS45OTggMTIuNzg3LC0xMS4zOTcgMS4wMTgsLTI5LjIyNCAtNy45OTksLTMwLjk5NiAtOS4xNjEsLTEyLjI1MSAzLjMxMiwtMzkuOTc2IC0xMS45OTksLTQ1Ljk5NCAtMTIuNzU5LC0wLjc2MSAtMTcuNTE1LDYuNDgyIC0yNy45OTcsNy45OTkgMS4zNzQsNC45NTkgNC4yNTIsOC40MTIgNy45OTksMTAuOTk4IDM3LjY4OCwyLjg2IDI4LjE0Niw2NS45NyAtNi45OTksNjMuOTkyIDcuOTk0LDMuMDA2IDQuOTkzLDE3LjAwNCA4Ljk5OSwyMy45OTcgOS44NiwtMiAzLjMzLC05LjUxIDksLTE4IHogbSAzMzUuOTYsLTU4Ljk5IGMgMTMuNjU4LDEuMTU0IDI4LjI2MywyMy41MjYgNDEuOTk1LDIxLjk5NyA4LjcwNywtMC45NyAxMi43ODcsLTEzLjM2MSA5Ljk5OSwtMjAuOTk3IC0zLjY4MiwtMTAuMDgzIC00My4zOTQsLTIyLjA2MyAtNDguOTk0LC0yMy45OTcgMi44NSw3LjU1IDAuMTYsMTguMTYgLTMuMDEsMjMgeiBtIC0zODMuOTUsLTE1IGMgMC43NzksLTAuMjIxIDEuMTYzLC0wLjgzOCAxLC0yIC01LjcxMiwtMy4yODYgLTE1LjAxNSwtMi45ODIgLTIzLjk5NywtMi45OTkgLTI2LjY0NSwyMi4yNzMgMjMuMTQzLDMzLjA2OSAzNS45OTUsMTMuOTk4IC02Ljc5MiwtMS4xNiAtMTEuMTQ0LC04LjcxIC0xMi45OTgsLTkgeiBtIDE4Ni45NywzNCBjIC0xLjk2NywyLjY5OSAtMS44MDcsNy41MjYgLTYuOTk5LDcgLTEuODY2LC04LjU1NyAtMTUuNTUxLC05LjI0MyAtMTQuOTk5LDEuOTk5IDEuNDA2LDAuMjYxIDEuMTQsMi4xOTMgMiwzIDUuMzI2LDEuNjE3IDguOTQ3LC0zLjY1OSAxMS45OTksLTEgLTAuNjk3LDUuNjM1IC03LjE3OSw1LjQ4NiAtMTEuOTk5LDYuOTk5IC0wLjczOCw4LjA3IDExLjM5OCwzLjI2NyA4Ljk5OSwxMi45OTkgMi44MzMsLTAuMTY4IDQuMTY3LC0xLjgzMyA2Ljk5OSwtMiB2IDUuOTk5IGMgNi4zNzcsLTQuMjg4IDE5LjYzOCwtMS42OTMgMjAuOTk3LC0xMC45OTkgLTQuNzEsLTExLjI1IDUuNzMsLTMyLjczIC0xNywtMjQgeiBtIC0xODkuOTcsMTIuOTkgYyAtMTAuNjQ0LDYuMDM4IC0zOS45MDUsMjMuMzk0IC0zNy45OTYsMzguOTk1IDAuNDgzLDMuOTQ2IDQuODk5LDkuMTM1IDcuOTk5LDkuOTk5IDE5LjQzMyw1LjQxMyAzNS45MzEsLTI0LjgwOSA0MS45OTUsLTMyLjk5NiAtNS43MDIsLTMuNjIgLTYuNjczLC0xMS45OCAtMTEuOTk4LC0xNS45OSB6IG0gMTg0Ljk3LDM5IGMgNy4yODQsOS44NTUgMTguMTMxLC02LjU4OSA2Ljk5OSwtOS45OTkgLTQuNzEsMC45NSAtNy45MywzLjQgLTcsMTAgeiBtIC03LDI1IGMgMS4yNDYsNC4wODYgMi42NSw4LjAxNiA1LDEwLjk5OCBoIDUgYyAyLjQyNiwtMS4zNTEgMC42MjMsLTEuOTk4IDEuOTk5LC0yLjk5OSBoIDQgYyAtMC40MTgsMy40MTcgMC4zMDIsNS42OTcgMy45OTksNC45OTkgMC43MzUsLTUuNDg4IDQuNTA0LC01LjMyMSA5Ljk5OSwtMy45OTkgMC40MjksLTEuOTA0IDIuMTU0LC0yLjUxMyAyLC01IC02LjExOSwtMy44OCAtNi43OTIsLTEzLjIwNSAtMTcuOTk4LC0xMS45OTggMC4zOSwtMS40MjggMS4yLC0xLjY4NyAwLC0zIC05LjA4LC0wLjc1IC02Ljg5LDkuNzcgLTE0LDExIHogbSAxODMuOTgsNTEuOTkgYyAtMzIuMzkxLC0zLjQ5IC01MS44Nyw4LjY4OSAtNzAuOTkxLDIyLjk5NyAwLjM1OSwyLjg3NCAxLjY4LDkuNDM5IC0yLjk5OSwxMS45OTkgLTEwLjM5OCw0LjU0OCAtMTcuNTA4LC0zLjE1MyAtMjQuOTk3LC0yIC0xMC40NTMsMS42MDkgLTEzLjU4MiwxNi43MzEgLTI2Ljk5NiwxNS45OTggNDEuMTY1LDEwLjIwOSAxMDguOTYsMTguNzQgMTU4Ljk4LDEwLjk5OCAxMS4xNywtMS43MjkgMjIuMzI5LC02LjQ4NiAyOC45OTcsLTEzLjk5OCAtMTIuODMsLTE4Ljk4IC0zMiwtNDIuNzcgLTYxLjk5LC00NiB6IG0gLTIyNS45Nyw1NC45OSBjIC0xNi42NCwtOS41MDMgLTI2LjQwNSwtMzYuMDU1IC00NS45OTUsLTM1Ljk5NSAwLjYxLC0wLjA1NyAxLjE4NCwtMC4xNDkgMSwtMSAtMzEuOTMsLTMuMDUgLTU1LjE5MSwxMC42NDEgLTY5Ljk5MSwyNy45OTYgMzIuMzk4LC0yMS4zOTYgNjUuMDYsLTUuNzYxIDgxLjk5LDE0Ljk5OCAyLjgyNSwzLjQ2NCA1LjI2NCw5LjEyOSA4Ljk5OSwxMS45OTkgMjAuODMxLDE2LjAwNSA0OC43NjEsLTE4LjY3NyA2NC45OTIsLTIzLjk5NyAtNi4yNTUsMC4yNTYgLTguMTk5LC0zLjggLTEzLjk5OCwtNCAtMi44NCw5LjQ5IC0xMy40NiwxMS4yIC0yNyw5Ljk5IHogbSAxMiwtMTkuOTkgYyAtNy43NTcsLTcuNzc2IC0yMy44MDEsLTE3LjQ2IC0zNi45OTYsLTcuOTk5IDExLjc3NCw5Ljk0OSAyMS40NDEsMzUuNTM3IDQ1Ljk5NCwyMi45OTcgMi44OTgsLTEuNDM1IDEuODI4LC02LjgzOCA1LC03Ljk5OSA2LjQzMSwwLjc5NiAxMy41OTMsOC40OCAxOS45OTgsMi45OTkgLTAuNzUsLTE3LjYyIC0xOS41LC05LjMgLTMzLjk5LC0xMCB6IG0gMTAxLjk5LC03IGMgLTE5LjYxMiwwLjAzMSAtNDQuNjEyLC0xMS43NjcgLTQ5Ljk5NCw5Ljk5OSA1Ljk5OSw0Ljg5NiAxMS41NTQsMCAxOC45OTgsMSA4LjAxOSwxLjA3NyAxMyw4LjA3OCAyMC45OTcsNi45OTkgOC4xNjEsLTEuMTAxIDEzLjg1MSwtMTMuNjk3IDIxLjk5NywtMTQuOTk4IDExLjU0OCwtMS44NDQgMjQuMjgzLDEyLjU5OSAyNy45OTcsLTMuOTk5IC0xMS40NywtNS43NCAtMjUuNDUsMC45NyAtNDAuMDEsMSB6IG0gLTE1NC45OCwzMS45OSBjIC03LjUzNywtOC40NzkgLTIwLjA1NCwtMTcuMTY1IC0zOC45OTUsLTE3Ljk5NyAtMTMuMjE2LC0wLjU4MSAtNDAuNDQsMTAuNjQgLTQyLjk5NSwxOS45OTcgLTIuMTI0LDcuNzc5IDQuNzcxLDE4LjQ3MyA5Ljk5OSwyMi45OTcgMjEuOTQ1LDE4Ljk5IDgzLjg1MywxMi40NDUgMTA0Ljk5LC0yIC0yMS4xMywyLjIxIC0yNC43NCwtMTMuNzIgLTMyLjk5LC0yMyB6IG0gMTM1Ljk4LC0xNCBjIC02LjU0MSwtMC40NTcgLTguNjM2LC01LjM2MiAtMTUuOTk4LC00Ljk5OSAzLjA4LDMuMjcgMTEuNiw2LjM4IDE2LDUgeiIgaWQ9InBhdGg2MTEwOC03LTE4LTYtMiIgc3R5bGU9InN0cm9rZS13aWR0aDoxLjc1MSIgLz48cGF0aCBmaWxsPSIjZmZlYTUzIiBkPSJtIDIyMi45OSw1NC4wMjggYyAyLjgwMiwxLjg2NCAzLjg1NSw1LjQ3NyA0Ljk5OSw4Ljk5OSAtMS4xNzMsLTEuNDk0IC00LjE1NSwtMS4xNzggLTMuOTk5LC00IC0zLjgyNSwxLjUwOCAtOC4zMTEsMi4zNTQgLTExLjk5OSw0IDAsLTIuNjk0IDguMTQsLTUuODM3IDExLC04Ljk5OSB6IiBpZD0icGF0aDYxMTEwLTMtMTEtNy03IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmVhNTMiIGQ9Im0gMzI3Ljk3LDUzLjAyOCBjIDcuMDIyLDIuODEyIDkuMDI4LDEzLjYzMyAzLDE4Ljk5OCAwLjgwNiwzLjUyNyA1LjI2OCwzLjM5OCA0Ljk5OSw3Ljk5OSAwLjQwNiw1LjA3MiAtMy4zLDYuMDMyIC01Ljk5OSw3Ljk5OSAwLjk5LDMuMzQzIDQuMDEsNC42NTYgNSw3Ljk5OSAxLjM3Myw2LjEwOCAtNi41NTgsNS42NjkgLTEwLjk5OSw4Ljk5OSAtMy4zMDcsMi40NzkgLTQuMDU5LDcuNDQ2IC03Ljk5OSw3Ljk5OSAtOS4zMiwxLjMwOCAtMTEuMDE1LC05LjcyNiAtMTUuOTk4LC0xNi45OTggMC40NjYsLTQuNTM0IDMuODc1LC02LjEyNCA1Ljk5OSwtOC45OTkgLTMuMTI4LC0xLjg3MSAtNS45NDQsLTQuMDU0IC02Ljk5OSwtNy45OTkgLTAuMjMsLTMuODk3IDIuMTQ4LC01LjE4NSAzLC03Ljk5OSAtMTAuMDg1LC04Ljk5NyAzLjExMSwtMjUuNTk3IDEzLjk5OCwtMTUuOTk4IDQuMDYsLTAuNjA3IDYuMjcsLTMuMDY3IDEyLC0xLjk5OSB6IiBpZD0icGF0aDYxMTEyLTktMi03LTYiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI0ZGRUE1MyIgZD0ibSAxNzMuOTksNzAuMDI2IGMgMy43ODksNS4wMDYgMy44OTYsMTQuMjE3IC0zLDE1Ljk5OCAwLjY3LDQuNjYyIDUuNzc5LDQuODg2IDUsMTAuOTk5IC00LjcyOSw1LjQ2IC01LjM3OSwxNS4wMDkgLTExLjk5OSwxNS45OTggLTcuNzM0LDEuMTU1IC0xNC44MDEsLTExLjI4NSAtMjEuOTk4LC0xMy45OTkgLTAuODk3LC01LjU2MyAyLjE4NiwtNy4xNDYgNCwtOS45OTkgLTEuMzMzLC0zLjMzMyAtNS4wMzksLTQuMjk0IC02LC03Ljk5OSAxLjAxMywtMy42NTQgMi4wMDYsLTcuMzI2IDYsLTcuOTk5IC0xLjI4NSwtNC4wNDggLTQuNzQsLTUuOTI2IC01LC0xMC45OTkgMS43MTMsLTYuODk0IDExLjI3NywtMTIuMjQ2IDE4Ljk5OCwtNi45OTkgMTAuMTYsLTEwLjE1OCAyNS4zOSw2LjcwNyAxNCwxNSB6IiBpZD0icGF0aDYxMTE0LTMtNy02LTEiIHN0eWxlPSJmaWxsOiNiNWQ2NTM7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlLXdpZHRoOjEuNzUxIiAvPjxwYXRoIGQ9Im0gMjM3Ljk4LDEwNS4wMiBjIDUuNTI1LC0xMS4wNTIgMi4zNDcsLTM1LjY1MiAxNC45OTgsLTM2Ljk5NiAxNC40NjcsLTEuNTM2IDE2LjM5NSwyOS4zMzcgMTQuOTk4LDQyLjk5NSA0Ljk2Nyw1LjYwMiAxMS4wOTksOC4yNDggMTAuOTk5LDE2Ljk5OCAtMC4zMywyOC43NDEgLTg1Ljk0OSwzMy40MiAtODAuOTksLTYgMi43MzYsLTQuMjYzIDcuMDY4LC02LjkzIDkuOTk5LC0xMC45OTkgLTAuMTU0LC0xNS4wNzIgMC43MDYsLTQyLjk5NSAxMy45OTgsLTQyLjk5NSAxMy42MiwwLjAwMSAxMC45NywyNS4zNDkgMTUuOTksMzYuOTk1IHogbSA5LDQxIGMgNi4wNzYsLTAuNzExIDI5Ljc0OCwtMi43NTggMjkuOTk2LC0xNy45OTggMC4wOTcsLTUuOTA2IC02Ljg5NSwtMTIuOTg1IC05Ljk5OSwtMTQuOTk4IC0xOC4xMywtMTEuNzU3IC02Ny4wODMsLTguMTk2IC02Ny45OTEsMTQuOTk4IC0wLjUzMSwxMy41NzcgMjkuOTM1LDIzLjY4MiA0OC45OTQsMTguOTk4IC0xLjAzLDAuMyAtMi41OCwtMC44MiAtMSwtMSB6IE0gMjIyLjk5LDcxLjAyNiBjIC0xMi4wNjQsMS45MzggLTEzLjY0NCwyMy4wMTUgLTEzLjk5OSwzOS45OTUgNC4wNDEsLTEuMjkyIDYuODk5LC0zLjc2NyAxMS45OTksLTQgMC42ODYsLTcuMzEzIDAuNzk1LC0xNS4yMDMgNi45OTksLTE2Ljk5OCAzLjQ2MSwxLjIwNSA0LjEwNSw1LjIyNyA2LDcuOTk5IC0xLjg2LC0xMC44MDQgLTIuMzYsLTIyLjk3NiAtMTEsLTI2Ljk5NSB6IG0gMzAuOTksLTEgYyAtOC4wNzcsNC45MjcgLTEyLjI4MywxOS4wMzkgLTEwLjk5OSwyOS45OTYgMC4wOTMsLTE1LjcyMiAxNS41NTQsLTYuOTM5IDExLjk5OSw2IDQuMDE3LDEuNjQ5IDguNTE5LDIuODEyIDExLjk5OCw0Ljk5OSAtMC4zMSwtMTcuNjg1IC0xLjI2LC0zNC43MzUgLTEzLC00MC45OTQgeiBtIC0yOC45OSwyNC45OTcgYyAtMS4zMTQsMy4wMTkgLTAuNjg2LDcuOTggLTIsMTAuOTk5IDMuMjkxLC0wLjA0MiA0Ljk3OCwtMS42ODggOC45OTksLTEgLTAuMTAyLC00LjU2NCAtMC42MjEsLTguNzEyIC0zLC0xMC45OTkgLTAuMTksMS40ODMgLTIuNDIsMC45MTkgLTQsMS4wMDIgeiBtIDE4Ljk5LDkuOTk3IGMgNC4wMjEsLTAuNjg4IDUuNzA4LDAuOTU4IDguOTk5LDEgMC41MjksLTUuMTk1IC0xLjMxOCwtOC4wMTQgLTIsLTExLjk5OSAtNi4zMSwtMC4zMTMgLTYuMTYsNS44NDIgLTcsMTAuOTk5IHoiIGlkPSJwYXRoNjExMTYtOS01LTUtNCIgc3R5bGU9InN0cm9rZS13aWR0aDoxLjc1MSIgLz48cGF0aCBkPSJtIDE3MC45OSwxNDkuMDIgYyAtMi45MjEsMS4wNzkgLTMuMjM4LDQuNzYxIC0zLDguOTk5IC00LjYxNywtNS44ODUgMS41MjksLTE1LjgwNCAxMC45OTksLTEzLjk5OCAwLjMwMiwzLjYzNCAtNS4zMzEsMS4zMzUgLTYuOTk5LDMgMTQuMTI3LDIyLjI1OCA0MC4xNzEsMzkuOTYyIDc2Ljk5MSwzNS45OTYgMjUuMTcxLC0yLjcxMiA0My4xMDUsLTE4Ljk2NyA1NC45OTIsLTM0Ljk5NiAtMi41ODMsLTMuMTYgLTYuMjY1LDEgLTguOTk4LDEgNC4zMzUsLTguMTQ5IDE4LjM1NywtMi40NTQgMTUuOTk4LDcuOTk5IC0zLjczNSwwLjA2OCAtMS4wNDcsLTYuMjg2IC00LC03IC0xNy4xNzEsMjguNTcxIC00MS4zMSw2MS4zNDIgLTgxLjk5LDU2Ljk5MyAtMS41MzksLTAuNTI5IC0wLjA2MywtMS4wNDMgMSwtMSAtMjQuNTIsLTEyLjggLTQ1LC0yOS42NiAtNTQuOTksLTU2Ljk5IHogbSA1OCwzNS45OSBjIC0yMS45MDgsLTEuOTExIC0zNy44NzksLTEzLjkxNSAtNDkuOTk0LC0yMi45OTcgOC45OTgsMTIuMzMzIDE4LjA3NiwyNC41ODYgMzEuOTk2LDMxLjk5NiA0LjIwOSwtNy41NzYgMTYuNTEsLTcuMDQ2IDIxLjk5NywtMSA2Ljg0NSwtNS4wMTQgMTkuMDc0LC0wLjMzNSAxNy45OTgsOC45OTkgMjAuMjQzLC04LjQyMSAzOC4wNjksLTI0LjU4OCA0NS45OTQsLTQxLjk5NSAtMTMuMSwxNi44MiAtNDAuNzcsMjcuMzcgLTY4LDI0Ljk5IHogbSAtMTUsMTEgYyA3Ljg2OSw2LjQ3NCAyMy44MTksMTMuOTI3IDM1Ljk5NSw2Ljk5OSAtMC40NzgsLTkuOTIyIC0xMi41NTcsLTEyLjM0IC0xOS45OTcsLTYuOTk5IC0xLjMxLC03LjE4IC0xNS4wNCwtOC4xNiAtMTUuOTksMCB6IiBpZD0icGF0aDYxMTE4LTUtNi0yLTIiIHN0eWxlPSJzdHJva2Utd2lkdGg6MS43NTEiIC8+PHBhdGggZD0ibSAyOTYuOTgsMTYwLjAyIGMgLTcuOTI1LDE3LjQwNiAtMjUuNzUxLDMzLjU3MyAtNDUuOTk0LDQxLjk5NSAxLjA3NiwtOS4zMzQgLTExLjE1MywtMTQuMDEzIC0xNy45OTgsLTguOTk5IC01LjQ4NywtNi4wNDYgLTE3Ljc4OCwtNi41NzYgLTIxLjk5NywxIC0xMy45MiwtNy40MSAtMjIuOTk4LC0xOS42NjQgLTMxLjk5NiwtMzEuOTk2IDEyLjExNCw5LjA4MiAyOC4wODUsMjEuMDg2IDQ5Ljk5NCwyMi45OTcgMjcuMjQsMi4zNyA1NC45MSwtOC4xOCA2OCwtMjUgeiIgaWQ9InBhdGg2MTEyMC01LTctNy0zIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjEuNzUxIiAvPjxwYXRoIGZpbGw9IiNlMzE4MzYiIGQ9Im0gMTY3Ljk5LDEyOS4wMiBjIDE4LjM5MSwtMi4wMDUgMjIuMTg1LDE0LjE1NCAzMy45OTYsMjIuOTk3IDE0LjczNiwxMS4wMzIgNDMuNjMyLDE1LjM5NiA2NC45OTIsNCAxNC45ODYsLTcuOTk2IDE2LjE4OCwtMjIuODA1IDMwLjk5NiwtMjYuOTk3IDE5Ljc4NSwtNS42MDIgMzIuNjQ5LDkuMzQ0IDMyLjk5NiwyMy45OTcgMC41NTQsMjMuNDEyIC0zMS4wOSw0My4xMDggLTQ0Ljk5NCw0OS45OTQgLTM0LjQ1LDE3LjA2MiAtNzUuNzgxLDEyLjM0MyAtMTA1Ljk5LC02Ljk5OSAtMTUuMTg1LC05LjcyNCAtMzAuNzk4LC0yMi43MzIgLTMzLjk5NiwtMzYuOTk2IC0zLjE5LC0xNC4yMSA2LjM4LC0yOC4yOSAyMS45OSwtMjkuOTkgeiBtIDU4LDc2Ljk5IGMgLTEuMDYzLC0wLjA0MyAtMi41MzksMC40NzEgLTEsMSA0MC42OCw0LjM0OSA2NC44MTksLTI4LjQyMiA4MS45OSwtNTYuOTkzIDIuOTUzLDAuNzEzIDAuMjY1LDcuMDY3IDQsNyAyLjM1OSwtMTAuNDUzIC0xMS42NjMsLTE2LjE0OCAtMTUuOTk4LC03Ljk5OSAyLjczMywwIDYuNDE1LC00LjE2IDguOTk4LC0xIC0xMS44ODcsMTYuMDI5IC0yOS44MjEsMzIuMjg0IC01NC45OTIsMzQuOTk2IC0zNi44MTksMy45NjcgLTYyLjg2MywtMTMuNzM4IC03Ni45OTEsLTM1Ljk5NiAxLjY2OCwtMS42NjUgNy4zMDEsMC42MzUgNi45OTksLTMgLTkuNDcsLTEuODA2IC0xNS42MTYsOC4xMTMgLTEwLjk5OSwxMy45OTggLTAuMjM5LC00LjIzOCAwLjA3OSwtNy45MiAzLC04Ljk5OSA5Ljk4LDI3LjMzIDMwLjQ2LDQ0LjE5IDU0Ljk5LDU2Ljk5IHogbSAyMy45OSwzIGMgLTMuNDIxLDEuMzg0IC0xNS41NzEsMy4yOTggLTYuOTk5LDAgLTMuMDQyLDAuOTU4IC0xMC4xNDEsLTIuMTQxIC05Ljk5OSwyIDkuMjk2LDIuNjE5IDIyLjY2OSwwLjY4MSAyNS45OTcsLTYgLTcuNDgsMS4yOSAtOC40NSwxLjIxIC05LDQgeiIgaWQ9InBhdGg2MTEyMi0xLTMtMC0yIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0gNDIyLjk2LDIxMy4wMSBjIDkuNTcxLDkuMzE1IDMuOTI0LDI5LjU5OSAtMy45OTksMzUuOTk2IDQuNjU4LDEyLjUzNiAtMC42ODYsMjIuMDEyIC03Ljk5OSwyNy45OTYgOS4yMjksLTAuNjU0IDE1LjA1LC0xNi4zOTYgOS45OTksLTI4Ljk5NiAxOS4xNjcsNi45NzggNjAuNzAxLC05Ljc4NiA3NS45OSwzIDIuMjg4LDEuOTE0IDUuMjM1LDYuOTg5IDQuOTk5LDkuOTk5IC0xLjQyLDE4LjA5OSAtNTQuNDQ2LDEyLjM4OSAtNTkuOTkyLC0xIDcuOTEzLDkuODEzIDExLjE0OCwyOS4wODYgMCwzNy45OTYgNS41NjMsMS43NCAxMi43ODUsMTUuNjExIDEyLjk5OCwyOC45OTYgLTEwLjU0LDE2LjEwMiAtMzMuMDI2LDAuMTM2IC0yNC45OTcsLTE5Ljk5NyAtMjcuMDQ2LDcuOTI1IC01NS43NDEsLTIxLjQzOCAtMzkuOTk0LC00OC45OTQgMy4yNSwtNS42ODkgMTQuNDM3LC05LjM0MSAxNy45OTcsLTE1Ljk5OCA1LjYzLC0xMC41NSAtNC4zNywtMzEuMjYgMTQuOTksLTI5LjAxIHoiIGlkPSJwYXRoNjExMjQtMi05LTYtMiIgc3R5bGU9InN0cm9rZS13aWR0aDo1LjMzNSIgLz48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJtIDgwLjAwNSwyNTEgYyA3LjE3MiwxMS4xNiA3LjI5MywyOS4zNyAxOC45OTgsMzUuOTk2IGggNy45OTkgYyAyNS42OTEsMTIuOTc3IDE2Ljk2NSw2Mi40NSAtMTYuOTk4LDU5Ljk5MiA3LjMzNCw3Ljg2MSAxMi4wMDgsMjIuNzI4IDQsMzIuOTk2IC0xOC4xODksOC4wNTEgLTI1LjQzNiwtMTguMjY5IC0xOS45OTgsLTMzLjk5NSBoIDUuOTk5IGMgLTEyLjE5MSwtNC44MTYgLTE5LjkxOSwtMTguMjcgLTE1Ljk5OCwtMzUuOTk2IC00Ljc5OCwxLjIwMSAtMi4zODksOS42MDkgLTMsMTQuOTk4IC0xMC4xMjEsMy4zMDEgLTU3LjYxNywyOS45MDMgLTU4Ljk5Myw0IC0xLjAxLC0xOS4wMjEgMzAuNTU2LC0yMy4yMzYgNDkuOTk0LC0yNS45OTcgMTIuMTYyLC0xLjcyOCAyMC44LC05LjAxNiAyOS45OTYsLTEwLjk5OSA0LjYxMiw2LjAwMiAtMy45NzQsMjYuODE4IDEyLjk5OSwyNC45OTcgLTMuNDA3LC0yLjU5MiAtNy45NzQsLTQuMDI0IC05Ljk5OSwtNy45OTkgLTAuNzU0LC02LjA4NyAxLjU5OCwtOS4wNjcgMSwtMTQuOTk4IC00LjY5OCwtNi42NzggLTEzLjEzNiwtNC4wOTQgLTE4Ljk5OCwtMTEuOTk4IC04LjAwOSwtMTAuOCAtNC41OTYsLTM0LjYzIDEzLjAwMSwtMzEgeiIgaWQ9InBhdGg2MTEyNi02LTAtMS0xIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0gNDQ5Ljk2LDI3MyBjIDUuNjAxLDEuOTM0IDQ1LjMxMiwxMy45MTQgNDguOTk0LDIzLjk5NyAyLjc4OCw3LjYzNiAtMS4yOTIsMjAuMDI3IC05Ljk5OSwyMC45OTcgLTEzLjczMiwxLjUyOSAtMjguMzM3LC0yMC44NDMgLTQxLjk5NSwtMjEuOTk3IDMuMTcsLTQuODQgNS44NiwtMTUuNDUgMywtMjMgeiIgaWQ9InBhdGg2MTEyOC01LTYtNS02IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0gNzIuMDA2LDM0My45OSBjIC02LjA2Myw4LjE4OCAtMjIuNTYyLDM4LjQwOSAtNDEuOTk1LDMyLjk5NiAtMy4xLC0wLjg2NCAtNy41MTYsLTYuMDUzIC03Ljk5OSwtOS45OTkgLTEuOTEsLTE1LjYwMiAyNy4zNTIsLTMyLjk1NyAzNy45OTYsLTM4Ljk5NSA1LjMyNSw0IDYuMjk2LDEyLjM2IDExLjk5OCwxNS45OSB6IiBpZD0icGF0aDYxMTMwLTMtMC05LTgiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZD0ibSA0MDUuOTYsNDQ4Ljk4IGMgLTIuMzExLC00LjE1MyAyNC43MjksLTAuNjk2IDEzLjk5OSwwIC0zLjU0LC0xLjQ1IC0xMC40NSwtMS40NSAtMTQsMCB6IiBpZD0icGF0aDYxMTMyLTctNy03LTUiIHN0eWxlPSJzdHJva2Utd2lkdGg6MS43NTEiIC8+PHBhdGggZmlsbD0iI2ZmZWE1MyIgZD0ibSAyNzQuOTgsNDg0Ljk4IGMgNy4zNjIsLTAuMzYzIDkuNDU3LDQuNTQyIDE1Ljk5OCw0Ljk5OSAtNC40LDEuMzcgLTEyLjkyLC0xLjc0IC0xNiwtNSB6IiBpZD0icGF0aDYxMTM0LTYtNS01LTciIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2Y4YjljZCIgZD0ibSAxNTUsNTEuMDI5IGMgLTguMTQyLC0yLjEyMyAtMTIuMDE2LDUuMjg4IC0xNC45OTgsNC45OTkgLTkuODA0LC0yNy40NjIgLTQ2LjUwMSwtNDQuNzA1IC03Mi45OTEsLTM0Ljk5NiAyLjQ0OSwzLjAyNiA2LjUwNywtMC43NTggOS45OTksMCAtMi4xNSwyMy40ODEgNi4zOTIsMzYuMjcgMjEuOTk4LDQxLjk5NSBDIDg4LjA2Miw1My43MjQgNzQuMjQ0LDQyLjgwOCA3OS4wMSwyMS4wMzIgYyAzMy43MzksLTIuMzQ2IDY3Ljk5NywyNC43MTMgNTkuOTkyLDYwLjk5MyA1LjcxMiw2LjA3NSAtMS41NzcsMTcuNjMyIDQsMjIuOTk3IC0yNi4zODIsMS4wNzggLTM2Ljk5MywzOC4xIC0yMC45OTcsNTcuOTkzIC0xMS44NzcsOC4wMDUgLTI0LjcsLTEuNzA4IC0yNS45OTcsLTExLjk5OSAtMC42NTgsLTUuMjI2IDMuNDU5LC0xMi45MzYgMiwtMjEuOTk3IC0xLjIyOCwtNy42MjQgLTcuODk3LC0xNi4xNTMgLTE0Ljk5OCwtMTkuOTk4IC01LjY2NywtMy4wNjggLTEzLjYxNCwtMy4wNzUgLTE5Ljk5OCwtNy45OTkgLTE5LjcxMywtMTUuMjA4IC0yOC45MSwtNjAuNyAtOC45OTksLTgzLjk5IDE2Ljg5LC0xOS43NTUgNTcuNDEyLC0xOC42MjQgNzguOTksLTIgMTEuOTEsOS4xOTEgMTYuNzMsMjAuMDY5IDIyLDM2LjAwOSB6IiBpZD0icGF0aDYxMTM2LTItMi0zLTYiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI0Y4QjlDRCIgZD0ibSAzNTMuOTcsMTY0LjAyIGMgLTAuNDI5LC00Ljg0NCA1LjYwOSwtOC4zOTcgNi45OTksLTEyLjk5OSA2LjcyMSwtMjIuMjUzIC04LjEzMywtNDQuMDQxIC0yNy45OTYsLTQ1Ljk5NCA2LjIxMSwtNy43MDggLTEuMjUxLC0xNy4yMjggNC45OTksLTIzLjk5NyAxLjA0NywtNS43MTMgLTMuNDc5LC01Ljg1MyAtMy45OTksLTkuOTk5IDYuODE3LC0yOS44MjggMzAuNzg3LC01Mi4xMDEgNjIuOTkyLC00OS45OTQgNi4xOTQsMjAuMzc3IC04LjM3LDMzLjIzNyAtMTkuOTk4LDQxLjk5NSAxNi4xNDksLTQuNjYzIDI1LjkwMiwtMjAuNTU3IDIxLjk5NywtNDEuOTk1IDQuMzY3LC0wLjcwMSA1LjYzMiwxLjcwMSA5Ljk5OSwxIC0yOC41OTEsLTExLjc5MiAtNjMuNjg3LDguOTk1IC03Mi45OTEsMzQuOTk2IC0zLjExLC0zLjg4OCAtNi45OTQsLTcuMDA0IC0xNC45OTgsLTUuOTk5IDcuNzQsLTIxLjM3OSAxOC43NDQsLTM4LjM3OCA0MC45OTUsLTQ1Ljk5NSAxOS40OTUsLTYuNjczIDQ4LjM5NCwtMS4zMzUgNTkuOTkyLDEwLjk5OSAxOC43ODMsMTkuOTc1IDEwLjQ3OSw2Ny4yNjUgLTUuOTk5LDgyLjk4OSAtNS44ODQsNS42MTYgLTE1LjQyOSw1Ljg0NiAtMjQuOTk3LDExLjk5OSAtOC4zMzUsNS4zNiAtMTMuMjMsMTUuNDU3IC0xMi45OTgsMjUuOTk3IDAuMTIyLDUuNTQ1IDMuMDUsMTIuNDA5IDIsMTYuOTk4IC0xLjk5LDguNzcgLTE0LjQ0LDE1LjI1IC0yNS45OCw5Ljk5IHoiIGlkPSJwYXRoNjExMzgtOC00LTEtMSIgc3R5bGU9ImZpbGw6Izg5ZWI4MztmaWxsLW9wYWNpdHk6MTtzdHJva2Utd2lkdGg6MS43NTEiIC8+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0ibSAyOTkuOTgsNzAuMDI2IGMgLTMuMDc5LDMuNzcgLTMuMjczLDE1LjY1OCAyLDE2Ljk5OCAtMTMuMzc2LDEyLjcxMyAxNC4zNiw0MS41MTcgMjQuOTk3LDE4Ljk5OCAyMS40MywyLjA1NyAzOC43ODMsMTkuNCAzMi45OTUsNDAuOTk1IC0xLjgwNiw2LjczOCAtOC40MjgsMTQuODggLTEzLjk5OCwyMC45OTggLTUuODk2LDYuNDc0IC0xMy4zMywxMy45MTUgLTE4Ljk5NywxMy45OTggMi40MTUsMi4zMjMgLTEuNTYyLDIuNjc3IC0yLDUgLTIuNTU4LDAuMDQzIC0xLjIyLC0wLjc0MyAtMSwtMiAtMS42NDYsMi42MjggLTUuOTQsOS4yMjkgLTExLjk5OCw2Ljk5OSAwLjU2NSwwLjkzNCAyLjc3OSwxLjUxNSAwLjk5OSwyIC0yNC4wNzcsMTQuOTYgLTU5LjU3MSwyOS4xMDYgLTk5Ljk4NywyMC45OTggLTE4LjU1OSwtMy43MjQgLTM5LjMxOCwtMTMuNDUzIC01NS45OTMsLTI0Ljk5NyAtMTYuMDE2LC0xMS4wODcgLTM2LjA0LC0yNy40NDYgLTM5Ljk5NSwtMzkuOTk1IC03LjQzMywtMjMuNTgzIDEwLjIzMiwtNDIuMzE0IDMxLjk5NiwtNDMuOTk0IDUuNjU1LDMuOTcgNi4wOTQsOC45MzggMTIuOTk4LDguOTk5IDguOTE4LDAuMDc5IDExLjc5MSwtMTAuMzkxIDE1Ljk5OCwtMTYuOTk4IDAuMTM1LC00LjgwMSAtMC43NiwtOC41NzIgLTQsLTkuOTk5IDQuMzMsLTMuNDU1IDYuODQ4LC0xMi4wMjEgMywtMTcuOTk4IDE1LjA3NywtMzQuNjg5IDgwLjIwNCwtMzkuNjMxIDEwOS45OSwtMTUuOTk4IDAuODE3LDAuNjQ5IDAuNjI1LDIuNTAzIDAsMiA0LjQxLDMuNTQ5IDEwLjY0LDguMTAyIDEyLjk5LDEzLjk4OSB6IG0gLTk3Ljk5LC0zIGMgOC40MDYsMC4wNzQgMTIuNzc3LC0zLjg4NyAxOS45OTgsLTQuOTk5IDQuNTY5LDEuNDMgNS4zNDgsNi42NTEgMTAuOTk5LDYuOTk5IC0yLjg3OSwtNi4xMTkgLTQuNDU1LC0xMy41NDIgLTguOTk5LC0xNy45OTggLTcuNjUsNS4wMTggLTE1LjYzLDkuNzA5IC0yMiwxNS45OTggeiBtIDQxLjk5LDIgYyA0LjkzOSwtMS4wNiA2LjE5OCwtNS44MDEgMTAuOTk5LC02Ljk5OSA2LjE2MywxLjE4NCAxMy4zODgsNi41OSAxOS45OTcsNCAtOC41MDUsLTQuMTYgLTE0LjUwNSwtMTAuODI1IC0yMi45OTcsLTE0Ljk5OCAtMy40LDUuMjYgLTYuMzIsMTEuMDA1IC04LDE3Ljk5NyB6IG0gLTIxLjk5LC0xIGMgLTEzLjI5MiwwIC0xNC4xNTIsMjcuOTIyIC0xMy45OTgsNDIuOTk1IC0yLjkzMSw0LjA2OCAtNy4yNjMsNi43MzYgLTkuOTk5LDEwLjk5OSAtNC45NTgsMzkuNDIgODAuNjYsMzQuNzQxIDgwLjk5LDYgMC4xLC04Ljc1IC02LjAzMiwtMTEuMzk2IC0xMC45OTksLTE2Ljk5OCAxLjM5NiwtMTMuNjU3IC0wLjUzMSwtNDQuNTMgLTE0Ljk5OCwtNDIuOTk1IC0xMi42NTEsMS4zNDMgLTkuNDczLDI1Ljk0NCAtMTQuOTk4LDM2Ljk5NiAtNS4wMiwtMTEuNjQ2IC0yLjM3LC0zNi45OTQgLTE1Ljk5LC0zNi45OTQgeiBtIDQzLjk5LDg1Ljk5NCBjIC0xOC44NTYsOS45NDQgLTQ0LjI2Myw4LjcyNSAtNTkuOTkyLC0yIC05LjUxNywtNi40ODkgLTEzLjYzMywtMjAuMzEgLTI0Ljk5NywtMjMuOTk3IC0yMi42MjksLTcuMzQzIC00MS41MjUsOC45ODEgLTM2Ljk5NSwzMi45OTYgMC44NTksNC41NTYgNi42NjMsMTMuMTI3IDEwLjk5OSwxNy45OTggMTEuMTA5LDEyLjQ4MSAzMi43LDI2LjM5OCA1MC45OTQsMzEuOTk2IDM3LjEwNSwxMS4zNTQgNzcuNzYxLC0xLjE0OSA5OC45ODcsLTE2Ljk5OCA5Ljc4LC03LjMwMiAyMy4yNCwtMjAuNDM4IDI1Ljk5NywtMjguOTk3IDcuMTYzLC0yMi4yMzYgLTUuMTg3LC00MS4yMzMgLTMyLjk5NiwtMzcuOTk1IC0xNy41LDguNzEgLTE3LjkyLDE5LjU3IC0zMiwyNyB6IiBpZD0icGF0aDYxMTQwLTItMC0xLTgiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2UzMTgzNiIgZD0ibSAyNDcuOTgsMTQ3LjAyIGMgLTE5LjA2LDQuNjg1IC00OS41MjUsLTUuNDIxIC00OC45OTQsLTE4Ljk5OCAwLjkwOCwtMjMuMTk0IDQ5Ljg2MSwtMjYuNzU1IDY3Ljk5MSwtMTQuOTk4IDMuMTA0LDIuMDEzIDEwLjA5Niw5LjA5MiA5Ljk5OSwxNC45OTggLTAuMjQ4LDE1LjIzOSAtMjMuOTIsMTcuMjg2IC0yOS45OTYsMTcuOTk4IC0xLjU4LDAuMTggLTAuMDMsMS4zIDEsMSB6IiBpZD0icGF0aDYxMTQyLTItODEtNS05IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmOGI5Y2QiIGQ9Im0gMjI5Ljk5LDE5Ni4wMSBjIDcuNDQsLTUuMzQxIDE5LjUyLC0yLjkyMyAxOS45OTcsNi45OTkgLTEyLjE3Niw2LjkyOCAtMjguMTI2LC0wLjUyNSAtMzUuOTk1LC02Ljk5OSAwLjk0LC04LjE2IDE0LjY3LC03LjE4IDE1Ljk5LDAgeiIgaWQ9InBhdGg2MTE0NC0yLTgtMy0yIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0gMzg1Ljk3LDIwMi4wMSBjIC0wLjEyNywxOS4yMDQgLTMxLjEwNCw3LjU1NyAtMzcuOTk1LDE5Ljk5OCAtOC4xOSwtMTQuMDE4IC0yOS41MzUsLTE0LjExIC00Ni45OTQsLTE0Ljk5OCAzLjQ5NywzLjU5MyAxNC42NjUsMi4yMTYgMjMuOTk3LDQgOC44NjMsMS42OTMgMjEuMjIxLDUuMDMyIDIxLjk5NywxMy45OTggMS4xODYsMTMuNjggLTEzLjQxOSwxNS4wNzQgLTI1Ljk5NywxMi45OTkgLTE5LjcyOSwtMy4yNTYgLTQ4LjYzNSwtMy4zOCAtNTQuOTkzLC0xNy45OTggLTMuMDUxLDQuNDMyIDcuMzA0LDkuMzEzIDYsMTEuOTk5IC0zMC42MzcsMC42NTYgLTUyLjk5MiwzMS45NzYgLTc5Ljk5LDEyLjk5OSAtOC4yMzMsLTUuNzg3IC0xMC4yMzksLTE2LjAwMSAtMjEuOTk4LC0xOS45OTggNy40MzUsLTIuODk3IDE2LjM4NywtNC4yNzcgMTYuOTk4LC0xMy45OTggLTE0Ljk0MywyMy4yNyAtNjUuMzgxLDUuNzg2IC04Ny45ODksOC45OTkgMjcuMjc2LC0yLjA1MyA0OS41MTYsLTkuMTQzIDY1Ljk5MiwtMjEuOTk3IDM4LjQ0NSwyOC45OTkgMTE5Ljc1LDI1LjAzOCAxNTMuOTgsLTUgMTUuNzMsNS4xOCA0MS41NSwxNy44IDY2Ljk4LDkgeiIgaWQ9InBhdGg2MTE0Ni02LTEtMy03IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNlMzE4MzYiIGQ9Im0gNDUwLjk2LDIzNC4wMSBjIC0zLjE3NCw0LjMxMyAtNS4yMjMsOS4zMzMgLTQsMTIuOTk4IC03Ljg3MiwwLjUzNCAtMTQuNDUzLDEuNTgzIC0yMS45OTcsMCAtMC44MzMsLTMuODE2IDUuMTUxLC04LjYxNSA0Ljk5OSwtMTQuOTk4IDUuNjUsLTQuNjkgMTcuMTIsLTMuMjQgMjEsMiB6IiBpZD0icGF0aDYxMTQ4LTEtOC0wLTkiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2ZmZWE1MyIgZD0ibSAzNDcuOTcsMjMyLjAxIGMgOS40MDksMS41ODkgMTguMjUzLDMuNzQ1IDI2Ljk5Niw2IC0yLjQ3OSw1LjIyNSAtNy41MzIsNi4zMzkgLTUuOTk5LDE1Ljk5OCAwLjg4OCw1LjU5IDYuNjA0LDguNzQ1IDcuOTk5LDEzLjk5OCAzLjE1OCwxMS44ODIgLTQuNTYyLDE4LjM0MyAtNi45OTksMzEuOTk2IC0xMC45NjMsMy4zMDcgLTE1Ljc1OSwtNi40MzMgLTIxLjk5NywtMTAuOTk4IC0xMi43MjIsMS4yOTUgLTIyLjcyLC00LjAxNiAtMzIuOTk2LC0yIC0xLjY4OCwtMi4zMTIgLTAuMzI4LC03LjY3IC0yLjk5OSwtOC45OTkgLTQuOTEsLTEuNjk5IC0xMC4wOTgsLTEuNTg2IC0xMy45OTksLTEuOTk5IC0zLjcwMSwtMTEuODMyIC00Ljk3LC0yNy45MzQgLTEsLTM5Ljk5NiAxNi4xOSwyLjQ4IDQzLjM1LDEzLjI4IDUxLC00IHoiIGlkPSJwYXRoNjExNTAtMC03OS01LTUiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2UzMTgzNiIgZD0ibSA0MDYuOTYsMjM3IGMgLTEwLjMyMiwxMy40NjIgLTI2LjIsMjEuOTM1IC0yMS45OTcsNDUuOTk1IDMuMTEyLDE3LjgxMiAyMC4xNzEsMjkuNjI0IDQyLjk5NSwyNS45OTYgLTQuMDM2LDguNzU5IDIuOTA2LDE3LjU4NCAxLjk5OSwyMi45OTcgLTExLjk3NCwzLjY3MyAtMTQuODkyLC05LjU1IC0yMi45OTcsLTEyLjk5OCAtMjAuNzUsMy40MTkgLTMwLjQwMywtNC4yNTkgLTM0Ljk5NSwtMTYuOTk4IDAuODg3LC0xMi4zNDcgOS42MTQsLTE5LjYxNiA2Ljk5OSwtMzIuOTk2IC0xLjYxNCwtOC4yNiAtOS4wOTIsLTExLjcxMSAtNy45OTksLTE5Ljk5OCAxLjYsLTEyLjA2IDE5LjksLTEzLjU4IDM2LC0xMiB6IiBpZD0icGF0aDYxMTUyLTUtMDMtOC00IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmVhNTMiIGQ9Im0gMTgyLjk5LDI0MCBjIDYuMzY3LDIuNzk1IDkuMzE5LDguOTgyIDE1Ljk5OCwxMC45OTkgMTguNjk2LDUuNjQ2IDM3LjgsLTYuMTc3IDQ5Ljk5NCwtOC45OTkgMS4xNzUsNS41MDggLTUuNzg4LDIuODc3IC04LDQuOTk5IC0wLjg4MywzLjI5NSA0Ljg5Niw0Ljk5NyAyLDcgLTEyLjIxOSwtMi4xODkgLTI4LjI4NiwtMC43OTIgLTI2Ljk5NywxNS45OTggMS4wMjksMy4zMDQgNS4yOTQsMy4zNzIgOC45OTksNCAtMS45MjIsNC4zNzkgLTYuNzE5LDkuMDUxIC00LDE0Ljk5OCA5LjE1LDQuMTgyIDE3LjgzNSw4LjgyOCAyNC45OTcsMTQuOTk4IC0wLjk5NCw2LjIyOSAyLjE3NSwxMC41MzUgMCwxNC45OTggLTQuODQzLDEuMTMxIC00LjA0NiwtNS42MDcgLTkuOTk5LC01Ljk5OSAtNy4xNzgsLTAuNDczIC0xMS4yNzUsNS4zNjMgLTcuOTk5LDE0Ljk5OCAyLjgwMSwxLjE0OSA1LjE5OCwxLjE0OSA3Ljk5OSwwIDIuMDg5LDIuNDggLTcuOTc4LDEuMzExIC03Ljk5OSw0Ljk5OSAtMS4yOTQsOS4yOTMgMTEuNTY2LDQuNDMzIDguOTk5LDE0Ljk5OCAzLjc2OSwwLjc2OSA0Ljc3OSwtMS4yMiA3Ljk5OSwtMSB2IDYgYyAyLjQ4MywxLjMgNC4xNDksLTIuOTM0IDQuOTk5LDAgLTMuMTg4LDQuNzgxIC03Ljc1LDQuODQzIC03Ljk5OSw5Ljk5OCAtMC4zMzQsNi45NiA3LjMzNSw2LjM5MiA4Ljk5OSwxMi45OTkgLTUuNTY4LDQuNDMgLTkuNDg0LDEwLjUxMyAtMTQuOTk4LDE0Ljk5OCAwLjY1Miw1LjY4MSAzLjE2OSw5LjQ5NSA1LDEzLjk5OCAzLjg1NywtMC4xNDMgOC43ODEsMC43ODEgOS45OTksLTIgMS4zNTgsMi4zMDggMi40ODUsNC44NDggNi45OTksNCAxMS42MzUsMjcuMjM0IDguMTQyLDY3LjQ1NCAtMTMuOTk4LDgxLjk4OSAyLjE0NywtOC40NzkgLTQuNzg1LC03Ljg4IC00Ljk5OSwtMTMuOTk4IC05LjY1NiwtMC4wODIgLTE5LjIxLDMuOTQzIC0yOC45OTcsMiAtNy4yMjYsLTEuNDM2IC0xMC42MDQsLTkuMzE2IC0xNS45OTgsLTEwLjk5OSAtNy45NTcsLTIuNDgxIC0xNi4yOTYsMC4xODMgLTIzLjk5NywzIC02Ljk4OSwtMy42NzYgLTEzLjAxLC04LjMyIC0yMi45OTcsLTguOTk5IDIuMjY4LC0xMC4yMTkgMTMuNjU2LC0xMi4zMjUgMTguOTk4LC0xOS45OTggNS45NiwtOC41NjEgNi4wMjksLTE5LjI3NiA3Ljk5OSwtMzIuOTk1IC01LjI1MiwxNi43NDUgLTYuNjE0LDM3LjM4IC0yMy45OTcsNDEuOTk0IC01LjkxLC05LjI1NCA1LjA1MSwtMTIuMTc2IDcuOTk5LC0xNS45OTggMTcuODA5LC0yMy4wODQgMi4xMTEsLTc0LjI3MiAyLC0xMDcuOTkgLTAuMSwtMzMuOTggMTYuMTMsLTU5LjYgMjMuMDEsLTg1IHogbSAtMTQsMTYzLjk4IGMgMC4zODgsLTQuNTMgMy4zMzksLTE2LjMxMiAtMSwtMTguOTk3IDIuMiw2LjcyIC0yLjMxLDE1LjUgMSwxOSB6IG0gMTIsMTEgYyAxLjIxNCwtNC45MzkgMS44MjQsLTEzLjMwMiAtMywtMTQuOTk4IDIuMDQsMy45NyAxLjIxLDEwLjc5IDMsMTUgeiIgaWQ9InBhdGg2MTE1NC04LTItNS0zIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNlMzE4MzYiIGQ9Im0gMTgxLjk5LDIzOSBjIC05LjUwNiwyMy44MjMgLTE5LjgwMiw0Ni44NTYgLTIyLjk5Nyw3Ni45OSAtNC4yMDMsMS43OTcgLTYuNjU2LDUuMzQzIC0xMC45OTksNyAtNS4wOTQsLTkuMzE1IC0xNC41ODgsLTkuNDQ0IC0xNy45OTgsLTE5Ljk5OCAtMy45NywtMTIuMjg5IDYuNTcyLC0zNC42NTYgLTguOTk5LC0zNy45OTUgMTguOTUzLC0xMC4wNDMgMzcuODQ2LC0yMC4xNDcgNTEuOTk0LC0zNC45OTYgNC4yNiwxLjc2IDcuMjYsNC43NiA5LjAxLDkgeiIgaWQ9InBhdGg2MTE1Ni0xLTQtMS0xIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0gMjUzLjk4LDI1MiBjIDMuNDM4LDUuNzU4IDExLjc2MSwwLjQ3MyAxNi45OTgsNCA3LjMxMSw5LjQgLTcuNjQ2LDE2LjQ3NCAtMSwyNC45OTcgLTEuOTY2LDQuMzM2IC03LjI5LDguNDgxIC00LDE0Ljk5OCAtMy43MjcsMC4wNjEgLTYuMzIzLC0xLjAwOSAtOC45OTgsLTIgLTQuNjgzLDAuNjUxIC00LjczMyw1LjkzMyAtNy45OTksNy45OTkgLTEwLjA4NiwtMi4yNDYgLTEyLjAwNCwtMTIuNjU5IC0yNC45OTcsLTExLjk5OCAtNC4wNzQsLTUuOTY2IDEuNTE1LC0xMC4xMDIgMywtMTUuOTk4IC0xLjEyNCwtMy4yMDkgLTYuODAxLC0xLjg2NCAtOC45OTksLTQgMC42MDUsLTkuMDYxIDQuOTAyLC0xNC40MjkgMTIuOTk5LC0xNS45OTggNC4xODUsNC4wOSA4LjEsMy45NTUgMTQuOTk4LDEgMS4xOTMsLTQuMzE3IC0zLjI3NiwtNS42MDUgLTEsLTcuOTk5IDcuNjQsLTAuOCAxMS42NywtNS45NCA5LDUgeiIgaWQ9InBhdGg2MTE1OC0yLTAtNC0yIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNlMzE4MzYiIGQ9Im0gMzIxLjk4LDQ2OC45OCBjIC0xNy4zMzQsNS4wNzIgLTM2LjY1MiwtNi4wODUgLTUwLjk5MywtMiAtOS4yNzEsMi42NDEgLTkuODQ5LDEwLjcxOSAtMTYuOTk4LDE2Ljk5OCA1LjQ0MiwtMTIuNTMxIDEzLjQzNSwtMjMuMzQzIDEyLjk5OCwtMzkuOTk1IC0wLjM5LC0xNC44ODYgLTcuMDIxLC0yOC45NjggLTQuOTk5LC00MS45OTUgNi42NjgsMy41NjIgOS43NDMsLTEuNjg3IDkuOTk5LC00Ljk5OSAwLjc0LC05LjU5OSAtMjAuNDM4LC0xMi43OTQgLTE4Ljk5OCwtMjMuOTk3IDQuMzY0LC0zLjkzNCA2Ljc1MywtNS42NTYgNS45OTksLTEwLjk5OSAtMC44NzgsLTYuMjMgLTcuMjkyLC00LjI4MyAtNy45OTksLTkuOTk4IDcuNTg0LC00LjEwMyAyMy4yODIsLTUuNzU3IDE0Ljk5OCwtMjAuOTk4IDkuNTIxLC0xMi45NDEgLTUuMzQxLC0yNS42NDYgLTE3Ljk5NywtMTYuOTk3IC0yLjcxMywtMTEuMzc5IDYuNTkzLC0xMC43MzggNy45OTksLTE3Ljk5OCA0LjQzOCwtMC4xMDUgNS44NjgsMi43OTcgMTAuOTk4LDIgLTAuMTEzLC01LjkxMSAxLjA0LC0xMS43ODcgNSwtMTUuOTk4IDAuNDc5LC0zLjE0NiAtMS40MjUsLTMuOTA5IC0yLC01Ljk5OSA4LjMzOSwtOC42NzMgNi45NjgsLTI4Ljc5MyAtMTIuOTk4LC0yMi45OTggLTIuNDc2LC0yLjU5MyAwLjk3MiwtNC45MDMgMCwtOC45OTkgLTAuNDMxLC0yLjIzNiAtNC45MjgsLTAuNDA1IC03LC0xIDcuMjM5LC0xMy43MTYgMzAuMzgsLTkuOTk5IDQ0Ljk5NSwtNyAtNy42NjEsMjMuODk4IDQuOTcsNTEuNzM4IDEwLjk5OCw3OC45OSA0LjQyMiwxOS45ODggMTEuOTk2LDM4LjQxNyAxMy45OTgsNTYuOTkzIDIuOTE5LDAuOTYxIDguODU5LDExLjQwMyA4Ljk5OSwxNC45OTggNi4xNTIsNi44OTIgMTguNzcyLDE4LjIwMyAyMC45OTgsMjkuOTk2IDUuNDQsMjguODggLTIzLjgyLDMwLjI1IC0yOCw1Mi4wMiB6IiBpZD0icGF0aDYxMTYwLTQtNS05LTMiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2ZmZWE1MyIgZD0ibSAxMDIsMzcyLjk5IGMgLTQuMDA2LC02Ljk5MyAtMS4wMDUsLTIwLjk5MSAtOC45OTksLTIzLjk5NyAzNS4xNDUsMS45NzggNDQuNjg3LC02MS4xMzIgNi45OTksLTYzLjk5MiAtMy43NDcsLTIuNTg2IC02LjYyNSwtNi4wMzkgLTcuOTk5LC0xMC45OTggMTAuNDgyLC0xLjUxNyAxNS4yMzgsLTguNzYgMjcuOTk3LC03Ljk5OSAxNS4zMTEsNi4wMTkgMi44MzcsMzMuNzQzIDExLjk5OSw0NS45OTQgOS4wMTcsMS43NzIgMjAuNzg2LDE5LjU5OSA3Ljk5OSwzMC45OTYgLTcuMjM5LDYuNDUyIC0yMi43MjgsMi42MTEgLTI4Ljk5NywxMS45OTggLTUuNjcsOC40OSAwLjg2LDE2IC05LDE4IHoiIGlkPSJwYXRoNjExNjItNS01LTEtMyIgc3R5bGU9InN0cm9rZS13aWR0aDo1LjMzNSIgLz48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJtIDc2LjAwNSwyOTAgYyAtMTIuODUzLDE5LjA3MSAtNjIuNjQsOC4yNzUgLTM1Ljk5NSwtMTMuOTk4IDguOTgxLDAuMDE3IDE4LjI4NSwtMC4yODcgMjMuOTk3LDIuOTk5IDAuMTYzLDEuMTYyIC0wLjIyMSwxLjc3OSAtMSwyIDEuODU0LDAuMjkgNi4yMDYsNy44NCAxMi45OTgsOSB6IiBpZD0icGF0aDYxMTY0LTAtNi0yLTQiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0ibSAyNjYuOTgsMzM4Ljk5IGMgLTEuMzU5LDkuMzA2IC0xNC42Miw2LjcxMSAtMjAuOTk3LDEwLjk5OSB2IC01Ljk5OSBjIC0yLjgzMywwLjE2NyAtNC4xNjcsMS44MzIgLTYuOTk5LDIgMi4zOTksLTkuNzMyIC05LjczNywtNC45MjkgLTguOTk5LC0xMi45OTkgNC44MiwtMS41MTMgMTEuMzAxLC0xLjM2NCAxMS45OTksLTYuOTk5IC0zLjA1MSwtMi42NTkgLTYuNjcyLDIuNjE3IC0xMS45OTksMSAtMC44NiwtMC44MDcgLTAuNTk0LC0yLjczOSAtMiwtMyAtMC41NTMsLTExLjI0MiAxMy4xMzIsLTEwLjU1NiAxNC45OTksLTEuOTk5IDUuMTkyLDAuNTI2IDUuMDMyLC00LjMwMSA2Ljk5OSwtNyAyMi43MywtOC43MiAxMi4yOSwxMi43NiAxNywyNCB6IiBpZD0icGF0aDYxMTY2LTgtMS0zLTEiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0ibSAyNTEuOTgsMzgwLjk5IGMgMS4yLDEuMzEzIDAuMzksMS41NzIgMCwzIDExLjIwNiwtMS4yMDcgMTEuODc5LDguMTE4IDE3Ljk5OCwxMS45OTggMC4xNTQsMi40ODcgLTEuNTcxLDMuMDk2IC0yLDUgLTUuNDk1LC0xLjMyMiAtOS4yNjQsLTEuNDg5IC05Ljk5OSwzLjk5OSAtMy42OTcsMC42OTggLTQuNDE3LC0xLjU4MiAtMy45OTksLTQuOTk5IGggLTQgYyAtMS4zNzYsMS4wMDEgMC40MjcsMS42NDggLTEuOTk5LDIuOTk5IGggLTUgYyAtMi4zNSwtMi45ODIgLTMuNzUzLC02LjkxMiAtNSwtMTAuOTk4IDcuMTEsLTEuMjMgNC45MiwtMTEuNzUgMTQsLTExIHoiIGlkPSJwYXRoNjExNjgtMC03LTQtMSIgc3R5bGU9InN0cm9rZS13aWR0aDo1LjMzNSIgLz48cGF0aCBmaWxsPSIjZmZlYTUzIiBkPSJtIDQ4My45Niw0ODkuOTcgYyAtNi42NjgsNy41MTIgLTE3LjgyNywxMi4yNyAtMjguOTk3LDEzLjk5OCAtNTAuMDIyLDcuNzQyIC0xMTcuODEsLTAuNzg5IC0xNTguOTgsLTEwLjk5OCAxMy40MTQsMC43MzMgMTYuNTQzLC0xNC4zODkgMjYuOTk2LC0xNS45OTggNy40ODksLTEuMTUzIDE0LjU5OSw2LjU0OCAyNC45OTcsMiA0LjY3OSwtMi41NiAzLjM1OCwtOS4xMjUgMi45OTksLTExLjk5OSAxOS4xMjEsLTE0LjMwOCAzOC42MDEsLTI2LjQ4NyA3MC45OTEsLTIyLjk5NyAyOS45OCwzLjI0IDQ5LjE1LDI3LjAzIDYxLjk5LDQ2IHogbSAtNjQsLTQwLjk5IGMgMTAuNzMsLTAuNjk2IC0xNi4zMSwtNC4xNTMgLTEzLjk5OSwwIDMuNTUsLTEuNDUgMTAuNDYsLTEuNDUgMTQsMCB6IiBpZD0icGF0aDYxMTcwLTAtOS0yLTMiIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2UzMTgzNiIgZD0ibSAyMjIuOTksNDg4Ljk3IGMgNS43OTksMC4yIDcuNzQzLDQuMjU2IDEzLjk5OCw0IC0xNi4yMzEsNS4zMiAtNDQuMTYxLDQwLjAwMiAtNjQuOTkyLDIzLjk5NyAtMy43MzUsLTIuODcgLTYuMTc0LC04LjUzNSAtOC45OTksLTExLjk5OSAtMTYuOTMsLTIwLjc1OSAtNDkuNTkyLC0zNi4zOTUgLTgxLjk5LC0xNC45OTggMTQuOCwtMTcuMzU1IDM4LjA2MSwtMzEuMDQ2IDY5Ljk5MSwtMjcuOTk2IDAuMTg0LDAuODUxIC0wLjM5LDAuOTQzIC0xLDEgMTkuNTksLTAuMDYgMjkuMzU0LDI2LjQ5MiA0NS45OTUsMzUuOTk1IDEzLjUzLDEuMjIgMjQuMTUsLTAuNDkgMjYuOTksLTkuOTkgeiIgaWQ9InBhdGg2MTE3Mi03LTAtOC04IiBzdHlsZT0ic3Ryb2tlLXdpZHRoOjUuMzM1IiAvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0gMjQxLjk4LDQ4OC45NyBjIC02LjQwNCw1LjQ4MSAtMTMuNTY3LC0yLjIwMyAtMTkuOTk4LC0yLjk5OSAtMy4xNzEsMS4xNjEgLTIuMTAxLDYuNTY0IC01LDcuOTk5IC0yNC41NTMsMTIuNTQgLTM0LjIyLC0xMy4wNDggLTQ1Ljk5NCwtMjIuOTk3IDEzLjE5NSwtOS40NjEgMjkuMjM4LDAuMjIzIDM2Ljk5Niw3Ljk5OSAxNC40OSwwLjcxIDMzLjI0LC03LjYxIDMzLjk5LDEwIHoiIGlkPSJwYXRoNjExNzQtNy0yNS05LTciIHN0eWxlPSJzdHJva2Utd2lkdGg6NS4zMzUiIC8+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0ibSAzNDkuOTcsNDcwLjk4IGMgLTMuNzE0LDE2LjU5OCAtMTYuNDQ5LDIuMTU1IC0yNy45OTcsMy45OTkgLTguMTQ2LDEuMzAxIC0xMy44MzYsMTMuODk3IC0yMS45OTcsMTQuOTk4IC03Ljk5NywxLjA3OSAtMTIuOTc5LC01LjkyMiAtMjAuOTk3LC02Ljk5OSAtNy40NDQsLTEgLTEyLjk5OSwzLjg5NiAtMTguOTk4LC0xIDUuMzgyLC0yMS43NjYgMzAuMzgyLC05Ljk2OCA0OS45OTQsLTkuOTk5IDE0LjU4LC0wLjAzIDI4LjU2LC02Ljc0IDQwLjAxLC0xIHoiIGlkPSJwYXRoNjExNzYtOS0zLTMtNCIgc3R5bGU9InN0cm9rZS13aWR0aDo1LjMzNSIgLz48cGF0aCBkPSJtIDE4Ny45OSw1MjYuOTcgYyAtMjEuMTM0LDE0LjQ0NSAtODMuMDQyLDIwLjk5IC0xMDQuOTksMiAtNS4yMjksLTQuNTI0IC0xMi4xMjMsLTE1LjIxOCAtOS45OTksLTIyLjk5NyAyLjU1NSwtOS4zNTcgMjkuNzc4LC0yMC41NzggNDIuOTk1LC0xOS45OTcgMTguOTQxLDAuODMyIDMxLjQ1OCw5LjUxOSAzOC45OTUsMTcuOTk3IDguMjUsOS4yOCAxMS44NiwyNS4yMSAzMi45OSwyMyB6IiBpZD0icGF0aDYxMTc4LTItOC0wLTIiIHN0eWxlPSJzdHJva2Utd2lkdGg6MS43NTEiIC8+PC9nPjwvZz48L3N2Zz4g';
+var ARROW_H = 1.4;
+var DEF = { mode:'eye', obj:'clown', ox:-3, ex:-1.4, ey:1.5, mb:0.4, mt:2.2, sx:-3, sy:1.6, normals:true, virtual:true, trace:false };
+var P = {}, narrT = null, drag = null, grab = [0, 0], trail = [];
+/* ══════════ geometry ══════════ */
+function objH(){ return P.obj === 'arrow' ? ARROW_H : CLOWN_H; }
+function objTop(){ return objH(); }
+function eye(){
+/* a person facing the mirror: the eye is in the same vertical plane as the head and the feet */
+if (P.obj === 'self') return { x:P.ox, y:CLOWN_H*(1 - EYE_V) };
+return { x:P.ex, y:P.ey };
+}
+/* where the light from (x, y) that reaches the eye meets the plane of the mirror */
+function mirrorHit(x, y){ var e = eye(); return e.y + (y - e.y)*e.x/(e.x + x); }
+function onMirror(ym){ return ym >= P.mb - 1e-9 && ym <= P.mt + 1e-9; }
+function needed(){
+var x = P.ox, a = mirrorHit(x, 0), b = mirrorHit(x, objTop());
+return { lo:Math.min(a, b), hi:Math.max(a, b) };
+}
+function visible(){
+/* the heights of the object that the eye sees: ym is linear in y */
+var x = P.ox, e = eye(), k = e.x/(e.x + x), y0 = 0, y1 = objTop();
+/* ym = e.y + (y - e.y) k  ->  y = e.y + (ym - e.y)/k */
+var ya = e.y + (P.mb - e.y)/k, yb = e.y + (P.mt - e.y)/k;
+var lo = Math.max(y0, Math.min(ya, yb)), hi = Math.min(y1, Math.max(ya, yb));
+return hi > lo ? { lo:lo, hi:hi, frac:(hi - lo)/(y1 - y0) } : { lo:0, hi:0, frac:0 };
+}
+/* ══════════ colors ══════════ */
+function C(){
+var cb = fmA11y.cb(), hc = fmA11y.hc();
+return { bg: hc ? '#000' : '#eef3f6', behind: hc ? '#101010' : '#dde5ea', wall: hc ? '#fff' : '#6b7480', mirror: hc ? '#66ccff' : '#2a4f8f',
+inc: cb ? '#0072b2' : '#1f5fd6', ref: cb ? '#009e73' : '#0a9a3c', virt: cb ? '#d55e00' : '#d62828', norm: cb ? '#e69f00' : '#f08a00',
+miss: hc ? '#888' : '#9aa3ae', text: hc ? '#fff' : '#1d232a', floor: hc ? '#444' : '#c8b8a0', wedge: hc ? 'rgba(255,255,0,0.12)' : 'rgba(255,214,90,0.28)',
+eye: hc ? '#fff' : '#222', light: cb ? '#e69f00' : '#ff3fa0' };
+}
+/* ══════════ drawing helpers ══════════ */
+function line(x1, y1, x2, y2, col, lw, dash, alpha){ g.save(); g.globalAlpha = alpha == null ? 1 : alpha; g.strokeStyle = col; g.lineWidth = lw || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(X(x1), Y(y1)); g.lineTo(X(x2), Y(y2)); g.stroke(); g.restore(); }
+function arrowHead(x1, y1, x2, y2, col){
+var a = Math.atan2(Y(y2) - Y(y1), X(x2) - X(x1)), px = X((x1 + x2)/2), py = Y((y1 + y2)/2), h = 8;
+g.save(); g.fillStyle = col; g.beginPath(); g.moveTo(px + h*Math.cos(a), py + h*Math.sin(a));
+g.lineTo(px - h*Math.cos(a - 0.4), py - h*Math.sin(a - 0.4)); g.lineTo(px - h*Math.cos(a + 0.4), py - h*Math.sin(a + 0.4)); g.closePath(); g.fill(); g.restore();
+}
+function toEdge(x, y, dx, dy){
+var t = 1e9;
+if (dx > 1e-9) t = Math.min(t, (XMAX - x)/dx); else if (dx < -1e-9) t = Math.min(t, (XMIN - x)/dx);
+if (dy > 1e-9) t = Math.min(t, (YTOP - y)/dy); else if (dy < -1e-9) t = Math.min(t, (YBOT - y)/dy);
+return [x + t*dx, y + t*dy];
+}
+/* the object at x (its image at -x, mirrored left to right) */
+function drawObject(x, mirrored, alpha){
+g.save(); g.globalAlpha = alpha;
+if (P.obj === 'arrow'){
+var col = mirrored ? C().virt : '#1f3fbf';
+line(x, 0, x, ARROW_H - 0.12, col, 4, mirrored ? [6, 4] : null, alpha);
+g.fillStyle = col; g.beginPath(); g.moveTo(X(x), Y(ARROW_H)); g.lineTo(X(x) - 9, Y(ARROW_H - 0.2)); g.lineTo(X(x) + 9, Y(ARROW_H - 0.2)); g.closePath(); g.fill();
+} else if (clownReady){
+g.translate(X(x), Y(CLOWN_H)); if (mirrored) g.scale(-1, 1);
+g.drawImage(clownImg, -CLOWN_W*S/2, 0, CLOWN_W*S, CLOWN_H*S);
+}
+g.restore();
+}
+function drawEye(e, col){
+var ex = X(e.x), ey = Y(e.y), s = 11;
+g.save(); g.fillStyle = '#ffffff'; g.strokeStyle = col; g.lineWidth = 1.8;
+g.beginPath(); g.moveTo(ex - s, ey); g.quadraticCurveTo(ex, ey - 0.8*s, ex + s, ey); g.quadraticCurveTo(ex, ey + 0.8*s, ex - s, ey); g.fill(); g.stroke();
+g.fillStyle = col; g.beginPath(); g.arc(ex + 4, ey, 3.6, 0, 2*Math.PI); g.fill(); g.restore();
+}
+/* ══════════ the rays ══════════ */
+function rayVia(px, py, ym, col, solid){
+/* from (px, py) to the mirror at (0, ym), reflected back to the left */
+var c = C();
+line(px, py, 0, ym, c.inc, 1.6, solid ? null : [4, 4]); arrowHead(px, py, 0, ym, c.inc);
+/* reflected: the incoming direction (0 - px, ym - py) with its x part reversed */
+var r = toEdge(0, ym, -(0 - px), ym - py);
+line(0, ym, r[0], r[1], c.ref, 1.6, solid ? null : [4, 4]); arrowHead(0, ym, (r[0] + 0)/2, (r[1] + ym)/2, c.ref);
+if (P.virtual) line(0, ym, -px, py, c.virt, 1.2, [5, 4]);
+if (P.normals){ line(-0.6, ym, 0.6, ym, c.norm, 1, [3, 3]); }
+}
+function drawWhere(){
+var c = C(), x = P.ox, tops = [objTop(), 0.02];
+tops.forEach(function(y){
+/* two rays from each point: one along the normal, one to the middle of the mirror */
+var targets = [y, (P.mb + P.mt)/2];
+targets.forEach(function(ym){ if (onMirror(ym)) rayVia(x, y, ym, c.inc, true); else line(x, y, 0, ym, c.miss, 1, [3, 4]); });
+});
+}
+function drawFan(){
+var c = C(), sx = P.sx, sy = P.sy, n = 26;
+for (var i=0; i<=n; i++){
+var ym = YBOT + (YTOP - YBOT)*i/n;
+if (onMirror(ym)){
+line(sx, sy, 0, ym, c.inc, 1.1);
+var r = toEdge(0, ym, -(0 - sx), ym - sy); line(0, ym, r[0], r[1], c.ref, 1.1);
+if (P.virtual) line(0, ym, -sx, sy, c.virt, 0.9, [4, 4], 0.85);
+if (P.normals && i % 3 === 0) line(-0.4, ym, 0.4, ym, c.norm, 1, [3, 3]);
+} else {
+/* misses the mirror: it hits the wall (dark) */
+line(sx, sy, 0, ym, c.miss, 1, null, 0.6);
+}
+}
+g.fillStyle = c.light; g.beginPath(); g.arc(X(sx), Y(sy), 6, 0, 2*Math.PI); g.fill();
+g.fillStyle = c.virt; g.globalAlpha = 0.8; g.beginPath(); g.arc(X(-sx), Y(sy), 5, 0, 2*Math.PI); g.fill(); g.globalAlpha = 1;
+}
+function drawEyeRays(){
+var c = C(), x = P.ox, e = eye(), H = objTop();
+[H, 0.75*H, 0.5*H, 0.25*H, 0.02].forEach(function(y){
+var ym = mirrorHit(x, y);
+if (onMirror(ym)){
+line(x, y, 0, ym, c.inc, 1.6); arrowHead(x, y, 0, ym, c.inc);
+line(0, ym, e.x, e.y, c.ref, 1.6); arrowHead(0, ym, e.x, e.y, c.ref);
+if (P.virtual) line(0, ym, -x, y, c.virt, 1.2, [5, 4]);
+if (P.normals) line(-0.4, ym, 0.4, ym, c.norm, 1, [3, 3]);
+} else {
+/* this light would need mirror where there is only wall */
+line(x, y, 0, ym, c.miss, 1, [3, 4]); line(0, ym, e.x, e.y, c.miss, 1, [3, 4]);
+g.save(); g.strokeStyle = c.virt; g.lineWidth = 2; var px = X(0), py = Y(ym);
+g.beginPath(); g.moveTo(px - 5, py - 5); g.lineTo(px + 5, py + 5); g.moveTo(px - 5, py + 5); g.lineTo(px + 5, py - 5); g.stroke(); g.restore();
+}
+});
+}
+/* the part of the region behind the mirror that the eye can see */
+function wedge(){
+var e = eye(), a = toEdge(0, P.mt, -e.x, P.mt - e.y), b = toEdge(0, P.mb, -e.x, P.mb - e.y);
+return [[0, P.mt], a, [XMAX, a[1]], [XMAX, b[1]], b, [0, P.mb]];
+}
+function drawSide(){
+var c = C(), e = eye();
+g.fillStyle = c.bg; g.fillRect(0, 0, LW, LH);
+g.fillStyle = c.behind; g.fillRect(X(0), 0, LW - X(0), LH);
+g.fillStyle = c.floor; g.fillRect(0, Y(0), LW, LH - Y(0));
+g.font = '14px ' + FONT; g.fillStyle = c.text; g.textAlign = 'center';
+g.fillText('in front of the mirror', X(XMIN/2), 20); g.fillText('behind the mirror (virtual: no light goes here)', X(XMAX/2), 20);
+/* what the eye can see behind the mirror */
+var showWedge = P.mode === 'eye' || P.obj === 'self';
+if (showWedge){
+var w = wedge(); g.save(); g.fillStyle = c.wedge; g.beginPath(); w.forEach(function(p, i){ if (i) g.lineTo(X(p[0]), Y(p[1])); else g.moveTo(X(p[0]), Y(p[1])); }); g.closePath(); g.fill(); g.restore();
+line(e.x, e.y, w[1][0], w[1][1], '#c9a400', 1, [2, 4]); line(e.x, e.y, w[4][0], w[4][1], '#c9a400', 1, [2, 4]);
+}
+/* the image: faint everywhere, bright where the eye can see it */
+drawObject(-P.ox, true, 0.28);
+if (showWedge){
+var w2 = wedge(); g.save(); g.beginPath(); w2.forEach(function(p, i){ if (i) g.lineTo(X(p[0]), Y(p[1])); else g.moveTo(X(p[0]), Y(p[1])); }); g.closePath(); g.clip();
+drawObject(-P.ox, true, 0.9); g.restore();
+} else drawObject(-P.ox, true, 0.55);
+/* the wall and the mirror on it */
+line(0, YBOT, 0, YTOP, c.wall, 3);
+line(0, P.mb, 0, P.mt, c.mirror, 7);
+[P.mb, P.mt].forEach(function(y, i){ g.fillStyle = drag === (i ? 'mt' : 'mb') ? '#ffdd66' : '#ffffff'; g.strokeStyle = c.mirror; g.lineWidth = 2;
+g.beginPath(); g.arc(X(0), Y(y), 7, 0, 2*Math.PI); g.fill(); g.stroke(); });
+/* the needed part of the mirror */
+if (P.mode === 'eye' || P.obj === 'self'){
+var nd = needed();
+g.save(); g.strokeStyle = '#3ad08f'; g.lineWidth = 3; g.beginPath(); g.moveTo(X(0) + 12, Y(nd.lo)); g.lineTo(X(0) + 12, Y(nd.hi)); g.stroke();
+g.fillStyle = '#12805a'; g.font = '12px ' + FONT; g.textAlign = 'left'; g.fillText('needed: ' + f2(nd.hi - nd.lo) + ' m', X(0) + 18, Y((nd.lo + nd.hi)/2) + 4); g.restore();
+}
+/* rays */
+if (P.mode === 'where') drawWhere(); else if (P.mode === 'fan') drawFan(); else drawEyeRays();
+/* the trace: the light point's path and its image */
+if (trail.length > 1){
+g.save(); g.lineWidth = 3; g.lineCap = 'round'; g.lineJoin = 'round';
+g.strokeStyle = c.light; g.beginPath(); trail.forEach(function(p, i){ if (i) g.lineTo(X(p[0]), Y(p[1])); else g.moveTo(X(p[0]), Y(p[1])); }); g.stroke();
+g.strokeStyle = c.virt; g.globalAlpha = 0.75; g.beginPath(); trail.forEach(function(p, i){ if (i) g.lineTo(X(-p[0]), Y(p[1])); else g.moveTo(X(-p[0]), Y(p[1])); }); g.stroke();
+g.restore();
+}
+/* the object and the eye */
+drawObject(P.ox, false, 1);
+drawEye(e, c.eye);
+if (P.obj !== 'self'){ g.font = '12px ' + FONT; g.fillStyle = c.text; g.textAlign = 'center'; g.fillText('eye', X(e.x), Y(e.y) - 14); }
+/* distances on the floor */
+g.save(); g.font = '12px ' + FONT; g.fillStyle = c.text; g.textAlign = 'center';
+var yl = Y(0) + 18;
+g.strokeStyle = c.text; g.lineWidth = 1; g.beginPath(); g.moveTo(X(P.ox), yl - 6); g.lineTo(X(-P.ox), yl - 6); g.stroke();
+g.fillText('d\u2092 = ' + f2(-P.ox) + ' m', X(P.ox/2), yl + 8); g.fillText('d\u1D62 = ' + f2(-P.ox) + ' m', X(-P.ox/2), yl + 8);
+g.restore();
+}
+/* ══════════ what the eye sees ══════════ */
+function drawEyeView(){
+var c = C(), e = eye(), d = -e.x;
+ge.fillStyle = fmA11y.hc() ? '#000' : '#b9c2cc'; ge.fillRect(0, 0, EW, EH);
+/* perspective from the eye looking at the wall: heights by their angle, centered on the middle of the mirror */
+var mid = (P.mb + P.mt)/2, F = Math.min(0.75*EH*d/Math.max(0.3, P.mt - P.mb), 2.2*EH*d/(CLOWN_H*1.2 + d));
+function vy(y, dist){ return EH/2 - F*((y - e.y)/dist - (mid - e.y)/d); }
+var mw = 0.9, mx0 = EW/2 - F*mw/d, mx1 = EW/2 + F*mw/d;
+/* the mirror as a window on the wall */
+ge.fillStyle = fmA11y.hc() ? '#222' : '#e4ecf3'; ge.fillRect(mx0, vy(P.mt, d), mx1 - mx0, vy(P.mb, d) - vy(P.mt, d));
+ge.save(); ge.beginPath(); ge.rect(mx0, vy(P.mt, d), mx1 - mx0, vy(P.mb, d) - vy(P.mt, d)); ge.clip();
+/* the image is -ox behind the mirror: its distance from the eye is d - ox */
+var di = d - P.ox;
+ge.fillStyle = c.floor; ge.fillRect(0, vy(0, di), EW, EH);
+if (P.obj === 'arrow'){
+var col = c.virt; ge.strokeStyle = col; ge.fillStyle = col; ge.lineWidth = Math.max(2, 4*d/di);
+ge.beginPath(); ge.moveTo(EW/2, vy(0, di)); ge.lineTo(EW/2, vy(ARROW_H, di)); ge.stroke();
+ge.beginPath(); ge.moveTo(EW/2, vy(ARROW_H, di)); ge.lineTo(EW/2 - 8, vy(ARROW_H - 0.2, di)); ge.lineTo(EW/2 + 8, vy(ARROW_H - 0.2, di)); ge.closePath(); ge.fill();
+} else if (clownReady){
+var hp = vy(0, di) - vy(CLOWN_H, di), wp = hp*CLOWN_W/CLOWN_H;
+/* seen in a mirror, the clown is reversed left to right */
+ge.translate(EW/2, vy(CLOWN_H, di)); ge.scale(-1, 1); ge.drawImage(clownImg, -wp/2, 0, wp, hp);
+}
+ge.restore();
+ge.strokeStyle = c.mirror; ge.lineWidth = 4; ge.strokeRect(mx0, vy(P.mt, d), mx1 - mx0, vy(P.mb, d) - vy(P.mt, d));
+ge.font = '11px ' + FONT; ge.fillStyle = fmA11y.hc() ? '#fff' : '#333'; ge.textAlign = 'left';
+ge.fillText('the wall', 6, 14); ge.textAlign = 'center'; ge.fillText('the mirror', EW/2, Math.max(14, vy(P.mt, d) - 6));
+}
+/* ══════════ readout and narration ══════════ */
+function seeText(){
+var v = visible(), H = objTop(), who = P.obj === 'self' ? 'itself' : (P.obj === 'arrow' ? 'the arrow' : 'the clown');
+if (v.frac >= 0.999) return 'all of ' + who;
+if (v.frac <= 0.001) return 'none of ' + who + ': no light from it reaches the eye by way of the mirror';
+var part = v.hi >= H - 0.01 ? 'the top ' : (v.lo <= 0.01 ? 'the bottom ' : 'the middle ');
+return part + Math.round(100*v.frac) + ' % of ' + who + ' (' + f2(v.lo) + ' m to ' + f2(v.hi) + ' m)';
+}
+function readouts(){
+var nd = needed(), H = objTop();
+function set(id, t){ var e = el(id); if (e) e.textContent = t; }
+set('fmRoDo', f2(-P.ox) + ' m'); set('fmRoDi', f2(-P.ox) + ' m (the same)');
+set('fmRoHo', f2(H) + ' m'); set('fmRoHi', f2(H) + ' m (the same)');
+set('fmRoMir', f2(P.mt - P.mb) + ' m tall, from ' + f2(P.mb) + ' m to ' + f2(P.mt) + ' m');
+var enough = nd.lo >= P.mb - 1e-6 && nd.hi <= P.mt + 1e-6;
+set('fmRoNeed', f2(nd.hi - nd.lo) + ' m, from ' + f2(nd.lo) + ' m to ' + f2(nd.hi) + ' m' + (P.obj === 'self' ? ' = half of ' + f2(H) + ' m' : '') + (enough ? ' -- this mirror is enough' : ' -- this mirror is too small or misplaced'));
+set('fmRoSee', seeText());
+}
+function summary(){
+var nd = needed(), s = (P.obj === 'self' ? 'The clown looks at itself, ' : (P.obj === 'arrow' ? 'An arrow ' : 'The clown ')) + f2(-P.ox) + ' m in front of the mirror; its image is ' + f2(-P.ox) + ' m behind it, the same size. ';
+s += 'The mirror is ' + f2(P.mt - P.mb) + ' m tall. To see all of the object from this eye, the mirror must cover ' + f2(nd.lo) + ' m to ' + f2(nd.hi) + ' m (' + f2(nd.hi - nd.lo) + ' m). ';
+return s + 'The eye sees ' + seeText() + '.';
+}
+function later(){ clearTimeout(narrT); narrT = setTimeout(function(){ fmA11y.narrate(summary()); }, 400); }
+function refresh(){ drawSide(); drawEyeView(); readouts(); }
+/* ══════════ controls ══════════ */
+function syncInputs(){
+function sv(id, v, t){ var e = el(id + ''); if (e) e.value = v; var tv = el(id + 'Val'); if (tv) tv.textContent = t; }
+var e = eye();
+sv('fmMt', P.mt, f2(P.mt)); sv('fmMb', P.mb, f2(P.mb)); sv('fmOx', -P.ox, f2(-P.ox)); sv('fmEx', -e.x, f2(-e.x)); sv('fmEy', e.y, f2(e.y));
+el('fmEx').disabled = el('fmEy').disabled = P.obj === 'self';
+el('fmMode').value = P.mode; el('fmObj').value = P.obj;
+el('fmNorm').checked = P.normals; el('fmVirt').checked = P.virtual; el('fmTrace').checked = P.trace;
+}
+function limits(){
+P.ox = clamp(P.ox, XMIN + 0.4, -0.4); P.ex = clamp(P.ex, XMIN + 0.2, -0.2); P.ey = clamp(P.ey, 0, YTOP - 0.2);
+P.sx = clamp(P.sx, XMIN + 0.1, -0.1); P.sy = clamp(P.sy, YBOT + 0.1, YTOP - 0.1);
+P.mt = clamp(P.mt, 0.05, YTOP - 0.1); P.mb = clamp(P.mb, 0, P.mt - 0.05);
+}
+function set(k, v){
+if (k === 'mode' || k === 'obj') P[k] = v; else if (k === 'normals' || k === 'virtual' || k === 'trace') P[k] = !!v; else P[k] = parseFloat(v);
+if (k === 'trace' && !v) trail = [];
+if (k === 'obj' && v === 'self' && P.mode === 'fan') P.mode = 'eye';
+limits(); syncInputs(); refresh(); later();
+}
+function fitMirror(){ var nd = needed(); P.mb = Math.max(0, nd.lo); P.mt = nd.hi; limits(); syncInputs(); refresh(); fmA11y.narrate('The mirror now covers exactly what is needed. ' + summary()); }
+function preset(name){
+var keepObj = P.obj;
+for (var k in DEF) P[k] = DEF[k]; trail = [];
+if (name === 'where'){ P.mode = 'where'; P.obj = 'arrow'; P.ox = -3; P.mb = 0; P.mt = 3.4; }
+if (name === 'fan'){ P.mode = 'fan'; P.obj = 'clown'; P.sx = -2.6; P.sy = 2.2; P.mb = 0.9; P.mt = 3.0; }
+if (name === 'eye'){ P.mode = 'eye'; P.obj = 'clown'; P.mb = 0.9; P.mt = 1.7; P.ex = -1.6; P.ey = 1.5; }
+if (name === 'tall'){ P.mode = 'eye'; P.obj = 'self'; P.ox = -2.4; P.mb = 0.2; P.mt = 1.2; }
+limits(); syncInputs(); refresh();
+var msg = { reset:'Reset. ', where:'Where is the image? Two rays from the top and from the bottom of the arrow, traced back behind the mirror. ',
+fan:'A fan of rays from the light point: drag it, or turn on the trace and write. ', eye:'Only the light that reaches the eye counts. ',
+tall:'The clown looks at itself in a short mirror. ' }[name] || '';
+fmA11y.narrate(msg + summary());
+}
+function describe(){
+var e = eye(), msg = 'Side view: a mirror on a wall from ' + f2(P.mb) + ' to ' + f2(P.mt) + ' m high. ';
+msg += (P.obj === 'arrow' ? 'An arrow ' : 'The clown ') + 'stands ' + f2(-P.ox) + ' m in front of it. ';
+msg += P.obj === 'self' ? 'The clown\u2019s own eye, ' + f2(e.y) + ' m high, is the viewer. ' : 'The eye is ' + f2(-e.x) + ' m from the mirror and ' + f2(e.y) + ' m high. ';
+msg += { where:'Rays from the top and the bottom of the object reflect from the mirror; traced back, they meet behind the mirror at the image. ',
+fan:'A fan of rays leaves the light point; the reflected rays seem to come from one point behind the mirror. ',
+eye:'The rays drawn are the ones that reach the eye; a cross marks light that would need mirror where there is only wall. ' }[P.mode];
+fmA11y.narrate(msg + summary());
+}
+/* ══════════ pointer ══════════ */
+function evPt(cx, cy){ var r = cv.getBoundingClientRect(); return { x:WX((cx - r.left)*(LW/r.width)), y:WY((cy - r.top)*(LH/r.height)), k:LW/r.width }; }
+function hit(p, touch){
+var tol = (10 + (touch ? 12*p.k : 0))/S, e = eye();
+if (Math.hypot(p.x, p.y - P.mt) < tol) return 'mt';
+if (Math.hypot(p.x, p.y - P.mb) < tol) return 'mb';
+if (P.mode === 'fan' && Math.hypot(p.x - P.sx, p.y - P.sy) < tol) return 'src';
+if (P.obj !== 'self' && Math.hypot(p.x - e.x, p.y - e.y) < tol + 0.05) return 'eye';
+var w = (P.obj === 'arrow' ? 0.18 : CLOWN_W/2) + tol;
+if (Math.abs(p.x - P.ox) < w && p.y > -tol && p.y < objTop() + tol) return 'obj';
+if (Math.abs(p.x) < tol && p.y > P.mb && p.y < P.mt) return 'mirror';
+return null;
+}
+function moveTo(p){
+if (drag === 'mt') P.mt = p.y; else if (drag === 'mb') P.mb = p.y;
+else if (drag === 'src'){ P.sx = p.x; P.sy = p.y; limits(); if (P.trace) trail.push([P.sx, P.sy]); }
+else if (drag === 'eye'){ P.ex = p.x; P.ey = p.y; }
+else if (drag === 'obj'){ var nx = p.x - grab[0]; if (P.mode === 'fan'){ P.sx += nx - P.ox; } P.ox = nx; }
+else if (drag === 'mirror'){ var h = P.mt - P.mb, nb = clamp(p.y - grab[1], 0, YTOP - 0.1 - h); P.mb = nb; P.mt = nb + h; }
+limits(); syncInputs(); refresh(); later();
+}
+function start(p, touch){
+drag = hit(p, touch);
+if (drag === 'obj') grab = [p.x - P.ox, 0];
+if (drag === 'mirror') grab = [0, p.y - P.mb];
+if (drag === 'src' && P.trace) trail.push([P.sx, P.sy]);
+return !!drag;
+}
+cv.addEventListener('mousedown', function(e){ if (start(evPt(e.clientX, e.clientY), false)){ cv.style.cursor = 'grabbing'; refresh(); } });
+window.addEventListener('mousemove', function(e){ var p = evPt(e.clientX, e.clientY); if (drag){ moveTo(p); return; } cv.style.cursor = hit(p, false) ? 'grab' : 'default'; });
+window.addEventListener('mouseup', function(){ if (drag){ drag = null; cv.style.cursor = 'default'; refresh(); } });
+cv.addEventListener('touchstart', function(e){ var t = e.touches[0]; if (start(evPt(t.clientX, t.clientY), true)){ e.preventDefault(); refresh(); } }, { passive:false });
+cv.addEventListener('touchmove', function(e){ if (!drag) return; e.preventDefault(); var t = e.touches[0]; moveTo(evPt(t.clientX, t.clientY)); }, { passive:false });
+cv.addEventListener('touchend', function(){ drag = null; refresh(); });
+/* boot */
+for (var k0 in DEF) P[k0] = DEF[k0];
+limits(); syncInputs(); refresh();
+fmA11y.narrate('Ready. ' + summary());
+return { set:set, preset:preset, describe:describe, refresh:refresh, fitMirror:fitMirror,
+_state:function(){ var nd = needed(), v = visible(), e = eye(); return { P:JSON.parse(JSON.stringify(P)), eye:e, needed:nd, visible:v, H:objTop() }; },
+_hit:function(x, y){ return mirrorHit(x, y); } };
+})();
+</script>
+</main>
+</body>
+</html>

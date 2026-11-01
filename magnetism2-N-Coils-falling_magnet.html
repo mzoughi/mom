@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Falling Magnet - Effect of the Number of Loops</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, Faraday law, induced EMF, falling magnet, coil, flux, magnetic flux, induction, Lenz law, lesson, scientific">
+<meta name="description" content="Interactive simulation of a magnet falling through a coil: the induced EMF, the flux change under each peak, and the data graph.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<!-- SETTINGS: 1 = shown, 0 = hidden (a MOM variable set to 0 or 1 also works) -->
+<script>
+var fmShow = {
+heightPanel:0, coilPanel:1, turns:1, flipCoil:1,
+magnetPanel:1, strength:0, flipMagnet:1,
+playback:1, logger:1, hint:1, uncertainty:0,
+xHeight:1, xTurns:1, xStrength:1, yMaxV:1, yFlux:1,
+title:'Falling Magnet - Effect of the Number of Loops', subtitle:''
+};
+</script>
+<div id="fmroot" class="fm_root" role="region" aria-label="Falling magnet EMF simulator">
+<!-- Accessibility toolbar -->
+<div class="fm_a11y" id="fmA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="fm_a11ybtn" id="fmBtnHC" onclick="fmA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fm_a11ybtn" id="fmBtnLM" onclick="fmA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fm_a11ybtn" id="fmBtnCB" onclick="fmA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fm_a11ybtn" id="fmBtnNR" onclick="fmA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="fm_header">
+<p class="fm_h1">Falling Magnet -- Induced EMF</p>
+<p class="fm_sub">A bar magnet falls through a coil -- the changing flux induces an EMF (Faraday's law)</p>
+</div>
+<!-- Instrument grid -->
+<div class="fm_instrument">
+<!-- Left column -->
+<div class="fm_leftcol">
+<div class="fm_diagpanel">
+<div class="fm_diaglabel"><b>APPARATUS</b><span class="fm_diagnote" id="fmDiagNote">magnet drops through a guide tube · coil leads go to a voltage sensor</span></div>
+<div class="fm_animwrap">
+<canvas id="fmAnimCanvas" class="fm_scene" width="623" height="400" role="img" aria-label="Falling magnet animation" aria-describedby="fmAnimDesc"></canvas>
+<p id="fmAnimDesc" class="fm_sronly">Lab bench with a stand holding a clear guide tube. A bar magnet is released above a copper coil wound around the tube and falls through it. A metre stick shows the drop height, and the coil leads go to a voltage sensor with a centre-zero meter.</p>
+<div class="fm_timebadge" id="fmTimeBadge">t = 0.000 s</div>
+</div>
+<div class="fm_statusbar" id="fmWhatBar" role="status" aria-live="polite"><span class="fm_whatlabel">WHAT'S HAPPENING</span> <span id="fmWhatText">Set drop height, turns and magnet strength, then press Play to release the magnet.</span></div>
+<div class="fm_runbar">
+<button type="button" class="fm_runbtn fm_runbtn_primary" id="fmBtnPlay" onclick="fallingMagnetSim.play()">▶ Play</button>
+<button type="button" class="fm_runbtn" id="fmBtnPause" onclick="fallingMagnetSim.pause()">❚❚ Pause</button>
+<button type="button" class="fm_runbtn fm_warn" id="fmBtnReset" onclick="fallingMagnetSim.reset()">↻ Reset</button>
+</div>
+</div>
+<!-- Oscilloscope -->
+<div class="fm_panel" role="region" aria-labelledby="fmScopeHd">
+<div class="fm_paneltitle" id="fmScopeHd">Voltage sensor -- induced EMF vs time</div>
+<div class="fm_graphwrap">
+<canvas id="fmGraphCanvas" class="fm_scope" width="623" height="230" role="img" aria-label="Induced voltage vs time graph" aria-describedby="fmGraphDesc"></canvas>
+<p id="fmGraphDesc" class="fm_sronly">Graph of induced EMF in volts versus time in seconds. Shows two peaks of opposite sign as the magnet enters and exits the coil.</p>
+</div>
+</div>
+<!-- Readout -->
+<div class="fm_panel" role="region" aria-labelledby="fmReadHd">
+<div class="fm_paneltitle" id="fmReadHd">Readout</div>
+<div class="fm_rinner fm_rgrid" id="fmReadout">
+<div class="fm_rrow"><span class="fm_rkey">Position y</span><span class="fm_rval" id="fmRdPos">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">Velocity v</span><span class="fm_rval" id="fmRdVel">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">Flux linkage NΦ</span><span class="fm_rval" id="fmRdFlux">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">EMF now ε</span><span class="fm_rval fm_hi" id="fmRdEMF">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">V₁ (1st peak)</span><span class="fm_rval fm_hi" id="fmRdPeakPos">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">V₂ (2nd peak)</span><span class="fm_rval fm_hi" id="fmRdPeakNeg">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">∆Φ₁ = ∫V dt</span><span class="fm_rval" id="fmRdAreaPos">--</span></div>
+<div class="fm_rrow"><span class="fm_rkey">∆Φ₂ = ∫V dt</span><span class="fm_rval" id="fmRdAreaNeg">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="fm_rightcol">
+<!-- Drop height -->
+<div class="fm_panel" role="group" aria-labelledby="fmHHd">
+<div class="fm_paneltitle" id="fmHHd">Drop Height</div>
+<div class="fm_panelbody">
+<div class="fm_ctrlhdr"><label for="fmSlH" class="fm_ctrlname">Height h</label><span class="fm_sval" id="fmVH">1.50 m</span></div>
+<input type="range" id="fmSlH" min="0.05" max="2.0" step="0.05" value="1.5" aria-label="Drop height in metres" oninput="fallingMagnetSim.onParam()">
+<p class="fm_note">Measured from the magnet centre to the coil centre</p>
+</div>
+</div>
+<!-- Coil -->
+<div class="fm_panel" role="group" aria-labelledby="fmCoilHd">
+<div class="fm_paneltitle" id="fmCoilHd">Coil</div>
+<div class="fm_panelbody">
+<div class="fm_ctrlhdr"><label for="fmSlN" class="fm_ctrlname">Turns N</label><span class="fm_sval" id="fmVN">50</span></div>
+<input type="range" id="fmSlN" min="25" max="500" step="25" value="50" aria-label="Number of turns" oninput="fallingMagnetSim.onParam()">
+<button type="button" class="fm_flipbtn" id="fmBtnFlipC" aria-label="Flip coil orientation (swap the leads)" onclick="fallingMagnetSim.flipCoil()">⇅ Flip coil</button>
+<div class="fm_state" id="fmCoilState">Coil ↑ -- leads normal</div>
+</div>
+</div>
+<!-- Magnet -->
+<div class="fm_panel" role="group" aria-labelledby="fmMagHd">
+<div class="fm_paneltitle" id="fmMagHd">Magnet</div>
+<div class="fm_panelbody">
+<div class="fm_ctrlhdr"><label for="fmSlB" class="fm_ctrlname">Strength B</label><span class="fm_sval" id="fmVB">10.0 mT</span></div>
+<input type="range" id="fmSlB" min="0.001" max="0.050" step="0.001" value="0.010" aria-label="Magnet strength in tesla" oninput="fallingMagnetSim.onParam()">
+<button type="button" class="fm_flipbtn" id="fmBtnFlip" aria-label="Flip magnet orientation" onclick="fallingMagnetSim.flipMagnet()">⇅ Flip magnet</button>
+<div class="fm_state" id="fmPolarity">N pole leading ↓</div>
+</div>
+</div>
+<!-- Playback -->
+<div class="fm_panel" role="group" aria-labelledby="fmPlayHd">
+<div class="fm_paneltitle" id="fmPlayHd">Playback</div>
+<div class="fm_panelbody">
+<div class="fm_ctrlhdr"><label for="fmSlSpeed" class="fm_ctrlname">Speed</label><span class="fm_sval" id="fmVSpeed">0.4×</span></div>
+<input type="range" id="fmSlSpeed" min="0.1" max="3" step="0.1" value="0.4" aria-label="Playback speed multiplier" oninput="fallingMagnetSim.onSpeed()">
+</div>
+</div>
+<!-- Data Logger -->
+<div class="fm_panel" role="group" aria-labelledby="fmLogHd">
+<div class="fm_paneltitle" id="fmLogHd">Data Logger</div>
+<div class="fm_panelbody">
+<div class="fm_btnpair">
+<button type="button" class="fm_logbtn fm_addbtn" id="fmBtnAddData" aria-label="Add current result to data graph" onclick="fallingMagnetSim.addDataPoint()">+ Add point</button>
+<button type="button" class="fm_logbtn" id="fmBtnOpenGraph" aria-label="Open data graph panel" onclick="fmGraphPanel.open()">📊 Open graph</button>
+</div>
+<div class="fm_state fm_center" id="fmDataCount">No data yet -- run sim first</div>
+</div>
+</div>
+<p class="fm_hint" id="fmHint">Drop the magnet, then flip the magnet, then flip the coil, and compare the signs of V₁ and V₂. Log max V for several heights, turn counts or strengths and graph them.</p>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="fm_formulastrip">
+<span class="fm_formulatxt">Flux linkage N&Phi;(y) = N B K / (1 + y&sup2;/a&sup2;)<sup>3/2</sup>, coil radius a = 6 cm &nbsp;|&nbsp; Faraday: &epsilon; = &minus;d(N&Phi;)/dt = &minus;(d(N&Phi;)/dy)&middot;v &nbsp;|&nbsp; Free fall: v = &minus;g t, y = h &minus; &frac12;g t&sup2; &nbsp;|&nbsp; Flipping the magnet or the coil leads reverses the sign of &epsilon; &nbsp;|&nbsp; The areas &int;&epsilon; dt under the two peaks are equal and opposite: the flux rises, then falls back to zero</span>
+</div>
+</div><!-- instrument -->
+<div id="fmNarBar" class="fm_narbar" aria-live="polite" aria-atomic="true"></div>
+<div id="fmSrAnn" class="fm_sronly" aria-live="assertive" aria-atomic="true"></div>
+<!-- ═══ DATA GRAPH PANEL (in-document overlay) ═══ -->
+<div id="fmGOverlay" class="fm_overlay" style="display:none;" onclick="if(event.target===this)fmGraphPanel.close()"></div>
+<div id="fmGPanel" class="fm_gpanel" style="display:none;" role="dialog" aria-label="Data graph panel">
+<div class="fm_gphdr">
+<div>
+<span class="fm_gptitle">Data Graph</span>
+<span class="fm_gpsubtitle" id="fmGSub">max V vs. parameter</span>
+</div>
+<div class="fm_gpbtnrow">
+<span class="fm_gpaxlbl">X-axis:</span>
+<button type="button" class="fm_gpbtn" id="fmGBtnH" data-axis="h">Height</button>
+<button type="button" class="fm_gpbtn" id="fmGBtnN" data-axis="N">N turns</button>
+<button type="button" class="fm_gpbtn" id="fmGBtnB" data-axis="B">B (mT)</button>
+<span class="fm_gpaxlbl">Y-axis:</span>
+<button type="button" class="fm_gpbtn" id="fmGBtnYV" data-axis="V">max V</button>
+<button type="button" class="fm_gpbtn" id="fmGBtnYF" data-axis="F">avg |&Delta;&Phi;|</button>
+<button type="button" class="fm_gpbtn" id="fmGBtnFit">Linear Fit: ON</button>
+<button type="button" class="fm_gpbtn" id="fmGBtnUnc">± Unc: ON</button>
+<button type="button" class="fm_gpbtn fm_gpclear" id="fmGBtnClear">Clear</button>
+<button type="button" class="fm_gpbtn fm_gpclose" id="fmGBtnClose" aria-label="Close data graph">✕</button>
+</div>
+</div>
+<div id="fmGUncBar" class="fm_uncbar">
+<span class="fm_gpaxlbl">Uncertainty:</span>
+<label class="fm_unclbl"><input type="radio" name="fmUncMode" value="percent" checked> % of value</label>
+<label class="fm_unclbl"><input type="radio" name="fmUncMode" value="abs"> Abs ±<span id="fmUncAbsU">mV</span></label>
+<span id="fmUncLbl" class="fm_gpaxlbl">δV %:</span>
+<input type="range" id="fmUncSl" min="1" max="30" step="1" value="5" aria-label="Y uncertainty">
+<span id="fmUncVLbl" class="fm_uncval">5%</span>
+<span class="fm_gpaxlbl">δX %:</span>
+<input type="range" id="fmUncXSl" min="0" max="20" step="1" value="2" aria-label="X uncertainty">
+<span id="fmUncXLbl" class="fm_uncval">2%</span>
+</div>
+<div class="fm_gpcanvaswrap">
+<canvas id="fmDGCanvas" width="660" height="300" aria-label="Data graph canvas"></canvas>
+</div>
+<div id="fmFitInfo" class="fm_fitinfo"></div>
+<div class="fm_gptablewrap">
+<div class="fm_gptablelbl">Logged Points</div>
+<div id="fmDTable" class="fm_dtable"></div>
+<div id="fmDNone" class="fm_dnone">No data yet. Run the sim, then click <b>+ Add point</b>.</div>
+</div>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #fmroot (DC motor / generator template) ════════
+ Theme colours are CSS variables. The accessibility controller overrides them with
+ inline style.setProperty() on the root, so no class names are toggled from JavaScript. */
+#fmroot {
+--fm-chassis:#1a1c1f; --fm-panel:#22262b; --fm-panel-hi:#2c3138; --fm-panel-lo:#14161a;
+--fm-border:#3a4048; --fm-border-hi:#525c66; --fm-text:#c8d0d8; --fm-dim:#8a94a3; --fm-bright:#e8eef5;
+--fm-accent:#e8a020; --fm-green:#3ad08f; --fm-val:#ffdd66; --fm-danger:#e0605a;
+--fm-focus:#e8a020; --fm-nar-bg:#2a2410; --fm-nar-border:#e0b040; --fm-nar-text:#f0e2b8;
+--fm-grid:rgba(255,255,255,0.015);
+--fm-north:#cc2828; --fm-south:#2860cc; --fm-plot1:#ff5050; --fm-plot2:#00e8d0;
+--fm-cyan:#00e8d0; --fm-magenta:#e040a0; --fm-copper:#c8783c;
+background:var(--fm-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, var(--fm-grid) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, var(--fm-grid) 40px);
+font-family:Arial, sans-serif; color:var(--fm-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#fmroot *, #fmroot *::before, #fmroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#fmroot input:focus-visible, #fmroot button:focus-visible { outline:2px solid var(--fm-focus); outline-offset:2px; }
+#fmroot .fm_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+/* toolbar */
+#fmroot .fm_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#fmroot .fm_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--fm-panel-hi); border:1px solid var(--fm-border-hi); color:var(--fm-dim); }
+#fmroot .fm_a11ybtn:hover { border-color:var(--fm-accent); color:var(--fm-accent); }
+/* header */
+#fmroot .fm_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#fmroot .fm_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--fm-accent); text-align:center; }
+#fmroot .fm_sub { font-size:.7rem; color:var(--fm-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* grid */
+#fmroot .fm_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#fmroot .fm_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#fmroot .fm_diagpanel { background:var(--fm-panel); border:1px solid var(--fm-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#fmroot .fm_diaglabel { background:var(--fm-panel-lo); border-bottom:1px solid var(--fm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--fm-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#fmroot .fm_diaglabel b { color:var(--fm-accent); }
+#fmroot .fm_diagnote { text-transform:none; letter-spacing:.02em; }
+/* scene and scope canvases scale with the panel */
+#fmroot .fm_animwrap { position:relative; background:#0d1016; }
+#fmroot .fm_graphwrap { background:#060810; }
+#fmroot .fm_scene, #fmroot .fm_scope { display:block; width:100%; max-width:623px; height:auto; margin:0 auto; }
+#fmroot .fm_timebadge { position:absolute; top:8px; left:8px; padding:3px 8px; font-family:monospace; font-size:.72rem; color:var(--fm-val); background:var(--fm-panel-lo); opacity:.92; border:1px solid var(--fm-border-hi); border-radius:3px; }
+#fmroot .fm_statusbar { background:var(--fm-panel-lo); border-top:1px solid var(--fm-border); padding:7px 12px; font-size:.74rem; color:var(--fm-text); min-height:30px; line-height:1.45; }
+#fmroot .fm_whatlabel { font-family:monospace; font-size:.6rem; letter-spacing:.12em; color:var(--fm-accent); font-weight:bold; margin-right:6px; }
+#fmroot .fm_runbar { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; padding:8px 10px; background:var(--fm-panel-lo); border-top:1px solid var(--fm-border); }
+#fmroot .fm_runbtn { padding:8px 4px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--fm-panel-hi); border:1px solid var(--fm-border-hi); color:var(--fm-text); border-radius:3px; text-transform:uppercase; }
+#fmroot .fm_runbtn:hover { border-color:var(--fm-accent); }
+#fmroot .fm_runbtn_primary { font-weight:bold; border-color:var(--fm-accent); color:var(--fm-accent); }
+#fmroot .fm_warn { color:var(--fm-danger); border-color:var(--fm-danger); }
+/* right column */
+#fmroot .fm_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#fmroot .fm_panel { background:var(--fm-panel); border:1px solid var(--fm-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#fmroot .fm_paneltitle { background:var(--fm-panel-lo); border-bottom:1px solid var(--fm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--fm-dim); }
+#fmroot .fm_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:7px; }
+#fmroot .fm_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#fmroot .fm_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--fm-dim); text-transform:uppercase; }
+#fmroot .fm_sval { font-family:monospace; font-size:.74rem; color:var(--fm-val); text-align:right; }
+#fmroot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--fm-panel-lo); border:1px solid var(--fm-border); }
+#fmroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--fm-accent); border:2px solid var(--fm-panel); cursor:pointer; }
+#fmroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--fm-accent); border:2px solid var(--fm-panel); cursor:pointer; }
+#fmroot .fm_note { font-size:.64rem; color:var(--fm-dim); line-height:1.35; }
+#fmroot .fm_flipbtn, #fmroot .fm_logbtn { padding:6px 4px; font-family:monospace; font-size:.7rem; letter-spacing:.03em; cursor:pointer; background:var(--fm-panel-hi); border:1px solid var(--fm-border-hi); color:var(--fm-text); border-radius:3px; }
+#fmroot .fm_flipbtn:hover, #fmroot .fm_logbtn:hover { border-color:var(--fm-accent); color:var(--fm-accent); }
+#fmroot .fm_addbtn { border-color:var(--fm-green); color:var(--fm-green); font-weight:bold; }
+#fmroot .fm_btnpair { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+#fmroot .fm_state { font-family:monospace; font-size:.7rem; color:var(--fm-val); }
+#fmroot .fm_center { text-align:center; }
+#fmroot .fm_hint { font-size:.66rem; color:var(--fm-dim); line-height:1.4; padding:0 4px; }
+/* readout */
+#fmroot .fm_rinner { padding:8px 10px; }
+#fmroot .fm_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#fmroot .fm_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--fm-panel-lo); border:1px solid var(--fm-border); border-radius:3px; }
+#fmroot .fm_rkey { font-family:monospace; font-size:.66rem; color:var(--fm-dim); letter-spacing:.02em; white-space:nowrap; }
+#fmroot .fm_rval { font-family:monospace; font-size:.74rem; text-align:right; color:var(--fm-text); }
+#fmroot .fm_hi { color:var(--fm-val); font-weight:bold; }
+/* formula strip, narration */
+#fmroot .fm_formulastrip { grid-column:1 / 3; background:var(--fm-panel-lo); border:1px solid var(--fm-border); border-radius:4px; padding:7px 14px; }
+#fmroot .fm_formulatxt { font-family:monospace; font-size:.66rem; color:var(--fm-dim); letter-spacing:.04em; line-height:1.6; }
+#fmroot .fm_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--fm-nar-bg); border-left:4px solid var(--fm-nar-border); font-size:.82rem; color:var(--fm-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* data graph panel (overlay dialog) */
+#fmroot .fm_overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.6); z-index:9998; }
+#fmroot .fm_gpanel { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:720px; max-width:96vw; max-height:92vh; overflow:auto; z-index:9999; background:var(--fm-panel); border:1px solid var(--fm-border-hi); border-radius:6px; box-shadow:0 10px 40px rgba(0,0,0,.6); color:var(--fm-text); }
+#fmroot .fm_gphdr { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 12px; background:var(--fm-panel-lo); border-bottom:1px solid var(--fm-border); }
+#fmroot .fm_gptitle { font-size:.85rem; font-weight:700; letter-spacing:.15em; text-transform:uppercase; color:var(--fm-accent); margin-right:8px; }
+#fmroot .fm_gpsubtitle { font-family:monospace; font-size:.66rem; color:var(--fm-dim); }
+#fmroot .fm_gpbtnrow { display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+#fmroot .fm_gpbtn { padding:4px 8px; font-family:monospace; font-size:.66rem; cursor:pointer; background:var(--fm-panel-hi); border:1px solid var(--fm-border-hi); color:var(--fm-text); border-radius:3px; }
+#fmroot .fm_gpbtn:hover { border-color:var(--fm-accent); }
+#fmroot .fm_gpclear { color:var(--fm-danger); border-color:var(--fm-danger); }
+#fmroot .fm_gpaxlbl, #fmroot .fm_unclbl { font-family:monospace; font-size:.66rem; color:var(--fm-dim); display:inline-flex; align-items:center; gap:4px; }
+#fmroot .fm_uncbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--fm-border); }
+#fmroot .fm_uncbar input[type=range] { width:90px; }
+#fmroot .fm_uncval { font-family:monospace; font-size:.7rem; color:var(--fm-val); min-width:38px; }
+#fmroot .fm_gpcanvaswrap { padding:8px 12px; background:#060810; }
+#fmroot .fm_gpcanvaswrap canvas { display:block; width:100%; height:auto; }
+#fmroot .fm_fitinfo { font-family:monospace; font-size:.72rem; color:var(--fm-val); padding:4px 12px; min-height:20px; }
+#fmroot .fm_gptablewrap { padding:6px 12px 12px; }
+#fmroot .fm_gptablelbl { font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--fm-dim); margin-bottom:5px; }
+#fmroot .fm_dtable { display:grid; grid-template-columns:32px repeat(6, minmax(0,1fr)); gap:2px; font-family:monospace; font-size:.68rem; overflow-x:auto; }
+#fmroot .fmTH { padding:4px; background:var(--fm-panel-lo); color:var(--fm-dim); border:1px solid var(--fm-border); text-align:center; }
+#fmroot .fmTD, #fmroot .fmTDx, #fmroot .fmTDv { padding:3px 4px; border:1px solid var(--fm-border); text-align:center; }
+#fmroot .fmTDx { color:var(--fm-accent); font-weight:bold; }
+#fmroot .fmTDv { color:var(--fm-val); font-weight:bold; }
+#fmroot .fm_dnone { font-size:.72rem; color:var(--fm-dim); padding:6px 0; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#fmroot .fm_instrument { grid-template-columns:minmax(0,1fr); }
+#fmroot .fm_rightcol { width:auto; }
+#fmroot .fm_formulastrip { grid-column:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#fmroot input[type=range] { height:8px; }
+#fmroot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#fmroot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#fmroot .fm_runbtn, #fmroot .fm_a11ybtn, #fmroot .fm_flipbtn, #fmroot .fm_logbtn, #fmroot .fm_gpbtn { min-height:40px; }
+#fmroot .fm_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#fmroot { padding:10px 6px 14px; }
+#fmroot .fm_rgrid { grid-template-columns:1fr; }
+}
+</style>
+<script>
+/* ════════════════════════════════════════════════
+Accessibility controller
+Themes are applied by overriding CSS custom properties on the root
+(style.setProperty) -- no class names are toggled from JavaScript.
+════════════════════════════════════════════════ */
+var fmA11y = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+var THEMES = {
+hc: {
+'--fm-chassis':'#000000','--fm-panel':'#000000','--fm-panel-hi':'#111111','--fm-panel-lo':'#000000',
+'--fm-border':'#ffffff','--fm-border-hi':'#ffffff','--fm-text':'#ffffff','--fm-dim':'#e0e0e0','--fm-bright':'#ffffff',
+'--fm-accent':'#ffd700','--fm-green':'#00ff88','--fm-val':'#ffff00','--fm-danger':'#ff5050',
+'--fm-focus':'#ffff00','--fm-nar-bg':'#000000','--fm-nar-border':'#ffd700','--fm-nar-text':'#ffffff',
+'--fm-grid':'transparent','--fm-north':'#ff3b3b','--fm-south':'#4da6ff','--fm-plot1':'#ffff00','--fm-plot2':'#00ffee',
+'--fm-cyan':'#00ffee','--fm-copper':'#ffb060'
+},
+lm: {
+'--fm-chassis':'#e9edf1','--fm-panel':'#ffffff','--fm-panel-hi':'#f1f4f7','--fm-panel-lo':'#f4f6f9',
+'--fm-border':'#c3cad3','--fm-border-hi':'#9aa3ae','--fm-text':'#1d232a','--fm-dim':'#556070','--fm-bright':'#000000',
+'--fm-accent':'#a8620a','--fm-green':'#12805a','--fm-val':'#8a4a00','--fm-danger':'#b02020',
+'--fm-focus':'#a8620a','--fm-nar-bg':'#ffefc0','--fm-nar-border':'#e0b040','--fm-nar-text':'#333333',
+'--fm-grid':'transparent'
+},
+cb: {
+'--fm-north':'#d55e00','--fm-south':'#0072b2','--fm-plot1':'#e69f00','--fm-plot2':'#56b4e9',
+'--fm-cyan':'#56b4e9','--fm-magenta':'#cc79a7','--fm-green':'#009e73'
+}
+};
+function applyAll() {
+if (!ROOT) return;
+var k, p;
+for (k in THEMES) for (p in THEMES[k]) ROOT.style.removeProperty(p);
+['hc','lm','cb'].forEach(function(t){
+if (!states[t]) return;
+for (p in THEMES[t]) ROOT.style.setProperty(p, THEMES[t][p]);
+});
+}
+function styleBtn(id, active) {
+var btn = document.getElementById(id);
+if (!btn) return;
+btn.style.background  = active ? 'rgba(58,208,143,0.14)' : '';
+btn.style.borderColor = active ? 'var(--fm-green)' : '';
+btn.style.color       = active ? 'var(--fm-green)' : '';
+btn.style.fontWeight  = active ? 'bold' : '';
+btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function apply() {
+if (!ROOT) return;
+applyAll();
+/* Light mode: the scene, scope and data-graph canvases are inverted to a light look */
+var lmFilter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.92)' : '';
+['fmAnimCanvas','fmGraphCanvas','fmDGCanvas'].forEach(function(id){
+var cv = document.getElementById(id); if (cv) cv.style.filter = lmFilter;
+});
+styleBtn('fmBtnHC', states.hc);
+styleBtn('fmBtnLM', states.lm);
+styleBtn('fmBtnCB', states.cb);
+var nb = document.getElementById('fmNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('fmBtnNR');
+if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('fmBtnNR', states.nr);
+if (typeof fallingMagnetSim !== 'undefined' && fallingMagnetSim.redraw) fallingMagnetSim.redraw();
+if (typeof fmGraphPanel !== 'undefined' && fmGraphPanel.redraw) fmGraphPanel.redraw();
+}
+return {
+init: function() { ROOT = document.getElementById('fmroot'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) { states.lm = false; }
+if (k === 'lm' && states.lm) { states.hc = false; }
+apply();
+},
+isNarOn: function() { return states.nr; },
+col: function(prop, def) {
+if (!ROOT) return def;
+var v = getComputedStyle(ROOT).getPropertyValue(prop);
+return (v && v.trim()) || def;
+}
+};
+})();
+</script>
+<script>
+/* ════════════════════════════════════════════════
+Main simulation
+════════════════════════════════════════════════ */
+var fallingMagnetSim = function() {
+var animCv = document.getElementById('fmAnimCanvas');
+var graphCv= document.getElementById('fmGraphCanvas');
+var actx   = animCv.getContext('2d');
+var gctx   = graphCv.getContext('2d');
+function el(id)    { return document.getElementById(id); }
+function set(id,v) { var e=el(id); if(e) e.textContent=v; }
+function narrate(msg) {
+if(fmA11y.isNarOn()) {
+var nb = el('fmNarBar'); if(nb) nb.textContent = msg;
+var sr = el('fmSrAnn'); if(sr) sr.textContent = msg;
+}
+}
+function updateWhat(msg) {
+var wt = el('fmWhatText'); if(wt) wt.textContent = msg;
+}
+/* ── Physics constants ── */
+var G       = 9.81;
+var A_COIL  = 0.06;
+var K_FLUX  = 1.0;
+/* ── Simulation parameters ── */
+var h0      = 1.5;
+var N_turns = 50;
+var B_str   = 0.010;
+var polarity= 1;
+var coilOrientation= 1;
+var playSpeed = 0.4;
+/* ── Pre-computed trace ── */
+var tArr=[], yArr=[], vArr=[], emfArr=[];
+var tEnd=0, DT=0.004;
+var peak1Val=0, peak2Val=0, peak1Idx=-1, peak2Idx=-1;
+var area1=0, area2=0, emfScale=1;
+/* ── Animation state ── */
+var simTime=0, simIdx=0, running=false, rafId=null, lastTS=null;
+var saidPeak1=false, saidPeak2=false, saidCoil=false;
+/* ── Scene geometry (canvas pixels) ── */
+var AW=animCv.width, AH=animCv.height;
+var GW=graphCv.width, GH=graphCv.height;
+var TUBE_CX=300, TUBE_HW=24, TUBE_TOP=16, BENCH_Y=372;
+var COIL_CY=318, COIL_RO=46;
+var MAG_W=34, MAG_H=72;
+var PX_PER_M=(COIL_CY-MAG_H/2-18)/2.05;
+var ROD_X=170;
+var RULER_X=362, RULER_W=26;
+var DIM_X=400;
+var SEN_X=446, SEN_Y=118, SEN_W=166, SEN_H=172;
+/* ── Colours (read from the theme variables) ── */
+function pal(){
+var c=fmA11y.col;
+return {
+north:c('--fm-north','#cc2828'), south:c('--fm-south','#2860cc'),
+plot1:c('--fm-plot1','#ff5050'), plot2:c('--fm-plot2','#00e8d0'),
+cyan:c('--fm-cyan','#00e8d0'), magenta:c('--fm-magenta','#e040a0'),
+green:c('--fm-green','#3ad08f'), copper:c('--fm-copper','#c8783c'),
+accent:c('--fm-accent','#e8a020')
+};
+}
+function rgba(hex,a){
+var h=hex.replace('#','');
+if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+var n=parseInt(h,16);
+return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+/* ── Physics ── */
+function fluxLinkage(y){
+var u=y/A_COIL;
+return coilOrientation*polarity*N_turns*B_str*K_FLUX/Math.pow(1+u*u,1.5);
+}
+function dFluxDy(y){
+var u=y/A_COIL;
+return coilOrientation*polarity*N_turns*B_str*K_FLUX*(-3.0*u/A_COIL)/Math.pow(1+u*u,2.5);
+}
+function emf(y,v){ return -dFluxDy(y)*v; }
+function precompute(){
+tArr=[]; yArr=[]; vArr=[]; emfArr=[];
+tEnd=Math.sqrt(2.0*(h0+1.5)/G);
+var steps=Math.ceil(tEnd/DT)+1;
+for(var i=0;i<steps;i++){
+var t=i*DT, y=h0-0.5*G*t*t, v=-G*t;
+tArr.push(t); yArr.push(y); vArr.push(v); emfArr.push(emf(y,v));
+}
+var pPosIdx=0, pNegIdx=0;
+for(var pi=0;pi<emfArr.length;pi++){
+if(emfArr[pi]>emfArr[pPosIdx]) pPosIdx=pi;
+if(emfArr[pi]<emfArr[pNegIdx]) pNegIdx=pi;
+}
+/* V1 = first peak in time (entry), V2 = second peak in time (exit).
+Peak values come from a fine-DT pass (0.2 ms) to avoid discretisation
+artefacts; indices into the 4 ms display array are kept for animation
+sync and area integration. */
+if(pPosIdx<=pNegIdx){ peak1Idx=pPosIdx; peak2Idx=pNegIdx; }
+else                { peak1Idx=pNegIdx; peak2Idx=pPosIdx; }
+var DT_FINE=0.0002;
+var fineSteps=Math.ceil(tEnd/DT_FINE)+1;
+var fineMaxPos=-Infinity, fineMinNeg=Infinity, fineMaxPosT=-1, fineMinNegT=-1;
+for(var fi=0;fi<fineSteps;fi++){
+var ft=fi*DT_FINE, fy=h0-0.5*G*ft*ft, fv=-G*ft, fe=emf(fy,fv);
+if(fe>fineMaxPos){ fineMaxPos=fe; fineMaxPosT=ft; }
+if(fe<fineMinNeg){ fineMinNeg=fe; fineMinNegT=ft; }
+}
+if(fineMaxPosT<=fineMinNegT){ peak1Val=fineMaxPos; peak2Val=fineMinNeg; }
+else                        { peak1Val=fineMinNeg; peak2Val=fineMaxPos; }
+var splitIdx=peak1Idx;
+for(var si=peak1Idx;si<=peak2Idx;si++){
+if(peak1Val>0&&emfArr[si]<=0){ splitIdx=si; break; }
+if(peak1Val<0&&emfArr[si]>=0){ splitIdx=si; break; }
+}
+area1=-(fluxLinkage(0)-fluxLinkage(h0)); area2=-(fluxLinkage(yArr[yArr.length-1])-fluxLinkage(0));   /* = integral of the EMF under each peak, exactly */
+var mx=0;
+for(var k=0;k<emfArr.length;k++) if(Math.abs(emfArr[k])>mx) mx=Math.abs(emfArr[k]);
+emfScale=mx<1e-9?1:mx*1.15;
+}
+/* ════════ Scene drawing ════════ */
+function coilHeight(){ return 14 + 26*(N_turns-25)/475; }
+function drawBackground(){
+var g=actx.createLinearGradient(0,0,0,BENCH_Y);
+g.addColorStop(0,'#141922'); g.addColorStop(1,'#0b0e14');
+actx.fillStyle=g; actx.fillRect(0,0,AW,AH);
+actx.strokeStyle='rgba(255,255,255,0.03)'; actx.lineWidth=0.5;
+for(var gx=0;gx<AW;gx+=20){ actx.beginPath(); actx.moveTo(gx,0); actx.lineTo(gx,BENCH_Y); actx.stroke(); }
+for(var gy=0;gy<BENCH_Y;gy+=20){ actx.beginPath(); actx.moveTo(0,gy); actx.lineTo(AW,gy); actx.stroke(); }
+}
+function metal(x,y,w,h){
+var g=actx.createLinearGradient(x,0,x+w,0);
+g.addColorStop(0,'#5d6670'); g.addColorStop(0.45,'#c9d2db'); g.addColorStop(1,'#4a525b');
+actx.fillStyle=g; actx.fillRect(x,y,w,h);
+}
+function drawStand(){
+/* base plate and rod */
+var bg=actx.createLinearGradient(0,BENCH_Y-12,0,BENCH_Y);
+bg.addColorStop(0,'#3d444d'); bg.addColorStop(1,'#1f2329');
+actx.fillStyle=bg; roundRect(ROD_X-55,BENCH_Y-12,120,12,[3,3,0,0]); actx.fill();
+metal(ROD_X-4,10,8,BENCH_Y-22);
+actx.fillStyle='#9aa3ae'; actx.beginPath(); actx.arc(ROD_X,10,4,0,Math.PI*2); actx.fill();
+/* two clamps: top of the tube and just above the coil */
+[34, COIL_CY-78].forEach(function(cy){
+metal(ROD_X-8,cy-8,16,16);
+actx.fillStyle='#2a2f36'; actx.beginPath(); actx.arc(ROD_X-11,cy,3,0,Math.PI*2); actx.fill();
+metal(ROD_X+8,cy-3,TUBE_CX-TUBE_HW-ROD_X-12,6);
+});
+}
+function drawClampJaws(){
+[34, COIL_CY-78].forEach(function(cy){
+actx.fillStyle='#3a414a';
+roundRect(TUBE_CX-TUBE_HW-7,cy-8,7,16,[2,2,2,2]); actx.fill();
+roundRect(TUBE_CX+TUBE_HW,cy-8,7,16,[2,2,2,2]); actx.fill();
+actx.strokeStyle='rgba(200,210,220,0.35)'; actx.lineWidth=1;
+actx.beginPath(); actx.moveTo(TUBE_CX-TUBE_HW,cy-6); actx.lineTo(TUBE_CX+TUBE_HW,cy-6); actx.stroke();
+});
+}
+function drawTubeBack(){
+actx.fillStyle='rgba(170,210,255,0.05)';
+actx.fillRect(TUBE_CX-TUBE_HW,TUBE_TOP,TUBE_HW*2,BENCH_Y-TUBE_TOP);
+actx.strokeStyle='rgba(200,230,255,0.18)'; actx.lineWidth=1;
+actx.beginPath(); actx.ellipse(TUBE_CX,TUBE_TOP,TUBE_HW,4,0,0,Math.PI*2); actx.stroke();
+}
+function drawTubeFront(){
+actx.strokeStyle='rgba(200,230,255,0.35)'; actx.lineWidth=1.4;
+actx.beginPath(); actx.moveTo(TUBE_CX-TUBE_HW,TUBE_TOP); actx.lineTo(TUBE_CX-TUBE_HW,BENCH_Y); actx.stroke();
+actx.beginPath(); actx.moveTo(TUBE_CX+TUBE_HW,TUBE_TOP); actx.lineTo(TUBE_CX+TUBE_HW,BENCH_Y); actx.stroke();
+actx.strokeStyle='rgba(255,255,255,0.12)'; actx.lineWidth=3;
+actx.beginPath(); actx.moveTo(TUBE_CX-TUBE_HW+6,TUBE_TOP+8); actx.lineTo(TUBE_CX-TUBE_HW+6,BENCH_Y-6); actx.stroke();
+}
+function drawCoilHalf(front,P){
+var cH=coilHeight(), nVis=Math.max(5,Math.round(cH/3.2));
+var top=COIL_CY-cH/2;
+for(var k=0;k<nVis;k++){
+var yk=top+(k+0.5)*cH/nVis;
+actx.strokeStyle=front?rgba(P.copper,0.95):rgba(P.copper,0.45);
+actx.lineWidth=front?2.4:1.6;
+actx.beginPath();
+if(front) actx.ellipse(TUBE_CX,yk,COIL_RO,8,0,0,Math.PI,false);
+else actx.ellipse(TUBE_CX,yk,COIL_RO,8,0,Math.PI,2*Math.PI,false);
+actx.stroke();
+}
+/* bobbin flanges */
+actx.strokeStyle=front?'rgba(230,210,180,0.6)':'rgba(230,210,180,0.25)'; actx.lineWidth=1.4;
+[top-2, top+cH+2].forEach(function(fy){
+actx.beginPath();
+if(front) actx.ellipse(TUBE_CX,fy,COIL_RO+6,10,0,0,Math.PI,false);
+else actx.ellipse(TUBE_CX,fy,COIL_RO+6,10,0,Math.PI,2*Math.PI,false);
+actx.stroke();
+});
+if(front){
+/* sides of the winding */
+actx.strokeStyle=rgba(P.copper,0.8); actx.lineWidth=1.2;
+actx.beginPath(); actx.moveTo(TUBE_CX-COIL_RO,top); actx.lineTo(TUBE_CX-COIL_RO,top+cH); actx.stroke();
+actx.beginPath(); actx.moveTo(TUBE_CX+COIL_RO,top); actx.lineTo(TUBE_CX+COIL_RO,top+cH); actx.stroke();
+actx.fillStyle='rgba(230,210,180,0.75)'; actx.font='10px monospace'; actx.textAlign='right';
+actx.fillText('N = '+N_turns+'  '+(coilOrientation>0?'↑':'↓'), TUBE_CX-COIL_RO-10, COIL_CY+4);
+}
+}
+function drawFluxGlow(y_m,P){
+var u=y_m/A_COIL, f=1/Math.pow(1+u*u,1.5);
+if(f<0.02) return;
+var g=actx.createRadialGradient(TUBE_CX,COIL_CY,2,TUBE_CX,COIL_CY,COIL_RO);
+g.addColorStop(0,rgba(P.plot2,0.35*f)); g.addColorStop(1,rgba(P.plot2,0));
+actx.fillStyle=g;
+actx.beginPath(); actx.ellipse(TUBE_CX,COIL_CY,COIL_RO,coilHeight()/2+10,0,0,Math.PI*2); actx.fill();
+}
+function drawCurrentChevrons(e,P){
+if(Math.abs(e)<0.04*emfScale) return;
+/* front of the winding: current to the right when emf·(coil sense) < 0 (Lenz) */
+var dir=(e*coilOrientation<0)?1:-1;
+var a=Math.min(1,0.35+Math.abs(e)/emfScale);
+var y=COIL_CY+coilHeight()/2+8;
+actx.strokeStyle=rgba(P.green,a); actx.lineWidth=2.2;
+[-22,0,22].forEach(function(dx){
+var x=TUBE_CX+dx;
+actx.beginPath(); actx.moveTo(x-4*dir,y-5); actx.lineTo(x+4*dir,y); actx.lineTo(x-4*dir,y+5); actx.stroke();
+});
+actx.fillStyle=rgba(P.green,a); actx.font='9px monospace'; actx.textAlign='center';
+actx.fillText('I', TUBE_CX+40, y+14);
+}
+function drawFieldLines(cx,py,y_m,P){
+var near=1.0/(1+Math.pow(y_m/(3*A_COIL),2));
+var alpha=0.18+0.32*near;
+var nAtBottom=polarity>0;
+var yN=nAtBottom?py+MAG_H/2:py-MAG_H/2;
+var yS=nAtBottom?py-MAG_H/2:py+MAG_H/2;
+var s=nAtBottom?1:-1;
+actx.save();
+actx.strokeStyle=rgba(P.north,alpha); actx.fillStyle=rgba(P.north,alpha+0.15); actx.lineWidth=1;
+for(var k=1;k<=3;k++){
+var w=k*14;
+[-1,1].forEach(function(side){
+var xo=cx+side*(MAG_W/2+w*1.6);
+actx.beginPath();
+actx.moveTo(cx+side*6,yN);
+actx.bezierCurveTo(xo,yN+s*w*0.9, xo,yS-s*w*0.9, cx+side*6,yS);
+actx.stroke();
+/* arrow at the outermost point: outside the magnet the field runs from N to S */
+var mx=(cx+side*6)*0.25+xo*0.75, my=(yN+yS)/2, d=-s;
+actx.beginPath(); actx.moveTo(mx,my+d*5); actx.lineTo(mx-3.5,my-d*2); actx.lineTo(mx+3.5,my-d*2); actx.closePath(); actx.fill();
+});
+}
+actx.restore();
+}
+function drawMagnet(cx,py,P){
+var x0=cx-MAG_W/2, y0=py-MAG_H/2;
+var nAtBottom=polarity>0;
+var topCol=nAtBottom?P.south:P.north, botCol=nAtBottom?P.north:P.south;
+var topLbl=nAtBottom?'S':'N', botLbl=nAtBottom?'N':'S';
+actx.save();
+actx.shadowColor=rgba(botCol,0.45); actx.shadowBlur=16;
+var gT=actx.createLinearGradient(x0,0,x0+MAG_W,0);
+gT.addColorStop(0,rgba(topCol,0.8)); gT.addColorStop(0.5,topCol); gT.addColorStop(1,rgba(topCol,0.66));
+actx.fillStyle=gT; roundRect(x0,y0,MAG_W,MAG_H/2,[4,4,0,0]); actx.fill();
+var gB=actx.createLinearGradient(x0,0,x0+MAG_W,0);
+gB.addColorStop(0,rgba(botCol,0.8)); gB.addColorStop(0.5,botCol); gB.addColorStop(1,rgba(botCol,0.66));
+actx.fillStyle=gB; roundRect(x0,y0+MAG_H/2,MAG_W,MAG_H/2,[0,0,4,4]); actx.fill();
+actx.restore();
+actx.fillStyle='rgba(255,255,255,0.14)'; roundRect(x0+3,y0+3,MAG_W-6,MAG_H*0.18,[3,3,0,0]); actx.fill();
+actx.strokeStyle='rgba(255,255,255,0.25)'; actx.lineWidth=1.2; roundRect(x0,y0,MAG_W,MAG_H,[4,4,4,4]); actx.stroke();
+actx.strokeStyle='rgba(255,255,255,0.3)'; actx.lineWidth=1;
+actx.beginPath(); actx.moveTo(x0,py); actx.lineTo(x0+MAG_W,py); actx.stroke();
+actx.fillStyle='#fff'; actx.font='bold 14px Arial'; actx.textAlign='center'; actx.textBaseline='middle';
+actx.fillText(topLbl,cx,y0+MAG_H*0.25); actx.fillText(botLbl,cx,y0+MAG_H*0.75);
+actx.textBaseline='alphabetic';
+}
+function drawRuler(P){
+var yTop=COIL_CY-2.05*PX_PER_M-4, yBot=COIL_CY+6;
+var g=actx.createLinearGradient(RULER_X,0,RULER_X+RULER_W,0);
+g.addColorStop(0,'#b88d45'); g.addColorStop(0.5,'#dcb66a'); g.addColorStop(1,'#a87d38');
+actx.fillStyle=g; roundRect(RULER_X,yTop,RULER_W,yBot-yTop,[2,2,2,2]); actx.fill();
+actx.strokeStyle='#2a1d0c'; actx.fillStyle='#2a1d0c'; actx.lineWidth=1;
+actx.font='8px monospace'; actx.textAlign='right';
+for(var i=0;i<=20;i++){
+var y=COIL_CY-i*0.1*PX_PER_M;
+var len=(i%5===0)?11:(i%1===0?6:4);
+actx.beginPath(); actx.moveTo(RULER_X,y); actx.lineTo(RULER_X+len,y); actx.stroke();
+if(i%5===0) actx.fillText((i/10).toFixed(1),RULER_X+RULER_W-2,y+3);
+}
+actx.fillStyle='rgba(230,210,180,0.7)'; actx.font='9px monospace'; actx.textAlign='center';
+actx.fillText('m',RULER_X+RULER_W/2,yTop-4);
+}
+function drawHeightMarker(P){
+var yRel=COIL_CY-h0*PX_PER_M;
+/* dashed release line from tube to ruler, pointer on the ruler */
+actx.strokeStyle=rgba(P.accent,0.7); actx.lineWidth=1; actx.setLineDash([4,3]);
+actx.beginPath(); actx.moveTo(TUBE_CX+TUBE_HW+2,yRel); actx.lineTo(RULER_X,yRel); actx.stroke();
+actx.beginPath(); actx.moveTo(TUBE_CX+COIL_RO+2,COIL_CY); actx.lineTo(RULER_X,COIL_CY); actx.stroke();
+actx.setLineDash([]);
+actx.fillStyle=P.accent;
+actx.beginPath(); actx.moveTo(RULER_X-1,yRel); actx.lineTo(RULER_X-8,yRel-5); actx.lineTo(RULER_X-8,yRel+5); actx.closePath(); actx.fill();
+/* dimension arrow h */
+if(h0*PX_PER_M>14){
+actx.strokeStyle=P.accent; actx.lineWidth=1.2;
+actx.beginPath(); actx.moveTo(DIM_X,yRel); actx.lineTo(DIM_X,COIL_CY); actx.stroke();
+[[yRel,1],[COIL_CY,-1]].forEach(function(e){
+actx.beginPath(); actx.moveTo(DIM_X,e[0]); actx.lineTo(DIM_X-4,e[0]+e[1]*7); actx.lineTo(DIM_X+4,e[0]+e[1]*7); actx.closePath(); actx.fill();
+});
+actx.beginPath(); actx.moveTo(DIM_X-6,yRel); actx.lineTo(DIM_X+6,yRel); actx.stroke();
+actx.beginPath(); actx.moveTo(DIM_X-6,COIL_CY); actx.lineTo(DIM_X+6,COIL_CY); actx.stroke();
+actx.save(); actx.translate(DIM_X+12,(yRel+COIL_CY)/2); actx.rotate(-Math.PI/2);
+actx.font='bold 10px monospace'; actx.textAlign='center'; actx.fillText('h = '+h0.toFixed(2)+' m',0,0); actx.restore();
+}
+}
+function drawLeads(){
+var cH=coilHeight();
+var aTop={x:TUBE_CX+COIL_RO, y:COIL_CY-cH/2+3}, aBot={x:TUBE_CX+COIL_RO, y:COIL_CY+cH/2-3};
+var tPlus={x:SEN_X, y:SEN_Y+62}, tMinus={x:SEN_X, y:SEN_Y+112};
+/* the coil top lead goes to + normally; flipping the coil swaps the leads (they cross) */
+var topTo=coilOrientation>0?tPlus:tMinus, botTo=coilOrientation>0?tMinus:tPlus;
+function lead(a,b,xv,col){
+actx.strokeStyle=col; actx.lineWidth=2;
+actx.beginPath(); actx.moveTo(a.x,a.y); actx.lineTo(xv,a.y); actx.lineTo(xv,b.y); actx.lineTo(b.x,b.y); actx.stroke();
+}
+lead(aTop,topTo,424,topTo===tPlus?'#d62828':'#9aa3ae');
+lead(aBot,botTo,434,botTo===tPlus?'#d62828':'#9aa3ae');
+}
+function drawSensor(e,P){
+var x=SEN_X, y=SEN_Y, w=SEN_W, h=SEN_H, cx=x+w/2;
+actx.fillStyle='#1c232c'; actx.strokeStyle='#c9a86a'; actx.lineWidth=2;
+roundRect(x,y,w,h,[6,6,6,6]); actx.fill(); actx.stroke();
+actx.fillStyle='#c9a86a'; actx.font='bold 10px monospace'; actx.textAlign='center';
+actx.fillText('VOLTAGE  SENSOR',cx,y+16);
+/* centre-zero meter */
+var fx=x+22, fy=y+26, fw=w-34, fh=70;
+actx.fillStyle='#f3ecd9'; roundRect(fx,fy,fw,fh,[4,4,4,4]); actx.fill();
+var pvx=fx+fw/2, pvy=fy+fh-8, r=50, span=55*Math.PI/180;
+actx.strokeStyle='#2a2a2a'; actx.lineWidth=1.2;
+actx.beginPath(); actx.arc(pvx,pvy,r,-Math.PI/2-span,-Math.PI/2+span,false); actx.stroke();
+for(var k=-4;k<=4;k++){
+var ak=-Math.PI/2+span*k/4, r1=(k%2===0)?r-8:r-4;
+actx.beginPath(); actx.moveTo(pvx+r1*Math.cos(ak),pvy+r1*Math.sin(ak)); actx.lineTo(pvx+r*Math.cos(ak),pvy+r*Math.sin(ak)); actx.stroke();
+}
+actx.fillStyle='#2a2a2a'; actx.font='bold 11px monospace';
+actx.fillText('−',pvx-44,fy+14); actx.fillText('+',pvx+44,fy+14);
+actx.font='8px monospace'; actx.fillText('0',pvx,fy+30);
+var frac=Math.max(-1,Math.min(1,e/emfScale)), an=-Math.PI/2+span*frac;
+actx.strokeStyle='#d62828'; actx.lineWidth=2; actx.lineCap='round';
+actx.beginPath(); actx.moveTo(pvx,pvy); actx.lineTo(pvx+(r-4)*Math.cos(an),pvy+(r-4)*Math.sin(an)); actx.stroke();
+actx.lineCap='butt';
+actx.fillStyle='#2a2a2a'; actx.beginPath(); actx.arc(pvx,pvy,3,0,Math.PI*2); actx.fill();
+/* LCD */
+actx.fillStyle='#0a1a12'; roundRect(x+22,y+104,w-34,26,[3,3,3,3]); actx.fill();
+actx.fillStyle='#3cff9a'; actx.font='bold 13px monospace';
+actx.fillText(fmtV(e),x+22+(w-34)/2,y+122);
+actx.fillStyle='#e6edf3'; actx.font='9px monospace';
+actx.fillText('full scale ±'+fmtV(emfScale),cx,y+h-14);
+/* terminals */
+[[y+62,'+','#d62828'],[y+112,'−','#111']].forEach(function(t){
+actx.fillStyle=t[2]; actx.strokeStyle='#c9a86a'; actx.lineWidth=1.5;
+actx.beginPath(); actx.arc(x,t[0],5,0,Math.PI*2); actx.fill(); actx.stroke();
+actx.fillStyle='#e6edf3'; actx.font='bold 11px monospace'; actx.textAlign='left';
+actx.fillText(t[1],x+8,t[0]+4); actx.textAlign='center';
+});
+}
+function drawBench(){
+var g=actx.createLinearGradient(0,BENCH_Y,0,AH);
+g.addColorStop(0,'#6b4a2b'); g.addColorStop(0.15,'#5a3d22'); g.addColorStop(1,'#3a2716');
+actx.fillStyle=g; actx.fillRect(0,BENCH_Y,AW,AH-BENCH_Y);
+actx.strokeStyle='rgba(255,220,170,0.25)'; actx.lineWidth=1;
+actx.beginPath(); actx.moveTo(0,BENCH_Y+0.5); actx.lineTo(AW,BENCH_Y+0.5); actx.stroke();
+actx.strokeStyle='rgba(0,0,0,0.18)';
+for(var i=0;i<4;i++){ actx.beginPath(); actx.moveTo(0,BENCH_Y+8+i*5); actx.bezierCurveTo(200,BENCH_Y+4+i*6,420,BENCH_Y+12+i*4,AW,BENCH_Y+7+i*5); actx.stroke(); }
+/* hole in the bench under the tube (the magnet drops into a padded catch box) */
+actx.fillStyle='#050608'; actx.beginPath(); actx.ellipse(TUBE_CX,BENCH_Y+2,TUBE_HW+3,4,0,0,Math.PI*2); actx.fill();
+/* sensor base */
+metal(SEN_X+50,SEN_Y+SEN_H,10,BENCH_Y-SEN_Y-SEN_H); metal(SEN_X+106,SEN_Y+SEN_H,10,BENCH_Y-SEN_Y-SEN_H);
+}
+function drawGravArrow(P){
+var x=AW-18, y0=16, y1=58;
+actx.strokeStyle=rgba(P.accent,0.6); actx.fillStyle=rgba(P.accent,0.7); actx.lineWidth=1.5;
+actx.beginPath(); actx.moveTo(x,y0); actx.lineTo(x,y1); actx.stroke();
+actx.beginPath(); actx.moveTo(x,y1); actx.lineTo(x-5,y1-8); actx.lineTo(x+5,y1-8); actx.closePath(); actx.fill();
+actx.font='italic 11px serif'; actx.textAlign='center'; actx.fillText('g',x,y0-4);
+}
+function drawVelocityArrow(py,v,P){
+if(Math.abs(v)<0.05) return;
+var len=Math.min(60,Math.abs(v)*7), x=TUBE_CX+TUBE_HW+12;
+if(py>BENCH_Y) return;
+actx.strokeStyle=P.cyan; actx.fillStyle=P.cyan; actx.lineWidth=2;
+actx.beginPath(); actx.moveTo(x,py); actx.lineTo(x,py+len-6); actx.stroke();
+actx.beginPath(); actx.moveTo(x,py+len); actx.lineTo(x-4,py+len-8); actx.lineTo(x+4,py+len-8); actx.closePath(); actx.fill();
+actx.font='italic bold 11px serif'; actx.textAlign='left'; actx.fillText('v',x+5,py+len/2+4);
+}
+function drawAnim(y_m, v_m, e_m){
+var P=pal();
+var mag_py=COIL_CY-y_m*PX_PER_M;
+actx.clearRect(0,0,AW,AH);
+drawBackground();
+drawStand();
+drawTubeBack();
+drawCoilHalf(false,P);
+drawFluxGlow(y_m,P);
+drawFieldLines(TUBE_CX,mag_py,y_m,P);
+drawMagnet(TUBE_CX,mag_py,P);
+drawTubeFront();
+drawCoilHalf(true,P);
+drawCurrentChevrons(e_m,P);
+drawClampJaws();
+drawRuler(P);
+drawHeightMarker(P);
+drawLeads();
+drawSensor(e_m,P);
+drawBench();
+drawGravArrow(P);
+drawVelocityArrow(mag_py+MAG_H/2+4,v_m,P);
+}
+function roundRect(x,y,w,h,r){
+actx.beginPath();
+actx.moveTo(x+r[0],y); actx.lineTo(x+w-r[1],y); actx.quadraticCurveTo(x+w,y,x+w,y+r[1]);
+actx.lineTo(x+w,y+h-r[2]); actx.quadraticCurveTo(x+w,y+h,x+w-r[2],y+h);
+actx.lineTo(x+r[3],y+h); actx.quadraticCurveTo(x,y+h,x,y+h-r[3]);
+actx.lineTo(x,y+r[0]); actx.quadraticCurveTo(x,y,x+r[0],y); actx.closePath();
+}
+/* ════════ EMF graph (voltage sensor trace) ════════ */
+var PAD={t:28,r:16,b:32,l:56};
+function drawGraph(currentIdx){
+var P=pal();
+gctx.clearRect(0,0,GW,GH);
+gctx.fillStyle='#060810'; gctx.fillRect(0,0,GW,GH);
+if(emfArr.length===0) return;
+var pw=GW-PAD.l-PAD.r, ph=GH-PAD.t-PAD.b;
+var emfMax=emfScale;
+gctx.strokeStyle='rgba(255,255,255,0.06)'; gctx.lineWidth=0.5;
+for(var gi=0;gi<=4;gi++){ var gy2=PAD.t+ph*gi/4; gctx.beginPath(); gctx.moveTo(PAD.l,gy2); gctx.lineTo(PAD.l+pw,gy2); gctx.stroke(); }
+for(var gj=0;gj<=10;gj++){ var gx2=PAD.l+pw*gj/10; gctx.beginPath(); gctx.moveTo(gx2,PAD.t); gctx.lineTo(gx2,PAD.t+ph); gctx.stroke(); }
+var zeroY=PAD.t+ph*0.5;
+gctx.strokeStyle='rgba(255,255,255,0.22)'; gctx.lineWidth=1;
+gctx.beginPath(); gctx.moveTo(PAD.l,zeroY); gctx.lineTo(PAD.l+pw,zeroY); gctx.stroke();
+gctx.strokeStyle='rgba(255,255,255,0.35)'; gctx.lineWidth=1.2;
+gctx.beginPath(); gctx.moveTo(PAD.l,PAD.t); gctx.lineTo(PAD.l,PAD.t+ph); gctx.lineTo(PAD.l+pw,PAD.t+ph); gctx.stroke();
+gctx.fillStyle='rgba(180,195,215,0.75)'; gctx.font='10px monospace'; gctx.textAlign='center';
+gctx.fillText('t  (s)',PAD.l+pw/2,GH-4);
+gctx.save(); gctx.translate(12,PAD.t+ph/2); gctx.rotate(-Math.PI/2); gctx.fillText('EMF  (V)',0,0); gctx.restore();
+gctx.textAlign='right'; gctx.font='9px monospace'; gctx.fillStyle='rgba(180,195,215,0.65)';
+var yVals=[emfMax,emfMax/2,0,-emfMax/2,-emfMax];
+for(var yl=0;yl<yVals.length;yl++){ var yPx=PAD.t+ph*(0.5-yVals[yl]/(2*emfMax)); gctx.fillText(fmtAxis(yVals[yl],emfMax),PAD.l-5,yPx+3); }
+gctx.textAlign='center';
+for(var xl=0;xl<=5;xl++){ var xPx=PAD.l+pw*xl/5; gctx.fillText((tEnd*xl/5).toFixed(2),xPx,PAD.t+ph+13); }
+gctx.fillStyle=rgba(P.accent,0.85); gctx.font='bold 11px monospace';
+gctx.fillText('Induced EMF vs. Time',PAD.l+pw/2,PAD.t-11);
+function toX(i){ return PAD.l+(tArr[i]/tEnd)*pw; }
+function toY(v){ return PAD.t+ph*(0.5-v/(2*emfMax)); }
+var endIdx=currentIdx<1?0:Math.min(currentIdx,emfArr.length-1);
+if(endIdx>0){
+gctx.beginPath(); gctx.moveTo(toX(0),zeroY);
+for(var fi=0;fi<=endIdx;fi++){ gctx.lineTo(toX(fi),emfArr[fi]>=0?toY(emfArr[fi]):zeroY); }
+gctx.lineTo(toX(endIdx),zeroY); gctx.closePath(); gctx.fillStyle=rgba(P.plot2,0.28); gctx.fill();
+gctx.beginPath(); gctx.moveTo(toX(0),zeroY);
+for(var ni=0;ni<=endIdx;ni++){ gctx.lineTo(toX(ni),emfArr[ni]<=0?toY(emfArr[ni]):zeroY); }
+gctx.lineTo(toX(endIdx),zeroY); gctx.closePath(); gctx.fillStyle=rgba(P.accent,0.28); gctx.fill();
+gctx.beginPath(); gctx.moveTo(toX(0),toY(emfArr[0]));
+for(var ti=1;ti<=endIdx;ti++) gctx.lineTo(toX(ti),toY(emfArr[ti]));
+gctx.strokeStyle=P.plot1; gctx.lineWidth=2.0; gctx.stroke();
+gctx.beginPath(); gctx.arc(toX(endIdx),toY(emfArr[endIdx]),4,0,Math.PI*2);
+gctx.fillStyle=P.plot1; gctx.fill(); gctx.strokeStyle='#fff'; gctx.lineWidth=1; gctx.stroke();
+}
+var tCoil=Math.sqrt(2.0*h0/G), xCoil=PAD.l+(tCoil/tEnd)*pw;
+gctx.strokeStyle=rgba(P.plot2,0.45); gctx.lineWidth=1; gctx.setLineDash([4,3]);
+gctx.beginPath(); gctx.moveTo(xCoil,PAD.t); gctx.lineTo(xCoil,PAD.t+ph); gctx.stroke(); gctx.setLineDash([]);
+gctx.fillStyle=rgba(P.plot2,0.7); gctx.font='9px monospace'; gctx.textAlign='center';
+gctx.fillText('coil',xCoil,PAD.t+9);
+var show1g=(simIdx>=peak1Idx&&peak1Idx>=0), show2g=(simIdx>=peak2Idx&&peak2Idx>=0);
+[[show1g,peak1Val,'V₁'],[show2g,peak2Val,'V₂']].forEach(function(pk){
+if(!pk[0]) return;
+var yP=toY(pk[1]);
+gctx.strokeStyle='rgba(255,170,90,0.55)'; gctx.lineWidth=1; gctx.setLineDash([3,4]);
+gctx.beginPath(); gctx.moveTo(PAD.l,yP); gctx.lineTo(PAD.l+pw,yP); gctx.stroke(); gctx.setLineDash([]);
+gctx.fillStyle='rgba(255,190,100,0.9)'; gctx.textAlign='left'; gctx.font='9px monospace';
+gctx.fillText(pk[2]+' = '+fmtV(pk[1]),PAD.l+4,yP+(pk[1]>0?-4:11));
+});
+}
+function fmtAxis(v,m){ if(m>=1) return v.toFixed(2); if(m>=0.001) return (v*1000).toFixed(1)+'m'; return (v*1e6).toFixed(0)+'μ'; }
+/* ── Readouts for the current frame ── */
+function showFrame(){
+var y_now=yArr[simIdx]!==undefined?yArr[simIdx]:yArr[yArr.length-1];
+var v_now=vArr[simIdx]!==undefined?vArr[simIdx]:vArr[vArr.length-1];
+var e_now=emfArr[simIdx]!==undefined?emfArr[simIdx]:emfArr[emfArr.length-1];
+if(simIdx===0){ y_now=h0; v_now=0; e_now=0; }
+drawAnim(y_now,v_now,e_now); drawGraph(simIdx);
+set('fmTimeBadge','t = '+simTime.toFixed(3)+' s');
+set('fmRdPos',y_now.toFixed(3)+' m');
+set('fmRdVel',v_now.toFixed(2)+' m/s');
+set('fmRdFlux',fmtWb(fluxLinkage(y_now)));
+set('fmRdEMF',fmtV(e_now));
+var show1=(simIdx>=peak1Idx&&peak1Idx>=0&&simIdx>0), show2=(simIdx>=peak2Idx&&peak2Idx>=0&&simIdx>0);
+set('fmRdPeakPos',show1?fmtV(peak1Val):'--');
+set('fmRdPeakNeg',show2?fmtV(peak2Val):'--');
+set('fmRdAreaPos',show1?fmtWb(area1):'--');
+set('fmRdAreaNeg',show2?fmtWb(area2):'--');
+return {show1:show1, show2:show2};
+}
+/* ── Animation loop ── */
+function animate(ts){
+if(!running) return;
+if(lastTS===null) lastTS=ts;
+var dt=Math.min((ts-lastTS)/1000,0.05)*playSpeed; lastTS=ts;
+simTime+=dt;
+simIdx=Math.min(Math.round(simTime/DT),tArr.length-1);
+var st=showFrame();
+/* narration at key moments (flags, so a skipped frame never misses them) */
+var idxCoil=Math.round(Math.sqrt(2.0*h0/G)/DT);
+if(!saidPeak1 && st.show1){ saidPeak1=true; narrate('First EMF peak: '+fmtV(peak1Val)+' as the magnet enters the coil.'); updateWhat('Entering the coil: the flux through the coil grows quickly, giving the first peak V₁ = '+fmtV(peak1Val)+'.'); }
+if(!saidCoil && simIdx>=idxCoil){ saidCoil=true; narrate('Magnet centre crossing the coil plane now -- the flux is at its maximum, so the EMF crosses zero.'); updateWhat('Magnet centre at the coil: the flux is at its maximum and momentarily not changing, so the EMF is zero.'); }
+if(!saidPeak2 && st.show2){ saidPeak2=true; narrate('Second EMF peak: '+fmtV(peak2Val)+' as the magnet exits the coil.'); updateWhat('Leaving the coil: the flux falls back, so the EMF reverses. The magnet is now faster, giving the larger peak V₂ = '+fmtV(peak2Val)+'.'); }
+if(simIdx>=tArr.length-1){
+running=false;
+setPlayLabel(false);
+updateWhat('Simulation complete. V₁ = '+fmtV(peak1Val)+' (entry), V₂ = '+fmtV(peak2Val)+' (exit). The exit peak is larger because the magnet is moving faster, but the two areas under the curve are equal and opposite. Click "+ Add point" to log this result.');
+narrate('Simulation complete. Peak 1: '+fmtV(peak1Val)+'. Peak 2: '+fmtV(peak2Val)+'.');
+return;
+}
+rafId=requestAnimationFrame(animate);
+}
+/* ── Formatting ── */
+function fmtPhi(v){ var a=Math.abs(v); if(a>=1) return v.toFixed(3)+' Wb'; if(a>=0.001) return (v*1000).toFixed(2)+' mWb'; return (v*1e6).toFixed(1)+' \u03BCWb'; }
+function fmtV(v){ var a=Math.abs(v); if(a>=1) return v.toFixed(3)+' V'; if(a>=0.001) return (v*1000).toFixed(2)+' mV'; return (v*1e6).toFixed(1)+' μV'; }
+function fmtWb(wb){ var a=Math.abs(wb); if(a>=1) return wb.toFixed(4)+' Wb'; if(a>=0.001) return (wb*1000).toFixed(3)+' mWb'; return (wb*1e6).toFixed(2)+' μWb'; }
+function setPlayLabel(on){ var b=el('fmBtnPlay'); if(b) b.textContent=on?'▶ Playing':'▶ Play'; }
+function readParams(){
+h0=parseFloat(el('fmSlH').value);
+N_turns=parseInt(el('fmSlN').value,10);
+B_str=parseFloat(el('fmSlB').value);
+playSpeed=parseFloat(el('fmSlSpeed').value);
+set('fmVH',h0.toFixed(2)+' m');
+set('fmVN',N_turns);
+set('fmVB',(B_str*1000).toFixed(1)+' mT');
+set('fmVSpeed',playSpeed.toFixed(1)+'\u00d7');
+}
+function onParam(){ readParams(); doReset(); }
+function onSpeed(){ playSpeed=parseFloat(el('fmSlSpeed').value); set('fmVSpeed',playSpeed.toFixed(1)+'\u00d7'); }
+function flipMagnet(){
+polarity*=-1;
+set('fmPolarity',polarity>0?'N pole leading \u2193':'S pole leading \u2193');
+doReset();
+narrate('Magnet flipped. '+(polarity>0?'N':'S')+' pole now leading downward.');
+}
+function flipCoil(){
+coilOrientation*=-1;
+set('fmCoilState',coilOrientation>0?'Coil \u2191 -- leads normal':'Coil \u2193 -- leads swapped');
+doReset();
+narrate('Coil flipped: its leads are now '+(coilOrientation>0?'back to normal.':'swapped at the voltage sensor.'));
+}
+function play(){
+if(simIdx>=tArr.length-1) doReset();
+running=true; lastTS=null;
+setPlayLabel(true);
+updateWhat('Magnet released from '+h0.toFixed(2)+' m. It accelerates under gravity. Watch the voltage sensor and the EMF graph.');
+narrate('Magnet released from '+h0.toFixed(2)+' m. Falling under gravity toward the coil with '+N_turns+' turns.');
+rafId=requestAnimationFrame(animate);
+}
+function pause(quiet){
+var was=running;
+running=false;
+setPlayLabel(false);
+if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
+if(was && !quiet) narrate('Paused at t = '+simTime.toFixed(3)+' s.');
+}
+function doReset(){
+pause(true); precompute(); simTime=0; simIdx=0; lastTS=null;
+saidPeak1=false; saidPeak2=false; saidCoil=false;
+var poleLabel=polarity>0?'N':'S';
+updateWhat('Magnet ('+poleLabel+' pole leading) set '+h0.toFixed(2)+' m above the coil ('+N_turns+' turns, B = '+(B_str*1000).toFixed(1)+' mT, coil '+(coilOrientation>0?'↑':'↓')+'). Press Play to release.');
+showFrame();
+}
+function reset(){ doReset(); narrate('Reset. Magnet back at h = '+h0.toFixed(2)+' m.'); }
+document.addEventListener('visibilitychange',function(){ if(document.hidden&&running) pause(); });
+/* ── Boot ── */
+fmA11y.init();
+readParams(); doReset();
+narrate('Falling magnet loaded. Set the drop height, turns and magnet strength, then press Play to release the magnet through the coil.');
+return {
+onParam:onParam, onSpeed:onSpeed, flipMagnet:flipMagnet, flipCoil:flipCoil, play:play, pause:function(){ pause(false); }, reset:reset,
+redraw:function(){ showFrame(); },
+addDataPoint: function(){
+if(peak1Idx<0||peak2Idx<0||simIdx===0){ set('fmDataCount','⚠ Run the sim first'); narrate('Run the simulation first.'); return; }
+if(simIdx<peak2Idx){ set('fmDataCount','⚠ Wait for the 2nd peak'); narrate('Wait for the second EMF peak before logging.'); return; }
+var trueMaxV=(Math.abs(peak1Val)+Math.abs(peak2Val))/2;
+var noise=gaussianRand()*0.08*trueMaxV+gaussianRand()*0.0005;
+var maxV=Math.max(0,trueMaxV+noise);
+var a1=area1, a2=area2;   /* the readout's areas: exact flux-linkage changes */
+var truePhi=(Math.abs(a1)+Math.abs(a2))/2;
+var avgPhi=Math.max(0,truePhi*(1+gaussianRand()*0.04));
+fmGraphPanel.addPoint({h:h0,N:N_turns,B:B_str,peak1:peak1Val,peak2:peak2Val,maxV:maxV,trueMaxV:trueMaxV,dphi1:a1,dphi2:a2,avgPhi:avgPhi,truePhi:truePhi});
+var n=fmGraphPanel.getCount();
+set('fmDataCount',n+' point'+(n===1?'':'s')+' logged ✓');
+narrate('Data point '+n+' logged. max V = '+fmtV(maxV)+'; average flux change under the two peaks = '+fmtPhi(avgPhi)+'.');
+}
+};
+};
+function gaussianRand(){
+var u=0,v=0;
+while(u===0) u=Math.random();
+while(v===0) v=Math.random();
+return Math.sqrt(-2.0*Math.log(u))*Math.cos(2.0*Math.PI*v);
+}
+</script>
+<script>
+var fallingMagnetSim = new fallingMagnetSim();
+</script>
+<script>
+/* ════════════════════════════════════════════════
+Data Graph Panel
+All button event listeners wired here (not inline onclick)
+so axis switching never touches the main sim.
+════════════════════════════════════════════════ */
+var fmGraphPanel = (function(){
+var data=[], xAxis='h', yAxis='V', showUnc=true, showFit=true, uncMode='percent', uncY=5, uncX=2;
+var cv=null, ctx=null, wired=false;
+function init(){
+if(wired) return;
+cv=document.getElementById('fmDGCanvas');
+if(!cv) return;
+ctx=cv.getContext('2d');
+wired=true;
+function wire(id,fn){
+var b=document.getElementById(id);
+if(b) b.addEventListener('click',function(e){ e.stopPropagation(); fn(); });
+}
+wire('fmGBtnH',  function(){ setAxis('h'); });
+wire('fmGBtnN',  function(){ setAxis('N'); });
+wire('fmGBtnB',  function(){ setAxis('B'); });
+wire('fmGBtnYV', function(){ setYAxis('V'); });
+wire('fmGBtnYF', function(){ setYAxis('F'); });
+wire('fmGBtnFit', toggleFit);
+wire('fmGBtnUnc', toggleUnc);
+wire('fmGBtnClear', clearData);
+wire('fmGBtnClose', close);
+var slY=document.getElementById('fmUncSl');
+if(slY) slY.addEventListener('input',function(e){ e.stopPropagation(); setUncValY(this.value); });
+var slX=document.getElementById('fmUncXSl');
+if(slX) slX.addEventListener('input',function(e){ e.stopPropagation(); setUncValX(this.value); });
+var radios=document.querySelectorAll('input[name="fmUncMode"]');
+Array.prototype.forEach.call(radios,function(r){ r.addEventListener('change',function(e){ e.stopPropagation(); setUncMode(this.value); }); });
+document.addEventListener('keydown',function(e){
+var p=document.getElementById('fmGPanel');
+if(e.key==='Escape' && p && p.style.display!=='none') close();
+});
+}
+function col(prop,def){ return fmA11y.col(prop,def); }
+function xLabel(){ if(xAxis==='h') return 'Drop Height h (m)'; if(xAxis==='N') return 'Number of Turns N'; return 'Magnet Strength B (mT)'; }
+function xVal(pt){ if(xAxis==='h') return pt.h; if(xAxis==='N') return pt.N; return pt.B*1000; }
+function yVal(pt){ return yAxis==='F' ? pt.avgPhi : pt.maxV; }
+function yName(){ return yAxis==='F' ? 'Average |Flux Change|' : 'Max Induced Voltage'; }
+function yLabel(){ return yAxis==='F' ? 'avg |\u0394N\u03A6| (Wb)' : 'Max Voltage (V)'; }
+function uY(pt){ if(!showUnc) return 0; return uncMode==='percent'?yVal(pt)*uncY/100:uncY*0.001; }
+function uX(pt){ return showUnc?xVal(pt)*uncX/100:0; }
+function fmtPhi(v){ var a=Math.abs(v); if(a>=1) return v.toFixed(3)+' Wb'; if(a>=0.001) return (v*1000).toFixed(2)+' mWb'; return (v*1e6).toFixed(1)+' \u03BCWb'; }
+function fmtV(v){ var a=Math.abs(v); if(a>=1) return v.toFixed(3)+' V'; if(a>=0.001) return (v*1000).toFixed(2)+' mV'; return (v*1e6).toFixed(1)+' μV'; }
+function linFit(){
+if(data.length<2) return null;
+var n=data.length,sx=0,sy=0,sxx=0,sxy=0;
+for(var i=0;i<n;i++){ var bx=xVal(data[i]),by=yVal(data[i]); sx+=bx;sy+=by;sxx+=bx*bx;sxy+=bx*by; }
+var denom=n*sxx-sx*sx; if(Math.abs(denom)<1e-30) return null;
+var sl=(n*sxy-sx*sy)/denom, ic=(sy-sl*sx)/n;
+return {slope:sl,intercept:ic};
+}
+function draw(){
+if(!cv) init();
+if(!cv) return;
+var accent=col('--fm-accent','#e8a020'), fitCol=col('--fm-plot2','#00e8d0'), errCol=col('--fm-magenta','#e040a0');
+var W=cv.width, H=cv.height;
+var P={t:38,r:28,b:48,l:66};
+var pw=W-P.l-P.r, ph=H-P.t-P.b;
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle='#060810'; ctx.fillRect(0,0,W,H);
+ctx.fillStyle=accent; ctx.font='bold 11px monospace'; ctx.textAlign='center';
+ctx.fillText(yName()+'  vs.  '+xLabel(), P.l+pw/2, 20);
+if(data.length===0){
+ctx.fillStyle='#8a94a3'; ctx.font='11px monospace';
+ctx.fillText('No data yet -- run the sim and click + Add point', P.l+pw/2, P.t+ph/2);
+updateFitInfo(null); return;
+}
+var xs=data.map(xVal), ys=data.map(yVal);
+var xMn=Math.min.apply(null,xs), xMx=Math.max.apply(null,xs);
+var yMn=0, yMx=Math.max.apply(null,ys);
+if(showUnc){ yMx+=Math.max.apply(null,data.map(uY))*1.1; }
+var xR=xMx-xMn||1, yR=yMx-yMn||1;
+xMn-=xR*0.08; xMx+=xR*0.08; yMx*=1.15; xR=xMx-xMn; yR=yMx-yMn;
+function toX(v){ return P.l+(v-xMn)/xR*pw; }
+function toY(v){ return P.t+ph-(v-yMn)/yR*ph; }
+ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=0.5;
+for(var gi=0;gi<=5;gi++){ var gy2=P.t+ph*gi/5; ctx.beginPath(); ctx.moveTo(P.l,gy2); ctx.lineTo(P.l+pw,gy2); ctx.stroke(); }
+for(var gj=0;gj<=6;gj++){ var gx2=P.l+pw*gj/6; ctx.beginPath(); ctx.moveTo(gx2,P.t); ctx.lineTo(gx2,P.t+ph); ctx.stroke(); }
+ctx.strokeStyle='rgba(255,255,255,0.32)'; ctx.lineWidth=1.2;
+ctx.beginPath(); ctx.moveTo(P.l,P.t); ctx.lineTo(P.l,P.t+ph); ctx.lineTo(P.l+pw,P.t+ph); ctx.stroke();
+ctx.fillStyle='rgba(180,195,215,0.75)'; ctx.font='10px monospace'; ctx.textAlign='center';
+ctx.fillText(xLabel(),P.l+pw/2,H-6);
+ctx.save(); ctx.translate(14,P.t+ph/2); ctx.rotate(-Math.PI/2); ctx.fillText(yLabel(),0,0); ctx.restore();
+ctx.textAlign='right'; ctx.font='9px monospace'; ctx.fillStyle='rgba(180,195,215,0.65)';
+for(var yi=0;yi<=5;yi++){ var yv=yMn+yR*yi/5; ctx.fillText(yR<0.05?yv.toExponential(1):yv.toFixed(3),P.l-5,toY(yv)+3); }
+ctx.textAlign='center';
+for(var xi=0;xi<=6;xi++){ var xv=xMn+xR*xi/6; ctx.fillText(xv.toFixed(xAxis==='N'?0:2),toX(xv),P.t+ph+14); }
+var fit=linFit();
+if(showFit&&fit&&data.length>=2){
+var fy0=fit.slope*xMn+fit.intercept, fy1=fit.slope*xMx+fit.intercept;
+ctx.beginPath(); ctx.moveTo(toX(xMn),toY(fy0)); ctx.lineTo(toX(xMx),toY(fy1));
+ctx.strokeStyle=fitCol; ctx.lineWidth=1.8; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+ctx.fillStyle=fitCol; ctx.font='9px monospace'; ctx.textAlign='right';
+ctx.fillText('fit',P.l+pw-2,toY(fy1)-6);
+}
+updateFitInfo(fit);
+for(var di=0;di<data.length;di++){
+var pt=data[di], px2=toX(xVal(pt)), py2=toY(yVal(pt));
+var eY=uY(pt), eX2=uX(pt);
+ctx.strokeStyle=errCol; ctx.lineWidth=1.5;
+if(eY>0){
+var ey1=toY(yVal(pt)+eY), ey2=toY(yVal(pt)-eY);
+ctx.beginPath(); ctx.moveTo(px2,ey1); ctx.lineTo(px2,ey2); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(px2-4,ey1); ctx.lineTo(px2+4,ey1); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(px2-4,ey2); ctx.lineTo(px2+4,ey2); ctx.stroke();
+}
+if(eX2>0){
+var ex1=toX(xVal(pt)-eX2), ex2=toX(xVal(pt)+eX2);
+ctx.beginPath(); ctx.moveTo(ex1,py2); ctx.lineTo(ex2,py2); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(ex1,py2-4); ctx.lineTo(ex1,py2+4); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(ex2,py2-4); ctx.lineTo(ex2,py2+4); ctx.stroke();
+}
+ctx.beginPath(); ctx.arc(px2,py2,5,0,Math.PI*2);
+ctx.fillStyle=accent; ctx.shadowColor=accent; ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0;
+ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+ctx.fillStyle=accent; ctx.font='9px monospace'; ctx.textAlign='center';
+ctx.fillText('#'+(di+1),px2,py2-10);
+}
+}
+function updateFitInfo(fit){
+var bar=document.getElementById('fmFitInfo'); if(!bar) return;
+if(!showFit||!fit||data.length<2){ bar.textContent=''; return; }
+var sl=fit.slope, ic=fit.intercept;
+var slStr=Math.abs(sl)>=0.001?sl.toFixed(4):sl.toExponential(3);
+var icStr=Math.abs(ic)>=0.001?ic.toFixed(4):ic.toExponential(3);
+var ys=data.map(yVal);
+var yMean=ys.reduce(function(a,b){return a+b;},0)/ys.length;
+var ssTot=ys.reduce(function(s,y){return s+(y-yMean)*(y-yMean);},0);
+var ssRes=data.reduce(function(s,pt){var pred=sl*xVal(pt)+ic;return s+(yVal(pt)-pred)*(yVal(pt)-pred);},0);
+var r2=ssTot<1e-30?1:1-ssRes/ssTot;
+bar.textContent='Linear fit: y = '+slStr+' · x + ('+icStr+')    R² = '+r2.toFixed(4);
+}
+function renderTable(){
+var tbl=document.getElementById('fmDTable');
+var msg=document.getElementById('fmDNone');
+if(!tbl) return;
+if(data.length===0){ tbl.innerHTML=''; if(msg) msg.style.display='block'; return; }
+if(msg) msg.style.display='none';
+var hds=['#','h (m)','N','B (mT)','V₁','V₂','max V (meas.)','avg |ΔΦ| (meas.)'];
+tbl.style.gridTemplateColumns='32px repeat(7, minmax(0,1fr))';
+var html=hds.map(function(h){return '<div class="fmTH">'+h+'</div>';}).join('');
+for(var i=0;i<data.length;i++){
+var pt=data[i];
+html+='<div class="fmTD">'+(i+1)+'</div>';
+html+='<div class="'+(xAxis==='h'?'fmTDx':'fmTD')+'">'+pt.h.toFixed(2)+'</div>';
+html+='<div class="'+(xAxis==='N'?'fmTDx':'fmTD')+'">'+pt.N+'</div>';
+html+='<div class="'+(xAxis==='B'?'fmTDx':'fmTD')+'">'+(pt.B*1000).toFixed(1)+'</div>';
+html+='<div class="fmTD">'+fmtV(pt.peak1)+'</div>';
+html+='<div class="fmTD">'+fmtV(pt.peak2)+'</div>';
+html+='<div class="'+(yAxis==='V'?'fmTDv':'fmTD')+'">'+fmtV(pt.maxV)+'</div>';
+html+='<div class="'+(yAxis==='F'?'fmTDv':'fmTD')+'">'+fmtPhi(pt.avgPhi)+'</div>';
+}
+tbl.innerHTML=html;
+}
+function styleToggle(btn,active){
+if(!btn) return;
+btn.style.background  = active ? 'rgba(232,160,32,0.16)' : '';
+btn.style.borderColor = active ? 'var(--fm-accent)' : '';
+btn.style.color       = active ? 'var(--fm-accent)' : '';
+btn.style.fontWeight  = active ? 'bold' : '';
+btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function refreshAxisBtns(){
+styleToggle(document.getElementById('fmGBtnH'), xAxis==='h');
+styleToggle(document.getElementById('fmGBtnN'), xAxis==='N');
+styleToggle(document.getElementById('fmGBtnB'), xAxis==='B');
+styleToggle(document.getElementById('fmGBtnYV'), yAxis==='V');
+styleToggle(document.getElementById('fmGBtnYF'), yAxis==='F');
+var sub=document.getElementById('fmGSub'); if(sub) sub.textContent=(yAxis==='F'?'avg |\u0394\u03A6|':'max V')+' vs. parameter';
+var au=document.getElementById('fmUncAbsU'); if(au) au.textContent=yAxis==='F'?'mWb':'mV';
+var uv=document.getElementById('fmUncVLbl'); if(uv) uv.textContent=uncMode==='percent'?uncY+'%':uncY+(yAxis==='F'?' mWb':' mV');
+var ul=document.getElementById('fmUncLbl'); if(ul) ul.textContent=(yAxis==='F'?'\u03B4\u03A6':'\u03B4V')+(uncMode==='percent'?' %:':(yAxis==='F'?' mWb:':' mV:'));
+var fitBtn=document.getElementById('fmGBtnFit');
+if(fitBtn){ fitBtn.textContent='Linear Fit: '+(showFit?'ON':'OFF'); styleToggle(fitBtn, showFit); }
+var uncBtn=document.getElementById('fmGBtnUnc');
+if(uncBtn){ uncBtn.textContent='± Unc: '+(showUnc?'ON':'OFF'); styleToggle(uncBtn, showUnc); }
+}
+function setAxis(a){ xAxis=a; refreshAxisBtns(); draw(); renderTable(); }
+function setYAxis(a){ yAxis=a; refreshAxisBtns(); draw(); renderTable(); }
+function toggleFit(){ showFit=!showFit; refreshAxisBtns(); draw(); }
+function toggleUnc(){
+showUnc=!showUnc;
+refreshAxisBtns();
+var bar=document.getElementById('fmGUncBar');
+if(bar) bar.style.opacity=showUnc?'1':'0.4';
+draw();
+}
+function setUncMode(m){
+uncMode=m;
+var lbl=document.getElementById('fmUncLbl');
+var vl=document.getElementById('fmUncVLbl');
+if(lbl) lbl.textContent=(yAxis==='F'?'δΦ':'δV')+(m==='percent'?' %:':(yAxis==='F'?' mWb:':' mV:'));
+uncY=parseFloat(document.getElementById('fmUncSl').value)||5;
+if(vl) vl.textContent=m==='percent'?uncY+'%':uncY+(yAxis==='F'?' mWb':' mV');
+draw();
+}
+function setUncValY(v){ uncY=parseFloat(v); var vl=document.getElementById('fmUncVLbl'); if(vl) vl.textContent=uncMode==='percent'?uncY+'%':uncY+(yAxis==='F'?' mWb':' mV'); draw(); }
+function setUncValX(v){ uncX=parseFloat(v); var xl=document.getElementById('fmUncXLbl'); if(xl) xl.textContent=uncX+'%'; draw(); }
+function clearData(){
+data=[]; renderTable(); draw();
+var dc=document.getElementById('fmDataCount');
+if(dc) dc.textContent='No data yet -- run sim first';
+}
+function open(){
+init();
+document.getElementById('fmGOverlay').style.display='block';
+document.getElementById('fmGPanel').style.display='block';
+refreshAxisBtns(); draw(); renderTable();
+var cb=document.getElementById('fmGBtnClose'); if(cb) cb.focus();
+}
+function close(){
+document.getElementById('fmGOverlay').style.display='none';
+document.getElementById('fmGPanel').style.display='none';
+var ob=document.getElementById('fmBtnOpenGraph'); if(ob) ob.focus();
+}
+(function waitForDOM(){
+if(document.getElementById('fmDGCanvas')){ init(); }
+else { setTimeout(waitForDOM, 50); }
+})();
+return {
+open:open, close:close, clearData:clearData, setAxis:setAxis, setYAxis:setYAxis, _data:function(){ return data; }, _axes:function(){ return [xAxis, yAxis, showUnc]; }, toggleFit:toggleFit, toggleUnc:toggleUnc,
+setUncMode:setUncMode, setUncValY:setUncValY, setUncValX:setUncValX,
+redraw:function(){ var p=document.getElementById('fmGPanel'); if(p && p.style.display!=='none') draw(); },
+addPoint: function(pt){ init(); data.push(pt); renderTable(); },
+getCount: function(){ return data.length; }
+};
+})();
+</script>
+<script>
+(function(){ /* applies the SETTINGS at the top */
+var S=(typeof fmShow==='object'&&fmShow)||{}, G=fmGraphPanel;
+function on(k){ return !(k in S)||String(S[k])!=='0'; }
+function el(i){ return document.getElementById(i+''); }
+function hide(e){ if(e){ e.style.display='none'; e.setAttribute('aria-hidden','true'); } }
+function up(i,c){ var e=el(i); return e?e.closest(c):null; }
+[['heightPanel','fmHHd'],['coilPanel','fmCoilHd'],['magnetPanel','fmMagHd'],['playback','fmPlayHd'],['logger','fmLogHd']].forEach(function(q){ if(!on(q[0])) hide(up(q[1],'.fm_panel')); });
+[['turns','fmVN','fmSlN'],['strength','fmVB','fmSlB']].forEach(function(q){ if(!on(q[0])){ hide(up(q[1],'.fm_ctrlhdr')); hide(el(q[2])); } });
+[['flipCoil','fmBtnFlipC','fmCoilState'],['flipMagnet','fmBtnFlip','fmPolarity'],['hint','fmHint','']].forEach(function(q){ if(!on(q[0])){ hide(el(q[1])); hide(el(q[2])); } });
+if(!on('uncertainty')){ hide(el('fmGUncBar')); hide(el('fmGBtnUnc')); G.toggleUnc(); }
+var x=[['xHeight','fmGBtnH','h'],['xTurns','fmGBtnN','N'],['xStrength','fmGBtnB','B']].filter(function(q){ if(!on(q[0])) hide(el(q[1])); return on(q[0]); }); if(x.length) G.setAxis(x[0][2]);
+var y=[['yMaxV','fmGBtnYV','V'],['yFlux','fmGBtnYF','F']].filter(function(q){ if(!on(q[0])) hide(el(q[1])); return on(q[0]); }); if(y.length) G.setYAxis(y[0][2]);
+var r=el('fmroot'), h=r.querySelector('.fm_h1'), t=r.querySelector('.fm_sub'); if(S.title&&h) h.textContent=S.title; if(S.subtitle&&t) t.textContent=S.subtitle;
+})();
+</script>
+</div><!-- #fmroot -->
+<div>
+  <hr>
+  <hr><h2>Effect of the Number of Loops</h2><hr>
+  <p>In part 3 of the labs, you need to make a graph.</p>
+  <p>a) which quantity should be graphed along the vertical axis of the graph? </p>
+  <p>b) which quantity should be graphed along the horizontal axis of the graph? </p>
+</div>
+</main>
+</body>
+</html>

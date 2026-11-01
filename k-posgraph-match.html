@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // Configure MathJax to load the AsciiMath input component
+  window.MathJax = {
+    loader: { load: ['input/asciimath', 'output/chtml'] }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<title>Physics Simulations-Kinematics-Position Graph Match</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,kinematics, position graph, x-t graph, motion diagram, velocity, acceleration, slope, tutorial, lesson, scientific">
+<meta name="description" content="Interactive kinematics game: drag the cart along the track to recreate a target position-time graph.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<!-- ═══════════════════════════════════════════════════════
+SIM -- Kinematics: Replicate the Position-Time Graph
+Dunwoody PL02
+Student sees a target x(t) curve (the underlying motion is NOT revealed)
+and drags a glider along a track to recreate it. Their live attempt is
+superposed on the target graph for direct comparison. Re-attempts allowed.
+Track length 1.2 m (120 cm) | Time span 10 s
+A11y: High Contrast | Color-Blind | Narration | Keyboard-draggable (MOM-ready)
+═══════════════════════════════════════════════════════ -->
+<div id="pm_root">
+<div class="pm_tbar"><h3>Recreate the Graph -- Position vs. Time</h3></div>
+<!-- Animation canvas -->
+<div class="pm_mcontent">
+<canvas id="pmCanvas" width="680" height="190" tabindex="0" role="img" aria-label="Glider on a 1.2 meter track that can be dragged with the mouse or arrow keys" aria-describedby="pmCanvasDesc"></canvas>
+<p id="pmCanvasDesc" class="pm_sronly">A glider cart sits on a frictionless 1.2 meter track. Drag the cart during an attempt to recreate the target position-time graph shown below.</p>
+</div>
+<!-- Graph -->
+<div class="pm_fbar" style="flex-direction:column;gap:5px;">
+<div class="pm_boxhd" style="width:100%;border-bottom:1px solid #888;padding-bottom:3px;display:flex;justify-content:space-between;">
+<span>Position-Time Graph</span>
+<span style="font-weight:normal;font-size:0.78rem;">
+<span style="color:#0072b2;">&#9644;</span> target &nbsp;
+<span style="color:#d55e00;">&#9644;</span> your attempt
+</span>
+</div>
+<canvas id="pmGraphCanvas" width="660" height="320" role="img" aria-label="Position versus time graph with target curve and your attempt curve" aria-describedby="pmGraphDesc"></canvas>
+<p id="pmGraphDesc" class="pm_sronly">Plot of position in centimeters versus time in seconds, showing the target curve and the student's recreated curve.</p>
+<div id="pmFeedback" class="pm_stats_box" style="display:none;" role="region" aria-live="polite">
+<div id="pmFeedbackTitle" class="pm_stats_title">Match Feedback</div>
+<div id="pmFeedbackContent" class="pm_stats_content"></div>
+</div>
+</div>
+<!-- Challenge select -->
+<div class="pm_bbar">
+<span class="pm_taglbl">Challenge:</span>
+<select id="challengeSel" style="font-size:0.8rem;">
+<option value="1">Challenge 1</option>
+<option value="2">Challenge 2</option>
+<option value="3">Challenge 3</option>
+<option value="4">Challenge 4</option>
+<option value="5">Challenge 5</option>
+<option value="6">Challenge 6</option>
+<option value="7">Challenge 7</option>
+<option value="8">Challenge 8</option>
+<option value="9">Challenge 9</option>
+<option value="10">Challenge 10</option>
+</select>
+<input type="button" value="Load Challenge" onclick="pmSim.loadSelected()">
+<input type="button" value="Random Challenge" onclick="pmSim.randomChallenge()">
+<span id="challengeLbl" class="pm_pval" style="margin-left:8px;">Challenge 1</span>
+</div>
+<!-- Attempt controls -->
+<div class="pm_bbar" id="attemptControls">
+<input type="button" id="btnStart" value="&#9654; Start Attempt" onclick="pmSim.startAttempt()">
+<input type="button" id="btnStop"  value="&#9208; Stop Attempt"  onclick="pmSim.stopAttempt()">
+<input type="button" id="btnRetry" value="&#8630; Retry (same graph)" onclick="pmSim.retry()">
+</div>
+<!-- A11y -->
+<div class="pm_bbar pm_a11ybar" role="toolbar" aria-label="Display options">
+<input type="button" id="btnHC"   value="High Contrast: OFF" onclick="pmSim.toggleHC()">
+<input type="button" id="btnCB"   value="Color-Blind: OFF"   onclick="pmSim.toggleCB()">
+<input type="button" id="btnNarr" value="Narration: ON"      onclick="pmSim.toggleNarr()">
+</div>
+<!-- Prompt + info -->
+<div class="pm_fbar">
+<div class="pm_prompt" role="note">
+<div class="pm_boxhd">Your Task</div>
+<p class="pm_prompttext">The graph below shows a target position-time curve for a 1.2 m track over 10 seconds. Study its shape, then press "Start Attempt" and drag the cart to recreate that exact motion. Your path is drawn on top of the target as you go, so you can see where you match and where you drift.</p>
+</div>
+<div class="pm_info" role="note">
+<strong>Tips:</strong><br>
+Flat section &rarr; hold the cart still<br>
+Straight slope &rarr; steady drag speed<br>
+Steeper slope &rarr; drag faster<br>
+Curve bending &rarr; speed changing<br>
+Letting go freezes position<br>
+<em>Arrow keys move the cart too</em>
+</div>
+</div>
+<!-- Live readouts + Narration -->
+<div class="pm_fbar">
+<div class="pm_readout" role="region" aria-live="polite" aria-atomic="false">
+<div class="pm_boxhd">Live Readings</div>
+<div class="pm_rrow"><span>Position x:</span> <span id="r_x" class="pm_rv">0.0 cm</span></div>
+<div class="pm_rrow"><span>Speed |v|:</span>  <span id="r_v" class="pm_rv">0.0 cm/s</span></div>
+<div class="pm_rrow"><span>Time t:</span>     <span id="r_t" class="pm_rv">0.0 s</span></div>
+<div class="pm_rrow"><span>Status:</span>     <span id="r_state" class="pm_badge" role="status">Ready</span></div>
+</div>
+<div id="narrationBox" class="pm_narr" role="region" aria-live="polite" aria-atomic="true">
+<div class="pm_boxhd pm_narrboxhd">What's happening</div>
+<p id="narration" class="pm_narrtext">A target graph is loaded. Press Start Attempt, then drag the cart to try to match it.</p>
+</div>
+</div>
+<div id="pm_srAnnounce" class="pm_sronly" aria-live="assertive" aria-atomic="true"></div>
+<!-- ══════════ STYLES ══════════ -->
+<style>
+#pm_root * { margin:0; box-sizing:border-box; }
+#pm_root { width:683px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#f4f4f4; }
+.pm_tbar { width:683px; height:48px; background:#f90; display:flex; align-items:center; justify-content:center; }
+.pm_tbar h3 { font-size:1rem; color:#222; }
+.pm_mcontent { width:683px; background:#fff; }
+#pmCanvas { display:block; border-bottom:2px solid #888; cursor:grab; }
+#pmCanvas:active { cursor:grabbing; }
+#pmCanvas:focus { outline:3px solid #3399ff; outline-offset:-3px; }
+.pm_bbar { width:683px; min-height:44px; background:#df9; padding:7px 8px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center; }
+.pm_bbar input[type=button] { font-size:0.78rem; padding:4px 10px; border:1px solid #888; border-radius:3px; cursor:pointer; font-weight:bold; background:#d4d4d4; color:#111; }
+.pm_bbar input#btnStart { background:#8bc4f0; border-color:#5599cc; }
+.pm_bbar input#btnRetry { background:#ffe0a0; border-color:#cc9900; }
+.pm_bbar input.pm_active { background:#333 !important; color:#fff !important; border-color:#111 !important; }
+.pm_taglbl { font-size:0.78rem; font-weight:bold; color:#333; }
+.pm_pval   { font-size:0.8rem; font-weight:bold; color:#003399; }
+.pm_fbar { width:683px; min-height:60px; background:#fec; padding:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:flex-start; }
+.pm_prompt  { background:#eef9ee; border:2px solid #559955; border-radius:4px; padding:9px 11px; flex:2; min-width:220px; }
+.pm_readout { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:1; min-width:130px; }
+.pm_narr    { background:#eef4ff; border:2px solid #6699cc; border-radius:4px; padding:9px 11px; flex:2; min-width:150px; }
+.pm_info    { background:#fffbe6; border:1px solid #ccaa00; border-radius:4px; padding:9px 11px; font-size:0.77rem; color:#555; line-height:1.55; flex:1; min-width:150px; }
+.pm_boxhd       { font-size:0.85rem; font-weight:bold; border-bottom:1px solid #888; padding-bottom:3px; margin-bottom:7px; }
+.pm_narrboxhd   { border-bottom-color:#6699cc; color:#112244; }
+.pm_prompttext  { font-size:0.8rem; color:#114411; line-height:1.5; margin:0; }
+.pm_rrow  { display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.82rem; }
+.pm_rv    { font-weight:bold; color:#cc2200; }
+.pm_badge { font-weight:bold; color:#005500; background:#ccffcc; border-radius:3px; padding:0 5px; }
+.pm_narrtext { font-size:0.79rem; color:#112244; line-height:1.55; margin:0; }
+.pm_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+#pmGraphCanvas { display:block; border:1px solid #aaa; background:#fff; }
+.pm_stats_box { background:#fff; border:1px solid #aaa; border-radius:3px; padding:8px 12px; font-size:0.78rem; line-height:1.7; width:100%; }
+.pm_stats_title { font-weight:bold; font-size:0.82rem; margin-bottom:4px; border-bottom:1px solid #ccc; padding-bottom:3px; }
+.pm_stats_content { font-family:'Courier New',monospace; font-size:0.77rem; }
+/* HC overrides */
+body.pm-hc-mode { background:#111; }
+body.pm-hc-mode #pm_root { background:#111; }
+body.pm-hc-mode #pm_root .pm_tbar  { background:#cc7700; }
+body.pm-hc-mode #pm_root .pm_bbar  { background:#1a2a1a; }
+body.pm-hc-mode #pm_root .pm_fbar  { background:#1a1a2a; }
+body.pm-hc-mode #pm_root .pm_prompt   { background:#0a220a; border-color:#66cc66; }
+body.pm-hc-mode #pm_root .pm_readout  { background:#111; border-color:#aaa; color:#eee; }
+body.pm-hc-mode #pm_root .pm_narr  { background:#0a0a22; border-color:#6699ff; }
+body.pm-hc-mode #pm_root .pm_info  { background:#111100; border-color:#aa8800; color:#ddd; }
+body.pm-hc-mode #pm_root .pm_boxhd { color:#fff; border-bottom-color:#aaa; }
+body.pm-hc-mode #pm_root .pm_rv    { color:#ff8888; }
+body.pm-hc-mode #pm_root .pm_badge { background:#003300; color:#88ff88; }
+body.pm-hc-mode #pm_root .pm_narrtext,
+body.pm-hc-mode #pm_root .pm_prompttext { color:#aaccff; }
+body.pm-hc-mode #pm_root .pm_taglbl,
+body.pm-hc-mode #pm_root .pm_pval,
+body.pm-hc-mode #pm_root .pm_rrow  { color:#ddd; }
+body.pm-hc-mode #pmCanvas, body.pm-hc-mode #pmGraphCanvas { background:#111; border-color:#555; }
+body.pm-hc-mode .pm_stats_box { background:#111; border-color:#555; color:#eee; }
+body.pm-hc-mode .pm_stats_title { color:#fff; border-bottom-color:#555; }
+/* ════════ Hall effect template layer: mobile friendly, scoped to #pm_root ════════ */
+#pm_root {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3; --tp-bright:#e8eef5;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66; --tp-warn:#e0605a;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+width:100%; max-width:760px; margin:0 auto 10px; box-sizing:border-box; position:relative;
+display:flex; flex-direction:column; gap:10px; padding:14px 10px 18px; border-radius:6px;
+font-family:Arial, sans-serif; color:var(--tp-text); background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+}
+body.pm-hc-mode #pm_root { --tp-chassis:#000000; --tp-panel:#000000; --tp-panel-hi:#111111; --tp-panel-lo:#000000; --tp-border:#ffffff; --tp-border-hi:#ffffff;
+--tp-text:#ffffff; --tp-dim:#e0e0e0; --tp-bright:#ffffff; --tp-accent:#ffd700; --tp-green:#00ff88; --tp-val:#ffff00; --tp-warn:#ff5555;
+--tp-focus:#ffff00; --tp-nar-bg:#000000; --tp-nar-border:#ffd700; --tp-nar-text:#ffffff; background-image:none; }
+#pm_root *, #pm_root *::before, #pm_root *::after { box-sizing:border-box; }
+#pm_root input:focus-visible, #pm_root select:focus-visible, #pm_root canvas:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+#pm_root .pm_tbar { width:auto; height:auto; min-height:0; background:none !important; padding:2px 4px; display:flex; justify-content:center; }
+#pm_root .pm_tbar h3 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent) !important; text-align:center; line-height:1.35; }
+#pm_root .pm_mcontent { width:auto; background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#pm_root canvas#pmCanvas { display:block; width:100%; max-width:680px; height:auto; margin:0 auto; }
+#pm_root canvas#pmGraphCanvas { display:block; width:100%; max-width:660px; height:auto; margin:0 auto; }
+#pm_root .pm_bbar { width:auto; min-height:0; background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border); border-radius:6px; padding:8px 10px; gap:6px; justify-content:center; color:var(--tp-text); }
+#pm_root .pm_a11ybar { background:none !important; border:none; padding:0; }
+#pm_root input[type=button] { font-family:monospace; font-size:.7rem; letter-spacing:.04em; text-transform:uppercase; font-weight:bold; padding:7px 10px; cursor:pointer;
+  background:var(--tp-panel-hi) !important; border:1px solid var(--tp-border-hi) !important; color:var(--tp-text) !important; border-radius:3px; line-height:1.25; white-space:normal; }
+#pm_root input[type=button]:hover { border-color:var(--tp-accent) !important; }
+#pm_root .pm_a11ybar input[type=button] { font-size:.68rem; font-weight:normal; letter-spacing:.06em; padding:4px 10px; color:var(--tp-dim) !important; }
+#pm_root #btnPlay { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#pm_root #btnStart { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#pm_root #btnCheck { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#pm_root #btnRecord { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#pm_root input[type=button][value*="Clear"], #pm_root input[type=button][value*="Delete"], #pm_root input[type=button][value*="Retry"], #pm_root #btnReset, #pm_root #btnReplay { color:var(--tp-warn) !important; border-color:#a04040 !important; }
+#pm_root input[type=button].pm_active { background:rgba(58,208,143,.14) !important; border-color:var(--tp-green) !important; color:var(--tp-green) !important; }
+#pm_root #btnViewStatic { border-bottom:3px solid #5599cc !important; }
+#pm_root #btnViewKinetic { border-bottom:3px solid #779933 !important; }
+#pm_root .pm_taglbl, #pm_root .pm_plbl { color:var(--tp-dim) !important; font-size:.72rem; font-weight:600; letter-spacing:.03em; }
+#pm_root .pm_pval { color:var(--tp-val) !important; font-family:monospace; }
+#pm_root select { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.78rem; max-width:100%; }
+#pm_root input[type=number], #pm_root input[type=text], #pm_root .pm_input { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; }
+#pm_root .pm_good { color:#111 !important; }
+#pm_root .pm_ok { color:#111 !important; }
+#pm_root .pm_off { color:#111 !important; }
+#pm_root input[type=range] { accent-color:var(--tp-accent); min-width:0; }
+#pm_root select { min-width:0; }
+#pm_root .hl_axislbl { display:inline-flex; flex-wrap:wrap; align-items:center; gap:4px; max-width:100%; }
+#pm_root input[type=checkbox] { accent-color:var(--tp-accent); }
+#pm_root .pm_fbar { width:auto; min-height:0; background:none !important; padding:0; gap:10px; }
+#pm_root .pm_fbar[style*="column"] { background:var(--tp-panel) !important; border:1px solid var(--tp-border); border-radius:6px; padding:10px; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#pm_root .pm_prompt, #pm_root .pm_readout, #pm_root .pm_narr, #pm_root .pm_info, #pm_root .pm_params, #pm_root .pm_tablebox { background:var(--tp-panel) !important; border:1px solid var(--tp-border) !important; border-radius:6px; padding:9px 12px; color:var(--tp-text) !important; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#pm_root .hl_tblbox { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; border-radius:6px; color:var(--tp-text); }
+#pm_root .hl_axisbar { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; border-radius:4px; }
+#pm_root .pm_boxhd { font-family:monospace; font-size:.66rem; font-weight:bold; letter-spacing:.12em; text-transform:uppercase; color:var(--tp-dim) !important; border-bottom-color:var(--tp-border) !important; }
+#pm_root .pm_prompt > .pm_boxhd:first-child, #pm_root .pm_readout > .pm_boxhd:first-child, #pm_root .pm_narr > .pm_boxhd:first-child, #pm_root .pm_info > .pm_boxhd:first-child, #pm_root .pm_params > .pm_boxhd:first-child, #pm_root .pm_tablebox > .pm_boxhd:first-child { background:var(--tp-panel-lo); margin:-9px -12px 9px; padding:6px 12px; border-bottom:1px solid var(--tp-border); }
+#pm_root .pm_prompttext, #pm_root .pm_info, #pm_root .pm_rrow { color:var(--tp-text) !important; }
+#pm_root .pm_info { font-size:.74rem; }
+#pm_root .pm_rv { color:var(--tp-val) !important; font-family:monospace; }
+#pm_root .pm_badge { background:rgba(58,208,143,.14) !important; color:var(--tp-green) !important; }
+#pm_root .pm_narr { background:var(--tp-nar-bg) !important; border:none !important; border-left:4px solid var(--tp-nar-border) !important; border-radius:3px; }
+#pm_root .pm_narr > .pm_boxhd:first-child { background:none; color:var(--tp-nar-border) !important; border-bottom-color:rgba(224,176,64,.35) !important; }
+#pm_root .pm_narrtext { color:var(--tp-nar-text) !important; font-style:italic; font-size:.82rem; }
+#pm_root .pm_stats_box { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; color:var(--tp-text) !important; border-radius:4px; }
+#pm_root .stats_box { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; color:var(--tp-text) !important; border-radius:4px; }
+#pm_root .pm_stats_title { color:var(--tp-accent) !important; border-bottom-color:var(--tp-border) !important; }
+#pm_root .stats_title { color:var(--tp-accent) !important; border-bottom-color:var(--tp-border) !important; }
+#pm_root .pm_table { color:var(--tp-text); }
+#pm_root .pm_table th { background:var(--tp-panel-hi) !important; color:var(--tp-text) !important; }
+#pm_root .pm_table th, #pm_root .pm_table td { border-color:var(--tp-border) !important; }
+#pm_root .dt_table { color:var(--tp-text); }
+#pm_root .dt_table th { background:var(--tp-panel-hi) !important; color:var(--tp-text) !important; }
+#pm_root .dt_table th, #pm_root .dt_table td { border-color:var(--tp-border) !important; }
+#pm_root .hl_table { color:var(--tp-text); }
+#pm_root .hl_table th { background:var(--tp-panel-hi) !important; color:var(--tp-text) !important; }
+#pm_root .hl_table th, #pm_root .hl_table td { border-color:var(--tp-border) !important; }
+#pm_root .dt_wrap { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; overflow:auto; -webkit-overflow-scrolling:touch; }
+#pm_root .hl_tblwrap { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; overflow:auto; -webkit-overflow-scrolling:touch; }
+#pm_root .dt_ctrl, #pm_root .hl_axisbar, #pm_root .hl_graphbar, #pm_root .hl_axislbl, #pm_root .hl_fitlabel, #pm_root .hl_hint, #pm_root .hl_nodatamsg, #pm_root .dt_empty { color:var(--tp-text) !important; }
+#pm_root [style*="color:#333"], #pm_root [style*="color:#555"] { color:var(--tp-dim) !important; }
+#pm_root [style*="color:#0072b2"], #pm_root [style*="color:#d55e00"] { background:#ffffff; border-radius:2px; padding:0 3px; }
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#pm_root input[type=button] { min-height:40px; }
+#pm_root .pm_a11ybar input[type=button] { min-height:36px; }
+#pm_root select { min-height:36px; font-size:16px; }
+#pm_root input[type=number], #pm_root input[type=text], #pm_root .pm_input { font-size:16px; min-height:30px; }
+#pm_root input[type=checkbox] { width:20px; height:20px; }
+#pm_root input[type=range] { height:28px; }
+}
+@media (max-width:560px) {
+#pm_root { padding:10px 6px 14px; }
+#pm_root .pm_fbar > *:not(.pm_sronly) { min-width:100% !important; }
+#pm_root .pm_fbar[style*="column"] { padding:8px 6px; }
+#pm_root .pm_plbl { min-width:0 !important; width:100%; }
+#pm_root .pm_prow { flex-wrap:wrap; row-gap:2px; margin-bottom:10px; }
+}
+</style>
+<!-- ══════════ JAVASCRIPT ══════════ -->
+<script>
+var pmSim = (function(){
+/* ── Canvas refs ── */
+var DPR=window.devicePixelRatio||1;   /* sharp on phones: draw at device resolution, CSS scales each canvas to the page */
+var sc=document.getElementById('pmCanvas'), ctx=sc.getContext('2d'); var CW=sc.width, CH=sc.height;
+sc.width=CW*DPR; sc.height=CH*DPR; ctx.scale(DPR,DPR);
+var gc=document.getElementById('pmGraphCanvas'), gctx=gc.getContext('2d'); var GW=gc.width, GH=gc.height;
+gc.width=GW*DPR; gc.height=GH*DPR; gctx.scale(DPR,DPR);
+var FP={l:55,r:15,t:14,b:34};
+/* ── Palettes ── */
+var PAL={
+def:{ trackBar:'#bbbbbb', trackEdge:'#666', wall:'#888', canvas:'#ffffff',
+ block1:'#6699cc', block2:'#224488', blockLbl:'#fff', grabEdge:'#ffaa00',
+ targetCurve:'#0072b2', attemptCurve:'#d55e00',
+ grid:'#e8e8e8', axis:'#333' },
+cb:{  trackBar:'#cccccc', trackEdge:'#555', wall:'#888', canvas:'#ffffff',
+block1:'#0072b2', block2:'#004f80', blockLbl:'#fff', grabEdge:'#f0e442',
+targetCurve:'#0072b2', attemptCurve:'#e69f00',
+grid:'#e0e0e0', axis:'#333' },
+hc:{  trackBar:'#555', trackEdge:'#000', wall:'#aaa', canvas:'#111',
+block1:'#222', block2:'#444', blockLbl:'#fff', grabEdge:'#ffcc66',
+targetCurve:'#00ccff', attemptCurve:'#ffcc00',
+grid:'#333', axis:'#eee' }
+};
+var pal=PAL.def, hcMode=false, cbMode=false, showNarration=true;
+/* ── Layout ── */
+var TRACK_Y=130, TRACK_THICK=10, ORIGIN_PX=45, TRACK_LEN_CM=120, PX_PER_CM=4.9;
+var BLOCK_W=56, BLOCK_H=32;
+var DURATION_S=10;
+/* ── Target motion functions (x in cm, t in seconds, 0..120 track, 0..10 s) ── */
+function clampCm(x){ return Math.max(0, Math.min(TRACK_LEN_CM, x)); }
+var FUNCS = {
+1: function(t){ var u=t/10; return clampCm(120*(3*u*u-2*u*u*u)); },
+2: function(t){ return clampCm(12*t + 5*Math.sin(6*Math.PI*t/10)); },
+3: function(t){
+var k=1.5;
+var num=Math.tanh((t-5)/k)-Math.tanh(-5/k);
+var den=Math.tanh(5/k)-Math.tanh(-5/k);
+return clampCm(120*(num/den));
+},
+4: function(t){ return clampCm(12*t + 15*Math.exp(-0.2*t)*Math.sin(8*Math.PI*t/10)); },
+5: function(t){
+if(t<4) return clampCm(60*Math.pow(t/4,2));
+if(t<6) return 60;
+return clampCm(120 - 60*Math.pow((10-t)/4,2));
+},
+6: function(t){ return clampCm(12*t + 12*Math.sin(2*Math.PI*t/10) - 5*Math.sin(6*Math.PI*t/10)); },
+7: function(t){
+function bracket(tt){ return 0.7/(1+Math.exp(-(tt-3))) + 0.3/(1+Math.exp(-2*(tt-8))); }
+var C=bracket(0);
+return clampCm(120*(bracket(t)-C));
+},
+8: function(t){ return clampCm(12*t + 1.5*Math.sin(2*Math.PI*t) + 0.8*Math.sin(4*Math.PI*t)); },
+9: function(t){
+if(t<4) return clampCm(3*t*t);
+if(t<7) return 48;
+return clampCm(120 - 8*Math.pow(10-t,2));
+},
+10: function(t){ return clampCm(12*t + 7*Math.sin(2*Math.PI*t/10) + 3*Math.sin(8*Math.PI*t/10)); }
+};
+var NUM_CHALLENGES=10;
+/* ── State ── */
+var currentChallenge=1, targetFn=FUNCS[1], targetSamples=[];
+var running=false, armed=false, isDragging=false, animId=null, lastTS=null;
+var simTime=0, lastSampleT=-1;
+var xcm=0, vcm=0;
+var attemptData=[];
+var attemptDone=false, attemptStarted=false;
+/* ── SR / button helpers ── */
+var srTimer=null;
+function sr(msg){ var el=document.getElementById('pm_srAnnounce'); if(!el)return;
+el.textContent=''; clearTimeout(srTimer); srTimer=setTimeout(function(){el.textContent=msg;},50); }
+function btnActive(id,on){ var b=document.getElementById(id); if(!b)return;
+if(on) b.className=(b.className+' pm_active').replace(/\s+/g,' ').trim();
+else   b.className=b.className.replace(/\bpm_active\b/g,'').trim(); }
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+/* ── A11y toggles ── */
+function toggleHC(){
+hcMode=!hcMode;
+if(hcMode){cbMode=false;btnActive('btnCB',false);document.getElementById('btnCB').value='Color-Blind: OFF';}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+document.body.className=hcMode?'pm-hc-mode':document.body.className.replace(/\bpm-hc-mode\b/g,'').trim();
+btnActive('btnHC',hcMode);
+document.getElementById('btnHC').value=hcMode?'High Contrast: ON':'High Contrast: OFF';
+drawAll(); redrawGraph();
+}
+function toggleCB(){
+cbMode=!cbMode;
+if(cbMode&&hcMode){hcMode=false;btnActive('btnHC',false);document.getElementById('btnHC').value='High Contrast: OFF';document.body.className=document.body.className.replace(/\bpm-hc-mode\b/g,'').trim();}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+btnActive('btnCB',cbMode);
+document.getElementById('btnCB').value=cbMode?'Color-Blind: ON':'Color-Blind: OFF';
+drawAll(); redrawGraph();
+}
+function toggleNarr(){
+showNarration=!showNarration;
+var box=document.getElementById('narrationBox'); if(box) box.style.display=showNarration?'':'none';
+btnActive('btnNarr',showNarration);
+document.getElementById('btnNarr').value=showNarration?'Narration: ON':'Narration: OFF';
+}
+/* ── Challenge loading ── */
+function buildTargetSamples(){
+targetSamples=[];
+for(var t=0;t<=DURATION_S+1e-9;t+=0.05){ targetSamples.push({t:t, x:targetFn(t)}); }
+}
+function loadChallenge(n){
+currentChallenge=n; targetFn=FUNCS[n];
+buildTargetSamples();
+document.getElementById('challengeLbl').textContent='Challenge '+n;
+document.getElementById('challengeSel').value=String(n);
+stopLoop(); attemptData=[]; simTime=0; lastSampleT=-1; xcm=0; vcm=0; isDragging=false;
+attemptDone=false; attemptStarted=false; armed=false;
+document.getElementById('pmFeedback').style.display='none';
+drawAll(); updateReadouts(); updateNarration(); redrawGraph();
+document.getElementById('r_state').textContent='Ready';
+sr('Challenge '+n+' loaded. Study the target graph, then press Start Attempt.');
+}
+function loadSelected(){
+var v=parseInt(document.getElementById('challengeSel').value)||1;
+loadChallenge(v);
+}
+function randomChallenge(){
+var n;
+do { n=1+Math.floor(Math.random()*NUM_CHALLENGES); } while(n===currentChallenge && NUM_CHALLENGES>1);
+loadChallenge(n);
+}
+/* ── Attempt control ── */
+function stopLoop(){ running=false; if(animId){cancelAnimationFrame(animId); animId=null;} lastTS=null; }
+/* Arm: reset data and wait for the user to actually grab the cart before the clock starts. */
+function armAttempt(){
+stopLoop();
+attemptData=[]; simTime=0; lastSampleT=-1; xcm=0; vcm=0; isDragging=false;
+attemptDone=false; attemptStarted=true; armed=true;
+document.getElementById('pmFeedback').style.display='none';
+drawAll(); updateReadouts(); updateNarration(); redrawGraph();
+document.getElementById('r_state').textContent='Armed';
+}
+function startAttempt(){
+armAttempt();
+sr('Ready. Press and hold on the cart (or focus the track and press an arrow key) to start the timer at t = 0.');
+}
+/* Called on the first grab/keypress while armed -- this is what actually starts the clock. */
+function beginTiming(){
+armed=false; running=true; lastTS=null; simTime=0; lastSampleT=-1;
+recordSample();
+animId=requestAnimationFrame(loop);
+document.getElementById('r_state').textContent='Running';
+updateNarration();
+sr('Timer started.');
+}
+function stopAttempt(){
+if(armed){
+armed=false; attemptStarted=false;
+drawAll(); updateReadouts(); updateNarration(); redrawGraph();
+document.getElementById('r_state').textContent='Ready';
+sr('Attempt cancelled.');
+return;
+}
+if(!running) return;
+finishAttempt();
+sr('Attempt stopped. '+attemptData.length+' samples captured.');
+}
+function finishAttempt(){
+stopLoop(); isDragging=false; armed=false; attemptDone=true;
+document.getElementById('r_state').textContent='Done';
+updateNarration(); redrawGraph(); showFeedback();
+}
+function retry(){
+armAttempt();
+sr('Attempt cleared. Same graph loaded -- press and hold the cart to try again.');
+}
+/* ── Main loop ── */
+function loop(ts){
+if(!running) return;
+if(lastTS===null) lastTS=ts;
+var realDt=(ts-lastTS)/1000; lastTS=ts;
+simTime+=realDt;
+if(simTime>=DURATION_S){ simTime=DURATION_S; vcm=computeInstantVelocity(); recordSample(); drawAll(); updateReadouts(); redrawGraph(); finishAttempt(); return; }
+vcm=computeInstantVelocity();
+recordSample();
+drawAll(); updateReadouts(); redrawGraph();
+animId=requestAnimationFrame(loop);
+}
+function computeInstantVelocity(){
+if(attemptData.length<1) return 0;
+var target=simTime-0.12, j=attemptData.length-1;
+while(j>0 && attemptData[j].t>target) j--;
+var p0=attemptData[j];
+var dt=simTime-p0.t;
+if(dt<=0.02) return vcm;
+return (xcm-p0.x)/dt;
+}
+function recordSample(){
+if(simTime-lastSampleT<0.025) return;
+lastSampleT=simTime;
+attemptData.push({t:parseFloat(simTime.toFixed(4)), x:parseFloat(xcm.toFixed(3)), v:parseFloat(vcm.toFixed(3))});
+}
+/* ── Drawing: main canvas ── */
+function drawAll(){
+ctx.clearRect(0,0,CW,CH);
+ctx.fillStyle=pal.canvas; ctx.fillRect(0,0,CW,CH);
+drawTrack();
+drawGlider();
+drawTimestamp();
+}
+function drawTrack(){
+var trackPx=TRACK_LEN_CM*PX_PER_CM;
+var gr=ctx.createLinearGradient(0,TRACK_Y,0,TRACK_Y+TRACK_THICK);
+gr.addColorStop(0,pal.trackBar); gr.addColorStop(1,pal.trackEdge);
+ctx.fillStyle=gr; ctx.fillRect(ORIGIN_PX, TRACK_Y, trackPx, TRACK_THICK);
+ctx.strokeStyle=hcMode?'#fff':'#555'; ctx.lineWidth=1;
+ctx.strokeRect(ORIGIN_PX, TRACK_Y, trackPx, TRACK_THICK);
+/* left and right stop walls */
+ctx.fillStyle=pal.wall;
+ctx.fillRect(ORIGIN_PX-6, TRACK_Y-14, 6, 14+TRACK_THICK);
+ctx.fillRect(ORIGIN_PX+trackPx, TRACK_Y-14, 6, 14+TRACK_THICK);
+/* ruler ticks every 10 cm, labels every 20 cm */
+ctx.strokeStyle='#999'; ctx.fillStyle=pal.axis; ctx.font='8px Arial'; ctx.textAlign='center';
+for(var c=0;c<=TRACK_LEN_CM;c+=10){
+var px_=ORIGIN_PX+c*PX_PER_CM;
+var th=(c%20===0)?7:4;
+ctx.beginPath(); ctx.moveTo(px_,TRACK_Y+TRACK_THICK); ctx.lineTo(px_,TRACK_Y+TRACK_THICK+th); ctx.stroke();
+if(c%20===0) ctx.fillText(c, px_, TRACK_Y+TRACK_THICK+18);
+}
+ctx.font='italic 9px Arial'; ctx.fillStyle=hcMode?'#999':'#999'; ctx.textAlign='left';
+ctx.fillText('frictionless track -- 1.2 m', ORIGIN_PX, TRACK_Y-2);
+}
+function gliderCenterPx(){ return ORIGIN_PX + xcm*PX_PER_CM; }
+function drawGlider(){
+var cx=gliderCenterPx(), left=cx-BLOCK_W/2, top=TRACK_Y-BLOCK_H;
+ctx.fillStyle=hcMode?'#666':'#999';
+ctx.fillRect(left+6, TRACK_Y-4, 8, 8);
+ctx.fillRect(left+BLOCK_W-14, TRACK_Y-4, 8, 8);
+if(!hcMode){
+var gr=ctx.createLinearGradient(left,top,left+BLOCK_W,top+BLOCK_H);
+gr.addColorStop(0,pal.block1); gr.addColorStop(1,pal.block2); ctx.fillStyle=gr;
+} else { ctx.fillStyle=pal.block1; }
+ctx.fillRect(left,top,BLOCK_W,BLOCK_H);
+ctx.strokeStyle=isDragging?pal.grabEdge:pal.block2; ctx.lineWidth=isDragging?3:1.5; ctx.strokeRect(left,top,BLOCK_W,BLOCK_H);
+ctx.fillStyle=pal.blockLbl; ctx.font='bold 10px Arial'; ctx.textAlign='center';
+ctx.fillText('cart', cx, top+BLOCK_H/2+4);
+}
+function drawTimestamp(){
+var bg=hcMode?'#333':'yellow', tc=hcMode?'#fff':'#000';
+ctx.fillStyle=bg; ctx.fillRect(CW-110,0,110,18);
+ctx.font='9pt Arial'; ctx.fillStyle=tc; ctx.textAlign='left';
+ctx.fillText('t = '+simTime.toFixed(2)+' / '+DURATION_S+' s', CW-106,13);
+}
+/* ── Readouts / narration ── */
+function updateReadouts(){
+function set(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
+set('r_x', xcm.toFixed(1)+' cm');
+set('r_v', Math.abs(vcm).toFixed(1)+' cm/s');
+set('r_t', simTime.toFixed(2)+' s');
+if(showNarration) updateNarration();
+}
+function updateNarration(){
+var el=document.getElementById('narration'); if(!el) return;
+var txt='';
+if(!attemptStarted) txt='A target graph is loaded. Press Start Attempt, then drag the cart to try to match it.';
+else if(armed) txt='Armed -- the clock has not started yet. Press and hold on the cart (or focus the track and press an arrow key) to begin timing exactly at t = 0.';
+else if(running) txt=isDragging ? 'Recording -- dragging cart to x = '+xcm.toFixed(1)+' cm at t = '+simTime.toFixed(1)+' s.' : 'Recording -- cart at rest at x = '+xcm.toFixed(1)+' cm. Drag it to continue.';
+else if(attemptDone) txt='Attempt complete. Compare your orange curve to the blue target curve below, then Retry if you would like another try.';
+else txt='Attempt paused.';
+el.textContent=txt;
+}
+/* ── Graph ── */
+function niceRange(vals, padFrac){
+if(vals.length===0) return {lo:0,hi:TRACK_LEN_CM};
+var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+if(mn===mx){ mn-=1; mx+=1; }
+var pad=(mx-mn)*padFrac;
+return {lo:mn-pad, hi:mx+pad};
+}
+function redrawGraph(){
+gctx.clearRect(0,0,GW,GH);
+gctx.fillStyle=hcMode?'#111':'#fff'; gctx.fillRect(0,0,GW,GH);
+var pW=GW-FP.l-FP.r, pH=GH-FP.t-FP.b;
+var tLo=0, tHi=DURATION_S;
+var tVals=targetSamples.map(function(p){return p.x;});
+var yr=niceRange(tVals.concat(attemptData.map(function(p){return p.x;})), 0.1);
+yr.lo=Math.min(yr.lo,-2); yr.hi=Math.max(yr.hi,TRACK_LEN_CM+2);
+function px(t){ return FP.l+pW*(t-tLo)/(tHi-tLo); }
+function py(v){ return FP.t+pH*(1-(v-yr.lo)/(yr.hi-yr.lo)); }
+var ac=pal.axis;
+/* grid */
+gctx.strokeStyle=pal.grid; gctx.lineWidth=0.8;
+var nGT=10, nGV=6;
+for(var gi=0;gi<=nGT;gi++){ var tv=tLo+gi*(tHi-tLo)/nGT; gctx.beginPath(); gctx.moveTo(px(tv),FP.t); gctx.lineTo(px(tv),FP.t+pH); gctx.stroke(); }
+for(var gi2=0;gi2<=nGV;gi2++){ var fv=yr.lo+gi2*(yr.hi-yr.lo)/nGV; gctx.beginPath(); gctx.moveTo(FP.l,py(fv)); gctx.lineTo(FP.l+pW,py(fv)); gctx.stroke(); }
+/* axes */
+gctx.strokeStyle=ac; gctx.lineWidth=hcMode?2:1.5;
+gctx.beginPath(); gctx.moveTo(FP.l,FP.t); gctx.lineTo(FP.l,FP.t+pH); gctx.lineTo(FP.l+pW,FP.t+pH); gctx.stroke();
+/* labels */
+gctx.fillStyle=ac; gctx.font='10px Arial'; gctx.textAlign='center';
+gctx.fillText('Time (s)', FP.l+pW/2, GH-4);
+gctx.save(); gctx.translate(13,FP.t+pH/2); gctx.rotate(-Math.PI/2); gctx.fillText('Position (cm)',0,0); gctx.restore();
+gctx.font='9px Arial';
+for(var gi3=0;gi3<=nGT;gi3++){ var tv2=tLo+gi3*(tHi-tLo)/nGT; gctx.textAlign='center'; gctx.fillStyle=ac; gctx.fillText(tv2.toFixed(0),px(tv2),FP.t+pH+14); }
+for(var gi4=0;gi4<=nGV;gi4++){ var fv2=yr.lo+gi4*(yr.hi-yr.lo)/nGV; gctx.textAlign='right'; gctx.fillStyle=ac; gctx.fillText(fv2.toFixed(0),FP.l-4,py(fv2)+3); }
+/* target curve -- always fully shown */
+gctx.strokeStyle=pal.targetCurve; gctx.lineWidth=hcMode?2.5:2.2;
+gctx.beginPath(); var firstT=true;
+for(var i=0;i<targetSamples.length;i++){
+var p=targetSamples[i]; var X=px(p.t), Y=py(p.x);
+if(firstT){gctx.moveTo(X,Y);firstT=false;} else gctx.lineTo(X,Y);
+}
+gctx.stroke();
+/* attempt curve -- grows live */
+if(attemptData.length>1){
+gctx.strokeStyle=pal.attemptCurve; gctx.lineWidth=hcMode?2.5:2.2;
+gctx.beginPath(); var firstA=true;
+for(var j=0;j<attemptData.length;j++){
+var q=attemptData[j]; var X2=px(q.t), Y2=py(q.x);
+if(firstA){gctx.moveTo(X2,Y2);firstA=false;} else gctx.lineTo(X2,Y2);
+}
+gctx.stroke();
+/* current point marker while running */
+if(running){
+var last=attemptData[attemptData.length-1];
+gctx.fillStyle=pal.attemptCurve;
+gctx.beginPath(); gctx.arc(px(last.t),py(last.x),4,0,2*Math.PI); gctx.fill();
+}
+}
+}
+/* ── Feedback ── */
+function showFeedback(){
+var box=document.getElementById('pmFeedback'), content=document.getElementById('pmFeedbackContent');
+if(!box||!content) return;
+if(attemptData.length<2){ box.style.display='none'; return; }
+var sumAbs=0, maxAbs=0, sumSq=0, n=0;
+for(var i=0;i<attemptData.length;i++){
+var p=attemptData[i];
+var tx=targetFn(p.t);
+var d=Math.abs(p.x-tx);
+sumAbs+=d; sumSq+=d*d; if(d>maxAbs) maxAbs=d;
+n++;
+}
+var meanAbs=sumAbs/n, rms=Math.sqrt(sumSq/n);
+var verdict;
+if(meanAbs<=3) verdict='Excellent match!';
+else if(meanAbs<=8) verdict='Good attempt -- refine your timing and speed where the curves separate.';
+else verdict='Keep practicing -- watch closely where your orange curve diverges from the blue target.';
+content.innerHTML=[
+'average deviation: '+meanAbs.toFixed(1)+' cm',
+'max deviation: '+maxAbs.toFixed(1)+' cm',
+'RMS deviation: '+rms.toFixed(1)+' cm',
+'samples compared: '+n,
+'<strong>'+verdict+'</strong>'
+].join('<br>');
+box.style.display='';
+}
+/* ── Pointer / drag input ── */
+/* fingers are less precise than a mouse: on touch, the drag handles grab from about 14 screen pixels further out */
+var TOUCH_SLOP=0;
+function getCanvasPos(evt){
+var rect=sc.getBoundingClientRect(), clientX, clientY;
+TOUCH_SLOP=(evt.touches && evt.touches.length) ? 14*(CW/rect.width) : 0;
+if(evt.touches && evt.touches.length){ clientX=evt.touches[0].clientX; clientY=evt.touches[0].clientY; }
+else { clientX=evt.clientX; clientY=evt.clientY; }
+return { x:(clientX-rect.left)*(CW/rect.width), y:(clientY-rect.top)*(CH/rect.height) };
+}
+function hitTestGlider(px_,py_){
+var cx=gliderCenterPx();
+var left=cx-BLOCK_W/2-10-TOUCH_SLOP, right=cx+BLOCK_W/2+10+TOUCH_SLOP, top=TRACK_Y-BLOCK_H-20-TOUCH_SLOP, bottom=TRACK_Y+10+TOUCH_SLOP;
+return px_>=left && px_<=right && py_>=top && py_<=bottom;
+}
+function onDown(evt){
+if(!armed && !running) return;
+var p=getCanvasPos(evt);
+if(hitTestGlider(p.x,p.y)){
+isDragging=true;
+if(armed) beginTiming();
+evt.preventDefault();
+}
+}
+function onMove(evt){
+if(!isDragging) return;
+var p=getCanvasPos(evt);
+xcm=clamp((p.x-ORIGIN_PX)/PX_PER_CM, 0, TRACK_LEN_CM);
+evt.preventDefault();
+}
+function onUp(){ isDragging=false; }
+sc.addEventListener('mousedown', onDown);
+document.addEventListener('mousemove', onMove);
+document.addEventListener('mouseup', onUp);
+sc.addEventListener('touchstart', onDown, {passive:false});
+sc.addEventListener('touchmove', onMove, {passive:false});
+sc.addEventListener('touchend', onUp);
+sc.addEventListener('keydown', function(evt){
+if(!armed && !running) return;
+if(evt.key!=='ArrowRight' && evt.key!=='ArrowLeft') return;
+if(armed) beginTiming();
+if(evt.key==='ArrowRight'){ xcm=clamp(xcm+2,0,TRACK_LEN_CM); }
+else if(evt.key==='ArrowLeft'){ xcm=clamp(xcm-2,0,TRACK_LEN_CM); }
+evt.preventDefault();
+});
+/* ── Boot ── */
+loadChallenge(1);
+return {
+loadSelected, randomChallenge,
+startAttempt, stopAttempt, retry,
+toggleHC, toggleCB, toggleNarr
+};
+})();
+</script>
+</div><!-- #pm_root -->
+</main>
+</body>
+</html>

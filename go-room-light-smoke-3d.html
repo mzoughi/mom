@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Light in a Smoky Room -- with a Smoke Detector</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, diffuse reflection, laser, flashlight, wavelength, infrared, ultraviolet, visible light, smoke, scattering, Beer-Lambert, smoke detector, photoelectric, lesson, scientific">
+<meta name="description" content="Interactive 3D room with matte walls: a laser of any wavelength (visible or not) or a flashlight, smoke that scatters and dims the light, and a photoelectric smoke detector.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="lsRoot" class="ls_root" role="region" aria-label="Room of mirrors 3-D simulator">
+<!-- Display options -->
+<div class="ls_a11y" id="lsA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="ls_a11ybtn" id="lsBtnHC" onclick="lsA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ls_a11ybtn" id="lsBtnLM" onclick="lsA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ls_a11ybtn" id="lsBtnCB" onclick="lsA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ls_a11ybtn ls_a11yon" id="lsBtnNR" onclick="lsA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="ls_header">
+<p class="ls_h1">Light in a Smoky Room</p>
+<p class="ls_sub">A laser or flashlight in a dark room with matte walls -- and smoke that makes a beam visible</p>
+</div>
+<div class="ls_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="ls_tab" id="lsT0" aria-selected="true" onclick="lsDet.tab(0)">1. Light in a smoky room</button>
+<button type="button" role="tab" class="ls_tab" id="lsT1" aria-selected="false" onclick="lsDet.tab(1)">2. A smoke detector</button>
+</div>
+<!-- Instrument grid -->
+<div class="ls_instrument">
+<!-- Left column -->
+<div class="ls_leftcol">
+<div class="ls_diagpanel">
+<div class="ls_diaglabel"><b>THE ROOM (3-D)</b><span class="ls_diagnote">drag to turn &middot; scroll or pinch to zoom</span></div>
+<canvas id="lsRoom" width="560" height="400" tabindex="0" role="img" aria-label="Three-dimensional view of the room: mirror walls, the light source, the reflected rays, the spots where light lands, and the viewer's eye. The readout and narration describe the beam."></canvas>
+<div class="ls_runbar">
+<button type="button" class="ls_btn" onclick="lsSim.view('3d')">3-D</button>
+<button type="button" class="ls_btn" onclick="lsSim.view('top')">Top</button>
+<button type="button" class="ls_btn" onclick="lsSim.view('side')">Side</button>
+<button type="button" class="ls_btn" onclick="lsSim.zoom(1/1.15)">Zoom +</button>
+<button type="button" class="ls_btn" onclick="lsSim.zoom(1.15)">Zoom &minus;</button>
+</div>
+</div>
+<div class="ls_diagpanel">
+<div class="ls_diaglabel"><b>VIEWER'S SCREEN</b><span class="ls_diagnote">what the viewer's eye sees &middot; drag to look around</span></div>
+<canvas id="lsView" width="480" height="360" tabindex="0" role="img" aria-label="What the viewer sees: a mostly dark room, the spots where the light lands, their images in the mirrors, and the beam itself when haze is on."></canvas>
+<div class="ls_runbar">
+<button type="button" class="ls_btn ls_primary" onclick="lsSim.preset('laser')">Laser</button>
+<button type="button" class="ls_btn ls_primary" onclick="lsSim.preset('flash')">Flashlight</button>
+<button type="button" class="ls_btn" onclick="lsSim.preset('smoky')">Smoky room</button>
+<button type="button" class="ls_btn" onclick="lsSim.preset('ir')">Infrared laser</button>
+<button type="button" class="ls_btn" onclick="lsSim.lookAtSpot()">Look at the spot</button>
+<button type="button" class="ls_btn" onclick="lsSim.describe()">Describe</button>
+<button type="button" class="ls_btn ls_warn" onclick="lsSim.preset('reset')">Reset</button>
+</div>
+</div>
+<!-- Readout -->
+<div class="ls_panel" role="region" aria-labelledby="lsReadHd">
+<div class="ls_paneltitle" id="lsReadHd">Readout -- the light and the smoke</div>
+<div class="ls_rgrid">
+<div class="ls_rrow ls_wide"><span class="ls_rkey">The light</span><span class="ls_rval ls_hi" id="lsRoWhat">--</span></div>
+<div class="ls_rrow"><span class="ls_rkey">Path to the surface L</span><span class="ls_rval" id="lsRoL">--</span></div>
+<div class="ls_rrow"><span class="ls_rkey">Left after the smoke e<sup>&minus;&sigma;L</sup></span><span class="ls_rval ls_hi" id="lsRoT">--</span></div>
+<div class="ls_rrow"><span class="ls_rkey">Spot diameter</span><span class="ls_rval" id="lsRoD">--</span></div>
+<div class="ls_rrow"><span class="ls_rkey">Smoke &sigma;</span><span class="ls_rval" id="lsRoS">--</span></div>
+<div class="ls_rrow ls_wide"><span class="ls_rkey">Lands on</span><span class="ls_rval" id="lsRoLand">--</span></div>
+<div class="ls_rrow ls_wide"><span class="ls_rkey">Part of the room lit directly</span><span class="ls_rval ls_hi" id="lsRoLit">--</span></div>
+<div class="ls_rrow ls_wide"><span class="ls_rkey">Light reflected diffusely by the surfaces</span><span class="ls_rval" id="lsRoScat">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="ls_rightcol">
+<div class="ls_panel" role="group" aria-labelledby="lsLightHd">
+<div class="ls_paneltitle" id="lsLightHd">Light source</div>
+<div class="ls_panelbody">
+<div class="ls_ctrl">
+<label for="lsSrc" class="ls_ctrlname">Source</label>
+<select id="lsSrc" onchange="lsSim.set('src',this.value)">
+<option value="laser">Laser</option>
+<option value="flash">Flashlight (white light)</option>
+</select>
+</div>
+<div class="ls_ctrl" id="lsWlCtrl">
+<div class="ls_ctrlhdr"><label for="lsWl" class="ls_ctrlname">Laser wavelength</label><span class="ls_sval"><span id="lsWlVal">650</span> nm</span></div>
+<input type="range" id="lsWl" min="250" max="1100" step="5" value="650" oninput="lsSim.set('wl',this.value)">
+<div class="ls_band" id="lsBand">visible: red</div>
+</div>
+<div class="ls_ctrl" id="lsSpCtrl">
+<div class="ls_ctrlhdr"><label for="lsSpread" class="ls_ctrlname">Beam spread (half-angle)</label><span class="ls_sval"><span id="lsSpreadVal">12</span>&deg;</span></div>
+<input type="range" id="lsSpread" min="3" max="45" step="0.5" value="12" oninput="lsSim.set('spread',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsLyaw" class="ls_ctrlname">Aim: turn</label><span class="ls_sval"><span id="lsLyawVal">30</span>&deg;</span></div>
+<input type="range" id="lsLyaw" min="-180" max="180" step="1" value="30" oninput="lsSim.set('lyaw',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsLpitch" class="ls_ctrlname">Aim: tilt up / down</label><span class="ls_sval"><span id="lsLpitchVal">-8</span>&deg;</span></div>
+<input type="range" id="lsLpitch" min="-89" max="89" step="1" value="-8" oninput="lsSim.set('lpitch',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsLx" class="ls_ctrlname">Position x</label><span class="ls_sval"><span id="lsLxVal">0.50</span> m</span></div>
+<input type="range" id="lsLx" min="0.1" max="3.9" step="0.05" value="0.5" oninput="lsSim.set('lx',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsLy" class="ls_ctrlname">Position y</label><span class="ls_sval"><span id="lsLyVal">0.60</span> m</span></div>
+<input type="range" id="lsLy" min="0.1" max="2.9" step="0.05" value="0.6" oninput="lsSim.set('ly',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsLz" class="ls_ctrlname">Height z</label><span class="ls_sval"><span id="lsLzVal">1.30</span> m</span></div>
+<input type="range" id="lsLz" min="0.1" max="2.4" step="0.05" value="1.3" oninput="lsSim.set('lz',this.value)">
+</div>
+</div>
+</div>
+<div class="ls_panel" role="group" aria-labelledby="lsSmkHd">
+<div class="ls_paneltitle" id="lsSmkHd">Smoke</div>
+<div class="ls_panelbody">
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsSmoke" class="ls_ctrlname">Smoke density</label><span class="ls_sval"><span id="lsSmokeVal">0</span> %</span></div>
+<input type="range" id="lsSmoke" min="0" max="100" step="1" value="0" oninput="lsSim.set('smoke',this.value)">
+</div>
+<div class="ls_ctrl">
+<label for="lsCam" class="ls_ctrlname">The viewer looks with</label>
+<select id="lsCam" onchange="lsSim.set('cam',this.value)">
+<option value="eye">human eyes</option>
+<option value="ir">a camera that also sees near infrared</option>
+</select>
+</div>
+</div>
+</div>
+<div class="ls_panel" role="group" aria-labelledby="lsEyeHd">
+<div class="ls_paneltitle" id="lsEyeHd">Viewer</div>
+<div class="ls_panelbody">
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsVyaw" class="ls_ctrlname">Look: turn</label><span class="ls_sval"><span id="lsVyawVal">150</span>&deg;</span></div>
+<input type="range" id="lsVyaw" min="-180" max="180" step="1" value="150" oninput="lsSim.set('vyaw',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsVpitch" class="ls_ctrlname">Look: up / down</label><span class="ls_sval"><span id="lsVpitchVal">-10</span>&deg;</span></div>
+<input type="range" id="lsVpitch" min="-80" max="80" step="1" value="-10" oninput="lsSim.set('vpitch',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsVx" class="ls_ctrlname">Position x</label><span class="ls_sval"><span id="lsVxVal">3.50</span> m</span></div>
+<input type="range" id="lsVx" min="0.1" max="3.9" step="0.05" value="3.5" oninput="lsSim.set('vx',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsVy" class="ls_ctrlname">Position y</label><span class="ls_sval"><span id="lsVyVal">0.40</span> m</span></div>
+<input type="range" id="lsVy" min="0.1" max="2.9" step="0.05" value="0.4" oninput="lsSim.set('vy',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsVz" class="ls_ctrlname">Eye height z</label><span class="ls_sval"><span id="lsVzVal">1.60</span> m</span></div>
+<input type="range" id="lsVz" min="0.1" max="2.4" step="0.05" value="1.6" oninput="lsSim.set('vz',this.value)">
+</div>
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsFov" class="ls_ctrlname">Field of view</label><span class="ls_sval"><span id="lsFovVal">70</span>&deg;</span></div>
+<input type="range" id="lsFov" min="30" max="110" step="1" value="70" oninput="lsSim.set('fov',this.value)">
+</div>
+</div>
+</div>
+<div class="ls_panel" role="group" aria-labelledby="lsShowHd">
+<div class="ls_paneltitle" id="lsShowHd">Room &amp; display</div>
+<div class="ls_panelbody">
+<div class="ls_ctrl">
+<div class="ls_ctrlhdr"><label for="lsAmb" class="ls_ctrlname">Room lights</label><span class="ls_sval"><span id="lsAmbVal">0</span> %</span></div>
+<input type="range" id="lsAmb" min="0" max="100" step="1" value="0" oninput="lsSim.set('amb',this.value)">
+</div>
+<label class="ls_chk"><input type="checkbox" id="lsDiff" checked onchange="lsSim.set('diffuse',this.checked)"> Diffuse reflection by matte surfaces</label>
+<label class="ls_chk" id="lsRaysL"><input type="checkbox" id="lsRays" onchange="lsSim.set('rays',this.checked)"> Laser beam in the 3-D view</label>
+<label class="ls_chk"><input type="checkbox" id="lsObj" checked onchange="lsSim.set('objects',this.checked)"> Objects in the room</label>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="ls_formulastrip">
+<span class="ls_formulatxt">Light left after a path L through smoke: I = I<sub>0</sub> e<sup>&minus;&sigma;L</sup> &nbsp;|&nbsp; light scattered toward the eye &prop; &sigma; &nbsp;|&nbsp; a flashlight spot: D &asymp; 2 L tan &alpha; &nbsp;|&nbsp; visible light: about 380 to 750 nm</span>
+</div>
+</div><!-- instrument -->
+<div class="ls_det" id="lsDetPanel" style="display:none">
+<div class="ls_diagpanel">
+<div class="ls_diaglabel"><b>INSIDE A PHOTOELECTRIC SMOKE DETECTOR</b><span class="ls_diagnote">the sensor looks across the beam, never into it</span></div>
+<canvas id="lsDetCv" width="640" height="340" role="img" aria-label="Inside a smoke detector: a light source shines across a dark chamber into a light trap; a light sensor at right angles to the beam sees light only when smoke particles scatter it."></canvas>
+</div>
+<div class="ls_detctl">
+<div class="ls_ctrl"><div class="ls_ctrlhdr"><label for="lsDS" class="ls_ctrlname">Smoke in the chamber</label><span class="ls_sval"><span id="lsDSVal">0</span> %</span></div>
+<input type="range" id="lsDS" min="0" max="100" step="1" value="0" oninput="lsDet.set('smoke',this.value)"></div>
+<div class="ls_ctrl"><div class="ls_ctrlhdr"><label for="lsDT" class="ls_ctrlname">Alarm threshold</label><span class="ls_sval"><span id="lsDTVal">25</span> %</span></div>
+<input type="range" id="lsDT" min="5" max="80" step="1" value="25" oninput="lsDet.set('thr',this.value)"></div>
+<div class="ls_ctrl"><label for="lsDW" class="ls_ctrlname">Light source</label>
+<select id="lsDW" onchange="lsDet.set('wl',this.value)"><option value="880">infrared LED, 880 nm (as in real detectors)</option><option value="650">red laser, 650 nm (visible)</option></select></div>
+<div class="ls_detbtns">
+<button type="button" class="ls_btn ls_primary" onclick="lsDet.puff()">Puff of smoke</button>
+<button type="button" class="ls_btn" onclick="lsDet.set('smoke',0)">Clear the air</button>
+<label class="ls_chk"><input type="checkbox" id="lsDR" checked onchange="lsDet.set('rays',this.checked)"> Scattered light</label>
+</div>
+<div class="ls_rgrid" id="lsDetRead"></div>
+</div>
+</div>
+<div id="lsNarBar" class="ls_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="ls_descwrap">
+<button type="button" class="ls_descbtn" id="lsDescBtn" aria-expanded="false" aria-controls="lsDesc" onclick="lsA11y.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="ls_desc" id="lsDesc" role="region" aria-labelledby="lsDescBtn" style="display:none">
+<p>This simulation follows the light of a laser or a flashlight in a dark room whose walls, floor and ceiling are matte. A matte surface reflects diffusely: each lit point sends light in all directions, so it can be seen from anywhere in the room and it faintly lights the rest of the room. The light reflected from one surface onto another follows</p>
+<p class="ls_eq">`E ~~ (rho E_0 A cos theta_e cos theta_r)/(pi r^2)`,</p>
+<p>where `rho` is the fraction the surface reflects and `theta_e`, `theta_r` are the angles between the line joining the two surfaces and their normals.</p>
+<p><b>Laser and flashlight.</b> A laser beam hardly spreads, so in clean air it shows up only as a small bright dot where it lands. A flashlight beam spreads into a cone of half-angle `alpha`; at a distance `L` its spot is about `D ~~ 2 L tan alpha` across, so the same light covers a larger area: the spot grows dimmer, and since more of the room is lit, the diffuse light in the room becomes more even.</p>
+<p><b>Visible and invisible light.</b> The eye sees wavelengths from about 380 nm (violet) to 750 nm (red). A laser of shorter wavelength (ultraviolet) or longer (infrared) still carries energy and still lands on the wall, but leaves no visible dot at all. Many cameras do see near-infrared light, which is how you can check a TV remote control. Invisible laser beams are especially dangerous to the eye, because the eye gives no warning glare.</p>
+<p><b>Smoke.</b> In clean air light travels in a straight line and none of it reaches the eye unless it hits something, so the beam itself is invisible. Smoke particles scatter a little of the light in all directions; that scattered light reaches the eye from every point along the beam, which makes the beam visible. The light that is scattered (or absorbed) is lost from the beam, so its intensity falls with distance as</p>
+<p class="ls_eq">`I = I_0 e^(-sigma L)`,</p>
+<p>where `sigma` (per metre) grows with the density of the smoke. The brightness of the beam seen from the side is proportional to `sigma`.</p>
+<p><b>A smoke detector.</b> A photoelectric smoke detector uses exactly this. Inside a dark chamber, a light source (usually an infrared LED) shines across the chamber into a light trap. A light sensor is placed at right angles to the beam, and a baffle stops the light from reaching it directly, so in clean air the sensor sees nothing. When smoke enters the chamber, its particles scatter some light toward the sensor; when the signal passes a threshold, the alarm sounds. The expected signal is proportional to the number of particles in the region where the beam and the sensor's view overlap -- that is, to the smoke density.</p>
+</div></div>
+</div>
+</div><!-- #lsRoot -->
+<!-- Questions -->
+<div class="ls_qwrap">
+<hr>
+<ol type="a">
+<li>With the laser at 650 nm and no smoke, what does the viewer see? Can the viewer see the beam between the laser and the wall? Explain.<br /> _____ </li>
+<li>Change the wavelength to 900 nm. What does the viewer see now? Switch the viewer to the camera that sees near infrared. What changes, and why?<br /> _____ </li>
+<li>Add smoke. Describe what happens to the beam as seen by the viewer, and to the dot on the wall. Use the readout to explain the change in the dot.<br /> _____ </li>
+<li>Choose the flashlight and increase its spread. How do the spot and the rest of the room change? Use D &asymp; 2 L tan &alpha;.<br /> _____ </li>
+<li>Open the smoke detector. Why is the sensor placed at right angles to the beam, rather than facing the light source?<br /> _____ </li>
+<li>Press Puff of smoke and watch the signal. Explain why the signal grows with the smoke density, and why real detectors use invisible infrared light.<br /> _____ </li>
+</ol>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #lsRoot (Hall effect template) ════════ */
+#lsRoot {
+--ls-chassis:#1a1c1f; --ls-panel:#22262b; --ls-panel-hi:#2c3138; --ls-panel-lo:#14161a;
+--ls-border:#3a4048; --ls-border-hi:#525c66; --ls-text:#c8d0d8; --ls-dim:#8a94a3;
+--ls-accent:#e8a020; --ls-green:#3ad08f; --ls-val:#ffdd66;
+--ls-focus:#e8a020; --ls-nar-bg:#2a2410; --ls-nar-border:#e0b040; --ls-nar-text:#f0e2b8;
+background:var(--ls-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--ls-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:900px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#lsRoot.ls_lm {
+--ls-chassis:#e9edf1; --ls-panel:#ffffff; --ls-panel-hi:#f1f4f7; --ls-panel-lo:#f4f6f9;
+--ls-border:#c3cad3; --ls-border-hi:#9aa3ae; --ls-text:#1d232a; --ls-dim:#556070;
+--ls-accent:#a8620a; --ls-green:#12805a; --ls-val:#8a4a00;
+--ls-focus:#a8620a; --ls-nar-bg:#ffefc0; --ls-nar-border:#e0b040; --ls-nar-text:#333333;
+background-image:none;
+}
+#lsRoot.ls_hc {
+--ls-chassis:#000000; --ls-panel:#000000; --ls-panel-hi:#111111; --ls-panel-lo:#000000;
+--ls-border:#ffffff; --ls-border-hi:#ffffff; --ls-text:#ffffff; --ls-dim:#e0e0e0;
+--ls-accent:#ffd700; --ls-green:#00ff88; --ls-val:#ffff00;
+--ls-focus:#ffff00; --ls-nar-bg:#000000; --ls-nar-border:#ffd700; --ls-nar-text:#ffffff;
+background-image:none;
+}
+#lsRoot.ls_hc .ls_panel, #lsRoot.ls_hc .ls_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#lsRoot :not(mjx-container):not(mjx-container *), #lsRoot :not(mjx-container):not(mjx-container *)::before, #lsRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; padding:0; }
+#lsRoot input:focus-visible, #lsRoot button:focus-visible, #lsRoot select:focus-visible, #lsRoot canvas:focus-visible { outline:2px solid var(--ls-focus); outline-offset:2px; }
+/* toolbar */
+#lsRoot .ls_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#lsRoot .ls_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--ls-panel-hi); border:1px solid var(--ls-border-hi); color:var(--ls-dim); }
+#lsRoot .ls_a11ybtn:hover { border-color:var(--ls-accent); color:var(--ls-accent); }
+#lsRoot .ls_a11yon { background:rgba(58,208,143,.14); border-color:var(--ls-green); color:var(--ls-green); font-weight:bold; }
+/* header */
+#lsRoot .ls_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#lsRoot .ls_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--ls-accent); text-align:center; }
+#lsRoot .ls_sub { font-size:.7rem; color:var(--ls-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* grid */
+#lsRoot .ls_instrument { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:12px; width:100%; }
+#lsRoot .ls_leftcol, #lsRoot .ls_rightcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#lsRoot .ls_diagpanel { background:var(--ls-panel); border:1px solid var(--ls-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#lsRoot .ls_diaglabel { background:var(--ls-panel-lo); border-bottom:1px solid var(--ls-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ls-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#lsRoot .ls_diaglabel b { color:var(--ls-accent); }
+#lsRoot .ls_diagnote { text-transform:none; letter-spacing:.02em; }
+#lsRoot canvas { display:block; width:100%; height:auto; margin:0 auto; touch-action:none; cursor:grab; background:#000; }
+#lsRoot #lsRoom { max-width:560px; }
+#lsRoot #lsView { max-width:480px; }
+#lsRoot .ls_runbar { display:grid; grid-template-columns:repeat(auto-fit, minmax(84px, 1fr)); gap:6px; padding:8px 10px; background:var(--ls-panel-lo); border-top:1px solid var(--ls-border); }
+#lsRoot .ls_btn { padding:8px 4px; font-family:monospace; font-size:.7rem; letter-spacing:.04em; cursor:pointer; background:var(--ls-panel-hi); border:1px solid var(--ls-border-hi); color:var(--ls-text); border-radius:3px; text-transform:uppercase; }
+#lsRoot .ls_btn:hover { border-color:var(--ls-accent); }
+#lsRoot .ls_primary { font-weight:bold; border-color:var(--ls-accent); color:var(--ls-accent); }
+#lsRoot .ls_warn { color:#e0605a; border-color:#a04040; }
+#lsRoot.ls_lm .ls_warn { color:#b02020; border-color:#c06060; }
+/* panels */
+#lsRoot .ls_panel { background:var(--ls-panel); border:1px solid var(--ls-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#lsRoot .ls_paneltitle { background:var(--ls-panel-lo); border-bottom:1px solid var(--ls-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--ls-dim); }
+#lsRoot .ls_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#lsRoot .ls_ctrl { display:flex; flex-direction:column; gap:4px; }
+#lsRoot .ls_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#lsRoot .ls_ctrlname { font-size:.72rem; font-weight:600; color:var(--ls-dim); }
+#lsRoot .ls_sval { font-family:monospace; font-size:.74rem; color:var(--ls-val); white-space:nowrap; }
+#lsRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--ls-panel-lo); border:1px solid var(--ls-border); }
+#lsRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--ls-accent); border:2px solid var(--ls-panel); cursor:pointer; }
+#lsRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--ls-accent); border:2px solid var(--ls-panel); cursor:pointer; }
+#lsRoot select { width:100%; background:var(--ls-panel-hi); color:var(--ls-text); border:1px solid var(--ls-border-hi); border-radius:3px; padding:4px 6px; font-size:.76rem; }
+#lsRoot .ls_chk { display:flex; align-items:center; gap:7px; font-size:.76rem; color:var(--ls-text); cursor:pointer; }
+#lsRoot .ls_chk input { accent-color:var(--ls-accent); width:15px; height:15px; flex-shrink:0; }
+/* readout */
+#lsRoot .ls_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px 10px; }
+#lsRoot .ls_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--ls-panel-lo); border:1px solid var(--ls-border); border-radius:3px; }
+#lsRoot .ls_rkey { font-family:monospace; font-size:.64rem; color:var(--ls-dim); letter-spacing:.02em; }
+#lsRoot .ls_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--ls-text); }
+#lsRoot .ls_hi { color:var(--ls-val); font-weight:bold; }
+#lsRoot .ls_wide { grid-column:1 / 3; }
+/* formula strip, narration */
+#lsRoot .ls_formulastrip { grid-column:1 / 3; background:var(--ls-panel-lo); border:1px solid var(--ls-border); border-radius:4px; padding:7px 14px; }
+#lsRoot .ls_formulatxt { font-family:monospace; font-size:.66rem; color:var(--ls-dim); letter-spacing:.04em; line-height:1.6; }
+#lsRoot .ls_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--ls-nar-bg); border-left:4px solid var(--ls-nar-border); font-size:.82rem; color:var(--ls-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* SIM description (toggle) */
+#lsRoot .ls_tabs { display:flex; flex-wrap:wrap; gap:4px; width:100%; }
+#lsRoot .ls_tab { flex:1 1 200px; padding:8px 10px; border:1px solid var(--ls-border-hi); background:var(--ls-panel-hi); color:var(--ls-text); border-radius:4px; cursor:pointer; font-size:.86rem; min-height:38px; }
+#lsRoot .ls_tab[aria-selected="true"] { background:var(--ls-accent); color:#1a1f24; border-color:var(--ls-accent); font-weight:bold; }
+#lsRoot .ls_band { font-size:.72rem; color:var(--ls-val); font-family:monospace; }
+#lsRoot .ls_det { width:100%; display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:12px; }
+#lsRoot .ls_detctl { display:flex; flex-direction:column; gap:10px; background:var(--ls-panel); border:1px solid var(--ls-border); border-radius:6px; padding:10px 12px; }
+#lsRoot .ls_detbtns { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+#lsRoot .ls_detctl .ls_rgrid { grid-template-columns:1fr; padding:0; }
+@media (max-width:840px) { #lsRoot .ls_det { grid-template-columns:minmax(0,1fr); } }
+#lsRoot .ls_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#lsRoot .ls_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--ls-panel-hi); border:1px solid var(--ls-accent); color:var(--ls-accent); border-radius:3px; font-weight:bold; }
+#lsRoot .ls_descbtn:hover { background:var(--ls-panel); }
+#lsRoot .ls_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#lsRoot .ls_desc { width:100%; background:var(--ls-panel); border:1px solid var(--ls-border); border-left:4px solid var(--ls-accent); border-radius:4px; padding:12px 16px; color:var(--ls-text); font-size:.86rem; line-height:1.55; }
+#lsRoot .ls_desc p { margin:0 0 9px 0; }
+#lsRoot .ls_desc p:last-child { margin-bottom:0; }
+#lsRoot .ls_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.ls_qwrap { width:100%; max-width:900px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.ls_qwrap ol { padding-left:24px; }
+.ls_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+/* narrow screens: stack the columns */
+@media (max-width:840px) {
+#lsRoot .ls_instrument { grid-template-columns:minmax(0,1fr); }
+#lsRoot .ls_formulastrip { grid-column:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#lsRoot input[type=range] { height:8px; }
+#lsRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#lsRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#lsRoot .ls_btn, #lsRoot .ls_a11ybtn, #lsRoot .ls_descbtn { min-height:40px; }
+#lsRoot select { min-height:36px; font-size:16px; }
+#lsRoot .ls_chk input { width:22px; height:22px; }
+#lsRoot .ls_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#lsRoot { padding:10px 6px 14px; }
+#lsRoot .ls_rgrid { grid-template-columns:1fr; }
+#lsRoot .ls_wide { grid-column:auto; }
+}
+</style>
+<!-- ════════ DISPLAY OPTIONS ════════ -->
+<script>
+var lsA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var DEFS = {
+'--lsc-bg':'#0d0f14','--lsc-floor':'#3a3630','--lsc-mirror':'rgba(120,180,255,0.10)','--lsc-mirroredge':'#6fa8dc','--lsc-matte':'rgba(200,200,200,0.06)',
+'--lsc-edge':'#59616d','--lsc-text':'#c8d0d8','--lsc-eye':'#ffffff','--lsc-frustum':'rgba(255,255,255,0.35)','--lsc-lamp':'#ffd34d',
+'--lsc-obj1':'#cfcabb','--lsc-obj2':'#3f9aa5','--lsc-obj3':'#c84040'
+};
+var THEMES = {
+cb:{ '--lsc-mirroredge':'#56b4e9','--lsc-obj2':'#0072b2','--lsc-obj3':'#d55e00' },
+hc:{ '--lsc-bg':'#000000','--lsc-floor':'#222222','--lsc-mirror':'rgba(120,200,255,0.18)','--lsc-mirroredge':'#66ccff','--lsc-edge':'#ffffff',
+'--lsc-text':'#ffffff','--lsc-frustum':'rgba(255,255,255,0.7)','--lsc-lamp':'#ffff00' }
+};
+var cur = {};
+function applyVars(){
+var p, order = ['cb','hc'];
+cur = {}; for (p in DEFS) cur[p] = DEFS[p];
+for (var i=0; i<order.length; i++){ if (states[order[i]]){ var t = THEMES[order[i]]; for (p in t) cur[p] = t[p]; } }
+ROOT.classList.toggle('ls_hc', states.hc); ROOT.classList.toggle('ls_lm', states.lm); ROOT.classList.toggle('ls_cb', states.cb);
+}
+function styleBtn(id, on){
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('ls_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function apply(){
+if (!ROOT) return;
+applyVars();
+var nb = document.getElementById('lsNarBar'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('lsBtnNR'); if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('lsBtnNR', states.nr); styleBtn('lsBtnHC', states.hc); styleBtn('lsBtnLM', states.lm); styleBtn('lsBtnCB', states.cb);
+}
+return {
+init:function(){ ROOT = document.getElementById('lsRoot'); apply(); },
+toggle:function(k){
+states[k] = !states[k];
+if (k==='hc' && states.hc) states.lm = false;
+if (k==='lm' && states.lm) states.hc = false;
+apply();
+if (typeof lsSim !== 'undefined' && lsSim.redraw3d) lsSim.redraw3d();
+},
+narrate:function(msg){ if (!states.nr) return; var nb = document.getElementById('lsNarBar'); if (nb) nb.textContent = msg; },
+/* SIM description: show or hide it; typeset its AsciiMath when it opens (MathJax 3 or 2, whichever the page has) */
+toggleDesc:function(){
+var b = document.getElementById('lsDescBtn'), d = document.getElementById('lsDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+},
+col:function(p){ return cur[p] || DEFS[p]; }
+};
+})();
+lsA11y.init();
+</script>
+<!-- ════════ SIMULATION ════════
+Room 4 m (x) by 3 m (y) by 2.5 m (z, up). Each of the six surfaces is either a plane mirror (specular, reflectivity R)
+or a matte surface. Light: N rays sampled uniformly inside a cone of half-angle alpha (one ray for a laser), each traced
+through specular reflections  r = d - 2 (d.n) n  until it lands on a matte surface or an object, where its energy
+(R^k / N) is stored in a light map (energy per area). Viewer's screen: rays are traced backward from the eye, reflected
+by the mirrors, and shaded at the first matte surface from the light map plus the room lights. With haze, light
+scattered sideways from the central ray of the beam is added along each eye ray.
+-->
+<script>
+var lsSim = (function(){
+var c3 = document.getElementById('lsRoom'), g3 = c3.getContext('2d');
+var cs = document.getElementById('lsView'), gs = cs.getContext('2d');
+var L3W = c3.width, L3H = c3.height, LSW = cs.width, LSH = cs.height, DPR = window.devicePixelRatio || 1;
+c3.width = L3W*DPR; c3.height = L3H*DPR; g3.scale(DPR, DPR);
+cs.width = LSW*DPR; cs.height = LSH*DPR; gs.scale(DPR, DPR);
+var off = document.createElement('canvas'), og = off.getContext('2d');
+var FONT = 'Calibri, Arial, sans-serif', DEG = Math.PI/180;
+/* ── room ── */
+var W = 4, D = 3, H = 2.5;
+var FACE_NAME = ['left wall','right wall','front wall','back wall','floor','ceiling'];
+var FACE_N = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];          /* inward normals */
+var FACE_ALB = [[0.62,0.6,0.56],[0.62,0.6,0.56],[0.62,0.6,0.56],[0.62,0.6,0.56],[0.42,0.38,0.33],[0.72,0.72,0.72]];
+var CELL = 0.04;                                                            /* light-map cell, m */
+var OBJS = [
+{ type:'sphere', c:[1.3,2.1,0.45], r:0.45, alb:[0.9,0.88,0.8], name:'white ball' },
+{ type:'box', mn:[2.6,0.9,0], mx:[3.1,1.4,0.9], alb:[0.25,0.6,0.65], name:'pedestal' },
+{ type:'sphere', c:[2.85,1.15,1.08], r:0.18, alb:[0.9,0.25,0.22], name:'red ball' }
+];
+/* the colour of the light, as the viewer (eye or infrared-sensitive camera) registers it */
+function wlRGB(l){
+var r = 0, gg = 0, b = 0;
+if (l >= 380 && l < 440){ r = (440 - l)/60; b = 1; } else if (l < 490 && l >= 440){ gg = (l - 440)/50; b = 1; } else if (l < 510 && l >= 490){ gg = 1; b = (510 - l)/20; }
+else if (l < 580 && l >= 510){ r = (l - 510)/70; gg = 1; } else if (l < 645 && l >= 580){ r = 1; gg = (645 - l)/65; } else if (l <= 750 && l >= 645){ r = 1; }
+var f = l < 380 || l > 750 ? 0 : (l < 420 ? 0.3 + 0.7*(l - 380)/40 : (l > 700 ? 0.3 + 0.7*(750 - l)/50 : 1));   /* the eye's sensitivity fades at the ends */
+return [r*f, gg*f, b*f];
+}
+function band(l){ return l < 380 ? 'ultraviolet: invisible' : (l > 750 ? 'infrared: invisible' : 'visible: ' + (l < 450 ? 'violet' : l < 490 ? 'blue' : l < 520 ? 'cyan' : l < 565 ? 'green' : l < 590 ? 'yellow' : l < 625 ? 'orange' : 'red')); }
+function visible(){ return P.src === 'flash' || (P.wl >= 380 && P.wl <= 750); }
+function lightCol(){
+if (P.src === 'flash') return [1, 0.95, 0.85];
+var c = wlRGB(P.wl);
+if (P.cam === 'ir' && P.wl > 700 && P.wl <= 1050){ var k = P.wl <= 750 ? 0.4 : Math.max(0, (1050 - P.wl)/300); c = [Math.max(c[0], 0.85*k), Math.max(c[1], 0.62*k), Math.max(c[2], 1.0*k)]; }   /* a camera shows near infrared as pale violet */
+return c;
+}
+function showCol(){ var c = lightCol(); return c[0] + c[1] + c[2] > 0.05 ? c : [0.75, 0.45, 1]; }   /* the 3-D overview draws invisible light in false colour */
+function alpha(){ return P.src === 'flash' ? P.spread*DEG : 0; }
+function sigma(){ return P.smoke/100*0.9; }                                  /* per metre */
+var K_LIGHT = 0.45, AMB_IRR = 12, HAZE_K = 0.006, LAMP_R = 0.05;
+var DEF = { src:'laser', wl:650, spread:12, cam:'eye', smoke:0, lyaw:30, lpitch:-8, lx:0.5, ly:0.6, lz:1.3, mirrors:'none', R:100, bounces:0,
+vyaw:150, vpitch:-10, vx:1.6, vy:0.4, vz:1.6, fov:70, amb:18, rays:false, objects:true, diffuse:true };
+var P = {}, cam = { yaw:-55, pitch:28, dist:7.2 };
+var faceGrid = [], objGrid = [], mirror = [false,false,false,false,false,false];
+var beam = { paths:[], central:null, segs:[], lit:0 };
+var narrT = null, idleT = null;
+function el(id){ return document.getElementById(id); }
+function col(p){ return lsA11y.col(p); }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+/* ── vectors ── */
+function add(a,b){ return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; }
+function sub(a,b){ return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+function mul(a,s){ return [a[0]*s, a[1]*s, a[2]*s]; }
+function dot(a,b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function crs(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+function nrm(a){ var l = Math.sqrt(dot(a,a)) || 1; return [a[0]/l, a[1]/l, a[2]/l]; }
+function reflect(d, n){ var k = 2*dot(d,n); return [d[0]-k*n[0], d[1]-k*n[1], d[2]-k*n[2]]; }
+function dirOf(yaw, pitch){ var cp = Math.cos(pitch*DEG); return [cp*Math.cos(yaw*DEG), cp*Math.sin(yaw*DEG), Math.sin(pitch*DEG)]; }
+/* ══════════ scene geometry ══════════ */
+function setMirrors(){ mirror = [false, false, false, false, false, false]; }   /* every surface is matte */
+function faceDims(f){ return f < 2 ? [D,H] : (f < 4 ? [W,H] : [W,D]); }
+function faceUV(f, p){ return f < 2 ? [p[1]/D, p[2]/H] : (f < 4 ? [p[0]/W, p[2]/H] : [p[0]/W, p[1]/D]); }
+/* light maps: G.d holds the beam's own (direct) light on a fine grid; G.i holds the light that matte surfaces
+   reflect diffusely onto other surfaces, on a coarse grid (diffuse light varies smoothly) */
+var G = { d:null, i:null };
+function gridSet(cell, sphNu, sphNv, boxN, exactArea){
+var faces = [];
+for (var f=0; f<6; f++){ var d = faceDims(f), nu = Math.max(1, Math.round(d[0]/cell)), nv = Math.max(1, Math.round(d[1]/cell));
+faces.push({ nu:nu, nv:nv, g:new Float32Array(nu*nv), area:exactArea ? (d[0]/nu)*(d[1]/nv) : cell*cell }); }
+var objs = OBJS.map(function(o){
+if (o.type === 'sphere'){ var ar = new Float32Array(sphNv);
+for (var j=0; j<sphNv; j++) ar[j] = o.r*o.r*(2*Math.PI/sphNu)*(Math.cos(j*Math.PI/sphNv) - Math.cos((j+1)*Math.PI/sphNv));
+return { nu:sphNu, nv:sphNv, g:new Float32Array(sphNu*sphNv), ar:ar }; }
+var bfs = [];
+for (var k=0; k<6; k++) bfs.push({ nu:boxN, nv:boxN, g:new Float32Array(boxN*boxN) });
+return { faces:bfs };
+});
+return { faces:faces, objs:objs };
+}
+function makeGrids(){
+G.d = gridSet(CELL, 48, 24, 16, false); G.i = gridSet(0.2, 16, 8, 4, true);
+faceGrid = G.d.faces; objGrid = G.d.objs;
+}
+/* nearest hit inside the room. returns { t, kind:'face'|'obj'|'lamp', f, i, n, u, v } */
+function hitScene(o, d, withObj, withLamp){
+var best = { t:Infinity }, t;
+if (d[0] > 1e-12){ t = (W - o[0])/d[0]; if (t < best.t) best = { t:t, kind:'face', f:1 }; } else if (d[0] < -1e-12){ t = -o[0]/d[0]; if (t < best.t) best = { t:t, kind:'face', f:0 }; }
+if (d[1] > 1e-12){ t = (D - o[1])/d[1]; if (t < best.t) best = { t:t, kind:'face', f:3 }; } else if (d[1] < -1e-12){ t = -o[1]/d[1]; if (t < best.t) best = { t:t, kind:'face', f:2 }; }
+if (d[2] > 1e-12){ t = (H - o[2])/d[2]; if (t < best.t) best = { t:t, kind:'face', f:5 }; } else if (d[2] < -1e-12){ t = -o[2]/d[2]; if (t < best.t) best = { t:t, kind:'face', f:4 }; }
+if (withObj){
+for (var i=0; i<OBJS.length; i++){
+var ob = OBJS[i];
+if (ob.type === 'sphere'){
+var oc = sub(o, ob.c), b = dot(oc, d), cc = dot(oc, oc) - ob.r*ob.r, disc = b*b - cc;
+if (disc > 0){ var sq = Math.sqrt(disc), t1 = -b - sq; if (t1 < 1e-6) t1 = -b + sq; if (t1 > 1e-6 && t1 < best.t) best = { t:t1, kind:'obj', i:i }; }
+} else {
+var tmin = -Infinity, tmax = Infinity, fa = -1;
+for (var a=0; a<3; a++){
+if (Math.abs(d[a]) < 1e-12){ if (o[a] < ob.mn[a] || o[a] > ob.mx[a]){ tmin = Infinity; break; } continue; }
+var ta = (ob.mn[a] - o[a])/d[a], tb = (ob.mx[a] - o[a])/d[a], fA = 2*a, fB = 2*a + 1;
+if (ta > tb){ var tt = ta; ta = tb; tb = tt; var ff = fA; fA = fB; fB = ff; }
+if (ta > tmin){ tmin = ta; fa = fA; } if (tb < tmax) tmax = tb;
+}
+if (tmin <= tmax && tmin > 1e-6 && tmin < best.t) best = { t:tmin, kind:'obj', i:i, bf:fa };
+}
+}
+}
+if (withLamp){
+var lp = [P.lx, P.ly, P.lz], ol = sub(o, lp), bl = dot(ol, d), cl = dot(ol, ol) - LAMP_R*LAMP_R, dl = bl*bl - cl;
+if (dl > 0){ var tl = -bl - Math.sqrt(dl); if (tl > 1e-6 && tl < best.t) best = { t:tl, kind:'lamp' }; }
+}
+return best;
+}
+/* light-map cell of a matte hit at point p */
+function cellOf(h, p, S){
+S = S || G.d;
+if (h.kind === 'face'){ var fg = S.faces[h.f], uv = faceUV(h.f, p);
+return { grid:fg, k:clamp(Math.floor(uv[1]*fg.nv),0,fg.nv-1)*fg.nu + clamp(Math.floor(uv[0]*fg.nu),0,fg.nu-1), area:fg.area, uv:uv }; }
+var ob = OBJS[h.i], og2 = S.objs[h.i];
+if (ob.type === 'sphere'){
+var n = mul(sub(p, ob.c), 1/ob.r), u = (Math.atan2(n[1], n[0])/(2*Math.PI) + 1) % 1, v = Math.acos(clamp(n[2],-1,1))/Math.PI;
+var j = clamp(Math.floor(v*og2.nv),0,og2.nv-1);
+return { grid:og2, k:j*og2.nu + clamp(Math.floor(u*og2.nu),0,og2.nu-1), area:og2.ar[j], uv:[u,v], n:n };
+}
+var bf = h.bf, ax = bf >> 1, a1 = (ax + 1) % 3, a2 = (ax + 2) % 3, fg2 = og2.faces[bf];
+var uu = (p[a1] - ob.mn[a1])/(ob.mx[a1] - ob.mn[a1]), vv = (p[a2] - ob.mn[a2])/(ob.mx[a2] - ob.mn[a2]);
+var nn = [0,0,0]; nn[ax] = (bf & 1) ? 1 : -1;
+var bn = fg2.nu;
+return { grid:fg2, k:clamp(Math.floor(vv*bn),0,bn-1)*bn + clamp(Math.floor(uu*bn),0,bn-1),
+area:((ob.mx[a1]-ob.mn[a1])/bn)*((ob.mx[a2]-ob.mn[a2])/bn), uv:[uu,vv], n:nn };
+}
+/* ══════════ the beam: light map ══════════ */
+/* each ray stands for a small patch of the beam: its energy is spread over a disc whose radius grows with the
+   distance travelled (rf), stretched by 1/cos(incidence) on the surface; a laser ray keeps a tiny footprint */
+function deposit(h, p, E, rf, cosi){
+var cl = cellOf(h, p), gr = cl.grid, nu = gr.nu, nv = gr.nv, cw, ch;
+if (h.kind === 'face'){ cw = CELL; ch = CELL; }
+else if (OBJS[h.i].type === 'sphere'){ var ob = OBJS[h.i], th = Math.max(0.05, Math.sin(cl.uv[1]*Math.PI)); cw = ob.r*th*2*Math.PI/nu; ch = ob.r*Math.PI/nv; }
+else { var ob2 = OBJS[h.i], ax = h.bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3; cw = (ob2.mx[a1]-ob2.mn[a1])/16; ch = (ob2.mx[a2]-ob2.mn[a2])/16; }
+var rad = rf/Math.max(0.25, cosi), ru = Math.min(25, rad/cw), rv = Math.min(25, rad/ch);
+if (ru < 0.5 && rv < 0.5){ gr.g[cl.k] += E/cl.area; return; }
+var cu = cl.uv[0]*nu - 0.5, cv = cl.uv[1]*nv - 0.5, iu0 = Math.floor(cu - ru), iu1 = Math.ceil(cu + ru), iv0 = Math.max(0, Math.floor(cv - rv)), iv1 = Math.min(nv-1, Math.ceil(cv + rv));
+var cells = [], wsum = 0;
+for (var j=iv0; j<=iv1; j++) for (var i=iu0; i<=iu1; i++){
+var du = (i - cu)/Math.max(ru, 0.5), dv = (j - cv)/Math.max(rv, 0.5), q = du*du + dv*dv; if (q > 1) continue;
+var ii = h.kind === 'obj' && OBJS[h.i].type === 'sphere' ? ((i % nu) + nu) % nu : i; if (ii < 0 || ii >= nu) continue;
+var w = 1 - q; cells.push([j*nu + ii, w, j]); wsum += w;
+}
+if (!wsum){ gr.g[cl.k] += E/cl.area; return; }
+for (var c=0; c<cells.length; c++){ var a = (h.kind === 'obj' && gr.ar) ? gr.ar[cells[c][2]] : cl.area; gr.g[cells[c][0]] += E*cells[c][1]/wsum/a; }
+}
+function coneDirs(d0, alpha){
+if (alpha < 0.05*DEG) return [d0];
+var N = 1500, up = Math.abs(d0[2]) < 0.9 ? [0,0,1] : [1,0,0], e1 = nrm(crs(up, d0)), e2 = crs(d0, e1), out = [], ga = Math.PI*(3 - Math.sqrt(5)), ca = Math.cos(alpha);
+for (var i=0; i<N; i++){
+var ct = 1 - (i + 0.5)/N*(1 - ca), st = Math.sqrt(1 - ct*ct), ph = i*ga;
+out.push(add(add(mul(e1, st*Math.cos(ph)), mul(e2, st*Math.sin(ph))), mul(d0, ct)));
+}
+return out;
+}
+function buildBeam(){
+setMirrors();
+faceGrid.forEach(function(fg){ fg.g.fill(0); });
+objGrid.forEach(function(og2){ if (og2.g) og2.g.fill(0); else og2.faces.forEach(function(f){ f.g.fill(0); }); });
+var src = [P.lx, P.ly, P.lz], d0 = nrm(dirOf(P.lyaw, P.lpitch)), alpha = (P.src === 'flash' ? P.spread*DEG : 0), R = 1, maxB = 0, sg0 = sigma();
+var dirs = coneDirs(d0, alpha), E0 = 1/dirs.length, every = Math.max(1, Math.floor(dirs.length/40));
+/* angular radius of the patch of beam each ray stands for: the cone's solid angle shared among the rays */
+var rs0 = alpha > 0 ? 0.025 : 0.0015, rayAng = dirs.length > 1 ? Math.sqrt(2*(1 - Math.cos(alpha))/dirs.length) : Math.tan(alpha);
+beam.paths = []; var landed = 0;
+for (var r=0; r<dirs.length; r++){
+var o = src, d = dirs[r], E = E0, k = 0, pts = [o], keep = (r % every === 0), Ls = 0;
+for (var step=0; step<=maxB + 1; step++){
+var h = hitScene(o, d, P.objects, false), p = add(o, mul(d, h.t));
+pts.push(p); Ls += h.t;
+if (h.kind === 'face' && mirror[h.f]){
+if (k >= maxB){ break; }
+E *= R; k++; d = reflect(d, FACE_N[h.f]); o = add(p, mul(FACE_N[h.f], 1e-7)); continue;
+}
+var nh = h.kind === 'face' ? FACE_N[h.f] : cellOf(h, p).n, Et = E*Math.exp(-sg0*Ls); deposit(h, p, Et, rs0 + Ls*rayAng, Math.abs(dot(d, nh))); landed += Et; break;   /* the smoke takes its share on the way */
+}
+if (keep) beam.paths.push({ pts:pts, E:E/E0 });
+}
+/* central ray: details for the readout and the haze */
+var o2 = src, d2 = d0, s = 0, k2 = 0, hits = [], segs = [], rs = alpha > 0 ? 0.025 : 0.0015, land = null, I = 1, pts2 = [src];
+for (var st2=0; st2<=maxB + 1; st2++){
+var h2 = hitScene(o2, d2, P.objects, false), p2 = add(o2, mul(d2, h2.t));
+segs.push({ a:o2, d:d2, len:h2.t, s0:s, I:I }); s += h2.t; pts2.push(p2); I = Math.exp(-sg0*s);
+if (h2.kind === 'face' && mirror[h2.f]){
+var ang = Math.acos(clamp(-dot(d2, FACE_N[h2.f]), -1, 1))/DEG;
+if (k2 >= maxB){ land = { what:'still reflecting', more:true }; break; }
+hits.push({ name:FACE_NAME[h2.f], ang:ang }); I *= P.R/100; k2++;
+d2 = reflect(d2, FACE_N[h2.f]); o2 = add(p2, mul(FACE_N[h2.f], 1e-7)); continue;
+}
+land = { what:(h2.kind === 'face' ? FACE_NAME[h2.f] : OBJS[h2.i].name), p:p2 }; break;
+}
+beam.central = { n:k2, L:s, I:Math.exp(-sg0*s), hits:hits, land:land, spot:2*(rs + s*Math.tan(alpha)), pts:pts2 };
+beam.segs = segs; beam.rs = rs; beam.tanA = Math.tan(alpha);
+beam.lit = litFraction(); beam.landed = landed;
+/* bookkeeping for checks: energy that landed vs. energy stored in the light maps */
+var stored = 0; for (var f=0; f<6; f++){ var gg = faceGrid[f].g; for (var q=0; q<gg.length; q++) stored += gg[q]*CELL*CELL; }
+OBJS.forEach(function(o, i){ var og2 = objGrid[i]; if (o.type === 'sphere'){ for (var j=0; j<og2.nv; j++) for (var u=0; u<og2.nu; u++) stored += og2.g[j*og2.nu+u]*og2.ar[j]; }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/256; for (var k=0; k<256; k++) stored += fc.g[k]*ca; }); });
+beam.stored = stored;
+}
+/* ══════════ diffuse reflection by matte surfaces (one bounce) ══════════ */
+var seed = 1;
+function rnd(){ seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0)/4294967296; }
+function meanAlb(a){ return (a[0] + a[1] + a[2])/3; }
+function clearSet(S){ S.faces.forEach(function(f){ f.g.fill(0); }); S.objs.forEach(function(o){ if (o.g) o.g.fill(0); else o.faces.forEach(function(f){ f.g.fill(0); }); }); }
+function emitters(){
+/* every lit matte cell of the direct map, with the power it reflects diffusely: rho * irradiance * area */
+var em = [], cum = [], tot = 0;
+function push(e, P){ if (P <= 1e-9) return; tot += P; em.push(e); cum.push(tot); }
+for (var f=0; f<6; f++){ if (mirror[f]) continue; var fg = G.d.faces[f], rho = meanAlb(FACE_ALB[f]);
+for (var k=0; k<fg.g.length; k++) if (fg.g[k] > 0) push({ t:'f', f:f, iu:k % fg.nu, iv:Math.floor(k/fg.nu), nu:fg.nu, nv:fg.nv }, rho*fg.g[k]*fg.area); }
+if (P.objects) OBJS.forEach(function(o, i){ var og2 = G.d.objs[i], rho2 = meanAlb(o.alb);
+if (o.type === 'sphere'){ for (var k2=0; k2<og2.g.length; k2++) if (og2.g[k2] > 0) push({ t:'s', i:i, iu:k2 % og2.nu, iv:Math.floor(k2/og2.nu), nu:og2.nu, nv:og2.nv }, rho2*og2.g[k2]*og2.ar[Math.floor(k2/og2.nu)]); }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/(fc.nu*fc.nv);
+for (var k3=0; k3<fc.g.length; k3++) if (fc.g[k3] > 0) push({ t:'b', i:i, bf:bf, iu:k3 % fc.nu, iv:Math.floor(k3/fc.nu), nu:fc.nu, nv:fc.nv }, rho2*fc.g[k3]*ca); });
+});
+return { em:em, cum:cum, tot:tot };
+}
+function emitPoint(e){
+/* a random point inside the emitting cell, and the surface normal there */
+var u = (e.iu + rnd())/e.nu, v = (e.iv + rnd())/e.nv;
+if (e.t === 'f'){ var f = e.f, p = f < 2 ? [f ? W : 0, u*D, v*H] : (f < 4 ? [u*W, f === 3 ? D : 0, v*H] : [u*W, v*D, f === 5 ? H : 0]); return { p:p, n:FACE_N[f] }; }
+var o = OBJS[e.i];
+if (e.t === 's'){ var ph = u*2*Math.PI, th = v*Math.PI, n = [Math.sin(th)*Math.cos(ph), Math.sin(th)*Math.sin(ph), Math.cos(th)]; return { p:add(o.c, mul(n, o.r)), n:n }; }
+var ax = e.bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, q = [0,0,0], nn = [0,0,0];
+q[ax] = (e.bf & 1) ? o.mx[ax] : o.mn[ax]; q[a1] = o.mn[a1] + u*(o.mx[a1]-o.mn[a1]); q[a2] = o.mn[a2] + v*(o.mx[a2]-o.mn[a2]); nn[ax] = (e.bf & 1) ? 1 : -1;
+return { p:q, n:nn };
+}
+function lambertDir(n){
+/* cosine-weighted direction about the normal n (Lambert's law) */
+var u1 = rnd(), u2 = rnd(), rr = Math.sqrt(u1), ph = 2*Math.PI*u2, up = Math.abs(n[2]) < 0.9 ? [0,0,1] : [1,0,0], t1 = nrm(crs(up, n)), t2 = crs(n, t1);
+return nrm(add(add(mul(t1, rr*Math.cos(ph)), mul(t2, rr*Math.sin(ph))), mul(n, Math.sqrt(1 - u1))));
+}
+function depositInd(h, p, E){
+/* bilinear share among the four nearest coarse cells (energy conserving) */
+var cl = cellOf(h, p, G.i), gr = cl.grid, nu = gr.nu, nv = gr.nv, x = cl.uv[0]*nu - 0.5, y = cl.uv[1]*nv - 0.5;
+var x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0, wrap = h.kind === 'obj' && OBJS[h.i].type === 'sphere';
+var ob = h.kind === 'obj' ? OBJS[h.i] : null, boxA = 0;
+if (ob && ob.type === 'box'){ var ax = h.bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3; boxA = (ob.mx[a1]-ob.mn[a1])*(ob.mx[a2]-ob.mn[a2])/(nu*nv); }
+[[x0,y0,(1-fx)*(1-fy)],[x0+1,y0,fx*(1-fy)],[x0,y0+1,(1-fx)*fy],[x0+1,y0+1,fx*fy]].forEach(function(c){
+var ix = c[0], iy = clamp(c[1], 0, nv-1);
+if (wrap) ix = ((ix % nu) + nu) % nu; else ix = clamp(ix, 0, nu-1);
+var a = h.kind === 'face' ? gr.area : (wrap ? gr.ar[iy] : boxA);
+gr.g[iy*nu + ix] += E*c[2]/a;
+});
+}
+function blurSet(S){
+/* one gentle 3 x 3 smoothing pass of the coarse face maps, to tame the Monte Carlo noise */
+S.faces.forEach(function(fg){ var src = Float32Array.from(fg.g), nu = fg.nu, nv = fg.nv;
+for (var j=0; j<nv; j++) for (var i=0; i<nu; i++){ var s2 = 0, w = 0;
+for (var dj=-1; dj<=1; dj++) for (var di=-1; di<=1; di++){ var ii = i+di, jj = j+dj; if (ii < 0 || jj < 0 || ii >= nu || jj >= nv) continue; var ww = (di || dj) ? 0.5 : 1; s2 += ww*src[jj*nu+ii]; w += ww; }
+fg.g[j*nu+i] = s2/w; } });
+}
+var indN = 0;
+function buildIndirect(N){
+clearSet(G.i); beam.scat = 0; beam.indLanded = 0; indN = N;
+if (!P.diffuse) return;
+var E = emitters(); beam.scat = E.tot;
+if (E.tot <= 0 || !E.em.length) return;
+seed = 12345;
+var R = P.R/100, maxB = P.bounces, Eray = E.tot/N, landed = 0;
+for (var r=0; r<N; r++){
+var x = rnd()*E.tot, lo = 0, hi = E.cum.length - 1;
+while (lo < hi){ var mid = (lo + hi) >> 1; if (E.cum[mid] < x) lo = mid + 1; else hi = mid; }
+var ep = emitPoint(E.em[lo]), d = lambertDir(ep.n), o = add(ep.p, mul(ep.n, 1e-5)), e = Eray, k = 0;
+for (var step=0; step<=maxB + 1; step++){
+var h = hitScene(o, d, P.objects, false), p = add(o, mul(d, h.t));
+if (h.kind === 'face' && mirror[h.f]){ if (k >= maxB) break; e *= R; k++; d = reflect(d, FACE_N[h.f]); o = add(p, mul(FACE_N[h.f], 1e-7)); continue; }
+depositInd(h, p, e); landed += e; break;
+}
+}
+blurSet(G.i);
+beam.indLanded = landed;
+}
+function indStored(){
+var s2 = 0; G.i.faces.forEach(function(fg){ for (var k=0; k<fg.g.length; k++) s2 += fg.g[k]*fg.area; });
+OBJS.forEach(function(o, i){ var og2 = G.i.objs[i];
+if (o.type === 'sphere'){ for (var k2=0; k2<og2.g.length; k2++) s2 += og2.g[k2]*og2.ar[Math.floor(k2/og2.nu)]; }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/(fc.nu*fc.nv); for (var k3=0; k3<fc.g.length; k3++) s2 += fc.g[k3]*ca; }); });
+return s2;
+}
+function litFraction(){
+var lit = 0, tot = 0, thr = 0.001;   /* any surface the beam reaches directly */
+for (var f=0; f<6; f++){ if (mirror[f]) continue; var g = faceGrid[f].g; tot += g.length*CELL*CELL; for (var k=0; k<g.length; k++) if (g[k] > thr) lit += CELL*CELL; }
+if (P.objects) OBJS.forEach(function(o, i){
+var og2 = objGrid[i];
+if (o.type === 'sphere'){ for (var j=0; j<og2.nv; j++) for (var u=0; u<og2.nu; u++){ tot += og2.ar[j]; if (og2.g[j*og2.nu+u] > thr) lit += og2.ar[j]; } }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/256;
+for (var k=0; k<256; k++){ tot += ca; if (fc.g[k] > thr) lit += ca; } });
+});
+return tot > 0 ? lit/tot : 0;
+}
+function irrAt(cl){
+var gr = cl.grid, nu = gr.nu, nv = gr.nv, x = cl.uv[0]*nu - 0.5, y = cl.uv[1]*nv - 0.5;
+var x0 = clamp(Math.floor(x),0,nu-1), y0 = clamp(Math.floor(y),0,nv-1), x1 = Math.min(x0+1,nu-1), y1 = Math.min(y0+1,nv-1), fx = clamp(x - x0,0,1), fy = clamp(y - y0,0,1);
+var g = gr.g;
+return (g[y0*nu+x0]*(1-fx) + g[y0*nu+x1]*fx)*(1-fy) + (g[y1*nu+x0]*(1-fx) + g[y1*nu+x1]*fx)*fy;
+}
+/* ══════════ viewer's screen: rays traced backward from the eye ══════════ */
+function segDist(a0, ad, alen, b0, bd, blen){
+/* closest points between segments a0 + s ad (0..alen) and b0 + t bd (0..blen), unit directions */
+var w0 = sub(a0, b0), b = dot(ad, bd), dd = dot(ad, w0), e = dot(bd, w0), den = 1 - b*b, s, t;
+if (den < 1e-9){ s = 0; t = e; } else { s = (b*e - dd)/den; t = (e - b*dd)/den; }
+s = clamp(s, 0, alen); t = clamp(b*s + e, 0, blen); s = clamp(b*t - dd, 0, alen);
+var pa = add(a0, mul(ad, s)), pb = add(b0, mul(bd, t)), df = sub(pa, pb);
+return { d:Math.sqrt(dot(df, df)), s:s, t:t };
+}
+function shade(o, d, pixAng, out){
+var T = 1, acc = [0,0,0], glow = 0, se = 0, lc = lightCol(), R = 1, maxB = 0, sgm = sigma(), veil = 0;
+var amb = P.amb/100*AMB_IRR;
+for (var b=0; b<=maxB; b++){
+var h = hitScene(o, d, P.objects, true), p = add(o, mul(d, h.t));
+if (sgm > 0 && b < 6){
+for (var j=0; j<beam.segs.length && j < 24; j++){
+var sg = beam.segs[j], q = segDist(o, d, h.t, sg.a, sg.d, sg.len);
+var sb = sg.s0 + q.t, rb = beam.rs + sb*beam.tanA, reff = Math.max(rb, 0.75*pixAng*(se + q.s), 0.003);
+if (q.d < 3*reff) glow += T*Math.exp(-sigma()*(sb + se + q.s))*Math.exp(-(q.d*q.d)/(reff*reff))/reff*HAZE_K*(sigma()/0.25)/Math.max(1, rb/0.1);   /* scattered toward the eye, in proportion to sigma; dimmed on both legs */
+}
+}
+veil += (1 - Math.exp(-sgm*h.t))*0.45; T *= Math.exp(-sgm*h.t); se += h.t;   /* smoke dims what lies beyond it, and glows grey in the room light */
+if (h.kind === 'lamp'){
+var toEye = nrm(sub([P.vx,P.vy,P.vz], [P.lx,P.ly,P.lz])), ld = nrm(dirOf(P.lyaw, P.lpitch));
+var inBeam = Math.acos(clamp(dot(toEye, ld),-1,1)) <= alpha() + 1.5*DEG;
+var e = inBeam ? 6 : 0.6*amb*0.08;
+for (var c=0; c<3; c++) acc[c] += T*(inBeam ? lc[c]*e : e);
+break;
+}
+if (h.kind === 'face' && mirror[h.f]){
+/* a thin frame where two surfaces meet, so the shape of the room can be seen */
+var uv = faceUV(h.f, p), dm = faceDims(h.f), fr = Math.min(uv[0]*dm[0], (1-uv[0])*dm[0], uv[1]*dm[1], (1-uv[1])*dm[1]);
+if (fr < 0.022){ for (var c2=0; c2<3; c2++) acc[c2] += T*0.3*amb*0.08; break; }
+T *= R; d = reflect(d, FACE_N[h.f]); o = add(p, mul(FACE_N[h.f], 1e-7));
+if (T < 0.01) break;
+continue;
+}
+var cl = cellOf(h, p), irr = irrAt(cl) + (P.diffuse ? irrAt(cellOf(h, p, G.i)) : 0), alb = h.kind === 'face' ? FACE_ALB[h.f] : OBJS[h.i].alb;
+/* matte surfaces: the light map, plus the room lights (shaded a little by the surface's tilt) */
+var nn = h.kind === 'face' ? FACE_N[h.f] : cl.n, lam = 0.55 + 0.45*Math.abs(nn[2]);
+for (var c3i=0; c3i<3; c3i++) acc[c3i] += T*alb[c3i]*(irr*K_LIGHT*lc[c3i] + amb*lam*0.08);
+break;
+}
+for (var c4=0; c4<3; c4++) out[c4] = 1 - Math.exp(-(acc[c4] + glow*lc[c4] + veil*(amb*0.08 + 0.02)));
+}
+function renderView(res){
+var w = res, h = Math.round(res*LSH/LSW);
+off.width = w; off.height = h;
+var img = og.createImageData(w, h), px = img.data;
+var eye = [P.vx, P.vy, P.vz], f = nrm(dirOf(P.vyaw, P.vpitch)), r = nrm(crs(f, [0,0,1])), u = crs(r, f);
+var th = Math.tan(P.fov*DEG/2), asp = w/h, pixAng = 2*th/w, out = [0,0,0];
+for (var y=0; y<h; y++){
+var vy = (1 - 2*(y + 0.5)/h)*th/asp;
+for (var x=0; x<w; x++){
+var vx = (2*(x + 0.5)/w - 1)*th;
+var d = nrm([f[0] + r[0]*vx + u[0]*vy, f[1] + r[1]*vx + u[1]*vy, f[2] + r[2]*vx + u[2]*vy]);
+shade(eye, d, pixAng, out);
+var i = (y*w + x)*4;
+px[i] = 255*Math.sqrt(out[0]); px[i+1] = 255*Math.sqrt(out[1]); px[i+2] = 255*Math.sqrt(out[2]); px[i+3] = 255;
+}
+}
+og.putImageData(img, 0, 0);
+gs.save(); gs.imageSmoothingEnabled = true; gs.drawImage(off, 0, 0, LSW, LSH); gs.restore();
+var lbl = (P.cam === 'ir' ? 'infrared-sensitive camera' : 'human eyes') + ' \u00B7 smoke ' + P.smoke + ' % \u00B7 room lights ' + P.amb + ' %';
+gs.font = '11px ' + FONT; gs.textAlign = 'left'; gs.fillStyle = 'rgba(0,0,0,0.6)'; gs.fillRect(4, 4, gs.measureText(lbl).width + 10, 17);
+gs.fillStyle = 'rgba(255,255,255,0.85)'; gs.fillText(lbl, 9, 16);
+}
+/* ══════════ 3-D room view ══════════ */
+var F3 = 470, camBasis = null;
+function setCam(){
+var cp = Math.cos(cam.pitch*DEG), tgt = [W/2, D/2, H/2];
+var pos = add(tgt, mul([cp*Math.cos(cam.yaw*DEG), cp*Math.sin(cam.yaw*DEG), Math.sin(cam.pitch*DEG)], cam.dist));
+var fw = nrm(sub(tgt, pos)), rt = nrm(crs(fw, [0,0,1])); if (!isFinite(rt[0]) || Math.abs(dot(fw,[0,0,1])) > 0.999) rt = [0,1,0];
+camBasis = { pos:pos, f:fw, r:rt, u:crs(rt, fw) };
+}
+function pr(p){ var v = sub(p, camBasis.pos), z = dot(v, camBasis.f); if (z < 0.05) z = 0.05;
+return [L3W/2 + F3*dot(v, camBasis.r)/z, L3H/2 - F3*dot(v, camBasis.u)/z, z]; }
+function poly(pts, fill, stroke, lw){
+var g = g3; g.beginPath(); pts.forEach(function(p, i){ var q = pr(p); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath();
+if (fill){ g.fillStyle = fill; g.fill(); } if (stroke){ g.strokeStyle = stroke; g.lineWidth = lw || 1; g.stroke(); }
+}
+function faceQuad(f){
+var x0=0,x1=W,y0=0,y1=D,z0=0,z1=H;
+switch(f){ case 0: return [[0,y0,z0],[0,y1,z0],[0,y1,z1],[0,y0,z1]]; case 1: return [[W,y0,z0],[W,y1,z0],[W,y1,z1],[W,y0,z1]];
+case 2: return [[x0,0,z0],[x1,0,z0],[x1,0,z1],[x0,0,z1]]; case 3: return [[x0,D,z0],[x1,D,z0],[x1,D,z1],[x0,D,z1]];
+case 4: return [[x0,y0,0],[x1,y0,0],[x1,y1,0],[x0,y1,0]]; default: return [[x0,y0,H],[x1,y0,H],[x1,y1,H],[x0,y1,H]]; }
+}
+function draw3d(){
+setCam();
+var g = g3, lc = showCol(), lcs = 'rgb(' + Math.round(255*lc[0]) + ',' + Math.round(255*lc[1]) + ',' + Math.round(255*lc[2]) + ')';
+g.fillStyle = col('--lsc-bg'); g.fillRect(0, 0, L3W, L3H);
+/* surfaces, far ones first */
+var order = [0,1,2,3,4,5].map(function(f){ var q = faceQuad(f), c = mul(add(add(q[0],q[1]),add(q[2],q[3])), 0.25); return { f:f, z:pr(c)[2] }; }).sort(function(a,b){ return b.z - a.z; });
+order.forEach(function(o){
+var f = o.f, fill = mirror[f] ? col('--lsc-mirror') : (f === 4 ? col('--lsc-floor') : col('--lsc-matte'));
+poly(faceQuad(f), fill, mirror[f] ? col('--lsc-mirroredge') : col('--lsc-edge'), mirror[f] ? 1.4 : 1);
+});
+/* lit spots on the matte surfaces */
+for (var f=0; f<6; f++){ if (mirror[f]) continue; var fg = faceGrid[f], dm = faceDims(f);
+for (var k=0; k<fg.g.length; k++){ var e = fg.g[k]; if (e < 0.3) continue;
+var u = ((k % fg.nu) + 0.5)/fg.nu, v = (Math.floor(k/fg.nu) + 0.5)/fg.nv, p;
+if (f < 2) p = [f ? W : 0, u*D, v*H]; else if (f < 4) p = [u*W, f === 3 ? D : 0, v*H]; else p = [u*W, v*D, f === 5 ? H : 0];
+var q = pr(p), a = Math.min(1, 1 - Math.exp(-e*K_LIGHT)); g.fillStyle = lcs; g.globalAlpha = a; var sz = Math.max(1.5, 0.045*F3/q[2]); g.fillRect(q[0]-sz/2, q[1]-sz/2, sz, sz); }
+}
+g.globalAlpha = 1;
+/* objects */
+if (P.objects) OBJS.forEach(function(o, i){
+if (o.type === 'sphere'){ var q = pr(o.c), rr = F3*o.r/q[2];
+var gr = g.createRadialGradient(q[0]-rr*0.35, q[1]-rr*0.35, rr*0.1, q[0], q[1], rr);
+gr.addColorStop(0, i === 0 ? col('--lsc-obj1') : col('--lsc-obj3')); gr.addColorStop(1, 'rgba(20,20,20,0.9)');
+g.fillStyle = gr; g.beginPath(); g.arc(q[0], q[1], rr, 0, 2*Math.PI); g.fill();
+var og2 = objGrid[i]; for (var k2=0; k2<og2.g.length; k2++){ var e2 = og2.g[k2]; if (e2 < 0.3) continue;
+var uu = ((k2 % og2.nu) + 0.5)/og2.nu*2*Math.PI, vv = (Math.floor(k2/og2.nu) + 0.5)/og2.nv*Math.PI, n = [Math.sin(vv)*Math.cos(uu), Math.sin(vv)*Math.sin(uu), Math.cos(vv)];
+if (dot(n, sub(camBasis.pos, o.c)) < 0) continue;
+var q2 = pr(add(o.c, mul(n, o.r))); g.fillStyle = lcs; g.globalAlpha = Math.min(1, 1 - Math.exp(-e2*K_LIGHT)); g.fillRect(q2[0]-1.5, q2[1]-1.5, 3, 3); }
+g.globalAlpha = 1;
+} else {
+var mn = o.mn, mx = o.mx, faces = [[[mn[0],mn[1],mn[2]],[mn[0],mx[1],mn[2]],[mn[0],mx[1],mx[2]],[mn[0],mn[1],mx[2]]],[[mx[0],mn[1],mn[2]],[mx[0],mx[1],mn[2]],[mx[0],mx[1],mx[2]],[mx[0],mn[1],mx[2]]],
+[[mn[0],mn[1],mn[2]],[mx[0],mn[1],mn[2]],[mx[0],mn[1],mx[2]],[mn[0],mn[1],mx[2]]],[[mn[0],mx[1],mn[2]],[mx[0],mx[1],mn[2]],[mx[0],mx[1],mx[2]],[mn[0],mx[1],mx[2]]],
+[[mn[0],mn[1],mx[2]],[mx[0],mn[1],mx[2]],[mx[0],mx[1],mx[2]],[mn[0],mx[1],mx[2]]]];
+var nrms = [[-1,0,0],[1,0,0],[0,-1,0],[0,1,0],[0,0,1]], ctr = mul(add(mn, mx), 0.5);
+faces.forEach(function(q3, j){ var fc = mul(add(add(q3[0],q3[1]),add(q3[2],q3[3])), 0.25); if (dot(nrms[j], sub(camBasis.pos, fc)) <= 0) return;
+poly(q3, col('--lsc-obj2'), 'rgba(0,0,0,0.5)', 1); });
+}
+});
+/* rays */
+if (P.rays && P.src === 'laser'){
+g.lineWidth = 1;
+beam.paths.forEach(function(pa){
+for (var s=0; s<pa.pts.length-1; s++){ var a = pr(pa.pts[s]), b = pr(pa.pts[s+1]); g.strokeStyle = lcs; g.globalAlpha = 0.3;
+g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+});
+g.globalAlpha = 1; g.lineWidth = 2.2;
+var cp2 = beam.central.pts;
+for (var s2=0; s2<cp2.length-1; s2++){ var a2 = pr(cp2[s2]), b2 = pr(cp2[s2+1]); g.strokeStyle = lcs; g.globalAlpha = 0.9; if (!visible()) g.setLineDash([5, 4]);
+g.beginPath(); g.moveTo(a2[0], a2[1]); g.lineTo(b2[0], b2[1]); g.stroke(); }
+g.globalAlpha = 1;
+}
+/* light source and its direction */
+var lp = [P.lx, P.ly, P.lz], ld = nrm(dirOf(P.lyaw, P.lpitch)), ql = pr(lp), qa = pr(add(lp, mul(ld, 0.35)));
+g.strokeStyle = col('--lsc-lamp'); g.lineWidth = 3; g.beginPath(); g.moveTo(ql[0], ql[1]); g.lineTo(qa[0], qa[1]); g.stroke();
+g.fillStyle = col('--lsc-lamp'); g.beginPath(); g.arc(ql[0], ql[1], 5, 0, 2*Math.PI); g.fill();
+/* viewer: eye and the edges of the field of view */
+var ep = [P.vx, P.vy, P.vz], fwd = nrm(dirOf(P.vyaw, P.vpitch)), rt = nrm(crs(fwd, [0,0,1])), up = crs(rt, fwd), th = Math.tan(P.fov*DEG/2), as = LSW/LSH, qe = pr(ep);
+var corners = [[-1,-1],[1,-1],[1,1],[-1,1]].map(function(cn){ return add(ep, mul(nrm(add(add(fwd, mul(rt, cn[0]*th)), mul(up, cn[1]*th/as))), 0.7)); });
+g.strokeStyle = col('--lsc-frustum'); g.lineWidth = 1;
+corners.forEach(function(cn){ var q = pr(cn); g.beginPath(); g.moveTo(qe[0], qe[1]); g.lineTo(q[0], q[1]); g.stroke(); });
+poly(corners, null, col('--lsc-frustum'), 1);
+g.fillStyle = col('--lsc-eye'); g.beginPath(); g.arc(qe[0], qe[1], 4.5, 0, 2*Math.PI); g.fill();
+g.font = '11px ' + FONT; g.fillStyle = col('--lsc-text'); g.textAlign = 'left';
+g.fillText('viewer', qe[0] + 7, qe[1] - 6); g.fillText('light', ql[0] + 7, ql[1] - 6);
+g.setLineDash([]); g.fillText(P.src === 'flash' ? 'flashlight, spread ' + P.spread + '\u00B0' : 'laser ' + P.wl + ' nm (' + band(P.wl) + ')' + (visible() ? '' : ' -- drawn in false colour'), 8, 16);
+}
+/* ══════════ readout and narration ══════════ */
+function readouts(){
+var c = beam.central;
+function set(id, t){ var e = el(id); if (e) e.textContent = t; }
+set('lsRoWhat', P.src === 'flash' ? 'white flashlight light, spread ' + P.spread + '\u00B0' : 'laser, ' + P.wl + ' nm -- ' + band(P.wl));
+set('lsRoL', c.L.toFixed(2) + ' m'); set('lsRoT', (100*c.I).toFixed(1) + ' %');
+set('lsRoD', (100*c.spot).toFixed(1) + ' cm'); set('lsRoS', sigma().toFixed(2) + ' per m');
+set('lsRoLand', 'the ' + c.land.what + (visible() || P.cam === 'ir' && P.wl <= 1050 ? '' : ' (the dot is invisible to the viewer)'));
+set('lsRoLit', (100*beam.lit).toFixed(1) + ' % (the rest stays dark)');
+set('lsRoScat', !P.diffuse ? 'not followed (turned off)' : (100*(beam.scat || 0)).toFixed(1) + ' % of the beam, ' + (100*(beam.indLanded || 0)).toFixed(1) + ' % lands on other surfaces');
+}
+function summary(){
+var c = beam.central, s;
+s = P.src === 'flash' ? 'A flashlight beam spreading ' + P.spread + ' degrees lights a spot about ' + (100*c.spot).toFixed(0) + ' cm across on the ' + c.land.what + ', ' + c.L.toFixed(1) + ' m away. ' :
+ 'A ' + P.wl + ' nanometre laser (' + band(P.wl) + ') lands on the ' + c.land.what + ', ' + c.L.toFixed(1) + ' m away. ';
+if (!visible()) s += P.cam === 'ir' && P.wl > 700 && P.wl <= 1050 ? 'The camera shows its dot as a pale violet glow. ' : 'Its dot is invisible: the light still lands there, but the viewer cannot see it. ';
+else if (P.src === 'laser') s += 'In ' + (P.smoke ? 'the smoke' : 'clean air') + ' the viewer sees ' + (P.smoke ? 'the beam as a glowing line, and the dot where it lands. ' : 'only the dot where it lands: the beam itself sends no light to the eye. ');
+if (P.smoke) s += 'The smoke (sigma = ' + sigma().toFixed(2) + ' per metre) leaves ' + (100*c.I).toFixed(0) + ' percent of the light by the time it lands. ';
+s += 'Only ' + (100*beam.lit).toFixed(1) + ' percent of the room is lit directly.';
+if (P.diffuse && beam.scat > 0.001) s += ' The matte surfaces reflect ' + (100*beam.scat).toFixed(0) + ' percent of the light diffusely, faintly lighting the rest of the room.';
+return s;
+}
+function narrate(){ lsA11y.narrate(summary()); }
+function later(){ clearTimeout(narrT); narrT = setTimeout(narrate, 400); }
+/* ══════════ update cycle: quick preview while changing, full detail when idle ══════════ */
+var pending = false;
+function update(beamToo){
+if (beamToo){ buildBeam(); buildIndirect(6000); }
+draw3d(); readouts();
+if (!pending){ pending = true; requestAnimationFrame(function(){ pending = false; renderView(120); }); }
+clearTimeout(idleT); idleT = setTimeout(function(){ if (P.diffuse && indN < 40000){ buildIndirect(40000); readouts(); } renderView(240); }, 220);
+}
+function syncInputs(){
+function sv(id, v, txt){ var e = el(id + ''); if (e) e.value = v; var t = el(id + 'Val'); if (t) t.textContent = txt; }
+sv('lsSpread', P.spread, P.spread); sv('lsWl', P.wl, P.wl); sv('lsSmoke', P.smoke, P.smoke); sv('lsLyaw', P.lyaw, P.lyaw); sv('lsLpitch', P.lpitch, P.lpitch);
+sv('lsLx', P.lx, P.lx.toFixed(2)); sv('lsLy', P.ly, P.ly.toFixed(2)); sv('lsLz', P.lz, P.lz.toFixed(2));
+sv('lsVyaw', P.vyaw, P.vyaw); sv('lsVpitch', P.vpitch, P.vpitch); sv('lsVx', P.vx, P.vx.toFixed(2)); sv('lsVy', P.vy, P.vy.toFixed(2)); sv('lsVz', P.vz, P.vz.toFixed(2));
+sv('lsFov', P.fov, P.fov); sv('lsAmb', P.amb, P.amb);
+el('lsSrc').value = P.src; el('lsCam').value = P.cam; el('lsBand').textContent = band(P.wl);
+el('lsWlCtrl').style.display = P.src === 'laser' ? '' : 'none'; el('lsSpCtrl').style.display = P.src === 'flash' ? '' : 'none'; el('lsRaysL').style.display = P.src === 'laser' ? '' : 'none';
+el('lsDiff').checked = P.diffuse; el('lsRays').checked = P.rays; el('lsObj').checked = P.objects;
+}
+var BEAM_KEYS = { src:1, spread:1, smoke:1, lyaw:1, lpitch:1, lx:1, ly:1, lz:1, objects:1, diffuse:1 };
+function set(k, v){
+if (typeof v === 'string' && k !== 'src' && k !== 'cam') v = parseFloat(v);
+P[k] = v; syncInputs(); update(!!BEAM_KEYS[k]); later();
+}
+function preset(name){
+var keep = { vyaw:P.vyaw, vpitch:P.vpitch, vx:P.vx, vy:P.vy, vz:P.vz, fov:P.fov };
+for (var k in DEF) P[k] = DEF[k];
+if (name !== 'reset') for (var k2 in keep) P[k2] = keep[k2];
+if (name === 'laser'){ P.src = 'laser'; P.wl = 650; }
+if (name === 'flash'){ P.src = 'flash'; P.spread = 12; P.lyaw = 40; P.lpitch = -22; P.lx = 0.4; P.ly = 0.5; P.lz = 1.6; }
+if (name === 'smoky'){ P.src = 'laser'; P.wl = 532; P.smoke = 45; }
+if (name === 'ir'){ P.src = 'laser'; P.wl = 850; }
+if (name === 'reset'){ cam = { yaw:-55, pitch:28, dist:7.2 }; }
+syncInputs(); update(true); if (name !== 'reset' || true){ var c0 = beam.central; if (c0 && c0.land && c0.land.p){ var q0 = c0.land.p; P.vyaw = Math.round(Math.atan2(q0[1] - P.vy, q0[0] - P.vx)/DEG); P.vpitch = Math.round(clamp(Math.atan2(q0[2] - P.vz, Math.hypot(q0[0] - P.vx, q0[1] - P.vy))/DEG, -80, 80)); syncInputs(); update(false); } }
+var msg = { laser:'A red laser in clean air: only its dot shows. ', flash:'A flashlight beam spreading 12 degrees. ', smoky:'A green laser in smoke: the smoke scatters light from the whole beam toward the eye. ', ir:'An infrared laser, 850 nanometres: try the camera that sees infrared. ', reset:'Reset. ' }[name] || '';
+lsA11y.narrate(msg + summary());
+}
+function lookAtSpot(){
+var c = beam.central; if (!c || !c.land || !c.land.p) return;
+var q = c.land.p, dx = q[0] - P.vx, dy = q[1] - P.vy, dz = q[2] - P.vz;
+P.vyaw = Math.round(Math.atan2(dy, dx)/DEG); P.vpitch = Math.round(clamp(Math.atan2(dz, Math.hypot(dx, dy))/DEG, -80, 80));
+syncInputs(); update(false); lsA11y.narrate('The viewer turns toward the spot on the ' + c.land.what + '. ' + summary());
+}
+function view(v){
+if (v === '3d'){ cam.yaw = -55; cam.pitch = 28; } else if (v === 'top'){ cam.yaw = -90; cam.pitch = 89; } else if (v === 'side'){ cam.yaw = -90; cam.pitch = 2; }
+draw3d();
+}
+function zoom(f){ cam.dist = clamp(cam.dist*f, 3.5, 16); draw3d(); }
+function describe(){
+var msg = 'A room 4 m by 3 m by 2.5 m with matte walls, smoke ' + P.smoke + ' percent. The light is ' + P.lx.toFixed(1) + ', ' + P.ly.toFixed(1) + ' m from the corner, ' + P.lz.toFixed(1) + ' m high. ';
+msg += summary() + ' ';
+msg += 'The viewer stands at ' + P.vx.toFixed(1) + ', ' + P.vy.toFixed(1) + ' m, eyes ' + P.vz.toFixed(1) + ' m high, looking with ' + (P.cam === 'ir' ? 'a camera that sees near infrared' : 'human eyes') + '. Room lights ' + P.amb + ' percent.';
+lsA11y.narrate(msg);
+}
+/* ══════════ pointer: turn the 3-D view, look around on the viewer's screen ══════════ */
+function dragger(cv, onMove){
+var pts = {}, last = null, pinch = null;
+function npt(){ return Object.keys(pts).length; }
+function pdist(){ var k = Object.keys(pts); return Math.max(10, Math.hypot(pts[k[0]].x - pts[k[1]].x, pts[k[0]].y - pts[k[1]].y)); }
+cv.addEventListener('pointerdown', function(e){ pts[e.pointerId] = { x:e.clientX, y:e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch(err){}
+if (npt() === 2 && cv === c3){ last = null; pinch = { d:pdist(), dist:cam.dist }; } else { last = { x:e.clientX, y:e.clientY }; } cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!pts[e.pointerId]) return; pts[e.pointerId] = { x:e.clientX, y:e.clientY };
+if (pinch && npt() === 2){ cam.dist = clamp(pinch.dist*pinch.d/pdist(), 3.5, 16); draw3d(); return; }
+if (!last) return; var dx = e.clientX - last.x, dy = e.clientY - last.y; last = { x:e.clientX, y:e.clientY }; onMove(dx, dy); });
+function up(e){ delete pts[e.pointerId]; if (npt() < 2) pinch = null; if (!npt()){ last = null; cv.style.cursor = ''; } }
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+}
+dragger(c3, function(dx, dy){ cam.yaw -= dx*0.4; cam.pitch = clamp(cam.pitch + dy*0.4, -10, 89); draw3d(); });
+dragger(cs, function(dx, dy){ var k = cs.getBoundingClientRect().width/LSW;
+P.vyaw = Math.round(((P.vyaw + dx*0.25/k + 540) % 360) - 180); P.vpitch = clamp(Math.round(P.vpitch - dy*0.25/k), -80, 80); syncInputs(); update(false); later(); });
+c3.addEventListener('wheel', function(e){ e.preventDefault(); zoom(e.deltaY > 0 ? 1.1 : 1/1.1); }, { passive:false });
+c3.addEventListener('keydown', function(e){ var k = e.key;
+if (k === 'ArrowLeft'){ cam.yaw += 5; } else if (k === 'ArrowRight'){ cam.yaw -= 5; } else if (k === 'ArrowUp'){ cam.pitch = clamp(cam.pitch + 5, -10, 89); } else if (k === 'ArrowDown'){ cam.pitch = clamp(cam.pitch - 5, -10, 89); }
+else if (k === '+' || k === '='){ zoom(1/1.15); return; } else if (k === '-'){ zoom(1.15); return; } else return; e.preventDefault(); draw3d(); });
+cs.addEventListener('keydown', function(e){ var k = e.key;
+if (k === 'ArrowLeft') P.vyaw = ((P.vyaw + 5 + 540) % 360) - 180; else if (k === 'ArrowRight') P.vyaw = ((P.vyaw - 5 + 540) % 360) - 180;
+else if (k === 'ArrowUp') P.vpitch = clamp(P.vpitch + 5, -80, 80); else if (k === 'ArrowDown') P.vpitch = clamp(P.vpitch - 5, -80, 80); else return;
+e.preventDefault(); syncInputs(); update(false); later(); });
+/* boot */
+makeGrids();
+for (var k0 in DEF) P[k0] = DEF[k0];
+syncInputs(); update(true);
+(function(){ var c0 = beam.central, q0 = c0.land.p; P.vyaw = Math.round(Math.atan2(q0[1] - P.vy, q0[0] - P.vx)/DEG); P.vpitch = Math.round(clamp(Math.atan2(q0[2] - P.vz, Math.hypot(q0[0] - P.vx, q0[1] - P.vy))/DEG, -80, 80)); syncInputs(); update(false); })();   /* the viewer starts facing the spot */
+lsA11y.narrate('Ready. A red laser in a dark room with matte walls, in clean air. ' + summary() + ' Drag the 3-D view to turn it, or drag the viewer\u2019s screen to look around.');
+return { set:set, preset:preset, view:view, lookAtSpot:lookAtSpot, zoom:zoom, describe:describe, redraw3d:draw3d,
+_state:function(){ return { P:JSON.parse(JSON.stringify(P)), sigma:sigma(), lightCol:lightCol(), visible:visible(), central:{ n:beam.central.n, L:beam.central.L, I:beam.central.I, spot:beam.central.spot, land:beam.central.land, hits:beam.central.hits }, lit:beam.lit, landed:beam.landed, stored:beam.stored, scat:beam.scat, indLanded:beam.indLanded, indStored:indStored() }; },
+_ind:function(f, q){ return irrAt(cellOf({ kind:'face', f:f }, q, G.i)); }, _indTime:function(N){ var t0 = performance.now(); buildIndirect(N); return performance.now() - t0; },
+_objInd:function(){ var e = 0, a = 0; OBJS.forEach(function(o, i){ var og2 = G.i.objs[i];
+if (o.type === 'sphere'){ for (var k=0; k<og2.g.length; k++){ var ar = og2.ar[Math.floor(k/og2.nu)]; e += og2.g[k]*ar; a += ar; } }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/(fc.nu*fc.nv); for (var k2=0; k2<fc.g.length; k2++){ e += fc.g[k2]*ca; a += ca; } }); });
+return { energy:e, area:a }; },
+_render:function(res){ var t0 = performance.now(); renderView(res || 240); return performance.now() - t0; } };
+})();
+</script>
+<!-- ════════ THE SMOKE DETECTOR (tab 2) ════════
+A dark chamber 600 x 280 (canvas units, 1 unit = 0.1 mm). The emitter's beam runs along y = BY into a light trap.
+The sensor below looks up with a view cone of half-angle 25 degrees; a baffle blocks any direct path from the emitter.
+Smoke: N = 40 x density particles drifting at random. A particle scatters light to the sensor when it is inside both
+the beam and the sensor's view: the expected signal is N x (overlap area / chamber area), so it grows with the density.
+-->
+<script>
+var lsDet = (function(){
+function el(id){ return document.getElementById(id); }
+var cv = el('lsDetCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var X0 = 40, X1 = 600, Y0 = 30, Y1 = 310, BY = 150, BW = 14, EX = 95, TX = 555, SX = 320, SY = 286, HALF = 25*Math.PI/180, PER = 40;   /* PER particles per % of smoke */
+var S = { smoke:0, thr:25, wl:880, rays:true, tab:0 }, parts = [], sig = 0, alarm = false, puffT = null, raf = null, last = 0;
+function seed(n){ while (parts.length < n) parts.push({ x:X0 + 20 + Math.random()*(X1 - X0 - 40), y:Y0 + 20 + Math.random()*(Y1 - Y0 - 40), vx:(Math.random() - 0.5)*60, vy:(Math.random() - 0.5)*60 }); if (parts.length > n) parts.length = n; }
+function inBeam(p){ return Math.abs(p.y - BY) < BW && p.x > EX + 12 && p.x < TX - 6; }
+function inView(p){ var dx = p.x - SX, dy = SY - 18 - p.y; return dy > 0 && Math.abs(Math.atan2(dx, dy)) < HALF; }
+/* the region seen by both: the beam strip inside the sensor's cone, and the chance a particle lies in it */
+var overlapFrac = (function(){ var hits = 0, n = 200000; for (var i=0; i<n; i++){ var p = { x:X0 + 20 + Math.random()*(X1 - X0 - 40), y:Y0 + 20 + Math.random()*(Y1 - Y0 - 40) }; if (inBeam(p) && inView(p)) hits++; } return hits/n; })();
+var FULL = 75*PER*overlapFrac;                         /* the signal at 75 % smoke reads 100 % */
+function expected(){ return Math.min(100, PER*S.smoke*overlapFrac/FULL*100); }
+function col(){ return S.wl === 650 ? '#ff3a2a' : '#c070ff'; }
+function step(dt){
+seed(Math.round(S.smoke*PER));
+var cnt = 0;
+parts.forEach(function(p){ p.vx += (Math.random() - 0.5)*400*dt; p.vy += (Math.random() - 0.5)*400*dt; p.vx *= 0.97; p.vy *= 0.97;   /* brisk random drift, no preferred direction */
+p.x += p.vx*dt; p.y += p.vy*dt;
+if (p.x < X0 + 14){ p.x = X0 + 14; p.vx = Math.abs(p.vx); } if (p.x > X1 - 14){ p.x = X1 - 14; p.vx = -Math.abs(p.vx); }
+if (p.y < Y0 + 14){ p.y = Y0 + 14; p.vy = Math.abs(p.vy); } if (p.y > Y1 - 14){ p.y = Y1 - 14; p.vy = -Math.abs(p.vy); }
+if (inBeam(p) && inView(p)) cnt++; });
+var raw = Math.min(100, cnt/FULL*100) + Math.random()*0.6;      /* a little electronic noise */
+sig += (raw - sig)*Math.min(1, dt*0.4);                          /* the detector averages over a few seconds */
+var was = alarm; alarm = sig > S.thr;
+if (alarm !== was) lsA11y.narrate(alarm ? 'ALARM! The smoke scatters enough light into the sensor: the signal, ' + sig.toFixed(0) + ' percent, has passed the ' + S.thr + ' percent threshold.' : 'The signal has dropped below the threshold: the alarm stops.');
+}
+function draw(t){
+g.fillStyle = '#14161a'; g.fillRect(0, 0, W, H);
+/* the chamber, with a labyrinth edge that lets smoke in but keeps room light out */
+g.fillStyle = '#050608'; g.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
+g.fillStyle = '#2a2e36'; for (var i=0; i<14; i++){ var x = X0 + 20 + i*40; g.fillRect(x, Y0, 16, 12); g.fillRect(x + 20, Y1 - 12, 16, 12); }
+for (var j=0; j<7; j++){ var y = Y0 + 20 + j*40; g.fillRect(X0, y, 12, 16); g.fillRect(X1 - 12, y + 20, 12, 16); }
+var c = col();
+/* the beam: invisible in clean air; drawn faintly here so you can see where it is */
+g.strokeStyle = c; g.globalAlpha = 0.18; g.lineWidth = 2*BW; g.beginPath(); g.moveTo(EX + 12, BY); g.lineTo(TX - 6, BY); g.stroke(); g.globalAlpha = 1;
+g.setLineDash([4, 4]); g.lineWidth = 1; g.globalAlpha = 0.6; g.beginPath(); g.moveTo(EX + 12, BY); g.lineTo(TX - 6, BY); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+/* the sensor's view cone */
+var ty = Y0 + 22, dx = Math.tan(HALF)*(SY - 18 - ty); g.fillStyle = 'rgba(80,200,255,0.07)'; g.beginPath(); g.moveTo(SX, SY - 18); g.lineTo(SX - dx, ty); g.lineTo(SX + dx, ty); g.closePath(); g.fill();
+g.strokeStyle = 'rgba(80,200,255,0.35)'; g.stroke();
+/* smoke particles: dim grey, bright where the beam lights them */
+var drawn = 0;
+parts.forEach(function(p, pi){ var lit = inBeam(p), seen = lit && inView(p); if (!lit && pi % 3) return;   /* draw a third of the unlit particles */
+g.fillStyle = lit ? c : 'rgba(150,150,150,0.22)'; g.beginPath(); g.arc(p.x, p.y, lit ? 2.4 : 1.4, 0, 2*Math.PI); g.fill();
+if (seen && S.rays && drawn < 30){ drawn++; g.strokeStyle = c; g.globalAlpha = 0.45; g.lineWidth = 1; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(SX, SY - 16); g.stroke(); g.globalAlpha = 1; } });
+/* the emitter, the light trap, the baffle and the sensor */
+g.fillStyle = '#3a3f48'; g.fillRect(EX - 30, BY - 16, 42, 32); g.fillStyle = c; g.beginPath(); g.arc(EX + 12, BY, 7, -Math.PI/2, Math.PI/2); g.fill();
+g.fillStyle = '#000'; g.beginPath(); g.moveTo(TX - 6, BY - 26); g.lineTo(TX + 30, BY); g.lineTo(TX - 6, BY + 26); g.closePath(); g.fill(); g.strokeStyle = '#444'; g.stroke();
+g.fillStyle = '#2a2e36'; g.fillRect(EX + 30, BY + 22, 150, 10);
+g.fillStyle = '#3a3f48'; g.fillRect(SX - 22, SY - 10, 44, 24); g.fillStyle = '#5ad1ff'; g.beginPath(); g.arc(SX, SY - 10, 9, Math.PI, 2*Math.PI); g.fill();
+g.fillStyle = '#c8d0d8'; g.font = '11px Calibri, Arial, sans-serif'; g.textAlign = 'center';
+g.fillText(S.wl === 650 ? 'red laser' : 'infrared LED', EX - 9, BY - 22); g.fillText('light trap', TX + 6, BY - 32); g.fillText('light sensor', SX, Y1 + 14 > H - 4 ? H - 6 : Y1 + 14); g.fillText('baffle', EX + 105, BY + 46);
+if (S.wl !== 650){ g.textAlign = 'left'; g.fillStyle = '#c070ff'; g.fillText('infrared: invisible, drawn in false colour', X0 + 16, Y0 + 30); }
+/* the alarm light and the signal meter */
+var on = alarm && (Math.floor(t/300) % 2 === 0);
+g.fillStyle = on ? '#ff2a2a' : (alarm ? '#5a1010' : '#1d3a26'); g.beginPath(); g.arc(X1 - 40, Y0 + 34, 11, 0, 2*Math.PI); g.fill();
+g.fillStyle = alarm ? '#ff6a5a' : '#3ad08f'; g.textAlign = 'right'; g.font = 'bold 13px Calibri, Arial, sans-serif'; g.fillText(alarm ? 'ALARM' : 'quiet', X1 - 58, Y0 + 38);
+var mx = W - 20, my0 = Y0 + 60, mh = 150;   /* outside the chamber's right wall */ g.fillStyle = '#22262b'; g.fillRect(mx - 8, my0, 16, mh); g.fillStyle = alarm ? '#ff6a5a' : '#3ad08f'; g.fillRect(mx - 8, my0 + mh*(1 - sig/100), 16, mh*sig/100);
+g.strokeStyle = '#ffdd66'; g.lineWidth = 2; g.beginPath(); g.moveTo(mx - 12, my0 + mh*(1 - S.thr/100)); g.lineTo(mx + 12, my0 + mh*(1 - S.thr/100)); g.stroke();
+g.fillStyle = '#c8d0d8'; g.font = '10px Calibri, Arial, sans-serif'; g.textAlign = 'center'; g.fillText('signal', mx, my0 + mh + 12);
+}
+function readout(){
+var T = Math.exp(-S.smoke/100*0.9*0.046);                            /* the beam crossing the 4.6 cm chamber */
+var rows = [['Signal (scattered light)', sig.toFixed(0) + ' %'], ['Expected for this smoke', expected().toFixed(0) + ' %'], ['Alarm threshold', S.thr + ' %'], ['Beam reaching the trap', (100*T).toFixed(1) + ' %'], ['State', alarm ? 'ALARM' : 'quiet']];
+el('lsDetRead').innerHTML = rows.map(function(r){ return '<div class="ls_rrow"><span class="ls_rkey">' + r[0] + '</span><span class="ls_rval ls_hi">' + r[1] + '</span></div>'; }).join('');
+}
+var rt = 0;
+function loop(t){ if (S.tab !== 1){ raf = null; return; } var dt = last ? Math.min(0.05, (t - last)/1000) : 0.016; last = t;
+if (puffT !== null){ var a = (t - puffT)/1000; S.smoke = Math.max(0, Math.round(a < 1.5 ? 70*a/1.5 : 70*Math.exp(-(a - 1.5)/5))); syncD(); if (a > 25){ puffT = null; S.smoke = 0; syncD(); } }
+step(dt); draw(t); if (t - rt > 250){ rt = t; readout(); } raf = requestAnimationFrame(loop); }
+function syncD(){ el('lsDS').value = S.smoke; el('lsDSVal').textContent = S.smoke; el('lsDT').value = S.thr; el('lsDTVal').textContent = S.thr; el('lsDW').value = String(S.wl); el('lsDR').checked = S.rays; }
+function set(k, v){ if (k === 'rays') S.rays = !!v; else S[k] = parseFloat(v); if (k === 'smoke') puffT = null; syncD();
+if (k === 'smoke') lsA11y.narrate(S.smoke ? 'Smoke at ' + S.smoke + ' percent: particles drifting through the beam scatter light, and some of it reaches the sensor.' : 'Clean air: the beam passes straight into the light trap, and the sensor, at right angles to it, sees nothing.'); }
+function puff(){ puffT = performance.now(); lsA11y.narrate('A puff of smoke drifts into the chamber, then slowly clears.'); }
+function tab(i){
+S.tab = i; el('lsT0').setAttribute('aria-selected', i === 0 ? 'true' : 'false'); el('lsT1').setAttribute('aria-selected', i === 1 ? 'true' : 'false');
+var inst = el('lsRoot').querySelector('.ls_instrument'); inst.style.display = i === 0 ? '' : 'none'; el('lsDetPanel').style.display = i === 1 ? '' : 'none';
+if (i === 1){ last = 0; if (!raf) raf = requestAnimationFrame(loop); readout(); lsA11y.narrate('Inside a photoelectric smoke detector. The light crosses the chamber into a light trap; the sensor looks across the beam, so in clean air it sees nothing. Add smoke, or press Puff of smoke.'); }
+else if (typeof lsSim !== 'undefined' && lsSim.redraw3d) lsSim.redraw3d();
+}
+syncD();
+return { set:set, puff:puff, tab:tab, _state:function(){ return { S:JSON.parse(JSON.stringify(S)), sig:sig, alarm:alarm, parts:parts.length, overlap:overlapFrac, expected:expected() }; },
+_run:function(sec){ for (var i=0; i<sec*60; i++) step(1/60); return { sig:sig, alarm:alarm }; } };
+})();
+</script>
+</main>
+</body>
+</html>

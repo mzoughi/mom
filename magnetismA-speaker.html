@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: How a Loudspeaker Works</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, loudspeaker, speaker, voice coil, resonance, sound, lesson, scientific">
+<meta name="description" content="Interactive loudspeaker simulation: a voice coil in a magnet's radial field, the force F = BIL, cone resonance, and a playable tune.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="spkroot" role="region" aria-label="Loudspeaker simulator">
+<!-- Accessibility toolbar -->
+<div class="spk_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="spk_a11ybtn" id="btnHC" onclick="spkSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="spk_a11ybtn" id="btnLight" onclick="spkSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="spk_a11ybtn" id="btnCB" onclick="spkSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="spk_a11ybtn spk_a11yon" id="btnNarr" onclick="spkSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="spk_header">
+<p class="spk_h1">How a Loudspeaker Works</p>
+<p class="spk_sub">A voice coil in a magnet's radial field -- the force F = BI&#8467; drives the cone</p>
+</div>
+<div id="spkMotionNotice" class="spk_motionnotice" role="status">Reduced motion is enabled. Sound-wave and floating-note animations are hidden; the cone still moves when you press Play.</div>
+<!-- Instrument grid -->
+<div class="spk_instrument">
+<!-- Left column: diagram + readout + sound -->
+<div class="spk_leftcol">
+<div class="spk_diagpanel">
+<div class="spk_diaglabel"><span id="diagLabel">CROSS-SECTION</span><span class="spk_diagnote">cut through the axis &middot; the cone faces the listener &middot; not to scale</span></div>
+<canvas id="spkCanvas" width="560" height="420" role="img" aria-label="Loudspeaker cross-section" aria-describedby="spkCanvasDesc"></canvas>
+<p id="spkCanvasDesc" class="spk_sronly">Cross-section of a loudspeaker: magnet, voice coil, cone and a listener.</p>
+<div class="spk_dispbar">
+<label class="spk_chk"><input type="checkbox" id="chkLabels" checked onchange="spkSim.onLabels(this.checked)"> Part labels</label>
+<label class="spk_chk"><input type="checkbox" id="chkFlux" checked onchange="spkSim.onFlux(this.checked)"> Magnetic flux path</label>
+</div>
+<div class="spk_hoverbar" id="spkHoverReadout" role="status" aria-live="polite" aria-atomic="true">Hover over a part of the speaker to identify it</div>
+</div>
+<div class="spk_row2">
+<!-- Readout -->
+<div class="spk_panel" role="region" aria-labelledby="readHd">
+<div class="spk_paneltitle" id="readHd">Readout</div>
+<div class="spk_rinner">
+<div class="spk_rrow"><span class="spk_rkey">Signal now</span><span class="spk_rval" id="r_now">--</span></div>
+<div class="spk_rrow"><span class="spk_rkey">Force F = BI&#8467;</span><span class="spk_rval spk_hi" id="r_F">--</span></div>
+<div class="spk_rrow"><span class="spk_rkey">Force direction</span><span class="spk_rval" id="r_Fdir">--</span></div>
+<div class="spk_rrow"><span class="spk_rkey">Cone motion</span><span class="spk_rval spk_hi" id="r_X">--</span></div>
+<div class="spk_rrow"><span class="spk_rkey">Resonance f&#8320;</span><span class="spk_rval" id="r_f0">--</span></div>
+<div class="spk_rrow"><span class="spk_rkey">Response</span><span class="spk_rval" id="r_reg">--</span></div>
+<div class="spk_rrow"><span class="spk_rkey">Loudness</span><span class="spk_rval spk_hi" id="r_db">--</span></div>
+<div class="spk_rrow" id="r_gaprow"><span class="spk_rkey">Coil in the gap?</span><span class="spk_rval" id="r_gap">--</span></div>
+</div>
+</div>
+<!-- Sound -->
+<div class="spk_panel" role="group" aria-labelledby="sndHd">
+<div class="spk_paneltitle" id="sndHd">Sound</div>
+<div class="spk_panelbody">
+<label class="spk_chk"><input type="checkbox" id="chkSound" onchange="spkSim.onSound(this.checked)"> Hear the speaker (AC tone)</label>
+<div class="spk_ctrlhdr"><label for="slVol" class="spk_ctrlname">Volume</label><span class="spk_sval" id="vVol">40%</span></div>
+<input type="range" id="slVol" min="0" max="100" step="1" value="40" aria-label="Master volume in percent" oninput="spkSim.onVolume(this.value)">
+<div class="spk_sub2">
+<label for="selOct" class="spk_ctrlname">Tune octave</label>
+<select id="selOct" aria-label="Octave of the tune" onchange="spkSim.onOctave(this.value)">
+<option value="2">Low (C2 &asymp; 65 Hz)</option>
+<option value="4" selected>Middle (C4 &asymp; 262 Hz)</option>
+<option value="6">High (C6 &asymp; 1047 Hz)</option>
+</select>
+<div class="spk_btnrow2">
+<button type="button" class="spk_btn" id="btnTune" onclick="spkSim.playTune()">&#9834; Play tune</button>
+<button type="button" class="spk_btn" id="btnMute" onclick="spkSim.stopAll()">&#9632; Stop sound</button>
+</div>
+<p class="spk_hint">Tune: <i>Twinkle, Twinkle, Little Star</i> (traditional). Its loudness follows the physics: change the magnet, the current or the cone while it plays and listen. Start with a low volume.</p>
+</div>
+</div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="spk_rightcol">
+<!-- Drive -->
+<div class="spk_panel" role="group" aria-labelledby="drvHd">
+<div class="spk_paneltitle" id="drvHd">Drive Current</div>
+<div class="spk_panelbody">
+<div class="spk_srcbtns" role="group" aria-label="Signal type">
+<button type="button" class="spk_srcbtn" id="btnDC" onclick="spkSim.setMode('dc')" aria-pressed="false">DC (BATTERY)</button>
+<button type="button" class="spk_srcbtn spk_srcon" id="btnAC" onclick="spkSim.setMode('ac')" aria-pressed="true">AC (SIGNAL)</button>
+</div>
+<div class="spk_ctrlhdr"><label for="slI" class="spk_ctrlname">Current I</label><span class="spk_sval" id="vI">+0.5 A</span></div>
+<input type="range" id="slI" min="-3" max="3" step="0.1" value="0.5" aria-label="Coil current in amperes (peak value for AC)" oninput="spkSim.onSlider('I', this.value)">
+<div class="spk_ctrlhdr"><label for="slF" class="spk_ctrlname">Frequency f</label><span class="spk_sval" id="vF">437 Hz</span></div>
+<input type="range" id="slF" min="0" max="100" step="0.5" value="67" aria-label="Signal frequency, 20 to 2000 hertz, logarithmic" oninput="spkSim.onSlider('F', this.value)">
+<div class="spk_btnrow">
+<button type="button" class="spk_btn" id="btnPlay" onclick="spkSim.togglePlay()">&#9654; Play</button>
+<button type="button" class="spk_btn" id="btnStep" onclick="spkSim.step()">Step</button>
+<button type="button" class="spk_btn spk_warn" id="btnReset" onclick="spkSim.resetAll()">Reset</button>
+</div>
+<p class="spk_hint">For AC, I is the peak current. A real tone repeats hundreds of times per second, so the animation runs in slow motion.</p>
+</div>
+</div>
+<!-- Magnet -->
+<div class="spk_panel" role="group" aria-labelledby="magHd">
+<div class="spk_paneltitle" id="magHd">Magnet</div>
+<div class="spk_panelbody">
+<label for="selMag" class="spk_ctrlname">Material</label>
+<select id="selMag" aria-label="Magnet material" onchange="spkSim.onMagChange(this.value)">
+<option value="none">No magnet (B = 0)</option>
+<option value="worn">Weak ferrite (B &asymp; 0.3 T)</option>
+<option value="ferrite" selected>Ferrite / ceramic (B &asymp; 0.9 T)</option>
+<option value="alnico">Alnico (B &asymp; 1.1 T)</option>
+<option value="neo">Neodymium (B &asymp; 1.4 T)</option>
+<option value="custom">Custom (use the slider)</option>
+</select>
+<p class="spk_hint" id="magDesc">--</p>
+<div class="spk_ctrlhdr"><label for="slB" class="spk_ctrlname">Gap field B</label><span class="spk_sval" id="vB">0.90 T</span></div>
+<input type="range" id="slB" min="0" max="1.5" step="0.05" value="0.9" aria-label="Magnetic field in the gap in tesla" oninput="spkSim.onSlider('B', this.value)">
+<label class="spk_chk"><input type="checkbox" id="chkFlip" onchange="spkSim.onFlip(this.checked)"> Flip the magnet (swap N and S)</label>
+<p class="spk_derived">B in the gap points <b id="vBdir">toward the axis</b></p>
+</div>
+</div>
+<!-- Coil & cone -->
+<div class="spk_panel" role="group" aria-labelledby="coilHd">
+<div class="spk_paneltitle" id="coilHd">Voice Coil &amp; Cone</div>
+<div class="spk_panelbody">
+<div class="spk_ctrlhdr"><label for="slN" class="spk_ctrlname">Turns N</label><span class="spk_sval" id="vN">100</span></div>
+<input type="range" id="slN" min="10" max="300" step="5" value="100" aria-label="Number of turns in the voice coil" oninput="spkSim.onSlider('N', this.value)">
+<div class="spk_ctrlhdr"><label for="slR" class="spk_ctrlname">Coil radius r</label><span class="spk_sval" id="vR">2.0 cm</span></div>
+<input type="range" id="slR" min="1" max="4" step="0.1" value="2" aria-label="Voice coil radius in centimetres" oninput="spkSim.onSlider('R', this.value)">
+<p class="spk_derived">&#8467; = 2&pi;rN = <b id="vLen">--</b> &middot; B&#8467; = <b id="vBL">--</b></p>
+<div class="spk_sub2">
+<div class="spk_ctrlhdr"><label for="slM" class="spk_ctrlname">Moving mass m</label><span class="spk_sval" id="vM">10 g</span></div>
+<input type="range" id="slM" min="5" max="60" step="1" value="10" aria-label="Mass of cone and coil in grams" oninput="spkSim.onSlider('M', this.value)">
+<div class="spk_ctrlhdr"><label for="slK" class="spk_ctrlname">Stiffness k</label><span class="spk_sval" id="vK">5000 N/m</span></div>
+<input type="range" id="slK" min="500" max="15000" step="100" value="5000" aria-label="Suspension stiffness in newtons per metre" oninput="spkSim.onSlider('K', this.value)">
+<p class="spk_derived">f&#8320; = (1/2&pi;)&radic;(k/m) = <b id="vF0">--</b></p>
+</div>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="spk_formulastrip">
+<span class="spk_formulatxt">Force: F = BI&#8467;, &#8467; = 2&pi;rN &nbsp;|&nbsp; Cone: m&#7821; + b&#7819; + kx = F(t) &nbsp;|&nbsp; f&#8320; = (1/2&pi;)&radic;(k/m) &nbsp;|&nbsp; Sound pressure &prop; cone acceleration &nbsp;|&nbsp; &#8857; current out of page &middot; &#8855; into page &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>P</kbd> play <kbd>T</kbd> tune</span>
+</div>
+</div><!-- instrument -->
+<div id="spkNarrBox" class="spk_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="spkNarration">--</span></div>
+<div id="spkSrAnnounce" class="spk_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="spk_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div><!-- #spkroot -->
+<style>
+/* ════════ All simulator rules scoped to #spkroot ════════ */
+#spkroot {
+--spk-chassis:#1a1c1f; --spk-panel:#22262b; --spk-panel-hi:#2c3138; --spk-panel-lo:#14161a;
+--spk-border:#3a4048; --spk-border-hi:#525c66; --spk-text:#c8d0d8; --spk-dim:#8a94a3; --spk-bright:#e8eef5;
+--spk-accent:#e8a020; --spk-green:#3ad08f; --spk-val:#ffdd66; --spk-warnc:#ff6a5a;
+--spk-focus:#e8a020; --spk-nar-bg:#2a2410; --spk-nar-border:#e0b040; --spk-nar-text:#f0e2b8;
+background:var(--spk-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--spk-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#spkroot.spk_lm {
+--spk-chassis:#e9edf1; --spk-panel:#ffffff; --spk-panel-hi:#f1f4f7; --spk-panel-lo:#f4f6f9;
+--spk-border:#c3cad3; --spk-border-hi:#9aa3ae; --spk-text:#1d232a; --spk-dim:#556070; --spk-bright:#000000;
+--spk-accent:#a8620a; --spk-green:#12805a; --spk-val:#8a4a00; --spk-warnc:#b02020;
+--spk-focus:#a8620a; --spk-nar-bg:#ffefc0; --spk-nar-border:#e0b040; --spk-nar-text:#333333;
+background-image:none;
+}
+#spkroot.spk_hc {
+--spk-chassis:#000000; --spk-panel:#000000; --spk-panel-hi:#111111; --spk-panel-lo:#000000;
+--spk-border:#ffffff; --spk-border-hi:#ffffff; --spk-text:#ffffff; --spk-dim:#e0e0e0; --spk-bright:#ffffff;
+--spk-accent:#ffd700; --spk-green:#00ff88; --spk-val:#ffff00; --spk-warnc:#ff5555;
+--spk-focus:#ffff00; --spk-nar-bg:#000000; --spk-nar-border:#ffd700; --spk-nar-text:#ffffff;
+background-image:none;
+}
+#spkroot.spk_cb { --spk-warnc:#D55E00; }
+#spkroot.spk_hc .spk_panel, #spkroot.spk_hc .spk_diagpanel { border-width:2px; }
+#spkroot *, #spkroot *::before, #spkroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#spkroot input:focus-visible, #spkroot button:focus-visible, #spkroot select:focus-visible { outline:2px solid var(--spk-focus); outline-offset:2px; }
+/* toolbar */
+#spkroot .spk_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#spkroot .spk_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--spk-panel-hi); border:1px solid var(--spk-border-hi); color:var(--spk-dim); }
+#spkroot .spk_a11ybtn:hover { border-color:var(--spk-accent); color:var(--spk-accent); }
+#spkroot .spk_a11yon { background:rgba(58,208,143,.14); border-color:var(--spk-green); color:var(--spk-green); font-weight:bold; }
+/* header */
+#spkroot .spk_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#spkroot .spk_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--spk-accent); text-align:center; }
+#spkroot .spk_sub { font-size:.7rem; color:var(--spk-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#spkroot .spk_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--spk-panel); border:1px solid var(--spk-border); border-radius:4px; color:var(--spk-dim); }
+/* grid */
+#spkroot .spk_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#spkroot .spk_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#spkroot .spk_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#spkroot .spk_diagpanel { background:var(--spk-panel); border:1px solid var(--spk-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#spkroot .spk_diaglabel { background:var(--spk-panel-lo); border-bottom:1px solid var(--spk-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--spk-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#spkroot #diagLabel { color:var(--spk-accent); font-weight:bold; }
+#spkroot .spk_diagnote { text-transform:none; letter-spacing:.02em; }
+#spkroot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#spkroot .spk_hoverbar { background:var(--spk-panel-lo); border-top:1px solid var(--spk-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--spk-val); min-height:28px; line-height:1.4; }
+/* right column */
+#spkroot .spk_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#spkroot .spk_panel { background:var(--spk-panel); border:1px solid var(--spk-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#spkroot .spk_paneltitle { background:var(--spk-panel-lo); border-bottom:1px solid var(--spk-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--spk-dim); }
+#spkroot .spk_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#spkroot .spk_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#spkroot .spk_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--spk-panel-hi); border:1px solid var(--spk-border-hi); color:var(--spk-dim); border-radius:3px; }
+#spkroot .spk_srcbtn:hover { border-color:var(--spk-accent); color:var(--spk-text); }
+#spkroot .spk_srcon { background:var(--spk-accent); color:#111; border-color:var(--spk-accent); font-weight:bold; }
+#spkroot .spk_srcon:hover { color:#111; }
+#spkroot .spk_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#spkroot .spk_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--spk-dim); text-transform:uppercase; }
+#spkroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--spk-panel-lo); border:1px solid var(--spk-border); }
+#spkroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--spk-accent); border:2px solid var(--spk-panel); cursor:pointer; }
+#spkroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--spk-accent); border:2px solid var(--spk-panel); cursor:pointer; }
+#spkroot input[type=range]:disabled { opacity:.35; cursor:default; }
+#spkroot .spk_sval { font-family:monospace; font-size:.74rem; color:var(--spk-val); min-width:56px; text-align:right; }
+#spkroot .spk_hint { font-size:.66rem; color:var(--spk-dim); line-height:1.4; }
+#spkroot .spk_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#spkroot .spk_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--spk-panel-lo); border:1px solid var(--spk-border); border-radius:3px; }
+#spkroot .spk_rrow.spk_alert { border-color:var(--spk-warnc); }
+#spkroot .spk_rrow.spk_alert .spk_rval { color:var(--spk-warnc); font-weight:bold; }
+#spkroot .spk_rkey { font-family:monospace; font-size:.6rem; color:var(--spk-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#spkroot .spk_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--spk-text); }
+#spkroot .spk_hi { color:var(--spk-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#spkroot .spk_formulastrip { grid-column:1 / 3; background:var(--spk-panel-lo); border:1px solid var(--spk-border); border-radius:4px; padding:7px 14px; }
+#spkroot .spk_formulatxt { font-family:monospace; font-size:.66rem; color:var(--spk-dim); letter-spacing:.04em; line-height:1.6; }
+#spkroot .spk_formulatxt kbd { border:1px solid var(--spk-border-hi); border-radius:2px; padding:0 4px; color:var(--spk-accent); font-family:monospace; }
+#spkroot .spk_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--spk-nar-bg); border-left:4px solid var(--spk-nar-border); font-size:.82rem; color:var(--spk-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#spkroot .spk_credit { font-size:.62rem; color:var(--spk-dim); text-align:center; }
+#spkroot .spk_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#spkroot .spk_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--spk-text); cursor:pointer; }
+#spkroot .spk_chk input { accent-color:var(--spk-accent); width:14px; height:14px; }
+#spkroot .spk_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--spk-panel-lo); border-top:1px solid var(--spk-border); }
+#spkroot select { width:100%; background:var(--spk-panel-hi); color:var(--spk-text); border:1px solid var(--spk-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#spkroot .spk_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#spkroot .spk_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#spkroot .spk_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--spk-panel-hi); border:1px solid var(--spk-border-hi); color:var(--spk-text); border-radius:3px; text-transform:uppercase; }
+#spkroot .spk_btn:hover { border-color:var(--spk-accent); }
+#spkroot .spk_btn:disabled { opacity:.4; cursor:default; }
+#spkroot .spk_btn.spk_active { background:var(--spk-green); border-color:var(--spk-green); color:#111; font-weight:bold; }
+#spkroot .spk_warn { color:#e0605a; border-color:#a04040; }
+#spkroot.spk_lm .spk_warn { color:#b02020; border-color:#c06060; }
+#spkroot .spk_sub2 { border-top:1px dashed var(--spk-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#spkroot .spk_derived { font-family:monospace; font-size:.68rem; color:var(--spk-dim); line-height:1.4; }
+#spkroot .spk_derived b { color:var(--spk-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#spkroot .spk_instrument { grid-template-columns:minmax(0,1fr); }
+#spkroot .spk_rightcol { width:auto; }
+#spkroot .spk_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #spkroot .spk_row2 { grid-template-columns:1fr; } }
+/* question section below the simulator */
+.spk_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.spk_qwrap ol { padding-left:24px; }
+.spk_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<script>
+/* ════════ SIMULATION ════════
+Pattern: mirrors the solenoid (magnetism) example:
+var simObj = function() { ... return { public methods }; };  var simObj = new simObj();
+Physics (SI units):
+  voice coil: N turns of radius r in a radial gap field B  ->  wire length l = 2 pi r N,  force F = B I l (axial)
+  moving system (cone + coil): m x'' + b x' + k x = F(t),  b = sqrt(k m)/Q  (Q = 2)
+  AC drive I = I0 sin(wt):  X = F0 / sqrt((k - m w^2)^2 + (b w)^2),  phase lag phi = atan2(b w, k - m w^2)
+  far-field sound pressure is proportional to the cone acceleration a = w^2 X  ->  loudness in dB relative to the default speaker
+  DC drive: static displacement X = F / k (no sound wave)
+  over-excursion: |X| > 6 mm, the coil leaves the gap and the sound distorts
+Audio frequencies are far too fast to watch, so the animation runs in slow motion (log-mapped visual frequency),
+and the cone displacement is drawn on a log scale (1 um ... 6 mm).
+*/
+var spkGen = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('spkroot');
+var canvas = document.getElementById('spkCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function el(id) { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function sgnTxt(v, d, u) { return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(d) + ' ' + u; }
+function fmtF(f) { return (f < 100 ? f.toFixed(1) : Math.round(f).toString()) + ' Hz'; }
+function fmtN(F) { var a = Math.abs(F); return (a < 10 ? a.toFixed(2) : a.toFixed(1)) + ' N'; }
+function fmtX(X) { var a = Math.abs(X); if (a < 1e-9) return '0'; if (a < 1e-3) return (a*1e6).toFixed(a < 1e-5 ? 2 : 1) + ' \u00b5m'; return (a*1e3).toFixed(2) + ' mm'; }
+
+/* ── Magnets: typical flux density in the voice-coil gap ── */
+var MAGNETS = {
+  none:    { B: 0,   label: 'No magnet',         desc: 'No permanent magnet: the gap has no field, so the coil feels no force.' },
+  worn:    { B: 0.3, label: 'Weak ferrite',      desc: 'A weak or partly demagnetized ceramic magnet. Gap field \u2248 0.3 T.' },
+  ferrite: { B: 0.9, label: 'Ferrite',           desc: 'The common, low-cost speaker magnet: a large ring of ceramic ferrite. Gap field \u2248 0.9 T.' },
+  alnico:  { B: 1.1, label: 'Alnico',            desc: 'Aluminium-nickel-cobalt alloy, used in vintage speakers. Gap field \u2248 1.1 T.' },
+  neo:     { B: 1.4, label: 'Neodymium',         desc: 'Rare-earth NdFeB magnet: the strongest for its size, used in headphones and compact speakers. Gap field \u2248 1.4 T.' },
+  custom:  { B: null, label: 'Custom',           desc: 'Gap field set with the slider below.' }
+};
+
+/* ── State ── */
+var DEF = { I0: 0.5, fs: 67, mag: 'ferrite', N: 100, r: 0.020, m: 0.010, k: 5000, vol: 40, oct: 4 };
+var mode = 'ac', I0 = DEF.I0, freq = 440, magKey = DEF.mag, Bgap = MAGNETS[DEF.mag].B, flip = false;
+var nTurns = DEF.N, rCoil = DEF.r, mCone = DEF.m, kSus = DEF.k;
+var QM = 2.0, XLIM = 0.006, VIS_MAX = 24;
+var A_REF = MAGNETS[DEF.mag].B * DEF.I0 * 2*Math.PI*DEF.r*DEF.N / DEF.m;   /* acceleration of the default speaker above resonance */
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true, showLabels = true, showFlux = true;
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var running = false, rafId = null, lastTs = null;
+var phase = 0, xv = 0, Inow = 0, dcX = 0, dcV = 0, prevS = 0;
+var waves = [], floatNotes = [], noteTimer = 0, scopeBuf = [], SCOPE_N = 270;
+var soundOn = false, volume = DEF.vol/100, octave = DEF.oct;
+var actx = null, master = null, toneOsc = null, toneGain = null;
+var tune = { playing: false, notes: [], idx: -1, start: 0, perf: 0, total: 0, osc: null, gain: null, useAudio: false, prevMode: 'ac' };
+
+/* ── Physics ── */
+function freqFromSlider(v) { return 20*Math.pow(100, v/100); }
+function wireLen() { return 2*Math.PI*rCoil*nTurns; }
+function force(I) { return (flip ? -1 : 1)*Bgap*I*wireLen(); }     /* + = toward the listener */
+function damping() { return Math.sqrt(kSus*mCone)/QM; }
+function f0() { return Math.sqrt(kSus/mCone)/(2*Math.PI); }
+function response(f, Iamp) {
+  var F = force(Iamp);
+  if (f <= 0) return { F: F, X: F/kSus, phi: 0, a: 0, v: 0 };
+  var w = 2*Math.PI*f, re = kSus - mCone*w*w, im = damping()*w, den = Math.sqrt(re*re + im*im);
+  var X = F/den;
+  return { F: F, X: X, phi: Math.atan2(im, re), a: w*w*Math.abs(X), v: w*Math.abs(X) };
+}
+function curFreq() { return (mode === 'tune' && tune.idx >= 0) ? tune.notes[tune.idx].f : freq; }
+function curIamp() { return (mode === 'tune' && tune.idx < 0) ? 0 : I0; }
+function dB(a) { return a > 0 ? 20*Math.log10(a/A_REF) : -Infinity; }
+function dbTxt(a) { var d = dB(a); if (!isFinite(d) || d < -60) return 'silent'; return (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ' dB'; }
+function loudNorm(a) { var d = dB(a); return isFinite(d) ? clamp((d + 40)/46, 0, 1) : 0; }
+function visFreq(f) { return 0.35 + 0.25*Math.log2(Math.max(f, 20)/20); }
+function visAmp(X) {
+  var a = Math.abs(X); if (a < 1e-7) return 0;
+  var t = clamp((Math.log10(a) + 6)/(Math.log10(XLIM) + 6), 0, 1.15);
+  return (X < 0 ? -1 : 1)*t*VIS_MAX;
+}
+function currentX() { return mode === 'dc' ? force(I0)/kSus : response(curFreq(), curIamp()).X; }
+function overNow() { return Math.abs(currentX()) > XLIM; }
+function regionText(f) {
+  var q = f/f0();
+  if (q < 0.7) return 'below resonance: the stiffness limits the motion';
+  if (q < 1.4) return 'near resonance: the motion is largest';
+  return 'above resonance: the mass limits the motion';
+}
+
+/* ── Time stepping ── */
+function advance(dt) {
+  if (tune.playing) updateTuneIndex();
+  var f = curFreq(), fv = visFreq(f);
+  if (mode === 'dc') {
+    Inow = I0;
+    var target = visAmp(force(I0)/kSus), wv = 2*Math.PI*0.9, z = 1/(2*QM), n = 6, h = dt/n;
+    for (var i = 0; i < n; i++) { var acc = -2*z*wv*dcV - wv*wv*(dcX - target); dcV += acc*h; dcX += dcV*h; }
+    xv = dcX;
+  } else {
+    var Iamp = curIamp(), r = response(f, Iamp);
+    phase += 2*Math.PI*fv*dt;
+    if (phase > 2000*Math.PI) phase -= 2000*Math.PI;
+    Inow = Iamp*Math.sin(phase);
+    var s = Math.sin(phase - r.phi);
+    xv = visAmp(r.X)*s;
+    if (dt > 0 && prevS < 0 && s >= 0 && !reducedMotion) { var amp = loudNorm(r.a); if (amp > 0.02) waves.push({ r: 0, amp: amp }); }
+    prevS = s; dcX = xv; dcV = 0;
+  }
+  if (dt <= 0) return;
+  for (var j = 0; j < waves.length; j++) waves[j].r += 75*dt;
+  waves = waves.filter(function(w) { return w.r < 250; });
+  if (isAudible() && !reducedMotion) {
+    noteTimer += dt;
+    if (noteTimer > 0.7) { noteTimer = 0; floatNotes.push({ x: 470 + Math.random()*20, y: 108, life: 0, ch: Math.random() < 0.5 ? '\u266a' : '\u266b' }); }
+  }
+  for (var k = 0; k < floatNotes.length; k++) { floatNotes[k].life += dt; floatNotes[k].y -= 22*dt; floatNotes[k].x -= 4*dt; }
+  floatNotes = floatNotes.filter(function(q) { return q.life < 2.4; });
+  scopeBuf.push({ i: Inow/3, x: xv/(VIS_MAX*1.15) });
+  if (scopeBuf.length > SCOPE_N) scopeBuf.shift();
+}
+function isAudible() {
+  if (!actx || volume <= 0) return false;
+  if (tune.playing) return tune.useAudio && tune.idx >= 0 && loudNorm(response(curFreq(), I0).a) > 0.05;
+  return mode === 'ac' && soundOn && running && loudNorm(response(freq, I0).a) > 0.05;
+}
+function startLoop() { if (!rafId) rafId = window.requestAnimationFrame(frame); }
+function stopLoop() { if (rafId) window.cancelAnimationFrame(rafId); rafId = null; lastTs = null; }
+function frame(ts) {
+  rafId = null;
+  if (!running) return;
+  if (lastTs === null) lastTs = ts;
+  var dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+  advance(dt);
+  redraw();
+  if (running) rafId = window.requestAnimationFrame(frame);
+}
+
+/* ── Audio (Web Audio API) ── */
+function ensureAudio() {
+  if (!actx) {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      actx = new AC(); master = actx.createGain(); master.gain.value = 0.8*volume; master.connect(actx.destination);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') { try { actx.resume(); } catch (e) {} }
+  return !!actx;
+}
+function noteGain(f, Iamp) {
+  var r = response(f, Iamp), g = 0.2*Math.min(r.a/A_REF, 3), over = Math.abs(r.X) > XLIM;
+  return { g: over ? g*0.4 : g, over: over };
+}
+function startTone() {
+  if (!ensureAudio()) return;
+  toneOsc = actx.createOscillator(); toneGain = actx.createGain(); toneGain.gain.value = 0;
+  toneOsc.connect(toneGain); toneGain.connect(master); toneOsc.start();
+  updateTone();
+}
+function updateTone() {
+  if (!toneOsc) return;
+  var ng = noteGain(freq, I0), now = actx.currentTime;
+  toneOsc.type = ng.over ? 'square' : 'sine';
+  toneOsc.frequency.setTargetAtTime(freq, now, 0.01);
+  toneGain.gain.setTargetAtTime(ng.g, now, 0.03);
+}
+function stopTone() {
+  if (!toneOsc) return;
+  try { var now = actx.currentTime; toneGain.gain.cancelScheduledValues(now); toneGain.gain.setTargetAtTime(0, now, 0.02); toneOsc.stop(now + 0.15); } catch (e) {}
+  toneOsc = null; toneGain = null;
+}
+function syncTone() { if (soundOn && running && mode === 'ac') { if (!toneOsc) startTone(); else updateTone(); } else stopTone(); }
+
+/* ── The tune: Twinkle, Twinkle, Little Star (traditional). "2" = half note ── */
+var TUNE_TXT = 'C C G G A A G2 F F E E D D C2 G G F F E E D2 G G F F E E D2 C C G G A A G2 F F E E D D C2';
+var SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+function buildTune() {
+  var beat = 0.4, t = 0, out = [];
+  TUNE_TXT.split(' ').forEach(function(tok) {
+    var nm = tok.charAt(0), len = tok.length > 1 ? 2 : 1, midi = 12*(octave + 1) + SEMI[nm];
+    out.push({ name: nm + octave, f: 440*Math.pow(2, (midi - 69)/12), t: t, d: len*beat });
+    t += len*beat;
+  });
+  tune.total = t;
+  return out;
+}
+function tuneClock() { return tune.useAudio ? actx.currentTime - tune.start : window.performance.now()/1000 - tune.perf; }
+function playTune() {
+  if (tune.playing) { stopTune(false); return; }
+  stopTone();
+  tune.prevMode = (mode === 'tune') ? 'ac' : mode;
+  mode = 'tune'; tune.notes = buildTune(); tune.idx = -1; tune.playing = true;
+  tune.useAudio = ensureAudio();
+  if (tune.useAudio) {
+    tune.osc = actx.createOscillator(); tune.gain = actx.createGain(); tune.gain.gain.value = 0;
+    tune.osc.connect(tune.gain); tune.gain.connect(master); tune.osc.start();
+    tune.start = actx.currentTime + 0.05;
+  } else { tune.perf = window.performance.now()/1000 + 0.05; }
+  phase = 0; prevS = 0; running = true; lastTs = null; startLoop();
+  updateButtons(); scheduleUpdate(false);
+  updateNarration('Playing the tune in octave ' + octave + '.' + (tune.useAudio ? '' : ' (Sound is not available in this browser; the motion is still shown.)'));
+}
+function updateTuneIndex() {
+  var tt = tuneClock();
+  if (tt >= tune.total + 0.1) { stopTune(true); return; }
+  var idx = -1;
+  for (var i = 0; i < tune.notes.length; i++) { var n = tune.notes[i]; if (tt >= n.t && tt < n.t + n.d) { idx = i; break; } }
+  if (idx !== tune.idx) { tune.idx = idx; onNote(); }
+}
+function onNote() {
+  if (tune.useAudio && tune.osc && tune.idx >= 0) {
+    var n = tune.notes[tune.idx], ng = noteGain(n.f, I0), now = actx.currentTime, g = tune.gain.gain;
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(0, now + 0.012);              /* short gap so repeated notes are heard separately */
+    tune.osc.frequency.setValueAtTime(n.f, now + 0.012);
+    tune.osc.type = ng.over ? 'square' : 'sine';
+    g.linearRampToValueAtTime(ng.g, now + 0.035);
+    g.setTargetAtTime(ng.g*0.55, now + 0.06, n.d*0.6);       /* gentle decay */
+  }
+  updateReadouts();
+}
+function updateTuneGain() {
+  if (!(tune.playing && tune.useAudio && tune.osc && tune.idx >= 0)) return;
+  var ng = noteGain(tune.notes[tune.idx].f, I0), now = actx.currentTime;
+  tune.osc.type = ng.over ? 'square' : 'sine';
+  tune.gain.gain.cancelScheduledValues(now); tune.gain.gain.setTargetAtTime(ng.g, now, 0.03);
+}
+function stopTune(ended) {
+  if (!tune.playing) return;
+  tune.playing = false; tune.idx = -1;
+  if (tune.osc) {
+    try { var now = actx.currentTime; tune.gain.gain.cancelScheduledValues(now); tune.gain.gain.setTargetAtTime(0, now, 0.02); tune.osc.stop(now + 0.15); } catch (e) {}
+    tune.osc = null; tune.gain = null;
+  }
+  mode = tune.prevMode; running = false; stopLoop();
+  updateButtons(); scheduleUpdate(false);
+  updateNarration(ended ? 'The tune has finished.' : 'Tune stopped.');
+}
+
+/* ── Canvas palette ── */
+function pal() {
+  var p;
+  if (hcMode) p = { bg:'#000000', grid:'#262626', edge:'#ffffff', steel:'#777777', magN:'#ff4444', magS:'#4499ff', magOff:'#444444', magTxt:'#ffffff',
+    copper:'#ffaa00', copperDk:'#000000', former:'#ffffff', cone:'#ffffff', surround:'#ffffff', spider:'#ffffff', frame:'rgba(255,255,255,0.6)',
+    sym:'#000000', symBg:'#ffffff', flux:'#ffffff', force:'#00ff88', wave:'#ffff00', warn:'#ff5555', text:'#ffffff', dim:'#e0e0e0',
+    person:'#bbbbbb', scopeBg:'#000000', scopeGrid:'#333333', traceI:'#ffd700', traceX:'#00ff88', boxBg:'#000000', lead:'#ffaa00', lw:1.8 };
+  else if (lightMode) p = { bg:'#ffffff', grid:'#eef1f4', edge:'#9aa3ae', steel:'#b4bcc6', magN:'#d64541', magS:'#3a6fd8', magOff:'#c8ccd2', magTxt:'#ffffff',
+    copper:'#b8702a', copperDk:'#6e3f12', former:'#556070', cone:'#9c8458', surround:'#556070', spider:'#8a7346', frame:'rgba(60,70,90,0.4)',
+    sym:'#1d232a', symBg:'#ffffff', flux:'rgba(60,60,170,0.75)', force:'#12805a', wave:'#1f5fc0', warn:'#c0262a', text:'#1d232a', dim:'#556070',
+    person:'#a3acb7', scopeBg:'#f4f6f9', scopeGrid:'#dde2e8', traceI:'#a8620a', traceX:'#12805a', boxBg:'#f1f4f7', lead:'#b8702a', lw:1.1 };
+  else p = { bg:'#0d0f12', grid:'#1b2027', edge:'#3a4048', steel:'#5b636d', magN:'#c9433d', magS:'#3d6cc9', magOff:'#4a4f57', magTxt:'#ffffff',
+    copper:'#c8813a', copperDk:'#7a4a1c', former:'#9aa3ae', cone:'#c9b48a', surround:'#8a94a3', spider:'#b7a37a', frame:'rgba(200,210,220,0.35)',
+    sym:'#ffffff', symBg:'#1a1c1f', flux:'rgba(180,180,255,0.75)', force:'#3ad08f', wave:'#7fc4ff', warn:'#ff5a52', text:'#c8d0d8', dim:'#8a94a3',
+    person:'#56606c', scopeBg:'#0a0c0f', scopeGrid:'#1f252d', traceI:'#e8a020', traceX:'#3ad08f', boxBg:'#22262b', lead:'#c8813a', lw:1.1 };
+  if (cbMode && !hcMode) {
+    p.magN = '#D55E00'; p.magS = '#0072B2'; p.warn = '#D55E00';
+    p.force = lightMode ? '#009E73' : '#F0E442'; p.wave = lightMode ? '#0072B2' : '#56B4E9';
+    p.traceI = '#E69F00'; p.traceX = lightMode ? '#0072B2' : '#56B4E9';
+  }
+  return p;
+}
+function colorFn(t) {
+  t = clamp(t, 0, 1);
+  if (hcMode) { var v = Math.round(90 + 165*t); return 'rgb(' + v + ',' + v + ',' + v + ')'; }
+  if (cbMode) {
+    var s = lightMode ? t*0.82 : t, rr, gg, bb;
+    if (s < .5) { var u = s*2; rr = Math.round(68 + u*(33-68)); gg = Math.round(1 + u*(145-1)); bb = Math.round(84 + u*(140-84)); }
+    else { var u2 = (s-.5)*2; rr = Math.round(33 + u2*(253-33)); gg = Math.round(145 + u2*(231-145)); bb = Math.round(140 + u2*(37-140)); }
+    if (!lightMode && s < 0.25) { rr += 60; gg += 60; bb += 60; }
+    return 'rgb(' + rr + ',' + gg + ',' + bb + ')';
+  }
+  return 'hsl(' + ((1-t)*240|0) + ',100%,' + (lightMode ? '40%' : '58%') + ')';
+}
+
+/* ── Geometry (canvas pixels). AX = axis of the speaker ── */
+var AX = 150, SCOPE_Y = 306;
+var AMP = { x: 24, y: 262, w: 108, h: 34 };
+function rect(x, y, w, h, fill, stroke, lw) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
+}
+function arrowHead(x, y, ang, sz, col) {
+  ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x - sz*Math.cos(ang - 0.45), y - sz*Math.sin(ang - 0.45));
+  ctx.lineTo(x - sz*Math.cos(ang + 0.45), y - sz*Math.sin(ang + 0.45));
+  ctx.closePath(); ctx.fill();
+}
+function arrow(x1, y1, x2, y2, col, lw, hs) {
+  ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  arrowHead(x2, y2, Math.atan2(y2 - y1, x2 - x1), hs || 6, col);
+}
+
+/* ── Drawing ── */
+function drawBackground(p) {
+  ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+  ctx.strokeStyle = p.grid; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(4, AX + 0.5); ctx.lineTo(CW - 4, AX + 0.5); ctx.stroke();   /* axis */
+  ctx.textAlign = 'right'; ctx.fillStyle = p.dim; ctx.font = '9px monospace';
+  var f = curFreq();
+  ctx.fillText(mode === 'dc' ? 'DC: a steady push, no vibration' : 'slow motion: ' + fmtF(f) + ' shown at ' + visFreq(f).toFixed(2) + ' Hz', CW - 8, 14);
+  ctx.fillText('cone motion exaggerated (log scale)', CW - 8, 26);
+}
+function drawWaves(p) {
+  if (reducedMotion) return;
+  ctx.save(); ctx.strokeStyle = p.wave; ctx.lineWidth = 2.5;
+  for (var i = 0; i < waves.length; i++) {
+    var w = waves[i], a = w.amp*Math.max(0, 1 - w.r/250);
+    if (a <= 0.02) continue;
+    ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(262, AX, 14 + w.r, -0.6, 0.6); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawBasket(p) {
+  ctx.strokeStyle = p.frame; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(112, AX - 92); ctx.lineTo(266, AX - 112); ctx.moveTo(112, AX + 92); ctx.lineTo(266, AX + 112);
+  ctx.stroke();
+  ctx.fillStyle = p.frame; ctx.fillRect(264, AX - 118, 6, 12); ctx.fillRect(264, AX + 106, 6, 12);
+  /* terminal block for the coil leads */
+  rect(142, AX + 94, 8, 6, p.steel, p.edge);
+}
+function drawMagnet(p) {
+  rect(40, AX - 92, 16, 184, p.steel, p.edge);                 /* back plate */
+  rect(56, AX - 20, 56, 40, p.steel, p.edge);                  /* pole piece */
+  var alpha = Bgap > 0 ? 0.35 + 0.65*Math.min(1, Bgap/1.4) : 1;
+  [-1, 1].forEach(function(sd) {
+    var y = sd < 0 ? AX - 92 : AX + 40;
+    var lc = Bgap > 0 ? (flip ? p.magN : p.magS) : p.magOff, rc = Bgap > 0 ? (flip ? p.magS : p.magN) : p.magOff;
+    ctx.globalAlpha = alpha; rect(56, y, 20, 52, lc); rect(76, y, 20, 52, rc); ctx.globalAlpha = 1;
+    rect(56, y, 40, 52, null, p.edge);
+    ctx.fillStyle = p.magTxt; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+    if (Bgap > 0) { ctx.fillText(flip ? 'N' : 'S', 66, y + 30); ctx.fillText(flip ? 'S' : 'N', 86, y + 30); }
+    else { ctx.fillStyle = p.dim; ctx.fillText('--', 76, y + 30); }
+    rect(96, sd < 0 ? AX - 92 : AX + 32, 16, 60, p.steel, p.edge);   /* front plate */
+  });
+}
+function drawFlux(p) {
+  if (!showFlux || Bgap <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, 0.35 + 0.65*Bgap/1.5);
+  var dir = flip ? -1 : 1;
+  [-1, 1].forEach(function(sd) {
+    var yM = AX + sd*66, yP = AX + sd*11;
+    ctx.strokeStyle = p.flux; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(48, yP); ctx.lineTo(48, yM); ctx.lineTo(104, yM); ctx.lineTo(104, AX + sd*33);
+    ctx.moveTo(104, AX + sd*19); ctx.lineTo(104, yP); ctx.lineTo(48, yP); ctx.stroke();
+    ctx.setLineDash([]);
+    /* N side of the magnet faces the front plate: flux runs magnet -> front plate -> gap -> pole piece -> back plate */
+    arrowHead(76 + dir*4, yM, dir > 0 ? 0 : Math.PI, 5, p.flux);                         /* through the magnet */
+    arrowHead(104, AX + sd*(48 - dir*4), dir > 0 ? (sd < 0 ? Math.PI/2 : -Math.PI/2) : (sd < 0 ? -Math.PI/2 : Math.PI/2), 5, p.flux);
+    arrowHead(76 - dir*4, yP, dir > 0 ? Math.PI : 0, 5, p.flux);                         /* back along the pole */
+    arrowHead(48, AX + sd*(38 + dir*4), dir > 0 ? (sd < 0 ? -Math.PI/2 : Math.PI/2) : (sd < 0 ? Math.PI/2 : -Math.PI/2), 5, p.flux);
+  });
+  ctx.restore();
+}
+function drawGapField(p) {
+  if (Bgap <= 0) return;
+  var col = colorFn(Bgap/1.5), inward = !flip;
+  [99, 104.5, 110].forEach(function(x) {
+    [-1, 1].forEach(function(sd) {
+      var yo = AX + sd*31, yi = AX + sd*21;
+      if (inward) arrow(x, yo, x, yi, col, 0.8 + Bgap, 4); else arrow(x, yi, x, yo, col, 0.8 + Bgap, 4);
+    });
+  });
+}
+function drawMoving(p, dx, over) {
+  var apex = 150 + dx, rim = 250 + dx;
+  /* spider (corrugated suspension) */
+  ctx.strokeStyle = p.spider; ctx.lineWidth = 1.4;
+  [-1, 1].forEach(function(sd) {
+    ctx.beginPath();
+    for (var k = 0; k <= 8; k++) {
+      var t = k/8, xx = 128 + dx*(1 - t) + ((k > 0 && k < 8) ? (k % 2 ? 4 : -4) : 0), yy = AX + sd*(26 + 67*t);
+      if (k === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke();
+  });
+  /* coil leads (flexible tinsel wires) from the terminal to the coil */
+  ctx.strokeStyle = p.lead; ctx.lineWidth = 1;
+  [0, 3].forEach(function(o) {
+    ctx.beginPath(); ctx.moveTo(144 + o, AX + 94); ctx.quadraticCurveTo(130 + dx/2 + o, AX + 66, 108 + dx + o, AX + 31); ctx.stroke();
+  });
+  /* coil former (paper/aluminium tube) */
+  ctx.strokeStyle = p.former; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(94 + dx, AX - 26); ctx.lineTo(apex, AX - 26); ctx.moveTo(94 + dx, AX + 26); ctx.lineTo(apex, AX + 26); ctx.stroke();
+  /* copper windings */
+  var stripes = clamp(Math.round(nTurns/25), 2, 12);
+  [-1, 1].forEach(function(sd) {
+    var y = sd < 0 ? AX - 30 : AX + 22;
+    rect(97 + dx, y, 14, 8, over ? p.warn : p.copper);
+    ctx.strokeStyle = p.copperDk; ctx.lineWidth = 0.7; ctx.beginPath();
+    for (var i = 0; i < stripes; i++) { var xx = 97 + dx + (i + 0.5)*14/stripes; ctx.moveTo(xx, y + 1); ctx.lineTo(xx, y + 7); }
+    ctx.stroke();
+  });
+  /* cone, dust cap, surround */
+  ctx.strokeStyle = p.cone; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(apex, AX - 26); ctx.lineTo(rim, AX - 112); ctx.moveTo(apex, AX + 26); ctx.lineTo(rim, AX + 112); ctx.stroke();
+  ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(apex, AX, 14, 26, 0, -Math.PI/2, Math.PI/2); ctx.stroke();
+  ctx.lineCap = 'butt';
+  ctx.strokeStyle = p.surround; ctx.lineWidth = 3;
+  [-1, 1].forEach(function(sd) {
+    ctx.beginPath(); ctx.moveTo(rim, AX + sd*112); ctx.quadraticCurveTo((rim + 266)/2, AX + sd*124, 266, AX + sd*112); ctx.stroke();
+  });
+}
+function drawCurrentSymbols(p, dx) {
+  if (Math.abs(Inow) < 0.02) return;
+  [-1, 1].forEach(function(sd) {
+    var x = 104 + dx, y = AX + sd*26, out = (sd < 0) === (Inow > 0);   /* I > 0: out of the page at the top */
+    ctx.beginPath(); ctx.arc(x, y, 4.5, 0, 2*Math.PI); ctx.fillStyle = p.symBg; ctx.fill();
+    ctx.strokeStyle = p.sym; ctx.lineWidth = 1.1; ctx.stroke();
+    if (out) { ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 2*Math.PI); ctx.fillStyle = p.sym; ctx.fill(); }
+    else { ctx.beginPath(); ctx.moveTo(x - 2.6, y - 2.6); ctx.lineTo(x + 2.6, y + 2.6); ctx.moveTo(x + 2.6, y - 2.6); ctx.lineTo(x - 2.6, y + 2.6); ctx.stroke(); }
+  });
+}
+function drawForce(p, dx) {
+  var F = force(Inow);
+  if (Math.abs(F) < 0.05) return;
+  var len = 10 + 34*Math.min(1, Math.log10(1 + Math.abs(F))/Math.log10(81)), d = F > 0 ? 1 : -1, x0 = 132 + dx;
+  arrow(x0, AX, x0 + d*len, AX, p.force, 3, 8);
+  ctx.fillStyle = p.force; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('F ' + fmtN(F), x0 + d*len/2, AX - 6);
+}
+function drawAmp(p) {
+  /* wires from the amplifier to the terminal */
+  ctx.strokeStyle = p.lead; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(60, AMP.y); ctx.lineTo(60, AMP.y - 8); ctx.lineTo(144, AX + 100);
+  ctx.moveTo(96, AMP.y); ctx.lineTo(96, AMP.y - 4); ctx.lineTo(148, AX + 100); ctx.stroke();
+  rect(AMP.x, AMP.y, AMP.w, AMP.h, p.boxBg, p.edge);
+  ctx.textAlign = 'left'; ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace';
+  ctx.fillText(mode === 'dc' ? 'BATTERY  \u2393' : (mode === 'tune' ? 'AMPLIFIER  \u266a' : 'AMPLIFIER  \u223f'), AMP.x + 6, AMP.y + 12);
+  ctx.font = '9px monospace';
+  var sub = mode === 'dc' ? 'I = ' + sgnTxt(I0, 1, 'A')
+          : (mode === 'tune' ? (tune.idx >= 0 ? tune.notes[tune.idx].name + '  ' + fmtF(tune.notes[tune.idx].f) : '...')
+          : fmtF(freq) + '  ' + Math.abs(I0).toFixed(1) + ' A');
+  ctx.fillText(sub, AMP.x + 6, AMP.y + 25);
+}
+function drawListener(p) {
+  var hx = 510, hy = AX - 18;
+  ctx.fillStyle = p.person;
+  ctx.beginPath(); ctx.moveTo(478, AX + 96); ctx.quadraticCurveTo(480, AX + 26, 512, AX + 20); ctx.quadraticCurveTo(546, AX + 26, 548, AX + 96); ctx.closePath(); ctx.fill();
+  ctx.fillRect(503, hy + 14, 14, 14);
+  ctx.beginPath(); ctx.arc(hx, hy, 22, 0, 2*Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(490, hy - 5); ctx.lineTo(481, hy + 5); ctx.lineTo(491, hy + 7); ctx.closePath(); ctx.fill();   /* nose */
+  ctx.strokeStyle = p.bg; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(hx + 4, hy + 1, 5, -1.3, 1.9); ctx.stroke();                                     /* ear */
+  ctx.fillStyle = p.bg; ctx.beginPath(); ctx.arc(hx - 12, hy - 6, 2, 0, 2*Math.PI); ctx.fill();            /* eye */
+  if (!reducedMotion) {
+    ctx.font = '16px serif'; ctx.textAlign = 'center';
+    for (var i = 0; i < floatNotes.length; i++) {
+      var q = floatNotes[i]; ctx.globalAlpha = Math.max(0, 1 - q.life/2.4); ctx.fillStyle = p.wave; ctx.fillText(q.ch, q.x, q.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+function lab(p, text, tx, ty, px, py, align) {
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = align || 'center';
+  ctx.fillText(text, tx, ty);
+  if (px !== undefined) { ctx.strokeStyle = p.dim; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(tx, ty + 2); ctx.lineTo(px, py); ctx.stroke(); }
+}
+function drawLabels(p, dx) {
+  if (!showLabels) return;
+  lab(p, 'back plate', 40, 46, 48, AX - 93);
+  lab(p, 'front plate', 116, 46, 106, AX - 93);
+  lab(p, 'voice coil', 170, 18, 104 + dx, AX - 31);
+  lab(p, 'air gap', 150, AX - 40, 113, AX - 27, 'left');
+  lab(p, 'cone', 212 + dx, AX - 50);
+  lab(p, 'surround', 262, AX - 126, undefined, undefined, 'left');
+  lab(p, 'spider', 178, AX + 80, 132, AX + 60);
+  lab(p, 'magnet', 76, AX + 104);
+  lab(p, 'listener', 513, AX + 108);
+  ctx.fillStyle = p.magTxt; ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.fillText('pole piece', 82, AX + 3);
+}
+function drawWarnings(p) {
+  var lines = [];
+  if (Bgap <= 0) lines.push('NO MAGNETIC FIELD: F = BI\u2113 = 0');
+  else if (Math.abs(I0) < 1e-9) lines.push('NO CURRENT: F = BI\u2113 = 0');
+  if (overNow()) lines.push('OVER-EXCURSION: the coil leaves the gap');
+  ctx.fillStyle = p.warn; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'right';
+  for (var i = 0; i < lines.length; i++) ctx.fillText(lines[i], CW - 8, 44 + 13*i);
+}
+function drawScope(p) {
+  var x0 = 10, y0 = SCOPE_Y, w = CW - 20, h = CH - SCOPE_Y - 8, mid = y0 + h/2, amp = h/2 - 12;
+  rect(x0, y0, w, h, p.scopeBg, p.edge);
+  ctx.strokeStyle = p.scopeGrid; ctx.lineWidth = 1; ctx.beginPath();
+  ctx.moveTo(x0 + 2, mid + 0.5); ctx.lineTo(x0 + w - 2, mid + 0.5);
+  for (var gx = x0 + 60; gx < x0 + w; gx += 60) { ctx.moveTo(gx + 0.5, y0 + 2); ctx.lineTo(gx + 0.5, y0 + h - 2); }
+  ctx.stroke();
+  var n = scopeBuf.length, dxs = w/SCOPE_N;
+  function trace(key, col) {
+    if (n < 2) return;
+    ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.beginPath();
+    for (var i = 0; i < n; i++) { var xx = x0 + w - 2 - (n - 1 - i)*dxs, yy = mid - clamp(scopeBuf[i][key], -1.1, 1.1)*amp; if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy); }
+    ctx.stroke();
+  }
+  trace('i', p.traceI); trace('x', p.traceX);
+  ctx.font = '9px monospace'; ctx.textAlign = 'left';
+  ctx.fillStyle = p.dim; ctx.fillText('SCOPE (slow motion)', x0 + 6, y0 + 11);
+  ctx.fillStyle = p.traceI; ctx.fillText('\u2014 current I(t)', x0 + 130, y0 + 11);
+  ctx.fillStyle = p.traceX; ctx.fillText('\u2014 cone position x(t), log scale', x0 + 240, y0 + 11);
+  if (n < 2) { ctx.fillStyle = p.dim; ctx.textAlign = 'center'; ctx.fillText('Press Play to record the traces', x0 + w/2, mid + 14); }
+}
+function redraw() {
+  var p = pal(), over = overNow();
+  ctx.clearRect(0, 0, CW, CH);
+  drawBackground(p); drawWaves(p); drawBasket(p); drawMagnet(p); drawFlux(p);
+  drawMoving(p, xv, over); drawGapField(p); drawCurrentSymbols(p, xv); drawForce(p, xv);
+  drawAmp(p); drawListener(p); drawLabels(p, xv); drawWarnings(p); drawScope(p);
+}
+
+/* ── Readouts & narration ── */
+function forceDirText() {
+  var F = force(I0);
+  if (Math.abs(F) < 1e-9) return 'none';
+  if (mode === 'dc') return F > 0 ? 'toward listener \u2192' : '\u2190 away from listener';
+  return 'alternates \u2190 \u2192';
+}
+function updateReadouts() {
+  var f = curFreq(), Fp = Math.abs(force(I0));
+  if (mode === 'dc') set('r_now', 'DC ' + sgnTxt(I0, 1, 'A'));
+  else if (mode === 'tune') set('r_now', tune.idx >= 0 ? 'note ' + tune.notes[tune.idx].name + ', ' + fmtF(f) : 'tune (between notes)');
+  else set('r_now', 'AC ' + fmtF(freq) + ', ' + Math.abs(I0).toFixed(1) + ' A peak');
+  set('r_F', fmtN(Fp) + (mode === 'dc' ? '' : ' peak'));
+  set('r_Fdir', forceDirText());
+  var X = currentX();
+  set('r_X', (mode === 'dc' ? 'held ' : '\u00b1 ') + fmtX(X));
+  set('r_f0', fmtF(f0()));
+  set('r_reg', mode === 'dc' ? 'static push' : (f/f0() < 0.7 ? 'below f\u2080 (stiffness)' : (f/f0() < 1.4 ? 'near f\u2080 (resonance)' : 'above f\u2080 (mass)')));
+  set('r_db', mode === 'dc' ? 'silent (no vibration)' : dbTxt(response(f, curIamp()).a));
+  var over = Math.abs(X) > XLIM, row = el('r_gaprow');
+  set('r_gap', over ? 'NO: over-excursion' : 'yes');
+  if (row) row.classList.toggle('spk_alert', over);
+}
+function statusText() {
+  var mat = MAGNETS[magKey], f = curFreq(), ell = wireLen(), Fp = Math.abs(force(I0)), s = '';
+  if (mode === 'dc') s += 'A steady DC current of ' + sgnTxt(I0, 1, 'A') + ' flows in the voice coil. ';
+  else if (mode === 'tune') s += 'The tune is playing' + (tune.idx >= 0 ? ', note ' + tune.notes[tune.idx].name + ' (' + fmtF(f) + ')' : '') + ', with a peak current of ' + Math.abs(I0).toFixed(1) + ' A. ';
+  else s += 'An AC signal of ' + fmtF(freq) + ' with a peak current of ' + Math.abs(I0).toFixed(1) + ' A drives the voice coil. ';
+  s += 'The coil has ' + nTurns + ' turns of radius ' + (rCoil*100).toFixed(1) + ' cm, so ' + ell.toFixed(1) + ' m of wire sits in a ' + Bgap.toFixed(2) + ' T radial field (' + mat.label + (flip ? ' magnet, flipped). ' : ' magnet). ');
+  if (Bgap <= 0 || Math.abs(I0) < 1e-9) s += 'With ' + (Bgap <= 0 ? 'no magnetic field' : 'no current') + ', the force F = BI\u2113 is zero: the cone does not move and there is no sound. ';
+  else if (mode === 'dc') { var Xd = force(I0)/kSus; s += 'The force F = BI\u2113 = ' + fmtN(Fp) + ' pushes the cone ' + (Xd > 0 ? 'toward' : 'away from') + ' the listener and holds it ' + fmtX(Xd) + ' from its rest position. A steady push makes no sound wave; only switching the current on or off makes a click. '; }
+  else { var r = response(f, I0); s += 'The peak force F = BI\u2113 = ' + fmtN(Fp) + ' changes direction with the current, so the cone vibrates with an amplitude of ' + fmtX(r.X) + '. The resonance frequency is ' + fmtF(f0()) + '; this frequency is ' + regionText(f) + '. Loudness: ' + dbTxt(r.a) + ' compared with the default speaker. '; }
+  if (overNow()) s += 'Warning: over-excursion. The coil moves out of the magnetic gap and the sound distorts. ';
+  s += running ? (mode === 'dc' ? 'Current switched on.' : 'Animation running in slow motion.') : 'Paused.';
+  return s;
+}
+var narrTimer = null;
+function updateNarration(prefix) {
+  if (!showNarr) return;
+  clearTimeout(narrTimer);
+  var go = function() { set('spkNarration', (prefix ? prefix + ' ' : '') + statusText()); };
+  if (prefix) go(); else narrTimer = setTimeout(go, 450);   /* slider drags are announced once they settle */
+}
+function updateCanvasDesc() {
+  var d = 'Loudspeaker cross-section. ' + MAGNETS[magKey].label + ' magnet, gap field ' + Bgap.toFixed(2) + ' T. Voice coil of ' + nTurns + ' turns, current ' + sgnTxt(I0, 1, 'A') + (mode === 'dc' ? ' DC' : ' peak AC') + '. Force ' + fmtN(force(I0)) + '. Cone motion ' + fmtX(currentX()) + '.';
+  set('spkCanvasDesc', d); canvas.setAttribute('aria-label', d);
+}
+function updateDerivedLabels() {
+  set('vLen', wireLen().toFixed(2) + ' m');
+  set('vBL', (Bgap*wireLen()).toFixed(2) + ' T\u00b7m');
+  set('vF0', fmtF(f0()));
+  set('vBdir', Bgap <= 0 ? 'nowhere (B = 0)' : (flip ? 'away from the axis' : 'toward the axis'));
+  set('diagLabel', 'CROSS-SECTION -- ' + MAGNETS[magKey].label + ' magnet, ' + nTurns + ' turns');
+}
+function updateButtons() {
+  var b = el('btnPlay');
+  if (b) { b.innerHTML = running && !tune.playing ? '&#10074;&#10074; Pause' : '&#9654; Play'; b.classList.toggle('spk_active', running && !tune.playing); }
+  var t = el('btnTune');
+  if (t) { t.innerHTML = tune.playing ? '&#9632; Stop tune' : '&#9834; Play tune'; t.classList.toggle('spk_active', tune.playing); }
+  var st = el('btnStep'); if (st) st.disabled = tune.playing;
+  var dcb = el('btnDC'), acb = el('btnAC'), m = tune.playing ? 'tune' : mode;
+  if (dcb) { dcb.classList.toggle('spk_srcon', m === 'dc'); dcb.setAttribute('aria-pressed', m === 'dc' ? 'true' : 'false'); }
+  if (acb) { acb.classList.toggle('spk_srcon', m === 'ac'); acb.setAttribute('aria-pressed', m === 'ac' ? 'true' : 'false'); }
+  var fs = el('slF'); if (fs) fs.disabled = (mode === 'dc') || tune.playing;
+}
+/* Redraws are merged to one per animation frame (as in the solenoid sim). */
+var pending = false;
+function scheduleUpdate(narrate) {
+  if (pending) return; pending = true;
+  var go = function() {
+    pending = false;
+    if (!running) advance(0);
+    updateDerivedLabels(); redraw(); updateReadouts(); updateCanvasDesc();
+    syncTone(); updateTuneGain();
+    if (narrate !== false) updateNarration();
+  };
+  if (window.requestAnimationFrame) window.requestAnimationFrame(go); else setTimeout(go, 16);
+}
+
+/* ── Controls ── */
+function onSlider(key, raw) {
+  var v = parseFloat(raw);
+  if      (key === 'I') { I0 = v; set('vI', sgnTxt(v, 1, 'A')); }
+  else if (key === 'F') { freq = freqFromSlider(v); set('vF', fmtF(freq)); }
+  else if (key === 'B') { Bgap = v; set('vB', v.toFixed(2) + ' T'); magKey = 'custom'; el('selMag').value = 'custom'; set('magDesc', MAGNETS.custom.desc); }
+  else if (key === 'N') { nTurns = Math.round(v); set('vN', String(nTurns)); }
+  else if (key === 'R') { rCoil = v/100; set('vR', v.toFixed(1) + ' cm'); }
+  else if (key === 'M') { mCone = v/1000; set('vM', Math.round(v) + ' g'); }
+  else if (key === 'K') { kSus = v; set('vK', Math.round(v) + ' N/m'); }
+  scheduleUpdate();
+}
+function onMagChange(val) {
+  magKey = val; set('magDesc', MAGNETS[magKey].desc);
+  if (MAGNETS[magKey].B !== null) { Bgap = MAGNETS[magKey].B; el('slB').value = Bgap; set('vB', Bgap.toFixed(2) + ' T'); }
+  scheduleUpdate();
+}
+function onFlip(on) { flip = !!on; scheduleUpdate(); }
+function setMode(m) {
+  if (tune.playing) stopTune(false);
+  if (m === mode) { updateButtons(); return; }
+  if (m === 'dc') { dcX = xv; dcV = 0; }
+  mode = m; prevS = 0;
+  updateButtons(); scheduleUpdate(false);
+  updateNarration(m === 'dc' ? 'DC mode: a battery drives a steady current.' : 'AC mode: an alternating signal drives the coil.');
+}
+function play() {
+  if (tune.playing) return;
+  if (soundOn && mode === 'ac') ensureAudio();
+  running = true; lastTs = null; startLoop();
+  updateButtons(); syncTone(); updateNarration(mode === 'dc' ? 'Battery connected.' : 'Playing.');
+}
+function pause(msg) {
+  running = false; stopLoop(); syncTone(); updateButtons();
+  updateNarration(msg || (mode === 'dc' ? 'Paused. The current stays on.' : 'Paused.'));
+}
+function togglePlay() { if (tune.playing) { stopTune(false); return; } if (running) pause(); else play(); }
+function step() {
+  if (tune.playing) return;
+  if (running) { running = false; stopLoop(); syncTone(); updateButtons(); }
+  advance(mode === 'dc' ? 0.1 : 1/(16*visFreq(freq)));
+  redraw(); updateReadouts();
+  updateNarration('Step.');
+}
+function onSound(on) {
+  soundOn = !!on;
+  if (soundOn) {
+    ensureAudio();
+    if (mode === 'ac' && !running && !tune.playing) { play(); return; }
+  }
+  syncTone();
+  updateNarration(soundOn ? (mode === 'dc' ? 'Sound on. A DC current gives no tone; switch to AC to hear the speaker.' : 'Sound on.') : 'Sound off.');
+}
+function onVolume(v) {
+  volume = clamp(parseFloat(v)/100, 0, 1); set('vVol', Math.round(volume*100) + '%');
+  if (master && actx) master.gain.setTargetAtTime(0.8*volume, actx.currentTime, 0.03);
+}
+function onOctave(v) { octave = parseInt(v, 10) || 4; if (tune.playing) { stopTune(false); playTune(); } }
+function stopAll() {
+  if (tune.playing) stopTune(false);
+  soundOn = false; var cs = el('chkSound'); if (cs) cs.checked = false;
+  stopTone(); updateNarration('Sound stopped.');
+}
+function onLabels(on) { showLabels = !!on; scheduleUpdate(false); }
+function onFlux(on) { showFlux = !!on; scheduleUpdate(false); }
+function resetAll(quiet) {
+  if (tune.playing) stopTune(false);
+  running = false; stopLoop();
+  mode = 'ac'; I0 = DEF.I0; freq = freqFromSlider(DEF.fs); magKey = DEF.mag; Bgap = MAGNETS[DEF.mag].B; flip = false;
+  nTurns = DEF.N; rCoil = DEF.r; mCone = DEF.m; kSus = DEF.k; soundOn = false; volume = DEF.vol/100; octave = DEF.oct;
+  phase = 0; xv = 0; Inow = 0; dcX = 0; dcV = 0; prevS = 0; waves = []; floatNotes = []; scopeBuf = [];
+  var vals = { 'slI': DEF.I0, 'slF': DEF.fs, 'slB': Bgap, 'slN': DEF.N, 'slR': DEF.r*100, 'slM': DEF.m*1000, 'slK': DEF.k, 'slVol': DEF.vol };
+  for (var id in vals) { var e = el(id); if (e) e.value = vals[id]; }
+  el('selMag').value = DEF.mag; el('selOct').value = String(DEF.oct);
+  el('chkFlip').checked = false; el('chkSound').checked = false;
+  set('vI', sgnTxt(I0, 1, 'A')); set('vF', fmtF(freq)); set('vB', Bgap.toFixed(2) + ' T');
+  set('vN', String(nTurns)); set('vR', (rCoil*100).toFixed(1) + ' cm'); set('vM', Math.round(mCone*1000) + ' g');
+  set('vK', kSus + ' N/m'); set('vVol', Math.round(volume*100) + '%'); set('magDesc', MAGNETS[magKey].desc);
+  if (master && actx) master.gain.setTargetAtTime(0.8*volume, actx.currentTime, 0.03);
+  stopTone(); updateButtons(); scheduleUpdate(false);
+  updateNarration(quiet === true ? 'Ready. Press Play to drive the speaker, tick "Hear the speaker" to listen, or press Play tune.' : 'Reset to the default speaker.');
+}
+
+/* ── Canvas interaction: hover to identify parts ── */
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function describePoint(x, y) {
+  var dx = xv, ay = Math.abs(y - AX), up = y < AX;
+  if (y >= SCOPE_Y) return 'Scope: the amber trace is the coil current I(t); the green trace is the cone position x(t) (log scale), both in slow motion.';
+  if (x >= AMP.x && x <= AMP.x + AMP.w && y >= AMP.y && y <= AMP.y + AMP.h) return mode === 'dc' ? 'Battery: drives a steady current of ' + sgnTxt(I0, 1, 'A') + ' through the voice coil.' : 'Amplifier: drives an alternating current through the voice coil through the two leads.';
+  if (x >= 95 + dx && x <= 113 + dx && ay >= 21 && ay <= 31) return 'Voice coil: ' + nTurns + ' turns, ' + wireLen().toFixed(2) + ' m of wire. The force on it is F = BI\u2113 = ' + fmtN(force(I0)) + (mode === 'dc' ? '.' : ' (peak).');
+  if (x >= 96 && x <= 112 && ay >= 20 && ay <= 32) return 'Air gap: radial field B = ' + Bgap.toFixed(2) + ' T, pointing ' + (Bgap <= 0 ? 'nowhere' : (flip ? 'away from' : 'toward') + ' the axis') + '. The coil current crosses this field at right angles.';
+  if (x >= 56 && x <= 112 && ay < 20) return 'Pole piece (soft steel): guides the magnet\'s flux to the inside of the gap.';
+  if (x >= 40 && x < 56 && ay <= 92) return 'Back plate (soft steel): closes the magnetic circuit behind the magnet.';
+  if (x >= 56 && x < 96 && ay >= 40 && ay <= 92) return 'Ring magnet (' + MAGNETS[magKey].label + '): magnetized along the axis' + (Bgap > 0 ? ', ' + (flip ? 'N' : 'S') + ' pole at the back, ' + (flip ? 'S' : 'N') + ' pole at the front plate.' : '. (No magnet selected.)');
+  if (x >= 96 && x <= 112 && ay >= 32 && ay <= 92) return 'Front plate (soft steel): carries the flux from the magnet to the outside of the gap.';
+  var wall = 26 + (x - 150 - dx)*86/100;
+  if (x >= 136 + dx && x <= 256 + dx && Math.abs(ay - wall) < 7) return 'Cone: moves with the coil and pushes the air. Mass of cone + coil = ' + Math.round(mCone*1000) + ' g.';
+  if (x >= 250 && x <= 272 && ay >= 104 && ay <= 126) return 'Surround: the flexible outer edge that lets the cone move and seals the air.';
+  if (x >= 118 && x <= 140 && ay >= 26 && ay <= 93) return 'Spider: the corrugated suspension that centres the coil and acts as a spring (k = ' + Math.round(kSus) + ' N/m).';
+  if (x >= 470) return 'Listener: hears the pressure waves from the cone. Loudness: ' + (mode === 'dc' ? 'silent (DC)' : dbTxt(response(curFreq(), I0).a)) + '.';
+  if (x > 266) return 'Air: the cone sends out compressions and rarefactions. Their spacing (wavelength) shrinks as the frequency rises.';
+  return 'Frame (basket): holds the magnet, the suspension and the cone together.' + (up ? '' : ' The two leads bring the current to the coil.');
+}
+canvas.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); set('spkHoverReadout', describePoint(c[0], c[1])); });
+canvas.addEventListener('mouseleave', function() { set('spkHoverReadout', 'Hover over a part of the speaker to identify it'); });
+canvas.addEventListener('touchstart', function(e) { var t = e.touches[0], c = canvasXY(t.clientX, t.clientY); set('spkHoverReadout', describePoint(c[0], c[1])); }, { passive: true });
+
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('spk_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+  ROOT.classList.toggle('spk_hc', hcMode); ROOT.classList.toggle('spk_lm', lightMode); ROOT.classList.toggle('spk_cb', cbMode);
+  setBtnOn('btnHC', hcMode); setBtnOn('btnLight', lightMode); setBtnOn('btnCB', cbMode); setBtnOn('btnNarr', showNarr);
+  var nb = el('btnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+  var box = el('spkNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate(false); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(''); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e = el('spkSrAnnounce'); if (!e) return; e.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e.textContent = msg; }, 60); }
+
+/* ── Keyboard shortcuts ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+  var tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  switch (e.key) {
+    case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+    case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+    case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+    case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+    case 'p': case 'P': togglePlay(); e.preventDefault(); break;
+    case 't': case 'T': playTune(); e.preventDefault(); break;
+  }
+});
+/* stop the sound if the page is hidden, so no tone is left hanging */
+document.addEventListener('visibilitychange', function() { if (document.hidden) { if (tune.playing) stopTune(false); else if (running) pause('Paused because the page was hidden.'); } });
+if (reducedMotion) { var mn = el('spkMotionNotice'); if (mn) mn.style.display = 'block'; }
+
+/* ── Boot ── */
+applyDisplay();
+resetAll(true);
+return { onSlider: onSlider, onMagChange: onMagChange, onFlip: onFlip, setMode: setMode, togglePlay: togglePlay, step: step, resetAll: resetAll,
+         onSound: onSound, onVolume: onVolume, onOctave: onOctave, playTune: playTune, stopAll: stopAll, onLabels: onLabels, onFlux: onFlux,
+         toggleHC: toggleHC, toggleLight: toggleLight, toggleCB: toggleCB, toggleNarr: toggleNarr };
+};
+</script>
+<script>
+var spkSim = new spkGen();
+</script>
+</main>
+</body>
+</html>

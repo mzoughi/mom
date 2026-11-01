@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Fermat's Principle: the Path of Least Time</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, Fermat's principle, least time, Snell's law, refraction, reflection, lifeguard problem, Huygens, wavefronts, optical path, lesson, scientific">
+<meta name="description" content="Interactive simulation of Fermat's principle: least time, the lifeguard problem, a race of all paths, and wavefronts.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="fpRoot" class="fp_root" role="region" aria-label="Fermat's principle: light takes the path of least time">
+<div class="fp_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="fp_a11ybtn" id="fpBtnHC" onclick="fpSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fp_a11ybtn" id="fpBtnLM" onclick="fpSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fp_a11ybtn" id="fpBtnCB" onclick="fpSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fp_a11ybtn fp_a11yon" id="fpBtnNR" onclick="fpSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="fp_header"><p class="fp_h1">Fermat's Principle: the Path of Least Time</p><p class="fp_sub">least time &middot; the lifeguard &middot; all paths race &middot; wavefronts &middot; Huygens</p></div>
+<div class="fp_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="fp_tab" id="fpT0" aria-selected="true" onclick="fpSim.tab(0)">Least time</button>
+<button type="button" role="tab" class="fp_tab" id="fpT1" aria-selected="false" onclick="fpSim.tab(1)">Lifeguard</button>
+<button type="button" role="tab" class="fp_tab" id="fpT2" aria-selected="false" onclick="fpSim.tab(2)">All paths</button>
+<button type="button" role="tab" class="fp_tab" id="fpT3" aria-selected="false" onclick="fpSim.tab(3)">Wavefronts</button>
+<button type="button" role="tab" class="fp_tab" id="fpT4" aria-selected="false" onclick="fpSim.tab(4)">Huygens</button>
+</div>
+<div class="fp_diag"><div class="fp_dlabel"><b id="fpLab1">THE PATH</b><span id="fpHint"></span></div>
+<canvas id="fpSide" width="780" height="480" role="img" aria-label="The two media, the start and end points, and the path."></canvas></div>
+<div class="fp_diag" id="fpPlotBox"><div class="fp_dlabel"><b id="fpLab2">TIME AGAINST THE CROSSING POINT</b></div><canvas id="fpPlot" width="780" height="230" role="img" aria-label="Graph of the travel time against the crossing point."></canvas></div>
+<div class="fp_bbar" id="fpBtns"></div>
+<div class="fp_panels">
+<div class="fp_panel"><div class="fp_ptitle">Settings</div><div class="fp_pbody" id="fpCtl"></div></div>
+<div class="fp_panel"><div class="fp_ptitle">Readout</div><div class="fp_pbody fp_read" id="fpRead"></div></div>
+</div>
+<div class="fp_eqs" id="fpEqs"></div>
+<div id="fpNar" class="fp_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="fp_descwrap">
+<button type="button" class="fp_descbtn" id="fpDescBtn" aria-expanded="false" aria-controls="fpDesc" onclick="fpSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="fp_desc" id="fpDesc" role="region" aria-labelledby="fpDescBtn" style="display:none">
+<p>Fermat's principle: <b>light travels between two points along the path that takes the least time</b> (more precisely, a path whose time does not change, to first order, when the path is varied a little). In a medium of index of refraction `n` light travels at `v = c/n`, so the time along a path is its optical length divided by `c`: `t = (n_1 L_1 + n_2 L_2)/c`.</p>
+<p><b>Least time.</b> Light goes from A, in medium 1, to B, in medium 2, crossing the boundary at P. Drag P: the time `t = L_1/v_1 + L_2/v_2` is smallest at one crossing point. There the path obeys Snell's law,</p>
+<p class="fp_eq">`(sin theta_1)/v_1 = (sin theta_2)/v_2`,&nbsp;&nbsp; that is,&nbsp; `n_1 sin theta_1 = n_2 sin theta_2`.</p>
+<p>The straight line from A to B is shorter, but it spends more of its length in the slow medium: it is not the fastest.</p>
+<p><b>The lifeguard.</b> The same problem in everyday form: a lifeguard runs fast on sand and swims slowly in water. The fastest route enters the water closer to the swimmer than the straight line does, so that less of it is swum; the best entry point obeys the same law, `(sin theta_1)/v_"run" = (sin theta_2)/v_"swim"`. Race a ghost that takes the best path.</p>
+<p><b>All paths race.</b> Send out many paths at once, each crossing the boundary at a different point, and let a dot travel along each at the speed of its medium. The first to arrive follows Snell's law; near it, the arrival times hardly change, which is why the path is stationary. With a mirror instead of a boundary, the least-time path reflects at equal angles: the law of reflection.</p>
+<p><b>Huygens.</b> Huygens' principle: every point of a wavefront is the source of a small spherical wavelet, and a moment later the new wavefront is their envelope. In the air the wavelets all grow at `v_1`, so the plane front rebuilds itself and moves on. As the front reaches the boundary, each point it touches starts a wavelet in the water, growing only at `v_2`. While the end C of the front travels `CB = v_1 T` to the boundary, the wavelet from A grows to `AN = v_2 T`: the new front BN is turned, and `(sin theta_1)/(sin theta_2) = (CB)/(AN) = v_1/v_2`. The dashed line shows where the front would be if the light did not slow down.</p>
+<p><b>Wavefronts.</b> The wave picture: a beam of plane waves slows down as it enters the denser medium, its wavelength shrinks, `lambda_2 = lambda_1 n_1/n_2`, and the wavefronts turn. Huygens' construction shows why: while one end of a wavefront travels `h_1 = v_1 Delta t` to the boundary, the wavelet from the other end travels only `h_2 = v_2 Delta t` in the slower medium, so that `(sin theta_1)/(sin theta_2) = h_1/h_2 = v_1/v_2 = n_2/n_1`. Past the critical angle there is no transmitted wave: total internal reflection.</p>
+</div></div>
+</div><!-- #fpRoot -->
+<style>
+#fpRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#fpRoot * { box-sizing:border-box; }
+#fpRoot.fp_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#fpRoot.fp_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#fpRoot .fp_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#fpRoot .fp_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#fpRoot .fp_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#fpRoot .fp_header { text-align:center; }
+#fpRoot .fp_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#fpRoot .fp_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#fpRoot .fp_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#fpRoot .fp_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#fpRoot .fp_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#fpRoot .fp_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#fpRoot .fp_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#fpRoot .fp_dlabel b { color:var(--c-accent); }
+#fpRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#fpRoot .fp_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#fpRoot .fp_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#fpRoot .fp_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#fpRoot .fp_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#fpRoot .fp_btn:hover { border-color:var(--c-accent); }
+#fpRoot .fp_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#fpRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#fpRoot .fp_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#fpRoot .fp_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#fpRoot .fp_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#fpRoot .fp_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#fpRoot .fp_ctrl { display:flex; flex-direction:column; gap:3px; }
+#fpRoot .fp_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#fpRoot .fp_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#fpRoot .fp_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#fpRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#fpRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#fpRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#fpRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#fpRoot .fp_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#fpRoot .fp_rkey { color:var(--c-dim); }
+#fpRoot .fp_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#fpRoot .fp_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#fpRoot .fp_eqs b { color:var(--c-val); }
+#fpRoot .fp_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#fpRoot .fp_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#fpRoot .fp_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#fpRoot .fp_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#fpRoot .fp_desc p { margin:0 0 9px; }
+#fpRoot .fp_eq { text-align:center; font-size:1rem; }
+#fpRoot button:focus-visible, #fpRoot input:focus-visible, #fpRoot select:focus-visible, #fpRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #fpRoot .fp_row2, #fpRoot .fp_panels { grid-template-columns:minmax(0,1fr); } #fpRoot .fp_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #fpRoot input[type=range] { height:8px; } #fpRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #fpRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #fpRoot .fp_a11ybtn { min-height:40px; } #fpRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Units: m and s (light mode: ns). The boundary is y = 0; medium 1 above, medium 2 below. The time along A -> P -> B is |AP|/v1 + |PB|/v2;
+its minimum (golden-section search, the time is convex in P) obeys sin(theta1)/v1 = sin(theta2)/v2. No dollar signs or backticks in the code.
+-->
+<script>
+var fpSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('fpRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var SD = hi('fpSide'), PL = hi('fpPlot'), DEG = Math.PI/180, C = 0.299792458;   /* c in m/ns */
+var S = { tab:0, eqs:true,
+  a:{ mode:'light', n1:1.00, n2:1.50, v1:20, v2:10, ax:-1.6, ay:1.1, bx:1.5, by:-1.0, px:0.4, trial:true },
+  l:{ vr:7, vs:1.5, px:-5, ax:-22, ay:14, bx:14, by:-16, tUser:null, tBest:null, run:null },
+  r:{ mode:'refraction', n1:1.0, n2:1.5, N:41, t:0, running:false, done:false, arr:[] },
+  w:{ n1:1.0, n2:1.5, th:40, t:0, running:true, huy:true },
+  h:{ n1:1.0, n2:1.5, th:40, N:4, tf:-1, running:false, air:true, wat:true, refl:false } };
+var th = { hc:false, lm:false, cb:false, nr:true };
+function pal(){
+  if (th.hc) return { m1:'#000', m2:'#101c2c', line:'#fff', text:'#fff', path:'#ffff00', best:'#00ff88', trial:'rgba(255,255,255,0.25)', a:'#00ffff', b:'#ff66ff', grid:'rgba(255,255,255,0.2)', t1:'#00ffff', t2:'#ff66ff', tt:'#ffff00', sand:'#222', sea:'#04223a' };
+  var p = { m1:'#eef4fa', m2:'#cfe3ef', line:'#2c4a66', text:'#1d2a36', path:'#e07a00', best:'#12805a', trial:'rgba(60,80,110,0.25)', a:'#1f5fd6', b:'#d62828', grid:'rgba(0,0,0,0.12)', t1:'#1f5fd6', t2:'#2ca02c', tt:'#e07a00', sand:'#efd9a0', sea:'#7ec3e0' };
+  if (th.cb){ p.path = '#e69f00'; p.best = '#009e73'; p.a = '#0072b2'; p.b = '#d55e00'; p.t1 = '#0072b2'; p.t2 = '#009e73'; p.tt = '#e69f00'; }
+  return p;
+}
+function T(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function dot(g, x, y, r, col){ g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, 2*Math.PI); g.fill(); }
+function golden(f, a, b){ var G = 0.381966011, x1 = a + G*(b - a), x2 = b - G*(b - a), f1 = f(x1), f2 = f(x2); for (var i=0; i<90; i++){ if (f1 < f2){ b = x2; x2 = x1; f2 = f1; x1 = a + G*(b - a); f1 = f(x1); } else { a = x1; x1 = x2; f1 = f2; x2 = b - G*(b - a); f2 = f(x2); } } return (a + b)/2; }
+function f2(v, n){ return (+v).toFixed(n === undefined ? 2 : n); }
+/* ══════════ tab 0: least time ══════════ */
+var W0 = { S:120, X0:390, Y0:190 };
+function X0f(x){ return W0.X0 + x*W0.S; } function Y0f(y){ return W0.Y0 - y*W0.S; }
+function speeds(){ var a = S.a; return a.mode === 'light' ? { v1:C/a.n1, v2:C/a.n2, u:'ns' } : { v1:a.v1, v2:a.v2, u:'s' }; }
+function times(px){ var a = S.a, sp = speeds(), L1 = Math.hypot(px - a.ax, a.ay), L2 = Math.hypot(a.bx - px, a.by); return { L1:L1, L2:L2, t1:L1/sp.v1, t2:L2/sp.v2, t:L1/sp.v1 + L2/sp.v2 }; }
+function xBest(){ var a = S.a; return golden(function(x){ return times(x).t; }, Math.min(a.ax, a.bx) - 1, Math.max(a.ax, a.bx) + 1); }
+function angles(px){ var a = S.a; return { th1:Math.atan2(Math.abs(px - a.ax), a.ay), th2:Math.atan2(Math.abs(a.bx - px), -a.by) }; }
+function drawSide0(){
+  var g = SD.g, W = SD.W, H = SD.H, p = pal(), a = S.a, sp = speeds(), xb = xBest();
+  g.fillStyle = p.m1; g.fillRect(0, 0, W, Y0f(0)); g.fillStyle = p.m2; g.fillRect(0, Y0f(0), W, H - Y0f(0)); seg(g, 0, Y0f(0), W, Y0f(0), p.line, 2);
+  T(g, a.mode === 'light' ? 'medium 1: n\u2081 = ' + f2(a.n1) + ', v\u2081 = c/n\u2081' : 'medium 1: v\u2081 = ' + f2(a.v1, 1) + ' m/s', 10, Y0f(0) - 12, p.text); T(g, a.mode === 'light' ? 'medium 2: n\u2082 = ' + f2(a.n2) + ', v\u2082 = c/n\u2082' : 'medium 2: v\u2082 = ' + f2(a.v2, 1) + ' m/s', 10, Y0f(0) + 14, p.text);
+  if (a.trial){ var tb = times(xb).t; for (var k=-12; k<=12; k++){ var x = xb + k*0.25; var tt = times(x).t; var al = Math.max(0.08, 0.5 - (tt - tb)/tb*6); g.strokeStyle = 'rgba(60,80,110,' + al.toFixed(2) + ')'; if (th.hc) g.strokeStyle = 'rgba(255,255,255,' + al.toFixed(2) + ')'; g.lineWidth = 1; g.beginPath(); g.moveTo(X0f(a.ax), Y0f(a.ay)); g.lineTo(X0f(x), Y0f(0)); g.lineTo(X0f(a.bx), Y0f(a.by)); g.stroke(); } }
+  seg(g, X0f(a.ax), Y0f(a.ay), X0f(a.bx), Y0f(a.by), p.grid, 1.2, [3, 4]); T(g, 'straight line', X0f((a.ax + a.bx)/2) + 6, Y0f((a.ay + a.by)/2) - 10, p.text, 'left', '11px Arial');
+  seg(g, X0f(a.ax), Y0f(a.ay), X0f(xb), Y0f(0), p.best, 1.5, [6, 4]); seg(g, X0f(xb), Y0f(0), X0f(a.bx), Y0f(a.by), p.best, 1.5, [6, 4]);
+  /* the path through P, with the normal and the angles */
+  var A = angles(a.px); seg(g, X0f(a.ax), Y0f(a.ay), X0f(a.px), Y0f(0), p.path, 3); seg(g, X0f(a.px), Y0f(0), X0f(a.bx), Y0f(a.by), p.path, 3);
+  seg(g, X0f(a.px), Y0f(0) - 90, X0f(a.px), Y0f(0) + 90, p.text, 1, [2, 3]);
+  g.strokeStyle = p.path; g.lineWidth = 1.5; g.beginPath(); g.arc(X0f(a.px), Y0f(0), 42, -Math.PI/2, -Math.PI/2 - Math.sign(a.px - a.ax)*A.th1, a.px > a.ax); g.stroke();
+  g.beginPath(); g.arc(X0f(a.px), Y0f(0), 42, Math.PI/2, Math.PI/2 - Math.sign(a.bx - a.px)*A.th2, a.bx > a.px); g.stroke();
+  T(g, '\u03B8\u2081 = ' + f2(A.th1/DEG, 1) + '\u00B0', X0f(a.px) + (a.px > a.ax ? -56 : 10), Y0f(0) - 54, p.path, a.px > a.ax ? 'right' : 'left', 'bold 12px Arial'); T(g, '\u03B8\u2082 = ' + f2(A.th2/DEG, 1) + '\u00B0', X0f(a.px) + (a.bx > a.px ? 10 : -56), Y0f(0) + 56, p.path, a.bx > a.px ? 'left' : 'right', 'bold 12px Arial');
+  dot(g, X0f(a.ax), Y0f(a.ay), 8, p.a); T(g, 'A', X0f(a.ax) - 14, Y0f(a.ay), p.a, 'right', 'bold 14px Arial'); dot(g, X0f(a.bx), Y0f(a.by), 8, p.b); T(g, 'B', X0f(a.bx) + 14, Y0f(a.by), p.b, 'left', 'bold 14px Arial');
+  dot(g, X0f(a.px), Y0f(0), 7, p.path); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(X0f(a.px), Y0f(0), 7, 0, 2*Math.PI); g.stroke(); T(g, 'P', X0f(a.px) + 10, Y0f(0) - 12, p.path, 'left', 'bold 13px Arial');
+  T(g, 'dashed green: the least-time path \u00B7 drag A, B or P', W - 8, H - 10, p.text, 'right', '11px Arial');
+}
+function drawPlot0(){
+  var g = PL.g, W = PL.W, H = PL.H, p = pal(), a = S.a, sp = speeds(), xb = xBest(), x0 = -3, x1 = 3, Xl = 56, Xr = W - 18, Yb = H - 34, Yt = 14, tb = times(xb).t;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  var tmax = Math.max(times(x0).t, times(x1).t)*1.02;
+  function X(x){ return Xl + (x - x0)/(x1 - x0)*(Xr - Xl); } function Y(t){ return Yb - t/tmax*(Yb - Yt); }
+  for (var x=-3; x<=3; x+=0.5){ seg(g, X(x), Yb, X(x), Yt, p.grid, 1); T(g, f2(x, 1), X(x), Yb + 12, p.text, 'center', '11px Arial'); }
+  for (var k=0; k<=4; k++){ var tv = tmax*k/4; seg(g, Xl, Y(tv), Xr, Y(tv), p.grid, 1); T(g, f2(tv, 2), Xl - 6, Y(tv), p.text, 'right', '10px Arial'); }
+  [['t1', p.t1, 't\u2081 = L\u2081/v\u2081'], ['t2', p.t2, 't\u2082 = L\u2082/v\u2082'], ['t', p.tt, 't = t\u2081 + t\u2082']].forEach(function(q, n){ g.strokeStyle = q[1]; g.lineWidth = n === 2 ? 2.6 : 1.6; g.setLineDash(n === 2 ? [] : [5, 3]); g.beginPath();
+    for (var i=0; i<=300; i++){ var xx = x0 + (x1 - x0)*i/300, v = times(xx)[q[0]]; if (i) g.lineTo(X(xx), Y(v)); else g.moveTo(X(xx), Y(v)); } g.stroke(); g.setLineDash([]); T(g, q[2], Xr - 4, Yt + 8 + 14*n, q[1], 'right', 'bold 11px Arial'); });
+  seg(g, X(xb), Yb, X(xb), Y(tb), p.best, 1.5, [3, 3]); dot(g, X(xb), Y(tb), 5, p.best); T(g, 'least time ' + f2(tb, 3) + ' ' + sp.u, X(xb), Y(tb) + 14, p.best, 'center', 'bold 11px Arial');
+  var tc = times(a.px).t; dot(g, X(a.px), Y(tc), 6, p.path); T(g, 'P', X(a.px) + 8, Y(tc) - 8, p.path, 'left', 'bold 12px Arial');
+  T(g, 'crossing point x of P (m)', (Xl + Xr)/2, H - 8, p.text, 'center', '11px Arial'); g.save(); g.translate(14, (Yb + Yt)/2); g.rotate(-Math.PI/2); T(g, 'time (' + sp.u + ')', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+}
+/* ══════════ tab 1: the lifeguard ══════════ */
+var W1 = { S:11, X0:400, Y0:196 };   /* the beach: 60 m across, the swimmer 16 m out */
+function X1f(x){ return W1.X0 + x*W1.S; } function Y1f(y){ return W1.Y0 - y*W1.S; }
+function lgTime(px){ var l = S.l; return Math.hypot(px - l.ax, l.ay)/l.vr + Math.hypot(l.bx - px, l.by)/l.vs; }
+function lgBest(){ var l = S.l; return golden(lgTime, Math.min(l.ax, l.bx), Math.max(l.ax, l.bx)); }
+function lgPos(px, t){ var l = S.l, L1 = Math.hypot(px - l.ax, l.ay), t1 = L1/l.vr; if (t <= t1){ var f = t/t1; return { x:l.ax + (px - l.ax)*f, y:l.ay*(1 - f), done:false }; }
+  var L2 = Math.hypot(l.bx - px, l.by), t2 = L2/l.vs; if (t >= t1 + t2) return { x:l.bx, y:l.by, done:true }; var f2_ = (t - t1)/t2; return { x:px + (l.bx - px)*f2_, y:l.by*f2_, done:false }; }
+function drawSide1(){
+  var g = SD.g, W = SD.W, H = SD.H, p = pal(), l = S.l, xb = lgBest();
+  g.fillStyle = p.sand; g.fillRect(0, 0, W, Y1f(0)); g.fillStyle = p.sea; g.fillRect(0, Y1f(0), W, H - Y1f(0));
+  for (var i=0; i<6; i++){ g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1.5; g.beginPath(); for (var x=0; x<=W; x+=8){ var y = Y1f(0) + 25 + i*28 + 4*Math.sin(x/30 + i); if (x) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke(); }
+  seg(g, 0, Y1f(0), W, Y1f(0), p.line, 2); T(g, 'sand: run at ' + f2(l.vr, 1) + ' m/s', 10, Y1f(0) - 12, p.text); T(g, 'water: swim at ' + f2(l.vs, 1) + ' m/s', 10, Y1f(0) + 14, p.text);
+  seg(g, X1f(l.ax), Y1f(l.ay), X1f(l.bx), Y1f(l.by), p.grid, 1.2, [3, 4]);
+  seg(g, X1f(l.ax), Y1f(l.ay), X1f(xb), Y1f(0), p.best, 1.5, [6, 4]); seg(g, X1f(xb), Y1f(0), X1f(l.bx), Y1f(l.by), p.best, 1.5, [6, 4]);
+  seg(g, X1f(l.ax), Y1f(l.ay), X1f(l.px), Y1f(0), p.path, 3); seg(g, X1f(l.px), Y1f(0), X1f(l.bx), Y1f(l.by), p.path, 3);
+  dot(g, X1f(l.px), Y1f(0), 7, p.path); T(g, 'your entry point', X1f(l.px), Y1f(0) - 16, p.path, 'center', 'bold 12px Arial');
+  /* the swimmer, the lifeguard, the ghost on the best path */
+  var tNow = l.run ? (performance.now() - l.run.t0)/1000*l.run.speed : null;
+  var me = tNow === null ? { x:l.ax, y:l.ay } : lgPos(l.px, tNow), gh = tNow === null ? { x:l.ax, y:l.ay } : lgPos(xb, tNow);
+  if (tNow !== null){ g.globalAlpha = 0.6; person(g, X1f(gh.x), Y1f(gh.y), p.best, gh.y < 0); g.globalAlpha = 1; }
+  person(g, X1f(me.x), Y1f(me.y), p.path, me.y < 0);
+  dot(g, X1f(l.bx), Y1f(l.by), 9, p.b); T(g, 'help!', X1f(l.bx) + 14, Y1f(l.by), p.b, 'left', 'bold 13px Arial');
+  T(g, 'lifeguard', X1f(l.ax) - 12, Y1f(l.ay) - 18, p.text, 'center'); T(g, 'dashed green: the fastest path', W - 8, H - 10, p.text, 'right', '11px Arial');
+  if (tNow !== null) T(g, 't = ' + f2(tNow, 1) + ' s', W - 10, 16, p.text, 'right', 'bold 14px monospace');
+}
+function person(g, x, y, col, swim){ g.fillStyle = col; g.beginPath(); g.arc(x, y - (swim ? 0 : 14), 6, 0, 2*Math.PI); g.fill(); if (!swim){ g.fillRect(x - 3, y - 8, 6, 12); g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 3, y + 4); g.lineTo(x - 6, y + 12); g.moveTo(x + 3, y + 4); g.lineTo(x + 6, y + 12); g.stroke(); } else { g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 10, 0.2, Math.PI - 0.2); g.stroke(); } }
+function race(){
+  var l = S.l, xb = lgBest(); l.tUser = lgTime(l.px); l.tBest = lgTime(xb); var dur = Math.max(l.tUser, l.tBest); l.run = { t0:performance.now(), speed:Math.max(1, dur/6) };
+  narrate('Race! Your lifeguard enters the water at ' + f2(l.px, 1) + ' metres; the ghost takes the fastest path, entering at ' + f2(xb, 1) + ' metres.');
+  (function step(){ if (!l.run) return; var tN = (performance.now() - l.run.t0)/1000*l.run.speed; schedule();
+    if (tN < dur + 0.3) requestAnimationFrame(step); else { l.run = null; schedule(); var d = l.tUser - l.tBest; narrate('Your path took ' + f2(l.tUser, 1) + ' seconds; the fastest takes ' + f2(l.tBest, 1) + ' seconds. ' + (d < 0.05 ? 'You found the fastest path!' : 'You were ' + f2(d, 1) + ' seconds slower: ' + (l.px < xb ? 'enter the water farther along, and swim less.' : 'enter the water sooner: running that far costs more than it saves.'))); } })();
+}
+function drawPlot1(){
+  var g = PL.g, W = PL.W, H = PL.H, p = pal(), l = S.l, xb = lgBest(), x0 = Math.min(l.ax, l.bx) - 4, x1 = Math.max(l.ax, l.bx) + 4, Xl = 56, Xr = W - 18, Yb = H - 34, Yt = 14;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  var tmax = Math.max(lgTime(x0), lgTime(x1))*1.02, tmin = lgTime(xb)*0.9; function X(x){ return Xl + (x - x0)/(x1 - x0)*(Xr - Xl); } function Y(t){ return Yb - (t - tmin)/(tmax - tmin)*(Yb - Yt); }
+  for (var x=Math.ceil(x0/5)*5; x<=x1; x+=5){ seg(g, X(x), Yb, X(x), Yt, p.grid, 1); T(g, String(x), X(x), Yb + 12, p.text, 'center', '11px Arial'); }
+  for (var k=0; k<=4; k++){ var tv = tmin + (tmax - tmin)*k/4; seg(g, Xl, Y(tv), Xr, Y(tv), p.grid, 1); T(g, f2(tv, 1), Xl - 6, Y(tv), p.text, 'right', '10px Arial'); }
+  g.strokeStyle = p.tt; g.lineWidth = 2.4; g.beginPath(); for (var i=0; i<=300; i++){ var xx = x0 + (x1 - x0)*i/300; if (i) g.lineTo(X(xx), Y(lgTime(xx))); else g.moveTo(X(xx), Y(lgTime(xx))); } g.stroke();
+  dot(g, X(xb), Y(lgTime(xb)), 5, p.best); T(g, 'fastest: ' + f2(lgTime(xb), 2) + ' s', X(xb), Y(lgTime(xb)) + 14, p.best, 'center', 'bold 11px Arial');
+  dot(g, X(l.px), Y(lgTime(l.px)), 6, p.path); T(g, 'you', X(l.px) + 8, Y(lgTime(l.px)) - 8, p.path, 'left', 'bold 11px Arial');
+  T(g, 'entry point along the shore (m)', (Xl + Xr)/2, H - 8, p.text, 'center', '11px Arial'); g.save(); g.translate(14, (Yb + Yt)/2); g.rotate(-Math.PI/2); T(g, 'time to the swimmer (s)', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+}
+/* ══════════ tab 2: all paths race ══════════ */
+var RA = { ax:-1.8, ay:1.2, bx:1.6, by:-1.1 };
+function rPaths(){
+  var r = S.r, refl = r.mode === 'reflection', B = refl ? { x:1.6, y:1.0 } : { x:RA.bx, y:RA.by }, v1 = C/r.n1, v2 = refl ? v1 : C/r.n2, out = [];
+  for (var k=0; k<r.N; k++){ var x = -2.6 + 5.2*k/(r.N - 1), L1 = Math.hypot(x - RA.ax, RA.ay), L2 = Math.hypot(B.x - x, B.y); out.push({ x:x, L1:L1, L2:L2, t1:L1/v1, t:L1/v1 + L2/v2, B:B, v1:v1, v2:v2 }); }
+  return out;
+}
+function rPos(q, t){ var A = { x:RA.ax, y:RA.ay }; if (t <= q.t1){ var f = t/q.t1; return { x:A.x + (q.x - A.x)*f, y:A.y*(1 - f) }; } var f2_ = Math.min(1, (t - q.t1)/(q.t - q.t1)); return { x:q.x + (q.B.x - q.x)*f2_, y:q.B.y*f2_ }; }
+function drawSide2(){
+  var g = SD.g, W = SD.W, H = SD.H, p = pal(), r = S.r, refl = r.mode === 'reflection', P = rPaths(), tmin = Math.min.apply(null, P.map(function(q){ return q.t; })), best = P.filter(function(q){ return q.t === tmin; })[0];
+  g.fillStyle = p.m1; g.fillRect(0, 0, W, Y0f(0)); g.fillStyle = refl ? (th.hc ? '#333' : '#c9ced6') : p.m2; g.fillRect(0, Y0f(0), W, H - Y0f(0)); seg(g, 0, Y0f(0), W, Y0f(0), p.line, refl ? 4 : 2);
+  T(g, refl ? 'mirror' : 'medium 2: n\u2082 = ' + f2(r.n2), 10, Y0f(0) + 16, p.text); T(g, 'medium 1: n\u2081 = ' + f2(r.n1), 10, Y0f(0) - 12, p.text);
+  P.forEach(function(q){ g.strokeStyle = p.trial; g.lineWidth = 1; g.beginPath(); g.moveTo(X0f(RA.ax), Y0f(RA.ay)); g.lineTo(X0f(q.x), Y0f(0)); g.lineTo(X0f(q.B.x), Y0f(q.B.y)); g.stroke(); });
+  if (r.done || !r.running){ seg(g, X0f(RA.ax), Y0f(RA.ay), X0f(best.x), Y0f(0), p.best, 2.5); seg(g, X0f(best.x), Y0f(0), X0f(best.B.x), Y0f(best.B.y), p.best, 2.5); }
+  /* the dots: where each path's light has got to */
+  var t = r.t, arrived = 0; P.forEach(function(q){ var ps = rPos(q, Math.min(t, q.t)); if (t >= q.t) arrived++; dot(g, X0f(ps.x), Y0f(ps.y), 3.2, t >= q.t ? p.best : p.path); });
+  dot(g, X0f(RA.ax), Y0f(RA.ay), 8, p.a); T(g, 'A', X0f(RA.ax) - 14, Y0f(RA.ay), p.a, 'right', 'bold 14px Arial'); dot(g, X0f(best.B.x), Y0f(best.B.y), 8, p.b); T(g, 'B', X0f(best.B.x) + 14, Y0f(best.B.y), p.b, 'left', 'bold 14px Arial');
+  T(g, 't = ' + f2(t, 2) + ' ns \u00B7 arrived: ' + arrived + ' of ' + P.length, W - 10, 16, p.text, 'right', 'bold 13px monospace');
+  if (r.done){ var A1 = Math.atan2(Math.abs(best.x - RA.ax), RA.ay), A2 = Math.atan2(Math.abs(best.B.x - best.x), Math.abs(best.B.y)); T(g, 'first to arrive: ' + (refl ? 'angles ' + f2(A1/DEG, 1) + '\u00B0 and ' + f2(A2/DEG, 1) + '\u00B0 (equal, to the spacing of the paths)' : 'n\u2081 sin \u03B8\u2081 = ' + f2(r.n1*Math.sin(A1), 3) + ', n\u2082 sin \u03B8\u2082 = ' + f2(r.n2*Math.sin(A2), 3)), W/2, H - 12, p.best, 'center', 'bold 13px Arial'); }
+}
+function drawPlot2(){
+  var g = PL.g, W = PL.W, H = PL.H, p = pal(), P = rPaths(), r = S.r, Xl = 56, Xr = W - 18, Yb = H - 34, Yt = 14, ts = P.map(function(q){ return q.t; }), tmin = Math.min.apply(null, ts), tmax = Math.max.apply(null, ts);
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  var lo = tmin*0.97, hi_ = tmax*1.01; function Y(t){ return Yb - (t - lo)/(hi_ - lo)*(Yb - Yt); } var bw = (Xr - Xl)/P.length;
+  for (var k=0; k<=4; k++){ var tv = lo + (hi_ - lo)*k/4; seg(g, Xl, Y(tv), Xr, Y(tv), p.grid, 1); T(g, f2(tv, 2), Xl - 6, Y(tv), p.text, 'right', '10px Arial'); }
+  P.forEach(function(q, i){ var done = r.t >= q.t, isBest = q.t === tmin; g.fillStyle = isBest ? p.best : (done ? p.path : p.trial); var x = Xl + i*bw + 1; g.fillRect(x, Y(q.t), bw - 2, Yb - Y(q.t)); });
+  T(g, 'arrival time of each path (ns), by its crossing point: least time at the green bar, where neighbours hardly differ', (Xl + Xr)/2, H - 10, p.text, 'center', '11px Arial');
+}
+function raceAll(){ var r = S.r; r.t = 0; r.done = false; r.running = true; var P = rPaths(), tmin = Math.min.apply(null, P.map(function(q){ return q.t; })), tmax = Math.max.apply(null, P.map(function(q){ return q.t; })), t0 = performance.now(), dur = 5;
+  narrate('All ' + P.length + ' paths start together. Each dot moves at the speed of light in its medium.');
+  (function step(){ if (!r.running) return; r.t = (performance.now() - t0)/1000/dur*tmax; if (r.t >= tmin && !r.done){ r.done = true; narrate(firstMsg()); } if (r.t >= tmax){ r.t = tmax; r.running = false; } schedule(); if (r.running) requestAnimationFrame(step); })(); }
+function firstMsg(){ var r = S.r, P = rPaths(), tmin = Math.min.apply(null, P.map(function(q){ return q.t; })), b = P.filter(function(q){ return q.t === tmin; })[0], A1 = Math.atan2(Math.abs(b.x - RA.ax), RA.ay), A2 = Math.atan2(Math.abs(b.B.x - b.x), Math.abs(b.B.y));
+  return r.mode === 'reflection' ? 'The first path to arrive reflects at ' + f2(A1/DEG, 1) + ' and ' + f2(A2/DEG, 1) + ' degrees: equal, to within the spacing of the paths. That is the law of reflection.' : 'The first path to arrive crosses at ' + f2(b.x, 2) + ' metres: n1 sin theta1 = ' + f2(r.n1*Math.sin(A1), 3) + ' and n2 sin theta2 = ' + f2(r.n2*Math.sin(A2), 3) + ': Snell\u2019s law, to the spacing of the paths.'; }
+/* ══════════ tab 3: wavefronts ══════════ */
+function waveGeo(){ var w = S.w, t1 = w.th*DEG, s2 = w.n1/w.n2*Math.sin(t1), tir = s2 >= 1; return { t1:t1, t2:tir ? null : Math.asin(s2), tir:tir, l1:0.30/w.n1, l2:0.30/w.n2 }; }
+function clip(p1, p2, below){ /* clip the segment to y <= 0 (below) or y >= 0 */ var s = below ? -1 : 1, a = s*p1.y, b = s*p2.y; if (a < 0 && b < 0) return null; if (a >= 0 && b >= 0) return [p1, p2]; var f = a/(a - b), m = { x:p1.x + (p2.x - p1.x)*f, y:0 }; return a >= 0 ? [p1, m] : [m, p2]; }
+function drawSide3(){
+  var g = SD.g, W = SD.W, H = SD.H, p = pal(), w = S.w, G = waveGeo(), bw = 1.3, ph = w.t;
+  g.fillStyle = p.m1; g.fillRect(0, 0, W, Y0f(0)); g.fillStyle = p.m2; g.fillRect(0, Y0f(0), W, H - Y0f(0)); seg(g, 0, Y0f(0), W, Y0f(0), p.line, 2);
+  T(g, 'n\u2081 = ' + f2(w.n1) + '   \u03BB\u2081 = ' + f2(G.l1*100, 1) + ' (scale units)', 10, Y0f(0) - 12, p.text); T(g, 'n\u2082 = ' + f2(w.n2) + (G.tir ? '' : '   \u03BB\u2082 = ' + f2(G.l2*100, 1)), 10, Y0f(0) + 14, p.text);
+  var u1 = { x:Math.sin(G.t1), y:-Math.cos(G.t1) }, q1 = { x:Math.cos(G.t1), y:Math.sin(G.t1) };
+  /* the incident beam and its wavefronts, moving toward the boundary */
+  function strip(u, q, half, below, lam, col){ g.fillStyle = col; g.beginPath(); var L = 6, c = [[-L, -half], [L, -half], [L, half], [-L, half]].map(function(z){ return { x:u.x*z[0] + q.x*z[1], y:u.y*z[0] + q.y*z[1] }; });
+    g.save(); g.beginPath(); g.rect(0, below ? Y0f(0) : 0, W, below ? H - Y0f(0) : Y0f(0)); g.clip(); g.beginPath(); c.forEach(function(z, i){ if (i) g.lineTo(X0f(z.x), Y0f(z.y)); else g.moveTo(X0f(z.x), Y0f(z.y)); }); g.closePath(); g.fill(); g.restore();
+    var off = ((ph % 1) + 1) % 1; g.strokeStyle = th.hc ? '#fff' : '#2952c9'; g.lineWidth = 2;
+    for (var m=-30; m<=30; m++){ var s = (m + off)*lam, pa = { x:u.x*s + q.x*(-half), y:u.y*s + q.y*(-half) }, pb = { x:u.x*s + q.x*half, y:u.y*s + q.y*half }, cl = clip(pa, pb, below); if (!cl) continue; g.beginPath(); g.moveTo(X0f(cl[0].x), Y0f(cl[0].y)); g.lineTo(X0f(cl[1].x), Y0f(cl[1].y)); g.stroke(); } }
+  strip(u1, q1, bw/2, false, G.l1, th.hc ? 'rgba(80,120,255,0.3)' : 'rgba(80,110,220,0.18)');
+  if (!G.tir){ var u2 = { x:Math.sin(G.t2), y:-Math.cos(G.t2) }, q2 = { x:Math.cos(G.t2), y:Math.sin(G.t2) }; strip(u2, q2, bw/2*Math.cos(G.t2)/Math.cos(G.t1), true, G.l2, th.hc ? 'rgba(80,120,255,0.3)' : 'rgba(80,110,220,0.18)'); }
+  else { var ur = { x:Math.sin(G.t1), y:Math.cos(G.t1) }, qr = { x:-Math.cos(G.t1), y:Math.sin(G.t1) }; strip(ur, qr, bw/2, false, G.l1, 'rgba(220,80,80,0.15)'); T(g, 'total internal reflection: no wave enters medium 2', W/2, Y0f(0) + 40, p.b, 'center', 'bold 14px Arial'); }
+  seg(g, X0f(0), Y0f(0) - 150, X0f(0), Y0f(0) + 150, p.text, 1, [2, 4]);
+  /* Huygens: while one end of a wavefront travels h1 to the boundary, the wavelet from the other end travels h2 */
+  if (w.huy && !G.tir){ var xL = -bw/2/Math.cos(G.t1), xR = -xL, h1 = (xR - xL)*Math.sin(G.t1), h2 = h1*w.n1/w.n2, far = { x:xR - h1*u1.x, y:-h1*u1.y };
+    seg(g, X0f(xL), Y0f(0), X0f(far.x), Y0f(far.y), p.best, 2.5); seg(g, X0f(far.x), Y0f(far.y), X0f(xR), Y0f(0), '#2ca02c', 3); T(g, 'h\u2081 = v\u2081\u0394t', X0f((far.x + xR)/2) + 8, Y0f((far.y)/2), '#2ca02c', 'left', 'bold 13px Arial');
+    g.strokeStyle = p.b; g.lineWidth = 1.8; g.beginPath(); g.arc(X0f(xL), Y0f(0), h2*W0.S, 0, Math.PI); g.stroke();
+    var tp = { x:xL + h2*Math.sin(G.t2), y:-h2*Math.cos(G.t2) }; seg(g, X0f(xL), Y0f(0), X0f(tp.x), Y0f(tp.y), '#2ca02c', 3); T(g, 'h\u2082 = v\u2082\u0394t', X0f((xL + tp.x)/2) - 8, Y0f(tp.y/2) + 4, '#2ca02c', 'right', 'bold 13px Arial');
+    seg(g, X0f(tp.x), Y0f(tp.y), X0f(xR), Y0f(0), p.best, 2.5); T(g, 'new wavefront', X0f(xR) + 8, Y0f(0) + 18, p.best, 'left', '12px Arial'); }
+}
+/* ══════════ tab 4: Huygens' construction ══════════ */
+function hzGeo(){ var h = S.h, t1 = h.th*DEG, s2 = h.n1/h.n2*Math.sin(t1), w = Math.min(2.25, 1.45/Math.sin(t1)), AB = w/Math.cos(t1), xa = -AB/2, v1 = 1/h.n1, v2 = 1/h.n2, T = w*Math.tan(t1)/v1;
+  return { t1:t1, t2:s2 < 1 ? Math.asin(s2) : null, w:w, AB:AB, A:{ x:xa, y:0 }, B:{ x:xa + AB, y:0 }, C:{ x:xa + w*Math.cos(t1), y:w*Math.sin(t1) }, v1:v1, v2:v2, T:T, u1:{ x:Math.sin(t1), y:-Math.cos(t1) } }; }
+function drawSide4(){
+  var Gf = hzGeo(), u2f = Gf.t2 === null ? null : { x:Math.sin(Gf.t2), y:-Math.cos(Gf.t2) }, Tt = Gf.T;
+  var xs_ = [Gf.A.x, Gf.B.x, Gf.C.x, Gf.A.x + Gf.u1.x*Gf.v1*Tt, Gf.A.x - Gf.u1.x*Gf.v1*Tt, Gf.C.x - Gf.u1.x*Gf.v1*Tt], ys_ = [Gf.C.y + 0.15 - Gf.u1.y*Gf.v1*Tt, 0, Gf.u1.y*Gf.v1*Tt];   /* the front starts T earlier, higher in the air */
+  if (S.h.refl){ xs_.push(Gf.A.x + Gf.u1.x*Gf.v1*Tt*1.45); ys_.push(-Gf.u1.y*Gf.v1*Tt*1.45); }
+  if (u2f){ xs_.push(Gf.A.x + u2f.x*Gf.v2*Tt*1.45, Gf.B.x + u2f.x*Gf.v2*Tt*0.45); ys_.push(u2f.y*Gf.v2*Tt*1.45); }
+  var x0_ = Math.min.apply(null, xs_) - 0.3, x1_ = Math.max.apply(null, xs_) + 0.3, y1_ = Math.max.apply(null, ys_) + 0.1, y0_ = Math.min.apply(null, ys_) - 0.1;
+  var kk = Math.min(125, (SD.W - 40)/(x1_ - x0_), (SD.H - 30)/(y1_ - y0_)), ox_ = SD.W/2 - kk*(x0_ + x1_)/2, oy_ = 14 + y1_*kk;
+  function X0f(x){ return ox_ + x*kk; } function Y0f(y){ return oy_ - y*kk; } var W0 = { S:kk };
+  var g = SD.g, W = SD.W, H = SD.H, p = pal(), h = S.h, G = hzGeo(), T0 = G.T, t = h.tf*T0, u1 = G.u1, A = G.A, B = G.B, Cc = G.C;
+  var ink = th.hc ? '#fff' : '#1d2a36', wave = th.hc ? '#ffff00' : '#2952c9', let_ = th.hc ? 'rgba(255,255,255,0.55)' : 'rgba(41,82,201,0.45)', ref = p.b;
+  g.fillStyle = p.m1; g.fillRect(0, 0, W, Y0f(0)); g.fillStyle = p.m2; g.fillRect(0, Y0f(0), W, H - Y0f(0)); seg(g, 0, Y0f(0), W, Y0f(0), p.line, 2);
+  T(g, 'n\u2081 = ' + f2(h.n1) + ' (v\u2081 = c/' + f2(h.n1) + ')', 10, Y0f(0) - 12, p.text); T(g, 'n\u2082 = ' + f2(h.n2) + ' (v\u2082 = c/' + f2(h.n2) + ')', 10, Y0f(0) + 14, p.text);
+  seg(g, X0f(A.x), Y0f(0) - 160, X0f(A.x), Y0f(0) + 150, p.text, 1, [2, 4]); T(g, 'E', X0f(A.x) + 6, Y0f(0) - 150, p.text); T(g, 'F', X0f(A.x) + 6, Y0f(0) + 142, p.text);
+  function clipAir(){ g.beginPath(); g.rect(0, 0, W, Y0f(0)); g.clip(); } function clipWater(){ g.beginPath(); g.rect(0, Y0f(0), W, H - Y0f(0)); g.clip(); }
+  /* the initial front AC, and the rays from its points H to the boundary points K */
+  seg(g, X0f(A.x), Y0f(0), X0f(Cc.x), Y0f(Cc.y), ink, 1.2, [5, 4]); T(g, 'C', X0f(Cc.x) + 6, Y0f(Cc.y) - 8, ink, 'left', 'bold 14px Arial');
+  var tir = G.t2 === null, u2 = tir ? null : { x:Math.sin(G.t2), y:-Math.cos(G.t2) }, ur = { x:u1.x, y:-u1.y }, rfl = th.hc ? '#ff66ff' : (th.cb ? '#cc79a7' : '#8e44ad');
+  for (var i=0; i<=h.N; i++){ var f = i/h.N, Hp = { x:A.x + f*(Cc.x - A.x), y:f*Cc.y }, Kp = { x:A.x + f*G.AB, y:0 }, ti = f*T0;
+    seg(g, X0f(Hp.x - u1.x*G.v1*T0), Y0f(Hp.y - u1.y*G.v1*T0), X0f(Kp.x), Y0f(0), ink, 1);
+    if (i > 0 && i < h.N){ T(g, 'H', X0f(Hp.x) - 10, Y0f(Hp.y) - 6, ink, 'right', 'bold 12px Arial'); T(g, 'K', X0f(Kp.x), Y0f(0) + 16, ink, 'center', 'bold 12px Arial'); }
+    if (!tir && t > ti){ var L = G.v2*(t - ti); seg(g, X0f(Kp.x), Y0f(0), X0f(Kp.x + u2.x*L), Y0f(u2.y*L), ink, 1); }
+    /* the wavelet from K, in the water */
+    if (!tir && t > ti && h.wat){ g.save(); clipWater(); g.strokeStyle = let_; g.lineWidth = 1.4; g.beginPath(); g.arc(X0f(Kp.x), Y0f(0), G.v2*(t - ti)*W0.S, 0, Math.PI); g.stroke(); g.restore(); }
+    /* the reflected wavelet from K, back into the air at v1 */
+    if (h.refl && t > ti){ var Lr = G.v1*(t - ti); g.save(); clipAir(); g.strokeStyle = rfl; g.lineWidth = 1.3; g.globalAlpha = 0.6; g.beginPath(); g.arc(X0f(Kp.x), Y0f(0), Lr*W0.S, Math.PI, 2*Math.PI); g.stroke(); g.globalAlpha = 1; g.restore();
+      seg(g, X0f(Kp.x), Y0f(0), X0f(Kp.x + ur.x*Lr), Y0f(ur.y*Lr), rfl, 1, [3, 3]); } }
+  /* in the air: the front a moment ago, its wavelets, and their envelope, the front now */
+  var dt = 0.12*T0;
+  function airFront(tt){ /* the incident front at time tt: wholly in the air (tt <= 0), or from the boundary point it has reached */
+    if (tt >= T0) return null; var e1 = tt <= 0 ? { x:A.x + u1.x*G.v1*tt, y:u1.y*G.v1*tt } : { x:A.x + (tt/T0)*G.AB, y:0 }; return [e1, { x:Cc.x + u1.x*G.v1*tt, y:Cc.y + u1.y*G.v1*tt }]; }
+  var Fn = airFront(t);
+  if (Fn){ var Fp = h.air ? airFront(t - dt) : null;
+    if (Fp){ seg(g, X0f(Fp[0].x), Y0f(Fp[0].y), X0f(Fp[1].x), Y0f(Fp[1].y), let_, 1.2, [3, 3]); g.save(); clipAir(); g.strokeStyle = let_; g.lineWidth = 1.2;
+      for (var j=0; j<=6; j++){ var fj = j/6, P0 = { x:Fp[0].x + fj*(Fp[1].x - Fp[0].x), y:Fp[0].y + fj*(Fp[1].y - Fp[0].y) }; g.beginPath(); g.arc(X0f(P0.x), Y0f(P0.y), G.v1*dt*W0.S, 0, 2*Math.PI); g.stroke(); dot(g, X0f(P0.x), Y0f(P0.y), 2.5, let_); }
+      g.restore(); }
+    seg(g, X0f(Fn[0].x), Y0f(Fn[0].y), X0f(Fn[1].x), Y0f(Fn[1].y), wave, 3.5); }
+  /* the reflected front: the envelope of the wavelets sent back into the air */
+  if (h.refl && t > 0){ var Re = { x:A.x + ur.x*G.v1*t, y:ur.y*G.v1*t }, Rk = t < T0 ? { x:A.x + (t/T0)*G.AB, y:0 } : { x:B.x + ur.x*G.v1*(t - T0), y:ur.y*G.v1*(t - T0) };
+    seg(g, X0f(Rk.x), Y0f(Rk.y), X0f(Re.x), Y0f(Re.y), rfl, 3); T(g, 'reflected front', X0f(Re.x) + 8, Y0f(Re.y) - 8, rfl, 'left', 'bold 12px Arial'); }
+  /* in the water: the refracted front, the envelope of the wavelets from the boundary */
+  if (!tir && t > 0){ var Ae = { x:A.x + u2.x*G.v2*t, y:u2.y*G.v2*t }, Ke = t < T0 ? { x:A.x + (t/T0)*G.AB, y:0 } : { x:B.x + u2.x*G.v2*(t - T0), y:u2.y*G.v2*(t - T0) };
+    seg(g, X0f(Ke.x), Y0f(Ke.y), X0f(Ae.x), Y0f(Ae.y), wave, 3.5);
+    if (t >= T0){ var Nn = { x:A.x + u2.x*G.v2*T0, y:u2.y*G.v2*T0 }, Gg = { x:A.x + u1.x*G.v1*T0, y:u1.y*G.v1*T0 };
+      seg(g, X0f(A.x), Y0f(0), X0f(Nn.x), Y0f(Nn.y), ref, 2.5); seg(g, X0f(Cc.x), Y0f(Cc.y), X0f(B.x), Y0f(0), ref, 2.5); seg(g, X0f(B.x), Y0f(0), X0f(Nn.x), Y0f(Nn.y), wave, 2, [6, 3]);
+      seg(g, X0f(B.x), Y0f(0), X0f(Gg.x), Y0f(Gg.y), ink, 1.2, [3, 4]); T(g, 'G', X0f(Gg.x) + 6, Y0f(Gg.y) + 8, ink, 'left', 'bold 14px Arial');
+      T(g, 'N', X0f(Nn.x) - 8, Y0f(Nn.y) + 10, ref, 'right', 'bold 14px Arial'); T(g, 'AN = v\u2082T', X0f((A.x + Nn.x)/2) - 10, Y0f(Nn.y/2), ref, 'right', 'bold 12px Arial'); T(g, 'CB = v\u2081T', X0f((Cc.x + B.x)/2) + 10, Y0f(Cc.y/2), ref, 'left', 'bold 12px Arial'); } }
+  else if (tir) T(g, 'beyond the critical angle: no wave enters medium 2 (total internal reflection)', W/2, Y0f(0) + 50, p.b, 'center', 'bold 13px Arial');
+  T(g, 'A', X0f(A.x) - 8, Y0f(0) + 14, ink, 'right', 'bold 14px Arial'); T(g, 'B', X0f(B.x) + 8, Y0f(0) - 10, ink, 'left', 'bold 14px Arial');
+  T(g, 't = ' + f2(h.tf, 2) + ' T', W - 10, 16, p.text, 'right', 'bold 13px monospace');
+  T(g, h.air && t < T0 ? 'dashed: the front a moment ago, with its wavelets; the solid front is their envelope' + (t < 0 ? ' (still all in the air)' : '') : (t >= T0 ? 'the whole front is in the water' : ''), W - 10, H - 10, p.text, 'right', '11px Arial');
+}
+/* ══════════ readout, equations, narration ══════════ */
+function rrow(k, v){ return '<div class="fp_rrow"><span class="fp_rkey">' + k + '</span><span class="fp_rval">' + v + '</span></div>'; }
+function readout(){
+  var r = '', e = '';
+  if (S.tab === 0){ var a = S.a, sp = speeds(), tm = times(a.px), xb = xBest(), tb = times(xb), A = angles(a.px), Ab = angles(xb), lt = a.mode === 'light';
+    r = rrow('L\u2081, L\u2082', f2(tm.L1) + ' m, ' + f2(tm.L2) + ' m') + rrow('t\u2081, t\u2082', f2(tm.t1, 3) + ', ' + f2(tm.t2, 3) + ' ' + sp.u) + rrow('t = t\u2081 + t\u2082', f2(tm.t, 4) + ' ' + sp.u) + rrow('least time (at x = ' + f2(xb) + ' m)', f2(tb.t, 4) + ' ' + sp.u) + rrow('your path is slower by', f2((tm.t - tb.t)/tb.t*100, 2) + ' %')
+      + rrow(lt ? 'n\u2081 sin \u03B8\u2081 / n\u2082 sin \u03B8\u2082' : 'sin \u03B8\u2081/v\u2081 / sin \u03B8\u2082/v\u2082', lt ? f2(a.n1*Math.sin(A.th1), 4) + ' / ' + f2(a.n2*Math.sin(A.th2), 4) : f2(Math.sin(A.th1)/sp.v1, 4) + ' / ' + f2(Math.sin(A.th2)/sp.v2, 4));
+    e = 'Time: t = L\u2081/v\u2081 + L\u2082/v\u2082 = ' + f2(tm.L1) + '/' + f2(sp.v1, lt ? 4 : 2) + ' + ' + f2(tm.L2) + '/' + f2(sp.v2, lt ? 4 : 2) + ' = <b>' + f2(tm.t, 4) + ' ' + sp.u + '</b>' + (lt ? ' (v = c/n, c = 0.2998 m/ns)' : '') + '<br>At the least-time point: ' + (lt ? 'n\u2081 sin \u03B8\u2081 = ' + f2(a.n1*Math.sin(Ab.th1), 5) + ' = n\u2082 sin \u03B8\u2082 = ' + f2(a.n2*Math.sin(Ab.th2), 5) : 'sin \u03B8\u2081/v\u2081 = ' + f2(Math.sin(Ab.th1)/sp.v1, 5) + ' = sin \u03B8\u2082/v\u2082 = ' + f2(Math.sin(Ab.th2)/sp.v2, 5)) + ': <b>Snell\u2019s law</b> follows from least time.'; }
+  if (S.tab === 1){ var l = S.l, xb = lgBest(), tu = lgTime(l.px), tb = lgTime(xb), t1 = Math.atan2(Math.abs(xb - l.ax), l.ay), t2 = Math.atan2(Math.abs(l.bx - xb), -l.by), xs = l.ax + (l.bx - l.ax)*l.ay/(l.ay - l.by);
+    r = rrow('your entry point', f2(l.px, 1) + ' m') + rrow('your time', f2(tu, 2) + ' s') + rrow('fastest entry point', f2(xb, 1) + ' m') + rrow('fastest time', f2(tb, 2) + ' s') + rrow('straight line', f2(lgTime(xs), 2) + ' s') + rrow('shortest swim', f2(lgTime(l.bx), 2) + ' s');
+    e = 'Fastest path: sin \u03B8\u2081/v_run = sin ' + f2(t1/DEG, 1) + '\u00B0/' + f2(l.vr, 1) + ' = <b>' + f2(Math.sin(t1)/l.vr, 4) + '</b> and sin \u03B8\u2082/v_swim = sin ' + f2(t2/DEG, 1) + '\u00B0/' + f2(l.vs, 1) + ' = <b>' + f2(Math.sin(t2)/l.vs, 4) + '</b>: the same law as light\u2019s. The straight line is ' + f2(lgTime(xs) - tb, 1) + ' s slower; swimming the shortest distance, ' + f2(lgTime(l.bx) - tb, 1) + ' s slower.'; }
+  if (S.tab === 2){ var P = rPaths(), ts = P.map(function(q){ return q.t; }), tmin = Math.min.apply(null, ts), b = P.filter(function(q){ return q.t === tmin; })[0], A1 = Math.atan2(Math.abs(b.x - RA.ax), RA.ay), A2 = Math.atan2(Math.abs(b.B.x - b.x), Math.abs(b.B.y)), refl = S.r.mode === 'reflection';
+    r = rrow('paths', String(P.length)) + rrow('first arrival', f2(tmin, 3) + ' ns') + rrow('last arrival', f2(Math.max.apply(null, ts), 3) + ' ns') + rrow('first path crosses at', f2(b.x) + ' m') + rrow(refl ? 'angles in and out' : '\u03B8\u2081, \u03B8\u2082', f2(A1/DEG, 1) + '\u00B0, ' + f2(A2/DEG, 1) + '\u00B0');
+    e = refl ? 'Reflection: both legs at the same speed, so least time is least length; it is reached when the angles are equal: <b>' + f2(A1/DEG, 1) + '\u00B0 and ' + f2(A2/DEG, 1) + '\u00B0</b>.' : 'The first path: n\u2081 sin \u03B8\u2081 = <b>' + f2(S.r.n1*Math.sin(A1), 3) + '</b>, n\u2082 sin \u03B8\u2082 = <b>' + f2(S.r.n2*Math.sin(A2), 3) + '</b> (equal to the spacing of the paths). Near it, the arrival times change least: the path of least time is stationary.'; }
+  if (S.tab === 3){ var G = waveGeo(), w = S.w;
+    r = rrow('angle of incidence \u03B8\u2081', f2(w.th, 1) + '\u00B0') + rrow('angle of refraction \u03B8\u2082', G.tir ? 'none (total internal reflection)' : f2(G.t2/DEG, 1) + '\u00B0') + rrow('\u03BB\u2082/\u03BB\u2081 = v\u2082/v\u2081 = n\u2081/n\u2082', f2(w.n1/w.n2, 3)) + rrow('critical angle', w.n1 > w.n2 ? f2(Math.asin(w.n2/w.n1)/DEG, 1) + '\u00B0' : 'none (n\u2081 < n\u2082)');
+    e = G.tir ? 'sin \u03B8\u2082 would be (n\u2081/n\u2082) sin \u03B8\u2081 = <b>' + f2(w.n1/w.n2*Math.sin(G.t1), 3) + '</b>, more than 1: no refracted wave, total internal reflection.' : 'Huygens: sin \u03B8\u2081 / sin \u03B8\u2082 = ' + f2(Math.sin(G.t1), 4) + ' / ' + f2(Math.sin(G.t2), 4) + ' = <b>' + f2(Math.sin(G.t1)/Math.sin(G.t2), 4) + '</b> = h\u2081/h\u2082 = v\u2081/v\u2082 = n\u2082/n\u2081 = <b>' + f2(w.n2/w.n1, 4) + '</b>'; }
+  if (S.tab === 4){ var Gz = hzGeo(), hz = S.h;
+    r = rrow('angle of incidence \u03B8\u2081', f2(hz.th, 1) + '\u00B0') + rrow('angle of refraction \u03B8\u2082', Gz.t2 === null ? 'none (total internal reflection)' : f2(Gz.t2/DEG, 1) + '\u00B0') + rrow('v\u2081/v\u2082 = n\u2082/n\u2081', f2(hz.n2/hz.n1, 3)) + rrow('time', f2(hz.tf, 2) + ' T') + rrow('secondary sources on AB', String(hz.N + 1)) + (hz.refl ? rrow('angle of reflection', f2(hz.th, 1) + '\u00B0 (= \u03B8\u2081)') : '');
+    e = (hz.refl ? 'Reflection: the reflected wavelets grow at v\u2081, the same speed as the incident ones, so the reflected front leaves at the angle of incidence, <b>' + f2(hz.th, 1) + '\u00B0</b>.<br>' : '') + (Gz.t2 === null ? 'sin \u03B8\u2082 would be (n\u2081/n\u2082) sin \u03B8\u2081 = <b>' + f2(hz.n1/hz.n2*Math.sin(Gz.t1), 3) + '</b> &gt; 1: no refracted front.' : 'In the time T that C takes to reach B: CB = v\u2081T and AN = v\u2082T. In the triangles ABC and ABN: sin \u03B8\u2081 = CB/AB, sin \u03B8\u2082 = AN/AB, so <b>sin \u03B8\u2081 / sin \u03B8\u2082 = CB/AN = v\u2081/v\u2082 = ' + f2(Math.sin(Gz.t1)/Math.sin(Gz.t2), 4) + '</b> = n\u2082/n\u2081 = ' + f2(hz.n2/hz.n1, 4) + '.'); }
+  el('fpRead').innerHTML = r; el('fpEqs').innerHTML = e; el('fpEqs').style.display = S.eqs ? '' : 'none';
+}
+function summary(){
+  if (S.tab === 0){ var a = S.a, sp = speeds(), tm = times(a.px), xb = xBest(), tb = times(xb).t; return 'P is at ' + f2(a.px) + ' metres; the trip takes ' + f2(tm.t, 3) + ' ' + (sp.u === 'ns' ? 'nanoseconds' : 'seconds') + ', ' + f2((tm.t - tb)/tb*100, 2) + ' percent longer than the least time, which is reached with P at ' + f2(xb) + ' metres. ' + (Math.abs(a.px - xb) < 0.02 ? 'This is the path of least time: it obeys Snell\u2019s law.' : 'Drag P, or press Find the least-time path.'); }
+  if (S.tab === 1){ var l = S.l, xb = lgBest(); return 'Entering the water at ' + f2(l.px, 1) + ' metres, the lifeguard needs ' + f2(lgTime(l.px), 1) + ' seconds; the fastest path enters at ' + f2(xb, 1) + ' metres and needs ' + f2(lgTime(xb), 1) + '. Press Race.'; }
+  if (S.tab === 2) return (S.r.mode === 'reflection' ? 'A mirror: ' : 'Refraction from n1 = ' + f2(S.r.n1) + ' to n2 = ' + f2(S.r.n2) + ': ') + S.r.N + ' paths from A to B, each crossing at a different point. Press Start the race.';
+  if (S.tab === 4){ var Gh = hzGeo(); return 'Huygens: each point of the front starts a wavelet; their envelope is the next front. At t = ' + f2(S.h.tf, 2) + ' T. ' + (Gh.t2 === null ? 'Beyond the critical angle, no front enters the second medium.' : 'In the second medium the wavelets grow only ' + f2(S.h.n1/S.h.n2*100, 0) + ' percent as fast, so the new front turns to ' + f2(Gh.t2/DEG, 1) + ' degrees.'); }
+  var G = waveGeo(); return G.tir ? 'At ' + f2(S.w.th, 0) + ' degrees, beyond the critical angle, the wave is totally reflected.' : 'A beam at ' + f2(S.w.th, 0) + ' degrees enters a medium with index ' + f2(S.w.n2) + ': it slows down, its wavelength shrinks to ' + f2(S.w.n1/S.w.n2*100, 0) + ' percent, and it turns to ' + f2(G.t2/DEG, 1) + ' degrees.';
+}
+function narrate(m){ if (!th.nr) return; el('fpNar').textContent = m; }
+var nT = null; function later(){ clearTimeout(nT); nT = setTimeout(function(){ narrate(summary()); }, 400); }
+var LABS = [['THE PATH FROM A TO B', 'drag A, B or P', 'TIME AGAINST THE CROSSING POINT'], ['THE BEACH', 'drag your entry point', 'TIME AGAINST THE ENTRY POINT'], ['ALL PATHS, AT ONCE', '', 'ARRIVAL TIMES'], ['A BEAM OF WAVES', '', ''], ['HUYGENS: WAVELETS AND THEIR ENVELOPE', '', '']];
+function draw(){ var t = S.tab; el('fpPlotBox').style.display = t >= 3 ? 'none' : ''; el('fpLab1').textContent = LABS[t][0]; el('fpHint').textContent = LABS[t][1]; el('fpLab2').textContent = LABS[t][2];
+  if (t === 0){ drawSide0(); drawPlot0(); } if (t === 1){ drawSide1(); drawPlot1(); } if (t === 2){ drawSide2(); drawPlot2(); } if (t === 3) drawSide3(); if (t === 4) drawSide4(); readout(); }
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+/* the wave animation */
+var lastT = null; (function loop(ts){ if (S.tab === 3 && S.w.running){ if (lastT !== null) S.w.t += (ts - lastT)/1000*0.8; schedule(); }
+  if (S.tab === 4 && S.h.running && lastT !== null){ S.h.tf += (ts - lastT)/1000*0.16; if (S.h.tf > 1.45){ S.h.tf = 1.45; S.h.running = false; var pb = el('fpHPlay'); if (pb) pb.textContent = 'Play'; narrate(summary()); } var hs = el('fpHT'); if (hs){ hs.value = S.h.tf; el('fpHTv').textContent = f2(S.h.tf, 2) + ' T'; } schedule(); } lastT = ts; requestAnimationFrame(loop); })(performance.now());
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="fp_ctrl"><div class="fp_ctrlhdr"><label class="fp_ctrlname" for="' + id + '">' + label + '</label><span class="fp_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function buildCtl(){
+  var b = '', c = '', a = S.a, l = S.l, r = S.r, w = S.w;
+  if (S.tab === 0){ b = '<label>Speeds <select id="fpMode"><option value="light">light: v = c/n</option><option value="speeds">any two speeds</option></select></label><button type="button" class="fp_btn fp_btnon" id="fpGo">Find the least-time path</button><label><input type="checkbox" id="fpTr"' + (a.trial ? ' checked' : '') + '> trial paths</label>';
+    c = (a.mode === 'light' ? row('fpN1', 'n\u2081 (medium 1)', 1, 2.5, 0.01, a.n1, f2(a.n1)) + row('fpN2', 'n\u2082 (medium 2)', 1, 2.5, 0.01, a.n2, f2(a.n2)) : row('fpV1', 'v\u2081 (medium 1)', 1, 40, 0.5, a.v1, f2(a.v1, 1) + ' m/s') + row('fpV2', 'v\u2082 (medium 2)', 1, 40, 0.5, a.v2, f2(a.v2, 1) + ' m/s')) + row('fpPX', 'crossing point P', -3, 3, 0.01, a.px, f2(a.px) + ' m'); }
+  if (S.tab === 1){ b = '<button type="button" class="fp_btn fp_btnon" id="fpRace">Race!</button><button type="button" class="fp_btn" id="fpStr">Straight line</button><button type="button" class="fp_btn" id="fpShort">Shortest swim</button><button type="button" class="fp_btn" id="fpBest">Show me the best</button>';
+    c = row('fpVR', 'running speed on sand', 2, 10, 0.1, l.vr, f2(l.vr, 1) + ' m/s') + row('fpVS', 'swimming speed', 0.5, 4, 0.1, l.vs, f2(l.vs, 1) + ' m/s') + row('fpLP', 'entry point along the shore', -25, 20, 0.1, l.px, f2(l.px, 1) + ' m'); }
+  if (S.tab === 2){ b = '<label>Boundary <select id="fpRM"><option value="refraction">refraction</option><option value="reflection">a mirror</option></select></label><button type="button" class="fp_btn fp_btnon" id="fpStart">Start the race</button>';
+    c = row('fpRN1', 'n\u2081', 1, 2.5, 0.01, r.n1, f2(r.n1)) + (r.mode === 'refraction' ? row('fpRN2', 'n\u2082', 1, 2.5, 0.01, r.n2, f2(r.n2)) : '') + row('fpRN', 'number of paths', 5, 61, 2, r.N, String(r.N)); }
+  if (S.tab === 3){ b = '<button type="button" class="fp_btn" id="fpPlay">' + (w.running ? 'Pause' : 'Play') + '</button><label><input type="checkbox" id="fpHuy"' + (w.huy ? ' checked' : '') + '> Huygens construction</label>';
+    c = row('fpWT', 'angle of incidence \u03B8\u2081', 0, 85, 1, w.th, f2(w.th, 0) + '\u00B0') + row('fpWN1', 'n\u2081', 1, 2.5, 0.01, w.n1, f2(w.n1)) + row('fpWN2', 'n\u2082', 1, 2.5, 0.01, w.n2, f2(w.n2)); }
+  var h = S.h;
+  if (S.tab === 4){ b = '<button type="button" class="fp_btn fp_btnon" id="fpHPlay">' + (h.running ? 'Pause' : 'Play') + '</button><button type="button" class="fp_btn" id="fpHStep">Step \u0394t</button><button type="button" class="fp_btn" id="fpHRe">Restart</button><label><input type="checkbox" id="fpHAir"' + (h.air ? ' checked' : '') + '> wavelets in the air</label><label><input type="checkbox" id="fpHWat"' + (h.wat ? ' checked' : '') + '> wavelets in the water</label><label><input type="checkbox" id="fpHRef"' + (h.refl ? ' checked' : '') + '> reflected wavelets</label>';
+    c = row('fpHT', 'time (in units of T, C to B)', -1, 1.45, 0.01, h.tf, f2(h.tf, 2) + ' T') + row('fpHTh', 'angle of incidence \u03B8\u2081', 5, 70, 1, h.th, f2(h.th, 0) + '\u00B0') + row('fpHN1', 'n\u2081', 1, 2.5, 0.01, h.n1, f2(h.n1)) + row('fpHN2', 'n\u2082', 1, 2.5, 0.01, h.n2, f2(h.n2)) + row('fpHN', 'secondary sources', 2, 12, 1, h.N, String(h.N + 1)); }
+  b += '<label><input type="checkbox" id="fpEq"' + (S.eqs ? ' checked' : '') + '> math</label><button type="button" class="fp_btn" id="fpDsc">Describe</button>';
+  el('fpBtns').innerHTML = b; el('fpCtl').innerHTML = c;
+  function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+  if (el('fpMode')) el('fpMode').value = a.mode; if (el('fpRM')) el('fpRM').value = r.mode;
+  on('fpEq', 'change', function(){ S.eqs = this.checked; schedule(); }); on('fpDsc', 'click', describe);
+  on('fpMode', 'change', function(){ a.mode = this.value; buildCtl(); schedule(); later(); }); on('fpTr', 'change', function(){ a.trial = this.checked; schedule(); });
+  on('fpGo', 'click', function(){ var xb = xBest(), x0 = a.px, t0 = performance.now(); (function step(){ var f = Math.min(1, (performance.now() - t0)/1200), e2 = 1 - Math.pow(1 - f, 3); a.px = x0 + (xb - x0)*e2; var s = el('fpPX'); if (s){ s.value = a.px; el('fpPXv').textContent = f2(a.px) + ' m'; } schedule(); if (f < 1) requestAnimationFrame(step); else narrate(summary()); })(); });
+  [['fpN1', 'n1', 2, ''], ['fpN2', 'n2', 2, ''], ['fpV1', 'v1', 1, ' m/s'], ['fpV2', 'v2', 1, ' m/s'], ['fpPX', 'px', 2, ' m']].forEach(function(q){ on(q[0], 'input', function(){ a[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(a[q[1]], q[2]) + q[3]; schedule(); later(); }); });
+  on('fpRace', 'click', race); on('fpStr', 'click', function(){ l.px = l.ax + (l.bx - l.ax)*l.ay/(l.ay - l.by); buildCtl(); schedule(); narrate('The straight line: the shortest path, but it swims a long way. ' + summary()); });
+  on('fpShort', 'click', function(){ l.px = l.bx; buildCtl(); schedule(); narrate('The shortest swim: run along the beach until opposite the swimmer. ' + summary()); });
+  on('fpBest', 'click', function(){ l.px = lgBest(); buildCtl(); schedule(); narrate('The fastest path. ' + summary()); });
+  [['fpVR', 'vr', ' m/s'], ['fpVS', 'vs', ' m/s'], ['fpLP', 'px', ' m']].forEach(function(q){ on(q[0], 'input', function(){ l[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(l[q[1]], 1) + q[2]; schedule(); later(); }); });
+  on('fpRM', 'change', function(){ r.mode = this.value; r.t = 0; r.done = false; r.running = false; buildCtl(); schedule(); later(); }); on('fpStart', 'click', raceAll);
+  [['fpRN1', 'n1', 2], ['fpRN2', 'n2', 2], ['fpRN', 'N', 0]].forEach(function(q){ on(q[0], 'input', function(){ r[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(r[q[1]], q[2]); r.t = 0; r.done = false; r.running = false; schedule(); later(); }); });
+  on('fpHPlay', 'click', function(){ if (!h.running && h.tf >= 1.44) h.tf = -1; h.running = !h.running; this.textContent = h.running ? 'Pause' : 'Play'; if (h.running) narrate('Each point of the front sends out a wavelet; watch the envelope.'); });
+  on('fpHStep', 'click', function(){ h.running = false; var pb = el('fpHPlay'); if (pb) pb.textContent = 'Play'; h.tf = Math.min(1.45, h.tf + 0.12); var hs = el('fpHT'); if (hs){ hs.value = h.tf; el('fpHTv').textContent = f2(h.tf, 2) + ' T'; } schedule(); narrate(summary()); });
+  on('fpHRe', 'click', function(){ h.tf = -1; h.running = true; var pb = el('fpHPlay'); if (pb) pb.textContent = 'Pause'; });
+  on('fpHAir', 'change', function(){ h.air = this.checked; schedule(); });
+  on('fpHWat', 'change', function(){ h.wat = this.checked; schedule(); narrate(this.checked ? 'The wavelets in the water are shown: each boundary point starts one when the front reaches it.' : 'The wavelets in the water are hidden; their envelope, the refracted front, remains.'); });
+  on('fpHRef', 'change', function(){ h.refl = this.checked; schedule(); narrate(this.checked ? 'Each boundary point also sends a wavelet back into the air, at the speed v1; their envelope is the reflected front, leaving at the angle of incidence.' : 'Reflected wavelets hidden.'); });
+  [['fpHT', 'tf', 2, ' T'], ['fpHTh', 'th', 0, '\u00B0'], ['fpHN1', 'n1', 2, ''], ['fpHN2', 'n2', 2, ''], ['fpHN', 'N', 0, '']].forEach(function(q){ on(q[0], 'input', function(){ h[q[1]] = +this.value; el(q[0] + 'v').textContent = q[0] === 'fpHN' ? String(h.N + 1) : f2(h[q[1]], q[2]) + q[3]; if (q[0] === 'fpHT'){ h.running = false; var pb = el('fpHPlay'); if (pb) pb.textContent = 'Play'; } schedule(); later(); }); });
+  on('fpPlay', 'click', function(){ w.running = !w.running; this.textContent = w.running ? 'Pause' : 'Play'; }); on('fpHuy', 'change', function(){ w.huy = this.checked; schedule(); });
+  [['fpWT', 'th', 0, '\u00B0'], ['fpWN1', 'n1', 2, ''], ['fpWN2', 'n2', 2, '']].forEach(function(q){ on(q[0], 'input', function(){ w[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(w[q[1]], q[2]) + q[3]; schedule(); later(); }); });
+}
+/* ── pointer: drag A, B, P (least time) or the entry point (lifeguard) ── */
+var drag = null;
+function pt(e){ var r = SD.c.getBoundingClientRect(), q = e.touches ? e.touches[0] : e; return { x:(q.clientX - r.left)*SD.W/r.width, y:(q.clientY - r.top)*SD.H/r.height }; }
+function down(e){ var q = pt(e);
+  if (S.tab === 0){ var a = S.a; if (Math.hypot(q.x - X0f(a.ax), q.y - Y0f(a.ay)) < 18) drag = 'A'; else if (Math.hypot(q.x - X0f(a.bx), q.y - Y0f(a.by)) < 18) drag = 'B'; else if (Math.abs(q.y - Y0f(0)) < 26) drag = 'P'; }
+  if (S.tab === 1 && Math.abs(q.y - Y1f(0)) < 30) drag = 'L';
+  if (drag && e.cancelable) e.preventDefault(); if (drag) move(e); }
+function move(e){ if (!drag) return; var q = pt(e);
+  if (drag === 'A'){ S.a.ax = Math.max(-3, Math.min(3, (q.x - W0.X0)/W0.S)); S.a.ay = Math.max(0.1, Math.min(1.5, (W0.Y0 - q.y)/W0.S)); }
+  if (drag === 'B'){ S.a.bx = Math.max(-3, Math.min(3, (q.x - W0.X0)/W0.S)); S.a.by = Math.min(-0.1, Math.max(-1.5, (W0.Y0 - q.y)/W0.S)); }
+  if (drag === 'P'){ S.a.px = Math.max(-3, Math.min(3, (q.x - W0.X0)/W0.S)); var s = el('fpPX'); if (s){ s.value = S.a.px; el('fpPXv').textContent = f2(S.a.px) + ' m'; } }
+  if (drag === 'L'){ S.l.px = Math.max(-25, Math.min(20, (q.x - W1.X0)/W1.S)); var s2 = el('fpLP'); if (s2){ s2.value = S.l.px; el('fpLPv').textContent = f2(S.l.px, 1) + ' m'; } }
+  if (e.cancelable) e.preventDefault(); schedule(); }
+function up(){ if (drag){ drag = null; later(); } }
+SD.c.addEventListener('mousedown', down); window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+SD.c.addEventListener('touchstart', down, { passive:false }); SD.c.addEventListener('touchmove', move, { passive:false }); SD.c.addEventListener('touchend', up);
+function tab(i){ S.tab = i; for (var k=0; k<5; k++) el('fpT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false'); buildCtl(); draw(); narrate(summary()); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('fp_hc', th.hc); ROOT.classList.toggle('fp_lm', th.lm);
+  [['hc', 'fpBtnHC'], ['lm', 'fpBtnLM'], ['cb', 'fpBtnCB'], ['nr', 'fpBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('fp_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('fpBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('fpNar').style.display = th.nr ? '' : 'none'; draw(); }
+function describe(){ narrate(['The top view shows medium 1 above and medium 2 below, the points A and B, your path through P, the straight line and, dashed green, the path of least time. Below, the travel times against the crossing point. ', 'The top view shows the beach and the sea, the lifeguard, the swimmer, your path and, dashed green, the fastest path. Below, the time against the entry point. ', 'The top view shows many paths from A to B with a dot travelling along each. Below, each path\u2019s arrival time. ', 'The view shows a beam of plane waves crossing the boundary, with Huygens\u2019 construction. ', 'The view shows Huygens\u2019 construction step by step: the incident front AC, the rays from its points H to the boundary points K, the wavelets each point starts, and the new fronts, their envelopes. '][S.tab] + summary()); }
+function toggleDesc(){ var b = el('fpDescBtn'), d = el('fpDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+buildCtl(); draw(); narrate('Ready. ' + summary());
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc, race:race, raceAll:raceAll,
+  set:function(k, v){ var a_ = k.split('.'); S[a_[0]][a_[1]] = v; buildCtl(); draw(); },
+  _state:function(){ var a = S.a, xb = xBest(), Ab = angles(xb), sp = speeds(); return { S:JSON.parse(JSON.stringify(S)), xBest:xb, tBest:times(xb).t, snell:[a.n1*Math.sin(Ab.th1), a.n2*Math.sin(Ab.th2)], v:[Math.sin(Ab.th1)/sp.v1, Math.sin(Ab.th2)/sp.v2], lgBest:lgBest(), lgT:[lgTime(S.l.px), lgTime(lgBest())] }; },
+  _paths:rPaths };
+})();
+</script>
+</main>
+</body>
+</html>

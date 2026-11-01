@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Force on a Current-Carrying Wire</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, magnetic force, F = BIL, current-carrying wire, Newton third law, scale, Ampere force, lesson, scientific">
+<meta name="description" content="Interactive simulation of the force on a current-carrying wire between magnet poles, with the reaction force read on a digital scale.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="fwroot" role="region" aria-label="Force on a current-carrying wire simulator">
+<!-- Accessibility toolbar -->
+<div class="fw_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="fw_a11ybtn" id="fwBtnHC" onclick="forceWireSim.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fw_a11ybtn" id="fwBtnLM" onclick="forceWireSim.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fw_a11ybtn" id="fwBtnCB" onclick="forceWireSim.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fw_a11ybtn fw_a11yon" id="fwBtnNR" onclick="forceWireSim.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="fw_header">
+<p class="fw_h1">Force on a Current-Carrying Wire</p>
+<p class="fw_sub">F = BIL -- Ampere Force Law -- Top view or side view -- Reaction measured by scale below</p>
+</div>
+<!-- Instrument grid -->
+<div class="fw_instrument">
+<!-- Diagram panel -->
+<div class="fw_diagpanel">
+<div class="fw_diaglabel">
+<span class="fw_viewtgl" role="group" aria-label="Choose view">
+<button type="button" class="fw_viewbtn fw_viewon" id="fwViewTop" onclick="forceWireSim.setView('top')" aria-pressed="true">TOP VIEW</button>
+<button type="button" class="fw_viewbtn" id="fwViewSide" onclick="forceWireSim.setView('side')" aria-pressed="false">SIDE VIEW</button>
+</span>
+<span id="fwDiagCaption">B vertical N→S · wire horizontal · force in/out of page</span>
+</div>
+<canvas id="fwCanvas" width="500" height="360" role="img" aria-label="Diagram of wire between magnet poles" aria-describedby="fwDiagDesc"></canvas>
+<p id="fwDiagDesc" class="fw_sronly">Schematic showing magnet poles, wire, field arrows, and force symbols.</p>
+</div>
+<!-- Right column -->
+<div class="fw_rightcol">
+<!-- Parameter controls -->
+<div class="fw_instpanel">
+<div class="fw_insttitle">Parameters</div>
+<div class="fw_instbody">
+<!-- Current I -->
+<div class="fw_ctrlrow">
+<div class="fw_ctrlhdr">
+<label class="fw_ctrlname" for="fwSlI">Current I</label>
+<span class="fw_ctrlval" id="fwVI">+2.00 A</span>
+</div>
+<div class="fw_sliderwrap">
+<span class="fw_dirbadge" id="fwDI" style="color:var(--fw-wire-pos)" aria-hidden="true">→</span>
+<input type="range" id="fwSlI" min="-10" max="10" step="0.1" value="2" aria-label="Current in amperes" oninput="forceWireSim.update()" onchange="forceWireSim.update()">
+<span class="fw_slunit">A</span>
+</div>
+</div>
+<!-- Field B -->
+<div class="fw_ctrlrow">
+<div class="fw_ctrlhdr">
+<label class="fw_ctrlname" for="fwSlB">Field B</label>
+<span class="fw_ctrlval fw_blue" id="fwVB">+0.50 T</span>
+</div>
+<div class="fw_sliderwrap">
+<span class="fw_dirbadge" id="fwDB" style="color:var(--fw-field-col)" aria-hidden="true">↓</span>
+<input type="range" class="fw_rangblue" id="fwSlB" min="-2" max="2" step="0.05" value="0.5" aria-label="Magnetic field in Tesla" oninput="forceWireSim.update()" onchange="forceWireSim.update()">
+<span class="fw_slunit">T</span>
+</div>
+</div>
+<!-- Wire length L -->
+<div class="fw_ctrlrow">
+<div class="fw_ctrlhdr">
+<label class="fw_ctrlname" for="fwSlL">Length L</label>
+<span class="fw_ctrlval fw_green" id="fwVL">0.050 m</span>
+</div>
+<div class="fw_sliderwrap">
+<span style="font-size:0.75rem;color:var(--fw-dim);width:22px;text-align:center" aria-hidden="true">↔</span>
+<input type="range" class="fw_ranggreen" id="fwSlL" min="0.01" max="0.20" step="0.005" value="0.05" aria-label="Wire length in field in metres" oninput="forceWireSim.update()" onchange="forceWireSim.update()">
+<span class="fw_slunit">m</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Force readout -->
+<div class="fw_forcereadout">
+<div class="fw_insttitle">Calculated Force</div>
+<div class="fw_forceinner">
+<div class="fw_forcerow">
+<span class="fw_forcekey">F = BIL</span>
+<span class="fw_forceval fw_fvhi" id="fwRF">--</span>
+</div>
+<div class="fw_forcerow">
+<span class="fw_forcekey">Direction</span>
+<span class="fw_forceval" id="fwRDir">--</span>
+</div>
+<div class="fw_forcerow">
+<span class="fw_forcekey">Δ mass on scale</span>
+<span class="fw_forceval" id="fwRDm">--</span>
+</div>
+<div class="fw_forcerow">
+<span class="fw_forcekey">On wire</span>
+<span class="fw_forceval" id="fwRWire">--</span>
+</div>
+</div>
+</div>
+<!-- Digital Scale -->
+<div class="fw_scalepanel">
+<div class="fw_scalebrand">
+<span class="fw_scalebrandname">LabScale Pro</span>
+<span class="fw_scalemodel">600g / 0.1g</span>
+</div>
+<div class="fw_scaledispwrap">
+<div class="fw_scaledisp" id="fwScaleDisp" aria-live="polite" aria-label="Scale reading in grams">150.0</div>
+<div class="fw_scaleunit">g</div>
+</div>
+<div class="fw_scalestatrow">
+<div class="fw_scaleled"></div>
+<span class="fw_scalestable">STABLE</span>
+</div>
+<div class="fw_scalebtnrow">
+<input type="button" class="fw_scalebtn fw_zerobtn" value="ZERO / TARE" aria-label="Zero / tare the scale" onclick="forceWireSim.tare()">
+<input type="button" class="fw_scalebtn" value="RESET" aria-label="Reset scale to show magnet weight" onclick="forceWireSim.resetScale()">
+</div>
+<div class="fw_scalecap">MAX: 600g &nbsp;·&nbsp; d=0.1g</div>
+</div>
+</div><!-- fw_rightcol -->
+<!-- Formula strip -->
+<div class="fw_formulastrip">
+<span class="fw_formulatxt">F = B · I · L &nbsp;|&nbsp; Newton's 3rd Law: reaction acts on magnet/scale &nbsp;|&nbsp; Δm = F/g &nbsp;(g = 9.81 m/s²)</span>
+<span class="fw_formulalive" id="fwFormulaLive">--</span>
+</div>
+</div><!-- fw_instrument -->
+<!-- Narration bar -->
+<div id="fwNarBar" class="fw_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="fwSrAnnounce" class="fw_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="fw_credit">Simulation by Taha Mzoughi © 2025 -- MOM adaptation</p>
+</div><!-- #fwroot -->
+<hr><h2>Part 5: Magnetic Force on a Current Carrying Wire</h2>
+<hr>
+<ol>
+<li>What happens to the wire when current flows through it while it is placed near a strong magnet?</li>
+<li>What happens to the direction of the wire's motion if the battery is connected in the opposite direction?</li>
+<li>What happens to the wire's motion if the magnet is flipped while keeping the battery connection the same?</li>
+<li>Why does the wire move when placed near a magnet and connected to a battery?</li>
+<li>How can the right-hand rule be used to determine the direction of the force on the wire?</li>
+</ol>
+<hr>
+<p>Discuss your results about this part of the experiment:</p>
+<style>
+/* ════════════════════════════════════════════════
+All rules scoped to #fwroot
+════════════════════════════════════════════════ */
+#fwroot {
+--fw-chassis:     #1a1c1f;
+--fw-panel:       #22262b;
+--fw-panel-hi:    #2c3138;
+--fw-panel-lo:    #14161a;
+--fw-border:      #3a4048;
+--fw-border-hi:   #525c66;
+--fw-text:        #c8d0d8;
+--fw-dim:         #8a94a3;
+--fw-bright:      #e8eef5;
+--fw-accent:      #e8a020;
+--fw-accent2:     #3ad08f;
+--fw-accent3:     #4a9eff;
+--fw-danger:      #e84040;
+--fw-lcd-bg:      #0d1a10;
+--fw-lcd-text:    #3aff88;
+--fw-lcd-more:    #ffcc44;
+--fw-lcd-less:    #44ddff;
+--fw-wire-pos:    #dd4422;
+--fw-wire-neg:    #3377cc;
+--fw-field-col:   #5599ff;
+--fw-force-col:   #ff8800;
+--fw-focus:       #e8a020;
+--fw-nar-bg:      #2a2410;
+--fw-nar-border:  #e0b040;
+--fw-nar-text:    #f0e2b8;
+background: var(--fw-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family: Arial, sans-serif;
+color: var(--fw-text);
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 16px 10px 24px;
+gap: 14px;
+box-sizing: border-box;
+width: 100%;
+max-width: 860px;
+margin: 0 auto;
+border-radius: 6px;
+position: relative;
+}
+/* ── Theme: LIGHT MODE ── */
+#fwroot.fw_lm {
+--fw-chassis:#e9edf1; --fw-panel:#ffffff; --fw-panel-hi:#f1f4f7; --fw-panel-lo:#f4f6f9;
+--fw-border:#c3cad3; --fw-border-hi:#9aa3ae; --fw-text:#1d232a; --fw-dim:#556070; --fw-bright:#000000;
+--fw-accent:#a8620a; --fw-accent2:#12805a; --fw-accent3:#1f5fc0; --fw-danger:#c0262a;
+--fw-lcd-bg:#dcebdf; --fw-lcd-text:#0b5a2a; --fw-lcd-more:#8a5a00; --fw-lcd-less:#005f8a;
+--fw-wire-pos:#c0391b; --fw-wire-neg:#1f4fa0; --fw-field-col:#1f5fc0; --fw-force-col:#b05a00; --fw-focus:#a8620a;
+--fw-nar-bg:#ffefc0; --fw-nar-border:#e0b040; --fw-nar-text:#333333;
+background-image:none;
+}
+/* ── Theme: HIGH CONTRAST ── */
+#fwroot.fw_hc {
+--fw-chassis:#000000; --fw-panel:#000000; --fw-panel-hi:#111111; --fw-panel-lo:#000000;
+--fw-border:#ffffff; --fw-border-hi:#ffffff; --fw-text:#ffffff; --fw-dim:#e0e0e0; --fw-bright:#ffffff;
+--fw-accent:#ffd700; --fw-accent2:#00ff88; --fw-accent3:#66ccff; --fw-danger:#ff5555;
+--fw-lcd-bg:#000000; --fw-lcd-text:#00ff66; --fw-lcd-more:#ffd700; --fw-lcd-less:#66ccff;
+--fw-wire-pos:#ff8a65; --fw-wire-neg:#64b5f6; --fw-field-col:#66ccff; --fw-force-col:#ffd700; --fw-focus:#ffff00;
+--fw-nar-bg:#000000; --fw-nar-border:#ffd700; --fw-nar-text:#ffffff;
+background-image:none;
+}
+#fwroot.fw_hc .fw_instpanel,
+#fwroot.fw_hc .fw_forcereadout,
+#fwroot.fw_hc .fw_scalepanel,
+#fwroot.fw_hc .fw_diagpanel { border-width:2px; }
+/* ── Theme: COLOR-BLIND SAFE (Okabe-Ito; layered on top of the dark or light theme) ── */
+#fwroot.fw_cb { --fw-wire-pos:#E69F00; --fw-wire-neg:#56B4E9; --fw-field-col:#CC79A7; --fw-force-col:#E69F00; --fw-accent2:#009E73; --fw-accent3:#56B4E9; --fw-danger:#D55E00; }
+#fwroot.fw_cb.fw_lm { --fw-wire-pos:#a86f00; --fw-wire-neg:#0072B2; --fw-field-col:#a0507f; --fw-force-col:#a86f00; --fw-accent3:#0072B2; }
+#fwroot *, #fwroot *::before, #fwroot *::after {
+box-sizing: border-box; margin: 0; padding: 0;
+}
+/* ── Focus ── */
+#fwroot input:focus-visible, #fwroot button:focus-visible {
+outline: 2px solid var(--fw-focus); outline-offset: 2px;
+}
+/* ── Accessibility toolbar ── */
+#fwroot .fw_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#fwroot .fw_a11ybtn {
+padding:4px 10px; font-size:.68rem; font-family:'Share Tech Mono', monospace; letter-spacing:.06em;
+border-radius:3px; cursor:pointer; background:var(--fw-panel-hi); border:1px solid var(--fw-border-hi); color:var(--fw-dim);
+}
+#fwroot .fw_a11ybtn:hover { border-color:var(--fw-accent); color:var(--fw-accent); }
+#fwroot .fw_a11yon { background:rgba(58,208,143,.14); border-color:var(--fw-accent2); color:var(--fw-accent2); font-weight:bold; }
+/* ── Narration bar ── */
+#fwroot .fw_narbar {
+width:100%; min-height:28px; padding:6px 12px;
+background:var(--fw-nar-bg); border-left:4px solid var(--fw-nar-border);
+font-size:.84rem; color:var(--fw-nar-text); font-style:italic; line-height:1.45; border-radius:3px;
+}
+/* ── Header ── */
+#fwroot .fw_header {
+display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+#fwroot .fw_h1 {
+font-size: 0.95rem; font-weight: 700; letter-spacing: 0.2em;
+text-transform: uppercase; color: var(--fw-accent);
+}
+#fwroot .fw_sub {
+font-size: 0.72rem; color: var(--fw-dim);
+letter-spacing: 0.1em; text-transform: uppercase; text-align:center;
+}
+/* ── Instrument grid ── */
+#fwroot .fw_instrument {
+display: grid;
+grid-template-columns: 1fr auto;
+grid-template-rows: auto auto;
+gap: 12px;
+width: 100%;
+}
+/* ── Diagram panel ── */
+#fwroot .fw_diagpanel {
+grid-column: 1; grid-row: 1 / 3;
+background: var(--fw-panel);
+border: 1px solid var(--fw-border);
+border-radius: 6px;
+overflow: hidden;
+box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+display: flex; flex-direction: column;
+}
+#fwroot .fw_diaglabel {
+background: var(--fw-panel-lo);
+border-bottom: 1px solid var(--fw-border);
+padding: 6px 12px;
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.62rem; letter-spacing: 0.13em; text-transform: uppercase;
+color: var(--fw-dim);
+display: flex; justify-content: space-between; align-items: center;
+flex-wrap: wrap; gap: 4px;
+}
+#fwroot .fw_diaglabel > span#fwDiagCaption { color: var(--fw-accent); font-size: 0.62rem; }
+#fwroot .fw_viewtgl { display:flex; gap:0; }
+#fwroot .fw_viewbtn {
+padding:3px 9px; font-size:.62rem; font-family:'Share Tech Mono', monospace; letter-spacing:.08em; cursor:pointer;
+background:var(--fw-panel-hi); border:1px solid var(--fw-border-hi); color:var(--fw-dim);
+}
+#fwroot .fw_viewbtn:first-child { border-radius:3px 0 0 3px; }
+#fwroot .fw_viewbtn:last-child  { border-radius:0 3px 3px 0; border-left:none; }
+#fwroot .fw_viewon { background:var(--fw-accent); color:#111; border-color:var(--fw-accent); font-weight:bold; }
+#fwroot #fwCanvas { display: block; flex: 1; cursor: default; max-width:100%; }
+/* ── Right column ── */
+#fwroot .fw_rightcol {
+display: flex; flex-direction: column; gap: 12px; width: 250px;
+}
+/* ── Generic instrument panel ── */
+#fwroot .fw_instpanel {
+background: var(--fw-panel);
+border: 1px solid var(--fw-border);
+border-radius: 6px; overflow: hidden;
+box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+#fwroot .fw_insttitle {
+background: var(--fw-panel-lo);
+border-bottom: 1px solid var(--fw-border);
+padding: 6px 12px;
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+color: var(--fw-dim);
+}
+#fwroot .fw_instbody {
+padding: 10px 12px; display: flex; flex-direction: column; gap: 9px;
+}
+/* ── Slider controls ── */
+#fwroot .fw_ctrlrow { display: flex; flex-direction: column; gap: 4px; }
+#fwroot .fw_ctrlhdr {
+display: flex; justify-content: space-between; align-items: baseline;
+}
+#fwroot .fw_ctrlname {
+font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em;
+color: var(--fw-dim); text-transform: uppercase;
+}
+#fwroot .fw_ctrlval {
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.82rem; color: var(--fw-accent);
+min-width: 76px; text-align: right;
+}
+#fwroot .fw_blue  { color: var(--fw-accent3); }
+#fwroot .fw_green { color: var(--fw-accent2); }
+#fwroot .fw_sliderwrap {
+display: flex; align-items: center; gap: 7px;
+}
+#fwroot .fw_dirbadge {
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.9rem; width: 22px; text-align: center; flex-shrink: 0;
+}
+#fwroot .fw_slunit {
+font-size: .62rem; color: var(--fw-dim);
+font-family: 'Share Tech Mono', monospace;
+}
+#fwroot input[type=range] {
+flex: 1; -webkit-appearance: none;
+height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+background: var(--fw-panel-lo); border: 1px solid var(--fw-border);
+}
+#fwroot input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 16px; height: 16px; border-radius: 50%;
+background: var(--fw-accent);
+border: 2px solid var(--fw-panel);
+cursor: pointer;
+}
+#fwroot .fw_rangblue::-webkit-slider-thumb { background: var(--fw-accent3); }
+#fwroot .fw_ranggreen::-webkit-slider-thumb { background: var(--fw-accent2); }
+/* ── Force readout ── */
+#fwroot .fw_forcereadout {
+background: var(--fw-panel);
+border: 1px solid var(--fw-border);
+border-radius: 6px; overflow: hidden;
+box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+#fwroot .fw_forceinner {
+padding: 10px 12px; display: flex; flex-direction: column; gap: 5px;
+}
+#fwroot .fw_forcerow {
+display: flex; justify-content: space-between; align-items: center;
+padding: 5px 7px;
+background: var(--fw-panel-lo);
+border-radius: 3px; border: 1px solid var(--fw-border);
+}
+#fwroot .fw_forcekey {
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.62rem; color: var(--fw-dim);
+letter-spacing: 0.07em; text-transform: uppercase;
+}
+#fwroot .fw_forceval {
+font-family: 'Share Tech Mono', monospace; font-size: 0.78rem;
+}
+#fwroot .fw_fvhi   { color: var(--fw-force-col); }
+#fwroot .fw_fvup   { color: var(--fw-accent2); }
+#fwroot .fw_fvdn   { color: var(--fw-danger); }
+#fwroot .fw_fvzero { color: var(--fw-dim); }
+/* ── Digital scale ── */
+#fwroot .fw_scalepanel {
+background: var(--fw-panel);
+border: 1px solid var(--fw-border);
+border-radius: 6px; overflow: hidden;
+box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+#fwroot .fw_scalebrand {
+background: linear-gradient(135deg, #c0781a 0%, #e8a020 50%, #c0781a 100%);
+padding: 6px 12px;
+display: flex; justify-content: space-between; align-items: center;
+}
+#fwroot .fw_scalebrandname {
+font-size: 0.72rem; font-weight: 700; color: #fff;
+letter-spacing: 0.1em; text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+#fwroot .fw_scalemodel {
+font-size: 0.6rem; color: rgba(255,255,255,0.85); letter-spacing: 0.08em;
+}
+#fwroot .fw_scaledispwrap {
+background: var(--fw-lcd-bg);
+border-bottom: 1px solid var(--fw-border);
+padding: 12px 14px;
+display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+}
+#fwroot .fw_scaledisp {
+font-family: 'Share Tech Mono', monospace;
+font-size: 2.2rem; color: var(--fw-lcd-text);
+letter-spacing: 0.06em; line-height: 1;
+min-width: 150px; text-align: right;
+transition: color 0.15s;
+}
+#fwroot .fw_lcdmore { color: var(--fw-lcd-more); }
+#fwroot .fw_lcdless { color: var(--fw-lcd-less); }
+#fwroot .fw_scaleunit {
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.72rem; color: var(--fw-accent2);
+letter-spacing: 0.1em;
+}
+#fwroot .fw_scalestatrow {
+display: flex; gap: 6px; padding: 4px 14px 6px; align-items: center;
+}
+#fwroot .fw_scaleled {
+width: 7px; height: 7px; border-radius: 50%;
+background: var(--fw-accent2);
+}
+#fwroot .fw_scalestable {
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.6rem; color: var(--fw-accent2); letter-spacing: 0.1em;
+}
+#fwroot .fw_scalebtnrow {
+padding: 8px 10px; display: flex; gap: 7px;
+}
+#fwroot .fw_scalebtn {
+flex: 1; padding: 7px 5px;
+background: var(--fw-panel-hi);
+border: 1px solid var(--fw-border-hi);
+border-radius: 4px; color: var(--fw-text);
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+cursor: pointer;
+}
+#fwroot .fw_scalebtn:hover { background: var(--fw-border); color: var(--fw-bright); }
+#fwroot .fw_zerobtn { color: var(--fw-accent2); border-color: var(--fw-accent2); }
+#fwroot .fw_scalecap {
+padding: 0 12px 8px;
+font-size: 0.6rem; color: var(--fw-dim);
+letter-spacing: 0.06em;
+font-family: 'Share Tech Mono', monospace; text-align: right;
+}
+/* ── Formula strip ── */
+#fwroot .fw_formulastrip {
+grid-column: 1 / 3;
+background: var(--fw-panel-lo);
+border: 1px solid var(--fw-border);
+border-radius: 4px;
+padding: 7px 14px;
+display: flex; align-items: center;
+justify-content: space-between;
+flex-wrap: wrap; gap: 7px;
+}
+#fwroot .fw_formulatxt {
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.68rem; color: var(--fw-dim); letter-spacing: 0.07em;
+}
+#fwroot .fw_formulalive {
+font-family: 'Share Tech Mono', monospace;
+font-size: 0.68rem; color: var(--fw-accent);
+}
+/* ── Misc ── */
+#fwroot .fw_credit {
+font-size: .62rem; color: var(--fw-dim); text-align: center; margin-top: 6px;
+}
+#fwroot .fw_sronly {
+position: absolute; width: 1px; height: 1px;
+overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+/* ════════ Mobile-friendly layout (same template as the Hall effect sim) ════════ */
+#fwroot .fw_instrument { grid-template-columns:minmax(0,1fr) 250px; }
+#fwroot .fw_diagpanel { min-width:0; }
+#fwroot canvas#fwCanvas { display:block; width:100%; max-width:500px; height:auto; margin:0 auto; flex:none; }
+#fwroot .fw_diagpanel { align-self:start; }
+#fwroot .fw_formulatxt { line-height:1.6; }
+#fwroot .fw_formulastrip { flex-wrap:wrap; gap:4px 12px; }
+#fwroot select:focus-visible { outline:2px solid var(--fw-focus); outline-offset:2px; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#fwroot .fw_instrument { grid-template-columns:minmax(0,1fr); }
+#fwroot .fw_instrument > * { grid-column:auto; grid-row:auto; }
+#fwroot .fw_rightcol { width:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#fwroot input[type=range] { height:8px; }
+#fwroot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#fwroot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#fwroot button, #fwroot input[type=button] { min-height:40px; }
+#fwroot select { min-height:36px; font-size:.9rem; }
+#fwroot input[type=checkbox] { width:22px; height:22px; }
+#fwroot .fw_instbody { gap:10px; }
+}
+@media (max-width:560px) {
+#fwroot { padding:10px 6px 14px; }
+#fwroot .fw_forcerow { flex-wrap:wrap; }
+#fwroot .fw_forcekey { white-space:normal; }
+}
+</style>
+<script>
+var forceWireSim = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('fwroot');
+var canvas = document.getElementById('fwCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var DPR = window.devicePixelRatio || 1;   /* sharp on phones: draw at device resolution, CSS scales the canvas to the panel */
+canvas.width = CW*DPR; canvas.height = CH*DPR; ctx.scale(DPR, DPR);
+/* ── Helpers ── */
+function set(id, txt) { var e = document.getElementById(id); if (e) e.textContent = txt; }
+function el(id)       { return document.getElementById(id); }
+function setCls(id, cls) { var e = el(id); if (e) e.className = cls; }
+/* ── Constants ── */
+var MAGNET_MASS_G = 152.4;
+var g_acc = 9.81;
+var tareOffset = 0;
+/* ── State ── */
+var I = 2.0, B = 0.5, L = 0.05;
+var view = 'top';                                   /* 'top' | 'side' */
+var st = { hc:false, lm:false, cb:false, nr:true };  /* display options */
+/* ── Physics ── */
+function computeForce(Iv, Bv, Lv) { return Iv * Bv * Lv; }
+function scaleRawGrams(F) { return MAGNET_MASS_G - F / g_acc * 1000; }
+function displayGrams(raw_g) { return (raw_g - tareOffset).toFixed(1); }
+/* ── Canvas palette: follows the display options ── */
+function pal() {
+var p;
+if (st.hc) p = { bg:'#000000', grid:null, text:'#ffffff', dim:'#e0e0e0',
+  poleN:'#ff3b3b', poleS:'#00c853', yoke:'#555555', yokeEdge:'#ffffff', field:'#66ccff',
+  wp:{mid:'#ff8a65', edge:'#ff5722', line:'#ffffff', sym:'#000000', lbl:'#ffab91'},
+  wn:{mid:'#64b5f6', edge:'#1e88e5', line:'#ffffff', sym:'#000000', lbl:'#90caf9'},
+  fw:'#00ff88', fr:'#ffd700', scale:'#222222', scaleEdge:'#ffffff', lcdBg:'#000000', lcdTxt:'#00ff66',
+  stand:'#bbbbbb', table:'#ffffff', lw:2.5 };
+else if (st.lm) p = { bg:'#ffffff', grid:'rgba(0,0,0,0.05)', text:'#1d232a', dim:'#556070',
+  poleN:'#c0392b', poleS:'#1e8449', yoke:'#9aa3ae', yokeEdge:'#556070', field:'#1f5fc0',
+  wp:{mid:'#ff8a65', edge:'#c0391b', line:'#8a2a10', sym:'#ffffff', lbl:'#b23a17'},
+  wn:{mid:'#7fb0ff', edge:'#2255aa', line:'#163d7a', sym:'#ffffff', lbl:'#1f4fa0'},
+  fw:'#12805a', fr:'#b05a00', scale:'#d5dae0', scaleEdge:'#556070', lcdBg:'#dcebdf', lcdTxt:'#0b5a2a',
+  stand:'#7a828c', table:'#556070', lw:1.5 };
+else p = { bg:'#0d0f12', grid:'rgba(255,255,255,0.03)', text:'#c8d0d8', dim:'rgba(150,160,180,0.9)',
+  poleN:'#b82a1a', poleS:'#1a8840', yoke:'#2c3340', yokeEdge:'rgba(255,255,255,0.18)', field:'#4a9eff',
+  wp:{mid:'#ff7755', edge:'#aa3310', line:'#ffaa88', sym:'#ffddcc', lbl:'#ff8866'},
+  wn:{mid:'#5599ff', edge:'#2255aa', line:'#88bbff', sym:'#ccddff', lbl:'#88aaff'},
+  fw:'#3ad08f', fr:'#cc8800', scale:'#2a2f36', scaleEdge:'#6a7480', lcdBg:'#0d1a10', lcdTxt:'#3aff88',
+  stand:'#6a7480', table:'#6a7480', lw:1.5 };
+if (st.cb) {   /* Okabe-Ito: no red/green pairs */
+p.poleN = '#D55E00'; p.poleS = '#0072B2';
+p.field = st.lm ? '#a0507f' : '#CC79A7';
+p.wp = {mid:'#E69F00', edge:'#a86f00', line:(st.lm?'#7a5000':'#ffd27a'), sym:'#111111', lbl:(st.lm?'#a86f00':'#E69F00')};
+p.wn = {mid:'#56B4E9', edge:'#0072B2', line:(st.lm?'#004f7a':'#b8e2fa'), sym:'#111111', lbl:(st.lm?'#0072B2':'#56B4E9')};
+p.fw = '#009E73'; p.fr = st.lm ? '#7a5c00' : '#F0E442';
+}
+return p;
+}
+/* ── Drawing helpers ── */
+function roundRect(c, x, y, w, h, r) {
+c.beginPath();
+c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
+c.closePath();
+}
+function drawVArrow2(c, x, y0, y1, dir, col, alpha, lw) {
+c.save(); c.globalAlpha = alpha;
+c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw || 1.5;
+var startY = dir > 0 ? y0 : y1, endY = dir > 0 ? y1 : y0;
+c.beginPath(); c.moveTo(x, startY); c.lineTo(x, endY); c.stroke();
+var hl = 7;
+c.beginPath(); c.moveTo(x, endY);
+c.lineTo(x - hl, endY - dir*hl); c.lineTo(x + hl, endY - dir*hl);
+c.closePath(); c.fill(); c.restore();
+}
+function drawHArrow(c, x0, x1, y, col, lw, head) {
+var dir = x1 >= x0 ? 1 : -1, hl = head || 8;
+c.save(); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw;
+c.beginPath(); c.moveTo(x0, y); c.lineTo(x1 - dir*hl*0.6, y); c.stroke();
+c.beginPath(); c.moveTo(x1, y); c.lineTo(x1 - dir*hl, y - hl*0.6); c.lineTo(x1 - dir*hl, y + hl*0.6); c.closePath(); c.fill();
+c.restore();
+}
+function drawBigVArrow(c, x, y0, len, dir, col, lw) {   /* dir +1 = down, -1 = up; starts at y0 */
+var y1 = y0 + dir*len, hl = 10;
+c.save(); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw;
+c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y1 - dir*hl*0.6); c.stroke();
+c.beginPath(); c.moveTo(x, y1); c.lineTo(x - hl*0.65, y1 - dir*hl); c.lineTo(x + hl*0.65, y1 - dir*hl); c.closePath(); c.fill();
+c.restore();
+}
+function drawPole(x, y, w, h, col, label) {
+var grd = ctx.createLinearGradient(x, y, x+w, y+h);
+grd.addColorStop(0, col + 'ff'); grd.addColorStop(0.5, col + 'cc'); grd.addColorStop(1, col + 'aa');
+ctx.fillStyle = grd; roundRect(ctx, x, y, w, h, 6); ctx.fill();
+ctx.fillStyle = 'rgba(255,255,255,0.1)'; roundRect(ctx, x+3, y+3, w-6, Math.min(h*0.35, 30), 4); ctx.fill();
+ctx.strokeStyle = st.hc ? '#ffffff' : 'rgba(255,255,255,0.3)'; ctx.lineWidth = st.hc ? 2 : 1.5;
+roundRect(ctx, x, y, w, h, 6); ctx.stroke();
+ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Arial';
+ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(label, x + w/2, y + h/2); ctx.textBaseline = 'alphabetic';
+}
+function clearBg(p) {
+ctx.clearRect(0, 0, CW, CH);
+ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+if (p.grid) {
+ctx.strokeStyle = p.grid; ctx.lineWidth = 1;
+for (var x = 0; x < CW; x += 30) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke(); }
+for (var y = 0; y < CH; y += 30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke(); }
+}
+}
+/* ══════════ TOP VIEW (looking down) ══════════ */
+function drawTop(p, Iv, Bv, F) {
+clearBg(p);
+var cx2 = CW / 2;
+var poleH = 48, poleW = 280, gapH = 120;
+var topY    = 30;
+var gapTopY = topY + poleH;
+var gapBotY = gapTopY + gapH;
+var px0 = cx2 - poleW/2;
+var Bpos = Bv >= 0;
+var topLabel = Bpos ? 'N' : 'S', botLabel = Bpos ? 'S' : 'N';
+var topCol   = Bpos ? p.poleN : p.poleS;
+var botCol   = Bpos ? p.poleS : p.poleN;
+// Yoke
+var yokeW = 20;
+ctx.fillStyle = p.yoke;
+ctx.fillRect(px0, gapTopY, yokeW, gapH);
+ctx.fillRect(px0 + poleW - yokeW, gapTopY, yokeW, gapH);
+ctx.strokeStyle = p.yokeEdge; ctx.lineWidth = 1;
+ctx.strokeRect(px0, gapTopY, yokeW, gapH);
+ctx.strokeRect(px0 + poleW - yokeW, gapTopY, yokeW, gapH);
+// Poles
+drawPole(px0, topY,    poleW, poleH, topCol, topLabel);
+drawPole(px0, gapBotY, poleW, poleH, botCol, botLabel);
+// B field arrows
+var Bdir = Bv >= 0 ? 1 : -1;
+var arrowXs = [cx2 - poleW*0.28, cx2, cx2 + poleW*0.28];
+var arrowStartY = gapTopY + 12, arrowEndY = gapBotY - 12;
+if (Math.abs(Bv) > 1e-9) for (var ai = 0; ai < arrowXs.length; ai++) {
+drawVArrow2(ctx, arrowXs[ai], arrowStartY, arrowEndY, Bdir, p.field, st.hc ? 1 : 0.75, st.hc ? 2.5 : 1.5);
+}
+ctx.fillStyle = p.field;
+ctx.font = '700 11px monospace'; ctx.textAlign = 'left';
+ctx.fillText('B  ' + (Bpos ? '\u2193' : '\u2191') + '  (N\u2192S)', px0 + poleW + 7, gapTopY + gapH/2 + 4);
+// Wire
+var wireY  = gapTopY + gapH/2, wireR = 8;
+var wireX0 = px0 - 24, wireX1 = px0 + poleW + 24;
+var Ipos = Iv >= 0, wc = Ipos ? p.wp : p.wn;
+var wireGrd = ctx.createLinearGradient(wireX0, wireY - wireR, wireX0, wireY + wireR);
+wireGrd.addColorStop(0, wc.mid); wireGrd.addColorStop(0.5, wc.edge); wireGrd.addColorStop(1, st.lm ? '#555555' : '#111418');
+ctx.fillStyle = wireGrd;
+roundRect(ctx, wireX0, wireY - wireR, wireX1 - wireX0, wireR*2, wireR); ctx.fill();
+ctx.strokeStyle = wc.line; ctx.lineWidth = st.hc ? 2 : 1.5;
+roundRect(ctx, wireX0, wireY - wireR, wireX1 - wireX0, wireR*2, wireR); ctx.stroke();
+// Current direction arrows
+if (Math.abs(Iv) > 1e-9) {
+var arrowSpacing = 55;
+var numArr = Math.floor((wireX1 - wireX0) / arrowSpacing);
+var arrowStart = wireX0 + ((wireX1 - wireX0) - (numArr-1)*arrowSpacing) / 2;
+ctx.fillStyle = wc.sym;
+ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+for (var k = 0; k < numArr; k++) ctx.fillText(Ipos ? '\u2192' : '\u2190', arrowStart + k*arrowSpacing, wireY + 1);
+ctx.textBaseline = 'alphabetic';
+}
+ctx.fillStyle = wc.lbl;
+ctx.font = '600 11px Arial'; ctx.textAlign = 'left';
+ctx.fillText('I  ' + (Math.abs(Iv) < 1e-9 ? '= 0' : (Ipos ? '\u2192 rightward' : '\u2190 leftward')), wireX0, wireY - wireR - 5);
+// Force symbols
+var fWireX = px0 + poleW * 0.28, fWireY = wireY;
+var fReactX = px0 + poleW * 0.72, fReactY = gapBotY + poleH + 44;
+var symRadius = Math.min(28, 13 + Math.abs(F)*300);
+var wireSymbol  = F > 0 ? '\u2297' : F < 0 ? '\u2299' : '\u00b7';
+var reactSymbol = F > 0 ? '\u2299' : F < 0 ? '\u2297' : '\u00b7';
+if (Math.abs(F) > 1e-9) {
+ctx.save(); if (!st.hc && !st.lm) { ctx.shadowColor = p.fw; ctx.shadowBlur = 16; }
+ctx.beginPath(); ctx.arc(fWireX, fWireY, symRadius, 0, Math.PI*2);
+ctx.strokeStyle = p.fw; ctx.lineWidth = st.hc ? 3 : 2; ctx.stroke(); ctx.restore();
+ctx.fillStyle = p.fw;
+ctx.font = 'bold ' + Math.min(24, 13 + Math.abs(F)*260) + 'px monospace';
+ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(wireSymbol, fWireX, fWireY); ctx.textBaseline = 'alphabetic';
+ctx.font = '700 11px monospace'; ctx.textAlign = 'center';
+ctx.fillText('F on wire', fWireX, fWireY - symRadius - 5);
+ctx.fillText((F > 0 ? '\u2297 into page' : '\u2299 out of page') + '  (' + (F > 0 ? 'downward' : 'upward') + ' in lab)', fWireX, fWireY + symRadius + 11);
+ctx.save(); if (!st.hc && !st.lm) { ctx.shadowColor = p.fr; ctx.shadowBlur = 16; }
+ctx.beginPath(); ctx.arc(fReactX, fReactY, symRadius, 0, Math.PI*2);
+ctx.strokeStyle = p.fr; ctx.lineWidth = st.hc ? 3 : 2; ctx.stroke(); ctx.restore();
+ctx.fillStyle = p.fr;
+ctx.font = 'bold ' + Math.min(24, 13 + Math.abs(F)*260) + 'px monospace';
+ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(reactSymbol, fReactX, fReactY); ctx.textBaseline = 'alphabetic';
+ctx.font = '700 11px monospace'; ctx.textAlign = 'center';
+ctx.fillText('Reaction on magnet', fReactX, fReactY - symRadius - 5);
+ctx.fillText(F > 0 ? '\u2299 out of page (lifts \u2191 \u2192 LESS)' : '\u2297 into page (pushes \u2193 \u2192 MORE)', fReactX, fReactY + symRadius + 11);
+ctx.fillStyle = p.dim; ctx.font = '500 10px monospace'; ctx.textAlign = 'center';
+ctx.fillText("Newton's 3rd law: equal & opposite", cx2-120, gapBotY + poleH + 38);
+ctx.fillStyle = p.text; ctx.font = '600 11px monospace';
+ctx.fillText('|F| = ' + Math.abs(F).toFixed(3) + ' N', cx2-120, gapBotY + poleH + 50);
+} else {
+ctx.fillStyle = p.dim; ctx.font = '600 11px monospace'; ctx.textAlign = 'center';
+ctx.fillText('F = 0  (no force \u2014 check I, B, L)', cx2, gapBotY + poleH + 38);
+}
+// Axis legend
+ctx.fillStyle = p.dim; ctx.font = '500 9px monospace'; ctx.textAlign = 'left';
+ctx.fillText('TOP VIEW  \u00b7  x\u2192 wire  \u00b7  y\u2193 field (N\u2192S)  \u00b7  \u2299/\u2297 = up/down in lab', 6, CH - 5);
+}
+/* ══════════ SIDE VIEW (looking along the wire from its left end) ══════════
+   Seen from the wire's left end (top view), the direction the top view calls
+   "rightward" points into the page, the top view's N->S direction points to
+   the right, and "into the top-view page" is down. So for B > 0 the N pole is
+   on the left, a positive current is drawn as (x), and F = IL x B points down
+   when I > 0 and B > 0, matching the top view.                               */
+function drawSide(p, Iv, Bv, F, dispStr) {
+clearBg(p);
+var Bpos = Bv >= 0, Ipos = Iv >= 0, wc = Ipos ? p.wp : p.wn;
+var tableY = 340;
+/* table */
+ctx.strokeStyle = p.table; ctx.lineWidth = st.hc ? 3 : 2;
+ctx.beginPath(); ctx.moveTo(10, tableY); ctx.lineTo(CW-10, tableY); ctx.stroke();
+/* scale: body, platform, LCD */
+var sx0 = 130, sx1 = 370, sTop = 296;
+ctx.fillStyle = p.scale; roundRect(ctx, sx0, sTop+8, sx1-sx0, tableY-sTop-8, 5); ctx.fill();
+ctx.strokeStyle = p.scaleEdge; ctx.lineWidth = st.hc ? 2 : 1.2; roundRect(ctx, sx0, sTop+8, sx1-sx0, tableY-sTop-8, 5); ctx.stroke();
+ctx.fillStyle = p.scaleEdge; ctx.fillRect(sx0-12, sTop, (sx1-sx0)+24, 8);              /* weighing platform */
+ctx.fillStyle = p.lcdBg; roundRect(ctx, 205, sTop+13, 90, 21, 3); ctx.fill();
+ctx.strokeStyle = p.scaleEdge; ctx.lineWidth = 1; roundRect(ctx, 205, sTop+13, 90, 21, 3); ctx.stroke();
+ctx.fillStyle = p.lcdTxt; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'right';
+ctx.fillText(dispStr + ' g', 289, sTop+29);
+ctx.fillStyle = p.dim; ctx.font = '600 9px monospace'; ctx.textAlign = 'left';
+ctx.fillText('SCALE', sx0+8, sTop+29);
+/* U-shaped magnet resting on the platform: yoke + two pole pieces */
+var mx0 = 150, mx1 = 350, yokeTop = 252, poleTop = 110, poleW = 62;
+var gapL = mx0 + poleW, gapR = mx1 - poleW, cx = (gapL + gapR)/2, cy = 180;
+ctx.fillStyle = p.yoke; roundRect(ctx, mx0, yokeTop, mx1-mx0, sTop-yokeTop, 5); ctx.fill();
+ctx.strokeStyle = p.yokeEdge; ctx.lineWidth = st.hc ? 2 : 1; roundRect(ctx, mx0, yokeTop, mx1-mx0, sTop-yokeTop, 5); ctx.stroke();
+ctx.fillStyle = p.dim; ctx.font = '600 10px monospace'; ctx.textAlign = 'center';
+ctx.fillText('MAGNET (on scale)', (mx0+mx1)/2, yokeTop + 27);
+var leftLbl = Bpos ? 'N' : 'S', rightLbl = Bpos ? 'S' : 'N';
+drawPole(mx0, poleTop, poleW, yokeTop - poleTop + 6, Bpos ? p.poleN : p.poleS, leftLbl);
+drawPole(gapR, poleTop, poleW, yokeTop - poleTop + 6, Bpos ? p.poleS : p.poleN, rightLbl);
+/* B field across the gap, from N to S (rows above and below the wire) */
+if (Math.abs(Bv) > 1e-9) {
+var rows = [poleTop + 22, poleTop + 46, cy + 46, cy + 66];
+for (var r = 0; r < rows.length; r++) {
+if (Bpos) drawHArrow(ctx, gapL + 6, gapR - 6, rows[r], p.field, st.hc ? 2.5 : 1.6, 8);
+else      drawHArrow(ctx, gapR - 6, gapL + 6, rows[r], p.field, st.hc ? 2.5 : 1.6, 8);
+}
+ctx.fillStyle = p.field; ctx.font = '700 11px monospace'; ctx.textAlign = 'center';
+ctx.fillText('B ' + (Bpos ? '\u2192' : '\u2190') + ' (N\u2192S)', gapR + poleW/2, poleTop - 8);   /* above the right pole, clear of the support rod */
+}
+/* stand that holds the wire (on the table, NOT on the scale) */
+ctx.fillStyle = p.stand;
+ctx.fillRect(24, tableY-8, 60, 8);                 /* base */
+ctx.fillRect(50, 26, 8, tableY-34);                 /* upright */
+ctx.fillRect(50, 26, cx-50+4, 7);                   /* arm */
+ctx.fillRect(cx-3, 33, 6, cy-16-33);                /* rod down to the wire clamp */
+ctx.fillRect(cx-9, cy-22, 18, 6);                   /* clamp */
+ctx.fillStyle = p.dim; ctx.font = '600 9px monospace'; ctx.textAlign = 'left';
+ctx.fillText('wire held by stand', 66, 50);
+ctx.fillText('(not touching magnet)', 66, 61);
+/* wire cross-section with current symbol */
+var wr = 15;
+var rg = ctx.createRadialGradient(cx-4, cy-4, 2, cx, cy, wr);
+rg.addColorStop(0, wc.mid); rg.addColorStop(1, wc.edge);
+ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(cx, cy, wr, 0, Math.PI*2); ctx.fill();
+ctx.strokeStyle = wc.line; ctx.lineWidth = st.hc ? 2.5 : 1.8; ctx.beginPath(); ctx.arc(cx, cy, wr, 0, Math.PI*2); ctx.stroke();
+var symCol = '#111111';
+if (Math.abs(Iv) > 1e-9) {
+if (Ipos) {   /* current INTO page: x */
+var d = wr*0.55;
+ctx.strokeStyle = symCol; ctx.lineWidth = 3; ctx.lineCap = 'round';
+ctx.beginPath(); ctx.moveTo(cx-d, cy-d); ctx.lineTo(cx+d, cy+d); ctx.moveTo(cx+d, cy-d); ctx.lineTo(cx-d, cy+d); ctx.stroke();
+ctx.lineCap = 'butt';
+} else {      /* current OUT of page: dot */
+ctx.fillStyle = symCol; ctx.beginPath(); ctx.arc(cx, cy, wr*0.28, 0, Math.PI*2); ctx.fill();
+}
+}
+/* labels for the wire go to the left of the magnet: the gap between the poles is too narrow */
+ctx.fillStyle = wc.lbl; ctx.font = '600 11px Arial'; ctx.textAlign = 'right';
+var iTxt = Math.abs(Iv) < 1e-9 ? 'I = 0' : (Ipos ? 'I \u2297 into page' : 'I \u2299 out of page');
+ctx.fillText(iTxt, mx0 - 8, cy + 4);
+/* forces: on the wire, and the equal and opposite reaction on the magnet */
+if (Math.abs(F) > 1e-9) {
+var len = 16 + 52*Math.sqrt(Math.min(1, Math.abs(F)/4));
+var down = F > 0;
+drawBigVArrow(ctx, cx, down ? cy + wr + 3 : cy - wr - 3, len, down ? 1 : -1, p.fw, st.hc ? 5 : 4);
+ctx.fillStyle = p.fw; ctx.font = '700 11px monospace'; ctx.textAlign = 'right';
+ctx.fillText('F on wire ' + (down ? '\u2193' : '\u2191'), mx0 - 8, cy + 26);
+/* reaction drawn on the right-hand side of the magnet */
+var rx = mx1 + 22, ry0 = 200;
+drawBigVArrow(ctx, rx, ry0, len, down ? -1 : 1, p.fr, st.hc ? 5 : 4);
+ctx.fillStyle = p.fr; ctx.font = '700 11px monospace'; ctx.textAlign = 'left';
+ctx.fillText('Reaction', rx + 10, ry0 - 6);
+ctx.fillText('on magnet ' + (down ? '\u2191' : '\u2193'), rx + 10, ry0 + 7);
+ctx.font = '600 10px monospace';
+ctx.fillText(down ? 'scale reads LESS' : 'scale reads MORE', rx + 10, ry0 + 22);
+ctx.strokeStyle = p.fr; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+ctx.beginPath(); ctx.moveTo(mx1, ry0); ctx.lineTo(rx - 6, ry0); ctx.stroke(); ctx.setLineDash([]);
+ctx.fillStyle = p.text; ctx.font = '600 11px monospace'; ctx.textAlign = 'right';
+ctx.fillText('|F| = ' + Math.abs(F).toFixed(3) + ' N', CW - 8, 18);
+} else {
+ctx.fillStyle = p.dim; ctx.font = '600 11px monospace'; ctx.textAlign = 'right';
+ctx.fillText('F = 0  (no force)', CW - 8, 18);
+}
+/* legend */
+ctx.fillStyle = p.dim; ctx.font = '500 9px monospace'; ctx.textAlign = 'left';
+ctx.fillText('SIDE VIEW (looking along the wire)  \u00b7  \u2297 current into page  \u00b7  \u2299 out of page', 6, CH - 5);
+}
+/* ── Narration (text equivalent of the diagram) ── */
+function describe(Iv, Bv, Lv, F, dm_g) {
+var s = (view === 'side' ? 'Side view, looking along the wire. ' : 'Top view, looking down. ');
+if (Math.abs(Iv) < 1e-9) s += 'No current. ';
+else s += 'Current ' + Math.abs(Iv).toFixed(2) + ' A ' + (Iv > 0 ? 'to the right' : 'to the left') +
+  (view === 'side' ? (Iv > 0 ? ' (into the page, shown as a cross)' : ' (out of the page, shown as a dot)') : '') + '. ';
+if (Math.abs(Bv) < 1e-9) s += 'No magnetic field. ';
+else s += 'Field ' + Math.abs(Bv).toFixed(2) + ' T from the N pole to the S pole' +
+  (view === 'side' ? (Bv > 0 ? ' (N on the left, field pointing right)' : ' (N on the right, field pointing left)') : (Bv > 0 ? ' (N at the top)' : ' (N at the bottom)')) + '. ';
+s += 'Length in the field ' + Lv.toFixed(3) + ' m. ';
+if (Math.abs(F) < 1e-9) s += 'There is no force, so the scale reading does not change.';
+else s += 'Force on the wire F = BIL = ' + Math.abs(F).toFixed(4) + ' N ' + (F > 0 ? 'downward' : 'upward') +
+  '. By Newton\u2019s third law the magnet is pushed ' + (F > 0 ? 'upward' : 'downward') +
+  ' with the same force, so the scale reads ' + Math.abs(dm_g).toFixed(2) + ' g ' + (F > 0 ? 'less' : 'more') + '.';
+return s;
+}
+/* ── Main update ── */
+function update() {
+I = parseFloat(el('fwSlI').value);
+B = parseFloat(el('fwSlB').value);
+L = parseFloat(el('fwSlL').value);
+var F = computeForce(I, B, L);
+// Slider display values
+set('fwVI', (I >= 0 ? '+' : '') + I.toFixed(2) + ' A');
+set('fwVB', (B >= 0 ? '+' : '') + B.toFixed(2) + ' T');
+set('fwVL', L.toFixed(3) + ' m');
+// Direction badges
+var dI = el('fwDI');
+if (dI) { dI.textContent = I >= 0 ? '\u2192' : '\u2190'; dI.style.color = I >= 0 ? 'var(--fw-wire-pos)' : 'var(--fw-wire-neg)'; }
+var dB = el('fwDB');
+if (dB) { dB.textContent = B >= 0 ? '\u2193' : '\u2191'; }
+// Scale
+var rawG  = scaleRawGrams(F);
+var dispG = displayGrams(rawG);
+// Diagram
+var p = pal();
+if (view === 'side') {
+drawSide(p, I, B, F, dispG);
+set('fwDiagCaption', 'Looking along the wire \u00b7 I ' + (I >= 0 ? '\u2297 in' : '\u2299 out') + ' \u00b7 B ' + (B >= 0 ? 'N\u2192S (\u2192)' : 'S\u2190N (\u2190)'));
+} else {
+drawTop(p, I, B, F);
+set('fwDiagCaption', 'B ' + (B >= 0 ? 'N\u2192S (\u2193)' : 'S\u2192N (\u2191)') + '  \u00b7  I ' + (I >= 0 ? 'rightward \u2192' : 'leftward \u2190'));
+}
+// Force readout
+var Fstr = F === 0 ? '0.000 N' : (Math.abs(F) < 0.001 ? (F*1000).toFixed(3) + ' mN' : F.toFixed(4) + ' N');
+set('fwRF', Fstr);
+var dirStr, dirCls, wireStr, wireCls;
+if (Math.abs(F) < 1e-9) {
+dirStr  = 'No force (zero B, I, or L)'; dirCls  = 'fw_forceval fw_fvzero';
+wireStr = '\u2014';                      wireCls = 'fw_forceval fw_fvzero';
+} else if (F > 0) {
+dirStr  = '\u2297 (wire down in lab)'; dirCls  = 'fw_forceval fw_fvdn';
+wireStr = '\u2297  into page (downward)';         wireCls = 'fw_forceval fw_fvdn';
+} else {
+dirStr  = '\u2299 (wire up in lab)'; dirCls  = 'fw_forceval fw_fvup';
+wireStr = '\u2299  out of page (upward)';         wireCls = 'fw_forceval fw_fvup';
+}
+if (view === 'side' && Math.abs(F) > 1e-9) { dirStr = F > 0 ? '\u2193 (wire pushed down)' : '\u2191 (wire pushed up)'; wireStr = F > 0 ? '\u2193  downward' : '\u2191  upward'; }
+setCls('fwRDir',  dirCls);  set('fwRDir',  dirStr);
+setCls('fwRWire', wireCls); set('fwRWire', wireStr);
+var dm_g = -F / g_acc * 1000;
+var dmStr = (dm_g >= 0 ? '+' : '') + dm_g.toFixed(2) + ' g';
+var dmCls = dm_g > 0.001 ? 'fw_forceval fw_fvup' : dm_g < -0.001 ? 'fw_forceval fw_fvdn' : 'fw_forceval fw_fvzero';
+setCls('fwRDm', dmCls); set('fwRDm', dmStr);
+set('fwScaleDisp', dispG);
+var dispNum = parseFloat(dispG);
+var sd = el('fwScaleDisp');
+if (sd) {
+sd.className = 'fw_scaledisp' + (Math.abs(dispNum - (MAGNET_MASS_G - tareOffset)) < 0.05 ? '' : (dm_g > 0 ? ' fw_lcdmore' : ' fw_lcdless'));
+}
+// Formula strip
+set('fwFormulaLive',
+'F = ' + Math.abs(B).toFixed(2) + ' \u00d7 ' + (I >= 0 ? '' : '-') + Math.abs(I).toFixed(2)
++ ' \u00d7 ' + L.toFixed(3) + ' = ' + F.toFixed(4) + ' N'
++ (Math.abs(F) > 1e-9 ? (F > 0 ? '  \u2297 into page (wire dn)' : '  \u2299 out of page (wire up)') : '  \u2014 no force'));
+// Text equivalent: canvas label + narration bar
+var desc = describe(I, B, L, F, dm_g);
+canvas.setAttribute('aria-label', desc);
+set('fwDiagDesc', desc);
+if (st.nr) set('fwNarBar', desc);
+}
+/* ── Display options ── */
+function styleBtn(id, on) {
+var b = el(id); if (!b) return;
+if (on) b.classList.add('fw_a11yon'); else b.classList.remove('fw_a11yon');
+b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function applyDisplay() {
+ROOT.classList.toggle('fw_hc', st.hc);
+ROOT.classList.toggle('fw_lm', st.lm);
+ROOT.classList.toggle('fw_cb', st.cb);
+styleBtn('fwBtnHC', st.hc); styleBtn('fwBtnLM', st.lm); styleBtn('fwBtnCB', st.cb); styleBtn('fwBtnNR', st.nr);
+var nb = el('fwBtnNR'); if (nb) nb.textContent = 'NARRATION: ' + (st.nr ? 'ON' : 'OFF');
+var bar = el('fwNarBar'); if (bar) bar.style.display = st.nr ? '' : 'none';
+}
+function toggle(k) {
+st[k] = !st[k];
+if (k === 'hc' && st.hc) st.lm = false;
+if (k === 'lm' && st.lm) st.hc = false;
+applyDisplay(); update();
+var names = { hc:'High contrast', lm:'Light mode', cb:'Color-blind safe colors', nr:'Narration' };
+srAnnounce(names[k] + (st[k] ? ' on.' : ' off.'));
+}
+function setView(v) {
+view = v;
+var bt = el('fwViewTop'), bs = el('fwViewSide');
+if (bt) { bt.classList.toggle('fw_viewon', v === 'top');  bt.setAttribute('aria-pressed', v === 'top' ? 'true' : 'false'); }
+if (bs) { bs.classList.toggle('fw_viewon', v === 'side'); bs.setAttribute('aria-pressed', v === 'side' ? 'true' : 'false'); }
+update();
+srAnnounce(v === 'side' ? 'Side view: looking along the wire, with the magnet resting on the scale.' : 'Top view: looking down on the magnet and wire.');
+}
+/* ── Scale buttons ── */
+function tare() {
+var I2 = parseFloat(el('fwSlI').value);
+var B2 = parseFloat(el('fwSlB').value);
+var L2 = parseFloat(el('fwSlL').value);
+tareOffset = scaleRawGrams(computeForce(I2, B2, L2));
+update();
+srAnnounce('Scale zeroed. Display now shows change from current reading.');
+}
+function resetScale() {
+tareOffset = 0; update();
+srAnnounce('Scale reset. Showing full magnet weight plus force contribution.');
+}
+/* ── SR announcer ── */
+var srTimer = null;
+function srAnnounce(msg) {
+var e = el('fwSrAnnounce'); if (!e) return;
+e.textContent = ''; clearTimeout(srTimer);
+srTimer = setTimeout(function() { e.textContent = msg; }, 60);
+}
+/* ── Boot ── */
+applyDisplay();
+update();
+/* ── Public API ── */
+return {
+update:     update,
+tare:       tare,
+resetScale: resetScale,
+toggle:     toggle,
+setView:    setView
+};
+};
+</script>
+<script>
+var forceWireSim = new forceWireSim();
+</script>
+</main>
+</body>
+</html>

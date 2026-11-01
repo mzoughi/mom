@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: The Transformer and Its Core</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, transformer, core, lamination, eddy currents, hysteresis, saturation, ferrite, silicon steel, skin depth, lesson, scientific">
+<meta name="description" content="Interactive transformer simulation focused on the core: solid versus laminated, sheet thickness, materials, eddy-current and hysteresis losses, saturation and heating.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="trfroot" role="region" aria-label="Transformer core simulator">
+<!-- Accessibility toolbar -->
+<div class="trf_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="trf_a11ybtn" id="btnHC" onclick="trfSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="trf_a11ybtn" id="btnLight" onclick="trfSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="trf_a11ybtn" id="btnCB" onclick="trfSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="trf_a11ybtn trf_a11yon" id="btnNarr" onclick="trfSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="trf_header">
+<p class="trf_h1">The Transformer and Its Core</p>
+<p class="trf_sub">Why is the core made of iron? Why is it built from thin insulated sheets?</p>
+</div>
+<div id="trfMotionNotice" class="trf_motionnotice" role="status">Reduced motion is enabled. The flux arrows and eddy currents are shown frozen at their peak.</div>
+<!-- Instrument grid -->
+<div class="trf_instrument">
+<!-- Left column -->
+<div class="trf_leftcol">
+<div class="trf_diagpanel">
+<div class="trf_diaglabel"><span id="diagLabel">TRANSFORMER</span><span class="trf_diagnote">flux and eddy currents animated in slow motion &middot; values are real-time physics</span></div>
+<canvas id="trfCanvas" width="560" height="420" role="img" aria-label="Transformer with core cross-section" aria-describedby="trfCanvasDesc"></canvas>
+<p id="trfCanvasDesc" class="trf_sronly">A transformer with primary and secondary coils on an iron core.</p>
+<div class="trf_hoverbar" id="trfHoverReadout" role="status" aria-live="polite" aria-atomic="true">Hover over the core, the coils, the cross-section or the meters to read values</div>
+</div>
+<!-- Readout -->
+<div class="trf_panel" role="region" aria-labelledby="readHd">
+<div class="trf_paneltitle" id="readHd">Readout (rms values)</div>
+<div class="trf_rinner trf_rgrid">
+<div class="trf_rrow"><span class="trf_rkey">Secondary voltage</span><span class="trf_rval trf_hi" id="r_Vs">--</span></div>
+<div class="trf_rrow"><span class="trf_rkey">Peak field in core</span><span class="trf_rval trf_hi" id="r_B">--</span></div>
+<div class="trf_rrow"><span class="trf_rkey">Primary current</span><span class="trf_rval" id="r_Ip">--</span></div>
+<div class="trf_rrow"><span class="trf_rkey">Secondary current</span><span class="trf_rval" id="r_Is">--</span></div>
+<div class="trf_rrow"><span class="trf_rkey">Eddy-current loss</span><span class="trf_rval trf_hi" id="r_Pe">--</span></div>
+<div class="trf_rrow"><span class="trf_rkey">Hysteresis loss</span><span class="trf_rval" id="r_Ph">--</span></div>
+<div class="trf_rrow"><span class="trf_rkey">Efficiency</span><span class="trf_rval trf_hi" id="r_eff">--</span></div>
+<div class="trf_rrow" id="r_Trow"><span class="trf_rkey">Core temperature</span><span class="trf_rval" id="r_T">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="trf_rightcol">
+<!-- Core -->
+<div class="trf_panel" role="group" aria-labelledby="coreHd">
+<div class="trf_paneltitle" id="coreHd">Core</div>
+<div class="trf_panelbody">
+<label for="selMat" class="trf_ctrlname">Material</label>
+<select id="selMat" aria-label="Core material" onchange="trfSim.onSlider('Mat', this.value)">
+<option value="si" selected>Silicon steel</option>
+<option value="fe">Plain soft iron</option>
+<option value="fer">MnZn ferrite (ceramic)</option>
+<option value="air">Air (no core)</option>
+</select>
+<div class="trf_srcbtns" role="group" aria-label="Core construction">
+<button type="button" class="trf_srcbtn" id="btnSolid" onclick="trfSim.setLam(false)" aria-pressed="false">SOLID BLOCK</button>
+<button type="button" class="trf_srcbtn trf_srcon" id="btnLam" onclick="trfSim.setLam(true)" aria-pressed="true">LAMINATED</button>
+</div>
+<div class="trf_ctrlhdr"><label for="slD" class="trf_ctrlname">Sheet thickness</label><span class="trf_sval" id="vD">0.35 mm</span></div>
+<input type="range" id="slD" min="0" max="100" step="0.5" value="42.3" aria-label="Lamination sheet thickness, 0.05 to 5 millimetres, logarithmic" oninput="trfSim.onSlider('D', this.value)">
+<div class="trf_ctrlhdr"><label for="slGap" class="trf_ctrlname">Air gap in the core</label><span class="trf_sval" id="vGap">0 mm</span></div>
+<input type="range" id="slGap" min="0" max="3" step="0.05" value="0" aria-label="Air gap in the magnetic path in millimetres" oninput="trfSim.onSlider('Gap', this.value)">
+<p class="trf_hint" id="matDesc">--</p>
+</div>
+</div>
+<!-- Supply -->
+<div class="trf_panel" role="group" aria-labelledby="supHd">
+<div class="trf_paneltitle" id="supHd">Primary (Supply)</div>
+<div class="trf_panelbody">
+<div class="trf_btnrow">
+<button type="button" class="trf_btn" onclick="trfSim.preset(230, 50)">230 V 50 Hz</button>
+<button type="button" class="trf_btn" onclick="trfSim.preset(120, 60)">120 V 60 Hz</button>
+<button type="button" class="trf_btn" onclick="trfSim.preset(115, 400)">115 V 400 Hz</button>
+</div>
+<div class="trf_ctrlhdr"><label for="slV" class="trf_ctrlname">Voltage</label><span class="trf_sval" id="vV">230 V</span></div>
+<input type="range" id="slV" min="0" max="240" step="1" value="230" aria-label="Primary voltage, rms" oninput="trfSim.onSlider('V', this.value)">
+<div class="trf_ctrlhdr"><label for="slF" class="trf_ctrlname">Frequency</label><span class="trf_sval" id="vF">50 Hz</span></div>
+<input type="range" id="slF" min="0" max="100" step="0.5" value="34.9" aria-label="Frequency, 10 to 1000 hertz, logarithmic" oninput="trfSim.onSlider('F', this.value)">
+<div class="trf_ctrlhdr"><label for="slNp" class="trf_ctrlname">Primary turns</label><span class="trf_sval" id="vNp">500</span></div>
+<input type="range" id="slNp" min="100" max="1000" step="10" value="500" aria-label="Number of primary turns" oninput="trfSim.onSlider('Np', this.value)">
+<button type="button" class="trf_btn trf_warn" id="btnFuse" onclick="trfSim.replaceFuse()">Replace the 2 A fuse</button>
+</div>
+</div>
+<!-- Secondary -->
+<div class="trf_panel" role="group" aria-labelledby="secHd">
+<div class="trf_paneltitle" id="secHd">Secondary (Load)</div>
+<div class="trf_panelbody">
+<div class="trf_ctrlhdr"><label for="slNs" class="trf_ctrlname">Secondary turns</label><span class="trf_sval" id="vNs">26</span></div>
+<input type="range" id="slNs" min="5" max="1000" step="1" value="26" aria-label="Number of secondary turns" oninput="trfSim.onSlider('Ns', this.value)">
+<label for="selLoad" class="trf_ctrlname">Load</label>
+<select id="selLoad" aria-label="Load on the secondary" onchange="trfSim.onSlider('Load', this.value)">
+<option value="0">Nothing connected</option>
+<option value="1" selected>1 lamp (12 V, 50 W)</option>
+<option value="2">2 lamps in parallel</option>
+<option value="3">3 lamps in parallel</option>
+</select>
+<p class="trf_derived" id="ratioInfo">--</p>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="trf_formulastrip">
+<span class="trf_formulatxt">V&#8347;/V&#8346; &asymp; N&#8347;/N&#8346; &nbsp;|&nbsp; Peak field B = &radic;2 V&#8346; / (2&pi; f N&#8346; A) &nbsp;|&nbsp; Eddy loss per m&sup3; &asymp; &pi;&sup2;f&sup2;B&sup2;d&sup2;&sigma;/6 (thin sheets) &nbsp;|&nbsp; Hysteresis loss &asymp; k&#8341; f B&sup1;&#183;&#8310; &nbsp;|&nbsp; Skin depth &delta; = &radic;(2/&omega;&mu;&sigma;) &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>S</kbd> solid/laminated</span>
+</div>
+</div><!-- instrument -->
+<div id="trfNarrBox" class="trf_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="trfNarration">--</span></div>
+<div id="trfSrAnnounce" class="trf_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="trf_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation explores the core of a transformer. An alternating current in the primary coil (`N_p` turns) makes an alternating magnetic flux in the core, which induces an emf in the secondary coil (`N_s` turns). For an ideal transformer</p>
+<p class="mob_eq">`V_s / V_p = N_s / N_p`.</p>
+<p>Why iron? Its high permeability concentrates the flux in the core, so almost all of the primary's flux passes through the secondary, and only a small current is needed to magnetize it. With an air core, or an air gap in the iron, the coupling is weak and the primary current is large.</p>
+<p>Why thin insulated sheets? The changing flux also induces eddy currents in the iron itself, which waste energy as heat. In a solid core they are large: the losses are huge and the field is pushed to the surface. Splitting the core into thin insulated sheets (laminations) confines the eddy currents, and the loss falls with the square of the sheet thickness. Too much current can also saturate the iron: the flux stops growing, and the primary current soars.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+.mob_descwrap { width:100%; max-width:860px; margin:8px auto 10px; display:flex; flex-direction:column; align-items:center; gap:8px; box-sizing:border-box; font-family:Arial, sans-serif; }
+.mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+.mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+.mob_desc { width:100%; box-sizing:border-box; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+.mob_desc p { margin:0 0 9px; } .mob_desc p:last-child { margin-bottom:0; }
+.mob_eq { text-align:center; font-size:1rem; }
+</style>
+<!-- #trfroot -->
+<style>
+/* ════════ All simulator rules scoped to #trfroot ════════ */
+#trfroot {
+--trf-chassis:#1a1c1f; --trf-panel:#22262b; --trf-panel-hi:#2c3138; --trf-panel-lo:#14161a;
+--trf-border:#3a4048; --trf-border-hi:#525c66; --trf-text:#c8d0d8; --trf-dim:#8a94a3; --trf-bright:#e8eef5;
+--trf-accent:#e8a020; --trf-green:#3ad08f; --trf-val:#ffdd66; --trf-warnc:#ff6a5a;
+--trf-focus:#e8a020; --trf-nar-bg:#2a2410; --trf-nar-border:#e0b040; --trf-nar-text:#f0e2b8;
+background:var(--trf-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--trf-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#trfroot.trf_lm {
+--trf-chassis:#e9edf1; --trf-panel:#ffffff; --trf-panel-hi:#f1f4f7; --trf-panel-lo:#f4f6f9;
+--trf-border:#c3cad3; --trf-border-hi:#9aa3ae; --trf-text:#1d232a; --trf-dim:#556070; --trf-bright:#000000;
+--trf-accent:#a8620a; --trf-green:#12805a; --trf-val:#8a4a00; --trf-warnc:#b02020;
+--trf-focus:#a8620a; --trf-nar-bg:#ffefc0; --trf-nar-border:#e0b040; --trf-nar-text:#333333;
+background-image:none;
+}
+#trfroot.trf_hc {
+--trf-chassis:#000000; --trf-panel:#000000; --trf-panel-hi:#111111; --trf-panel-lo:#000000;
+--trf-border:#ffffff; --trf-border-hi:#ffffff; --trf-text:#ffffff; --trf-dim:#e0e0e0; --trf-bright:#ffffff;
+--trf-accent:#ffd700; --trf-green:#00ff88; --trf-val:#ffff00; --trf-warnc:#ff5555;
+--trf-focus:#ffff00; --trf-nar-bg:#000000; --trf-nar-border:#ffd700; --trf-nar-text:#ffffff;
+background-image:none;
+}
+#trfroot.trf_cb { --trf-warnc:#D55E00; }
+#trfroot.trf_hc .trf_panel, #trfroot.trf_hc .trf_diagpanel { border-width:2px; }
+#trfroot *, #trfroot *::before, #trfroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#trfroot input:focus-visible, #trfroot button:focus-visible, #trfroot select:focus-visible { outline:2px solid var(--trf-focus); outline-offset:2px; }
+/* toolbar */
+#trfroot .trf_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#trfroot .trf_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--trf-panel-hi); border:1px solid var(--trf-border-hi); color:var(--trf-dim); }
+#trfroot .trf_a11ybtn:hover { border-color:var(--trf-accent); color:var(--trf-accent); }
+#trfroot .trf_a11yon { background:rgba(58,208,143,.14); border-color:var(--trf-green); color:var(--trf-green); font-weight:bold; }
+/* header */
+#trfroot .trf_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#trfroot .trf_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--trf-accent); text-align:center; }
+#trfroot .trf_sub { font-size:.7rem; color:var(--trf-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#trfroot .trf_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--trf-panel); border:1px solid var(--trf-border); border-radius:4px; color:var(--trf-dim); }
+/* grid */
+#trfroot .trf_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#trfroot .trf_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#trfroot .trf_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#trfroot .trf_diagpanel { background:var(--trf-panel); border:1px solid var(--trf-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#trfroot .trf_diaglabel { background:var(--trf-panel-lo); border-bottom:1px solid var(--trf-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--trf-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#trfroot #diagLabel { color:var(--trf-accent); font-weight:bold; }
+#trfroot .trf_diagnote { text-transform:none; letter-spacing:.02em; }
+#trfroot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#trfroot .trf_hoverbar { background:var(--trf-panel-lo); border-top:1px solid var(--trf-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--trf-val); min-height:28px; line-height:1.4; }
+/* right column */
+#trfroot .trf_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#trfroot .trf_panel { background:var(--trf-panel); border:1px solid var(--trf-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#trfroot .trf_paneltitle { background:var(--trf-panel-lo); border-bottom:1px solid var(--trf-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--trf-dim); }
+#trfroot .trf_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#trfroot .trf_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#trfroot .trf_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--trf-panel-hi); border:1px solid var(--trf-border-hi); color:var(--trf-dim); border-radius:3px; }
+#trfroot .trf_srcbtn:hover { border-color:var(--trf-accent); color:var(--trf-text); }
+#trfroot .trf_srcon { background:var(--trf-accent); color:#111; border-color:var(--trf-accent); font-weight:bold; }
+#trfroot .trf_srcon:hover { color:#111; }
+#trfroot .trf_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#trfroot .trf_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--trf-dim); text-transform:uppercase; }
+#trfroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--trf-panel-lo); border:1px solid var(--trf-border); }
+#trfroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--trf-accent); border:2px solid var(--trf-panel); cursor:pointer; }
+#trfroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--trf-accent); border:2px solid var(--trf-panel); cursor:pointer; }
+#trfroot input[type=range]:disabled { opacity:.35; cursor:default; }
+#trfroot .trf_sval { font-family:monospace; font-size:.74rem; color:var(--trf-val); min-width:56px; text-align:right; }
+#trfroot .trf_hint { font-size:.66rem; color:var(--trf-dim); line-height:1.4; }
+#trfroot .trf_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#trfroot .trf_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--trf-panel-lo); border:1px solid var(--trf-border); border-radius:3px; }
+#trfroot .trf_rrow.trf_alert { border-color:var(--trf-warnc); }
+#trfroot .trf_rrow.trf_alert .trf_rval { color:var(--trf-warnc); font-weight:bold; }
+#trfroot .trf_rkey { font-family:monospace; font-size:.6rem; color:var(--trf-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#trfroot .trf_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--trf-text); }
+#trfroot .trf_hi { color:var(--trf-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#trfroot .trf_formulastrip { grid-column:1 / 3; background:var(--trf-panel-lo); border:1px solid var(--trf-border); border-radius:4px; padding:7px 14px; }
+#trfroot .trf_formulatxt { font-family:monospace; font-size:.66rem; color:var(--trf-dim); letter-spacing:.04em; line-height:1.6; }
+#trfroot .trf_formulatxt kbd { border:1px solid var(--trf-border-hi); border-radius:2px; padding:0 4px; color:var(--trf-accent); font-family:monospace; }
+#trfroot .trf_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--trf-nar-bg); border-left:4px solid var(--trf-nar-border); font-size:.82rem; color:var(--trf-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#trfroot .trf_credit { font-size:.62rem; color:var(--trf-dim); text-align:center; }
+#trfroot .trf_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#trfroot .trf_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--trf-text); cursor:pointer; }
+#trfroot .trf_chk input { accent-color:var(--trf-accent); width:14px; height:14px; }
+#trfroot .trf_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--trf-panel-lo); border-top:1px solid var(--trf-border); }
+#trfroot select { width:100%; background:var(--trf-panel-hi); color:var(--trf-text); border:1px solid var(--trf-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#trfroot .trf_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#trfroot .trf_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#trfroot .trf_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--trf-panel-hi); border:1px solid var(--trf-border-hi); color:var(--trf-text); border-radius:3px; text-transform:uppercase; }
+#trfroot .trf_btn:hover { border-color:var(--trf-accent); }
+#trfroot .trf_btn:disabled { opacity:.4; cursor:default; }
+#trfroot .trf_btn.trf_active { background:var(--trf-green); border-color:var(--trf-green); color:#111; font-weight:bold; }
+#trfroot .trf_warn { color:#e0605a; border-color:#a04040; }
+#trfroot.trf_lm .trf_warn { color:#b02020; border-color:#c06060; }
+#trfroot .trf_sub2 { border-top:1px dashed var(--trf-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#trfroot .trf_derived { font-family:monospace; font-size:.68rem; color:var(--trf-dim); line-height:1.4; }
+#trfroot .trf_derived b { color:var(--trf-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#trfroot .trf_instrument { grid-template-columns:minmax(0,1fr); }
+#trfroot .trf_rightcol { width:auto; }
+#trfroot .trf_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #trfroot .trf_row2 { grid-template-columns:1fr; } }
+#trfroot .trf_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#trfroot .trf_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#trfroot .trf_small { padding:3px 8px; margin-left:auto; }
+@media (max-width:560px) { #trfroot .trf_rgrid { grid-template-columns:1fr; } }
+#trfroot .trf_scalebtns { display:flex; gap:5px; margin-left:auto; }
+#trfroot .trf_small { padding:3px 8px; margin-left:0; }
+/* question section below the simulator */
+.trf_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.trf_qwrap ol { padding-left:24px; }
+.trf_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<script>
+/* ════════ SIMULATION ════════
+Pattern: mirrors the solenoid (magnetism) example:
+var simObj = function() { ... return { public methods }; };  var simObj = new simObj();
+Physics (SI units, sinusoidal steady state, complex phasors):
+  Core: square limb 4 cm x 4 cm (A = 16 cm^2), mean magnetic path l = 40 cm, optional air gap g.
+  Each sheet of thickness d (a solid core is one 4 cm "sheet") has a complex effective permeability
+    mu_eff = mu_r tanh(z)/z, z = (1 + j) d/(2 delta), skin depth delta = sqrt(2/(omega mu0 mu_r sigma)).
+    For thin sheets this gives the classic eddy-current loss pi^2 f^2 B^2 d^2 sigma/6 per m^3; for a thick solid
+    core the field is pushed to the surface, the inductance collapses and the losses become huge.
+  Inductances: L_p = mu0 mu_tot N_p^2 A/l (1/mu_tot = 1/mu_eff + g/l), L_s = L_p (N_s/N_p)^2, M = k L_p N_s/N_p.
+  Circuit: V = (R_p + j w L_p) I_p + j w M I_s ;  0 = j w M I_p + (R_s + R_load + j w L_s) I_s.
+  Hysteresis loss (Steinmetz) P_h = k_h f B^1.6 V_core, drawn as an extra in-phase current.
+  Saturation: if the peak field would exceed B_sat, the permeability is reduced until B ~ B_sat (the current soars).
+  A 2 A fuse protects the primary. Core temperature (steady) = 22 C + core losses / (1.5 W/K).
+*/
+var trfGen = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('trfroot');
+var canvas = document.getElementById('trfCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function el(id) { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function fmtW(P) { var a = Math.abs(P); if (a < 0.001) return '0 W'; if (a < 1) return (a*1000).toFixed(0) + ' mW'; if (a < 100) return a.toFixed(2) + ' W'; return a.toFixed(0) + ' W'; }
+function fmtA(I) { var a = Math.abs(I); if (a < 1) return (a*1000).toFixed(0) + ' mA'; return a.toFixed(2) + ' A'; }
+function fmtMm(d) { return d < 1 ? (d*1000).toFixed(2) + ' mm' : (d*1000).toFixed(1) + ' mm'; }
+
+/* ── Complex arithmetic ── */
+function C(re, im) { return { re: re, im: im || 0 }; }
+function add(a, b) { return C(a.re + b.re, a.im + b.im); }
+function mul(a, b) { return C(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re); }
+function div(a, b) { var d = b.re*b.re + b.im*b.im; return C((a.re*b.re + a.im*b.im)/d, (a.im*b.re - a.re*b.im)/d); }
+function sc(a, s) { return C(a.re*s, a.im*s); }
+function mag(a) { return Math.sqrt(a.re*a.re + a.im*a.im); }
+function arg(a) { return Math.atan2(a.im, a.re); }
+/* tanh(z)/z for z = (1 + j) x/2 */
+function slab(x) {
+  if (x < 1e-3) return C(1, 0);
+  var z = C(x/2, x/2), th;
+  if (x > 40) th = C(1, 0);
+  else { var dn = Math.cosh(x) + Math.cos(x); th = C(Math.sinh(x)/dn, Math.sin(x)/dn); }
+  return div(th, z);
+}
+
+/* ── Parameters ── */
+var MU0 = 4e-7*Math.PI, A = 1.6e-3, LP = 0.40, WLIMB = 0.04, VC = A*LP, RP = 3, FUSE = 2, HCOOL = 1.5, TAMB = 22, RLAMP = 2.88;
+var MATS = {
+  si:  { label: 'Silicon steel', mur: 4000, sigma: 2.0e6, kh: 50, Bsat: 1.9, rho: 7650, cp: 450, col: '#7d8590', desc: 'Iron with about 3% silicon: very easy to magnetize, saturates at about 1.9 T, and the silicon makes it a poorer conductor, which reduces eddy currents. Used in almost every mains transformer.' },
+  fe:  { label: 'Plain soft iron', mur: 2000, sigma: 1.0e7, kh: 250, Bsat: 2.0, rho: 7870, cp: 450, col: '#6b737d', desc: 'Magnetic, but it conducts electricity five times better than silicon steel and has a wider hysteresis loop: larger losses.' },
+  fer: { label: 'MnZn ferrite', mur: 2000, sigma: 0.5, kh: 15, Bsat: 0.45, rho: 4800, cp: 700, col: '#3a3a40', desc: 'A magnetic ceramic that hardly conducts at all: no eddy currents even as a solid block. But it saturates at only about 0.45 T, so it is used at high frequencies (chargers, switch-mode supplies).' },
+  air: { label: 'Air', mur: 1, sigma: 0, kh: 0, Bsat: 1e9, rho: 0, cp: 0, col: '#bfe3ff', desc: 'No core: the coils are linked only through air. The primary has very little inductance, so it behaves almost like a short circuit across the supply.' }
+};
+
+/* ── State ── */
+var matKey = 'si', lam = true, dLam = 0.35e-3, gapMm = 0, Vp = 230, f = 50, Np = 500, Ns = 26, nLamps = 1;
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true, fuseBlown = false;
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var res = null, Tcore = TAMB, phV = 0;
+
+/* ── Solve the circuit ── */
+function coupling() { if (matKey === 'air') return 0.15; return Math.max(0.8, 0.998 - 0.05*gapMm); }
+function sheet() { return lam && matKey !== 'air' ? dLam : WLIMB; }
+function solve() {
+  var m = MATS[matKey], w = 2*Math.PI*f, n = Ns/Np, k = coupling(), d = sheet(), RS = RP*n*n, RL = nLamps ? RLAMP/nLamps : Infinity;
+  var s = 1, B = 0, sat = false, out = null, x = 0, delta = Infinity;
+  for (var it = 0; it < 40; it++) {
+    var mur = m.mur*s, muc;
+    if (matKey === 'air') muc = C(1, 0);
+    else { delta = m.sigma > 0 ? Math.sqrt(2/(w*MU0*mur*m.sigma)) : Infinity; x = d/delta; muc = sc(slab(x), mur); }
+    var mutot = matKey === 'air' ? C(1, 0) : div(C(1, 0), add(div(C(1, 0), muc), C(gapMm/1000/LP, 0)));
+    var Lp = sc(mutot, MU0*Np*Np*A/LP), Ls = sc(Lp, n*n), M = sc(Lp, k*n), jw = C(0, w);
+    var jwLp = mul(jw, Lp), jwM = mul(jw, M), Zin, Ic, Is;
+    if (isFinite(RL)) {
+      var Zs = add(C(RS + RL, 0), mul(jw, Ls));
+      Zin = add(add(C(RP, 0), jwLp), sc(div(mul(jwM, jwM), Zs), -1));
+      Ic = div(C(Vp, 0), Zin); Is = sc(div(mul(jwM, Ic), Zs), -1);
+    } else { Zin = add(C(RP, 0), jwLp); Ic = div(C(Vp, 0), Zin); Is = C(0, 0); }
+    var phi = div(add(mul(Lp, Ic), mul(M, Is)), C(Np, 0));
+    B = mag(phi)*Math.SQRT2/A;
+    var Ph = matKey === 'air' ? 0 : m.kh*f*Math.pow(B, 1.6)*VC, Ih = Vp > 0 ? Ph/Vp : 0, Ip = add(Ic, C(Ih, 0));
+    out = { Ic: Ic, Is: Is, Ip: Ip, B: B, Ph: Ph, RL: RL, RS: RS, x: x, delta: delta, muEff: mag(mutot), sat: sat };
+    if (B > m.Bsat*1.01) { s *= Math.pow(m.Bsat/B, 1.5); sat = true; out.sat = true; } else break;
+    if (s < 1e-6) break;
+  }
+  var r = out;
+  r.Pin = Vp*r.Ip.re;
+  r.Pload = isFinite(r.RL) ? Math.pow(mag(r.Is), 2)*r.RL : 0;
+  r.Pcu = Math.pow(mag(r.Ic), 2)*RP + Math.pow(mag(r.Is), 2)*r.RS;
+  r.Pe = Math.max(0, r.Pin - r.Pload - r.Pcu - r.Ph);
+  r.Vs = isFinite(r.RL) ? mag(r.Is)*r.RL : Vp*n*Math.abs(coupling());
+  r.eff = r.Pin > 1e-6 ? r.Pload/r.Pin : 0;
+  r.Ipm = mag(r.Ip);
+  r.Tss = TAMB + (r.Pe + r.Ph)/HCOOL;
+  return r;
+}
+function update() {
+  res = solve();
+  if (res.Ipm > FUSE && Vp > 0) fuseBlown = true;
+}
+
+/* ── Animation loop ── */
+var rafId = null, lastTs = null, roTimer = 0;
+function frame(ts) {
+  rafId = null;
+  if (lastTs === null) lastTs = ts;
+  var dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+  if (!reducedMotion) phV += 2*Math.PI*0.6*dt;
+  var m = MATS[matKey], Ttarget = fuseBlown ? TAMB : res.Tss, tau = matKey === 'air' ? 1 : Math.max(1, m.rho*VC*m.cp/HCOOL/200);
+  Tcore += (Ttarget - Tcore)*Math.min(1, dt/tau);
+  redraw();
+  roTimer += dt; if (roTimer > 0.25) { roTimer = 0; updateReadouts(); }
+  if (!document.hidden) rafId = window.requestAnimationFrame(frame);
+}
+function startLoop() { if (!rafId && window.requestAnimationFrame) { lastTs = null; rafId = window.requestAnimationFrame(frame); } }
+
+/* ── Palette ── */
+function pal() {
+  var p;
+  if (hcMode) p = { bg:'#000000', edge:'#ffffff', panel:'#000000', text:'#ffffff', dim:'#e0e0e0', copper:'#ffaa00', copperDk:'#000000', wire:'#ffffff', flux:'#00e8d0', eddyA:'#ffff00', eddyB:'#ff55ff', ins:'#000000', glow:'255,255,120', vp:'#ffd700', vs:'#00ff88', ip:'#55aaff', warn:'#ff5555', ok:'#00ff88', bars:['#ffffff', '#00ff88', '#ffaa00', '#ff5555', '#55aaff'], lw:1.6 };
+  else if (lightMode) p = { bg:'#ffffff', edge:'#9aa3ae', panel:'#f4f6f9', text:'#1d232a', dim:'#556070', copper:'#b8702a', copperDk:'#6e3f12', wire:'#3a4048', flux:'#127a8a', eddyA:'#a8620a', eddyB:'#7a2fa0', ins:'#f4efe0', glow:'255,200,60', vp:'#a8620a', vs:'#12805a', ip:'#1f5fc0', warn:'#c0262a', ok:'#12805a', bars:['#556070', '#12805a', '#b8702a', '#c0262a', '#1f5fc0'], lw:1.1 };
+  else p = { bg:'#0d0f12', edge:'#3a4048', panel:'#0a0c0f', text:'#c8d0d8', dim:'#8a94a3', copper:'#c8813a', copperDk:'#7a4a1c', wire:'#9aa3ae', flux:'#3ac0d0', eddyA:'#ffdd66', eddyB:'#dd88ff', ins:'#e8dcb0', glow:'255,220,120', vp:'#e8a020', vs:'#3ad08f', ip:'#5aa0ff', warn:'#ff5a52', ok:'#3ad08f', bars:['#c8d0d8', '#3ad08f', '#c8813a', '#ff6a5a', '#5aa0ff'], lw:1.1 };
+  if (cbMode && !hcMode) { p.flux = lightMode ? '#0072B2' : '#56B4E9'; p.eddyA = '#E69F00'; p.eddyB = '#CC79A7'; p.vp = '#E69F00'; p.vs = '#009E73'; p.ip = lightMode ? '#0072B2' : '#56B4E9'; p.warn = '#D55E00'; p.bars = [p.text, '#009E73', '#E69F00', '#D55E00', '#56B4E9']; }
+  return p;
+}
+function rect(x, y, w2, h2, fill, stroke, lw) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w2, h2); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.strokeRect(x + 0.5, y + 0.5, w2 - 1, h2 - 1); }
+}
+function heatTint(T) { var t = clamp((T - 60)/500, 0, 1); return t > 0 ? 'rgba(255,' + Math.round(120 - 80*t) + ',0,' + (0.15 + 0.6*t).toFixed(2) + ')' : null; }
+
+/* ── Drawing: the transformer ── */
+var CX0 = 96, CY0 = 26, CW0 = 176, CH0 = 188, LW = 34;
+function drawTransformer(p) {
+  var m = MATS[matKey], on = !fuseBlown && Vp > 0, Bn = on ? clamp(res.B/1.9, 0, 1.2) : 0;
+  /* core */
+  if (matKey === 'air') { ctx.setLineDash([4, 4]); ctx.strokeStyle = p.dim; ctx.lineWidth = 1; ctx.strokeRect(CX0, CY0, CW0, CH0); ctx.strokeRect(CX0 + LW, CY0 + LW, CW0 - 2*LW, CH0 - 2*LW); ctx.setLineDash([]); ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText('(no core)', CX0 + CW0/2, CY0 + 14); }
+  else {
+    ctx.fillStyle = m.col; ctx.beginPath(); ctx.rect(CX0, CY0, CW0, CH0); ctx.rect(CX0 + LW, CY0 + LW, CW0 - 2*LW, CH0 - 2*LW); ctx.fill('evenodd');
+    var tint = heatTint(Tcore); if (tint) { ctx.fillStyle = tint; ctx.beginPath(); ctx.rect(CX0, CY0, CW0, CH0); ctx.rect(CX0 + LW, CY0 + LW, CW0 - 2*LW, CH0 - 2*LW); ctx.fill('evenodd'); }
+    ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.strokeRect(CX0 + 0.5, CY0 + 0.5, CW0 - 1, CH0 - 1); ctx.strokeRect(CX0 + LW + 0.5, CY0 + LW + 0.5, CW0 - 2*LW - 1, CH0 - 2*LW - 1);
+    if (lam) { ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1; for (var q = 3; q < LW; q += 4) { ctx.strokeRect(CX0 + q + 0.5, CY0 + q + 0.5, CW0 - 2*q - 1, CH0 - 2*q - 1); } }
+    if (gapMm > 0) { var gpx = 2 + gapMm*3; ctx.fillStyle = p.bg; ctx.fillRect(CX0 + CW0/2 - gpx/2, CY0, gpx, LW); }
+  }
+  /* flux arrows around the core */
+  if (on && Bn > 0.01) {
+    var sg = Math.sin(phV) >= 0 ? 1 : -1, amp = reducedMotion ? 1 : Math.abs(Math.sin(phV)), xL = CX0 + LW/2, xR = CX0 + CW0 - LW/2, yT = CY0 + LW/2, yB = CY0 + CH0 - LW/2;
+    var pts = [[xL, (yT + yB)/2, 0, -1], [xL, yT + 45, 0, -1], [(xL + xR)/2, yT, 1, 0], [xR, yT + 45, 0, 1], [xR, (yT + yB)/2, 0, 1], [xR, yB - 45, 0, 1], [(xL + xR)/2, yB, -1, 0], [xL, yB - 45, 0, -1]];
+    ctx.fillStyle = p.flux; ctx.globalAlpha = clamp((0.25 + 0.75*Bn)*amp, 0.1, 1)*(matKey === 'air' ? 0.5 : 1);
+    pts.forEach(function(q) { var dx = q[2]*sg, dy = q[3]*sg, L2 = 8 + 4*Bn; ctx.beginPath(); ctx.moveTo(q[0] + dx*L2, q[1] + dy*L2); ctx.lineTo(q[0] - dx*L2 + dy*6, q[1] - dy*L2 - dx*6); ctx.lineTo(q[0] - dx*L2 - dy*6, q[1] - dy*L2 + dx*6); ctx.closePath(); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    if (matKey === 'air') { ctx.strokeStyle = p.flux; ctx.globalAlpha = 0.4; ctx.lineWidth = 1; for (var r = 0; r < 3; r++) { ctx.beginPath(); ctx.ellipse(xL, (yT + yB)/2, 30 + r*12, 60 + r*10, 0, 0, 2*Math.PI); ctx.stroke(); } ctx.globalAlpha = 1; ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText('flux leaks away', xL, CY0 + CH0 + 12); }
+  }
+  /* coils */
+  function coil(x, turns, label, nd) {
+    rect(x - 8, CY0 + 52, LW + 16, CH0 - 104, p.copper, p.copperDk);
+    ctx.strokeStyle = p.copperDk; ctx.lineWidth = 1; var k2 = clamp(nd, 3, 26);
+    ctx.beginPath(); for (var i = 0; i < k2; i++) { var y = CY0 + 54 + (i + 0.5)*(CH0 - 108)/k2; ctx.moveTo(x - 8, y); ctx.lineTo(x + LW + 8, y); } ctx.stroke();
+    ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center'; ctx.fillText(label, x + LW/2, CY0 + CH0 + 24); ctx.font = '9px monospace'; ctx.fillStyle = p.dim; ctx.fillText(turns + ' turns', x + LW/2, CY0 + CH0 + 35);
+  }
+  coil(CX0, Np, 'PRIMARY', Math.round(Np/40)); coil(CX0 + CW0 - LW, Ns, 'SECONDARY', Math.round(Ns/40) + 2);
+  /* supply, fuse and leads */
+  var sx = 34, sy = 120;
+  ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.moveTo(sx, sy - 22); ctx.lineTo(sx, CY0 + 60); ctx.lineTo(CX0 - 8, CY0 + 60); ctx.moveTo(sx, sy + 22); ctx.lineTo(sx, CY0 + CH0 - 60); ctx.lineTo(CX0 - 8, CY0 + CH0 - 60); ctx.stroke();
+  ctx.fillStyle = p.panel; ctx.beginPath(); ctx.arc(sx, sy, 20, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = p.vp; ctx.lineWidth = 2; ctx.beginPath(); for (var a = 0; a <= 24; a++) { var xx = sx - 12 + a, yy = sy - 7*Math.sin(a/24*2*Math.PI); if (a === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy); } ctx.stroke();
+  ctx.fillStyle = p.text; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText(Vp + ' V', sx, sy + 34); ctx.fillText(Math.round(f) + ' Hz', sx, sy + 44);
+  /* fuse on the top lead */
+  var fx = 58, fy = CY0 + 60; rect(fx - 11, fy - 5, 22, 10, p.panel, p.wire);
+  ctx.strokeStyle = fuseBlown ? p.warn : p.wire; ctx.lineWidth = 1.5; ctx.beginPath();
+  if (fuseBlown) { ctx.moveTo(fx - 9, fy); ctx.lineTo(fx - 3, fy - 3); ctx.moveTo(fx + 3, fy + 3); ctx.lineTo(fx + 9, fy); } else { ctx.moveTo(fx - 9, fy); ctx.lineTo(fx + 9, fy); }
+  ctx.stroke(); ctx.fillStyle = fuseBlown ? p.warn : p.dim; ctx.font = (fuseBlown ? 'bold ' : '') + '8px monospace'; ctx.fillText(fuseBlown ? 'FUSE BLOWN' : 'fuse 2 A', fx, fy - 9);
+  /* secondary leads and lamps */
+  var lx = 318, xs = CX0 + CW0 + 8;
+  ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xs, CY0 + 60); ctx.lineTo(lx + 22, CY0 + 60); ctx.moveTo(xs, CY0 + CH0 - 60); ctx.lineTo(lx + 22, CY0 + CH0 - 60); ctx.stroke();
+  var Vs = on ? res.Vs : 0, bright = clamp(Math.pow(Vs/12, 3.4), 0, 1.6);
+  if (nLamps === 0) { ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText('open', lx + 10, CY0 + CH0/2); }
+  for (var L = 0; L < nLamps; L++) {
+    var bx = lx - 6 + L*14 + (nLamps === 1 ? 14 : 0), by = CY0 + CH0/2 - 6 + (L % 2 ? 20 : -14);
+    ctx.strokeStyle = p.wire; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, CY0 + 60); ctx.lineTo(bx, by - 10); ctx.moveTo(bx, by + 14); ctx.lineTo(bx, CY0 + CH0 - 60); ctx.stroke();
+    if (bright > 0.02) { var g = ctx.createRadialGradient(bx, by, 2, bx, by, 12 + 20*bright); g.addColorStop(0, 'rgba(' + p.glow + ',' + clamp(0.9*bright, 0, 0.95) + ')'); g.addColorStop(1, 'rgba(' + p.glow + ',0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by, 12 + 20*bright, 0, 2*Math.PI); ctx.fill(); }
+    ctx.fillStyle = 'rgba(200,220,255,0.15)'; ctx.strokeStyle = p.dim; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(bx, by, 9, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+    rect(bx - 4, by + 8, 8, 6, p.dim);
+  }
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+  ctx.fillText(on ? res.Vs.toFixed(1) + ' V' : '0 V', lx + 14, CY0 + 46);
+  if (on && res.sat) { ctx.fillStyle = p.warn; ctx.font = 'bold 9px monospace'; ctx.fillText('CORE SATURATED', CX0 + CW0/2, CY0 + CH0/2 + 4); }
+  if (fuseBlown) { ctx.fillStyle = p.warn; ctx.font = 'bold 10px monospace'; ctx.fillText('supply cut off', CX0 + CW0/2, CY0 + CH0/2 + 4); }
+}
+function drawSection(p) {
+  var x0 = 362, y0 = 6, w2 = 192, h2 = 244, m = MATS[matKey], on = !fuseBlown && Vp > 0;
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('CROSS-SECTION OF A LIMB', x0 + 6, y0 + 13);
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText('4 cm \u00d7 4 cm, B along the limb', x0 + 6, y0 + 24);
+  var S = 128, sx = x0 + (w2 - S)/2, sy = y0 + 34;
+  if (matKey === 'air') { ctx.setLineDash([4, 4]); ctx.strokeStyle = p.dim; ctx.strokeRect(sx, sy, S, S); ctx.setLineDash([]); ctx.fillStyle = p.dim; ctx.textAlign = 'center'; ctx.fillText('air: nothing to', sx + S/2, sy + S/2 - 4); ctx.fillText('carry the flux', sx + S/2, sy + S/2 + 8); }
+  else {
+    var nSheets = lam ? Math.max(1, Math.round(WLIMB/dLam)) : 1, nDraw = Math.min(nSheets, 16), sw = S/nDraw, x = res ? res.x : 0;
+    for (var i = 0; i < nDraw; i++) {
+      var xx = sx + i*sw;
+      /* skin effect: flux concentrated near the sheet surfaces when the sheet is thick */
+      if (x > 2 && !lam) {
+        var g = ctx.createLinearGradient(xx, 0, xx + sw, 0); g.addColorStop(0, m.col); g.addColorStop(0.5, '#1a1c1f'); g.addColorStop(1, m.col);
+        ctx.fillStyle = g;
+      } else ctx.fillStyle = m.col;
+      ctx.fillRect(xx, sy, sw, S);
+      if (lam && nDraw > 1) { ctx.fillStyle = p.ins; ctx.fillRect(xx + sw - 1, sy, 1, S); }
+    }
+    var tint = heatTint(Tcore); if (tint) { ctx.fillStyle = tint; ctx.fillRect(sx, sy, S, S); }
+    ctx.strokeStyle = p.edge; ctx.strokeRect(sx + 0.5, sy + 0.5, S - 1, S - 1);
+    /* eddy current loops: one big loop (solid) or a thin loop in each sheet */
+    if (on && m.sigma > 1) {
+      var Jrel = clamp(Math.log10(1 + (res.Pe/VC)/1e3)/3.5, 0.05, 1), ph = reducedMotion ? 1 : Math.cos(phV), dir = ph >= 0 ? 1 : -1;
+      ctx.globalAlpha = clamp(Jrel*(0.3 + 0.7*Math.abs(ph)), 0.08, 1); ctx.strokeStyle = dir > 0 ? p.eddyA : p.eddyB; ctx.lineWidth = 1 + 2.5*Jrel;
+      for (var j = 0; j < nDraw; j++) {
+        var lx = sx + j*sw + Math.min(6, sw*0.22), lw = Math.max(1, sw - 2*Math.min(6, sw*0.22)), ly = sy + 8, lh = S - 16;
+        ctx.beginPath(); ctx.rect(lx, ly, lw, lh); ctx.stroke();
+        var ax = lx + lw/2; ctx.fillStyle = ctx.strokeStyle;
+        ctx.beginPath(); ctx.moveTo(ax + dir*4, ly); ctx.lineTo(ax - dir*2, ly - 3); ctx.lineTo(ax - dir*2, ly + 3); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(ax - dir*4, ly + lh); ctx.lineTo(ax + dir*2, ly + lh - 3); ctx.lineTo(ax + dir*2, ly + lh + 3); ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    /* B symbol */
+    if (on) { var bs = reducedMotion ? 1 : Math.sin(phV); ctx.fillStyle = p.flux; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center'; ctx.fillText(bs >= 0 ? '\u2299' : '\u2297', sx + S + 12, sy + 14); ctx.font = '8px monospace'; ctx.fillText('B', sx + S + 12, sy + 26); }
+    ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+    ctx.fillText(lam ? nSheets + ' sheets of ' + fmtMm(dLam) + (nSheets > nDraw ? ' (16 drawn)' : '') : 'one solid block', x0 + 6, sy + S + 14);
+    ctx.fillText('skin depth \u03b4 = ' + (isFinite(res.delta) ? fmtMm(res.delta) : '\u221e'), x0 + 6, sy + S + 26);
+    ctx.fillText(lam ? 'insulated: currents stay in each sheet' : (x > 2 ? 'B pushed to the surface (dark centre)' : ''), x0 + 6, sy + S + 38);
+  }
+  /* thermometer */
+  var tx = x0 + w2 - 18, ty0 = y0 + 34, th = 128;
+  rect(tx, ty0, 8, th, p.bg, p.edge); var fr = clamp((Tcore - 0)/600, 0, 1);
+  ctx.fillStyle = p.warn; ctx.fillRect(tx + 2, ty0 + th*(1 - fr), 4, th*fr); ctx.beginPath(); ctx.arc(tx + 4, ty0 + th + 5, 6, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = p.text; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'right'; ctx.fillText(Math.round(Tcore) + '\u00b0C', tx + 10, y0 + h2 - 6);
+}
+function drawPower(p) {
+  var x0 = 8, y0 = 256, w2 = 266, h2 = 158;
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('WHERE THE POWER GOES', x0 + 6, y0 + 13);
+  var on = !fuseBlown && Vp > 0, r = res;
+  var rows = [['from the supply', on ? r.Pin : 0], ['to the lamps', on ? r.Pload : 0], ['copper (coil heating)', on ? r.Pcu : 0], ['eddy currents in core', on ? r.Pe : 0], ['hysteresis in core', on ? r.Ph : 0]];
+  var mx = Math.max(1, rows[0][1]);
+  rows.forEach(function(q, i) {
+    var yy = y0 + 30 + i*24, bw = clamp(q[1]/mx, 0, 1)*(w2 - 130);
+    ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText(q[0], x0 + 6, yy + 8);
+    ctx.fillStyle = p.bars[i]; ctx.fillRect(x0 + 124, yy, Math.max(1, bw), 10);
+    ctx.fillStyle = p.text; ctx.fillText(fmtW(q[1]), x0 + 128 + Math.min(bw, w2 - 190), yy + 8);
+  });
+  ctx.fillStyle = on && r.eff > 0.9 ? p.ok : p.warn; ctx.font = 'bold 9px monospace';
+  ctx.fillText(fuseBlown ? 'fuse blown: would draw ' + fmtA(res.Ipm) + ', ' + fmtW(res.Pin) : (nLamps ? 'efficiency ' + (r.eff*100).toFixed(1) + '%' : 'no load: the core still uses power'), x0 + 6, y0 + h2 - 8);
+}
+function drawScope(p) {
+  var x0 = 280, y0 = 256, w2 = 274, h2 = 158, mid = y0 + h2/2 + 8, amp = h2/2 - 22, on = !fuseBlown && Vp > 0;
+  rect(x0, y0, w2, h2, p.panel, p.edge);
+  ctx.strokeStyle = p.edge; ctx.beginPath(); ctx.moveTo(x0 + 4, mid + 0.5); ctx.lineTo(x0 + w2 - 4, mid + 0.5); ctx.stroke();
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('SCOPE (2 cycles)', x0 + 6, y0 + 13);
+  if (!on) { ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.fillText(fuseBlown ? 'no supply: fuse blown' : 'no supply', x0 + w2/2, mid - 6); return; }
+  var vsPk = Math.max(1, res.Vs*Math.SQRT2*1.2), ipPk = Math.max(0.05, res.Ipm*Math.SQRT2*(res.sat ? 2.2 : 1.2)), ipArg = arg(res.Ip), vsArg = arg(res.Is);
+  var spikeNorm = 0; for (var q = 0; q < 64; q++) { var ss = Math.pow(Math.abs(Math.sin(q/64*2*Math.PI)), 9); spikeNorm += ss*ss; } spikeNorm = Math.sqrt(spikeNorm/64);
+  function tr(fn, col, scl) { ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath(); for (var i = 0; i <= 200; i++) { var th = i/200*4*Math.PI, y = mid - clamp(fn(th)/scl, -1.1, 1.1)*amp, x = x0 + 6 + i*(w2 - 12)/200; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); }
+  tr(function(th) { return Vp*Math.SQRT2*Math.sin(th); }, p.vp, 340);
+  tr(function(th) { return res.Vs*Math.SQRT2*Math.sin(th + vsArg + (nLamps ? 0 : -ipArg)); }, p.vs, vsPk);
+  tr(function(th) { var ps = th + ipArg; if (res.sat) { var s = Math.sin(ps); return res.Ipm*Math.SQRT2/1.414*(s < 0 ? -1 : 1)*Math.pow(Math.abs(s), 9)/spikeNorm; } return res.Ipm*Math.SQRT2*Math.sin(ps); }, p.ip, ipPk);
+  ctx.font = '8px monospace'; ctx.fillStyle = p.vp; ctx.fillText('\u2014 V\u209a \u00b1340 V', x0 + 6, y0 + 25); ctx.fillStyle = p.vs; ctx.fillText('\u2014 V\u209b \u00b1' + vsPk.toFixed(0) + ' V', x0 + 92, y0 + 25); ctx.fillStyle = p.ip; ctx.fillText('\u2014 I\u209a \u00b1' + fmtA(ipPk), x0 + 182, y0 + 25);
+  if (res.sat) { ctx.fillStyle = p.warn; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'right'; ctx.fillText('saturation: current spikes', x0 + w2 - 6, y0 + h2 - 6); }
+}
+function redraw() {
+  var p = pal();
+  ctx.clearRect(0, 0, CW, CH); ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+  drawTransformer(p); drawSection(p); drawPower(p); drawScope(p);
+}
+
+/* ── Readouts & narration ── */
+function updateReadouts() {
+  var on = !fuseBlown && Vp > 0, r = res;
+  set('r_Vs', on ? r.Vs.toFixed(2) + ' V' : '0 V');
+  set('r_B', on ? r.B.toFixed(2) + ' T' + (r.sat ? ' (saturated)' : '') : '0');
+  set('r_Ip', fuseBlown ? 'fuse blown (' + fmtA(r.Ipm) + ')' : fmtA(r.Ipm));
+  set('r_Is', on ? fmtA(mag(r.Is)) : '0');
+  set('r_Pe', on ? fmtW(r.Pe) : '0');
+  set('r_Ph', on ? fmtW(r.Ph) : '0');
+  set('r_eff', on && nLamps ? (r.eff*100).toFixed(1) + '%' : '--');
+  set('r_T', Math.round(Tcore) + ' \u00b0C (steady ' + Math.round(fuseBlown ? TAMB : r.Tss) + ' \u00b0C)');
+  var tr = el('r_Trow'); if (tr) tr.classList.toggle('trf_alert', !fuseBlown && r.Tss > 110);
+}
+function coreName() { return matKey === 'air' ? 'no core (air)' : (lam ? 'a laminated ' : 'a solid ') + MATS[matKey].label.toLowerCase() + ' core' + (lam ? ' (' + fmtMm(dLam) + ' sheets)' : ''); }
+function statusText() {
+  var r = res, s = 'Supply ' + Vp + ' V, ' + Math.round(f) + ' Hz; ' + Np + ' : ' + Ns + ' turns; ' + coreName() + (gapMm > 0 ? ' with a ' + gapMm.toFixed(2) + ' mm air gap' : '') + '. ';
+  if (fuseBlown) {
+    s += 'The fuse has blown: the primary would draw ' + fmtA(r.Ipm) + '. ';
+    if (matKey === 'air') s += 'Without an iron core the primary has almost no inductance, so it is nearly a short circuit across the supply. ';
+    else if (r.sat) s += 'The core saturates: it cannot carry the flux this voltage and frequency demand, so the magnetizing current soars. ';
+    else if (!lam && MATS[matKey].sigma > 1) s += 'In a solid metal core, huge eddy currents circulate around the whole cross-section. They push the field out of the core (skin depth ' + fmtMm(r.delta) + ') and would turn ' + fmtW(r.Pe) + ' into heat. That is why cores are laminated. (Lower the voltage to about 40 V to see the solid core working, badly.) ';
+    return s + 'Change the settings, then replace the fuse.';
+  }
+  s += 'The secondary gives ' + r.Vs.toFixed(1) + ' V (turns ratio predicts ' + (Vp*Ns/Np).toFixed(1) + ' V). Peak field in the core ' + r.B.toFixed(2) + ' T' + (r.sat ? ', saturated' : '') + '. ';
+  if (matKey !== 'air') {
+    s += 'Core losses: eddy currents ' + fmtW(r.Pe) + ', hysteresis ' + fmtW(r.Ph) + '. ';
+    if (lam) s += 'The insulated sheets stop the eddy currents from circling the whole core: each current is trapped in a thin sheet, where it meets a long, narrow path and stays small. ';
+    else if (MATS[matKey].sigma < 1) s += 'Ferrite hardly conducts, so even a solid block has almost no eddy currents. ';
+  }
+  if (nLamps) s += 'Efficiency ' + (r.eff*100).toFixed(1) + '%. ';
+  s += 'The core settles at about ' + Math.round(r.Tss) + ' \u00b0C.';
+  return s;
+}
+var narrTimer = null;
+function updateNarration(prefix) {
+  if (!showNarr) return;
+  clearTimeout(narrTimer);
+  var go = function() { set('trfNarration', (prefix ? prefix + ' ' : '') + statusText()); };
+  if (prefix) go(); else narrTimer = setTimeout(go, 450);
+}
+function updateCanvasDesc() { var d = 'Transformer. ' + statusText(); set('trfCanvasDesc', d); canvas.setAttribute('aria-label', d); }
+function updateLabels() {
+  set('vD', fmtMm(dLam)); set('vGap', gapMm.toFixed(2) + ' mm'); set('vV', Vp + ' V'); set('vF', (f < 100 ? f.toFixed(1) : Math.round(f)) + ' Hz');
+  set('vNp', String(Np)); set('vNs', String(Ns)); set('matDesc', MATS[matKey].desc);
+  set('ratioInfo', 'turns ratio ' + Np + ' : ' + Ns + ' \u2192 ideal ' + (Vp*Ns/Np).toFixed(1) + ' V');
+  set('diagLabel', 'TRANSFORMER -- ' + coreName());
+  var d = el('slD'); if (d) d.disabled = !lam || matKey === 'air';
+  var g = el('slGap'); if (g) g.disabled = matKey === 'air';
+  var fb = el('btnFuse'); if (fb) fb.disabled = !fuseBlown;
+}
+function updateButtons() {
+  var a = el('btnSolid'), b = el('btnLam');
+  if (a) { a.classList.toggle('trf_srcon', !lam); a.setAttribute('aria-pressed', !lam ? 'true' : 'false'); }
+  if (b) { b.classList.toggle('trf_srcon', lam); b.setAttribute('aria-pressed', lam ? 'true' : 'false'); }
+}
+var pending = false;
+function scheduleUpdate(narrate) {
+  if (pending) return; pending = true;
+  var go = function() {
+    pending = false; var was = fuseBlown; update();
+    updateLabels(); updateButtons(); redraw(); updateReadouts(); updateCanvasDesc();
+    if (fuseBlown && !was) { updateNarration('Bang! The fuse blew.'); srAnnounce('The fuse blew.'); }
+    else if (narrate !== false) updateNarration();
+  };
+  if (window.requestAnimationFrame) window.requestAnimationFrame(go); else setTimeout(go, 16);
+}
+
+/* ── Controls ── */
+function onSlider(key, raw) {
+  var v = parseFloat(raw);
+  if (key === 'Mat') matKey = raw;
+  else if (key === 'D') dLam = 0.05e-3*Math.pow(100, v/100);
+  else if (key === 'Gap') gapMm = v;
+  else if (key === 'V') Vp = Math.round(v);
+  else if (key === 'F') f = 10*Math.pow(100, v/100);
+  else if (key === 'Np') Np = Math.round(v);
+  else if (key === 'Ns') Ns = Math.round(v);
+  else if (key === 'Load') nLamps = parseInt(raw, 10);
+  scheduleUpdate();
+}
+function setLam(on) { lam = on; scheduleUpdate(false); updateNarration(on ? 'Laminated core: a stack of thin, insulated sheets.' : 'Solid core: one block of metal.'); }
+function preset(V, F) {
+  Vp = V; f = F; var sv = el('slV'), sf = el('slF'); if (sv) sv.value = V; if (sf) sf.value = (100*Math.log(F/10)/Math.log(100)).toFixed(1);
+  scheduleUpdate(false); updateNarration('Supply set to ' + V + ' V, ' + F + ' Hz.');
+}
+function replaceFuse() { fuseBlown = false; scheduleUpdate(false); updateNarration('New fuse fitted.'); }
+
+/* ── Canvas interaction ── */
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function describePoint(x, y) {
+  if (y < 250) {
+    if (x > 360) return 'Cross-section of the core limb: the flux runs along the limb (\u2299/\u2297) and induces eddy currents circling around it. Insulated sheets confine each current to one thin sheet.';
+    if (x < 76) return 'Supply ' + Vp + ' V, ' + Math.round(f) + ' Hz with a 2 A fuse.';
+    if (x > 280) return 'Load: ' + (nLamps ? nLamps + ' lamp' + (nLamps > 1 ? 's' : '') + ' (12 V, 50 W each).' : 'nothing connected.');
+    if (y > CY0 + 52 && y < CY0 + CH0 - 52 && (x < CX0 + LW + 8 || x > CX0 + CW0 - LW - 8)) return x < 180 ? 'Primary coil: ' + Np + ' turns. Its alternating current makes the alternating flux.' : 'Secondary coil: ' + Ns + ' turns. The changing flux through it induces ' + (res ? res.Vs.toFixed(1) : '0') + ' V.';
+    return 'Core: guides the flux from the primary to the secondary. Peak field ' + (res ? res.B.toFixed(2) : '0') + ' T.';
+  }
+  if (x < 276) return 'Power: what the supply delivers = lamps + copper heating + eddy-current and hysteresis losses in the core.';
+  return 'Scope: primary voltage, secondary voltage and primary current.';
+}
+canvas.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); set('trfHoverReadout', describePoint(c[0], c[1])); });
+canvas.addEventListener('mouseleave', function() { set('trfHoverReadout', 'Hover over the core, the coils, the cross-section or the meters to read values'); });
+
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('trf_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+  ROOT.classList.toggle('trf_hc', hcMode); ROOT.classList.toggle('trf_lm', lightMode); ROOT.classList.toggle('trf_cb', cbMode);
+  setBtnOn('btnHC', hcMode); setBtnOn('btnLight', lightMode); setBtnOn('btnCB', cbMode); setBtnOn('btnNarr', showNarr);
+  var nb = el('btnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+  var box = el('trfNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate(false); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(''); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e = el('trfSrAnnounce'); if (!e) return; e.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e.textContent = msg; }, 60); }
+
+/* ── Keyboard shortcuts ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+  var tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  switch (e.key) {
+    case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+    case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+    case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+    case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+    case 's': case 'S': setLam(!lam); e.preventDefault(); break;
+  }
+});
+document.addEventListener('visibilitychange', function() { if (!document.hidden) startLoop(); });
+if (reducedMotion) { var mn = el('trfMotionNotice'); if (mn) mn.style.display = 'block'; }
+
+/* ── Boot ── */
+applyDisplay(); update(); Tcore = res.Tss; scheduleUpdate(false);
+updateNarration('Ready. A 230 V to 12 V transformer with a laminated silicon-steel core lights a lamp. Switch the core to a solid block and see what happens.');
+startLoop();
+return { onSlider: onSlider, setLam: setLam, preset: preset, replaceFuse: replaceFuse,
+         toggleHC: toggleHC, toggleLight: toggleLight, toggleCB: toggleCB, toggleNarr: toggleNarr };
+};
+</script>
+<script>
+var trfSim = new trfGen();
+</script>
+</main>
+</body>
+</html>

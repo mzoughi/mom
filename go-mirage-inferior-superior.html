@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Mirages: Why Light Bends in Warm Air</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of inferior and superior mirages: light bending through air whose temperature changes with height.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mgRoot" class="mg_root" role="region" aria-label="Mirages: light bending through air of changing temperature">
+<div class="mg_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="mg_a11ybtn" id="mgBtnHC" onclick="mgSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="mg_a11ybtn" id="mgBtnLM" onclick="mgSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="mg_a11ybtn" id="mgBtnCB" onclick="mgSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="mg_a11ybtn mg_a11yon" id="mgBtnNR" onclick="mgSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="mg_header"><p class="mg_h1">Mirages: Why Light Bends in Warm Air</p><p class="mg_sub">inferior mirage (hot ground) &middot; superior mirage (cold ground)</p></div>
+<div class="mg_bbar"><label>Situation <select id="mgPre"><option value="road">A hot road: a truck, and "water" on the road (inferior mirage)</option><option value="lake">A dry lake bed: the "lake" by itself, like a desert photo (inferior mirage)</option><option value="desert">The desert: palm trees and an "oasis" (inferior mirage)</option><option value="sea">A cold sea: a ship looming (superior mirage)</option><option value="none">The same road, air of one temperature: no mirage</option><option value="own">(your own settings)</option></select></label>
+<label>Object <select id="mgObj"><option value="truck">a truck</option><option value="car">a car</option><option value="palm">a palm tree</option><option value="ship">a ship</option><option value="nothing">nothing</option></select></label></div>
+<div class="mg_diag"><div class="mg_dlabel"><b>WHAT THE CLOWN SEES</b><span id="mgHintE"></span></div><canvas id="mgEye" width="780" height="320" role="img" aria-label="The view of the observer: the road or the ground receding to the horizon, the object, and the mirage."></canvas></div>
+<div class="mg_diag"><div class="mg_dlabel"><b>SIDE VIEW</b><span id="mgHintS">heights exaggerated</span></div><canvas id="mgSide" width="780" height="320" role="img" aria-label="Side view: the observer, the object, the air shaded by temperature, the curved light paths and, dashed, the straight lines along which the observer sees each image."></canvas></div>
+<div class="mg_diag"><div class="mg_dlabel"><b>WHY RAYS BEND: LAYERS OF AIR</b><span>Snell's law at every boundary; the indices are exaggerated</span></div><canvas id="mgLay" width="780" height="300" role="img" aria-label="The air cut into layers, each hotter and of lower index toward the ground; a ray crosses each boundary by Snell's law, bending away from the normal, until it is totally reflected and climbs back up."></canvas>
+<div class="mg_bbar mg_laybar"><label>layers <input type="range" id="mgNL" min="2" max="80" step="1" value="6"> <span id="mgNLv">6</span></label><label>angle from the vertical <input type="range" id="mgAL" min="50" max="85" step="0.5" value="66"> <span id="mgALv">66&deg;</span></label><label><input type="checkbox" id="mgSm" checked> the smooth limit</label></div></div>
+<div class="mg_row2">
+<div class="mg_diag"><div class="mg_dlabel"><b>THE AIR NEAR THE GROUND</b></div><canvas id="mgTn" width="380" height="280" role="img" aria-label="Graph of the air temperature and its index of refraction against height, near the ground."></canvas></div>
+<div class="mg_diag"><div class="mg_dlabel"><b>WHERE EACH VIEWING ANGLE LANDS</b></div><canvas id="mgMap" width="380" height="280" role="img" aria-label="Graph of the height at which each ray from the eye reaches the object, against the viewing angle."></canvas></div>
+</div>
+<div class="mg_bbar" id="mgBtns"></div>
+<div class="mg_panels">
+<div class="mg_panel"><div class="mg_ptitle">Settings</div><div class="mg_pbody" id="mgCtl"></div></div>
+<div class="mg_panel"><div class="mg_ptitle">Readout</div><div class="mg_pbody" id="mgRead"></div></div>
+</div>
+<div class="mg_eqs" id="mgEqs"></div>
+<div id="mgNar" class="mg_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="mg_descwrap">
+<button type="button" class="mg_descbtn" id="mgDescBtn" aria-expanded="false" aria-controls="mgDesc" onclick="mgSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mg_desc" id="mgDesc" role="region" aria-labelledby="mgDescBtn" style="display:none">
+<p>The index of refraction of air depends on its density, and so on its temperature: `n - 1` is proportional to `1/T`. Hot air has a lower index than cold air. When the temperature changes with height, light does not travel in straight lines: it bends gradually, always toward the colder, denser air (the higher index).</p>
+<p>In air whose index depends only on the height, Snell's law takes a continuous form: along any ray,</p>
+<p class="mg_eq">`n(y) cos alpha = "constant"`,</p>
+<p>where `alpha` is the ray's angle above the horizontal. A nearly horizontal ray curves with a radius `R = n/(dn/dy)`; the simulation traces every ray exactly through the changing air.</p>
+<p><b>The inferior mirage.</b> On a hot road, or over the desert, the air is hottest just above the ground, so the index increases upward. A ray heading down toward the road at a shallow angle curves back up before it touches it. Looking down at the road far ahead, the clown therefore sees light that came from the sky: a bright, shimmering patch that looks like water, the "puddle" on the road. Light from the truck reaches him the same way, from below, so he also sees the truck upside down in the "puddle", like a reflection.</p>
+<p><b>The superior mirage.</b> Over a cold sea or snow the air is coldest at the bottom, so the index decreases upward and rays bend down. Light leaving a distant ship slightly upward reaches the eye from above: the ship looks raised (looming), and can even be seen when it is below the horizon.</p>
+<p><b>Why the rays bend.</b> Think of the air as thin layers, each a little hotter, and of lower index, than the one above. A ray heading down crosses each boundary by Snell's law, `n_1 sin theta_1 = n_2 sin theta_2`, and bends away from the normal, more at every boundary, until at some layer it can no longer get in: it is totally reflected, and climbs back up the same way. With more and thinner layers the path becomes the smooth curve of real air. The quantity `n sin theta` (`theta` from the vertical, so `n cos alpha`) is the same at every boundary.</p>
+<p>On a road only the asphalt gets this hot; the shoulders stay cooler, so the "water" lies only on the road.</p>
+<p>The bending is gentle, a few metres over hundreds of metres, and mirages are small, a fraction of a degree: like the photographs of mirages, the view is a telephoto view, and its zoom can be changed. The side view exaggerates heights. The clown is the observer; his eyes are at the eye height.</p>
+</div></div>
+</div><!-- #mgRoot -->
+<style>#mgRoot .mg_laybar { border:none; border-top:1px solid var(--c-bd); border-radius:0; }
+#mgRoot .mg_laybar input[type=range] { width:140px; }</style>
+<style>
+#mgRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#mgRoot * { box-sizing:border-box; }
+#mgRoot.mg_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#mgRoot.mg_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#mgRoot .mg_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#mgRoot .mg_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#mgRoot .mg_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#mgRoot .mg_header { text-align:center; }
+#mgRoot .mg_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#mgRoot .mg_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#mgRoot .mg_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#mgRoot .mg_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#mgRoot .mg_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#mgRoot .mg_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#mgRoot .mg_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#mgRoot .mg_dlabel b { color:var(--c-accent); }
+#mgRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#mgRoot .mg_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#mgRoot .mg_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#mgRoot .mg_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#mgRoot .mg_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#mgRoot .mg_btn:hover { border-color:var(--c-accent); }
+#mgRoot .mg_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#mgRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#mgRoot .mg_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#mgRoot .mg_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#mgRoot .mg_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#mgRoot .mg_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#mgRoot .mg_ctrl { display:flex; flex-direction:column; gap:3px; }
+#mgRoot .mg_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#mgRoot .mg_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#mgRoot .mg_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#mgRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#mgRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#mgRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#mgRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#mgRoot .mg_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#mgRoot .mg_rkey { color:var(--c-dim); }
+#mgRoot .mg_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#mgRoot .mg_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#mgRoot .mg_eqs b { color:var(--c-val); }
+#mgRoot .mg_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#mgRoot .mg_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#mgRoot .mg_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#mgRoot .mg_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#mgRoot .mg_desc p { margin:0 0 9px; }
+#mgRoot .mg_eq { text-align:center; font-size:1rem; }
+#mgRoot button:focus-visible, #mgRoot input:focus-visible, #mgRoot select:focus-visible, #mgRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #mgRoot .mg_row2, #mgRoot .mg_panels { grid-template-columns:minmax(0,1fr); } #mgRoot .mg_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #mgRoot input[type=range] { height:8px; } #mgRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #mgRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #mgRoot .mg_a11ybtn { min-height:40px; } #mgRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Air temperature T(y) = Ta + dT exp(-y/h): dT > 0 hot ground, dT < 0 cold ground. Index n(y) = 1 + 2.93e-4 (288.15/T) (density, at constant pressure).
+A ray from the eye at elevation angle phi is traced: with s the horizontal distance and y' = dy/ds, y'' = (n'(y)/n)(1 + y'^2), the exact ray
+equation in a medium that varies only with height (equivalent to n cos(alpha) = constant), by RK4. The view: one ray per row of pixels, its
+heights kept along the way, so that every object, at any distance, and the ground, are found from it. No dollar signs or backticks in the code.
+-->
+<script>
+var mgSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('mgRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CE = hi('mgEye'), CS = hi('mgSide'), CT = hi('mgTn'), CM = hi('mgMap');
+var TA = 293.15;
+var PRE = { road:{ dT:20, h:0.3, D:1100, he:1.6, obj:'truck', ground:'road', fov:1.6, hz:0.4 }, lake:{ dT:22, h:0.35, D:1500, he:1.6, obj:'nothing', ground:'playa', fov:2.6, hz:0.62 }, desert:{ dT:25, h:0.3, D:1500, he:1.6, obj:'palm', ground:'sand', fov:1.6, hz:0.4 },
+  sea:{ dT:-12, h:4, D:3000, he:2.0, obj:'ship', ground:'sea', fov:1.2, hz:0.4 }, none:{ dT:0, h:0.3, D:1100, he:1.6, obj:'truck', ground:'road', fov:1.6, hz:0.4 } };
+var S = { pre:'road', dT:20, h:0.3, D:1100, he:1.6, obj:'truck', ground:'road', fov:1.6, hz:0.4, shoulders:true, nL:6, aL:66, smooth:true, rays:true, imgs:true, fan:false, eqs:true };
+var th = { hc:false, lm:false, cb:false, nr:true };
+/* ── the objects, drawn once: what each looks like from behind (the truck, the car) or from the side (the palm, the ship) ── */
+function tex(w, h, H, W, paint){ var c = document.createElement('canvas'); c.width = w; c.height = h; var g = c.getContext('2d'); paint(g, w, h); return { img:c, data:g.getImageData(0, 0, w, h).data, w:w, h:h, H:H, W:W }; }
+var OBJ = {
+  truck:tex(100, 144, 3.4, 2.5, function(g, w, h){ g.fillStyle = '#c9c8c0'; g.fillRect(4, 6, w - 8, h - 40); g.strokeStyle = '#a8a79f'; g.lineWidth = 2; g.strokeRect(4, 6, w - 8, h - 40); g.beginPath(); g.moveTo(w/2, 6); g.lineTo(w/2, h - 34); g.stroke();
+    g.fillStyle = '#333'; g.fillRect(2, h - 36, w - 4, 10); g.fillStyle = '#9a4a44'; g.fillRect(6, h - 34, 12, 6); g.fillRect(w - 18, h - 34, 12, 6); g.fillStyle = '#111'; g.fillRect(8, h - 26, 22, 26); g.fillRect(w - 30, h - 26, 22, 26); }),
+  car:tex(90, 70, 1.45, 1.85, function(g, w, h){ g.fillStyle = '#b8262d'; g.beginPath(); g.moveTo(14, 26); g.lineTo(24, 4); g.lineTo(w - 24, 4); g.lineTo(w - 14, 26); g.lineTo(w - 2, 30); g.lineTo(w - 2, h - 14); g.lineTo(2, h - 14); g.lineTo(2, 30); g.closePath(); g.fill();
+    g.fillStyle = '#2a3440'; g.beginPath(); g.moveTo(20, 24); g.lineTo(27, 8); g.lineTo(w - 27, 8); g.lineTo(w - 20, 24); g.closePath(); g.fill(); g.fillStyle = '#ffb3b3'; g.fillRect(6, 34, 14, 7); g.fillRect(w - 20, 34, 14, 7); g.fillStyle = '#111'; g.fillRect(6, h - 16, 18, 16); g.fillRect(w - 24, h - 16, 18, 16); }),
+  ship:tex(240, 80, 7, 22, function(g, w, h){ g.fillStyle = '#4a5260'; g.beginPath(); g.moveTo(0, 44); g.lineTo(w, 44); g.lineTo(w - 18, h); g.lineTo(16, h); g.closePath(); g.fill(); g.fillStyle = '#b9bcc0'; g.fillRect(70, 18, 100, 26); g.fillRect(96, 4, 50, 14);
+    g.fillStyle = '#8a5650'; g.fillRect(150, 0, 14, 20); g.fillStyle = '#334'; for (var i=0; i<6; i++) g.fillRect(78 + i*15, 26, 9, 6); }),
+  palm:tex(168, 240, 6.0, 4.2, function(g){ g.strokeStyle = '#7a4a22'; g.lineWidth = 12; g.lineCap = 'round'; g.beginPath(); g.moveTo(80, 238); g.quadraticCurveTo(70, 140, 92, 52); g.stroke();
+    g.strokeStyle = '#5b3416'; g.lineWidth = 2; for (var y=60; y<235; y+=12){ g.beginPath(); g.moveTo(74 + (238 - y)*0.03, y); g.lineTo(90 - (238 - y)*0.02, y + 4); g.stroke(); }
+    [[-1.2, 0.9], [-0.7, 0.35], [-0.2, 0.05], [0.3, 0.15], [0.8, 0.5], [1.3, 1.0], [-1.5, 1.35], [1.6, 1.4]].forEach(function(f, i){ g.fillStyle = i % 2 ? '#3f8f2f' : '#5aae3a'; g.beginPath(); var a = f[0], cx = 92, cy = 52, L = 78, ex = cx + L*Math.sin(a), ey = cy - L*Math.cos(a)*0.4 + L*f[1]*0.55;
+      g.moveTo(cx, cy); g.quadraticCurveTo(cx + L*0.55*Math.sin(a) - 10, cy - 30 + L*f[1]*0.1, ex, ey); g.quadraticCurveTo(cx + L*0.55*Math.sin(a) + 10, cy - 14 + L*f[1]*0.2, cx, cy); g.fill(); }); })
+};
+var CLOWN = { img:null, w:0, h:0 };
+OBJ.nothing = { img:document.createElement('canvas'), data:new Uint8ClampedArray(4), w:1, h:1, H:0.01, W:0.01 };
+(function(){ /* the palm trees from the teacher's own drawing */ var im = new Image(); im.onload = function(){ var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; var g = c.getContext('2d'); g.drawImage(im, 0, 0);
+  OBJ.palm = { img:c, data:g.getImageData(0, 0, c.width, c.height).data, w:c.width, h:c.height, H:6.0, W:6.5 }; draw(); }; im.src = 'data:image/png;base64,' + 'iVBORw0KGgoAAAANSUhEUgAAAKoAAACcCAMAAADYi8AAAAADAFBMVEX////+//////39/v76+v3a65PA2WW+3iyw1CWuwImjxiikyCKQuCWEsw2DrRuQl2Z6phBwlw5qhSqZazuNWiliYDNySyVWOiEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACcEX5iAAAAGXRSTlP///////////////////////////////8AATQKtwAAD4RJREFUeNrVm+t6nLoOhudHMtjG2MYgPPd/pVuSDxgGArMXbaifNk0nyfAiS58OJo/Xn1xf8sI3e/xZVGvlP4L60k3zlOf3wP4iqhfNaVjrlfxVVIWsjT3jK06r33QAK1qya/M8gP16+a5T9ldR27ZtmkPDSmtdp4X8VVR1gvVbdx46o34X9aWFii6wzypV1/mgVat/VayQQ2SzNtsaaztcvcc7sn8XVa5xpBbZrJusTIohpVol/yaqtO8aaq2aWfdIDfr0Jaj2JOizad6uZ58o7arZYf02yagYfUdXOYX61PKMRRFFvZtGC6F2XUCaQiouQcUYPYQl0GYrikla26ICYBe+waiYptrj/T+J2ujOSHlk0qZphd+4T0JNLuB9lbekM7JHVCY93P+TYaVb01m7b1nyUjbq1i5ici1m9aryAcyl4DtHISWU/b4G1QpN79rJvZzEHGLbNiytyay6Ci2k7Dx+QK/ZVlwZN1Ji2sUlz6HKVmlPbmV33ZS2n41K7yp3zUq2j2+CWR9FytH2+3UF/oV43ht8lf81WmvjT6I+21ZzsOp9Utp+SUFttAeoLm5rb81mTbHPiiraUlRJdnyv+WsgrXZdWvpkCsAwVvHH9btzJAL0N9oraSOEM8Z6m/RqYVZOE76bFRVX3GoSCJt/HrMt6wPCGmN6fxYVL6biW8jN2G+eyoPv8VscAF0nLkeXTh5QzKrmLNXpKGU2GtPh3ZlIlz6QjxjX973/PonKiqP4ze2qeE/G8n2ft8pni+GVQBpkNwuzooLW209fwVcobLvg820SqTPaOeLse3u+BqAoji6wjBkbjap9ASVWUz7tLf5QH9rarArscvuFTl7T+86VPY/W7DPpaVTeQ2aVtb7aBujirgZdrkBX7/varNrnG6Pt1xg8bFEX9yH7ZrW8/KiyslimCXRXB5S55uBHUW/ylXHDjKHrrC3sfAyepADaV9uvLPpo9EwmJXtmRvR+Il2lAMlKK6PCSfmeRrFLN0LhVU2RAYmYmTQ7Vd9j6DttlrZdmrU2qmh99E8X/y4MCujBmbSgIofjhTEosdFF1fVLXZZUeKqkc7ZSVIynTOnnqzjnalaozNpWRhUGuZ3L8a6ZEyC9ka9r9dmqpmyc08ntHWc8W+ecpFgsWZLjRPddpgPfL5arwsvPZjV9iSnR++yffei1gRCg5xv3gRZs1gDS09YhLm1En3akw+QGHmSpkJJidSYbVQC+bTQDrFGJtpg1ChbvvytGJYVzERR/2gevm3kJ3NiqaKzDyrMhXDRuFA386KHvDMVgMmtMWuQCLKlYG2CGVugveDF6gx1aB6VuBZc9lXwnggbdmBBEs15VFbtQAFs2LvJG07KiG0BXrV3Aoe+md+aXWxQctCtuY3KzsIKNkaXYY7JRY0AhqMG3CeENFPcMlSxt61KsbGWM6AysHnznmHTIfMUFcHNKRRWdzmnyM7QuO0NYW9azC4jkqk7r4Dn4ITh+G1DvqB60yAXOSldlFDJfZKdLkRxdgUQguwB+UaeKihY5oIEYQhBg7QcYYVFcVY4qvq+Af/pswWZnqcASuk4B0jsUKT9fAUUy+gH98U7MkdWnRjQala+fI95pH9Yua1AFOLASKolU54JXzdHS/vnUYN+zFdWz0SYxsJ3OeZncynNkReczs1E1zBKKyQZ/LPgtVlFQOd33wTRnl9pMrFHS0JM8y5vXLvQJtkfnKWadjVqqFUo25NtI2+bEODsshZaIqOCIVDXn1wYq5mSjZsdpMUDRRiEpoPNaZLOqZFRMOZFTU+7p2He7gP/qbpHBetx1QagETT5dx3rzpF7yOa+18z7eZrIveLsfJG00JMtSJEezsgeUmMJAwUbFIR+GXavbzrVETflkxkXlE+QsDqjIL5joU4pXWy96YRcVOyIv7TurJ8lLsEiYRIBQRYkpbchNEDTCRvZ4daSFXBlALwIbNZOKViVMtbHwRbGJylldbQhcH5M38LahmKkYabz/7Hxak+yQEdlhufChmgdbTZ5IIBlkf8U98C7uvmg36VZLrFGpCDzycxf4ct6zt6LjUQkPsSJC0hhXWGgbE6sfF8s6TbZ2npSUgqlH1eOzl01D6gU2FNi5sgJMnOIwIlvPTgAmKSs7qtbIj6RkSgTsQ+fMvNjIhozrqEpwHd0uaGpxN5fV1R0ITN8qOu2jHBqd1Yyeqo0eIirrFBeZmB7jDAJtjs6YWTusJ/kTpKX6JJBZyRU2TNpyAyck2qxC/dbxf+Kx6OYWlQKuJsnHKs/1nGswWBQraipPIGQ9DuTThrOXhoRKORphKfSQF3MUBQwu2nF0aEN/jcH/PeXLZ3YEty+ZrPxI6XQJubUvQszlTs9mpeTjS2GNep8SAaosyhP3FJSkO9PF/EydTtuhSTEwUZtxMzjLuNSj+B4FKI+peKHA82hJVai1TTf9J4pc1g0ypWe58dDN+h61nyKY9Sl2xRgDZdH0CX07YHxR12p0CrhW8GrpW9cTkW9uQSl+HytSdbBiyyFQbNB0ps+73zsqBHTcRWpbSVI5adXXpi4aBY29xES+SvEFVXxC643xpURzPx/VLIdBW+33lKNSOdWTNPrYAKI/tLSfziRFpZ7VaGq19WqM+YWULTq1p13SMUeUHBVLd3QquztfxQbmGedjBAJ2dtXW+i3pE9TKUfFEpMApKgqSqxTKc0mLGlVfWIaJY0/nGjjltEVCFdruolZ7L6y0bYwiCk9J57nx0zrYWmqpe06QHi1aGGFGtYB+SAWMri8MYSJWmLC+1Lm4RfMvYbdZH5k0iZeWL4twip3O+Jd9YhHSRxTN+8XILbpA7w1mdNx6U+QoxE9JBdKseTUYholRhyFggHMeKUVZTbvJ+kikKWZot6jxykOWKBxcYXO3Rc0MUI+qBLfTjrvCpPEOY8jTPWKFtTNOCmMg/YXAKBaziQld7rUPWB/5FIcLh/gNX8uBPLqEb0q4cpgjJeL4QOFkvI0iGJWGvn//LAYb8AFXGUVYr8M8l65gN1gfL8Vlg7Z265EYSaeOrfHze8RUIHgQ4rFPPT4Zqat2NCihgpx7OfBzr1OzmjXNwyqajO88uGPT/LOqdXVaipoD/PvJESwHFbHCQjKrUZyunMC+oe4dfs+kBVQXjXFUSuGaJvjEpiNG1bRErU4wysFgup5do+7voBVL0NI+o3uSgSicP0Hl7yfU9c/Yyq5Gze4qzx6x1aQJtDOW+iK63TBwJI8feECYolS93530yQRLVn8StSLNoFynprQn0ensABDOP56Gyo87MWzenNQ8GDPVUYZYqcDjdeynSpn58MSX4frEsXweFcIQhnEYd1wGvcDYvsSWDl4tzfr46ZmTRKrnga6cryM5lNFOJ1ktf/847qG+rDPSFx1QHmjcf4wq5+1Xpmj0UuoC2XQ6yyoDb8IwTrun6WgHO2sWHS6e8VVbbf6cTVanvGGIMX1KBGAk1GH8KQ7RjPV51urEfhtV6kIaJ2F8Bvn95nwkrNMpEYhGRav+vAd2kQrEibCyTcpQPPGhQ9Nuq94FGDGkw5nIIqMC3Zs9eIgxdWeRVR36qsQaBHQZpoNFLd38PtxPMtSJJ4YwpnAL9mOqZnVkHP2mrNtDS2ze+MmnKMzSum2YLyDWYTgOLJQLmMZTfk2ihcYxb2bdDaty/Iuou2ZD7YmV0gmrMukZv/adx/Byel2zPPYFQKktiVobK64jVhuASc+ohcSwiE/fYIV8hGoXgup/zECYLY9RSdeAjXpGgyU/g+GUBi8OUNMjPDoWvf6oBKFyefw5siihogeMZ+uwWBEIOoz4GTUalZ9/dZ09KuwwVSLrjwxYLpBUhNMVY0yw3D4foIqoUxarB39Yg47kgj+j5sHb+dqWWfXy4bvH5pNKyKodYnp/KC0xsCH8WKik6LOvj1iNOtJV2bTYlRt3aNHULk9s2H0MOwwndWLF6o5RrQVFw353JlyxESDScZfVBvh/ULHvRg+oK6TH5qN4SlAI+lPVXeBpyT5HsMUBPkJ9gdHiAJXiilKqP1kzU7ygbMJelrCZFezrQ9bDGkDi3bjTpMUXYSemeHDFldVnpOgCh6iW2j5/vmfKrrg5T4A8tf6kYcw/q+URqlCdP79ZpQ7Y9AELEm+CG/FPSV/ysLRGq7pPhiaQCny5JZzYhAMVqifz/w9r21eV/+TeCTVt8laOIE4uVez1qC+rP3pXDBm7i8rF3x9E/TBWA9hoV9h4qxn19QdQP45UmkXTrBvetz+EzHoHVEkzE8qu7xofqPa7xlWvQk17PGwUqpF1nOB1B9S8x+Mk39pEqqknkqrvO6C+Euo4hZULhDGzhv/+q7fXhFWI7Sh55hbqABeQXvSrYYF7gUAdlF2hDsMIAPC6C6qk+ppIV5MeSqrIGcb7WJUOTyLpaNd3wIl1tLdBJVbe7IVVbZH/O6F+Bz48nRao6fTnZqiWtpm7/c1SZboRahxdrKrSqlSRN0PlVf3uXwjp1fE+YlWhVl5Jo7cpvn4nVDtmVJiNOpD/XuWql6Hm6qqispy9GDa8boSaSxbMTbZG5Uo2yFuhptM2rE/DwqofTgD/Bip5AFC6GvN5i+STTRoThXuh0nlbXDMqHRRwVwX3QuWSnwfpcp1Wp5uh2pDG6GGW1emiZvVqB8hYoaSqu6Om1BqGAe7qACswmmRnu4a7ovKhT3z8I712sxQwowJpfojiD9e56h9AjQ/SJVRi/e8joMvFCgrpYNPzHwMPrOF1M1Q2azn3I9SRnqwIIcjboUqYoLYlxCbgmmL1WtQXjyfYrhAfFRov61avRuVOgIYpZNFxbqzv56s0u4wj4bGaVV+Vqy5HLc10mGbWiyTgSgeoLImouVm9owOUifA40lk2zVp4iHFHBQhp7JeP3blbHcfwuiFq4pyGkJMVwl+UVi8WK/pdCk7+BXUYrvLUS1G/h5CLlGlGHe6ISk9e5hXibwBNNAi4JWoyKUHmuUoI4Z5WRe2fImGaARG5vaVVJx6vjMOUUcfxurh6XGrUbMswo473RB0TYPhXUMmmdIZ5a9TkAIFcNqT/3NRXQ7EqS2tEvacCpCIlp9XkuPdMAYHPrxl15AL7tikASgsQIafpkidB/khYjbkHqAaW03THInDuVuoV/hnU8c6o09Kqd3QAWUa/9RTglmH1mlHDHFlXTdeu1lWW0imRpo+31NX0K3hjzKkpB3zfE9WGRJhP3MfrjHoxan6osppeTXdFzZl1LE8y3Bp1jGXKlCx8z+b6NZXp6pgmgWOAu1qVn19KnRWPLO5q1ZAaltxX39hX+dfvCioPL65D/R+r3XgnRuJeRwAAAABJRU5ErkJggg=='; })();
+(function(){ var im = new Image(); im.onload = function(){ var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); CLOWN.img = c; CLOWN.w = c.width; CLOWN.h = c.height; draw(); }; im.src = 'data:image/png;base64,' + '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'; })();
+function scene(){
+  if (S.obj === 'nothing') return [];
+  /* the main object at the distance D on the road (or the sand, or the sea), and what is around it */
+  var L = [{ o:OBJ[S.obj], d:S.D, x:S.obj === 'truck' || S.obj === 'car' ? 1.8 : 0 }];
+  if (S.ground === 'road') for (var d=120; d<=3600; d+=120){ L.push({ pole:true, d:d, x:-6.5, H:8.5, W:0.3 }); L.push({ pole:true, d:d + 60, x:6.5, H:8.5, W:0.3 }); }
+  if (S.ground === 'sand' && S.obj === 'palm'){ L.push({ o:OBJ.palm, d:S.D + 60, x:-7 }); L.push({ o:OBJ.palm, d:S.D + 140, x:9 }); }
+  return L;
+}
+/* ══════════ the air, and the rays ══════════ */
+var KF = 1;   /* the fraction of the ground's excess temperature: 1 over the asphalt, less over the shoulders */
+function T(y){ return TA + KF*S.dT*Math.exp(-Math.max(0, y)/S.h); }
+function n(y){ return 1 + 2.93e-4*288.15/T(y); }
+function dn(y){ var t = T(y); return 2.93e-4*288.15*(KF*S.dT/S.h)*Math.exp(-Math.max(0, y)/S.h)/(t*t); }
+function acc(y, p){ return dn(y)/n(y)*(1 + p*p); }
+var SHOULDER = 0.2;   /* the shoulders' excess temperature, as a fraction of the asphalt's */
+function trace(phi, smax, keep, dsMax){
+  var y = S.he, p = Math.tan(phi), s = 0, ds = Math.max(0.25, Math.min(dsMax || 2, smax/500)), pts = keep ? [[0, y]] : null;
+  while (s < smax){ var h = Math.min(ds, smax - s);
+    var k1y = p, k1p = acc(y, p), k2y = p + 0.5*h*k1p, k2p = acc(y + 0.5*h*k1y, p + 0.5*h*k1p), k3y = p + 0.5*h*k2p, k3p = acc(y + 0.5*h*k2y, p + 0.5*h*k2p), k4y = p + h*k3p, k4p = acc(y + h*k3y, p + h*k3p);
+    var yn = y + h*(k1y + 2*k2y + 2*k3y + k4y)/6, pn = p + h*(k1p + 2*k2p + 2*k3p + k4p)/6;
+    if (yn < 0){ var f = y/(y - yn); s += f*h; if (pts) pts.push([s, 0]); return { y:0, p:pn, s:s, ground:true, pts:pts }; }
+    y = yn; p = pn; s += h; if (pts) pts.push([s, y]); }
+  return { y:y, p:p, s:s, ground:false, pts:pts };
+}
+function mainH(){ return OBJ[S.obj].H; }
+function phiRange(){ var top = Math.max(mainH(), S.he), crit = Math.sqrt(2*Math.abs(n(S.he) - n(0))); return [-Math.max(2.4*top/S.D, 1.35*crit + S.he/S.D), Math.max(1.7*top/S.D, 0.6*crit)]; }
+function images(){
+  if (S.obj === 'nothing') return { list:[], samples:[] };
+  var Hm = mainH(), r = phiRange(), N = 400, out = [], targets = [Hm*0.97, Hm*0.35], ys = [];
+  for (var i=0; i<=N; i++){ var ph = r[0] + (r[1] - r[0])*i/N, t = trace(ph, S.D, false); ys.push([ph, t.ground ? -1 : t.y]); }
+  targets.forEach(function(yt, ti){ for (var i=1; i<ys.length; i++){ var a = ys[i - 1], b = ys[i]; if (a[1] < 0 || b[1] < 0) continue;
+      if ((a[1] - yt)*(b[1] - yt) <= 0 && a[1] !== b[1]){ var lo = a[0], hi_ = b[0]; for (var k=0; k<40; k++){ var mid = (lo + hi_)/2, tm = trace(mid, S.D, false); if (((tm.ground ? -1 : tm.y) - yt)*(a[1] - yt) > 0) lo = mid; else hi_ = mid; }
+        out.push({ phi:(lo + hi_)/2, which:ti === 0 ? 'top' : 'low', upright:b[1] > a[1] }); } } });
+  return { list:out, samples:ys };
+}
+/* ══════════ helpers ══════════ */
+function pal(){ if (th.hc) return { bg:'#000', text:'#fff', grid:'rgba(255,255,255,0.25)', ray:'#ffff00', app:'#00ffff', hot:'rgba(255,80,0,', cold:'rgba(0,160,255,', sand:'#555', T:'#ff6666', N:'#66aaff', eye:'#fff', mir:'#00ffff' };
+  var p = { bg:'#eef4fa', text:'#1d2a36', grid:'rgba(0,0,0,0.12)', ray:'#1d2a36', app:'#c2185b', hot:'rgba(255,140,60,', cold:'rgba(80,150,230,', sand:'#e8c983', T:'#d62828', N:'#1f5fd6', eye:'#222', mir:'#1f5fd6' };
+  if (th.cb){ p.app = '#cc79a7'; p.T = '#d55e00'; p.N = '#0072b2'; p.hot = 'rgba(230,159,0,'; } return p; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function arcmin(r){ return r*180/Math.PI*60; }
+function lerpY(pts, d){ /* the ray's height at the distance d */ var lo = 0, hi_ = pts.length - 1; if (d > pts[hi_][0]) return null; while (hi_ - lo > 1){ var m = (lo + hi_) >> 1; if (pts[m][0] < d) lo = m; else hi_ = m; } var a = pts[lo], b = pts[hi_]; return a[1] + (b[1] - a[1])*(d - a[0])/Math.max(1e-9, b[0] - a[0]); }
+/* ══════════ what the clown sees: the scene in perspective, one ray per row ══════════ */
+function groundCol(x, s){
+  if (S.ground === 'playa'){ var pl = 0.92 + 0.06*Math.sin(s/11 + x/7) + 0.02*Math.sin(s*1.3); return [224*pl, 206*pl, 170*pl]; }
+  if (S.ground === 'road'){ var ax = Math.abs(x);
+    if (ax < 3.75){ var c = 92 + 10*Math.sin(s*1.7 + x*3.1)*0.4; if (ax < 0.09 && (s % 12) < 4) return [214, 178, 52]; if (Math.abs(ax - 3.55) < 0.08) return [225, 225, 222]; return [c, c, c + 3]; }
+    var gr = 0.85 + 0.15*Math.sin(s/3 + x); return [185*gr, 165*gr, 112*gr]; }
+  if (S.ground === 'sea'){ var w = 0.9 + 0.1*Math.sin(s/9 + x/4); return [52*w, 92*w, 118*w]; }
+  var st = 0.9 + 0.1*Math.sin(s/7 + Math.sin(x/9)*1.5); return [232*st, 200*st, 140*st];
+}
+function skyCol(el_){ var k = Math.max(0, Math.min(1, el_/(6*Math.PI/180))); return [214 - 92*k, 228 - 56*k, 240 - 14*k]; }
+var lastMirage = null;
+function drawEye(){
+  var g = CE.g, W = CE.W, H = CE.H, Wp = Math.round(W*DPR), Hp = Math.round(H*DPR), img = g.createImageData(Wp, Hp), d = img.data, F = S.fov*Math.PI/180, aPP = F/Hp, top = S.hz*F, L = scene();
+  var lake = S.ground === 'playa', smax = lake ? 34000 : Math.max(12000, 3*S.D), haze = S.ground === 'sea' ? 9000 : (lake ? 26000 : 4500), mirRows = [], twoAir = S.ground === 'road' && S.shoulders;
+  var MD = 30000; function ridge(th_){ return 300 + 95*Math.sin(th_*70 + 1.3) + 55*Math.sin(th_*170 + 0.4) + 22*Math.sin(th_*430); }   /* a low range of hills and peaks, as in a desert photo */   /* the mountains' skyline, 30 km away */
+  for (var py=0; py<Hp; py++){
+    var ph = top - py*aPP, t = trace(ph, smax, true, smax/1600), cand = [], tc = null, sClose = 0;
+    if (twoAir){ KF = SHOULDER; tc = trace(ph, smax, true, smax/1600); KF = 1;   /* the same row, over the cooler shoulders */
+      if (t.ground) sClose = t.s; else { var ymn = 1e9; t.pts.forEach(function(q){ if (q[1] < ymn){ ymn = q[1]; sClose = q[0]; } }); } }   /* where its light comes closest to the ground */
+    L.forEach(function(ob){ var yy = (t.ground && t.s < ob.d) ? null : lerpY(t.pts, ob.d); var Ho = ob.pole ? ob.H : ob.o.H; if (yy !== null && yy > 0 && yy < Ho) cand.push({ ob:ob, y:yy }); });
+    cand.sort(function(a, b){ return a.ob.d - b.ob.d; });
+    if (ph < 0 && !t.ground) mirRows.push(py);
+    var candC = null; if (tc){ candC = []; L.forEach(function(ob){ var yy = (tc.ground && tc.s < ob.d) ? null : lerpY(tc.pts, ob.d); var Ho = ob.pole ? ob.H : ob.o.H; if (yy !== null && yy > 0 && yy < Ho) candC.push({ ob:ob, y:yy }); }); candC.sort(function(a, b){ return a.ob.d - b.ob.d; }); }
+    var tRow = t, candRow = cand;
+    for (var px=0; px<Wp; px++){
+      var q = 4*(py*Wp + px), th_ = (px - Wp/2)*aPP, col = null;
+      if (tc){ var onRoad = Math.abs(th_*sClose) < 3.75; t = onRoad ? tRow : tc; cand = onRoad ? candRow : candC; }   /* over the asphalt, the hot air; beside it, the cooler air */
+      for (var c=0; c<cand.length && !col; c++){ var ob = cand[c].ob, u = ob.d*th_ - ob.x, yy = cand[c].y;
+        if (ob.pole){ if (Math.abs(u) < ob.W/2 || (yy > ob.H - 0.7 && yy < ob.H - 0.45 && Math.abs(u) < 0.9)) col = [70, 56, 44]; }
+        else { var O = ob.o; if (Math.abs(u) < O.W/2){ var iu = Math.floor((u/O.W + 0.5)*O.w), iv = Math.floor((1 - yy/O.H)*O.h), k = 4*(iv*O.w + iu); if (iu >= 0 && iu < O.w && iv >= 0 && iv < O.h && O.data[k + 3] > 128) col = [O.data[k], O.data[k + 1], O.data[k + 2]]; } }
+        if (col){ var hz = 1 - Math.exp(-ob.d/haze), sk = skyCol(0); col = [col[0]*(1 - hz) + sk[0]*hz, col[1]*(1 - hz) + sk[1]*hz, col[2]*(1 - hz) + sk[2]*hz]; } }
+      if (!col){ if (t.ground){ var gc = groundCol(t.s*th_, t.s), hz2 = 1 - Math.exp(-t.s/haze), sk2 = skyCol(0); col = [gc[0]*(1 - hz2) + sk2[0]*hz2, gc[1]*(1 - hz2) + sk2[1]*hz2, gc[2]*(1 - hz2) + sk2[2]*hz2]; }
+        else { var ym = lake ? lerpY(t.pts, MD) : null;
+          if (ym !== null && ym < ridge(th_)){ var mf = 0.62 + 0.22*Math.max(0, Math.min(1, ym/ridge(th_))), hz3 = 0.42; col = [70*mf*(1 - hz3) + 160*hz3, 96*mf*(1 - hz3) + 186*hz3, 140*mf*(1 - hz3) + 214*hz3]; }   /* the distant mountains, in haze */
+          else col = skyCol(Math.atan(t.p)); } }
+      if (ph < 0 && !t.ground && S.dT > 0){ var sh = 1.04 + 0.05*Math.sin(py*0.9 + Math.sin(px*0.021 + py*0.37)*2.2); col = [Math.min(255, col[0]*sh), Math.min(255, col[1]*sh), Math.min(255, col[2]*sh*1.03)]; }   /* the hot air is turbulent: the mirage shimmers */
+      d[q] = col[0]; d[q + 1] = col[1]; d[q + 2] = col[2]; d[q + 3] = 255; } }
+  t = tRow;
+  g.putImageData(img, 0, 0);
+  /* the mirage band: rows that look down, yet end in the sky */
+  lastMirage = null;
+  if (mirRows.length > 2 && Math.abs(S.dT) > 0.01){ var y0 = mirRows[0]/DPR, y1 = mirRows[mirRows.length - 1]/DPR, p = pal(); lastMirage = { y0:y0, y1:y1 };
+    if (S.dT > 0 && y1 - y0 > 3){ g.strokeStyle = p.mir; g.lineWidth = 2; g.beginPath(); g.moveTo(W - 14, y0); g.lineTo(W - 8, y0); g.lineTo(W - 8, y1); g.lineTo(W - 14, y1); g.stroke();
+      var ly = Math.min(H - 22, y1 + 22); g.fillStyle = 'rgba(255,255,255,0.85)'; g.fillRect(W - 300, ly - 17, 286, 34); Tx(g, '\u2191 the "water": light from the sky,', W - 16, ly - 8, p.mir, 'right', 'bold 12px Arial'); Tx(g, 'bent up by the hot air near the ground', W - 16, ly + 8, p.mir, 'right', 'bold 12px Arial'); } }
+  el('mgHintE').textContent = (twoAir ? 'the asphalt is hot, the shoulders cooler · ' : '') + 'a telephoto view, ' + f2(S.fov, 1) + '\u00B0 from top to bottom; the horizon is at the line where the sky meets the ground';
+}
+/* ══════════ why rays bend: layers of air, Snell's law at each boundary ══════════ */
+var CL = hi('mgLay');
+function drawLayers(){
+  var g = CL.g, W = CL.W, H = CL.H, p = pal(), N = S.nL, top = 26, bot = H - 30, nTop = 1.30, nBot = 1.00, hot = S.dT >= 0;
+  /* the indices, exaggerated: the same shape as the real air (largest change near the ground), but differences of 0.3 instead of 0.00002 */
+  function nAt(f){ /* f: 0 at the ground, 1 at the top */ var e = Math.exp(-f*3); return hot ? nTop - (nTop - nBot)*(e - Math.exp(-3))/(1 - Math.exp(-3)) : nBot + (nTop - nBot)*(e - Math.exp(-3))/(1 - Math.exp(-3)); }
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  var hL = (bot - top)/N;
+  for (var k=0; k<N; k++){ var f = 1 - (k + 0.5)/N, nk = nAt(f), y0 = top + k*hL, warm = (nTop - nk)/(nTop - nBot);
+    g.fillStyle = hot ? 'rgba(255,140,60,' + (0.08 + 0.5*warm).toFixed(3) + ')' : 'rgba(80,150,230,' + (0.08 + 0.5*(1 - warm)).toFixed(3) + ')'; g.fillRect(0, y0, W, hL);
+    seg(g, 0, y0, W, y0, 'rgba(0,0,0,0.15)', 1); if (hL > 13) Tx(g, 'n = ' + nk.toFixed(3), W - 6, y0 + hL/2, p.text, 'right', '10px Arial'); }
+  g.fillStyle = p.sand; g.fillRect(0, bot, W, H - bot); Tx(g, hot ? 'hot ground' : 'cold ground', 8, bot + 14, p.text, 'left', 'bold 11px Arial'); Tx(g, hot ? 'cooler air: higher index' : 'warmer air: lower index', 8, 12, p.text, 'left', 'bold 11px Arial');
+  /* the ray starts where the index is highest and heads toward lower index: from the top over hot ground, from the ground over cold ground.
+     Snell's law at each boundary; totally reflected where it can no longer get in; it stops at the ground or at the top. */
+  var th0 = S.aL*Math.PI/180, k = hot ? 0 : N - 1, dir = hot ? 1 : -1, x = 30, y = hot ? top : bot, C = nAt(1 - (k + 0.5)/N)*Math.sin(th0), pts = [[x, y]], turned = -1, guard = 0, angs = [];
+  while (guard++ < 400){ var nk = nAt(1 - (k + 0.5)/N), sk = C/nk;
+    if (sk >= 1){ if (turned >= 0) break; dir = -dir; turned = k; k += dir; if (k < 0 || k >= N) break; continue; }   /* total internal reflection */
+    var tk = Math.asin(sk); x += hL*Math.tan(tk); y += dir*hL; pts.push([x, y]); angs.push([x, y, tk, nk]);
+    if (x > W - 70) break; k += dir; if (k < 0 || k >= N) break; }   /* at the top it leaves; at the ground it would be absorbed */
+  g.strokeStyle = p.ray; g.lineWidth = 2.4; g.beginPath(); pts.forEach(function(q, i){ if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke();
+  angs.forEach(function(a, i){ if (i % Math.max(1, Math.round(N/5)) || a[1] <= top + 1 || a[1] >= bot - 1) return; seg(g, a[0], a[1] - 14, a[0], a[1] + 14, p.text, 1, [2, 2]); Tx(g, (a[2]*180/Math.PI).toFixed(0) + '\u00B0', a[0] + 4, a[1] - 9, p.app, 'left', 'bold 10px Arial'); });
+  if (S.smooth){ /* the same air without steps: toward the turning point, with steps that shrink where the ray is nearly level, then the mirror image back */
+    var fH = hot ? 1 : 0, sgn = hot ? -1 : 1, xx = 30, dpts = [[30, hot ? top : bot]], f = fH;
+    for (var i=0; i<20000; i++){ var sn = C/nAt(f); if (sn >= 0.999999) break; var tn = Math.tan(Math.asin(sn)), dz = Math.min(0.002, 1.5/((bot - top)*tn)), sn2 = C/nAt(f + sgn*dz);
+      if (sn2 >= 1) break; xx += dz*(bot - top)*tn; f += sgn*dz; if (f <= 0 || f >= 1) break; dpts.push([xx, top + (1 - f)*(bot - top)]); if (xx > W) break; }
+    var xt = dpts[dpts.length - 1][0], all = dpts.slice(); for (var j=dpts.length - 2; j>=0; j--) all.push([2*xt - dpts[j][0], dpts[j][1]]);
+    g.strokeStyle = p.app; g.lineWidth = 1.6; g.setLineDash([5, 4]); g.beginPath(); var st = false; all.forEach(function(q){ if (q[0] > W - 70){ st = false; return; } if (st) g.lineTo(q[0], q[1]); else { g.moveTo(q[0], q[1]); st = true; } }); g.stroke(); g.setLineDash([]); }
+  Tx(g, 'n sin \u03B8 = ' + C.toFixed(4) + ' at every boundary' + (turned >= 0 ? ' \u00B7 totally reflected where n sin \u03B8 would exceed n' : ''), W/2, H - 10, p.text, 'center', 'bold 11px Arial');
+  Tx(g, 'indices exaggerated: in real air they differ by about 2 parts in 100 000', W - 6, 12, p.text, 'right', 'italic 10px Arial');
+}
+/* ══════════ the side view ══════════ */
+function drawSide(I){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), O = OBJ[S.obj], Xo = 70, Xe = W - 60, Ymax = Math.max(O.H, S.he/0.92)*1.55, Y0 = Math.round(H*0.62), ky = (Y0 - 20)/Ymax;
+  function X(s){ return Xe - s*(Xe - Xo)/S.D; } function Y(y){ return Y0 - y*ky; }
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  if (Math.abs(S.dT) > 0.01) for (var yy=0; yy<Y0; yy+=2){ var hgt = (Y0 - yy)/ky, k = Math.exp(-hgt/S.h); g.fillStyle = (S.dT > 0 ? p.hot : p.cold) + (0.55*k).toFixed(3) + ')'; g.fillRect(0, yy, W, 2); }
+  g.fillStyle = S.ground === 'sea' ? '#5c7f99' : (S.ground === 'road' ? '#8a8a8e' : p.sand); g.globalAlpha = 0.55; g.fillRect(0, Y0, W, H - Y0); g.globalAlpha = 1; seg(g, 0, Y0, W, Y0, th.hc ? '#fff' : '#6b5a2a', 2);
+  Tx(g, S.dT > 0 ? 'the hot air near the ground (shaded): low index' : (S.dT < 0 ? 'the cold air near the ground (shaded): high index' : 'air of one temperature'), (Xo + Xe)/2, Y0 + 36, p.text, 'center', 'bold 12px Arial');   /* below the ground line, clear of the rays */
+  var oh = O.H*ky, ow = Math.min(80, oh*O.w/O.h); if (S.obj !== 'nothing') g.drawImage(O.img, Xo - ow/2, Y0 - oh, ow, oh);
+  /* the observer: the clown, his eyes at the eye height */
+  if (CLOWN.img){ var ch = S.he/0.92*ky, cw = ch*CLOWN.w/CLOWN.h; g.drawImage(CLOWN.img, Xe - cw/2, Y0 - ch, cw, ch); }
+  var ex = Xe, ey = Y(S.he); g.fillStyle = p.app; g.beginPath(); g.arc(ex, ey, 3, 0, 2*Math.PI); g.fill(); Tx(g, 'eyes ' + f2(S.he, 2) + ' m', ex + 18, ey - 6, p.text, 'left', '11px Arial');
+  if (S.fan){ var r = phiRange(); for (var i=0; i<=16; i++){ var ph = r[0] + (r[1] - r[0])*i/16, t = trace(ph, S.D, true); g.strokeStyle = 'rgba(80,80,80,0.35)'; g.lineWidth = 1; g.beginPath(); t.pts.forEach(function(q, j){ if (j) g.lineTo(X(q[0]), Y(q[1])); else g.moveTo(X(q[0]), Y(q[1])); }); g.stroke(); } }
+  if (S.rays) I.list.forEach(function(im){ var t = trace(im.phi, S.D, true); g.strokeStyle = p.ray; g.lineWidth = 2; g.beginPath(); t.pts.forEach(function(q, j){ if (j) g.lineTo(X(q[0]), Y(q[1])); else g.moveTo(X(q[0]), Y(q[1])); }); g.stroke();
+    if (S.imgs){ var yApp = S.he + S.D*Math.tan(im.phi); seg(g, ex, ey, X(S.D), Y(yApp), p.app, 1.5, [6, 4]); } });
+  if (S.imgs){ ['up', 'inv'].forEach(function(kind){ var tops = I.list.filter(function(m){ return (kind === 'up') === m.upright && m.which === 'top'; }), lows = I.list.filter(function(m){ return (kind === 'up') === m.upright && m.which === 'low'; });
+      tops.forEach(function(tp, i){ var lw = lows[i]; if (!lw) return; var a = S.he + S.D*Math.tan(tp.phi), b0 = S.he + S.D*Math.tan(lw.phi), b = a + (b0 - a)*(0.97/0.62), yt = Y(a), yb = Y(b);
+        if (kind === 'up' && a < 0.97*O.H*1.1) return;
+        var hh = Math.abs(yb - yt), ww = Math.min(80, hh*O.w/O.h); g.save(); g.globalAlpha = 0.45; g.translate(Xo, (yt + yb)/2); if (yt > yb) g.scale(1, -1); g.drawImage(O.img, -ww/2, -hh/2, ww, hh); g.restore();
+        Tx(g, kind === 'inv' ? 'seen here: inverted' : 'seen here: raised', Xo + 46, (yt + yb)/2, p.app, 'left', 'bold 12px Arial'); }); }); }
+  Tx(g, 'distance ' + f2(S.D, 0) + ' m', (Xo + Xe)/2, Y0 + 16, p.text, 'center', '12px Arial');
+  el('mgHintS').textContent = 'heights exaggerated about ' + Math.round(ky/((Xe - Xo)/S.D)) + ' times';
+}
+/* ══════════ the graphs ══════════ */
+function niceStep(range){ var r = range/4, e = Math.pow(10, Math.floor(Math.log(r)/Math.LN10)), f = r/e; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10)*e; }
+function drawTn(){
+  /* only the air near the ground, where the temperature changes; both quantities with labelled axes */
+  var g = CT.g, W = CT.W, H = CT.H, p = pal(), X0 = 52, X1 = W - 16, Y0 = H - 46, Y1 = 40, Ymax = Math.min(Math.max(4*S.h, 1.4*S.he), 60);
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  var t0 = Math.min(T(0), T(Ymax)) - 273.15, t1 = Math.max(T(0), T(Ymax)) - 273.15; if (t1 - t0 < 0.5){ t0 -= 1; t1 += 1; }
+  var m0 = (Math.min(n(0), n(Ymax)) - 1)*1e6, m1 = (Math.max(n(0), n(Ymax)) - 1)*1e6; if (m1 - m0 < 0.2){ m0 -= 0.5; m1 += 0.5; }
+  function Y(y){ return Y0 - y/Ymax*(Y0 - Y1); } function XT(t){ return X0 + (t - t0)/(t1 - t0)*(X1 - X0); } function XN(v){ return X0 + (v - m0)/(m1 - m0)*(X1 - X0); }
+  var hs = niceStep(Ymax); for (var yy=0; yy<=Ymax + 1e-9; yy+=hs){ seg(g, X0, Y(yy), X1, Y(yy), p.grid, 1); Tx(g, yy < 1 ? f2(yy, 1) : f2(yy, 0), X0 - 5, Y(yy), p.text, 'right', '10px Arial'); }
+  seg(g, X0, Y0, X1, Y0, p.T, 1.5); var ts = niceStep(t1 - t0); for (var tv=Math.ceil(t0/ts)*ts; tv<=t1 + 1e-9; tv+=ts){ seg(g, XT(tv), Y0, XT(tv), Y0 + 4, p.T, 1); Tx(g, f2(tv, ts < 1 ? 1 : 0), XT(tv), Y0 + 12, p.T, 'center', '10px Arial'); }
+  Tx(g, 'temperature (\u00B0C)', (X0 + X1)/2, H - 10, p.T, 'center', 'bold 11px Arial');
+  seg(g, X0, Y1, X1, Y1, p.N, 1.5); var ns = niceStep(m1 - m0); for (var nv=Math.ceil(m0/ns)*ns; nv<=m1 + 1e-9; nv+=ns){ seg(g, XN(nv), Y1, XN(nv), Y1 - 4, p.N, 1); Tx(g, f2(nv, ns < 1 ? 1 : 0), XN(nv), Y1 - 11, p.N, 'center', '10px Arial'); }
+  Tx(g, 'index: (n \u2212 1) in millionths', (X0 + X1)/2, 9, p.N, 'center', 'bold 11px Arial');
+  g.strokeStyle = p.T; g.lineWidth = 2.4; g.beginPath(); for (var i=0; i<=120; i++){ var y = Ymax*i/120, x = XT(T(y) - 273.15); if (i) g.lineTo(x, Y(y)); else g.moveTo(x, Y(y)); } g.stroke();
+  g.strokeStyle = p.N; g.lineWidth = 2.2; g.setLineDash([6, 3]); g.beginPath(); for (var j=0; j<=120; j++){ var y2 = Ymax*j/120, x2 = XN((n(y2) - 1)*1e6); if (j) g.lineTo(x2, Y(y2)); else g.moveTo(x2, Y(y2)); } g.stroke(); g.setLineDash([]);
+  if (S.he <= Ymax){ seg(g, X0, Y(S.he), X1, Y(S.he), p.text, 1, [2, 3]); Tx(g, 'eyes', X1 - 2, Y(S.he) - 7, p.text, 'right', '10px Arial'); }
+  var yl = Ymax*0.8, xt = XT(T(yl) - 273.15), xn = XN((n(yl) - 1)*1e6), mid = (X0 + X1)/2;   /* labelled high up, where the two curves are apart */
+  Tx(g, 'temperature', xt + (xt < mid ? 6 : -6), Y(yl), p.T, xt < mid ? 'left' : 'right', 'bold 11px Arial');
+  Tx(g, 'index', xn + (xn < mid ? 6 : -6), Y(yl) + (Math.abs(xt - xn) < 80 ? 14 : 0), p.N, xn < mid ? 'left' : 'right', 'bold 11px Arial');
+  g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'height above the ground (m)', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+}
+function drawMap(I){
+  var g = CM.g, W = CM.W, H = CM.H, p = pal(), Hm = mainH(), X0 = 50, X1 = W - 14, Y0 = H - 34, Y1 = 14, r = phiRange(), ymax = Math.max(Hm, S.he)*2.2;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  function X(ph){ return X0 + (ph - r[0])/(r[1] - r[0])*(X1 - X0); } function Y(y){ return Y0 - y/ymax*(Y0 - Y1); }
+  g.fillStyle = 'rgba(194,24,91,0.12)'; g.fillRect(X0, Y(Hm), X1 - X0, Y(0) - Y(Hm)); Tx(g, 'the ' + S.obj, X1 - 4, Y(Hm) + 10, p.app, 'right', '10px Arial');
+  for (var k=0; k<=4; k++){ var yy = ymax*k/4; seg(g, X0, Y(yy), X1, Y(yy), p.grid, 1); Tx(g, f2(yy, 1), X0 - 4, Y(yy), p.text, 'right', '10px Arial'); }
+  var span = arcmin(r[1] - r[0]), st = span > 60 ? 10 : 5; for (var a=-60; a<=60; a+=st){ var ph = a/60*Math.PI/180; if (ph < r[0] || ph > r[1]) continue; seg(g, X(ph), Y0, X(ph), Y1, p.grid, 1); Tx(g, a + '\u2032', X(ph), Y0 + 10, p.text, 'center', '10px Arial'); }
+  g.strokeStyle = p.ray; g.lineWidth = 2; g.beginPath(); var on = false; I.samples.forEach(function(q){ if (q[1] < 0){ on = false; return; } var yv = Math.min(q[1], ymax); if (on) g.lineTo(X(q[0]), Y(yv)); else { g.moveTo(X(q[0]), Y(yv)); on = true; } }); g.stroke();
+  Tx(g, 'viewing angle above the horizontal (arc minutes)', (X0 + X1)/2, H - 8, p.text, 'center', '11px Arial');
+  g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'height reached at the ' + S.obj + ' (m)', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+}
+/* ══════════ readout ══════════ */
+function rrow(k, v){ return '<div class="mg_rrow"><span class="mg_rkey">' + k + '</span><span class="mg_rval">' + v + '</span></div>'; }
+function info(I){ var inv = I.list.filter(function(m){ return !m.upright; }), raised = I.list.filter(function(m){ return m.upright && m.which === 'top' && S.he + S.D*Math.tan(m.phi) > 0.97*mainH()*1.1; }).length > 0; return { inv:inv.length > 0, raised:raised }; }
+function readout(I){
+  var g0 = dn(0), R = Math.abs(g0) > 1e-12 ? n(0)/Math.abs(g0) : Infinity, F = info(I), tops = I.list.filter(function(m){ return m.which === 'top'; });
+  var r = rrow('air above', f2(TA - 273.15, 1) + ' \u00B0C') + rrow('at the ground', f2(TA + S.dT - 273.15, 1) + ' \u00B0C') + rrow('index change, ground to air', ((n(30*S.h) - n(0))*1e6).toFixed(2) + ' \u00D7 10\u207B\u2076')
+    + rrow('radius of a grazing ray', isFinite(R) ? f2(R/1000, 1) + ' km' : 'straight') + rrow('images of the ' + S.obj + '\u2019s top', tops.length ? tops.map(function(m){ return (m.upright ? 'upright' : 'inverted') + ' at ' + f2(arcmin(m.phi), 1) + '\u2032'; }).join(', ') : 'none (hidden)')
+    + rrow('the "water" on the ground', lastMirage && S.dT > 0 ? 'from ' + f2(arcmin(0.4*S.fov*Math.PI/180 - lastMirage.y0*S.fov*Math.PI/180/CE.H), 1) + '\u2032 to ' + f2(arcmin(0.4*S.fov*Math.PI/180 - lastMirage.y1*S.fov*Math.PI/180/CE.H), 1) + '\u2032' : 'none');
+  var e = 'Along each ray <b>n(y) cos \u03B1 = constant</b>: rays bend toward the higher index (the colder air). A grazing ray curves with R = n/(dn/dy) = ' + (isFinite(R) ? '<b>' + f2(R/1000, 1) + ' km</b>; over ' + f2(S.D, 0) + ' m it bends by about D\u00B2/(2R) = <b>' + f2(S.D*S.D/(2*R), 2) + ' m</b>' : 'infinite: no bending') + '.'
+    + (F.inv ? '<br>Two viewing angles reach the same point of the ' + S.obj + ' (the graph turns back): it is seen twice, once <b>upside down</b>, in the "water".' : '') + (F.raised ? '<br>Rays bend down, so the ' + S.obj + ' is seen <b>higher</b> than it is.' : '');
+  el('mgRead').innerHTML = r; el('mgEqs').innerHTML = e; el('mgEqs').style.display = S.eqs ? '' : 'none';
+}
+function summary(I){ var F = info(I);
+  if (S.obj === 'nothing') return S.dT > 0 ? 'Over the hot, flat ground the clown sees a shimmering lake at the foot of the mountains. There is no water: it is light from the sky, and from the lower slopes, bent up by the hot air near the ground.' : 'Nothing but the ground and the sky.';
+  if (Math.abs(S.dT) < 0.05) return 'The air has the same temperature at every height: light travels in straight lines. The road looks dry, and the ' + S.obj + ' is seen once, where it is.';
+  return (S.dT > 0 ? 'The ground is ' + f2(S.dT, 0) + ' degrees hotter than the air: the index increases upward, and rays bend up. Looking at the ground far ahead, the clown sees light from the sky, which looks like water. ' : 'The ground is ' + f2(-S.dT, 0) + ' degrees colder than the air: the index decreases upward, and rays bend down. ')
+    + (F.inv ? 'He sees the ' + S.obj + ' twice: upright, and upside down in the "water".' : '') + (F.raised ? 'The ' + S.obj + ' looks raised: a superior mirage.' : '') + (!F.inv && !F.raised ? 'At this distance the ' + S.obj + ' is not mirrored: move it farther, or lower the eyes.' : '');
+}
+function narrate(m){ if (!th.nr) return; el('mgNar').textContent = m; }
+var nT = null; function later(){ clearTimeout(nT); nT = setTimeout(function(){ narrate(summary(images())); }, 450); }
+function draw(){ var I = images(); drawEye(); drawSide(I); drawLayers(); drawTn(); drawMap(I); readout(I); return I; }
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="mg_ctrl"><div class="mg_ctrlhdr"><label class="mg_ctrlname" for="' + id + '">' + label + '</label><span class="mg_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function buildCtl(){
+  el('mgCtl').innerHTML = row('mgDT', 'ground minus air temperature \u0394T', -20, 40, 0.5, S.dT, f2(S.dT, 1) + ' K') + row('mgH', 'thickness of the warm (or cold) layer', 0.1, 10, 0.05, S.h, f2(S.h, 2) + ' m')
+    + row('mgD', 'distance to the ' + S.obj, 50, 5000, 10, S.D, f2(S.D, 0) + ' m') + row('mgHE', 'height of the clown\u2019s eyes', 0.3, 5, 0.05, S.he, f2(S.he, 2) + ' m') + row('mgFOV', 'zoom: the view\u2019s height', 0.4, 8, 0.1, S.fov, f2(S.fov, 1) + '\u00B0');
+  el('mgBtns').innerHTML = (S.ground === 'road' ? '<label><input type="checkbox" id="mgSh"' + (S.shoulders ? ' checked' : '') + '> shoulders cooler than the asphalt</label>' : '') + '<label><input type="checkbox" id="mgRays"' + (S.rays ? ' checked' : '') + '> light paths</label><label><input type="checkbox" id="mgImgs"' + (S.imgs ? ' checked' : '') + '> where the eye sees them</label><label><input type="checkbox" id="mgFan"' + (S.fan ? ' checked' : '') + '> a fan of rays from the eye</label><label><input type="checkbox" id="mgEq"' + (S.eqs ? ' checked' : '') + '> math</label><button type="button" class="mg_btn" id="mgDsc">Describe</button>';
+  function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+  [['mgDT', 'dT', 1, ' K', true], ['mgH', 'h', 2, ' m', true], ['mgD', 'D', 0, ' m', true], ['mgHE', 'he', 2, ' m', true], ['mgFOV', 'fov', 1, '\u00B0', false]].forEach(function(q){ on(q[0], 'input', function(){ S[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(S[q[1]], q[2]) + q[3]; if (q[4]){ S.pre = 'own'; el('mgPre').value = 'own'; } schedule(); later(); }); });
+  on('mgSh', 'change', function(){ S.shoulders = this.checked; schedule(); narrate(S.shoulders ? 'Only the asphalt is hot: the "water" lies on the road, not on the cooler ground beside it.' : 'The ground beside the road is now as hot as the asphalt: the "water" spreads across it too.'); });
+  on('mgRays', 'change', function(){ S.rays = this.checked; schedule(); }); on('mgImgs', 'change', function(){ S.imgs = this.checked; schedule(); }); on('mgFan', 'change', function(){ S.fan = this.checked; schedule(); }); on('mgEq', 'change', function(){ S.eqs = this.checked; schedule(); });
+  on('mgDsc', 'click', function(){ narrate('At the top, what the clown sees: the ' + (S.ground === 'road' ? 'road receding to the horizon, with poles along it' : (S.ground === 'sea' ? 'sea' : 'desert')) + ', the ' + S.obj + ', and the mirage. Then a side view, heights exaggerated: the clown, the air shaded by temperature, the curved light paths and, dashed, the straight lines along which he sees each image. Below, the temperature and index near the ground, and the height each viewing angle reaches at the ' + S.obj + '. ' + summary(images())); });
+}
+function preset(k){ if (!PRE[k]) return; var P = PRE[k]; S.pre = k; for (var key in P) S[key] = P[key]; if (P.hz === undefined) S.hz = 0.4; el('mgObj').value = S.obj; buildCtl(); var I = draw(); narrate(summary(I)); }
+el('mgPre').addEventListener('change', function(){ preset(this.value); });
+el('mgNL').addEventListener('input', function(){ S.nL = +this.value; el('mgNLv').textContent = this.value; drawLayers(); });
+el('mgAL').addEventListener('input', function(){ S.aL = +this.value; el('mgALv').textContent = this.value + '\u00B0'; drawLayers(); });
+el('mgSm').addEventListener('change', function(){ S.smooth = this.checked; drawLayers(); });
+el('mgObj').addEventListener('change', function(){ S.obj = this.value; buildCtl(); schedule(); later(); });
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('mg_hc', th.hc); ROOT.classList.toggle('mg_lm', th.lm);
+  [['hc', 'mgBtnHC'], ['lm', 'mgBtnLM'], ['cb', 'mgBtnCB'], ['nr', 'mgBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('mg_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('mgBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('mgNar').style.display = th.nr ? '' : 'none'; draw(); }
+function toggleDesc(){ var b = el('mgDescBtn'), d = el('mgDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+buildCtl(); var I0 = draw(); narrate('Ready. ' + summary(I0));
+return { theme:theme, toggleDesc:toggleDesc, preset:preset, set:function(k, v){ S[k] = v; buildCtl(); draw(); },
+  _images:function(){ return images().list; }, _trace:function(ph, s){ var t = trace(ph, s, false); return { y:t.y, p:t.p, ground:t.ground, s:t.s }; }, _n:n, _state:function(){ return JSON.parse(JSON.stringify(S)); }, _mirage:function(){ return lastMirage; } };
+})();
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<meta charset="UTF-8">
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations - Projectile Motion - Acceleration Vector</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,motion, kinematics, projectile,2d, acceleration, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<!-- ═══════════════════════════════════════════════════════
+SIM -- Kinematics: Position & Velocity vs. Time (Glider Track)
+A11y: High Contrast | Color-Blind | Narration | Keyboard-draggable (MOM-ready)
+Student drags a glider along a frictionless track (or plays a scripted
+example) while position-time and velocity-time graphs are plotted live.
+═══════════════════════════════════════════════════════ -->
+<div id="km_root">
+<div class="km_tbar"><h3>Motion Graphs -- Position &amp; Velocity vs. Time (Glider Track)</h3></div>
+<!-- Animation canvas -->
+<div class="km_mcontent">
+<canvas id="kmCanvas" width="680" height="190" tabindex="0" role="img" aria-label="Glider on a horizontal track that can be dragged with the mouse or arrow keys" aria-describedby="kmCanvasDesc"></canvas>
+<p id="kmCanvasDesc" class="km_sronly">A glider cart sits on a frictionless horizontal track. Drag the cart, or play a scripted example, to generate position and velocity graphs.</p>
+</div>
+<!-- Mode select -->
+<div class="km_bbar">
+<span class="km_taglbl">Mode:</span>
+<input type="button" id="btnEx1"  value="Example 1" onclick="kmSim.selectExample(1)" style=visibility:hidden>
+<input type="button" id="btnEx2"  value="Example 2" onclick="kmSim.selectExample(2)">
+<input type="button" id="btnDrag" value="Free Drag / Practice" onclick="kmSim.selectFreeDrag()">
+</div>
+<!-- Example playback controls -->
+<div class="km_bbar" id="exampleControls" style="display:none;">
+<input type="button" id="btnPlay"  value="&#9654; Play"  onclick="kmSim.playSim()">
+<input type="button" id="btnPause" value="&#9208; Pause" onclick="kmSim.pauseSim()">
+<input type="button" id="btnStep"  value="&#9197; Step"  onclick="kmSim.stepSim()">
+<input type="button" id="btnResetEx" value="&#8630; Reset" onclick="kmSim.resetRun()">
+<span class="km_taglbl" style="margin-left:10px;">Speed:</span>
+<input type="range" id="speedSlider" min="25" max="300" step="25" value="100" style="width:110px;" onchange="kmSim.setSpeed(this.value)">
+<span id="speedVal" class="km_pval">1.00&times;</span>
+</div>
+<!-- Free-drag controls -->
+<div class="km_bbar" id="dragControls" style="display:none;">
+<input type="button" id="btnRecStart" value="&#9679; Start Recording" onclick="kmSim.startRecording()">
+<input type="button" id="btnRecStop"  value="&#9632; Stop Recording"  onclick="kmSim.stopRecording()">
+<input type="button" id="btnResetDrag" value="&#8630; Reset" onclick="kmSim.resetRun()">
+<span class="km_taglbl" style="margin-left:10px;">Compare to:</span>
+<select id="selCompare" onchange="kmSim.setCompare(this.value)" style="font-size:0.8rem;">
+<option value="0">None</option>
+<option value="1">Example 1 (target)</option>
+<option value="2">Example 2 (target)</option>
+</select>
+</div>
+<!-- A11y -->
+<div class="km_bbar">
+<input type="button" id="btnHC"   value="High Contrast: OFF" onclick="kmSim.toggleHC()">
+<input type="button" id="btnCB"   value="Color-Blind: OFF"   onclick="kmSim.toggleCB()">
+<input type="button" id="btnNarr" value="Narration: ON"      onclick="kmSim.toggleNarr()">
+<input type="button" value="Clear graphs" onclick="kmSim.clearGraphs()"
+style="background:#ffe0a0;border-color:#cc9900;">
+</div>
+<!-- Prompt + quick info -->
+<div class="km_fbar">
+<div class="km_prompt" id="promptBox" role="note">
+<div class="km_boxhd">Prompt</div>
+<p id="promptText" class="km_prompttext">Choose a mode above: play an example to see its correct graph, or choose Free Drag to build your own by dragging the cart.</p>
+</div>
+<div class="km_info" role="note">
+<strong>Reading the graphs:</strong><br>
+Flat line on x-t &rarr; at rest (v = 0)<br>
+Sloped line on x-t &rarr; constant v<br>
+Steeper slope &rarr; faster speed<br>
+Slope on v-t &rarr; acceleration<br>
+Curve above 0 &rarr; moving right<br>
+Curve below 0 &rarr; moving left
+</div>
+</div>
+<!-- Live readouts + Narration -->
+<div class="km_fbar">
+<div class="km_readout" role="region" aria-live="polite" aria-atomic="false">
+<div class="km_boxhd">Live Readings</div>
+<div class="km_rrow"><span>Position x:</span> <span id="r_x" class="km_rv">0.0 cm</span></div>
+<div class="km_rrow"><span>Velocity v:</span> <span id="r_v" class="km_rv">0.0 cm/s</span></div>
+<div class="km_rrow"><span>Time t:</span>     <span id="r_t" class="km_rv">0.0 s</span></div>
+<div class="km_rrow"><span>Status:</span>     <span id="r_state" class="km_badge" role="status">Ready</span></div>
+</div>
+<div id="narrationBox" class="km_narr" role="region" aria-live="polite" aria-atomic="true">
+<div class="km_boxhd km_narrboxhd">What's happening</div>
+<p id="narration" class="km_narrtext">Select a mode to begin.</p>
+</div>
+</div>
+<!-- Graphs -->
+<div class="km_fbar" style="flex-direction:column;gap:5px;">
+<div class="km_boxhd" style="width:100%;border-bottom:1px solid #888;padding-bottom:3px;">Position-Time Graph</div>
+<canvas id="kmPosCanvas" width="660" height="170" role="img" aria-label="Position versus time graph" aria-describedby="posDesc"></canvas>
+<p id="posDesc" class="km_sronly">Plot of the cart's position in centimeters versus time in seconds.</p>
+<div class="km_boxhd" style="width:100%;border-bottom:1px solid #888;padding-bottom:3px;margin-top:6px;">Velocity-Time Graph</div>
+<canvas id="kmVelCanvas" width="660" height="170" role="img" aria-label="Velocity versus time graph" aria-describedby="velDesc"></canvas>
+<p id="velDesc" class="km_sronly">Plot of the cart's velocity in centimeters per second versus time in seconds.</p>
+<div id="kmStatsBox" class="km_stats_box" style="display:none;" role="region" aria-live="polite">
+<div id="kmStatsTitle" class="km_stats_title">Motion Summary</div>
+<div id="kmStatsContent" class="km_stats_content"></div>
+</div>
+</div>
+<div id="km_srAnnounce" class="km_sronly" aria-live="assertive" aria-atomic="true"></div>
+<!-- ══════════ STYLES ══════════ -->
+<style>
+#km_root * { margin:0; box-sizing:border-box; }
+#km_root { width:683px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#f4f4f4; }
+.km_tbar { width:683px; height:48px; background:#f90; display:flex; align-items:center; justify-content:center; }
+.km_tbar h3 { font-size:1rem; color:#222; }
+.km_mcontent { width:683px; background:#fff; }
+#kmCanvas { display:block; border-bottom:2px solid #888; cursor:grab; }
+#kmCanvas:active { cursor:grabbing; }
+#kmCanvas:focus { outline:3px solid #3399ff; outline-offset:-3px; }
+.km_bbar { width:683px; min-height:44px; background:#df9; padding:7px 8px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center; }
+.km_bbar input[type=button] { font-size:0.78rem; padding:4px 10px; border:1px solid #888; border-radius:3px; cursor:pointer; font-weight:bold; background:#d4d4d4; color:#111; }
+.km_bbar input#btnPlay      { background:#8bc4f0; border-color:#5599cc; }
+.km_bbar input#btnRecStart  { background:#f0b8b8; border-color:#cc5555; }
+.km_bbar input.km_active    { background:#333 !important; color:#fff !important; border-color:#111 !important; }
+.km_taglbl { font-size:0.78rem; font-weight:bold; color:#333; }
+.km_pval   { font-size:0.8rem; font-weight:bold; color:#003399; min-width:44px; }
+.km_fbar { width:683px; min-height:60px; background:#fec; padding:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:flex-start; }
+.km_prompt  { background:#eef9ee; border:2px solid #559955; border-radius:4px; padding:9px 11px; flex:2; min-width:220px; }
+.km_readout { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:1; min-width:130px; }
+.km_narr    { background:#eef4ff; border:2px solid #6699cc; border-radius:4px; padding:9px 11px; flex:2; min-width:150px; }
+.km_info    { background:#fffbe6; border:1px solid #ccaa00; border-radius:4px; padding:9px 11px; font-size:0.77rem; color:#555; line-height:1.55; flex:1; min-width:150px; }
+.km_boxhd       { font-size:0.85rem; font-weight:bold; border-bottom:1px solid #888; padding-bottom:3px; margin-bottom:7px; }
+.km_narrboxhd   { border-bottom-color:#6699cc; color:#112244; }
+.km_prompttext  { font-size:0.8rem; color:#114411; line-height:1.5; margin:0; }
+.km_rrow  { display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.82rem; }
+.km_rv    { font-weight:bold; color:#cc2200; }
+.km_badge { font-weight:bold; color:#005500; background:#ccffcc; border-radius:3px; padding:0 5px; }
+.km_narrtext { font-size:0.79rem; color:#112244; line-height:1.55; margin:0; }
+.km_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+#kmPosCanvas, #kmVelCanvas { display:block; border:1px solid #aaa; background:#fff; }
+.km_stats_box { background:#fff; border:1px solid #aaa; border-radius:3px; padding:8px 12px; font-size:0.78rem; line-height:1.7; width:100%; }
+.km_stats_title { font-weight:bold; font-size:0.82rem; margin-bottom:4px; border-bottom:1px solid #ccc; padding-bottom:3px; }
+.km_stats_content { font-family:'Courier New',monospace; font-size:0.77rem; }
+/* HC overrides */
+body.km-hc-mode { background:#111; }
+body.km-hc-mode #km_root { background:#111; }
+body.km-hc-mode #km_root .km_tbar  { background:#cc7700; }
+body.km-hc-mode #km_root .km_bbar  { background:#1a2a1a; }
+body.km-hc-mode #km_root .km_fbar  { background:#1a1a2a; }
+body.km-hc-mode #km_root .km_prompt   { background:#0a220a; border-color:#66cc66; }
+body.km-hc-mode #km_root .km_readout  { background:#111; border-color:#aaa; color:#eee; }
+body.km-hc-mode #km_root .km_narr  { background:#0a0a22; border-color:#6699ff; }
+body.km-hc-mode #km_root .km_info  { background:#111100; border-color:#aa8800; color:#ddd; }
+body.km-hc-mode #km_root .km_boxhd { color:#fff; border-bottom-color:#aaa; }
+body.km-hc-mode #km_root .km_rv    { color:#ff8888; }
+body.km-hc-mode #km_root .km_badge { background:#003300; color:#88ff88; }
+body.km-hc-mode #km_root .km_narrtext,
+body.km-hc-mode #km_root .km_prompttext { color:#aaccff; }
+body.km-hc-mode #km_root .km_taglbl,
+body.km-hc-mode #km_root .km_rrow  { color:#ddd; }
+body.km-hc-mode #kmCanvas, body.km-hc-mode #kmPosCanvas, body.km-hc-mode #kmVelCanvas { background:#111; border-color:#555; }
+body.km-hc-mode .km_stats_box { background:#111; border-color:#555; color:#eee; }
+body.km-hc-mode .km_stats_title { color:#fff; border-bottom-color:#555; }
+</style>
+<!-- ══════════ JAVASCRIPT ══════════ -->
+<script>
+var kmSim = (function(){
+/* ── Canvas refs ── */
+var sc=document.getElementById('kmCanvas'), ctx=sc.getContext('2d'); var CW=sc.width, CH=sc.height;
+var pc=document.getElementById('kmPosCanvas'), pctx=pc.getContext('2d'); var PW=pc.width, PH=pc.height;
+var vc=document.getElementById('kmVelCanvas'), vctx=vc.getContext('2d'); var VW=vc.width, VH=vc.height;
+var FP={l:55,r:15,t:14,b:34};
+/* ── Palettes ── */
+var PAL={
+def:{ trackBar:'#bbbbbb', trackEdge:'#666', wall:'#888', canvas:'#ffffff',
+ block1:'#6699cc', block2:'#224488', blockLbl:'#fff', grabEdge:'#ffaa00',
+ posCurve:'#0072b2', velCurve:'#d55e00', targetCurve:'#888888',
+ grid:'#e8e8e8', axis:'#333' },
+cb:{  trackBar:'#cccccc', trackEdge:'#555', wall:'#888', canvas:'#ffffff',
+block1:'#0072b2', block2:'#004f80', blockLbl:'#fff', grabEdge:'#f0e442',
+posCurve:'#0072b2', velCurve:'#d55e00', targetCurve:'#888888',
+grid:'#e0e0e0', axis:'#333' },
+hc:{  trackBar:'#555', trackEdge:'#000', wall:'#aaa', canvas:'#111',
+block1:'#222', block2:'#444', blockLbl:'#fff', grabEdge:'#ffcc66',
+posCurve:'#00ffcc', velCurve:'#ff8800', targetCurve:'#aaaaaa',
+grid:'#333', axis:'#eee' }
+};
+var pal=PAL.def, hcMode=false, cbMode=false, showNarration=true;
+/* ── Layout constants ── */
+var TRACK_Y=130, TRACK_THICK=10, ORIGIN_PX=45, PX_PER_CM=4.6, TRACK_MAX_CM=130;
+var BLOCK_W=56, BLOCK_H=32;
+/* ── Motion scripts (piecewise constant-acceleration segments) ── */
+/* seg: {t0,t1,x0,v0,a}  x(t)=x0+v0*dt+0.5*a*dt^2 , v(t)=v0+a*dt , dt=t-t0 */
+var SEG_EX1=[
+{t0:0,  t1:2,  x0:10, v0:0,  a:0},
+{t0:2,  t1:10, x0:10, v0:5,  a:0},
+{t0:10, t1:12, x0:50, v0:0,  a:0}
+];
+var DUR_EX1=12;
+var SEG_EX2=[
+{t0:0,  t1:2,  x0:100, v0:0,   a:0},
+{t0:2,  t1:6,  x0:100, v0:-10, a:0},
+{t0:6,  t1:8,  x0:60,  v0:-10, a:5},
+{t0:8,  t1:12, x0:50,  v0:10,  a:0},
+{t0:12, t1:14, x0:90,  v0:10,  a:-5}
+];
+var DUR_EX2=14;
+var EX_TEXT={
+1:"Example 1: The cart stays at rest at x = 10 cm for 2 s, then moves at a slow but constant speed toward the right for 8 s, then abruptly stops at t = 10 s.",
+2:"Example 2: The cart stays at rest at x = 100 cm for 2 s, then moves at a slow but constant speed toward the left for 4 s, then comes to a momentary stop over 2 s, then turns around and moves at a slow but constant speed toward the right for 4 s, then comes to a stop over 2 s."
+};
+var FREE_DRAG_TEXT="Free Drag / Practice: Click 'Start Recording', then click-and-drag the cart along the track (or press Tab to focus the track and use the Left/Right arrow keys) to create your own motion. Letting go leaves the cart at rest while time keeps running. Try to recreate one of the example prompts, then use 'Compare to' to check your graph against the correct answer.";
+function evalMotion(segs,t){
+var s=segs[segs.length-1];
+for(var i=0;i<segs.length;i++){ if(t>=segs[i].t0 && t<=segs[i].t1+1e-9){ s=segs[i]; break; } }
+var dt=Math.max(0, Math.min(t,s.t1)-s.t0);
+return { x:s.x0+s.v0*dt+0.5*s.a*dt*dt, v:s.v0+s.a*dt };
+}
+function evalMotionExt(segs,dur,t){
+if(t<=dur) return evalMotion(segs,t);
+var last=segs[segs.length-1];
+var dt=last.t1-last.t0;
+return { x:last.x0+last.v0*dt+0.5*last.a*dt*dt, v:0 };
+}
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+/* ── State ── */
+var mode='idle';           /* idle | example | freedrag */
+var currentExample=0, currentSegments=null, currentDuration=0;
+var running=false, recording=false, isDragging=false, animId=null, lastTS=null;
+var simSpeed=1.0, simTime=0, lastSampleT=-1;
+var xcm=20, vcm=0;
+var motionData=[];
+var compareTarget=0;
+/* ── SR / button helpers ── */
+var srTimer=null;
+function sr(msg){ var el=document.getElementById('km_srAnnounce'); if(!el)return;
+el.textContent=''; clearTimeout(srTimer); srTimer=setTimeout(function(){el.textContent=msg;},50); }
+function btnActive(id,on){ var b=document.getElementById(id); if(!b)return;
+if(on) b.className=(b.className+' km_active').replace(/\s+/g,' ').trim();
+else   b.className=b.className.replace(/\bkm_active\b/g,'').trim(); }
+/* ── A11y toggles ── */
+function toggleHC(){
+hcMode=!hcMode;
+if(hcMode){cbMode=false;btnActive('btnCB',false);document.getElementById('btnCB').value='Color-Blind: OFF';}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+document.body.className=hcMode?'km-hc-mode':document.body.className.replace(/\bkm-hc-mode\b/g,'').trim();
+btnActive('btnHC',hcMode);
+document.getElementById('btnHC').value=hcMode?'High Contrast: ON':'High Contrast: OFF';
+drawAll(); redrawGraphs();
+}
+function toggleCB(){
+cbMode=!cbMode;
+if(cbMode&&hcMode){hcMode=false;btnActive('btnHC',false);document.getElementById('btnHC').value='High Contrast: OFF';document.body.className=document.body.className.replace(/\bkm-hc-mode\b/g,'').trim();}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+btnActive('btnCB',cbMode);
+document.getElementById('btnCB').value=cbMode?'Color-Blind: ON':'Color-Blind: OFF';
+drawAll(); redrawGraphs();
+}
+function toggleNarr(){
+showNarration=!showNarration;
+var box=document.getElementById('narrationBox'); if(box) box.style.display=showNarration?'':'none';
+btnActive('btnNarr',showNarration);
+document.getElementById('btnNarr').value=showNarration?'Narration: ON':'Narration: OFF';
+}
+/* ── Speed / compare ── */
+function setSpeed(v){ simSpeed=parseFloat(v)/100; document.getElementById('speedVal').textContent=simSpeed.toFixed(2)+'\u00d7'; }
+function setCompare(v){ compareTarget=parseInt(v)||0; redrawGraphs(); }
+/* ── Mode switching ── */
+function updateControlPanels(){
+document.getElementById('exampleControls').style.display = (mode==='example') ? '' : 'none';
+document.getElementById('dragControls').style.display    = (mode==='freedrag') ? '' : 'none';
+btnActive('btnEx1', mode==='example' && currentExample===1);
+btnActive('btnEx2', mode==='example' && currentExample===2);
+btnActive('btnDrag', mode==='freedrag');
+}
+function updatePromptBox(){
+var el=document.getElementById('promptText'); if(!el) return;
+if(mode==='example') el.textContent=EX_TEXT[currentExample];
+else if(mode==='freedrag') el.textContent=FREE_DRAG_TEXT;
+else el.textContent="Choose a mode above: play an example to see its correct graph, or choose Free Drag to build your own by dragging the cart.";
+}
+function selectExample(n){
+stopLoop();
+mode='example'; currentExample=n;
+currentSegments = (n===1)?SEG_EX1:SEG_EX2;
+currentDuration = (n===1)?DUR_EX1:DUR_EX2;
+updateControlPanels(); updatePromptBox();
+resetRun();
+sr('Example '+n+' selected. Press Play to run it.');
+}
+function selectFreeDrag(){
+stopLoop();
+mode='freedrag'; recording=false;
+updateControlPanels(); updatePromptBox();
+resetRun();
+sr('Free drag mode selected. Press Start Recording, then drag the cart.');
+}
+function stopLoop(){ running=false; if(animId){cancelAnimationFrame(animId); animId=null;} lastTS=null; }
+/* ── Reset current run ── */
+function resetRun(){
+stopLoop(); recording=false; isDragging=false;
+motionData=[]; simTime=0; lastSampleT=-1;
+if(mode==='example'){ var mv=evalMotion(currentSegments,0); xcm=mv.x; vcm=mv.v; }
+else { xcm=20; vcm=0; }
+drawAll(); updateReadouts(); updateNarration(); redrawGraphs();
+document.getElementById('r_state').textContent='Ready';
+sr('Reset.');
+}
+/* ── Recording (drag) ── */
+function startRecording(){
+if(mode!=='freedrag') return;
+motionData=[]; simTime=0; lastSampleT=-1; xcm=20; vcm=0;
+recording=true; running=true; lastTS=null;
+drawAll(); updateReadouts();
+animId=requestAnimationFrame(loop);
+sr('Recording started. Drag the cart, or use arrow keys.');
+}
+function stopRecording(){
+recording=false; isDragging=false; stopLoop();
+updateNarration(); redrawGraphs();
+sr('Recording stopped. '+motionData.length+' samples captured.');
+document.getElementById('r_state').textContent='Stopped';
+}
+/* ── Example playback ── */
+function playSim(){
+if(mode!=='example') return;
+if(simTime>=currentDuration) resetRun();
+running=true; lastTS=null;
+animId=requestAnimationFrame(loop);
+sr('Playing.');
+}
+function pauseSim(){
+if(!running) return;
+running=false; if(animId){cancelAnimationFrame(animId); animId=null;}
+updateNarration(); sr('Paused.');
+}
+function stepSim(){
+if(mode!=='example') return;
+pauseSim();
+simTime=Math.min(simTime+0.15*simSpeed, currentDuration);
+var mv=evalMotion(currentSegments, simTime); xcm=mv.x; vcm=mv.v;
+recordSample();
+drawAll(); updateReadouts(); redrawGraphs();
+}
+/* ── Main loop ── */
+function loop(ts){
+if(!running) return;
+if(lastTS===null) lastTS=ts;
+var realDt=(ts-lastTS)/1000; lastTS=ts;
+if(mode==='example'){
+simTime=Math.min(simTime+realDt*simSpeed, currentDuration);
+var mv=evalMotion(currentSegments, simTime); xcm=mv.x; vcm=mv.v;
+recordSample();
+drawAll(); updateReadouts(); redrawGraphs();
+if(simTime>=currentDuration){
+running=false; animId=null;
+document.getElementById('r_state').textContent='Done';
+updateNarration(); redrawGraphs();
+sr('Example finished.');
+return;
+}
+} else if(mode==='freedrag' && recording){
+simTime+=realDt;
+vcm=computeInstantVelocity();
+recordSample();
+drawAll(); updateReadouts(); redrawGraphs();
+}
+animId=requestAnimationFrame(loop);
+}
+function computeInstantVelocity(){
+if(motionData.length<1) return 0;
+var target=simTime-0.12, j=motionData.length-1;
+while(j>0 && motionData[j].t>target) j--;
+var p0=motionData[j];
+var dt=simTime-p0.t;
+if(dt<=0.02) return vcm;
+return (xcm-p0.x)/dt;
+}
+function recordSample(){
+if(simTime-lastSampleT<0.025) return;
+lastSampleT=simTime;
+motionData.push({t:parseFloat(simTime.toFixed(4)), x:parseFloat(xcm.toFixed(3)), v:parseFloat(vcm.toFixed(3))});
+}
+/* ── Drawing: main canvas ── */
+function drawAll(){
+ctx.clearRect(0,0,CW,CH);
+ctx.fillStyle=pal.canvas; ctx.fillRect(0,0,CW,CH);
+drawTrack();
+drawGlider();
+drawTimestamp();
+}
+function drawTrack(){
+var gr=ctx.createLinearGradient(0,TRACK_Y,0,TRACK_Y+TRACK_THICK);
+gr.addColorStop(0,pal.trackBar); gr.addColorStop(1,pal.trackEdge);
+ctx.fillStyle=gr; ctx.fillRect(ORIGIN_PX-8, TRACK_Y, TRACK_MAX_CM*PX_PER_CM+30, TRACK_THICK);
+ctx.strokeStyle=hcMode?'#fff':'#555'; ctx.lineWidth=1;
+ctx.strokeRect(ORIGIN_PX-8, TRACK_Y, TRACK_MAX_CM*PX_PER_CM+30, TRACK_THICK);
+/* left stop wall at x=0 */
+ctx.fillStyle=pal.wall;
+ctx.fillRect(ORIGIN_PX-8, TRACK_Y-14, 6, 14+TRACK_THICK);
+/* ruler ticks every 10 cm, labels every 20 cm */
+ctx.strokeStyle=hcMode?'#999':'#999'; ctx.fillStyle=pal.axis; ctx.font='8px Arial'; ctx.textAlign='center';
+for(var c=0;c<=TRACK_MAX_CM;c+=10){
+var px_=ORIGIN_PX+c*PX_PER_CM;
+var th = (c%20===0)?7:4;
+ctx.beginPath(); ctx.moveTo(px_,TRACK_Y+TRACK_THICK); ctx.lineTo(px_,TRACK_Y+TRACK_THICK+th); ctx.stroke();
+if(c%20===0) ctx.fillText(c, px_, TRACK_Y+TRACK_THICK+18);
+}
+ctx.textAlign='right'; ctx.fillText('x (cm)', ORIGIN_PX+TRACK_MAX_CM*PX_PER_CM+26, TRACK_Y+TRACK_THICK+18);
+ctx.textAlign='left'; ctx.fillStyle=hcMode?'#999':'#999'; ctx.font='italic 9px Arial';
+ctx.fillText('frictionless glider track', ORIGIN_PX, TRACK_Y-2);
+}
+function gliderCenterPx(){ return ORIGIN_PX + xcm*PX_PER_CM; }
+function drawGlider(){
+var cx=gliderCenterPx(), left=cx-BLOCK_W/2, top=TRACK_Y-BLOCK_H;
+/* two small riser feet (air-track glider look) */
+ctx.fillStyle=hcMode?'#666':'#999';
+ctx.fillRect(left+6, TRACK_Y-4, 8, 8);
+ctx.fillRect(left+BLOCK_W-14, TRACK_Y-4, 8, 8);
+/* body */
+if(!hcMode){
+var gr=ctx.createLinearGradient(left,top,left+BLOCK_W,top+BLOCK_H);
+gr.addColorStop(0,pal.block1); gr.addColorStop(1,pal.block2); ctx.fillStyle=gr;
+} else { ctx.fillStyle=pal.block1; }
+ctx.fillRect(left,top,BLOCK_W,BLOCK_H);
+ctx.strokeStyle=isDragging?pal.grabEdge:pal.block2; ctx.lineWidth=isDragging?3:1.5; ctx.strokeRect(left,top,BLOCK_W,BLOCK_H);
+ctx.fillStyle=pal.blockLbl; ctx.font='bold 10px Arial'; ctx.textAlign='center';
+ctx.fillText('cart', cx, top+BLOCK_H/2+4);
+}
+function drawTimestamp(){
+var bg=hcMode?'#333':'yellow', tc=hcMode?'#fff':'#000';
+ctx.fillStyle=bg; ctx.fillRect(CW-110,0,110,18);
+ctx.font='9pt Arial'; ctx.fillStyle=tc; ctx.textAlign='left';
+ctx.fillText('t = '+simTime.toFixed(2)+' s', CW-106,13);
+}
+/* ── Readouts / narration ── */
+function updateReadouts(){
+function set(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
+set('r_x', xcm.toFixed(1)+' cm');
+set('r_v', vcm.toFixed(1)+' cm/s');
+set('r_t', simTime.toFixed(2)+' s');
+var st = mode==='freedrag' ? (recording ? (isDragging?'Dragging':'Recording') : (motionData.length?'Stopped':'Ready'))
+: (running ? 'Playing' : (simTime>=currentDuration && currentDuration>0 ? 'Done' : 'Ready'));
+set('r_state', st);
+if(showNarration) updateNarration();
+}
+function updateNarration(){
+var el=document.getElementById('narration'); if(!el) return;
+var txt='';
+if(mode==='idle') txt='Select Example 1, Example 2, or Free Drag to begin.';
+else if(mode==='example'){
+if(!running && simTime<=0.001) txt='Ready to play Example '+currentExample+'. Press Play.';
+else if(running) txt='Playing Example '+currentExample+' -- watch the graphs draw as the cart moves.';
+else if(simTime>=currentDuration) txt='Example '+currentExample+' complete. Review the position and velocity graphs below.';
+else txt='Paused at t = '+simTime.toFixed(2)+' s.';
+} else if(mode==='freedrag'){
+if(!recording) txt=motionData.length? 'Recording stopped. Press Start Recording to try again, or Reset to clear.' : 'Press Start Recording, then drag the cart along the track to build your own motion.';
+else txt=isDragging? 'Recording -- dragging cart to x = '+xcm.toFixed(1)+' cm.' : 'Recording -- cart at rest. Drag it again to continue the graph.';
+}
+el.textContent=txt;
+}
+/* ── Graph helpers ── */
+function computeTimeRange(){
+var hi;
+if(mode==='example') hi=currentDuration;
+else hi=Math.max(simTime, 2);
+return {lo:0, hi:hi+0.4};
+}
+function niceRange(vals, padFrac){
+if(vals.length===0) return {lo:-1,hi:1};
+var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+if(mn===mx){ mn-=1; mx+=1; }
+var pad=(mx-mn)*padFrac;
+return {lo:mn-pad, hi:mx+pad};
+}
+function clearGraphs(){
+motionData=[]; redrawGraphs(); sr('Graphs cleared.');
+}
+function redrawGraphs(){
+var tRange=computeTimeRange();
+drawMotionGraph(pctx,PW,PH,'x',pal.posCurve,'Position (cm)',tRange);
+drawMotionGraph(vctx,VW,VH,'v',pal.velCurve,'Velocity (cm/s)',tRange);
+updateStats();
+}
+function drawMotionGraph(ctx2,W,H,key,color,yLabel,tRange){
+ctx2.clearRect(0,0,W,H);
+ctx2.fillStyle=hcMode?'#111':'#fff'; ctx2.fillRect(0,0,W,H);
+var pW=W-FP.l-FP.r, pH=H-FP.t-FP.b;
+var series=motionData.map(function(p){return {t:p.t, v:p[key]};});
+var vals=series.map(function(p){return p.v;});
+var segs=compareTarget===1?SEG_EX1:(compareTarget===2?SEG_EX2:null);
+var dur=compareTarget===1?DUR_EX1:(compareTarget===2?DUR_EX2:0);
+if(segs){
+for(var tt=tRange.lo; tt<=tRange.hi; tt+=0.25){
+var mv=evalMotionExt(segs,dur,tt);
+vals.push(key==='x'?mv.x:mv.v);
+}
+}
+var yr=niceRange(vals, key==='x'?0.12:0.2);
+function px(t){ return FP.l+pW*(t-tRange.lo)/(tRange.hi-tRange.lo); }
+function py(v){ return FP.t+pH*(1-(v-yr.lo)/(yr.hi-yr.lo)); }
+var ac=pal.axis;
+/* grid */
+ctx2.strokeStyle=pal.grid; ctx2.lineWidth=0.8;
+var nGT=7, nGV=5;
+for(var gi=0;gi<=nGT;gi++){ var tv=tRange.lo+gi*(tRange.hi-tRange.lo)/nGT; ctx2.beginPath(); ctx2.moveTo(px(tv),FP.t); ctx2.lineTo(px(tv),FP.t+pH); ctx2.stroke(); }
+for(var gi2=0;gi2<=nGV;gi2++){ var fv=yr.lo+gi2*(yr.hi-yr.lo)/nGV; ctx2.beginPath(); ctx2.moveTo(FP.l,py(fv)); ctx2.lineTo(FP.l+pW,py(fv)); ctx2.stroke(); }
+/* axes */
+ctx2.strokeStyle=ac; ctx2.lineWidth=hcMode?2:1.5;
+ctx2.beginPath(); ctx2.moveTo(FP.l,FP.t); ctx2.lineTo(FP.l,FP.t+pH); ctx2.lineTo(FP.l+pW,FP.t+pH); ctx2.stroke();
+/* zero line */
+if(yr.lo<0 && yr.hi>0){
+ctx2.save(); ctx2.setLineDash([3,3]); ctx2.strokeStyle=hcMode?'#666':'#aaa'; ctx2.lineWidth=1;
+ctx2.beginPath(); ctx2.moveTo(FP.l,py(0)); ctx2.lineTo(FP.l+pW,py(0)); ctx2.stroke(); ctx2.restore();
+ctx2.fillStyle=ac; ctx2.font='9px Arial'; ctx2.textAlign='right'; ctx2.fillText('0', FP.l-4, py(0)+3);
+}
+/* labels */
+ctx2.fillStyle=ac; ctx2.font='10px Arial'; ctx2.textAlign='center';
+ctx2.fillText('Time (s)', FP.l+pW/2, H-4);
+ctx2.save(); ctx2.translate(13,FP.t+pH/2); ctx2.rotate(-Math.PI/2); ctx2.fillText(yLabel,0,0); ctx2.restore();
+ctx2.font='9px Arial';
+for(var gi3=0;gi3<=nGT;gi3++){ var tv2=tRange.lo+gi3*(tRange.hi-tRange.lo)/nGT; ctx2.textAlign='center'; ctx2.fillStyle=ac; ctx2.fillText(tv2.toFixed(1),px(tv2),FP.t+pH+14); }
+for(var gi4=0;gi4<=nGV;gi4++){ var fv2=yr.lo+gi4*(yr.hi-yr.lo)/nGV; ctx2.textAlign='right'; ctx2.fillStyle=ac; ctx2.fillText(fv2.toFixed(1),FP.l-4,py(fv2)+3); }
+/* target dashed curve */
+if(segs){
+ctx2.strokeStyle=pal.targetCurve; ctx2.setLineDash([5,4]); ctx2.lineWidth=1.5;
+ctx2.beginPath(); var firstT=true;
+for(var tt2=tRange.lo; tt2<=tRange.hi; tt2+=0.1){
+var mv2=evalMotionExt(segs,dur,tt2);
+var yv=key==='x'?mv2.x:mv2.v;
+var X=px(tt2), Y=py(yv);
+if(firstT){ctx2.moveTo(X,Y);firstT=false;} else ctx2.lineTo(X,Y);
+}
+ctx2.stroke(); ctx2.setLineDash([]);
+}
+/* student / example curve */
+ctx2.strokeStyle=color; ctx2.lineWidth=hcMode?2.5:2;
+ctx2.beginPath(); var first2=true;
+for(var i=0;i<series.length;i++){
+var p=series[i]; if(p.t<tRange.lo||p.t>tRange.hi) continue;
+var X2=px(p.t), Y2=py(p.v);
+if(first2){ctx2.moveTo(X2,Y2);first2=false;} else ctx2.lineTo(X2,Y2);
+}
+ctx2.stroke();
+}
+function updateStats(){
+var box=document.getElementById('kmStatsBox'), content=document.getElementById('kmStatsContent');
+if(!box||!content) return;
+if(motionData.length<2){ box.style.display='none'; return; }
+var first=motionData[0], last=motionData[motionData.length-1];
+var disp=last.x-first.x, totalDur=last.t-first.t;
+var totalDist=0;
+for(var i=1;i<motionData.length;i++) totalDist+=Math.abs(motionData[i].x-motionData[i-1].x);
+var maxSpeed=Math.max.apply(null, motionData.map(function(p){return Math.abs(p.v);}));
+var avgVel=totalDur>0 ? disp/totalDur : 0;
+content.innerHTML=[
+'net displacement: '+disp.toFixed(1)+' cm',
+'total distance traveled: '+totalDist.toFixed(1)+' cm',
+'average velocity: '+avgVel.toFixed(2)+' cm/s',
+'max |speed| reached: '+maxSpeed.toFixed(2)+' cm/s',
+'elapsed time: '+totalDur.toFixed(2)+' s'
+].join('<br>');
+box.style.display='';
+}
+/* ── Pointer / drag input ── */
+function getCanvasPos(evt){
+var rect=sc.getBoundingClientRect(), clientX, clientY;
+if(evt.touches && evt.touches.length){ clientX=evt.touches[0].clientX; clientY=evt.touches[0].clientY; }
+else { clientX=evt.clientX; clientY=evt.clientY; }
+return { x:(clientX-rect.left)*(CW/rect.width), y:(clientY-rect.top)*(CH/rect.height) };
+}
+function hitTestGlider(px_,py_){
+var cx=gliderCenterPx();
+var left=cx-BLOCK_W/2-10, right=cx+BLOCK_W/2+10, top=TRACK_Y-BLOCK_H-40, bottom=TRACK_Y+10;
+return px_>=left && px_<=right && py_>=top && py_<=bottom;
+}
+function onDown(evt){
+if(mode!=='freedrag' || !recording) return;
+var p=getCanvasPos(evt);
+if(hitTestGlider(p.x,p.y)){ isDragging=true; evt.preventDefault(); }
+}
+function onMove(evt){
+if(!isDragging) return;
+var p=getCanvasPos(evt);
+xcm=clamp((p.x-ORIGIN_PX)/PX_PER_CM, 0, TRACK_MAX_CM);
+evt.preventDefault();
+}
+function onUp(){ isDragging=false; }
+sc.addEventListener('mousedown', onDown);
+document.addEventListener('mousemove', onMove);
+document.addEventListener('mouseup', onUp);
+sc.addEventListener('touchstart', onDown, {passive:false});
+sc.addEventListener('touchmove', onMove, {passive:false});
+sc.addEventListener('touchend', onUp);
+sc.addEventListener('keydown', function(evt){
+if(mode!=='freedrag' || !recording) return;
+if(evt.key==='ArrowRight'){ xcm=clamp(xcm+2,0,TRACK_MAX_CM); evt.preventDefault(); }
+else if(evt.key==='ArrowLeft'){ xcm=clamp(xcm-2,0,TRACK_MAX_CM); evt.preventDefault(); }
+});
+/* ── Boot ── */
+updateControlPanels(); updatePromptBox(); resetRun();
+return {
+selectExample, selectFreeDrag,
+playSim, pauseSim, stepSim, resetRun,
+startRecording, stopRecording,
+toggleHC, toggleCB, toggleNarr,
+setSpeed, setCompare, clearGraphs
+};
+})();
+</script>
+</div><!-- #km_root -->
+</body>
+</html>

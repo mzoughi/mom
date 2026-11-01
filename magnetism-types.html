@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Diamagnetism, Paramagnetism and Ferromagnetism</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, magnetism, magnetic field, physics simulation, lesson, scientific">
+<meta name="description" content="Diamagnetism, Paramagnetism and Ferromagnetism -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mgtroot" role="region" aria-label="Diamagnetism, paramagnetism and ferromagnetism simulator">
+<!-- Accessibility toolbar -->
+<div class="mgt_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="mgt_a11ybtn" id="btnHC" onclick="mgtSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="mgt_a11ybtn" id="btnLight" onclick="mgtSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="mgt_a11ybtn" id="btnCB" onclick="mgtSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="mgt_a11ybtn mgt_a11yon" id="btnNarr" onclick="mgtSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="mgt_header">
+<p class="mgt_h1">Dia-, Para- and Ferromagnetism</p>
+<p class="mgt_sub">A sample in an electromagnet, weighed on a Gouy balance -- how its atoms respond to B and to temperature</p>
+</div>
+<div id="mgtMotionNotice" class="mgt_motionnotice" role="status">Reduced motion is enabled. Thermal jiggling of the atoms is not animated.</div>
+<!-- Instrument grid -->
+<div class="mgt_instrument">
+<!-- Left column: diagram + readout -->
+<div class="mgt_leftcol">
+<div class="mgt_diagpanel">
+<div class="mgt_diaglabel"><span id="diagLabel">SAMPLE IN FIELD</span><span class="mgt_diagnote">atom arrows and line bending exaggerated &middot; graph and readouts use real values</span></div>
+<canvas id="mgtCanvas" width="560" height="420" role="img" aria-label="Sample between electromagnet poles" aria-describedby="mgtCanvasDesc"></canvas>
+<p id="mgtCanvasDesc" class="mgt_sronly">Sample between the poles of an electromagnet.</p>
+<div class="mgt_dispbar">
+<label class="mgt_chk"><input type="checkbox" id="chkLines" checked onchange="mgtSim.onOpt('lines', this.checked)"> Field lines</label>
+<label class="mgt_chk"><input type="checkbox" id="chkLabels" checked onchange="mgtSim.onOpt('labels', this.checked)"> Part labels</label>
+<label class="mgt_chk"><input type="checkbox" id="chkZoom" onchange="mgtSim.onOpt('zoom', this.checked)"> Zoom graph to &plusmn;0.1 T</label>
+<button type="button" class="mgt_btn mgt_small" onclick="mgtSim.clearTrace()">Clear trace</button>
+</div>
+<div class="mgt_hoverbar" id="mgtHoverReadout" role="status" aria-live="polite" aria-atomic="true">Hover over the sample, the magnet or the graph to read values</div>
+</div>
+<!-- Readout -->
+<div class="mgt_panel" role="region" aria-labelledby="readHd">
+<div class="mgt_paneltitle" id="readHd">Readout (sample in the full field)</div>
+<div class="mgt_rinner mgt_rgrid">
+<div class="mgt_rrow"><span class="mgt_rkey">Behaviour</span><span class="mgt_rval mgt_hi" id="r_type">--</span></div>
+<div class="mgt_rrow"><span class="mgt_rkey">Susceptibility &chi;</span><span class="mgt_rval" id="r_chi">--</span></div>
+<div class="mgt_rrow"><span class="mgt_rkey">Magnetization M</span><span class="mgt_rval mgt_hi" id="r_M">--</span></div>
+<div class="mgt_rrow"><span class="mgt_rkey">&mu;&#8320;M</span><span class="mgt_rval" id="r_muM">--</span></div>
+<div class="mgt_rrow"><span class="mgt_rkey">Alignment</span><span class="mgt_rval" id="r_align">--</span></div>
+<div class="mgt_rrow"><span class="mgt_rkey">Critical temp.</span><span class="mgt_rval" id="r_Tc">--</span></div>
+<div class="mgt_rrow"><span class="mgt_rkey">Force on sample</span><span class="mgt_rval" id="r_F">--</span></div>
+<div class="mgt_rrow" id="r_balrow"><span class="mgt_rkey">Balance &Delta;m</span><span class="mgt_rval mgt_hi" id="r_dm">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="mgt_rightcol">
+<!-- Sample -->
+<div class="mgt_panel" role="group" aria-labelledby="smpHd">
+<div class="mgt_paneltitle" id="smpHd">Sample</div>
+<div class="mgt_panelbody">
+<div class="mgt_srcbtns3" role="group" aria-label="Type of magnetism">
+<button type="button" class="mgt_srcbtn" id="btnDia" onclick="mgtSim.setCat('dia')" aria-pressed="false">DIA</button>
+<button type="button" class="mgt_srcbtn" id="btnPara" onclick="mgtSim.setCat('para')" aria-pressed="false">PARA</button>
+<button type="button" class="mgt_srcbtn mgt_srcon" id="btnFerro" onclick="mgtSim.setCat('ferro')" aria-pressed="true">FERRO</button>
+</div>
+<label for="selMat" class="mgt_ctrlname">Material</label>
+<select id="selMat" aria-label="Sample material" onchange="mgtSim.onMatChange(this.value)"></select>
+<p class="mgt_hint" id="matDesc">--</p>
+</div>
+</div>
+<!-- Electromagnet -->
+<div class="mgt_panel" role="group" aria-labelledby="emHd">
+<div class="mgt_paneltitle" id="emHd">Electromagnet</div>
+<div class="mgt_panelbody">
+<div class="mgt_ctrlhdr"><label for="slB" class="mgt_ctrlname">Applied field B</label><span class="mgt_sval" id="vB">+0.00 T</span></div>
+<input type="range" id="slB" min="-1" max="1" step="0.01" value="0" aria-label="Applied magnetic field in tesla, negative reverses it" oninput="mgtSim.onSlider('B', this.value)">
+<div class="mgt_btnrow">
+<button type="button" class="mgt_btn" id="btnSweep" onclick="mgtSim.toggleSweep()">Sweep</button>
+<button type="button" class="mgt_btn" id="btnDemag" onclick="mgtSim.demagnetize()">Demagnetize</button>
+<button type="button" class="mgt_btn mgt_warn" id="btnZero" onclick="mgtSim.zeroField()">B = 0</button>
+</div>
+<p class="mgt_derived">Left pole: <b id="vPole">off</b></p>
+<p class="mgt_hint">Sweep cycles B between &plusmn;|B| to trace the M&ndash;B curve. Demagnetize applies a shrinking alternating field.</p>
+</div>
+</div>
+<!-- Temperature -->
+<div class="mgt_panel" role="group" aria-labelledby="tHd">
+<div class="mgt_paneltitle" id="tHd">Temperature</div>
+<div class="mgt_panelbody">
+<div class="mgt_ctrlhdr"><label for="slT" class="mgt_ctrlname">T</label><span class="mgt_sval" id="vT">293 K</span></div>
+<input type="range" id="slT" min="4" max="1200" step="1" value="293" aria-label="Sample temperature in kelvin" oninput="mgtSim.onSlider('T', this.value)">
+<div class="mgt_btnrow2">
+<button type="button" class="mgt_btn" onclick="mgtSim.setT(4)">4 K liquid He</button>
+<button type="button" class="mgt_btn" onclick="mgtSim.setT(77)">77 K liquid N&#8322;</button>
+<button type="button" class="mgt_btn" onclick="mgtSim.setT(293)">293 K room</button>
+<button type="button" class="mgt_btn" onclick="mgtSim.setT(1100)">1100 K red hot</button>
+</div>
+<p class="mgt_hint" id="tNote">--</p>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="mgt_formulastrip">
+<span class="mgt_formulatxt">M = &chi;H, H = B/&mu;&#8320; &nbsp;|&nbsp; Dia: &chi; &lt; 0, independent of T &nbsp;|&nbsp; Para (Curie): &chi; = n&mu;&#8320;&mu;&sup2;/3kT &nbsp;|&nbsp; Ferro: domains, hysteresis, only below T<sub>C</sub> &nbsp;|&nbsp; Gouy force F = AMB/2 = &chi;AB&sup2;/2&mu;&#8320; (A = 1 cm&sup2;) &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>S</kbd> sweep <kbd>D</kbd> demagnetize <kbd>Z</kbd> B = 0</span>
+</div>
+</div><!-- instrument -->
+<div id="mgtNarrBox" class="mgt_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="mgtNarration">--</span></div>
+<div id="mgtSrAnnounce" class="mgt_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="mgt_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div><!-- #mgtroot -->
+<div class="mgt_qwrap">
+<hr><h2>Types of Magnetism - Simulation:</h2><hr>
+<ol>
+<li>Choose a diamagnetic sample (bismuth) and raise the applied field. Which way do the induced atomic moments point compared with B? Is the sample pulled into or pushed out of the field?
+</li>
+<li>For bismuth, double the field from 0.5 T to 1.0 T. By what factor do the magnetization and the force change? Explain using F = &chi;AB&sup2;/2&mu;&#8320;.
+</li>
+<li>Change the temperature of the bismuth sample from 4 K to 1100 K. What happens to its susceptibility? What does this tell you about diamagnetism?
+</li>
+<li>Choose the YBCO superconductor and cool it below 92 K with a field applied. What happens to the field lines and to the balance reading? Why is a superconductor called a perfect diamagnet?
+</li>
+<li>Choose copper sulfate at 293 K. Raise the field. How do the atomic moments respond, and is the sample attracted or repelled?
+</li>
+<li>Keep B = 1 T and cool the copper sulfate from 293 K to 77 K. By what factor does &chi; change? Does this agree with Curie's law?
+</li>
+<li>Choose gadolinium sulfate at 4 K and sweep the field. Why is the M&ndash;B graph no longer a straight line?
+</li>
+<li>For a paramagnet, what happens to the magnetization when the field is switched off? Why?
+</li>
+<li>Choose soft iron. Starting from B = 0, raise the field slowly and watch the domains. Describe how the domains change. Compare the size of the magnetization with that of the paramagnetic samples.
+</li>
+<li>Press Sweep with hardened steel. Sketch the M&ndash;B loop and mark the remanent magnetization and the coercive field.
+</li>
+<li>Compare the hysteresis loops of soft iron, hardened steel and Alnico 5 (use the zoom). Which would you use for a transformer core, and which for a permanent magnet? Why?
+</li>
+<li>Magnetize hardened steel, set B = 0, and then press Demagnetize. What happens to the domains and to the remanent magnetization?
+</li>
+<li>Choose nickel with a field applied and raise the temperature past 627 K. What happens to the magnetization and to the domains? Cool it again with B = 0: does the magnetization come back?
+</li>
+<li>Gadolinium has a Curie temperature of 293 K. Compare its behaviour at 250 K and at 330 K.
+</li>
+<li>Compare the balance readings of a diamagnet, a paramagnet and a ferromagnet at B = 0.5 T. Roughly how many times stronger is the ferromagnetic force?
+</li>
+</ol>
+<hr><h2>Types of Magnetism - Hands on Activity:</h2><hr>
+<p>You need a strong neodymium magnet, two grapes, a drinking straw, a toothpick or thread, a steel paper clip, an iron nail, aluminium foil, a pencil, and a compass. Neodymium magnets can pinch fingers and are dangerous if swallowed; keep them away from phones and cards.</p>
+<ol>
+<li>Push a grape onto each end of the straw and balance the straw on the head of the toothpick (or hang it from a thread) so it can turn freely. Slowly bring the magnet close to one grape without touching it. What happens? Repeat with the other pole of the magnet.</li>
+<li>Repeat with small balls of aluminium foil instead of grapes. Compare.</li>
+<li>Hold the magnet near a single steel paper clip. Then try a stack of graphite shavings from a pencil on a sheet of paper. Compare the strength of the effects.</li>
+<li>Check that the paper clip does not attract a second clip. Stroke it about 20 times in one direction with one pole of the magnet. Can it now pick up a second clip? Use the compass to find its poles.</li>
+<li>Drop the magnetized paper clip on a hard floor several times, then test it again.</li>
+<li>Repeat step 4 with the iron nail. Remove the magnet and test the nail right away and again after a minute.</li>
+</ol>
+<hr>
+<ol>
+<li>Which way did the grapes move? What type of magnetism does this show, and which substance in the grapes is responsible?
+</li>
+<li>Why is the effect on the grapes so much weaker than the effect on the paper clip?
+</li>
+<li>Why did stroking the paper clip turn it into a magnet? Describe what happened to its domains.
+</li>
+<li>What did dropping the paper clip do to its magnetism? Explain using domains.
+</li>
+<li>Did the nail keep its magnetism as well as the paper clip? Is the nail magnetically soft or hard?
+</li>
+<li>Why does a magnet attract a paper clip whichever pole you use, but a magnet can either attract or repel a compass needle?
+</li>
+</ol>
+<hr>
+<p>Discuss your results about this part of the experiment:
+</p>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #mgtroot ════════ */
+#mgtroot {
+--mgt-chassis:#1a1c1f; --mgt-panel:#22262b; --mgt-panel-hi:#2c3138; --mgt-panel-lo:#14161a;
+--mgt-border:#3a4048; --mgt-border-hi:#525c66; --mgt-text:#c8d0d8; --mgt-dim:#8a94a3; --mgt-bright:#e8eef5;
+--mgt-accent:#e8a020; --mgt-green:#3ad08f; --mgt-val:#ffdd66; --mgt-warnc:#ff6a5a;
+--mgt-focus:#e8a020; --mgt-nar-bg:#2a2410; --mgt-nar-border:#e0b040; --mgt-nar-text:#f0e2b8;
+background:var(--mgt-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--mgt-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#mgtroot.mgt_lm {
+--mgt-chassis:#e9edf1; --mgt-panel:#ffffff; --mgt-panel-hi:#f1f4f7; --mgt-panel-lo:#f4f6f9;
+--mgt-border:#c3cad3; --mgt-border-hi:#9aa3ae; --mgt-text:#1d232a; --mgt-dim:#556070; --mgt-bright:#000000;
+--mgt-accent:#a8620a; --mgt-green:#12805a; --mgt-val:#8a4a00; --mgt-warnc:#b02020;
+--mgt-focus:#a8620a; --mgt-nar-bg:#ffefc0; --mgt-nar-border:#e0b040; --mgt-nar-text:#333333;
+background-image:none;
+}
+#mgtroot.mgt_hc {
+--mgt-chassis:#000000; --mgt-panel:#000000; --mgt-panel-hi:#111111; --mgt-panel-lo:#000000;
+--mgt-border:#ffffff; --mgt-border-hi:#ffffff; --mgt-text:#ffffff; --mgt-dim:#e0e0e0; --mgt-bright:#ffffff;
+--mgt-accent:#ffd700; --mgt-green:#00ff88; --mgt-val:#ffff00; --mgt-warnc:#ff5555;
+--mgt-focus:#ffff00; --mgt-nar-bg:#000000; --mgt-nar-border:#ffd700; --mgt-nar-text:#ffffff;
+background-image:none;
+}
+#mgtroot.mgt_cb { --mgt-warnc:#D55E00; }
+#mgtroot.mgt_hc .mgt_panel, #mgtroot.mgt_hc .mgt_diagpanel { border-width:2px; }
+#mgtroot *, #mgtroot *::before, #mgtroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#mgtroot input:focus-visible, #mgtroot button:focus-visible, #mgtroot select:focus-visible { outline:2px solid var(--mgt-focus); outline-offset:2px; }
+/* toolbar */
+#mgtroot .mgt_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#mgtroot .mgt_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--mgt-panel-hi); border:1px solid var(--mgt-border-hi); color:var(--mgt-dim); }
+#mgtroot .mgt_a11ybtn:hover { border-color:var(--mgt-accent); color:var(--mgt-accent); }
+#mgtroot .mgt_a11yon { background:rgba(58,208,143,.14); border-color:var(--mgt-green); color:var(--mgt-green); font-weight:bold; }
+/* header */
+#mgtroot .mgt_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#mgtroot .mgt_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--mgt-accent); text-align:center; }
+#mgtroot .mgt_sub { font-size:.7rem; color:var(--mgt-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#mgtroot .mgt_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--mgt-panel); border:1px solid var(--mgt-border); border-radius:4px; color:var(--mgt-dim); }
+/* grid */
+#mgtroot .mgt_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#mgtroot .mgt_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#mgtroot .mgt_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#mgtroot .mgt_diagpanel { background:var(--mgt-panel); border:1px solid var(--mgt-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#mgtroot .mgt_diaglabel { background:var(--mgt-panel-lo); border-bottom:1px solid var(--mgt-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--mgt-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#mgtroot #diagLabel { color:var(--mgt-accent); font-weight:bold; }
+#mgtroot .mgt_diagnote { text-transform:none; letter-spacing:.02em; }
+#mgtroot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#mgtroot .mgt_hoverbar { background:var(--mgt-panel-lo); border-top:1px solid var(--mgt-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--mgt-val); min-height:28px; line-height:1.4; }
+/* right column */
+#mgtroot .mgt_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#mgtroot .mgt_panel { background:var(--mgt-panel); border:1px solid var(--mgt-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#mgtroot .mgt_paneltitle { background:var(--mgt-panel-lo); border-bottom:1px solid var(--mgt-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--mgt-dim); }
+#mgtroot .mgt_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#mgtroot .mgt_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#mgtroot .mgt_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--mgt-panel-hi); border:1px solid var(--mgt-border-hi); color:var(--mgt-dim); border-radius:3px; }
+#mgtroot .mgt_srcbtn:hover { border-color:var(--mgt-accent); color:var(--mgt-text); }
+#mgtroot .mgt_srcon { background:var(--mgt-accent); color:#111; border-color:var(--mgt-accent); font-weight:bold; }
+#mgtroot .mgt_srcon:hover { color:#111; }
+#mgtroot .mgt_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#mgtroot .mgt_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--mgt-dim); text-transform:uppercase; }
+#mgtroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--mgt-panel-lo); border:1px solid var(--mgt-border); }
+#mgtroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--mgt-accent); border:2px solid var(--mgt-panel); cursor:pointer; }
+#mgtroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--mgt-accent); border:2px solid var(--mgt-panel); cursor:pointer; }
+#mgtroot input[type=range]:disabled { opacity:.35; cursor:default; }
+#mgtroot .mgt_sval { font-family:monospace; font-size:.74rem; color:var(--mgt-val); min-width:56px; text-align:right; }
+#mgtroot .mgt_hint { font-size:.66rem; color:var(--mgt-dim); line-height:1.4; }
+#mgtroot .mgt_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#mgtroot .mgt_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--mgt-panel-lo); border:1px solid var(--mgt-border); border-radius:3px; }
+#mgtroot .mgt_rrow.mgt_alert { border-color:var(--mgt-warnc); }
+#mgtroot .mgt_rrow.mgt_alert .mgt_rval { color:var(--mgt-warnc); font-weight:bold; }
+#mgtroot .mgt_rkey { font-family:monospace; font-size:.6rem; color:var(--mgt-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#mgtroot .mgt_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--mgt-text); }
+#mgtroot .mgt_hi { color:var(--mgt-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#mgtroot .mgt_formulastrip { grid-column:1 / 3; background:var(--mgt-panel-lo); border:1px solid var(--mgt-border); border-radius:4px; padding:7px 14px; }
+#mgtroot .mgt_formulatxt { font-family:monospace; font-size:.66rem; color:var(--mgt-dim); letter-spacing:.04em; line-height:1.6; }
+#mgtroot .mgt_formulatxt kbd { border:1px solid var(--mgt-border-hi); border-radius:2px; padding:0 4px; color:var(--mgt-accent); font-family:monospace; }
+#mgtroot .mgt_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--mgt-nar-bg); border-left:4px solid var(--mgt-nar-border); font-size:.82rem; color:var(--mgt-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#mgtroot .mgt_credit { font-size:.62rem; color:var(--mgt-dim); text-align:center; }
+#mgtroot .mgt_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#mgtroot .mgt_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--mgt-text); cursor:pointer; }
+#mgtroot .mgt_chk input { accent-color:var(--mgt-accent); width:14px; height:14px; }
+#mgtroot .mgt_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--mgt-panel-lo); border-top:1px solid var(--mgt-border); }
+#mgtroot select { width:100%; background:var(--mgt-panel-hi); color:var(--mgt-text); border:1px solid var(--mgt-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#mgtroot .mgt_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#mgtroot .mgt_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#mgtroot .mgt_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--mgt-panel-hi); border:1px solid var(--mgt-border-hi); color:var(--mgt-text); border-radius:3px; text-transform:uppercase; }
+#mgtroot .mgt_btn:hover { border-color:var(--mgt-accent); }
+#mgtroot .mgt_btn:disabled { opacity:.4; cursor:default; }
+#mgtroot .mgt_btn.mgt_active { background:var(--mgt-green); border-color:var(--mgt-green); color:#111; font-weight:bold; }
+#mgtroot .mgt_warn { color:#e0605a; border-color:#a04040; }
+#mgtroot.mgt_lm .mgt_warn { color:#b02020; border-color:#c06060; }
+#mgtroot .mgt_sub2 { border-top:1px dashed var(--mgt-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#mgtroot .mgt_derived { font-family:monospace; font-size:.68rem; color:var(--mgt-dim); line-height:1.4; }
+#mgtroot .mgt_derived b { color:var(--mgt-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#mgtroot .mgt_instrument { grid-template-columns:minmax(0,1fr); }
+#mgtroot .mgt_rightcol { width:auto; }
+#mgtroot .mgt_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #mgtroot .mgt_row2 { grid-template-columns:1fr; } }
+#mgtroot .mgt_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#mgtroot .mgt_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#mgtroot .mgt_small { padding:3px 8px; margin-left:auto; }
+@media (max-width:560px) { #mgtroot .mgt_rgrid { grid-template-columns:1fr; } }
+/* question section below the simulator */
+.mgt_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.mgt_qwrap ol { padding-left:24px; }
+.mgt_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+
+/* ════ layout by the width the sim actually gets (in a MOM column it can be much narrower than the window);
+   the @media rules above stay as the fallback for browsers without container queries ════ */
+#mgtroot { container-type:inline-size; }
+@container (max-width:820px) {
+#mgtroot .mgt_instrument { grid-template-columns:minmax(0,1fr); }
+#mgtroot .mgt_rightcol { width:auto; }
+#mgtroot .mgt_formulastrip { grid-column:auto; }
+}
+@container (max-width:560px) { #mgtroot .mgt_row2 { grid-template-columns:1fr; } }
+@container (max-width:560px) { #mgtroot .mgt_rgrid { grid-template-columns:1fr; } }
+</style>
+<script>
+/* ════════ SIMULATION ════════
+Pattern: mirrors the solenoid (magnetism) example:
+var simObj = function() { ... return { public methods }; };  var simObj = new simObj();
+Physics (SI units, H = B/mu0 inside the sample; demagnetizing effects ignored):
+Diamagnet:       M = chi H, chi < 0 and independent of T.  Superconductor below Tc: chi = -1 (Meissner, B expelled).
+Pauli paramagnet: M = chi H, chi > 0, nearly independent of T (conduction electrons).
+Curie paramagnet: n moments mu,  M = n mu L(mu B / kT)  (Langevin; low field: chi = n mu0 mu^2 / 3kT, Curie's law).
+Ferromagnet, T < Tc: M = Ms(T) tanh(Heff/a), Heff from a play (backlash) operator of width Hc(T) -> hysteresis,
+Ms(T) = Ms0 (1 - T/Tc)^0.36,  Hc(T) = Hc0 (1 - T/Tc).
+Ferromagnet, T >= Tc: paramagnetic, M = n mu L(mu B / k(T - Tc))  (Curie-Weiss, mean field).
+Gouy balance: a tube of cross-section A = 1 cm^2 hangs with its lower end in the field and its top outside:
+F = A M B / 2  (= chi A B^2 / 2 mu0 for a linear material), reading dm = F/g.
+The field falls off above the pole pieces, so each row of atoms in the tube feels its own local field.
+*/
+var mgtGen = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('mgtroot');
+var canvas = document.getElementById('mgtCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function el(id) { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function sgnTxt(v, d, u) { return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(d) + ' ' + u; }
+function sup(n) { return String(n).replace('-', '\u207b').replace(/[0-9]/g, function(d) { return '\u2070\u00b9\u00b2\u00b3\u2074\u2075\u2076\u2077\u2078\u2079'.charAt(+d); }); }
+function fmtSci(v) {
+if (!isFinite(v)) return '--';
+if (v === 0) return '0';
+var a = Math.abs(v), s = v < 0 ? '\u2212' : '';
+if (a >= 0.01 && a < 1000) return s + a.toPrecision(3);
+var e = Math.floor(Math.log10(a)), m = a/Math.pow(10, e);
+if (m >= 9.995) { m /= 10; e++; }
+return s + m.toFixed(2) + '\u00d710' + sup(e);
+}
+function fmtTesla(B) { var a = Math.abs(B), s = B < 0 ? '\u2212' : '+'; if (a === 0) return '0 T'; if (a >= 0.1) return s + a.toFixed(3) + ' T'; if (a >= 1e-4) return s + (a*1e3).toFixed(2) + ' mT'; return s + (a*1e6).toFixed(2) + ' \u00b5T'; }
+function fmtForce(F) { var a = Math.abs(F), s = F < 0 ? '\u2212' : '+'; if (a < 1e-9) return '0'; if (a < 1e-3) return s + (a*1e6).toFixed(a < 1e-5 ? 2 : 1) + ' \u00b5N'; if (a < 1) return s + (a*1e3).toFixed(2) + ' mN'; return s + a.toFixed(1) + ' N'; }
+function fmtMass(m) { var a = Math.abs(m), s = m < 0 ? '\u2212' : '+'; if (a < 1e-12) return '0'; if (a < 1e-6) return s + (a*1e9).toFixed(1) + ' \u00b5g'; if (a < 1e-3) return s + (a*1e6).toFixed(2) + ' mg'; if (a < 1) return s + (a*1e3).toFixed(2) + ' g'; return s + a.toFixed(2) + ' kg'; }
+function fmtT(T) { return Math.round(T) + ' K (' + Math.round(T - 273.15) + ' \u00b0C)'; }
+/* ── Constants ── */
+var MU0 = 4e-7*Math.PI, KB = 1.380649e-23, MUB = 9.274e-24, GRAV = 9.81, AREA = 1e-4, EXAG = 300;
+/* ── Materials ── */
+var MATS = {
+dia: [
+{ key:'bi', label:'Bismuth', chi:-1.66e-4, desc:'The most strongly diamagnetic metal. \u03c7 \u2248 \u22121.7\u00d710\u207b\u2074.' },
+{ key:'graphite', label:'Pyrolytic graphite', chi:-4.5e-4, desc:'Strongly diamagnetic across its layers: a thin sheet floats above a grid of neodymium magnets. \u03c7 \u2248 \u22124.5\u00d710\u207b\u2074.' },
+{ key:'water', label:'Water', chi:-9.04e-6, desc:'Weakly diamagnetic. In a 16 T magnet this was enough to levitate a living frog (Nijmegen, 1997). \u03c7 \u2248 \u22129\u00d710\u207b\u2076.' },
+{ key:'cu', label:'Copper', chi:-9.6e-6, desc:'Copper is not attracted by a magnet: its weak diamagnetism wins. \u03c7 \u2248 \u22121\u00d710\u207b\u2075.' },
+{ key:'ybco', label:'YBCO superconductor', chi:-2e-6, Tsc:92, desc:'Below 92 K it is a superconductor and expels the field completely (Meissner effect): \u03c7 = \u22121. Ideal Meissner state shown; real type-II samples let some flux in above a small field.' }
+],
+para: [
+{ key:'al', label:'Aluminium', pauli:2.2e-5, desc:'Pauli paramagnet: the spins of its conduction electrons slightly favour B. Nearly independent of temperature. \u03c7 \u2248 +2.2\u00d710\u207b\u2075.' },
+{ key:'cuso4', label:'Copper sulfate (CuSO\u2084\u00b75H\u2082O)', n:5.51e27, mu:1.9, desc:'Each Cu\u00b2\u207a ion carries a moment of about 1.9 \u03bc\u0299. Follows Curie\'s law: \u03c7 \u221d 1/T.' },
+{ key:'gdso4', label:'Gadolinium sulfate (Gd\u2082(SO\u2084)\u2083\u00b78H\u2082O)', n:4.85e27, mu:7.94, desc:'Gd\u00b3\u207a ions carry large moments (7.9 \u03bc\u0299). A classic Curie-law salt; it saturates at very low T and high B.' },
+{ key:'o2', label:'Liquid oxygen', n:2.15e28, mu:2.83, Tmin:55, Tmax:90, desc:'O\u2082 molecules are paramagnetic: liquid oxygen poured between magnet poles sticks there. Liquid only from 55 K to 90 K.' }
+],
+ferro: [
+{ key:'fe', label:'Soft iron', Ms:1.75e6, Tc:1043, Hc:0.5e-3/MU0, a:8e-3/MU0, mu:2.2, desc:'Magnetically soft: it magnetizes easily and keeps little magnetization when the field is removed. Used in transformer and electromagnet cores. T\u1d04 = 1043 K.' },
+{ key:'steel', label:'Hardened steel', Ms:1.6e6, Tc:1040, Hc:20e-3/MU0, a:14e-3/MU0, mu:2.0, desc:'Harder than soft iron: domain walls are pinned, so it keeps much of its magnetization. A magnetized steel needle is a weak permanent magnet.' },
+{ key:'ni', label:'Nickel', Ms:5.1e5, Tc:627, Hc:2e-3/MU0, a:4e-3/MU0, mu:0.6, desc:'Ferromagnetic with a low Curie temperature (627 K = 354 \u00b0C), reachable with a flame.' },
+{ key:'gd', label:'Gadolinium', Ms:2.06e6, Tc:293, Hc:2e-3/MU0, a:10e-3/MU0, mu:7.6, desc:'Its Curie temperature is 293 K, room temperature: ferromagnetic on a cold day, paramagnetic on a warm one.' },
+{ key:'alnico', label:'Alnico 5', Ms:1.07e6, Tc:1133, Hc:64e-3/MU0, a:40e-3/MU0, mu:2.0, desc:'A permanent-magnet alloy: a wide hysteresis loop and a large remanence. T\u1d04 \u2248 1133 K.' }
+]
+};
+/* ── State ── */
+var cat = 'ferro', matKey = 'fe', Bapp = 0, T = 293;
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true, showLines = true, showLabels = true, zoom = false;
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var sweep = { on: false, demag: false, t: 0, amp: 1, period: 8 };
+var trail = [], lastTrail = null;
+/* ── Sample grid: a tube in the gap, its lower part in the full field ── */
+var TUBE = { x: 120, y: 70, w: 100, h: 200 }, COLS = 8, ROWS = 16, SP = 12.5;
+var atoms = [], heff = [], prof = [];
+(function buildGrid() {
+var p1 = Math.random()*6.3, p2 = Math.random()*6.3, p3 = Math.random()*6.3, p4 = Math.random()*6.3, q1 = Math.random()*6.3, q2 = Math.random()*6.3;
+var raw = [];
+for (var j = 0; j < ROWS; j++) for (var i = 0; i < COLS; i++) {
+var v = Math.sin(0.55*i + p1) + Math.sin(0.42*j + p2) + 0.8*Math.sin(0.33*(i + j) + p3) + 0.8*Math.sin(0.47*(i - j) + p4) + 0.25*Math.random();
+var ys = Math.sin(0.5*i + q1) + Math.sin(0.37*j + q2) > 0 ? 1 : -1;
+atoms.push({ i: i, j: j, r: j, x: TUBE.x + SP/2 + i*SP, y: TUBE.y + SP/2 + j*SP, v: v, u: 0, ys: ys,
+ phi: Math.random()*2*Math.PI, ang: 0, disp: 0, len: 9, orb: Math.random()*6.3 });
+}
+raw = atoms.slice().sort(function(a, b) { return a.v - b.v; });
+for (var k = 0; k < raw.length; k++) raw[k].u = (k + 0.5)/raw.length;
+for (var r = 0; r < ROWS; r++) {
+var y = TUBE.y + SP/2 + r*SP;
+prof.push(y >= 165 ? 1 : (y <= 95 ? 0 : 0.5*(1 - Math.cos(Math.PI*(y - 95)/70))));
+heff.push(0);
+}
+/* demagnetized start: the four easy directions equally shared */
+atoms.forEach(function(a) { a.ang = a.u < 0.25 ? 0 : (a.u > 0.75 ? Math.PI : (a.ys > 0 ? -Math.PI/2 : Math.PI/2)); a.disp = a.ang; });
+})();
+/* ── Physics ── */
+function mat() { var L = MATS[cat]; for (var i = 0; i < L.length; i++) if (L[i].key === matKey) return L[i]; return L[0]; }
+function langevin(x) { var a = Math.abs(x); if (a < 1e-3) return x/3; if (a > 50) return Math.sign(x)*(1 - 1/a); return 1/Math.tanh(x) - 1/x; }
+function isSC() { var m = mat(); return cat === 'dia' && m.Tsc && T < m.Tsc; }
+function ferroOn() { return cat === 'ferro' && T < mat().Tc; }
+function MsT(m) { return m.Ms*Math.pow(Math.max(0, 1 - T/m.Tc), 0.36); }
+function HcT(m) { return m.Hc*Math.max(0, 1 - T/m.Tc); }
+function dChi(m) { return (m.Tsc && T < m.Tsc) ? -1 : m.chi; }
+/* magnetization for a local field B without hysteresis (dia, para, ferro above Tc) */
+function MofB(B) {
+var m = mat(), H = B/MU0;
+if (cat === 'dia') return dChi(m)*H;
+if (cat === 'para') { if (m.pauli) return m.pauli*H; var mu = m.mu*MUB; return m.n*mu*langevin(mu*B/(KB*T)); }
+var muf = m.mu*MUB, nf = m.Ms/muf; return nf*muf*langevin(muf*B/(KB*Math.max(1, T - m.Tc)));
+}
+function rowB(r) { return Bapp*prof[r]; }
+function Mrow(r) { if (ferroOn()) { var m = mat(); return MsT(m)*Math.tanh(heff[r]/m.a); } return MofB(rowB(r)); }
+function bulkM() { return Mrow(ROWS - 1); }
+function updateHyst() {
+var m = mat();
+for (var r = 0; r < ROWS; r++) {
+var H = rowB(r)/MU0;
+if (cat !== 'ferro' || T >= m.Tc) { heff[r] = H; continue; }
+var hc = HcT(m);
+if (H - heff[r] > hc) heff[r] = H - hc; else if (H - heff[r] < -hc) heff[r] = H + hc;
+}
+}
+function lowFieldChi() {
+var m = mat();
+if (cat === 'dia') return dChi(m);
+if (cat === 'para') { if (m.pauli) return m.pauli; var mu = m.mu*MUB; return m.n*MU0*mu*mu/(3*KB*T); }
+if (T >= m.Tc) { var muf = m.mu*MUB, nf = m.Ms/muf; return nf*MU0*muf*muf/(3*KB*Math.max(1, T - m.Tc)); }
+return NaN;
+}
+function chiNow() { var H = Bapp/MU0; if (ferroOn()) return Math.abs(H) > 1 ? bulkM()/H : NaN; return lowFieldChi(); }
+function gouyForce() { return AREA*bulkM()*Bapp/2; }          /* + = pulled down into the field */
+function alignReal() {                                       /* <cos theta> of the moments in the full field */
+var m = mat();
+if (cat === 'para' && !m.pauli) { var mu = m.mu*MUB; return langevin(mu*Bapp/(KB*T)); }
+if (cat === 'ferro') { if (ferroOn()) { var ms = MsT(m); return ms > 0 ? bulkM()/ms : 0; } return bulkM()/m.Ms; }
+return NaN;
+}
+function visAlign(B) {                                       /* exaggerated alignment used only for drawing */
+var m = mat();
+if (cat === 'para') { if (m.pauli) return clamp(0.35*Math.abs(B), 0, 0.35); return Math.abs(langevin(EXAG*m.mu*MUB*B/(KB*T))); }
+return Math.abs(langevin(EXAG*m.mu*MUB*B/(KB*Math.max(1, T - m.Tc))));
+}
+function behaviour() {
+var m = mat();
+if (cat === 'dia') return isSC() ? 'Perfect diamagnet' : (m.Tsc ? 'Diamagnetic (normal state)' : 'Diamagnetic');
+if (cat === 'para') return m.pauli ? 'Paramagnetic (Pauli)' : 'Paramagnetic (Curie)';
+return ferroOn() ? 'Ferromagnetic' : 'Paramagnetic (T > T\u1d04)';
+}
+/* ── Time stepping (continuous loop: thermal jiggle, domain-wall motion, sweeps) ── */
+function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5)*2; }
+function angDiff(a, b) { var d = a - b; while (d > Math.PI) d -= 2*Math.PI; while (d < -Math.PI) d += 2*Math.PI; return d; }
+function advance(dt) {
+if (sweep.on) {
+sweep.t += dt;
+var env = 1;
+if (sweep.demag) { env = Math.exp(-sweep.t/2.6); if (env < 0.004) { stopSweep(true); setB(0); updateNarration('Demagnetized: the field shrank to zero while alternating.'); } }
+if (sweep.on) setB(sweep.amp*env*Math.sin(2*Math.PI*sweep.t/sweep.period));
+}
+updateHyst();
+var m = mat(), fOn = ferroOn(), D = clamp(3*Math.sqrt(T/293), 0.3, 6), ms = fOn ? MsT(m) : 0, tj = fOn ? Math.pow(T/m.Tc, 2) : 0;
+for (var k = 0; k < atoms.length; k++) {
+var a = atoms[k], B = rowB(a.r), sg = B >= 0 ? 1 : -1;
+if (!reducedMotion && dt > 0) a.phi += gauss()*Math.sqrt(dt)*(cat === 'para' && mat().pauli ? 2 : D);
+a.orb += dt*4;
+if (fOn) {
+var mm = ms > 0 ? clamp(Mrow(a.r)/ms, -1, 1) : 0, pp = 0.25*(1 + mm)*(1 + mm), pm = 0.25*(1 - mm)*(1 - mm);
+var tgt = a.u < pp ? 0 : (a.u > 1 - pm ? Math.PI : (a.ys > 0 ? -Math.PI/2 : Math.PI/2));
+a.ang += angDiff(tgt, a.ang)*Math.min(1, dt > 0 ? dt*7 : 1);
+a.disp = a.ang + (reducedMotion ? 0 : 0.9*tj*Math.sin(a.phi)); a.len = 9;
+} else if (cat !== 'dia') {
+var s = visAlign(B), vx = (1 - s)*Math.cos(a.phi) + s*sg, vy = (1 - s)*Math.sin(a.phi);
+a.disp = Math.atan2(vy, vx); a.ang = a.disp; a.len = (cat === 'para' && mat().pauli) ? 6 : 9;
+}
+}
+/* graph trail (ferro below Tc) */
+if (fOn) {
+var Mb = bulkM();
+if (!lastTrail || Math.abs(lastTrail.B - Bapp) > 0.0015 || Math.abs(lastTrail.M - Mb) > 2e-3*m.Ms) {
+lastTrail = { B: Bapp, M: Mb }; trail.push(lastTrail); if (trail.length > 2500) trail.shift();
+}
+}
+}
+var rafId = null, lastTs = null, roTimer = 0;
+function frame(ts) {
+rafId = null;
+if (lastTs === null) lastTs = ts;
+var dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+advance(dt); redraw();
+roTimer += dt; if (roTimer > 0.15) { roTimer = 0; updateReadouts(); }
+if (!document.hidden) rafId = window.requestAnimationFrame(frame);
+}
+function startLoop() { if (!rafId && window.requestAnimationFrame) { lastTs = null; rafId = window.requestAnimationFrame(frame); } }
+/* ── Canvas palette ── */
+function pal() {
+var p;
+if (hcMode) p = { bg:'#000000', grid:'#262626', edge:'#ffffff', iron:'#777777', copper:'#ffaa00', copperDk:'#000000', magN:'#ff4444', magS:'#4499ff',
+tube:'rgba(255,255,255,0.08)', tubeEdge:'#ffffff', atom:'#ffffff', pos:'#ff5555', neg:'#55aaff', side:'#ffff00', text:'#ffffff', dim:'#e0e0e0',
+force:'#00ff88', warn:'#ff5555', gbg:'#000000', ggrid:'#333333', curve:'#ffd700', trail:'#00ff88', point:'#ffffff', box:'#000000', lcd:'#00ff88', lcdBg:'#001a00', mercury:'#ff4444', lw:1.6 };
+else if (lightMode) p = { bg:'#ffffff', grid:'#eef1f4', edge:'#9aa3ae', iron:'#9aa3ae', copper:'#b8702a', copperDk:'#6e3f12', magN:'#d64541', magS:'#3a6fd8',
+tube:'rgba(120,160,200,0.10)', tubeEdge:'#556070', atom:'#556070', pos:'#c0262a', neg:'#1f5fc0', side:'#7a8a00', text:'#1d232a', dim:'#556070',
+force:'#12805a', warn:'#c0262a', gbg:'#f4f6f9', ggrid:'#dde2e8', curve:'#a8620a', trail:'#12805a', point:'#1d232a', box:'#f1f4f7', lcd:'#0f5132', lcdBg:'#dff3e4', mercury:'#c0262a', lw:1.1 };
+else p = { bg:'#0d0f12', grid:'#1b2027', edge:'#3a4048', iron:'#5b636d', copper:'#c8813a', copperDk:'#7a4a1c', magN:'#c9433d', magS:'#3d6cc9',
+tube:'rgba(160,200,255,0.07)', tubeEdge:'#8a94a3', atom:'#8a94a3', pos:'#ff6a5a', neg:'#5aa0ff', side:'#c8d070', text:'#c8d0d8', dim:'#8a94a3',
+force:'#3ad08f', warn:'#ff5a52', gbg:'#0a0c0f', ggrid:'#1f252d', curve:'#e8a020', trail:'#3ad08f', point:'#ffffff', box:'#22262b', lcd:'#7dffb0', lcdBg:'#0b2016', mercury:'#ff4a4a', lw:1.1 };
+if (cbMode && !hcMode) {
+p.magN = '#D55E00'; p.magS = '#0072B2'; p.pos = '#D55E00'; p.neg = lightMode ? '#0072B2' : '#56B4E9'; p.side = lightMode ? '#555555' : '#CC79A7';
+p.warn = '#D55E00'; p.force = lightMode ? '#009E73' : '#F0E442'; p.trail = lightMode ? '#0072B2' : '#56B4E9'; p.curve = '#E69F00';
+}
+return p;
+}
+function colorFn(t) {
+t = clamp(t, 0, 1);
+if (hcMode) { var v = Math.round(90 + 165*t); return 'rgb(' + v + ',' + v + ',' + v + ')'; }
+if (cbMode) {
+var s = lightMode ? t*0.82 : t, rr, gg, bb;
+if (s < .5) { var u = s*2; rr = Math.round(68 + u*(33-68)); gg = Math.round(1 + u*(145-1)); bb = Math.round(84 + u*(140-84)); }
+else { var u2 = (s-.5)*2; rr = Math.round(33 + u2*(253-33)); gg = Math.round(145 + u2*(231-145)); bb = Math.round(140 + u2*(37-140)); }
+if (!lightMode && s < 0.25) { rr += 60; gg += 60; bb += 60; }
+return 'rgb(' + rr + ',' + gg + ',' + bb + ')';
+}
+return 'hsl(' + ((1-t)*240|0) + ',100%,' + (lightMode ? '40%' : '58%') + ')';
+}
+/* ── Drawing helpers ── */
+function rect(x, y, w, h, fill, stroke, lw) {
+if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); }
+if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
+}
+function arrowAt(x, y, ang, len, col, lw) {
+var hx = Math.cos(ang)*len/2, hy = Math.sin(ang)*len/2;
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 1.4;
+ctx.beginPath(); ctx.moveTo(x - hx, y - hy); ctx.lineTo(x + hx, y + hy); ctx.stroke();
+var hs = Math.max(3, len*0.38);
+ctx.beginPath(); ctx.moveTo(x + hx, y + hy);
+ctx.lineTo(x + hx - hs*Math.cos(ang - 0.5), y + hy - hs*Math.sin(ang - 0.5));
+ctx.lineTo(x + hx - hs*Math.cos(ang + 0.5), y + hy - hs*Math.sin(ang + 0.5));
+ctx.closePath(); ctx.fill();
+}
+function dirColor(p, ang) { var c = Math.cos(ang); return c > 0.7 ? p.pos : (c < -0.7 ? p.neg : p.side); }
+function forceDy() { var dm = gouyForce()/GRAV; if (Math.abs(dm) < 1e-12) return 0; return (dm > 0 ? 1 : -1)*Math.min(12, 3*Math.log10(1 + Math.abs(dm)*1e6)); }
+/* ── Scene ── */
+function drawMagnet(p) {
+/* C-shaped iron yoke with two coils */
+rect(20, 150, 38, 240, p.iron, p.edge); rect(282, 150, 38, 240, p.iron, p.edge); rect(20, 355, 300, 35, p.iron, p.edge);
+var on = Math.abs(Bapp) > 0.005, a = 0.3 + 0.7*Math.min(1, Math.abs(Bapp));
+[[58, true], [250, false]].forEach(function(q) {
+var x = q[0], left = q[1], isN = left ? Bapp > 0 : Bapp < 0;
+ctx.globalAlpha = on ? a : 1;
+rect(x, 155, 32, 145, on ? (isN ? p.magN : p.magS) : p.iron);
+ctx.globalAlpha = 1; rect(x, 155, 32, 145, null, p.edge);
+if (on) { ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center'; ctx.fillText(isN ? 'N' : 'S', x + 16, 232); }
+});
+/* coils */
+[12, 274].forEach(function(cx) {
+rect(cx, 215, 54, 115, p.copper, p.copperDk);
+ctx.strokeStyle = p.copperDk; ctx.lineWidth = 0.8; ctx.beginPath();
+for (var y = 220; y < 330; y += 6) { ctx.moveTo(cx + 1, y + 0.5); ctx.lineTo(cx + 53, y + 0.5); }
+ctx.stroke();
+});
+if (on) {
+ctx.fillStyle = p.text; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+ctx.fillText('I ' + (Bapp > 0 ? '\u2299' : '\u2297'), 39, 344); ctx.fillText('I ' + (Bapp > 0 ? '\u2297' : '\u2299'), 301, 344);
+}
+}
+function drawFieldLines(p, dy) {
+if (!showLines) return;
+var n = Math.round(Math.abs(Bapp)*14); if (n < 1) return;
+var Mb = bulkM(), H = Bapp/MU0, sV = 1, eV = 0, m = mat();
+if (cat === 'dia') { if (isSC()) eV = 1.05; else eV = 0.5*clamp((Math.log10(Math.abs(dChi(m))) + 6.5)/6.5, 0.05, 1); }
+else if (Math.abs(H) > 1) { var chi = Mb/H, v = clamp((Math.log10(Math.abs(chi) + 1e-30) + 6.5)/6.5, 0.05, 1); if (chi > 0) sV = 1 - 0.55*v; else eV = 0.5*v; }
+var cy = 215 + dy, hh = 55 + Math.max(0, 0), col = colorFn(Math.abs(Bapp)), dir = Bapp > 0 ? 1 : -1;
+ctx.save();
+if (isSC()) { ctx.beginPath(); ctx.rect(0, 0, CW, CH); ctx.rect(TUBE.x + 1, TUBE.y + dy + 1, TUBE.w - 2, TUBE.h - 2); ctx.clip('evenodd'); }
+ctx.strokeStyle = col; ctx.lineWidth = p.lw; ctx.globalAlpha = 0.85;
+for (var k = 0; k < n; k++) {
+var y0 = 161 + (k + 0.5)*(134/n), d = y0 - cy, sg = d >= 0 ? 1 : -1, ad = Math.abs(d);
+var tgt = cy + sg*(ad*sV + eV*hh*Math.max(0, 1 - ad/(2.2*hh)));
+ctx.beginPath();
+for (var x = 90; x <= 250; x += 4) {
+var w = x < 118 ? (x - 90)/28 : (x > 222 ? (250 - x)/28 : 1); w = w*w*(3 - 2*w);
+var y = y0 + (tgt - y0)*w;
+if (x === 90) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+}
+ctx.stroke();
+var ax = dir > 0 ? 104 : 236; ctx.globalAlpha = 1;
+ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(ax + dir*4, y0); ctx.lineTo(ax - dir*3, y0 - 3); ctx.lineTo(ax - dir*3, y0 + 3); ctx.closePath(); ctx.fill();
+ctx.globalAlpha = 0.85;
+}
+ctx.restore(); ctx.globalAlpha = 1;
+}
+function drawBalance(p, dy) {
+var dm = gouyForce()/GRAV, over = Math.abs(dm) > 0.2;
+rect(112, 6, 116, 36, p.box, p.edge);
+rect(118, 12, 104, 18, p.lcdBg);
+ctx.fillStyle = over ? p.warn : p.lcd; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+ctx.fillText(over ? 'OVERLOAD' : '\u0394m ' + fmtMass(dm), 170, 25);
+ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.fillText('GOUY BALANCE', 170, 39);
+ctx.strokeStyle = p.tubeEdge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(170, 42); ctx.lineTo(170, TUBE.y + dy); ctx.stroke();
+}
+function drawTube(p, dy) {
+var x = TUBE.x, y = TUBE.y + dy, w = TUBE.w, h = TUBE.h;
+rect(x, y, w, h, p.tube);
+if (T > 750) { ctx.fillStyle = 'rgba(255,' + Math.round(90 + 60*clamp((T - 750)/450, 0, 1)) + ',0,' + (0.32*clamp((T - 750)/450, 0, 1)).toFixed(3) + ')'; ctx.fillRect(x, y, w, h); }
+if (T < 100) { ctx.fillStyle = 'rgba(170,220,255,' + (0.18*clamp((100 - T)/96, 0, 1)).toFixed(3) + ')'; ctx.fillRect(x, y, w, h); }
+ctx.strokeStyle = isSC() ? p.force : p.tubeEdge; ctx.lineWidth = isSC() ? 2 : 1.2; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+}
+function drawAtoms(p, dy) {
+var sc = isSC();
+for (var k = 0; k < atoms.length; k++) {
+var a = atoms[k], x = a.x, y = a.y + dy, B = rowB(a.r);
+if (cat === 'dia') {
+ctx.strokeStyle = p.atom; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 2*Math.PI); ctx.stroke();
+if (!sc && Math.abs(B) > 0.01) { var ang = B > 0 ? Math.PI : 0; arrowAt(x, y, ang, 3 + 6*Math.min(1, Math.abs(B)), dirColor(p, ang), 1.2); }
+else { ctx.fillStyle = p.atom; ctx.beginPath(); ctx.arc(x, y, 1, 0, 2*Math.PI); ctx.fill(); }
+} else {
+arrowAt(x, y, a.disp, a.len, dirColor(p, a.disp), 1.3);
+}
+}
+if (sc && Math.abs(Bapp) > 0.005) {
+ctx.fillStyle = p.force; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+ctx.fillText('B = 0 inside', 170, 222 + dy); ctx.font = '9px monospace'; ctx.fillText('(Meissner effect)', 170, 234 + dy);
+}
+}
+function drawForceArrow(p, dy) {
+var F = gouyForce(), dm = F/GRAV;
+if (Math.abs(dm) < 1e-9) return;
+var len = 10 + 26*Math.min(1, Math.log10(1 + Math.abs(dm)*1e6)/6), d = F > 0 ? 1 : -1, y0 = 118 - d*len/2;
+ctx.strokeStyle = p.force; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(240, y0); ctx.lineTo(240, y0 + d*len); ctx.stroke();
+ctx.fillStyle = p.force; ctx.beginPath(); ctx.moveTo(240, y0 + d*(len + 7)); ctx.lineTo(234, y0 + d*len); ctx.lineTo(246, y0 + d*len); ctx.closePath(); ctx.fill();
+ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left';
+ctx.fillText(d > 0 ? 'pulled into' : 'pushed out of', 250, 112); ctx.fillText('the field', 250, 123);
+ctx.font = '9px monospace'; ctx.fillText('F ' + fmtForce(F), 250, 135);
+}
+function drawLabels(p) {
+if (!showLabels) return;
+ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+ctx.fillText('pole', 74, 148); ctx.fillText('pole', 266, 148);
+ctx.fillText('coil', 39, 210); ctx.fillText('coil', 301, 210);
+ctx.fillText('iron yoke', 170, 376);
+ctx.textAlign = 'left'; ctx.fillText('sample tube', 30, 82); ctx.strokeStyle = p.dim; ctx.lineWidth = 0.6;
+ctx.beginPath(); ctx.moveTo(84, 85); ctx.lineTo(TUBE.x, 95); ctx.stroke();
+ctx.fillText('field-free', 30, 108); ctx.fillText('region', 30, 118);
+ctx.textAlign = 'center'; ctx.fillText('gap: full field', 170, 312);
+}
+function drawGraph(p) {
+var gx = 345, gy = 18, gw = 205, gh = 222, cx = gx + gw/2, cy = gy + gh/2, xr = zoom ? 0.1 : 1.0, m = mat();
+rect(gx, gy, gw, gh, p.gbg, p.edge);
+ctx.strokeStyle = p.ggrid; ctx.lineWidth = 1; ctx.beginPath();
+ctx.moveTo(gx + 4, cy + 0.5); ctx.lineTo(gx + gw - 4, cy + 0.5); ctx.moveTo(cx + 0.5, gy + 16); ctx.lineTo(cx + 0.5, gy + gh - 14);
+ctx.moveTo(gx + gw/2 - gw*0.46, gy + 16); ctx.lineTo(gx + gw/2 - gw*0.46, gy + gh - 14);
+ctx.moveTo(gx + gw/2 + gw*0.46, gy + 16); ctx.lineTo(gx + gw/2 + gw*0.46, gy + gh - 14);
+ctx.stroke();
+var fs;
+if (ferroOn()) fs = m.Ms;
+else fs = Math.max(Math.abs(MofB(xr)), Math.abs(MofB(-xr)), 1e-30);
+function px(B) { return cx + clamp(B/xr, -1.06, 1.06)*gw*0.46; }
+function py(M) { return cy - clamp(M/fs, -1.15, 1.15)*gh*0.38; }
+if (ferroOn()) {
+var ms = MsT(m);
+ctx.setLineDash([3, 3]); ctx.strokeStyle = p.dim; ctx.beginPath();
+ctx.moveTo(gx + 4, py(ms)); ctx.lineTo(gx + gw - 4, py(ms)); ctx.moveTo(gx + 4, py(-ms)); ctx.lineTo(gx + gw - 4, py(-ms)); ctx.stroke(); ctx.setLineDash([]);
+ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText('M\u209b(T)', gx + 5, py(ms) - 3);
+if (trail.length > 1) {
+ctx.strokeStyle = p.trail; ctx.lineWidth = 1.6; ctx.beginPath();
+for (var i = 0; i < trail.length; i++) { var X = px(trail[i].B), Y = py(trail[i].M); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
+ctx.stroke();
+}
+} else {
+ctx.strokeStyle = p.curve; ctx.lineWidth = 1.8; ctx.beginPath();
+for (var k = 0; k <= 80; k++) { var B = -xr + 2*xr*k/80, X2 = px(B), Y2 = py(MofB(B)); if (k === 0) ctx.moveTo(X2, Y2); else ctx.lineTo(X2, Y2); }
+ctx.stroke();
+}
+ctx.fillStyle = p.point; ctx.beginPath(); ctx.arc(px(Bapp), py(bulkM()), 4, 0, 2*Math.PI); ctx.fill();
+ctx.strokeStyle = p.gbg; ctx.lineWidth = 1; ctx.stroke();
+ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('M vs applied B', gx + 6, gy + 11);
+ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'right'; ctx.fillText('full scale ' + fmtSci(fs) + ' A/m', gx + gw - 5, gy + 11);
+ctx.textAlign = 'center';
+ctx.fillText((zoom ? '\u22120.1' : '\u22121'), px(-xr), gy + gh - 4); ctx.fillText((zoom ? '+0.1 T' : '+1 T'), px(xr), gy + gh - 4); ctx.fillText('0', cx, gy + gh - 4);
+if (Math.abs(Bapp) > xr) { ctx.fillStyle = p.warn; ctx.fillText('B off scale', cx, gy + 24); }
+}
+function drawCloseup(p) {
+var bx = 345, by = 250, bw = 163, bh = 160, cx = bx + bw/2, cy = by + 78, m = mat(), sg = Bapp >= 0 ? 1 : -1, t;
+rect(bx, by, bw, bh, p.gbg, p.edge);
+ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('CLOSE-UP', bx + 6, by + 12);
+ctx.textAlign = 'center'; ctx.font = '9px monospace';
+var lines = [];
+if (cat === 'dia' && isSC()) {
+ctx.strokeStyle = colorFn(Math.abs(Bapp)); ctx.lineWidth = 1.2;
+for (var k = -2; k <= 2; k++) { var y0 = cy + k*14; ctx.beginPath(); ctx.moveTo(bx + 10, y0); ctx.bezierCurveTo(cx - 30, y0, cx - 30, cy + (k >= 0 ? 1 : -1)*(40 + Math.abs(k)*5), cx, cy + (k >= 0 ? 1 : -1)*(40 + Math.abs(k)*5)); ctx.bezierCurveTo(cx + 30, cy + (k >= 0 ? 1 : -1)*(40 + Math.abs(k)*5), cx + 30, y0, bx + bw - 10, y0); ctx.stroke(); }
+ctx.fillStyle = p.gbg; ctx.strokeStyle = p.force; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+lines = ['Surface currents expel B:', 'a perfect diamagnet.'];
+} else if (cat === 'dia') {
+ctx.fillStyle = p.text; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2*Math.PI); ctx.fill();
+ctx.strokeStyle = p.atom; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx, cy, 34, 14, 0, 0, 2*Math.PI); ctx.stroke();
+var ea = atoms[0].orb; ctx.fillStyle = p.neg; ctx.beginPath(); ctx.arc(cx + 34*Math.cos(ea), cy + 14*Math.sin(ea), 3, 0, 2*Math.PI); ctx.fill();
+ctx.fillStyle = p.side; ctx.beginPath(); ctx.arc(cx - 34*Math.cos(ea), cy - 14*Math.sin(ea), 3, 0, 2*Math.PI); ctx.fill();
+if (Math.abs(Bapp) > 0.01) { arrowAt(cx, cy - 32, Bapp > 0 ? Math.PI : 0, 14 + 22*Math.min(1, Math.abs(Bapp)), p.neg, 2.2); lines = ['B changes the orbits: a tiny', 'moment opposes B (Lenz).']; }
+else lines = ['Paired electrons: orbital and', 'spin moments cancel.'];
+} else if (ferroOn()) {
+var mm = clamp(bulkM()/Math.max(1, MsT(m)), -1, 1), wallC = 0.5 + 0.38*mm, N = 11;
+for (var i = 0; i < N; i++) {
+var xf = (i + 0.5)/N, tt = clamp((xf - wallC)/0.22 + 0.5, 0, 1), ang = Math.PI*tt;
+arrowAt(bx + 8 + xf*(bw - 16), cy, ang === 0 ? 0 : -ang, 16, dirColor(p, ang), 2);
+}
+ctx.strokeStyle = p.dim; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(bx + 8 + wallC*(bw - 16), cy - 28); ctx.lineTo(bx + 8 + wallC*(bw - 16), cy + 22); ctx.stroke(); ctx.setLineDash([]);
+ctx.fillStyle = p.dim; ctx.fillText('domain wall', bx + 8 + wallC*(bw - 16), cy - 32);
+lines = ['Exchange aligns neighbours;', 'B moves the domain wall.'];
+} else {
+var s = visAlign(Bapp);
+for (var q = 0; q < 6; q++) {
+var a = atoms[q*13 + 100 < atoms.length ? q*13 + 100 : q], vx = (1 - s)*Math.cos(a.phi) + s*sg, vy = (1 - s)*Math.sin(a.phi), an = Math.atan2(vy, vx);
+arrowAt(bx + 22 + (q % 3)*58, cy - 18 + Math.floor(q/3)*38, an, 22, dirColor(p, an), 2);
+}
+lines = cat === 'para' && m.pauli ? ['Electron spins tilt slightly', 'toward B (Pauli).'] :
+(cat === 'ferro' ? ['Above T\u1d04 heat beats exchange:', 'no domains: paramagnetic.'] : ['Heat scrambles the moments;', 'B tilts them toward B.']);
+}
+ctx.fillStyle = p.dim; ctx.textAlign = 'center'; ctx.font = '8px monospace';
+ctx.fillText(lines[0] || '', cx, by + bh - 20); ctx.fillText(lines[1] || '', cx, by + bh - 8);
+}
+function drawThermo(p) {
+var x = 520, top = 262, bot = 392, m = mat();
+function ty(t) { return bot - (Math.log(t/4)/Math.log(1200/4))*(bot - top); }   /* log scale 4 K ... 1200 K */
+rect(x, top, 14, bot - top, p.gbg, p.edge);
+ctx.fillStyle = p.mercury; ctx.fillRect(x + 4, ty(T), 6, bot - ty(T));
+ctx.beginPath(); ctx.arc(x + 7, bot + 8, 8, 0, 2*Math.PI); ctx.fill();
+ctx.font = '7px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = p.dim;
+[[4, '4'], [77, '77'], [293, '293'], [1200, '1200']].forEach(function(q) { var y = ty(q[0]); ctx.fillRect(x + 14, y, 3, 1); ctx.fillText(q[1], x + 18, y + 3); });
+var tc = cat === 'ferro' ? m.Tc : (m.Tsc || null);
+if (tc) { var yc = ty(tc); ctx.fillStyle = p.warn; ctx.fillRect(x - 4, yc, 22, 1.5); ctx.textAlign = 'right'; ctx.fillText('T\u1d04', x - 5, yc + 3); }
+ctx.fillStyle = p.text; ctx.textAlign = 'center'; ctx.font = 'bold 8px monospace'; ctx.fillText(Math.round(T) + ' K', x + 10, 256);
+}
+function redraw() {
+var p = pal(), dy = forceDy();
+ctx.clearRect(0, 0, CW, CH);
+ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+drawMagnet(p); drawTube(p, dy); drawFieldLines(p, dy); drawAtoms(p, dy); drawBalance(p, dy); drawForceArrow(p, dy);
+drawLabels(p); drawGraph(p); drawCloseup(p); drawThermo(p);
+}
+/* ── Readouts & narration ── */
+function updateReadouts() {
+var m = mat(), Mb = bulkM(), chi = chiNow(), F = gouyForce(), dm = F/GRAV;
+set('r_type', behaviour());
+set('r_chi', ferroOn() ? (isFinite(chi) ? 'M/H \u2248 ' + fmtSci(chi) : '-- (B = 0)') : (chi > 0 ? '+' : '') + fmtSci(chi));
+set('r_M', fmtSci(Mb) + ' A/m');
+set('r_muM', fmtTesla(MU0*Mb));
+var al;
+if (cat === 'dia') al = isSC() ? 'B fully expelled' : (Math.abs(Bapp) > 0.005 ? 'induced, opposite B' : 'none');
+else if (cat === 'para' && m.pauli) al = 'slight spin imbalance';
+else if (ferroOn()) al = 'M/M\u209b = ' + sgnTxt(alignReal(), 2, '').trim();
+else al = '\u27e8cos\u03b8\u27e9 = ' + fmtSci(alignReal());
+set('r_align', al);
+set('r_Tc', cat === 'ferro' ? 'Curie ' + m.Tc + ' K' : (m.Tsc ? 'T\u1d04 (SC) = ' + m.Tsc + ' K' : 'none'));
+set('r_F', fmtForce(F) + (Math.abs(F) > 1e-9 ? (F > 0 ? ' \u2193' : ' \u2191') : ''));
+var over = Math.abs(dm) > 0.2;
+set('r_dm', over ? fmtMass(dm) + ' (too big!)' : fmtMass(dm));
+var row = el('r_balrow'); if (row) row.classList.toggle('mgt_alert', over);
+}
+function explanation() {
+var m = mat();
+if (cat === 'dia' && isSC()) return 'Below ' + m.Tsc + ' K the superconductor expels the field completely (Meissner effect): \u03c7 = \u22121, a perfect diamagnet, and it is strongly repelled.';
+if (cat === 'dia') return 'All materials are diamagnetic: the field slightly changes the electrons\' orbital motion and induces tiny moments that oppose B (Lenz\'s law). The effect does not depend on temperature.' + (m.Tsc ? ' Cool it below ' + m.Tsc + ' K to make it superconducting.' : '');
+if (cat === 'para' && m.pauli) return 'In aluminium the conduction electrons\' spins tilt slightly toward B. This weak paramagnetism hardly depends on temperature.';
+if (cat === 'para') return 'Each ion carries a permanent moment. Heat keeps the moments randomly oriented and the field tilts them only slightly toward B, so M is proportional to B/T (Curie\'s law). Remove the field and M returns to zero.';
+if (ferroOn()) return 'Neighbouring moments are locked together by the exchange interaction, forming domains. The field grows the domains that point along it (domain walls move), giving a huge magnetization. When the field is removed some magnetization remains: hysteresis.';
+return 'Above the Curie temperature of ' + m.Tc + ' K, heat destroys the domains and ' + m.label.toLowerCase() + ' is only paramagnetic.';
+}
+function statusText() {
+var m = mat(), Mb = bulkM(), F = gouyForce(), dm = F/GRAV, s = '';
+s += m.label + ' at ' + fmtT(T) + ' in an applied field of ' + (Math.abs(Bapp) < 0.005 ? 'zero' : fmtTesla(Bapp)) + '. Behaviour: ' + behaviour() + '. ' + explanation() + ' ';
+if (Math.abs(Bapp) < 0.005) {
+if (ferroOn() && Math.abs(Mb) > 0.01*m.Ms) s += 'With no field the sample keeps a remanent magnetization of ' + fmtSci(Mb) + ' A/m (\u03bc\u2080M = ' + fmtTesla(MU0*Mb) + ').';
+else s += 'With no field there is no net magnetization and no force.';
+} else {
+if (Math.abs(F) < 1e-9) s += 'Magnetization in the full field: ' + fmtSci(Mb) + ' A/m, so there is no force on the sample.';
+else s += 'Magnetization in the full field: ' + fmtSci(Mb) + ' A/m. The sample is ' + (F > 0 ? 'pulled into' : 'pushed out of') + ' the field with a force of ' + fmtForce(Math.abs(F)).replace('+', '') + ', so the balance reads ' + fmtMass(dm) + (Math.abs(dm) > 0.2 ? ', far more than the balance can measure.' : '.');
+}
+if (sweep.on) s += sweep.demag ? ' Demagnetizing.' : ' Sweeping the field.';
+return s;
+}
+var narrTimer = null;
+function updateNarration(prefix) {
+if (!showNarr) return;
+clearTimeout(narrTimer);
+var go = function() { updateHyst(); set('mgtNarration', (prefix ? prefix + ' ' : '') + statusText()); };
+if (prefix) go(); else narrTimer = setTimeout(go, 450);
+}
+function updateCanvasDesc() {
+var d = 'Sample of ' + mat().label + ' between electromagnet poles, applied field ' + fmtTesla(Bapp) + ', temperature ' + Math.round(T) + ' K. ' + behaviour() + '. Magnetization ' + fmtSci(bulkM()) + ' A/m. Balance reading ' + fmtMass(gouyForce()/GRAV) + '.';
+set('mgtCanvasDesc', d); canvas.setAttribute('aria-label', d);
+}
+function updateLabels() {
+set('vB', sgnTxt(Bapp, 2, 'T'));
+set('vPole', Math.abs(Bapp) < 0.005 ? 'off (no current)' : (Bapp > 0 ? 'N (field points right)' : 'S (field points left)'));
+set('vT', Math.round(T) + ' K');
+var m = mat(), note;
+if (cat === 'dia') note = m.Tsc ? 'Superconducting below ' + m.Tsc + ' K; otherwise temperature has no effect.' : 'Diamagnetism does not depend on temperature.';
+else if (cat === 'para') note = m.pauli ? 'Pauli paramagnetism hardly depends on temperature.' : (m.Tmin ? 'Liquid only from ' + m.Tmin + ' K to ' + m.Tmax + ' K. ' : '') + 'Curie\'s law: halving T doubles \u03c7.';
+else note = 'Curie temperature ' + m.Tc + ' K (' + Math.round(m.Tc - 273.15) + ' \u00b0C): ferromagnetic below, paramagnetic above.';
+set('tNote', note);
+set('diagLabel', 'SAMPLE IN FIELD -- ' + m.label);
+}
+function updateButtons() {
+['dia', 'para', 'ferro'].forEach(function(c) {
+var b = el('btn' + c.charAt(0).toUpperCase() + c.slice(1) + '');
+if (b) { b.classList.toggle('mgt_srcon', c === cat); b.setAttribute('aria-pressed', c === cat ? 'true' : 'false'); }
+});
+var s = el('btnSweep'); if (s) { s.textContent = sweep.on && !sweep.demag ? 'Stop' : 'Sweep'; s.classList.toggle('mgt_active', sweep.on && !sweep.demag); }
+var d = el('btnDemag'); if (d) d.classList.toggle('mgt_active', sweep.on && sweep.demag);
+}
+var pending = false;
+function scheduleUpdate(narrate) {
+if (pending) return; pending = true;
+var go = function() {
+pending = false;
+advance(0); updateLabels(); redraw(); updateReadouts(); updateCanvasDesc(); updateButtons();
+if (narrate !== false) updateNarration();
+};
+if (window.requestAnimationFrame) window.requestAnimationFrame(go); else setTimeout(go, 16);
+}
+/* ── Controls ── */
+function setB(v) { Bapp = clamp(v, -1, 1); var s = el('slB'); if (s) s.value = Bapp.toFixed(2); set('vB', sgnTxt(Bapp, 2, 'T')); set('vPole', Math.abs(Bapp) < 0.005 ? 'off (no current)' : (Bapp > 0 ? 'N (field points right)' : 'S (field points left)')); }
+function clampTForMat() { var m = mat(); if (m.Tmin) { T = clamp(T, m.Tmin, m.Tmax); var s = el('slT'); if (s) s.value = T; } }
+function onSlider(key, raw) {
+var v = parseFloat(raw);
+if (key === 'B') { if (sweep.on) stopSweep(false); setB(v); }
+else if (key === 'T') { var wasF = ferroOn(); T = v; clampTForMat(); if (wasF !== ferroOn()) { trail = []; lastTrail = null; } }
+scheduleUpdate();
+}
+function setT(v) { var wasF = ferroOn(); T = v; clampTForMat(); var s = el('slT'); if (s) s.value = T; if (wasF !== ferroOn()) { trail = []; lastTrail = null; } scheduleUpdate(false); updateNarration('Temperature set to ' + Math.round(T) + ' K.'); }
+function fillMatSelect() {
+var sel = el('selMat'); if (!sel) return;
+sel.innerHTML = '';
+MATS[cat].forEach(function(m) { var o = document.createElement('option'); o.value = m.key; o.textContent = m.label; if (m.key === matKey) o.selected = true; sel.appendChild(o); });
+set('matDesc', mat().desc);
+}
+function demagState() { for (var r = 0; r < ROWS; r++) heff[r] = 0; atoms.forEach(function(a) { a.ang = a.u < 0.25 ? 0 : (a.u > 0.75 ? Math.PI : (a.ys > 0 ? -Math.PI/2 : Math.PI/2)); }); trail = []; lastTrail = null; }
+function setCat(c) {
+if (c === cat) return;
+cat = c; matKey = MATS[c][0].key; clampTForMat(); demagState(); fillMatSelect(); updateButtons(); scheduleUpdate(false);
+updateNarration({ dia: 'Diamagnetic samples.', para: 'Paramagnetic samples.', ferro: 'Ferromagnetic samples.' }[c]);
+}
+function onMatChange(v) { matKey = v; var sl = el('selMat'); if (sl) sl.value = v; clampTForMat(); demagState(); set('matDesc', mat().desc); scheduleUpdate(false); updateNarration('New sample: ' + mat().label + '.'); }
+function toggleSweep() {
+if (sweep.on && !sweep.demag) { stopSweep(false); updateNarration('Sweep stopped.'); return; }
+sweep.on = true; sweep.demag = false; sweep.t = 0; sweep.period = 8;
+sweep.amp = Math.abs(Bapp) > 0.02 ? Math.abs(Bapp) : (zoom ? 0.1 : 1.0);
+updateButtons(); updateNarration('Sweeping the field between \u00b1' + sweep.amp.toFixed(2) + ' T.');
+}
+function demagnetize() {
+sweep.on = true; sweep.demag = true; sweep.t = 0; sweep.period = 1.0;
+sweep.amp = Math.max(Math.abs(Bapp), 0.5);
+updateButtons(); updateNarration('Demagnetizing: an alternating field that slowly shrinks to zero.');
+}
+function stopSweep(done) { sweep.on = false; sweep.demag = false; updateButtons(); scheduleUpdate(false); }
+function zeroField() { if (sweep.on) stopSweep(false); setB(0); scheduleUpdate(false); updateNarration('Field switched off.'); }
+function clearTrace() { trail = []; lastTrail = null; scheduleUpdate(false); }
+function onOpt(k, on) { if (k === 'lines') showLines = on; else if (k === 'labels') showLabels = on; else if (k === 'zoom') zoom = on; scheduleUpdate(false); }
+/* ── Canvas interaction: hover readout ── */
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function describePoint(x, y) {
+var dy = forceDy(), m = mat();
+if (x >= TUBE.x && x <= TUBE.x + TUBE.w && y >= TUBE.y + dy && y <= TUBE.y + TUBE.h + dy) {
+var r = clamp(Math.floor((y - TUBE.y - dy)/SP), 0, ROWS - 1), B = rowB(r), M = Mrow(r);
+return 'Sample, row ' + (r + 1) + ': local field ' + fmtTesla(B) + ', magnetization ' + fmtSci(M) + ' A/m' + (prof[r] < 0.05 ? ' (above the poles: almost no field here).' : '.');
+}
+if (x >= 112 && x <= 228 && y <= 44) return 'Gouy balance: it weighs the hanging sample. Attraction into the field adds apparent mass; repulsion removes it. Reading ' + fmtMass(gouyForce()/GRAV) + '.';
+if (x >= 345 && x <= 550 && y >= 18 && y <= 240) return ferroOn() ? 'Graph: the green trace is the path of M as B changes; a loop that does not retrace itself is hysteresis.' : 'Graph: M against applied B at the current temperature. Real values; the full scale is shown at the top.';
+if (x >= 345 && x <= 508 && y >= 250) return 'Close-up: what happens at the scale of atoms.';
+if (x >= 510 && y >= 250) return 'Thermometer (log scale): ' + fmtT(T) + (cat === 'ferro' ? '. The red mark is the Curie temperature, ' + m.Tc + ' K.' : '.');
+if ((x >= 58 && x <= 90 || x >= 250 && x <= 282) && y >= 155 && y <= 300) return 'Pole piece of the electromagnet' + (Math.abs(Bapp) < 0.005 ? ' (no current, no field).' : ': ' + ((x < 170) === (Bapp > 0) ? 'north' : 'south') + ' pole.');
+if ((x >= 12 && x <= 66 || x >= 274 && x <= 328) && y >= 215 && y <= 330) return 'Coil: its current magnetizes the iron yoke. Reversing the current reverses B.';
+if (x >= 90 && x <= 250 && y >= 155 && y <= 300) return 'Gap: applied field ' + fmtTesla(Bapp) + ', pointing ' + (Bapp >= 0 ? 'right' : 'left') + '. Field lines bend ' + (cat === 'dia' ? 'around' : 'into') + ' the sample.';
+if (y >= 150) return 'Iron yoke: guides the flux from one pole around to the other.';
+return 'Above the poles the field quickly falls to zero, so only the bottom of the sample is in the field.';
+}
+canvas.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); set('mgtHoverReadout', describePoint(c[0], c[1])); });
+canvas.addEventListener('mouseleave', function() { set('mgtHoverReadout', 'Hover over the sample, the magnet or the graph to read values'); });
+canvas.addEventListener('touchstart', function(e) { var t = e.touches[0], c = canvasXY(t.clientX, t.clientY); set('mgtHoverReadout', describePoint(c[0], c[1])); }, { passive: true });
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('mgt_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+ROOT.classList.toggle('mgt_hc', hcMode); ROOT.classList.toggle('mgt_lm', lightMode); ROOT.classList.toggle('mgt_cb', cbMode);
+setBtnOn('btnHC', hcMode); setBtnOn('btnLight', lightMode); setBtnOn('btnCB', cbMode); setBtnOn('btnNarr', showNarr);
+var nb = el('btnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+var box = el('mgtNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate(false); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(''); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e = el('mgtSrAnnounce'); if (!e) return; e.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e.textContent = msg; }, 60); }
+/* ── Keyboard shortcuts ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+var tag = document.activeElement.tagName;
+if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+switch (e.key) {
+case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+case 's': case 'S': toggleSweep(); e.preventDefault(); break;
+case 'd': case 'D': demagnetize(); e.preventDefault(); break;
+case 'z': case 'Z': zeroField(); e.preventDefault(); break;
+}
+});
+document.addEventListener('visibilitychange', function() { if (!document.hidden) startLoop(); });
+if (reducedMotion) { var mn = el('mgtMotionNotice'); if (mn) mn.style.display = 'block'; }
+/* ── Boot ── */
+applyDisplay(); fillMatSelect(); updateButtons();
+scheduleUpdate(false);
+updateNarration('Ready. Raise the applied field with the slider, try each type of material, and change the temperature.');
+startLoop();
+return { onSlider: onSlider, setT: setT, setCat: setCat, onMatChange: onMatChange, toggleSweep: toggleSweep, demagnetize: demagnetize,
+ zeroField: zeroField, clearTrace: clearTrace, onOpt: onOpt, toggleHC: toggleHC, toggleLight: toggleLight, toggleCB: toggleCB, toggleNarr: toggleNarr };
+};
+</script>
+<script>
+var mgtSim = new mgtGen();
+</script>
+</main>
+</body>
+</html>

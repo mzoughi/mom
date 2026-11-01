@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations</title>
+</head>
+<body>
+<div id="snellRoot819">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y819" id="snellA11yBar819" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn819" id="snBtnHC819" onclick="snellA11y819.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn819" id="snBtnLM819" onclick="snellA11y819.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn819" id="snBtnCB819" onclick="snellA11y819.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sn_a11ybtn819 sn_a11yon819" id="snBtnNR819" onclick="snellA11y819.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<hr><h2>Divergent and a Convergent Lens</h2><hr>
+<div id="canvasesdiv" class="tbar819"><H3>Imaging the Virtual</H3></div>
+<div class="mcontent819">
+<canvas id="cv4819" width="820" height="380"><span style="color:red;">This browser doesn't support HTML 5 canvas!</span></canvas>
+</div>
+<div class="mcontent2819">
+<div style="border:2px solid gray;"><canvas id="cvo819" width="192" height="192"></canvas></div>
+<div style="border:2px solid black;"><canvas id="cve819" width="192" height="192"></canvas></div>
+<div style="border:2px solid gray;"><canvas id="cvi819" width="192" height="192"></canvas></div>
+</div>
+<!-- Narration bar -->
+<div id="snNarBar819" class="sn_narbar819" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbbar819">
+<div>
+`d = `<input class="slider819" type="range" id="kValue" min="100" max="300" value="200" step="25"
+oninput="DaCLens819.changed(this.value)" onchange="DaCLens819.changed(this.value)">
+<span class="txtDPL819"><span id="initialdValue4819">200</span> cm</span>
+</div>
+<div>
+<input type="checkbox" id="myCheck4819" onchange="DaCLens819.rst();">
+<label for="myCheck4819"><span>Toggle Lens Data</span></label>
+</div>
+</div>
+<div class="bbbar2819">
+<div class="left819">
+Move Screen:
+<input class="zslider819" type="range" id="screenSliderDC" min="1" max="900" step="1" value="100"
+ oninput="DaCLens819.moveScreen(this.value)" onchange="DaCLens819.moveScreen(this.value)">
+<span class="txtDPL819"><span id="screenPosDC">100</span> cm</span>
+Move Eye:
+<input class="zslider819" type="range" id="eyeSliderDC" min="1" max="900" step="1" value="200"
+ oninput="DaCLens819.moveEye(this.value)" onchange="DaCLens819.moveEye(this.value)">
+<span class="txtDPL819"><span id="eyePosDC">200</span> cm</span>
+</div>
+</div>
+<div class="bbar819">
+<div class="left819">Object</div>
+<div class="centerL819">
+po = <input class="slider819" type="range" id="dObjectValue" min="-200" max="-18" value="-50" step="1"
+ oninput="CLens819.showdObject(this.value)" onchange="CLens819.showdObject(this.value)">
+<span class="txtDPL819"><span id="initialdObjectValue">-50</span> cm</span>
+<br>ho = <input class="slider819" type="range" id="hObjectValue" min="-50" max="50" value="-100" step="2"
+ oninput="CLens819.showhObject(this.value)" onchange="CLens819.showhObject(this.value)">
+<span class="txtDPL819"><span id="initialhObjectValue">-100</span> mm</span>
+</div>
+<div class="centerR819">Lens</div>
+<div class="right819">
+df = <input class="slider819" type="range" id="fValue" min="50" max="100" value="70" step="1"
+oninput="DaCLens819.showf(this.value)" onchange="DaCLens819.showf(this.value)">
+<span class="txtDPL819"><span id="initialfValue4819">70</span> cm</span>
+<br>df2 = <input class="slider819" type="range" id="f2Value" min="50" max="100" value="85" step="1"
+ oninput="DaCLens819.showf2(this.value)" onchange="DaCLens819.showf2(this.value)">
+<span class="txtDPL819"><span id="initialfValue42819">85</span> cm</span>
+</div>
+</div>
+<hr>
+<p>In this case, the simulation shows a divergent lens and a convergent lens.</p>
+<ol type="a">
+<li>What type of image is obtained from the object placed at `p1=$po\ "cm"` in front of the first lens?<br /></li>
+<li>What will act as the object for the second lens?<br /></li>
+<li>What can you say about the object of the second lens?<br /></li>
+<li>What can you say about the image of the second lens?<br /></li>
+<li>What would be the correct expression for the object distance for the second lens?<br /></li>
+</ol>
+</div><!-- #snellRoot819 -->
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 823px; margin: 0; }
+#snellRoot819 { --sn-toolbar-bg: #222; }
+#snellRoot819 .sn_a11y819 {
+display: flex; gap: 6px; padding: 6px 8px;
+background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 823px;
+}
+#snellRoot819 .sn_a11ybtn819 {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+}
+#snellRoot819 .sn_a11ybtn819:hover { border-color: #00e8d0; color: #00e8d0; }
+#snellRoot819 .sn_a11yon819 { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#snellRoot819 .sn_narbar819 {
+width: 823px; min-height: 28px; padding: 5px 10px;
+background: #ffefc0; border-left: 4px solid #e0b040;
+font-size: .88rem; color: #333; font-style: italic;
+}
+.slider819  { width: 195px; height: 14px; display: inline-block; }
+.zslider819 { width: 145px; height: 14px; display: inline-block; }
+.txtDPL819  { background-color: blue; color: yellow; margin-left: 10px; padding-top: 2px;
+display: inline-block; font-size: 14px; text-align: center; height: 20px; width: 58px; }
+.tbar819    { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+.mcontent819  { height: 382px; }
+.mcontent2819 { height: 192px; text-align: center; display: flex; }
+.bbbar819  { height: 45px; padding: 5px; background-color: #6a9; text-align: right; display: flex; }
+.bbbar2819 { height: 45px; padding: 5px; background-color: #fce4ec; text-align: left; display: flex; }
+.bbbar2819 .left819 { width: 823px; padding: 5px; }
+.bbar819 { height: 60px; text-align: center; display: flex; }
+.bbar819 .left819    { background-color: #df9; width: 80px; padding: 5px; }
+.bbar819 .centerL819 { background-color: #df9; width: 332px; padding: 5px; }
+.bbar819 .centerR819 { background-color: #df9; width: 80px; padding: 5px; }
+.bbar819 .right819   { background-color: #df9; width: 332px; padding: 5px; }
+.footer819 { height: 60px; text-align: center; font-size: larger; display: flex; }
+.footer819 .left819   { width: 206px; padding: 2px; }
+.footer819 .center819 { width: 206px; padding: 4px; }
+.footer819 .right819  { width: 206px; padding: 4px; }
+.flex819 { min-height: 100px; background-color: #fec; padding: 4px; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var snellA11y819 = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+var CSETS = {
+def: {
+bg: '#ffd', axis: '#000', text: 'black',
+focal1: 'purple', focal2: 'cyan',
+rayR: 'red',     rayRg: '#fbb',
+rayB: 'blue',    rayBg: '#bbf',
+rayG: 'green',   rayGg: '#bfb',
+obj: '#933', img1: '#339', img2: '#393',
+eye: '#000'
+},
+hc: {
+bg: '#111', axis: '#fff', text: '#fff',
+focal1: '#ff88ff', focal2: '#00ffff',
+rayR: '#ff6600', rayRg: '#7b3300',
+rayB: '#44aaff', rayBg: '#1a4466',
+rayG: '#00ff88', rayGg: '#005533',
+obj: '#ff6600', img1: '#44aaff', img2: '#00ff88',
+eye: '#fff'
+},
+cb: { /* Okabe-Ito */
+bg: '#ffd', axis: '#000', text: 'black',
+focal1: '#cc79a7',   /* pink -- lens 1 */
+focal2: '#56b4e9',   /* sky blue -- lens 2 */
+rayR: '#d55e00', rayRg: '#e8b49e',
+rayB: '#0072b2', rayBg: '#99c4e0',
+rayG: '#009e73', rayGg: '#99d9c3',
+obj: '#d55e00', img1: '#0072b2', img2: '#009e73',
+eye: '#000'
+}
+};
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var filt = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+['cv4819','cvo819','cvi819','cve819'].forEach(function(id){
+var el = document.getElementById(id);
+if (el) el.style.filter = filt;
+});
+}
+function applyNarBar() {
+var nb = document.getElementById('snNarBar819');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR819');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR819', states.nr); }
+}
+function applyToolbar() {
+if (ROOT) ROOT.style.setProperty('--sn-toolbar-bg', (states.hc || states.lm) ? '#111' : '#222');
+}
+function apply() {
+if (!ROOT) return;
+applyCanvas(); applyNarBar(); applyToolbar();
+styleBtn('snBtnHC819', states.hc);
+styleBtn('snBtnLM819', states.lm);
+styleBtn('snBtnCB819', states.cb);
+}
+return {
+init: function() { ROOT = document.getElementById('snellRoot819'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+if (typeof DaCLens819 !== 'undefined') DaCLens819.rst();
+},
+isNarOn: function() { return states.nr; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('snNarBar819');
+if (!nb) return;
+nb.innerHTML = msg;
+if (window.MathJax) {
+if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+}
+},
+getColors: function() {
+if (states.cb) return CSETS.cb;
+if (states.hc) return CSETS.hc;
+return CSETS.def;
+}
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var DaCLens = function() {
+var xBase=110, yBase=110, xInit=20;
+var slope=0.4, x1Init=0, x1=xBase+x1Init;
+var d=200;
+var dObject=$po, hObject=$ho;
+var objectColor='#933';
+var f=-$df, f2=$df2;
+var dImage, hImage, dObject2, dImage2, hObject2, hImage2;
+var imageColor='#339', imageColor2='#393';
+var fMarker=0.29, lCurve=0.71, cfScale=0.25, rEnd=520;
+var scale=1;
+var lensKind=1, y1=yBase+80;
+var timer, runFlag=1;
+var lensRadius=160, radius=150;
+var screenP=100, eyeP=200, screenV=0, eyeV=0;
+var dash=false, px, py;
+function _narrate(msg) { snellA11y819.narrate(msg); }
+function _lens1Msg() {
+var pi1 = -dObject*f/(-dObject-f);
+return 'L1 (diverging): p<sub>o1</sub>=' + Math.abs(dObject).toFixed(0) +
+' cm, f<sub>1</sub>=' + f.toFixed(0) +
+' cm &rarr; p<sub>i1</sub>=' + pi1.toFixed(1) + ' cm' +
+(pi1 > 0 ? ' (real).' : ' (virtual).');
+}
+function _lens2Msg() {
+var pi1 = -dObject*f/(-dObject-f);
+var do2 = d - pi1;
+var pi2 = do2*f2/(do2-f2);
+return 'L2: p<sub>o2</sub>=' + do2.toFixed(1) +
+' cm (d&minus;p<sub>i1</sub>), f<sub>2</sub>=' + f2.toFixed(0) +
+' cm &rarr; p<sub>i2</sub>=' + pi2.toFixed(1) + ' cm' +
+(pi2 > 0 ? ' (real).' : ' (virtual).');
+}
+function showdObject(v) {
+document.getElementById("initialdObjectValue4819").innerHTML = v;
+dObject = Number(v); rst();
+_narrate(_lens1Msg() + ' ' + _lens2Msg());
+}
+function showhObject(v) {
+document.getElementById("initialhObjectValue4819").innerHTML = v;
+hObject = Number(v); rst();
+_narrate('h<sub>o</sub>=' + hObject + ' mm.');
+}
+function showf(v) {
+document.getElementById("initialfValue4819").innerHTML = v;
+f = -Number(v);   /* diverging: stored negative */
+rst();
+_narrate('f<sub>1</sub>=' + f.toFixed(0) + ' cm. ' + _lens1Msg() + ' ' + _lens2Msg());
+}
+function showf2(v) {
+document.getElementById("initialfValue42819").innerHTML = v;
+f2 = Number(v);   /* converging: stored positive */
+rst();
+_narrate('f<sub>2</sub>=' + f2.toFixed(0) + ' cm. ' + _lens2Msg());
+}
+function changed(v) {
+document.getElementById("initialdValue4819").innerHTML = v;
+d = Number(v); rst();
+_narrate('Lens separation d=' + d + ' cm. ' + _lens2Msg());
+}
+function moveScreen(v) {
+document.getElementById("screenPosDC").innerHTML = v;
+screenP = Number(v); screenV=1; rst();
+var pi2 = dImage2;
+if (isFinite(pi2) && pi2 > 0) {
+var diff = Math.abs(screenP - pi2);
+if (diff < 3) _narrate('Screen at ' + screenP + ' cm past L2 &mdash; image is sharp! (p<sub>i2</sub>&approx;' + pi2.toFixed(1) + ' cm)');
+else          _narrate('Screen at ' + screenP + ' cm past L2. Sharp image at p<sub>i2</sub>=' + pi2.toFixed(1) + ' cm (off by ' + diff.toFixed(0) + ' cm).');
+} else {
+_narrate('Screen at ' + screenP + ' cm past L2. Final image is virtual &mdash; screen cannot capture it.');
+}
+}
+function moveEye(v) {
+document.getElementById("eyePosDC").innerHTML = v;
+eyeP = Number(v); eyeV=1; rst();
+var pi2 = dImage2;
+if (isFinite(pi2) && pi2 > 0 && eyeP > pi2)
+_narrate('Eye at ' + eyeP + ' cm past L2 &mdash; past real image at p<sub>i2</sub>=' + pi2.toFixed(1) + ' cm. Image visible.');
+else if (isFinite(pi2) && pi2 < 0)
+_narrate('Eye at ' + eyeP + ' cm past L2 &mdash; virtual image at p<sub>i2</sub>=' + pi2.toFixed(1) + ' cm. Look back through lens system.');
+else
+_narrate('Eye at ' + eyeP + ' cm past L2, p<sub>i2</sub>=' + (isFinite(pi2)?pi2.toFixed(1):'?') + ' cm.');
+}
+function lensType(lens) {
+/* L1 is always diverging, L2 always converging in this sim */
+rst();
+}
+function rst() {
+window.clearTimeout(timer);
+index=-1; x1=xBase+x1Init; runFlag=1;
+drawMotion();
+}
+var canvas, ctx;
+canvas = document.getElementById("cv4819");
+ctx    = canvas.getContext("2d");
+var myCheck3 = document.getElementById("myCheck4819");
+var cvo=document.getElementById("cvo819");
+var cvi=document.getElementById("cvi819");
+var cve=document.getElementById("cve819");
+var ctxo=cvo.getContext("2d");
+var ctxi=cvi.getContext("2d");
+var ctxe=cve.getContext("2d");
+var index=-1;
+/* initial draw deferred to after snellA11y819.init() */
+function drawMotion() {
+if (index>=400) runFlag=0;
+if (runFlag==1) {
+ctx.clearRect(0,0,canvas.width,canvas.height);
+index+=1;
+var C = snellA11y819.getColors();
+objectColor  = C.obj;
+imageColor   = C.img1;
+imageColor2  = C.img2;
+ctx.fillStyle=C.bg;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+/* Lens 1 -- diverging (concave shape) */
+ctx.strokeStyle=C.axis; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(x1+0.71*radius-30,y1+lensRadius);
+ctx.lineTo(x1+0.71*radius+30,y1+lensRadius);
+ctx.quadraticCurveTo(x1+0.71*radius+30-(0.40*f+60),y1,x1+0.71*radius+30,y1-lensRadius);
+ctx.lineTo(x1+0.71*radius-30,y1-lensRadius);
+ctx.quadraticCurveTo(x1+0.71*radius-30+(0.4*f+60),y1,x1+0.71*radius-30,y1+lensRadius);
+ctx.stroke();
+/* Lens 2 */
+ctx.beginPath();
+ctx.moveTo(x1+d+lCurve*radius,y1+lensRadius);
+ctx.quadraticCurveTo(x1+d+lCurve*radius-cfScale*f2,y1,x1+d+lCurve*radius,y1-lensRadius);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(x1+d+lCurve*radius,y1+lensRadius);
+ctx.quadraticCurveTo(x1+d+lCurve*radius+cfScale*f2,y1,x1+d+lCurve*radius,y1-lensRadius);
+ctx.stroke();
+/* Principal axis */
+ctx.beginPath(); ctx.moveTo(0,y1); ctx.lineTo(canvas.width,y1); ctx.stroke();
+/* Focal points -- lens 1 (C.focal1) */
+ctx.strokeStyle=C.focal1; ctx.lineWidth=2;
+[x1+radius-fMarker*radius-scale*f,   x1+radius-fMarker*radius-2*scale*f,
+ x1+radius-fMarker*radius+scale*f,   x1+radius-fMarker*radius+2*scale*f].forEach(function(fx){
+ctx.beginPath(); ctx.arc(fx,y1,4,0,2*Math.PI,false);
+ctx.fillStyle=C.focal1; ctx.fill(); ctx.stroke();
+});
+/* Focal points -- lens 2 (C.focal2) */
+ctx.strokeStyle=C.focal2; ctx.lineWidth=2;
+[x1+d+radius-fMarker*radius-scale*f2,  x1+d+radius-fMarker*radius-2*scale*f2,
+ x1+d+radius-fMarker*radius+scale*f2,  x1+d+radius-fMarker*radius+2*scale*f2].forEach(function(fx){
+ctx.beginPath(); ctx.arc(fx,y1,4,0,2*Math.PI,false);
+ctx.fillStyle=C.focal2; ctx.fill(); ctx.stroke();
+});
+/* Compute images */
+dImage  = -dObject*f/(-dObject-f);
+hImage  = dImage*hObject/dObject;
+dObject2 = d - dImage;
+dImage2  = dObject2*f2/(dObject2-f2);
+hObject2 = hImage;
+hImage2  = -dImage2*hImage/dObject2;
+/* ── Rays ── */
+if (myCheck3.checked) {
+/* Second lens rays */
+var L2x = x1+d+radius-fMarker*radius;
+/* Parallel ray */
+ctx.strokeStyle=C.rayR; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(L2x-scale*dObject2,y1-scale*hObject2);
+ctx.lineTo(L2x,y1-scale*hObject2);
+slope=hObject2/f2;
+ctx.lineTo(L2x+rEnd,y1-scale*hObject2+slope*rEnd);
+ctx.stroke();
+if (dImage2<0) {
+ctx.strokeStyle=C.rayRg; ctx.beginPath();
+ctx.moveTo(L2x,y1-scale*hObject2);
+ctx.lineTo(L2x-rEnd,y1-scale*hObject2-slope*rEnd);
+ctx.stroke();
+}
+/* Focal ray */
+ctx.strokeStyle=C.rayG; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(L2x-scale*dObject2,y1-scale*hObject2);
+slope=-hObject2/(-dObject2+f2);
+ctx.lineTo(L2x,y1-scale*hObject2+slope*(scale*dObject2));
+ctx.lineTo(L2x+rEnd,y1-scale*hObject2+slope*(scale*dObject2));
+ctx.stroke();
+if (dImage2<0) {
+ctx.strokeStyle=C.rayGg; ctx.beginPath();
+ctx.moveTo(L2x,y1-scale*hObject2+slope*(scale*dObject2));
+ctx.lineTo(L2x-rEnd,y1-scale*hObject2+slope*(scale*dObject2));
+ctx.stroke();
+}
+/* Chief ray */
+ctx.strokeStyle=C.rayB; ctx.lineWidth=2;
+ctx.beginPath();
+var negob=false;
+if (dObject2<0) {
+ctx.moveTo(L2x,y1); negob=true;
+} else {
+ctx.moveTo(L2x-scale*dObject2,y1-scale*hObject2);
+}
+slope=hObject2/dObject2;
+var do2abs=Math.abs(dObject2);
+if (negob) ctx.lineTo(L2x+rEnd,y1-scale*hObject2+slope*(rEnd-scale*do2abs));
+else        ctx.lineTo(L2x+rEnd,y1-scale*hObject2+slope*(rEnd+scale*dObject2));
+ctx.stroke();
+if (dImage2<0) {
+ctx.strokeStyle=C.rayBg; ctx.beginPath();
+ctx.moveTo(L2x-scale*dObject2,y1-scale*hObject2);
+ctx.lineTo(L2x-rEnd,y1-scale*hObject2-slope*(rEnd-scale*dObject2));
+ctx.stroke();
+}
+} else {
+/* First lens rays */
+var L1x = x1+radius-fMarker*radius;
+/* Parallel ray -- diverging L1 */
+ctx.strokeStyle=C.rayR; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(L1x+scale*dObject,y1-scale*hObject);
+ctx.lineTo(L1x,y1-scale*hObject);
+slope=hObject/f;  /* f negative → diverges */
+ctx.lineTo(L1x-dObject,y1-scale*hObject+slope*(-dObject));
+ctx.stroke();
+/* back-trace to virtual image */
+ctx.strokeStyle=C.rayRg; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(L1x,y1-scale*hObject);
+ctx.lineTo(L1x+dImage,y1-scale*hObject-slope*(-dImage));
+ctx.stroke();
+/* Focal ray -- diverging L1 */
+ctx.strokeStyle=C.rayG; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(L1x+scale*dObject,y1-scale*hObject);
+slope=hObject/(dObject+f);
+ctx.lineTo(L1x,y1-scale*hObject+slope*(scale*dObject));
+ctx.lineTo(L1x+rEnd,y1-scale*hObject+slope*(scale*dObject));
+ctx.stroke();
+/* back-trace */
+ctx.strokeStyle=C.rayGg; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(L1x,y1-scale*hObject+slope*(scale*dObject));
+ctx.lineTo(L1x+dImage,y1-scale*hObject+slope*(scale*dObject));
+ctx.stroke();
+/* Chief ray -- diverging L1 (straight through, no bend) */
+ctx.strokeStyle=C.rayB; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(L1x+scale*dObject,y1-scale*hObject);
+slope=-hObject/dObject;
+ctx.lineTo(L1x+rEnd,y1-scale*hObject+slope*(rEnd-scale*dObject));
+ctx.stroke();
+}
+/* Object arrow (lens 1) */
+var L1x=x1+radius-fMarker*radius;
+if (hObject>0) { px=L1x+scale*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(scale*hObject,Math.PI/2); }
+if (hObject<0) { px=L1x+scale*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(-scale*hObject,Math.PI*1.5); }
+/* Image 1 arrow */
+var L1xp=x1+radius-fMarker*radius;
+if (hImage>0) { if(dImage<0||dObject2<0)dash=true; px=L1xp+scale*dImage;py=y1; ctx.strokeStyle=imageColor; arrowDraw(scale*hImage,Math.PI*0.5); if(dash)dash=false; }
+if (hImage<0) { if(dImage<0||dObject2<0)dash=true; px=L1xp+scale*dImage;py=y1; ctx.strokeStyle=imageColor; arrowDraw(-scale*hImage,Math.PI*1.5); if(dash)dash=false; }
+/* Image 2 arrow */
+var L2xp=x1+d+radius-fMarker*radius;
+if (hImage2>0) { if(dImage2<0)dash=true; px=L2xp+scale*dImage2;py=y1; ctx.strokeStyle=imageColor2; arrowDraw(scale*hImage2,Math.PI*0.5); if(dash)dash=false; }
+if (hImage2<0) { if(dImage2<0)dash=true; px=L2xp+scale*dImage2;py=y1; ctx.strokeStyle=imageColor2; arrowDraw(-scale*hImage2,Math.PI*1.5); if(dash)dash=false; }
+/* Screen line -- right of lens 2 */
+ctx.strokeStyle='gray'; ctx.lineWidth=1;
+ctx.beginPath();
+ctx.moveTo(L2xp+scale*screenP, 10);
+ctx.lineTo(L2xp+scale*screenP, canvas.height-10);
+ctx.stroke();
+/* Eye -- right of lens 2 */
+if (eyeV) { drawSideEye(ctx, L2xp+scale*eyeP, 190, 15, 'left', C.eye); }
+/* Canvas text labels */
+ctx.font='14pt Calibri'; ctx.fillStyle=C.text; ctx.textAlign='left';
+if (myCheck3.checked) {
+ctx.fillText('d\u2092\u2082 = '+dObject2.toFixed(2)+' cm',  20, 330);
+ctx.fillText('h\u2092\u2082 = '+hObject2.toFixed(2)+' mm',  20, 360);
+ctx.fillText('d\u1D62\u2082 = '+dImage2.toFixed(2)+' cm',  250, 330);
+ctx.fillText('h\u1D62\u2082 = '+hImage2.toFixed(2)+' mm',  250, 360);
+} else {
+ctx.fillText('d\u2092\u2081 = '+(-dObject).toFixed(2)+' cm', 20, 330);
+ctx.fillText('h\u2092\u2081 = '+hObject.toFixed(2)+' mm',    20, 360);
+ctx.fillText('d\u1D62\u2081 = '+dImage.toFixed(2)+' cm',    250, 330);
+ctx.fillText('h\u1D62\u2081 = '+hImage.toFixed(2)+' mm',    250, 360);
+}
+/* Sub-canvases */
+/* Object view (lens 1 object) */
+ctxo.clearRect(0,0,cvo.width,cvo.height);
+ctxo.fillStyle="black";
+drawF(ctxo,cvo.width/2,cvo.height/2,Math.abs(hObject)*4);
+ctxo.fillStyle="blue"; ctxo.font="12px Arial"; ctxo.textAlign="left";
+ctxo.fillText("object",2,14);
+/* Screen view (final image from lens 2) */
+ctxi.clearRect(0,0,cvi.width,cvi.height);
+if (dImage2 > 0) {
+var flipSign = (hImage2 * hObject > 0) ? 1 : -1;
+ctxi.save(); ctxi.translate(cvi.width/2,cvi.height/2); ctxi.scale(flipSign,flipSign);
+ctxi.filter="blur("+(Math.abs(screenP-dImage2)/5)+"px)";
+ctxi.fillStyle="black";
+drawF(ctxi,0,0,Math.abs(hImage2)*4);
+ctxi.restore(); ctxi.filter="none";
+}
+/* else: blank -- virtual final image can't appear on screen */
+ctxi.fillStyle="blue"; ctxi.font="12px Arial"; ctxi.textAlign="left";
+ctxi.fillText("screen image",2,14);
+/* Eye view (final image from lens 2) */
+ctxe.clearRect(0,0,cve.width,cve.height);
+var flipSign = (hImage2 * hObject > 0) ? 1 : -1;
+ctxe.save(); ctxe.translate(cve.width/2,cve.height/2);
+ctxe.scale(flipSign, flipSign);
+if (dImage2 > 0 && eyeP < dImage2) ctxe.filter="blur("+(Math.abs(eyeP-dImage2)/5)+"px)";
+ctxe.fillStyle="black";
+drawF(ctxe,0,0,Math.abs(hImage2)*4);
+ctxe.restore(); ctxe.filter="none";
+ctxe.fillStyle="blue"; ctxe.font="12px Arial"; ctxe.textAlign="left";
+ctxe.fillText("eye view",2,14);
+}
+}
+function drawF(c,x,y,size) {
+c.beginPath();
+var s=(hObject/Math.abs(hObject))*size/100;
+c.moveTo(x-20*s,y-50*s); c.lineTo(x+20*s,y-50*s); c.lineTo(x+20*s,y-35*s);
+c.lineTo(x,y-35*s); c.lineTo(x,y-10*s); c.lineTo(x+15*s,y-10*s);
+c.lineTo(x+15*s,y+5*s); c.lineTo(x,y+5*s); c.lineTo(x,y+50*s);
+c.lineTo(x-20*s,y+50*s); c.closePath(); c.fill();
+}
+function arrowDraw(r,phi) {
+var xf=px+r*Math.cos(phi), yf=py-r*Math.sin(phi);
+arrow(px,py,xf,yf,3);
+}
+function arrow(x1,y1,x2,y2,w,col,txt,spc) {
+if(!w)w=1; if(!txt)txt=""; if(!spc)spc=5;
+if(!col)col=ctx.strokeStyle;
+if(dash){ctx.setLineDash([5,3]);}
+ctx.fillStyle=col; ctx.strokeStyle=col;
+var dx=x2-x1,dy=y2-y1,length=Math.sqrt(dx*dx+dy*dy);
+if(length===0)return;
+dx/=length; dy/=length;
+var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;
+var h=0.5*w+3.5;
+var xSp1=xSp-h*dy,ySp1=ySp+h*dx,xSp2=xSp+h*dy,ySp2=ySp-h*dx;
+xSp=x2-0.6*s*dx; ySp=y2-0.6*s*dy;
+ctx.beginPath(); ctx.lineWidth=w;
+ctx.moveTo(x1,y1);
+if(length<5)ctx.lineTo(x2,y2); else ctx.lineTo(xSp,ySp);
+ctx.stroke();
+if(length<5)return;
+ctx.beginPath(); ctx.fillStyle=ctx.strokeStyle;
+ctx.moveTo(xSp,ySp); ctx.lineTo(xSp1,ySp1); ctx.lineTo(x2,y2); ctx.lineTo(xSp2,ySp2);
+ctx.closePath(); ctx.fill();
+var tspc=x2<=x1?-(3*spc):2*spc;
+ctx.fillText(txt,x2+tspc,y2+spc);
+if(dash){ctx.setLineDash([5,0]);}
+}
+function drawSideEye(ctx,cx,cy,scale,look,color) {
+look=look||'left'; color=color||'#000';
+var sign=(look==='left')?1:-1;
+var tipX=cx+scale*1.2*sign, leftX=cx-scale*1.2*sign;
+var topY=cy-scale*0.9, botY=cy+scale*0.9;
+var ctrlOffsetX=cx+scale*0.6*sign, topCtrlY=cy-scale*0.15, botCtrlY=cy+scale*0.15;
+ctx.lineCap='round'; ctx.lineJoin='round';
+ctx.strokeStyle=color; ctx.lineWidth=Math.max(1,scale*0.2);
+ctx.beginPath(); ctx.moveTo(leftX,botY);
+ctx.quadraticCurveTo(ctrlOffsetX,topCtrlY,tipX,cy); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(leftX,topY);
+ctx.quadraticCurveTo(ctrlOffsetX,botCtrlY,tipX,cy); ctx.stroke();
+var irisCX=cx-sign*(scale*0.6+5);
+ctx.beginPath(); ctx.ellipse(irisCX,cy,scale*0.25,scale*0.7,0,0,Math.PI*2);
+ctx.fillStyle=color; ctx.fill();
+ctx.beginPath(); ctx.ellipse(cx-sign*(scale*0.6+6),cy-5,scale*0.1,scale*0.14,0,0,Math.PI*2);
+ctx.fillStyle="white"; ctx.fill();
+}
+function runMotion() { drawMotion(); }
+return {
+rst, showdObject, changed, showhObject, showf, showf2, moveScreen, moveEye,
+redraw: function(){ rst(); }
+};
+};
+</script>
+<script>
+var DaCLens819 = new DaCLens();
+snellA11y819.init();
+window.setTimeout(function(){
+DaCLens819.rst();
+snellA11y819.narrate('Divergent + Convergent Lenses ready. p<sub>o1</sub>=$po cm, f<sub>1</sub>=&minus;$df cm (diverging), f<sub>2</sub>=$df2 cm (converging), d=200 cm. The virtual image of lens 1 acts as the object for lens 2.');
+}, 0);
+</script>
+</body>
+</html>

@@ -1,1 +1,574 @@
-<html><body></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta content="SIM Website for Taha Mzoughi." name=description>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,electricity, mechanics, optics, magnetism, nuclear, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   <title>Physics Simulations-Taha Mzoughi</title>
+<style>
+:root{
+--accent:#005a9c;
+--bg:#f5f7fa;
+--card:#ffffff;
+--border:#d7dce2;
+}
+*{box-sizing:border-box;}
+body{
+font-family:Segoe UI, Arial, sans-serif;
+background:var(--bg);
+margin:0;
+padding:30px;
+}
+header{margin-bottom:25px;}
+h1{
+margin:0;
+color:var(--accent);
+}
+.stats{
+margin-top:8px;
+color:#555;
+font-size:1rem;
+}
+#searchBox{
+width:100%;
+max-width:500px;
+margin-top:20px;
+padding:12px;
+border:1px solid #ccc;
+border-radius:8px;
+font-size:1rem;
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+gap:20px;
+}
+.category{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:12px;
+padding:18px;
+box-shadow:0 2px 5px rgba(0,0,0,0.08);
+}
+.category-title{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:12px;
+border-bottom:2px solid #edf2f7;
+padding-bottom:8px;
+}
+.category-title h2{
+margin:0;
+color:var(--accent);
+font-size:1.2rem;
+}
+.category-count{
+background:#edf5ff;
+color:var(--accent);
+padding:3px 8px;
+border-radius:999px;
+font-size:0.9rem;
+font-weight:600;
+}
+.ncategory{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:12px;
+padding:18px;
+box-shadow:0 2px 5px rgba(0,0,0,0.08);
+}
+.sim-list{
+list-style:none;
+padding:0;
+margin:0;
+}
+.sim-list li{
+margin:8px 0;
+color:#228;
+}
+.sim-list a{
+display:block;
+padding:4px 6px;
+border-radius:6px;
+color:#222;
+text-decoration:none;
+transition:all 0.2s ease;
+}
+.sim-list a:hover{
+background:#edf5ff;
+color:var(--accent);
+}
+.hidden{
+display:none;
+}
+.no-results{
+display:none;
+margin-top:20px;
+color:#666;
+font-style:italic;
+}
+</style></head>
+<body>
+<header>
+<h1>Physics Simulations</h1>
+<div class="stats">
+Active SIMs:
+<strong id="totalSimCount">0</strong></div>
+<input
+type="text"
+id="searchBox"
+placeholder="Search simulations...">
+</header>
+<hr>
+ <p>These SIMS are inspired by the amazing work of many giants in developing interactive science simulations. <a href="#" id="toggleLink">Click here</a> to visit their great Work. 
+  They are being developed with help from the AI Anthropic Claude. These two PDFs provide snapshots of the chats that were used in developing two of the SIMS listed here 
+  <a href=go-mirage-inferior-superior.html target=go019>Mirage</a> and <a href=po-thin-film-wedge-newton-rings.html target=po4>Thin Film: Wedge & Newton's Rings</a>: 
+  <a href=claude-sim-development-based-on-images-mirage.pdf target=_pdf>PDF of the Chat for developing Mirage</a>,  <a href=claude-sim-development-based-on-older-SIM-thin-film-wedge.pdf target=_pdf>PDF of the Chat for developing the thin film wedge</a>. 
+  I am using the Pro subscription version of the AI. The "Continue" statements in the PDF mark the interruptions that happened when my plan quotas were reached.
+ To know a little more about me, <a href="#" id="toggleLink2">click here</a> to see what ChatGPT "thought" in September 2026.</p>
+  <p><a href=https://myopenmath.org target=_mom>MyOpenMath.org (MOM)</a> versions of these SIMS are are available there.</p>
+<p style=color:#228>The list currently includes items that are <span style="color:green;background-color:#FFC;font-size:.75em;">highlighted</span> as reminders for me for SIMS in myOpenMath that I am working on porting here as well as ideas for new SIMS.</p>
+<hr>
+ <div id="myDiv" class="hidden">
+<ul>
+<p>My work on SIMS is inspired by the amazing work of many giants in developing interactive science simulations. Everything that is posted here benefited from enhancements from Anthropic's Claude AI. Some were originally developed from scratch either recently, or many years back by me. AI's role was to add accessibility features and clean/streamline the code. Some simulations were started from scratch with AI tasked to doing all the coding. I occasionally had to fix the final code. Other simulations were started by providing AI with example simulations from the list below and laying out what I hope to do in the new simulations. </p>
+<p>Here are links to sites that have inspired me the most:</p>
+<hr>Let me start by mentioning my colleague and mentor Professor <a href=https://hfa1.physics.msstate.edu/students.html target=_o>John Foley</a> from Mississippi State University. We worked on developing WebTOP. If time allows, I might try to see if I can get Claude to help me revive it. It involved simulations covering waves and optics.<hr>
+The second colleague that I worked with for a little while is Professor  <a href=https://physics.uncg.edu/about/history/retired-faculty/ target=_o>Gerry Meisner</a> from University of North Carolina-Greensboro. Gerry helped me learn to put more focus on ensuring the SIMs do not only expose the learners to simple ideal conditions.<hr>
+<li><a href="https://physics.bu.edu/~duffy/HTML5/index.html" target="_blank">Duffy' Simulation list</a></li>
+<li><a href="https://www.walter-fendt.de/html5/phen/" target="_blank">Fendt' Simulation list</a></li>
+<li><a href="https://www.compadre.org/osp/EJSS/" target="_blank">Christian' Simulation list</a></li>
+<li><a href="https://www.compadre.org/osp/search/browse.cfm?browse=j" target="_blank">Christian' Book</a></li>
+<li><a href="https://ophysics.com/" target="_blank">Geogebra-OPhysics</a></li>
+<li><a href="https://simuphysics.com/" target="_blank">SimuPhysics</a></li>
+<li><a href="https://phet.colorado.edu/en/simulations/filter?subjects=physics&amp;type=html" target="_blank">PhET Simulations</a></li>
+<li><a href="https://javalab.org/en/" target="_blank">Javalab</a></li>
+<li><a href="https://sg.iwant2study.org/ospsg/index.php/interactive-resources/physics" target="_blank">Physics-Open Educational Resources/Singapore(Lookang)</a></li>
+<li><a href="https://github.com/lookang" target="_blank">Lookang' Simulation list</a></li>
+<li><a href="https://www.myphysicslab.com/" target="_blank">myPhysicsLab</a></li>
+<li><a href="https://www.physicsclassroom.com/interactive" target="_blank">Interactives-Physicsclassroom</a></li> 
+<li><a href="https://www.compadre.org/IntroPhys/items/detail.cfm?ID=3346" target="_blank">NTNU JAVA Virtual Physics Lab: Java Simulations </a></li> 
+<li><a href="https://en.wikipedia.org/wiki/Easy_Java_Simulations" target="_blank">Easy Java Simulations by Francisco Esquembre</a></li> 
+<li><a href=https://www.physicslens.com/ target=_l23>https://www.physicslens.com/ (Seng Kwang Tan)</a></li>
+<li><a href=https://phydemo.app/ target=_l24>https://phydemo.app/</a></li>
+<li><a href=https://physics-simulations.org/ target=_l24>https://physics-simulations.org/</a></li>
+</ul>
+</div>
+<div id="myDiv2" class="hidden">
+<img src=chatGPT-TahaMzoughi600x900.png width=600>
+</div>
+<div class="grid">
+<!--Measurements--><section class='category'><div class='category-title'><h2>Measurements</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='measurement-unit-conversion-calculator.html' target=mus1>Unit Conversion Calculator</a>
+<li><a href='tbb/' target=mus2>Triple Beam Balance</a>
+<li><a href='measurement-digital-scale.html' target=mus5>Digital Scale</a>
+<li><a href='measurement-ruler.html' target=mus5>Ruler 📳</a>
+<li><a href='measurement-graduated-cylinder-meniscus.html' target=mus15>Graduated Cylinder Meniscus</a>
+<li><a href='measurement-vernier_caliper.html' target=mus5>Vernier Caliper 📳</a>
+<li><a href='measurement-vernier_caliper-V2.html' target=mus5>Vernier Caliper - V2 📳</a>
+<li><a href='measurement-micrometer.html' target=mus5>Micrometer 📳</a>
+<li><a href='measurement-image_analyzer_prototype.html' target=mus6>Data Collection From Image</a>
+<li><a href='measurement-Video-Analysis.html' target=mus4>Video Analysis</a>
+<li><a href='measurement-Video-Analysis-of-4-Objects.html' target=mus5>Video Analysis of up to 4 Objects</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:   uncertainty-digital scale reading [] Triple Beam Balance-adding a container  [] Triple Beam Balance Large Masses</li>
+</ul></section>
+<!--Electrical Measurements--><section class='category'><div class='category-title'><h2>Electrical Measurements</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='measurement-resistor-color-code-calculator.html' target=emus3>Resistor Color Code Calculator</a>
+<li><a href='measurement-multimeter.html' target=emus4>Multimeter 📳</a>
+<li><a href='measurement-multimeter-resistance.html' target=emus5>Multimeter-Resistance Mode</a>
+<li><a href='measurement-multimeter-capacitance.html' target=emus6>Multimeter-Capacitance Mode</a>
+<li><a href='measurement-multimeter-voltage.html' target=emus7>Multimeter-Voltage Mode</a>
+<li><a href='measurement-multimeter-current.html' target=emus8>Multimeter-Current Mode</a>
+<li><a href='measurement-multimeter-RC-Circuit.html' target=emus9>Measuring # Quantities in RC circuit</a>
+</ul></section>
+<!--Vectors--><section class='category'><div class='category-title'><h2>Vectors</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='vectors-graphical-addition.html' target=vc01>Graphical Vector Addition</a>
+<li><a href='vectors-force-table.html' target=vc02>Force/Vector Table</a>
+<li><a href='vectors-right-hand-rule-3d.html' target=vc03>3 Finger Right Hand Rule 📳</a>
+<li><a href='vectors-right-hand-rule-curl-3d.html' target=vc04>Right Hand Rule 📳</a>
+<li><a href='vectors-delivery-robot.html' target=vc05>Delivery Robot 📳</a>
+</ul></section>
+<!--1D Kinematics--><section class='category'><div class='category-title'><h2>1D Kinematics</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='k-movingcart.htm' target=sim3>Graphing Manual Motion</a>
+<li><a href='k-motiondiag-tutorial.html' target=_k10>Velocity & Acceleration Tutorial</a>
+<li><a href='k-posgraph-tutorial.html' target=_k11>Position Graph Tutorial</a>
+<li><a href='k-posgraph-match.html' target=_k13>Position Graph Matching Excercise 📳</a>
+<li><a href='k-velgraph-tutorial.html' target=_k12>Velocity Graph Tutorial</a>
+<li><a href='k-vel-acc-from-pos.html' target=_k14>Getting Vel. and Acc. Graph from Pos. 📳</a>
+<li><a href='k-pos-acc-from-vel.html' target=_k15>Getting Pos. and Acc. Graph from Vel. 📳</a>
+<li><a href='k-pos-vel-from-acc.html' target=_k16>Getting Pos. and Vel. Graph from Acc. 📳</a>
+<li><a href='k-rollingdownincline.html' target=k01>Cart Rolling Down Incline</a>
+<li><a href='k-springlaunchedupdownincline.html' target=k02>Cart Spring Launched Up Incline `v(t)`</a>
+<li><a href='k-springlaunchedupdowninclineV2.html' target=k03>Cart Spring Launched Up Incline `a(sin(theta))`</a>
+</ul></section>
+<!--2D & 3D Kinematics--><section class='category'><div class='category-title'><h2>2D & 3D Kinematics</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='k-2DMotion_Position.html' target=pmsim1>Projectile Motion-Position Vector</a>
+<li><a href='k-2DMotion_Velocity.html' target=pmsim2>Projectile Motion-Velocity Vector</a>
+<li><a href='k-2DMotion_Acceleration.html' target=pmsim3>Projectile Motion-Acceleration Vector</a>
+<li><a href='k-relative-motion-boat_river.html' target=pmsim3>Relative Motion-Boat on a River</a>
+<li><a href='k-relative-motion-drone_wind.html' target=pmsim3>Relative Motion-The Wind and the Drone</a>
+<li><a href='k-BallDroppedFromTruck.html' target=pmsim3>Projectile & Relative Motion-Ball Dropped From Moving Truck</a>
+<li><a href='k-Video-Analysis-GalileoDrop.html' target=sim3>Video Analysis-Galileo Drop</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  kinematics-Moving Block by hand to replicate graph [] kinematics-Moving Block by hand</li>
+</ul></section>
+<!--Rotational Kinematics--><section class='category'><div class='category-title'><h2>Rotational Kinematics</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+</ul></section>
+<!--Forces--><section class='category'><div class='category-title'><h2>Forces</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='force-fbd_builder.html' target=_f04>Free Body Diagram Builder</a>
+<li><a href='force-onebody-N2L-Tutorial.html' target=_f06>Newton's Second Law Tutorial</a>
+<li><a href='force-twobody-N2L-Tutorial.html' target=_f07>Newton's Second Law Tutorial 2</a>
+<li><a href='force-friction-probe.html' target=_f01>Friction with a Force Probe 📳</a>
+<li><a href='force-friction-incline.html' target=_f02>Friction with Incline 📳</a>
+<li><a href='force-friction-pulley.html' target=_f03>Friction with Pulley</a>
+<li><a href='force-hooke.html' target=_f13>Hooke's Law 📳</a>
+<li><a href='force-gravitation-tides.html' target=_f13>Gravity - Tides</a>
+<li><a href='statics-tensegrity-3d.html' target=_f13>Tensegrity Structures</a>
+</ul></section>
+<!--Torque--><section class='category'><div class='category-title'><h2>Torque</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='rot-physical-pendulum-design.html' target=_f11>Center of Mass - Moment of Inertia 📳</a>
+<li><a href='force-balance_beam.html' target=_f11>Torque: Beam Balance 📳</a>
+<li><a href='force-balance_beam-mystery.html' target=_f10>Torque: Beam Balance V2</a>
+<li><a href='rot-sliding-to-rolling.html' target=_f14>Sliding to Rolling 📳</a>
+<li><a href='rot-incline-rolling-slipping.html' target=_f15>Rolling & Slipping 📳</a>
+</ul></section>
+<!--Momentum--><section class='category'><div class='category-title'><h2>Momentum</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='momentum-1d-elastic.html' target=mom01>1D Elastic Collision 📳</a>
+<li><a href='momentum-1d-inelastic.html' target=mom02>1D Inelastic Collision 📳</a>
+<li><a href='momentum-Video-Analysis-InelasticCollision.html' target=mom5>Video Analysis of an inelastic Collision</a>
+<li><a href='momentum-1d-impulse.html' target=mom03>1D Impulse 📳</a>
+<li><a href='momentum-1d-ballistic.html' target=mom07>Ballistic Pendulum 📳</a>
+<li><a href='momentum-1d-ballistic-no-catch.html' target=mom08>No Catch Ballistic Pendulum 📳</a>
+<li><a href='momentum-2d-collisions-billiard.html' target=mom09>2D Elastic/Inelastic Collision 📳</a>
+</ul></section>
+<!--Angular Momentum--><section class='category'><div class='category-title'><h2>Angular Momentum</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='momentum-angular-1-two-spinning-balls.html' target=mom10>Angular Momentum 📳</a>
+<li><a href='momentum-angular-3-two-spinning-balls-3d.html' target=mom10>Angular Momentum in 3D 📳</a>
+<li><a href='momentum-2d-collisions-spin-billiard.html' target=mom10>Linear & Angular Momentum Collisions 📳</a>
+<li><a href='momentum-angular-2-ball-hits-pendulum.html' target=mom10>How Sweet it is! 📳</a>
+<li><a href='rot-angular-momentum-spin.html' target=mom11>Rotational Angular Momentum - Stool & Dumbells 📳</a>
+<li><a href='rot-angular-momentum-bicycle-wheel.html' target=mom12>Rotational Angular Momentum - Stool & Bicycle Wheel 📳</a>
+<li><a href='rot-merry-go-round.html' target=mom15>Merry-Go-Round 📳</a>
+<li><a href='rotation-gyroscope-3d.html' target=mom13>Gyroscope</a>
+<li><a href='rotation-helicopter-3d.html' target=mom14>Helicopter</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:   ball, physical pendulum collisions, rotating platform</li>
+</ul></section>
+<!--Energy--><section class='category'><div class='category-title'><h2>Energy</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='energy-2d-toss.html' target=en01>2D Toss 📳</a>
+<li><a href='energy-atwood.html' target=en02>Atwood Machine 📳</a>
+<li><a href='energy-spring-horizontal-track.html' target=en09>Spring Propulsion 📳</a>
+<li><a href='energy-spring-inclined-track.html' target=en08>Spring Propulsion Up an Incline 📳</a>
+<li><a href='energy-rolling-down-incline.html' target=en06>Rolling Down and Incline 📳</a>
+<li><a href='energy-rolling_race.html' target=en09>Rolling Race 📳</a>
+<li><a href='energy-sliding-down-incline.html' target=en07>Sliding Down and Incline 📳</a>
+<li><a href='energy-sliding_race.html' target=en08>Sliding Race 📳</a>
+<li><a href='energy-joule_calorimeter.html' target=en09>Calorimeter 📳</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  Video Tracking of 2d motion [] Video Tracking of of rolling down an incline [] Video Tracking of of rolling up and down an incline Lab [] Video Tracking of of rolling up and down an incline [] Atwood Machine With Two Pulleys-Energy-Friction-Kinematics</li>
+</ul></section>
+<!-- Simple Harmonic Motion-SHM--><section class='category'><div class='category-title'><h2> Simple Harmonic Motion-SHM</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='shm-h-spring.html' target=shm01>Horizontal Spring 📳</a>
+<li><a href='shm-h-spring-damped.html' target=shm01>Damped Horizontal Spring 📳</a>
+<li><a href='shm-v-spring.html' target=shm01>Vertical Spring 📳</a>
+<li><a href='shm-v-spring-damped.html' target=shm01>Damped Vertical Spring 📳</a>
+<li><a href='shm-pendulum.html' target=shm01>Simple Pendulum 📳</a>
+<li><a href='shm-physical-pendulum.html' target=shm11>Physical Pendulum 📳</a>
+<li><a href='shm-pendulum-damped.html' target=shm01>Damped Simple Pendulum 📳</a>
+<li><a href='shm-physical-pendulum-damped.html' target=shm12>Damped Physical Pendulum 📳</a>
+<li><a href='shm-fit-pendulum-damped.html' target=shm01>Data Fit of Damped Pendulum 📳</a>
+<li><a href='shm-h-spring-driven-resonance.html' target=shm12>Driven SHM/Resonance - Horizantal Spring 📳</a>
+<li><a href='shm-v-spring-driven-resonance.html' target=shm11>Driven SHM/Resonance - Vertical Spring 📳</a>
+<li><a href='shm-foucault-pendulum-3d.html' target=shm12>Foucault Pendulum</a>
+</ul></section>
+<!--1D-Waves--><section class='category'><div class='category-title'><h2>1D-Waves</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='wave-properties-rope.html' target=wd1>Transverse Wave Properties for a Rope 📳</a>
+<li><a href='wave-slinky.html' target=wd12>Longitudinal Wave Properties for a Slinky</a>
+<li><a href='wave-properties-rope-boundary.html' target=wd13>Transverse Wave Properties for a Two Rope Setup 📳</a>
+<li><a href='wave-slinky-boundary.html' target=wd14>Longitudinal & Transverse Wave Properties for a Two Slinky Setup</a>
+<li><a href='wave-slinky-boundary2.html' target=wd15>Longitudinal & Transverse Wave Properties for a Two Slinky Setup-Slinkies are closer to lab settings</a>
+<li><a href='wave-pulse-properties-rope-end-boundary.html' target=wd16>Wave Pulse Motion in a Rope 📳</a>
+<li><a href='wave-damped-pulse-properties-rope-boundary.html' target=wd17>Wave Damped Pulse Motion in a Rope 📳</a>
+<li><a href='wave-damped-pulse-properties-rope-boundary-fixed.html' target=wd16>Pulse Motion in a Rope-V1 (fixed end) 📳</a>
+<li><a href='wave-damped-pulse-properties-rope-boundary-free.html' target=wd16>Pulse Motion in a Rope-V2 (free end) 📳</a>
+<li><a href='wave-pulse-properties-rope-boundary.html' target=wd18>Pulse Motion in a Two Rope Setup 📳</a>
+<li><a href='wave-pulse-properties-slinky-boundary.html' target=wd19>Pulse Motion in a Two Slinky Setup 📳</a>
+<li><a href='wave-pulse-interference-rope.html' target=wd20>Pulse Interference/Addition 📳</a>
+<li><a href='wave-pulse-interference-addition.html' target=wd21>Pulse Interference/Addition V2 📳</a>
+<li><a href='wave-standing_wave_resonance.html' target=wd22>Standing Waves 📳</a>
+<li><a href='wave-resonance-rods.html' target=wd23>Standing Waves - Resonance Rods 📳</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  Standing Waves-1-wave superposition [] Standing Waves-3-Wave Reflections-2 wavelengths [] Standing Waves-4-Wave Reflections-1/2 wavelength [] Standing Waves-5-rod [] Standing Waves-6-string/rope [] Standing Waves-7-air column [] Standing Waves-Wave Reflections-2</li>
+</ul></section>
+<!--2&3D-Waves--><section class='category'><div class='category-title'><h2>2&3D-Waves</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='wave2-ripple_tank.html' target=wd2>Ripple Tank</a>
+<li><a href='wave2-reflection_refraction_ripple-tank.html' target=wd22>Reflection/Refraction on a Ripple Tank</a>
+<li><a href='wave2-chladni.html' target=wd23>Chladni plates</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  single strips</li>
+</ul></section>
+<!--Sound--><section class='category'><div class='category-title'><h2>Sound</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='wave-sound.html' target=wd11>Longitudinal Wave Properties for Sound</a>
+<li><a href='wave-doppler_effect.html' target=wd3>The Doppler Effect</a>
+<li><a href='wave-doppler_effect2.html' target=wd4>The Doppler Effect 2</a>
+<li><a href='wave-shock_waves.html' target=wd5>Shock Waves</a>
+<li><a href='wave-straw_reed_length.html' target=sd01>Sound/Music from a Drinking Straw</a>
+<li><a href='wave-straw_flute_holes.html' target=sd02>Sound/Music: Drinking Straw Flute</a>
+<li><a href='wave-straw_trombone.html' target=sd03>Sound/Music: Drinking Straw Trombone</a>
+<li><a href='wave-straw_blow_across.html' target=sd04>Sound/Music through One Pan Flute Pipe</a>
+<li><a href='wave-pan_flute.html' target=sd05>Sound/Music: Pan Flute</a>
+<li><a href='wave-swaircolumn.htm' target=wd6>Standing Waves Air Colunm</a>
+<li><a href='wave-swflute.htm' target=wd7>Standing Waves Flute</a>
+<li><a href='wave-swclarinet.htm' target=wd8>Standing Waves Clarinet</a>
+</ul></section>
+<!--Electrostatics--><section class='category'><div class='category-title'><h2>Electrostatics</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='electrostatics-Three-point-charges-Coulomb.html' target=_el01>Coulomb's Law 📳</a>
+<li><a href='electrostatics-Three-point-charges-EField.html' target=_el02>Electric Field 📳</a>
+<li><a href='electrostatics-capacitor.html' target=_el10>Parallel Plate Capacitor 📳</a>
+<li><a href='electrostatics-Three-point-charges-potential.html' target=_el03>Electric Potential 📳</a>
+<li><a href='electrostatics-potential-relief-3D.html' target=_el03>Electric Potential Relief Map 📳</a>
+<li><a href='electrostatics-potential-relief-test-charge-3D.html' target=_el09>Charge Amusement Park 📳</a>
+<li><a href='electrostatics-potential-field-lines.html' target=_el04>Equipotential and Field Lines</a>
+<li><a href='electrostatics-work_potential_energy.html' target=_el05>Work & Electrical Potential Energy 📳</a>
+<li><a href='electrostatics-uniform_field_work_potential.html' target=_el06>Work & Electrical Potential Energy in Uniform Field 📳</a>
+<li><a href='electrostatics-electron-drift.html' target=_el07>Electron Drift in a Conductor 📳</a>
+<li><a href='electrostatics-vdg.html' target=_el08>Van De Graaf Generator 📳</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  Improve the work SIMS [] Add another work SIM based on the EP relief map</li>
+</ul></section>
+<!--Resistance--><section class='category'><div class='category-title'><h2>Resistance</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='resistance-ohms_law_resistor_lamp.html' target=ohms01>Ohms Law: Resistor and Lamp</a>
+<li><a href='resistance-ohm-various-devices.html' target=ohms08>Ohms Law: Many Devices</a>
+<li><a href='resistance-carbon.html' target=ohms07>Ohms Law: Graphite Pencil Leads</a>
+<li><a href='resistance-resistivity.html' target=ohms05>Resistance/Resistivity Lab</a>
+<li><a href='resistance-equrestut01.htm' target=equrestut00>Equivalent Resitance Tutorial</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come: Equivalent Resistance tutorial 2 [] Equivalent Resistance tutorial 3</li>
+</ul></section>
+<!--Circuits--><section class='category'><div class='category-title'><h2>Circuits</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='circuit-using_meters_in_series-resistive_Circuit.html' target=ohms04>Meters in a Two series resistors circuit</a>
+<li><a href='circuit-using_meters_in_two-loop-resistive_Circuit.html' target=ohms05>Meters in a 3 resistors circuit with 2 of them in parallel</a>
+<li><a href='circuit-using_meters_in_two-loop-Circuit.html' target=ohms03>Meters in a 2 loops and 2 supply circuit-Kirchhoff's rules</a>
+<li><a href='circuit-using_a_multimeter_in_RC_Circuit.html' target=ohms02>Using a Multimeter in an RC Circuit</a>
+<li><a href='circuit-Kirchhofftut01.htm' target=equrestut01>Kirchhoff's Rule Tutorial 1</a>
+<li><a href='circuit-Kirchhofftut02.htm' target=equrestut02>Kirchhoff's Rule Tutorial 2</a>
+<li><a href='circuit-Kirchhofftut03.htm' target=equrestut03>Kirchhoff's Rule Tutorial 3</a>
+<li><a href='circuit-rc-v1.html' target=rc01>RC Circuit Ver 1</a>
+<li><a href='circuit-rc-vd1.html' target=rc02>RC Circuit Ver 2</a>
+<li><a href='circuit-builder-dc.html' target=cb01>DC Circuit Builder</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  RC Circuit 1 [] RC Circuit 3 [] RC Circuit Charge Discharge 2 [] RC Circuit with voltage divider</li>
+</ul></section>
+<!--AC Circuits--><section class='category'><div class='category-title'><h2>AC Circuits</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='accircuit-rc.html' target=ac01>RC Circuit with phasors & oscilloscope</a>
+<li><a href='accircuit-rl.html' target=ac02>RL Circuit with phasors & oscilloscope</a>
+<li><a href='accircuit-rlc.html' target=ac03>RLC Circuit with phasors & oscilloscope</a>
+<li><a href='accircuit-lrc_phasor.html' target=ac04>RLC/RL/RC/CL Phasors</a>
+<li><a href='accircuit-builder-ac.html' target=ac05>AC Circuit Builder</a>
+<li><a href='accircuit-builder-ac-scope.html ac06=cb01>AC Circuit Builder with Scope</a></li>' target=></a>
+</ul></section>
+<!--Magnetism--><section class='category'><div class='category-title'><h2>Magnetism</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='magnetism-types.html' target=_m14>Ferromagnetism, Diamagnetism & Paramagnetism 📳</a>
+<li><a href='magnetism-hysteresis.html' target=_m15>Hysteresis</a>
+<li><a href='magnetism-Charge-in-Magnetic-Field.html' target=_m01>Charge in Magnetic Field 📳</a>
+<li><a href='magnetism-hall_effect.html' target=_m17>Hall Effect</a>
+<li><a href='magnetism-magnets-loops-solenoid.html' target=_m05>Bar Magnets, Loops and Solenoid 📳</a>
+<li><a href='magnetism-Bar-Magnet.html' target=_m06>Bar Magnets 📳</a>
+<li><a href='magnetism-Solenoid.html' target=_m07>Electromagnets 📳</a>
+<li><a href='magnetism-Right-Hand-Rule-Straight-Wire.html' target=_m08>Right-Hand-Rule for Straight Wire 📳</a>
+<li><a href='magnetism-Magnetic-Field-of-Wires.html' target=_m03>Magnetic Field due Current Carrying Wires 📳</a>
+<li><a href='magnetism-current-wire-magnet-on-scale.html' target=_m02>Force on Current Carrying Wire 📳</a>
+<li><a href='magnetism-Forces-Between-Wires.html' target=_m04>Force Between Current Carrying Wires 📳</a>
+</ul></section>
+<!--Magnetism Applications--><section class='category'><div class='category-title'><h2>Magnetism Applications</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='magnetism-magnetic_recording.html' target=_m18>Magnetic Recording</a>
+<li><a href='magnetism-hard-disk-ssd.html' target=_m19>Magnetic Storage/Hard Disks 📳</a>
+<li><a href='magnetism-speaker.html' target=_m16>Speaker</a>
+<li><a href='magnetism-dc_motor_loop.html' target=_m14>DC Motor 📳</a>
+<li><a href='magnetism-dc_motor_3d.html' target=_m11>DC Motor 3D 📳</a>
+<li><a href='magnetism-electric_machines_3d.html' target=_m12>Electrical Motors & Generators 📳</a>
+<li><a href='magnetism-homopolar.html' target=_m13>Homopolar Motor</a>
+</ul></section>
+<!--Magnetic Induction--><section class='category'><div class='category-title'><h2>Magnetic Induction</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='magnetism2-guitar_pickup.html' target=_mi01>Guitar Pickup</a>
+<li><a href='magnetism-electric_machines_3d.html' target=_mi02>Electrical Generators & Motors 📳</a>
+<li><a href='magnetism2-eddy_tube.html' target=_mi03>Eddy Currents in a Tube</a>
+<li><a href='magnetism2-eddy_pendulum.html' target=_mi07>Magnetic Braking - Pendulum</a>
+<li><a href='magnetism2-falling_magnet.html' target=_mi07>Dropping Magnets through Coils</a>
+<li><a href='magnetism2-generator_loop.html' target=_mi07>Generator</a>
+<li><a href='magnetism2-crank-generator.html' target=_mi04>Crank Generator</a>
+<li><a href='magnetism2-hamster-generator.html' target=_mi05>Hamster Generator</a>
+<li><a href='magnetism2-transformer-core.html' target=_mi06>Transformer</a>
+</ul></section>
+<!--EM--><section class='category'><div class='category-title'><h2>EM</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='wave-em-antenna-spectrum.html' target=em01>Electromagnetic Waves Spectrum</a>
+<li><a href='wave-em-antenna-spectrum-medium.html' target=em02>Electromagnetic Waves Spectrum with Changing Medium</a>
+</ul></section>
+<!--Geometrical Optics--><section class='category'><div class='category-title'><h2>Geometrical Optics</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='go-camera-obscura-pinhole.html' target=go018>Camera Obscura / Pinhole Camera 📳</a>
+<li><a href='go-pinhole-rays.html' target=go019>Making the Pinhole Less Obscur 📳</a>
+<li><a href='go-room-light-smoke-3d.html' target=go019>House of Smoke 📳</a>
+<li><a href='go-fermat-least-time.html' target=go022>Fermat & Huyguens Principles 📳</a>
+<li><a href='wave-em-3D-snells-law-slab.html' target=go013>Snell's Law in 3D 📳</a>
+<li><a href='go-Snells-Law-Polarization.html' target=go014>Snell's Law: Polarization 📳</a>
+<li><a href='go-Snells-Law-Refractions-Reflections.html' target=go018>Snell's Law: Reflection/Refraction 📳</a>
+<li><a href='go-refraction-apparent-depth.html' target=go023>Viewing Through Refraction/Apparent Depth 📳</a>
+<li><a href='go-Snells-Law-Three-Media.html' target=go015>Snell's Law: 3 Media 📳</a>
+<li><a href='go-Snells-Law-Half-Disk-Refractions.html' target=go016>Half Disk Refractions 📳</a>
+<li><a href='go-Snells-Law-Half-Disk-Refractions-Lab.html' target=go016>Half Disk Refractions Lab 📳</a>
+<li><a href='go-Snells-Law-Inverted-Half-Disk-Refractions.html' target=go019>Flipped Half Disk Refractions/TIR 📳</a>
+<li><a href='go-Snells-Law-Inverted-Half-Disk-Refractions-Lab.html' target=go019>Flipped Half Disk Refractions Lab 📳</a>
+<li><a href='go-prism.html' target=go017>Reflection/Refraction in a Prism 📳</a>
+<li><a href='go-snells-law-slab.html' target=go020>Reflection/Refraction in a Rectangular Slab 📳</a>
+<li><a href='go-snells-law-Trapezoid.html' target=go021>Reflection/Refraction in a Trapezoid 📳</a>
+<li><a href='go-fiber-optics.html' target=go018>Fiber Optics 📳</a>
+<li><a href='go-mirage-inferior-superior.html' target=go019>Mirage 📳</a>
+</ul></section>
+<!--Mirrors--><section class='category'><div class='category-title'><h2>Mirrors</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='mirror-plane-mirror.html' target=mi05>Plane Mirror 📳</a>
+<li><a href='mirror-skating-clown.html' target=mi07>Skating Clown & Mirrors</a>
+<li><a href='mirror-concave-mirror.html' target=mi01>Concave Mirror 📳</a>
+<li><a href='mirror-convex-mirror.html' target=mi02>Convex Mirror 📳</a>
+<li><a href='mirror-focal_length-lab.html' target=mi06>Fobal Length Lab 📳</a>
+<li><a href='mirror-flower-vase-concave-mirror.html' target=mi03>Flower in a Vase 📳</a>
+<li><a href='mirror-mirascope.html' target=mi04>Mirascope</a>
+<li><a href='mirror-room-of-mirrors-3d.html' target=go019>House of Mirrors 📳</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  Concave Mirror equation - Convex Mirror equation - Phone Hologram - image by glass- clown looking at mirror</li>
+</ul></section>
+<!--Lenses--><section class='category'><div class='category-title'><h2>Lenses</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='lenses-clens.html' target=sim1>Convergent Lenses 📳</a>
+<li><a href='lenses-clens-block.html' target=sim2>Blocked Lenses 📳</a>
+<li><a href='lenses-clens-follow-light.html' target=sim3>Follow the Light 📳</a>
+<li><a href='lenses-clens-3D.html' target=sim4>3D Objects 📳</a>
+<li><a href='lenses-dlens.html' target=sim5>Divergent Lenses 📳</a>
+<li><a href='lenses-2clens.html' target=sim6>2 Convergent Lenses 📳</a>
+<li><a href='lenses-dlens-clens.html' target=sim7>Divergent & Convergent Lens 📳</a>
+<li><a href='lenses-lensmaker-convex.html' target=sim8>Lensmaker Equation Convex Lens 📳</a>
+<li><a href='lenses-lensmaker-concave.html' target=sim9>Lensmaker Equation Concave Lens 📳</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come: lensmaker equation/Concave Lens/Convex Lens </li>
+</ul></section>
+<!--The Eye--><section class='category'><div class='category-title'><h2>The Eye</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='eye-anatomy-3D.html' target=oa01>Physic Anatomy of the Eye 📳</a>
+<li><a href='eye-camera-pinhole-lens.html' target=oa02>The Eye as a Camera 📳</a>
+<li><a href='eye-accommodation.html' target=oa03>Eye Accommodation 📳</a>
+<li><a href='eye-corrections.html' target=oa04>Eye Corrections 📳</a>
+<li><a href='eye-corrections-intro.html' target=oa05>Eye Corrections V2 📳</a>
+<li><a href='eye-color-vision.html' target=oa06>Color Vision 📳</a>
+<li><a href='eye-eye-retina-light-color.html' target=oa07>Cones and Rods</a>
+<li><a href='eye-3D-vision-brain.html' target=oa08>3D Vision 📳</a>
+</ul></section>
+<!--Optics Applications--><section class='category'><div class='category-title'><h2>Optics Applications</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='oa-telescopes-refractor-reflector.html' target=oa21>Refractor & Reflector Telescopes 📳</a>
+<li><a href='oa-microscopes-magnifier-compound.html' target=oa22>Microscope 📳</a>
+<li><a href='oa-cameras-pinhole-lens-phone.html' target=oa23>Camera 📳</a>
+<li style="color:green;background-color:#FFC;font-size:.75em;">What to come:  Rainbows, Blue Sky, Sunset & Sunrise </li>
+</ul></section>
+<!--Physical Optics--><section class='category'><div class='category-title'><h2>Physical Optics</h2><span class='category-count'>0</span></div><ul class='sim-list'>
+<li><a href='waves-path-difference.html' target=po21>Path Difference 📳</a>
+<li><a href='po-Single-Slit-Diffraction.html' target=po1>Single Slit Diffraction 📳</a>
+<li><a href='po-Double-Single-Slit-Diffraction.html' target=po2>Two Slit/One Slit Diffraction/Interference 📳</a>
+<li><a href='po-Double-Slits-Sources-Interference-Diffraction.html' target=po3>Two Slit/Source Diffraction/Interference 📳</a>
+<li><a href='po-Multiple-Slits-Interference-Diffraction.html' target=po3>Multi-Slit Diffraction/Interference 📳</a>
+<li><a href='po-Multiple-Slits-Interference-Diffraction-grating.html' target=po3>Multi-Slit/Grating Diffraction/Interference 📳</a>
+<li><a href='po-Multiple-Slits-Interference-Diffraction-grating-lamps.html' target=po3>Grating Spectroscopy 📳</a>
+<li><a href='po-thin-film-soap-oil-coatings.html' target=po3>Thin Film 📳</a>
+<li><a href='po-thin-film-wedge-newton-rings.html' target=po4>Thin Film: Wedge & Newton's Rings 📳</a>
+<li><a href='measurement-image_analyzer_shared.html' target=mus6>Data Collection From Image - Interference</a>
+</ul></section>
+<!--Others -->
+<section class="ncategory">
+<div class="category-title">
+<h2>Other Simulations</h2>
+<span class="category-count">0</span></div>
+<ul class="sim-list">
+<li><a href=https://mzoughi.github.io/STSIMS/ target=stsims>Student SIMS</a></li>
+<li><a href=https://alo.academy/html5/ target=stsims>Older SIMS</a></li>
+</ul></section>
+<!--Others -->
+<section class="ncategory">
+<div class="category-title">
+<h2>Upcoming Simulations</h2>
+<span class="category-count">0</span></div>
+<ul class="sim-list">
+</ul>
+</section></div>
+<div id="noResults" class="no-results">
+No simulations match your search.</div>
+<script>
+function updateCounts(){
+let total = 0;
+document.querySelectorAll('.category').forEach(category=>{
+let visibleLinks =
+category.querySelectorAll('li:not(.hidden)').length;
+category.querySelector('.category-count').textContent =
+visibleLinks;
+total += visibleLinks;
+category.style.display =
+visibleLinks ? '' : 'none';
+});
+document.getElementById('totalSimCount').textContent =
+total;
+}
+function updateNCounts(){
+document.querySelectorAll('.ncategory').forEach(category=>{
+let visibleLinks2 =
+category.querySelectorAll('li:not(.hidden)').length;
+category.querySelector('.category-count').textContent =
+visibleLinks2;
+category.style.display =
+visibleLinks2 ? '' : 'none';
+});
+// intentionally not added to totalSimCount
+}
+updateCounts();
+updateNCounts();
+document.getElementById('searchBox')
+.addEventListener('input', function(){
+let search =
+this.value.trim().toLowerCase();
+/*
+document.querySelectorAll('.sim-list li')
+.forEach(item=>{
+let text =
+item.textContent.toLowerCase();
+item.classList.toggle(
+'hidden',
+!text.includes(search)
+);
+});
+*/
+ document.querySelectorAll('.category').forEach(category => {
+let categoryText = category
+.querySelector('.category-title')
+.textContent
+.toLowerCase();
+let categoryMatch = categoryText.includes(search);
+category.querySelectorAll('.sim-list li').forEach(item => {
+let itemText = item.textContent.toLowerCase();
+item.classList.toggle(
+'hidden',
+!(categoryMatch || itemText.includes(search))
+);
+});
+});
+updateCounts();
+updateNCounts();
+document.getElementById('noResults').style.display =
+document.getElementById('totalSimCount').textContent == 0
+? 'block'
+: 'none';
+});
+</script>
+ <script>
+document.getElementById('toggleLink').addEventListener('click', function(e){
+e.preventDefault();
+document.getElementById('myDiv').classList.toggle('hidden');
+});
+document.getElementById('toggleLink2').addEventListener('click', function(e){
+e.preventDefault();
+document.getElementById('myDiv2').classList.toggle('hidden');
+});
+</script>
+</body></html>

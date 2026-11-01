@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Homopolar Motor</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,motor, teach, learn,Electric, magnetism, Field,mapping,homopolar, Lines,magnet,Impedance,Electric, Electricity, battery,current,torque, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="hproot1005" role="main" aria-label="Homopolar motor simulator">
+<p class="hp_title1005">Homopolar Motor</p>
+<p class="hp_sub1005">Current · Magnetic Field · Lorentz Force → Rotation</p>
+<div class="hp_main1005">
+<!-- Canvas panel -->
+<div class="hp_canvaswrap1005">
+<div class="hp_canvasbar1005">
+DIAGRAM -- SIDE VIEW &nbsp;<span id="hpCvCaption1005">motor running</span>
+</div>
+<canvas id="hpCanvas1005" width="340" height="500" role="img" aria-label="Homopolar motor diagram" aria-describedby="hpCvDesc1005"></canvas>
+<p id="hpCvDesc1005" class="hp_sronly1005">Animated diagram of a homopolar motor showing battery, screw, magnet, and rotation.</p>
+</div>
+<!-- Controls column -->
+<div class="hp_ctrlcol1005">
+<!-- Electrical -->
+<div class="hp_box1005">
+<div class="hp_boxtitle1005">Electrical</div>
+<div class="hp_boxbody1005">
+<div class="hp_srow1005">
+<div class="hp_srowhd1005">
+<span class="hp_sname1005">Current I</span>
+<span class="hp_sval1005" id="hpVI1005">2.0 A</span>
+</div>
+<input type="range" id="hpSlI1005" min="0" max="10" step="0.1" value="2" aria-label="Current in amperes" oninput="homopolarSim1005.update()">
+</div>
+<div class="hp_brow1005">
+<input type="button" class="hp_btn1005" id="hpBtnFlipBatt1005" value="&#8645; Flip Battery" aria-label="Flip battery polarity" onclick="homopolarSim1005.flipBattery()">
+</div>
+</div>
+</div>
+<!-- Magnetic -->
+<div class="hp_box1005">
+<div class="hp_boxtitle1005">Magnetic</div>
+<div class="hp_boxbody1005">
+<div class="hp_srow1005">
+<div class="hp_srowhd1005">
+<span class="hp_sname1005">Field B</span>
+<span class="hp_sval1005 hp_blue1005" id="hpVB1005">0.50 T</span>
+</div>
+<input type="range" class="hp_rangblue1005" id="hpSlB1005" min="0" max="2" step="0.05" value="0.5" aria-label="Magnetic field strength" oninput="homopolarSim1005.update()">
+</div>
+<div class="hp_brow1005">
+<input type="button" class="hp_btn1005" id="hpBtnFlipMag1005" value="&#8645; Flip Magnet" aria-label="Flip magnet polarity" onclick="homopolarSim1005.flipMagnet()">
+</div>
+</div>
+</div>
+<!-- Disk -->
+<div class="hp_box1005">
+<div class="hp_boxtitle1005">Disk (screw head ↔ magnet)</div>
+<div class="hp_boxbody1005">
+<div class="hp_brow1005">
+<input type="button" class="hp_btn1005 hp_btnon1005" id="hpBtnDisk1005" value="Conducting" aria-pressed="false" onclick="homopolarSim1005.toggleDisk()">
+</div>
+<p class="hp_diskdesc1005">
+Insulating disk breaks the radial current path → no torque → motor stops.
+</p>
+</div>
+</div>
+<!-- Status -->
+<div class="hp_statuspanel1005">
+<div class="hp_statustitle1005">Status</div>
+<div class="hp_statusgrid1005">
+<span class="hp_sgl1005">Torque:</span>&nbsp;    <span class="hp_sgv1005" id="hpSTorque1005">--</span>
+<span class="hp_sgl1005">Direction:</span> <span class="hp_sgv1005" id="hpSDir1005">--</span>
+<span class="hp_sgl1005">Disk:</span>      <span class="hp_sgv1005 hp_green1005" id="hpSDisk1005">conducting</span>
+<span class="hp_sgl1005">Battery:</span>    <span class="hp_sgv1005" id="hpSBatt1005">+ bottom</span>
+<span class="hp_sgl1005">Magnet:</span>     <span class="hp_sgv1005" id="hpSMag1005">N top</span>
+<span class="hp_sgl1005">Speed:</span>      <span class="hp_sgv1005 hp_green1005" id="hpSSpeed1005">--</span>
+</div>
+</div>
+<!-- Narration -->
+<div class="hp_narr1005">
+<div class="hp_narrtitle1005">What's happening</div>
+<p id="hpNarrText1005" class="hp_narrtext1005">Loading...</p>
+</div>
+<p class="hp_hint1005">Current flows axially through screw,<br>
+radially through magnet → Lorentz force → spin</p>
+<p class="hp_credit1005">Simulation by Taha Mzoughi © 2025 -- MOM adaptation</p>
+</div><!-- hp_ctrlcol -->
+</div><!-- hp_main -->
+<div id="hpSrAnn1005" class="hp_sronly1005" aria-live="assertive" aria-atomic="true"></div>
+</div><!-- #hproot1005 -->
+<hr><h2>Part 6: Homopolar Motor</h2>
+<hr>
+<ol>
+<li>Why does the screw stick to the battery when the magnet is attached?
+<br></li>
+<li>What determines the direction in which the screw and magnet rotate?
+<br></li>
+<li>What happens to the rotation when the battery is flipped?
+<br></li>
+<li>What happens to the rotation when the magnet is flipped?
+<br></li>
+<li>What happens when a piece of plastic or paper is placed between the screw and the magnet?
+<br></li>
+<li>What happens when the wire is connected to the bottom of the magnet instead of the side?
+<br></li>
+<li>What happens when the wire touches the side of the screw instead of the magnet?
+<br></li>
+<li>How does the right-hand rule explain the rotation of the screw and magnet in the homopolar motor?
+<br></li>
+<li>Why might the screw and magnet continue to rotate briefly after the wire is disconnected?
+<br></li>
+</ol>
+<hr>
+<p>Discuss your results about this part of the experiment:
+<br></p>
+<style>
+/* ════════════════════════════════════════════════
+All rules scoped to #hproot1005
+════════════════════════════════════════════════ */
+#hproot1005 {
+--hp-bg:       #0d0f14;
+--hp-panel:    #181c24;
+--hp-panel-hi: #1e2330;
+--hp-bd:       #2a3040;
+--hp-bd-hi:    #3a4560;
+--hp-text:     #c8d0dc;
+--hp-dim:      #4a5468;
+--hp-accent:   #e8a020;
+--hp-accent2:  #3ad08f;
+--hp-accent3:  #4a9eff;
+--hp-danger:   #e84040;
+--hp-focus:    #e8a020;
+background: var(--hp-bg);
+background-image: radial-gradient(ellipse at 50% 0%, rgba(74,158,255,0.04) 0%, transparent 70%);
+font-family: Arial, sans-serif;
+color: var(--hp-text);
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 14px 8px 22px;
+gap: 12px;
+box-sizing: border-box;
+width: 100%;
+max-width: 760px;
+margin: 0 auto;
+border-radius: 6px;
+position: relative;
+}
+#hproot1005 *, #hproot1005 *::before, #hproot1005 *::after {
+box-sizing: border-box; margin: 0; padding: 0;
+}
+/* ── Focus ── */
+#hproot1005 input:focus-visible {
+outline: 2px solid var(--hp-focus); outline-offset: 2px;
+}
+/* ── Title ── */
+#hproot1005 .hp_title1005 {
+font-size: .9rem; font-weight: 700; letter-spacing: .22em;
+text-transform: uppercase; color: var(--hp-accent);
+text-shadow: 0 0 20px rgba(232,160,32,.35); text-align: center;
+}
+#hproot1005 .hp_sub1005 {
+font-size: .68rem; color: var(--hp-dim);
+letter-spacing: .1em; text-transform: uppercase; text-align: center;
+}
+/* ── Main layout ── */
+#hproot1005 .hp_main1005 {
+display: flex; gap: 13px; align-items: flex-start;
+flex-wrap: wrap; justify-content: center; width: 100%;
+}
+/* ── Canvas wrap ── */
+#hproot1005 .hp_canvaswrap1005 {
+background: var(--hp-panel); border: 1px solid var(--hp-bd);
+border-radius: 6px; overflow: hidden;
+box-shadow: 0 6px 32px rgba(0,0,0,.6);
+display: flex; flex-direction: column;
+}
+#hproot1005 .hp_canvasbar1005 {
+background: var(--hp-bg); border-bottom: 1px solid var(--hp-bd);
+padding: 5px 12px; font-family: 'Share Tech Mono', monospace;
+font-size: .6rem; letter-spacing: .12em; text-transform: uppercase;
+color: var(--hp-dim); display: flex; justify-content: space-between; align-items: center;
+}
+#hproot1005 .hp_canvasbar1005 span { color: var(--hp-accent); }
+#hproot1005 #hpCanvas1005 { display: block; cursor: default; }
+/* ── Controls column ── */
+#hproot1005 .hp_ctrlcol1005 {
+width: 240px; display: flex; flex-direction: column; gap: 9px;
+}
+/* ── Box ── */
+#hproot1005 .hp_box1005 {
+background: var(--hp-panel); border: 1px solid var(--hp-bd);
+border-radius: 5px; overflow: hidden;
+box-shadow: 0 3px 16px rgba(0,0,0,.4);
+}
+#hproot1005 .hp_boxtitle1005 {
+background: var(--hp-bg); border-bottom: 1px solid var(--hp-bd);
+padding: 5px 11px; font-family: 'Share Tech Mono', monospace;
+font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--hp-dim);
+}
+#hproot1005 .hp_boxbody1005 { padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; }
+/* ── Slider rows ── */
+#hproot1005 .hp_srow1005 { display: flex; flex-direction: column; gap: 3px; }
+#hproot1005 .hp_srowhd1005 { display: flex; justify-content: space-between; align-items: baseline; }
+#hproot1005 .hp_sname1005 {
+font-size: .72rem; font-weight: 600; letter-spacing: .05em;
+color: var(--hp-dim); text-transform: uppercase;
+}
+#hproot1005 .hp_sval1005 {
+font-family: 'Share Tech Mono', monospace; font-size: .82rem; color: var(--hp-accent);
+}
+#hproot1005 .hp_blue1005 { color: var(--hp-accent3); }
+#hproot1005 input[type=range] {
+width: 100%; -webkit-appearance: none; height: 4px; border-radius: 2px;
+background: var(--hp-bg); border: 1px solid var(--hp-bd); outline: none; cursor: pointer;
+}
+#hproot1005 input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%;
+background: var(--hp-accent); border: 2px solid var(--hp-panel);
+box-shadow: 0 0 5px rgba(232,160,32,.5); cursor: pointer;
+}
+#hproot1005 .hp_rangblue1005::-webkit-slider-thumb {
+background: var(--hp-accent3); box-shadow: 0 0 5px rgba(74,158,255,.5);
+}
+/* ── Button rows ── */
+#hproot1005 .hp_brow1005 { display: flex; gap: 7px; flex-wrap: wrap; }
+#hproot1005 .hp_btn1005 {
+flex: 1; padding: 7px 5px; background: var(--hp-panel-hi);
+border: 1px solid var(--hp-bd-hi); border-radius: 4px; color: var(--hp-text);
+font-family: 'Share Tech Mono', monospace; font-size: .6rem;
+letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+}
+#hproot1005 .hp_btn1005:hover { background: var(--hp-bd); color: #fff; }
+#hproot1005 .hp_btnon1005 { background: #1a3a20; color: var(--hp-accent2); border-color: var(--hp-accent2); }
+#hproot1005 .hp_btnwarn1005 { color: var(--hp-danger); border-color: #552222; }
+#hproot1005 .hp_btnwarn1005:hover { background: #2a1010; }
+#hproot1005 .hp_diskdesc1005 {
+font-size: .66rem; color: var(--hp-dim); line-height: 1.5;
+}
+/* ── Status panel ── */
+#hproot1005 .hp_statuspanel1005 {
+background: var(--hp-panel); border: 1px solid var(--hp-bd); border-radius: 5px; overflow: hidden;
+}
+#hproot1005 .hp_statustitle1005 {
+background: var(--hp-bg); border-bottom: 1px solid var(--hp-bd); padding: 5px 11px;
+font-family: 'Share Tech Mono', monospace; font-size: .6rem;
+letter-spacing: .14em; text-transform: uppercase; color: var(--hp-dim);
+}
+#hproot1005 .hp_statusgrid1005 {
+display: grid; grid-template-columns: 1fr 1fr; gap: 3px 7px;
+padding: 9px 11px; font-size: .7rem;
+}
+#hproot1005 .hp_sgl1005 { color: var(--hp-dim); }
+#hproot1005 .hp_sgv1005 {
+font-family: 'Share Tech Mono', monospace; color: var(--hp-accent); font-weight: 600;
+}
+#hproot1005 .hp_green1005 { color: var(--hp-accent2); }
+#hproot1005 .hp_blue21005 { color: var(--hp-accent3); }
+#hproot1005 .hp_red1005    { color: var(--hp-danger); }
+#hproot1005 .hp_sgdim1005 { color: var(--hp-dim); }
+/* ── Narration ── */
+#hproot1005 .hp_narr1005 {
+background: var(--hp-panel); border: 1px solid var(--hp-bd); border-radius: 5px; overflow: hidden;
+}
+#hproot1005 .hp_narrtitle1005 {
+background: var(--hp-bg); border-bottom: 1px solid var(--hp-bd); padding: 5px 11px;
+font-family: 'Share Tech Mono', monospace; font-size: .6rem;
+letter-spacing: .14em; text-transform: uppercase; color: var(--hp-dim);
+}
+#hproot1005 .hp_narrtext1005 {
+padding: 9px 11px; font-size: .71rem; line-height: 1.6;
+color: rgba(168,196,240,.8); min-height: 52px;
+}
+/* ── Misc ── */
+#hproot1005 .hp_hint1005 {
+font-size: .62rem; color: var(--hp-dim); text-align: center; line-height: 1.7; letter-spacing: .04em;
+}
+#hproot1005 .hp_credit1005 { font-size: .6rem; color: var(--hp-dim); text-align: center; }
+#hproot1005 .hp_sronly1005 {
+position: absolute; width: 1px; height: 1px;
+overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+</style>
+<script>
+var homopolarSim = function() {
+var ROOT   = document.getElementById('hproot1005');
+var canvas = document.getElementById('hpCanvas1005');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function set(id,txt) {
+var e=document.getElementById(id);
+if(e) e.textContent=txt;
+}
+function el(id) {
+return document.getElementById(id);
+}
+var I=2.0;
+var Bmag=0.5;
+var battFlip=1;
+var magFlip=1;
+var diskCond=true;
+var angle=0;
+var lastTime=null;
+var rafId=null;
+function computeTorque() {
+if(!diskCond) return 0;
+if(I<1e-6) return 0;
+return battFlip*magFlip*I*Bmag;
+}
+function roundRect(x,y,w,h,r) {
+ctx.beginPath();
+ctx.moveTo(x+r,y);
+ctx.lineTo(x+w-r,y);
+ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+ctx.lineTo(x+w,y+h-r);
+ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+ctx.lineTo(x+r,y+h);
+ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+ctx.lineTo(x,y+r);
+ctx.quadraticCurveTo(x,y,x+r,y);
+ctx.closePath();
+}
+function ellipsePath(cx,cy,rx,ry) {
+ctx.beginPath();
+ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+}
+function arrow(x1,y1,x2,y2,size,color) {
+var a=Math.atan2(y2-y1,x2-x1);
+ctx.strokeStyle=color;
+ctx.fillStyle=color;
+ctx.lineWidth=2;
+ctx.lineCap='round';
+ctx.beginPath();
+ctx.moveTo(x1,y1);
+ctx.lineTo(x2,y2);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(x2,y2);
+ctx.lineTo(x2-size*Math.cos(a-0.48),y2-size*Math.sin(a-0.48));
+ctx.lineTo(x2-size*Math.cos(a+0.48),y2-size*Math.sin(a+0.48));
+ctx.closePath();
+ctx.fill();
+}
+function drawBackground() {
+ctx.fillStyle='#080a10';
+ctx.fillRect(0,0,CW,CH);
+var g=ctx.createRadialGradient(CW/2,310,15,CW/2,310,190);
+g.addColorStop(0,'rgba(70,130,210,0.07)');
+g.addColorStop(1,'rgba(0,0,0,0)');
+ctx.fillStyle=g;
+ctx.fillRect(0,0,CW,CH);
+}
+function drawDisk(cx,y,cond,ang) {
+var rx=29;
+var ry=7;
+ctx.save();
+ctx.shadowColor=cond?'rgba(180,200,230,0.35)':'rgba(230,190,60,0.4)';
+ctx.shadowBlur=9;
+ctx.fillStyle=cond?'#9da8b7':'#c8a93d';
+//ellipsePath(cx,y,rx,ry);
+ctx.fill();
+ctx.shadowBlur=0;
+ctx.strokeStyle=cond?'#d3dce6':'#f0d65e';
+ctx.lineWidth=1.4;
+ctx.stroke();
+ctx.save();
+ctx.beginPath();
+ctx.ellipse(cx,y,rx-2,ry-2,0,0,Math.PI*2);
+ctx.clip();
+ctx.strokeStyle=cond?'rgba(255,255,255,0.35)':'rgba(255,255,255,0.22)';
+ctx.lineWidth=1;
+var p;
+for(p=-2;p<=2;p++) {
+var px=cx+p*8+Math.sin(ang+p)*3;
+ctx.beginPath();
+ctx.moveTo(px,y-ry);
+ctx.lineTo(px+Math.sin(ang+p)*5,y+ry);
+ctx.stroke();
+}
+ctx.restore();
+ctx.fillStyle=cond?'#586777':'#806c29';
+ctx.font='500 8px monospace';
+ctx.textAlign='center';
+ctx.fillText(cond?'conducting':'insulating',cx,y+18);
+ctx.restore();
+}
+function drawBattery(cx,top,w,h,flip) {
+var x=cx-w/2;
+var bodyTop=top+8;
+var bodyBottom=top+h-8;
+var bodyH=bodyBottom-bodyTop;
+ctx.save();
+var g=ctx.createLinearGradient(x,0,x+w,0);
+g.addColorStop(0,'#17191e');
+g.addColorStop(0.25,'#3e444e');
+g.addColorStop(0.5,'#242830');
+g.addColorStop(0.75,'#3e444e');
+g.addColorStop(1,'#17191e');
+ctx.fillStyle=g;
+roundRect(x,bodyTop,w,bodyH,6);
+ctx.fill();
+/* Accent color flips with battery polarity */
+ctx.fillStyle='#dc5534';
+//ctx.fillStyle=flip>0?'#dc5534':'#347adc';
+ctx.beginPath();
+ctx.moveTo(x+1,flip>0?bodyTop+bodyH*0.52:bodyTop+1);
+ctx.lineTo(x+w-1,flip>0?bodyTop+bodyH*0.52:bodyTop+1);
+ctx.lineTo(x+w-1,flip>0?bodyTop+bodyH-1:bodyTop+bodyH*0.48);
+ctx.lineTo(x+1,flip>0?bodyTop+bodyH-1:bodyTop+bodyH*0.48);
+ctx.closePath();
+ctx.fill();
+ctx.strokeStyle='rgba(255,255,255,0.18)';
+ctx.lineWidth=1;
+roundRect(x,bodyTop,w,bodyH,6);
+ctx.stroke();
+/* Terminals */
+ctx.fillStyle='#c8a52c';
+ctx.beginPath();
+ctx.ellipse(cx,top+3,9,4,0,0,Math.PI*2);
+ctx.fill();
+ctx.beginPath();
+ctx.ellipse(cx,top+h-3,9,4,0,0,Math.PI*2);
+ctx.fill();
+ctx.fillStyle='#ffffff';
+ctx.font='bold 12px Arial';
+ctx.textAlign='center';
+ctx.textBaseline='middle';
+ctx.fillText(flip>0?'−':'+',cx,top+3);
+ctx.fillText(flip>0?'+':'−',cx,top+h-3);
+ctx.textBaseline='alphabetic';
+ctx.restore();
+}
+function drawScrew(cx,top,shaftH,ang,torque,flip) {
+var shaftW=11;
+var shaftTop=top+7;
+var shaftBottom=shaftTop+shaftH;
+var headRx=17;
+var headRy=7;
+/* Shaft */
+ctx.save();
+var metal=ctx.createLinearGradient(cx-shaftW/2,0,cx+shaftW/2,0);
+metal.addColorStop(0,'#394451');
+metal.addColorStop(0.25,'#8e9dac');
+metal.addColorStop(0.5,'#d1d9e0');
+metal.addColorStop(0.72,'#7b8997');
+metal.addColorStop(1,'#303944');
+ctx.fillStyle=metal;
+roundRect(cx-shaftW/2,shaftTop,shaftW,shaftH,2);
+ctx.fill();
+ctx.strokeStyle='rgba(255,255,255,0.22)';
+ctx.lineWidth=1;
+ctx.stroke();
+var bScrew=shaftTop+5+11*7+12;
+/* Moving shaft highlight */
+var hx=cx+Math.sin(ang)*3;
+ctx.strokeStyle='rgba(255,255,255,0.55)';
+ctx.lineWidth=1.8;
+ctx.beginPath();
+ctx.moveTo(hx,shaftTop+3);
+ctx.lineTo(hx,shaftBottom-2);
+//ctx.stroke();
+/* Flat head against battery / pointed tip towards magnet */
+var headY = (flip < 0) ? (bScrew + shaftH - 93) : (bScrew + shaftH - 93);
+ctx.fillStyle='#8795a3';
+ctx.beginPath();
+ctx.ellipse(cx, headY, headRx, headRy-2, 0, 1, Math.PI * 2);
+ctx.fill();
+ctx.strokeStyle='#8795a3';
+ctx.lineWidth=1.2;
+ctx.stroke();
+/* Sharp pointed tip at the opposite end */
+var tipY = (flip < 0) ? (top+7) : (top+7);
+ctx.beginPath();
+ctx.moveTo(cx - 6, tipY+7);
+ctx.lineTo(cx, (flip > 0) ? (tipY - 10) : (tipY - 10));
+ctx.lineTo(cx + 6, tipY+7);
+ctx.closePath();
+ctx.fillStyle='#8795a3';
+ctx.fill();
+ctx.stroke();
+ctx.restore();
+/* Rotating helical thread */
+var k;
+for(k=0;k<12;k++) {
+var yy=shaftTop+5+k*7;
+var phase=ang+k*0.65;
+var offset=Math.sin(phase)*2.5;
+ctx.strokeStyle='rgba(30,35,42,0.9)';
+ctx.lineWidth=1.4;
+ctx.beginPath();
+ctx.moveTo(cx-shaftW/2-1,yy+3);
+ctx.lineTo(cx+shaftW/2+1,yy-2+offset);
+ctx.stroke();
+ctx.strokeStyle='rgba(240,245,250,0.42)';
+ctx.lineWidth=1;
+ctx.beginPath();
+ctx.moveTo(cx-shaftW/2,yy);
+ctx.lineTo(cx+shaftW/2,yy-4+offset);
+ctx.stroke();
+}
+}
+function drawWire(cx,battTop,battH,magX,magTop,magRx,magDepth,flip) {
+var startX=cx;
+//var startY=flip>0?battTop:(battTop+battH);
+var startY=flip>0?(battTop):(battTop);
+var endX=magX+magRx;
+var endY=magTop+magDepth/2;
+var cp1x=cx+32;
+//var cp1y=startY+(flip>0?-25:25);
+var cp1y=startY+(flip>0?25:-25);
+var cp2x=endX+35;
+var cp2y=magTop-45;
+ctx.save();
+ctx.strokeStyle='#3388ff';
+ctx.shadowColor='rgba(50,130,255,0.45)';
+ctx.shadowBlur=7;
+ctx.lineWidth=3;
+ctx.lineCap='round';
+ctx.beginPath();
+ctx.moveTo(startX,startY);
+ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,endX,endY);
+ctx.stroke();
+ctx.shadowBlur=0;
+var t=0.63;
+var mt=1-t;
+var px=mt*mt*mt*startX+3*mt*mt*t*cp1x+3*mt*t*t*cp2x+t*t*t*endX;
+var py=mt*mt*mt*startY+3*mt*mt*t*cp1y+3*mt*t*t*cp2y+t*t*t*endY;
+var dx=3*mt*mt*(cp1x-startX)+6*mt*t*(cp2x-cp1x)+3*t*t*(endX-cp2x);
+var dy=3*mt*mt*(cp1y-startY)+6*mt*t*(cp2y-cp1y)+3*t*t*(endY-cp2y);
+var len=Math.sqrt(dx*dx+dy*dy)||1;
+dx/=len;
+dy/=len;
+if(flip>0) {
+dx=-dx;
+dy=-dy;
+}
+arrow(px-dx*8,py-dy*8,px+dx*8,py+dy*8,7,'#3388ff');
+ctx.fillStyle='#4aa0ff';
+ctx.beginPath();
+ctx.arc(endX,endY,4,0,Math.PI*2);
+ctx.fill();
+ctx.restore();
+}
+function drawMagnet(cx,top,rx,ry,depth,flip,ang) {
+  top=top-1;
+var bottom=top+depth;
+var topColor=flip>0?'#c63b2b':'#238b4c';
+var bottomColor=flip>0?'#238b4c':'#c63b2b';
+var sideGrad=ctx.createLinearGradient(0,top,0,bottom);
+sideGrad.addColorStop(0,topColor);
+sideGrad.addColorStop(0.48,topColor);
+sideGrad.addColorStop(0.52,bottomColor);
+sideGrad.addColorStop(1,bottomColor);
+ctx.fillStyle=sideGrad;
+ctx.beginPath();
+ctx.moveTo(cx-rx,top);
+ctx.lineTo(cx-rx,bottom);
+ctx.quadraticCurveTo(cx,bottom+ry,cx+rx,bottom);
+ctx.lineTo(cx+rx,top);
+ctx.closePath();
+ctx.fill();
+ctx.fillStyle=bottomColor;
+ctx.beginPath();
+ctx.ellipse(cx,bottom,rx,ry,0,0,Math.PI*2);
+ctx.fill();
+ctx.strokeStyle='rgba(255,255,255,0.25)';
+ctx.lineWidth=1;
+ctx.stroke();
+var tg=ctx.createLinearGradient(cx-rx,top-ry,cx+rx,top+ry);
+tg.addColorStop(0,topColor);
+tg.addColorStop(0.5,flip>0?'#df5b43':'#39a963');
+tg.addColorStop(1,topColor);
+ctx.fillStyle=tg;
+ctx.beginPath();
+ctx.ellipse(cx,top,rx,ry,0,0,Math.PI*2);
+ctx.fill();
+ctx.strokeStyle='rgba(255,255,255,0.35)';
+ctx.lineWidth=1.2;
+ctx.stroke();
+ctx.save();
+ctx.beginPath();
+ctx.ellipse(cx,top,rx-2,ry-2,0,0,Math.PI*2);
+ctx.clip();
+var i;
+for(i=0;i<12;i++) {
+var a=ang+i*Math.PI/6;
+var ex=cx+Math.cos(a)*rx;
+var ey=top+Math.sin(a)*ry;
+ctx.strokeStyle=i%2===0?'rgba(255,255,255,0.30)':'rgba(0,0,0,0.18)';
+ctx.lineWidth=i%2===0?1.2:1;
+ctx.beginPath();
+ctx.moveTo(cx,top);
+ctx.lineTo(ex,ey);
+ctx.stroke();
+}
+var ma=ang;
+var mx=cx+Math.cos(ma)*rx;
+var my=top+Math.sin(ma)*ry;
+ctx.fillStyle='#fff1a8';
+ctx.beginPath();
+ctx.arc(mx,my,4,0,Math.PI*2);
+ctx.fill();
+ctx.restore();
+ctx.fillStyle='rgba(255,255,255,0.95)';
+ctx.font='bold 16px Arial';
+ctx.textAlign='center';
+ctx.textBaseline='middle';
+ctx.fillText(flip>0?'N':'S',cx,top);
+ctx.font='bold 10px Arial';
+ctx.fillText(flip>0?'S':'N',cx,bottom);
+ctx.textBaseline='alphabetic';
+}
+function drawCurrentPath(cx,screwBottom,magTop,magDepth,magRx,battFlip) {
+if(I<0.05 || !diskCond) return;
+var col='rgba(70,255,255,0.85)';
+var contactY=magTop+magDepth/2;
+if(battFlip>0) {
+arrow(cx,screwBottom-50,cx,screwBottom-10,7,col);
+} else {
+arrow(cx,screwBottom-10,cx,screwBottom-50,7,col);
+}
+/* Radial current arrow dynamically flips direction with battery/current */
+var startX = battFlip > 0 ? (cx + 10):(cx + magRx - 8);
+var endX = battFlip > 0 ? (cx + magRx - 8):(cx + 10);
+arrow(startX, contactY, endX, contactY, 7, col);
+ctx.fillStyle=col;
+ctx.font='9px monospace';
+ctx.textAlign='center';
+ctx.fillText('radial current',cx+magRx/2,contactY-9);
+}
+function drawForce(cx,magTop,magDepth,magRx,torque) {
+if(Math.abs(torque)<0.001) return;
+var contactX=cx+magRx;
+var contactY=magTop+magDepth/2;
+/* Corrected direction: pointing downwards when CW rotation occurs */
+var forceDown = torque > 0;
+var y1=contactY+(forceDown?-18:18);
+var y2=contactY+(forceDown?18:-18);
+ctx.save();
+ctx.strokeStyle='rgba(232,160,32,0.95)';
+ctx.fillStyle='rgba(232,160,32,0.95)';
+ctx.lineWidth=2.5;
+arrow(contactX,y1,contactX,y2,8,'rgba(232,160,32,0.95)');
+ctx.font='bold 10px monospace';
+ctx.textAlign='left';
+ctx.fillText('\u03c4',contactX+7,contactY+4);
+ctx.restore();
+}
+function drawFrame(ang) {
+var torque=computeTorque();
+ctx.clearRect(0,0,CW,CH);
+drawBackground();
+var cx=CW/2;
+var battTop=25;
+var battH=120;
+var battW=82;
+var battBottom=battTop+battH;
+var screwTop=battBottom;
+var screwH=98;
+var screwBottom=screwTop+7+screwH;
+var diskY=246;
+var magTop=252;
+var magRx=96;
+var magRy=14;
+var magDepth=34;
+drawBattery(cx,battTop,battW,battH,battFlip);
+drawWire(cx,battTop,battH,cx,magTop,magRx,magDepth,battFlip);
+drawDisk(cx,diskY,diskCond,ang);
+drawMagnet(cx,magTop,magRx,magRy,magDepth,magFlip,ang);
+drawScrew(cx,screwTop,screwH,ang,torque,battFlip);
+drawCurrentPath(cx,screwBottom,magTop,magDepth,magRx,battFlip);
+drawForce(cx,magTop,magDepth,magRx,torque);
+if(Math.abs(torque)>0.001) {
+ctx.fillStyle='rgba(232,160,32,0.8)';
+ctx.font='bold 11px monospace';
+ctx.textAlign='center';
+ctx.fillText('ROTATING',cx,magTop+magDepth+35);
+} else {
+ctx.fillStyle='#4a5468';
+ctx.font='bold 11px monospace';
+ctx.textAlign='center';
+ctx.fillText('STOPPED',cx,magTop+magDepth+35);
+}
+}
+function animate(ts) {
+if(lastTime===null) lastTime=ts;
+var dt=Math.min((ts-lastTime)/1000,0.05);
+lastTime=ts;
+var torque=computeTorque();
+angle+=torque*1.8*dt;
+drawFrame(angle);
+rafId=requestAnimationFrame(animate);
+}
+function update() {
+I=parseFloat(el('hpSlI1005').value);
+Bmag=parseFloat(el('hpSlB1005').value);
+set('hpVI1005',I.toFixed(1)+' A');
+set('hpVB1005',Bmag.toFixed(2)+' T');
+updateStatus();
+}
+function updateStatus() {
+var torque=computeTorque();
+var Tstr=Math.abs(torque)<1e-6?'0 (stopped)':torque.toFixed(3)+' N·m (relative)';
+var dirStr=Math.abs(torque)<1e-6?'—':torque>0?'CW (from above)':'CCW (from above)';
+var speedStr=Math.abs(torque)<1e-6?'0':Math.abs(torque)<1?'slow':Math.abs(torque)<3?'medium':'fast';
+set('hpSTorque1005',Tstr);
+var tEl=el('hpSTorque1005');
+if(tEl) tEl.className='hp_sgv1005 '+(Math.abs(torque)<1e-6?'hp_sgdim1005':torque>0?'hp_green1005':'hp_blue21005');
+set('hpSDir1005',dirStr);
+var dEl=el('hpSDir1005');
+if(dEl) dEl.className='hp_sgv1005 '+(Math.abs(torque)<1e-6?'hp_sgdim1005':torque>0?'hp_green1005':'hp_blue21005');
+set('hpSDisk1005',diskCond?'conducting':'insulating');
+var dkEl=el('hpSDisk1005');
+if(dkEl) dkEl.className='hp_sgv1005 '+(diskCond?'hp_green1005':'hp_red1005');
+set('hpSBatt1005',battFlip>0?'+ bottom':'+ top');
+set('hpSMag1005',magFlip>0?'N top':'N bottom');
+set('hpSSpeed1005',speedStr);
+updateNarration(torque,dirStr);
+set('hpCvCaption1005',Math.abs(torque)<1e-6?'motor stopped':'spinning '+dirStr);
+}
+function updateNarration(torque,dirStr) {
+var txt;
+if(!diskCond) {
+txt='The insulating disk blocks current from flowing radially through the magnet. No Lorentz force → no torque → motor is stopped.';
+} else if(I<0.05) {
+txt='Current is zero. No force acts on the magnet → motor is stopped.';
+} else if(Bmag<0.01) {
+txt='Magnetic field is zero. No Lorentz force → motor is stopped.';
+} else {
+var iDir=battFlip>0?'downward through the screw':'upward through the screw';
+txt='Current flows '+iDir+', then radially outward through the magnet. '
++'The axial B field from the magnet crosses this radial current. '
++'F = IL × B produces a tangential force → '+dirStr+' rotation.';
+}
+set('hpNarrText1005',txt);
+}
+function flipBattery() {
+battFlip*=-1;
+var b=el('hpBtnFlipBatt1005');
+if(b) b.value=battFlip>0?'⇅ Flip Battery':'⇅ Unflip Battery';
+update();
+srAnn('Battery flipped. + terminal now '+(battFlip>0?'bottom':'top')+'.');
+}
+function flipMagnet() {
+magFlip*=-1;
+var b=el('hpBtnFlipMag1005');
+if(b) b.value=magFlip>0?'⇅ Flip Magnet':'⇅ Unflip Magnet';
+update();
+srAnn('Magnet flipped. N pole now '+(magFlip>0?'top':'bottom')+'.');
+}
+function toggleDisk() {
+diskCond=!diskCond;
+var btn=el('hpBtnDisk1005');
+if(!btn) return;
+btn.value=diskCond?'Conducting':'Insulating';
+btn.className='hp_btn1005 '+(diskCond?'hp_btnon1005':'hp_btnwarn1005');
+btn.setAttribute('aria-pressed',!diskCond);
+update();
+srAnn('Disk is now '+(diskCond?'conducting — motor can run.':'insulating — motor stops.'));
+}
+var srTimer=null;
+function srAnn(msg) {
+var e=el('hpSrAnn1005');
+if(!e) return;
+e.textContent='';
+clearTimeout(srTimer);
+srTimer=setTimeout(function() {
+e.textContent=msg;
+},60);
+}
+update();
+rafId=requestAnimationFrame(animate);
+document.addEventListener('visibilitychange',function() {
+if(document.hidden && rafId) {
+cancelAnimationFrame(rafId);
+rafId=null;
+} else if(!document.hidden && !rafId) {
+lastTime=null;
+rafId=requestAnimationFrame(animate);
+}
+});
+return {
+update:update,
+flipBattery:flipBattery,
+flipMagnet:flipMagnet,
+toggleDisk:toggleDisk
+};
+};
+</script>
+<script>
+var homopolarSim1005 = new homopolarSim();
+</script>
+
+
+</body>
+</html>

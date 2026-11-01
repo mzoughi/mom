@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: The Hall Effect</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, Hall effect, Hall voltage, charge carriers, electrons, holes, semiconductor, drift speed, Lorentz force, lesson, scientific">
+<meta name="description" content="Interactive Hall effect simulation: a current-carrying slab in a magnetic field, charge build-up, the Hall voltage and the sign of the charge carriers.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="hallRoot" class="hal_root" role="region" aria-label="Hall effect simulator">
+<!-- Accessibility toolbar -->
+<div class="hal_a11y" id="hallA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="hal_a11ybtn" id="hallBtnHC" onclick="hallA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="hal_a11ybtn" id="hallBtnLM" onclick="hallA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="hal_a11ybtn" id="hallBtnCB" onclick="hallA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="hal_a11ybtn hal_a11yon" id="hallBtnNR" onclick="hallA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="hal_header">
+<p class="hal_h1">The Hall Effect</p>
+<p class="hal_sub">A current-carrying slab in a magnetic field -- the sideways voltage reveals the sign of the charge carriers</p>
+</div>
+<!-- Instrument grid -->
+<div class="hal_instrument">
+<!-- Left column -->
+<div class="hal_leftcol">
+<div class="hal_diagpanel">
+<div class="hal_diaglabel"><span id="diagLabel">HALL PROBE</span><span class="hal_diagnote">current to the right &middot; field into or out of the page &middot; voltmeter across the slab</span></div>
+<canvas id="hallCanvas" width="640" height="400" role="img" aria-label="A current-carrying slab between magnet poles, wired to a current supply and a voltmeter that reads the voltage across the slab. The narration below describes what is happening."></canvas>
+<div class="hal_runbar">
+<button type="button" class="hal_btn hal_play" id="hallPlay" onclick="hallSim.toggle()">&#9654; Play</button>
+<button type="button" class="hal_btn" onclick="hallSim.step()">Step</button>
+<button type="button" class="hal_btn" onclick="hallSim.describe()">Describe</button>
+<button type="button" class="hal_btn hal_warn" onclick="hallSim.rst()">Restart</button>
+</div>
+</div>
+<!-- Readout -->
+<div class="hal_panel" role="region" aria-labelledby="readHd">
+<div class="hal_paneltitle" id="readHd">Readout</div>
+<div class="hal_rinner hal_rgrid">
+<div class="hal_rrow"><span class="hal_rkey">Voltmeter V<sub>H</sub> (top &minus; bottom)</span><span class="hal_rval hal_hi" id="r_VH">--</span></div>
+<div class="hal_rrow"><span class="hal_rkey">Predicted |V<sub>H</sub>| = IB/(n|q|t)</span><span class="hal_rval" id="r_VHeq">--</span></div>
+<div class="hal_rrow"><span class="hal_rkey">Drift speed v<sub>d</sub></span><span class="hal_rval" id="r_vd">--</span></div>
+<div class="hal_rrow"><span class="hal_rkey">Hall field E<sub>H</sub></span><span class="hal_rval" id="r_EH">--</span></div>
+<div class="hal_rrow"><span class="hal_rkey">Charge build-up</span><span class="hal_rval hal_hi" id="r_s">--</span></div>
+<div class="hal_rrow"><span class="hal_rkey">Carrier density n</span><span class="hal_rval" id="r_n">--</span></div>
+<div class="hal_rrow hal_wide"><span class="hal_rkey">What the reading tells you</span><span class="hal_rval" id="r_clue">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="hal_rightcol">
+<!-- Circuit -->
+<div class="hal_panel" role="group" aria-labelledby="cirHd">
+<div class="hal_paneltitle" id="cirHd">Circuit</div>
+<div class="hal_panelbody">
+<div class="hal_ctrlhdr"><label for="hallI" class="hal_ctrlname">Current I</label><span class="hal_sval"><span id="hallIVal">50</span> mA</span></div>
+<input type="range" id="hallI" min="0" max="100" step="5" value="50" aria-label="Current in milliamperes" oninput="hallSim.setParam()">
+<label for="hallMat" class="hal_ctrlname">Material</label>
+<select id="hallMat" aria-label="Slab material" onchange="hallSim.setParam()">
+<option value="cu">Copper (electrons)</option>
+<option value="nsi" selected>n-type silicon (electrons)</option>
+<option value="psi">p-type silicon (holes)</option>
+</select>
+</div>
+</div>
+<!-- Field -->
+<div class="hal_panel" role="group" aria-labelledby="fldHd">
+<div class="hal_paneltitle" id="fldHd">Magnetic Field</div>
+<div class="hal_panelbody">
+<div class="hal_ctrlhdr"><label for="hallB" class="hal_ctrlname">B</label><span class="hal_sval"><span id="hallBVal">0.5</span> T</span></div>
+<input type="range" id="hallB" min="-1" max="1" step="0.1" value="0.5" aria-label="Magnetic field in tesla; positive is out of the page" oninput="hallSim.setParam()">
+<p class="hal_derived">Direction: <b id="hallBDir">out of page</b></p>
+<label class="hal_chk"><input type="checkbox" id="hallForces" checked onchange="hallSim.refresh()"> Show forces on the tracer carrier</label>
+</div>
+</div>
+<p class="hal_hint hal_side">Changing a setting starts the charge build-up again, so you can watch the new Hall voltage develop.</p>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="hal_formulastrip">
+<span class="hal_formulatxt">Drift speed v<sub>d</sub> = I/(nqwt) &nbsp;|&nbsp; Equilibrium qE<sub>H</sub> = qv<sub>d</sub>B &nbsp;|&nbsp; Hall voltage V<sub>H</sub> = E<sub>H</sub>w = IB/(nqt) &nbsp;|&nbsp; The sign of the reading reveals the sign of the carriers &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>P</kbd> play <kbd>S</kbd> step <kbd>R</kbd> restart</span>
+</div>
+</div><!-- instrument -->
+<div id="hallNarBar" class="hal_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<p class="hal_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div><!-- #hallRoot -->
+<style>
+/* ════════ All simulator rules scoped to #hallRoot ════════ */
+#hallRoot {
+--hal-chassis:#1a1c1f; --hal-panel:#22262b; --hal-panel-hi:#2c3138; --hal-panel-lo:#14161a;
+--hal-border:#3a4048; --hal-border-hi:#525c66; --hal-text:#c8d0d8; --hal-dim:#8a94a3; --hal-bright:#e8eef5;
+--hal-accent:#e8a020; --hal-green:#3ad08f; --hal-val:#ffdd66; --hal-warnc:#ff6a5a;
+--hal-focus:#e8a020; --hal-nar-bg:#2a2410; --hal-nar-border:#e0b040; --hal-nar-text:#f0e2b8;
+background:var(--hal-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--hal-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#hallRoot.hal_lm {
+--hal-chassis:#e9edf1; --hal-panel:#ffffff; --hal-panel-hi:#f1f4f7; --hal-panel-lo:#f4f6f9;
+--hal-border:#c3cad3; --hal-border-hi:#9aa3ae; --hal-text:#1d232a; --hal-dim:#556070; --hal-bright:#000000;
+--hal-accent:#a8620a; --hal-green:#12805a; --hal-val:#8a4a00; --hal-warnc:#b02020;
+--hal-focus:#a8620a; --hal-nar-bg:#ffefc0; --hal-nar-border:#e0b040; --hal-nar-text:#333333;
+background-image:none;
+}
+#hallRoot.hal_hc {
+--hal-chassis:#000000; --hal-panel:#000000; --hal-panel-hi:#111111; --hal-panel-lo:#000000;
+--hal-border:#ffffff; --hal-border-hi:#ffffff; --hal-text:#ffffff; --hal-dim:#e0e0e0; --hal-bright:#ffffff;
+--hal-accent:#ffd700; --hal-green:#00ff88; --hal-val:#ffff00; --hal-warnc:#ff5555;
+--hal-focus:#ffff00; --hal-nar-bg:#000000; --hal-nar-border:#ffd700; --hal-nar-text:#ffffff;
+background-image:none;
+}
+#hallRoot.hal_cb { --hal-warnc:#D55E00; }
+#hallRoot.hal_hc .hal_panel, #hallRoot.hal_hc .hal_diagpanel { border-width:2px; }
+#hallRoot *, #hallRoot *::before, #hallRoot *::after { box-sizing:border-box; margin:0; padding:0; }
+#hallRoot input:focus-visible, #hallRoot button:focus-visible, #hallRoot select:focus-visible { outline:2px solid var(--hal-focus); outline-offset:2px; }
+/* toolbar */
+#hallRoot .hal_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#hallRoot .hal_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--hal-panel-hi); border:1px solid var(--hal-border-hi); color:var(--hal-dim); }
+#hallRoot .hal_a11ybtn:hover { border-color:var(--hal-accent); color:var(--hal-accent); }
+#hallRoot .hal_a11yon { background:rgba(58,208,143,.14); border-color:var(--hal-green); color:var(--hal-green); font-weight:bold; }
+/* header */
+#hallRoot .hal_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#hallRoot .hal_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--hal-accent); text-align:center; }
+#hallRoot .hal_sub { font-size:.7rem; color:var(--hal-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#hallRoot .hal_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--hal-panel); border:1px solid var(--hal-border); border-radius:4px; color:var(--hal-dim); }
+/* grid */
+#hallRoot .hal_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#hallRoot .hal_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#hallRoot .hal_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#hallRoot .hal_diagpanel { background:var(--hal-panel); border:1px solid var(--hal-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#hallRoot .hal_diaglabel { background:var(--hal-panel-lo); border-bottom:1px solid var(--hal-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--hal-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#hallRoot #diagLabel { color:var(--hal-accent); font-weight:bold; }
+#hallRoot .hal_diagnote { text-transform:none; letter-spacing:.02em; }
+#hallRoot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#hallRoot .hal_hoverbar { background:var(--hal-panel-lo); border-top:1px solid var(--hal-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--hal-val); min-height:28px; line-height:1.4; }
+/* right column */
+#hallRoot .hal_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#hallRoot .hal_panel { background:var(--hal-panel); border:1px solid var(--hal-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#hallRoot .hal_paneltitle { background:var(--hal-panel-lo); border-bottom:1px solid var(--hal-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--hal-dim); }
+#hallRoot .hal_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#hallRoot .hal_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#hallRoot .hal_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--hal-panel-hi); border:1px solid var(--hal-border-hi); color:var(--hal-dim); border-radius:3px; }
+#hallRoot .hal_srcbtn:hover { border-color:var(--hal-accent); color:var(--hal-text); }
+#hallRoot .hal_srcon { background:var(--hal-accent); color:#111; border-color:var(--hal-accent); font-weight:bold; }
+#hallRoot .hal_srcon:hover { color:#111; }
+#hallRoot .hal_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#hallRoot .hal_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--hal-dim); text-transform:uppercase; }
+#hallRoot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--hal-panel-lo); border:1px solid var(--hal-border); }
+#hallRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--hal-accent); border:2px solid var(--hal-panel); cursor:pointer; }
+#hallRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--hal-accent); border:2px solid var(--hal-panel); cursor:pointer; }
+#hallRoot input[type=range]:disabled { opacity:.35; cursor:default; }
+#hallRoot .hal_sval { font-family:monospace; font-size:.74rem; color:var(--hal-val); min-width:56px; text-align:right; }
+#hallRoot .hal_hint { font-size:.66rem; color:var(--hal-dim); line-height:1.4; }
+#hallRoot .hal_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#hallRoot .hal_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--hal-panel-lo); border:1px solid var(--hal-border); border-radius:3px; }
+#hallRoot .hal_rrow.hal_alert { border-color:var(--hal-warnc); }
+#hallRoot .hal_rrow.hal_alert .hal_rval { color:var(--hal-warnc); font-weight:bold; }
+#hallRoot .hal_rkey { font-family:monospace; font-size:.6rem; color:var(--hal-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#hallRoot .hal_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--hal-text); }
+#hallRoot .hal_hi { color:var(--hal-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#hallRoot .hal_formulastrip { grid-column:1 / 3; background:var(--hal-panel-lo); border:1px solid var(--hal-border); border-radius:4px; padding:7px 14px; }
+#hallRoot .hal_formulatxt { font-family:monospace; font-size:.66rem; color:var(--hal-dim); letter-spacing:.04em; line-height:1.6; }
+#hallRoot .hal_formulatxt kbd { border:1px solid var(--hal-border-hi); border-radius:2px; padding:0 4px; color:var(--hal-accent); font-family:monospace; }
+#hallRoot .hal_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--hal-nar-bg); border-left:4px solid var(--hal-nar-border); font-size:.82rem; color:var(--hal-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#hallRoot .hal_credit { font-size:.62rem; color:var(--hal-dim); text-align:center; }
+#hallRoot .hal_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#hallRoot .hal_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--hal-text); cursor:pointer; }
+#hallRoot .hal_chk input { accent-color:var(--hal-accent); width:14px; height:14px; }
+#hallRoot .hal_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--hal-panel-lo); border-top:1px solid var(--hal-border); }
+#hallRoot select { width:100%; background:var(--hal-panel-hi); color:var(--hal-text); border:1px solid var(--hal-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#hallRoot .hal_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#hallRoot .hal_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#hallRoot .hal_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--hal-panel-hi); border:1px solid var(--hal-border-hi); color:var(--hal-text); border-radius:3px; text-transform:uppercase; }
+#hallRoot .hal_btn:hover { border-color:var(--hal-accent); }
+#hallRoot .hal_btn:disabled { opacity:.4; cursor:default; }
+#hallRoot .hal_btn.hal_active { background:var(--hal-green); border-color:var(--hal-green); color:#111; font-weight:bold; }
+#hallRoot .hal_warn { color:#e0605a; border-color:#a04040; }
+#hallRoot.hal_lm .hal_warn { color:#b02020; border-color:#c06060; }
+#hallRoot .hal_sub2 { border-top:1px dashed var(--hal-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#hallRoot .hal_derived { font-family:monospace; font-size:.68rem; color:var(--hal-dim); line-height:1.4; }
+#hallRoot .hal_derived b { color:var(--hal-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#hallRoot .hal_instrument { grid-template-columns:minmax(0,1fr); }
+#hallRoot .hal_rightcol { width:auto; }
+#hallRoot .hal_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #hallRoot .hal_row2 { grid-template-columns:1fr; } }
+#hallRoot .hal_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#hallRoot .hal_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#hallRoot .hal_small { padding:3px 8px; margin-left:auto; }
+@media (max-width:560px) { #hallRoot .hal_rgrid { grid-template-columns:1fr; } }
+#hallRoot .hal_scalebtns { display:flex; gap:5px; margin-left:auto; }
+#hallRoot .hal_small { padding:3px 8px; margin-left:0; }
+#hallRoot canvas { display:block; width:100%; max-width:640px; height:auto; margin:0 auto; cursor:default; }
+#hallRoot .hal_runbar { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; padding:8px 10px; background:var(--hal-panel-lo); border-top:1px solid var(--hal-border); }
+#hallRoot .hal_runbar .hal_btn { font-size:.72rem; padding:8px 4px; }
+#hallRoot .hal_play { font-weight:bold; }
+#hallRoot .hal_wide { grid-column:1 / 3; }
+#hallRoot .hal_wide .hal_rval { white-space:normal; text-align:right; }
+#hallRoot .hal_side { padding:0 4px; }
+#hallRoot .hal_rkey sub, #hallRoot .hal_formulatxt sub { text-transform:none; }
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#hallRoot input[type=range] { height:8px; }
+#hallRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#hallRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#hallRoot .hal_btn, #hallRoot .hal_a11ybtn { min-height:40px; }
+#hallRoot select { min-height:36px; font-size:.9rem; }
+#hallRoot .hal_chk input { width:22px; height:22px; }
+#hallRoot .hal_panelbody { gap:10px; }
+}
+@media (max-width:560px) {
+#hallRoot { padding:10px 6px 14px; }
+#hallRoot .hal_wide { grid-column:auto; }
+#hallRoot .hal_rrow { flex-wrap:wrap; }
+#hallRoot .hal_rkey { white-space:normal; }
+}
+/* question section below the simulator */
+.hal_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.hal_qwrap ol { padding-left:24px; }
+.hal_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════
+Same API as the VDG example (init / toggle / narrate / col). Themes are layered over the
+defaults (light / colour-blind first, high contrast on top), and the canvas is redrawn on
+every toggle so the change shows even while the simulation is paused.
+-->
+<script>
+var hallA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var DEFS = {
+'--hall-bg':'#eaf2f8','--hall-bg2':'#cfdfeb','--hall-bench':'#8b5a2b','--hall-bench-text':'#fff6e0',
+'--hall-text':'#111111','--hall-struct':'#222222','--hall-wire':'#b8652a',
+'--hall-lead-pos':'#d62828','--hall-lead-neg':'#222222',
+'--hall-cu':'#c8794a','--hall-si':'#6f7f8f',
+'--hall-neg':'#1f5fd6','--hall-pos':'#d62828','--hall-glyph':'#ffffff',
+'--hall-bfield':'#2b2b6b','--hall-pole-n':'#d62828','--hall-pole-s':'#1f5fd6',
+'--hall-fb':'#b000b5','--hall-fe':'#0a8f3c','--hall-efield':'#0a8f3c',
+'--hall-databox-bg':'#ffff99','--hall-databox-border':'#cc0000',
+'--hall-meter-body':'#3b3f46','--hall-meter-face':'#fbf6e6','--hall-meter-ink':'#222222','--hall-needle':'#cc0000',
+'--hall-lcd-bg':'#16261a','--hall-lcd-fg':'#7dff9a','--hall-supply':'#e4e0d4','--hall-toolbar':'#222'
+};
+var THEMES = {
+lm:{'--hall-bg':'#ffffff','--hall-bg2':'#f0f0f0','--hall-bench':'#c49a6c','--hall-bench-text':'#1a1a1a',
+'--hall-databox-bg':'#fff8d6','--hall-databox-border':'#cc8800','--hall-meter-face':'#ffffff',
+'--hall-supply':'#f2efe6','--hall-toolbar':'#444'},
+cb:{'--hall-neg':'#0072b2','--hall-pos':'#d55e00','--hall-lead-pos':'#d55e00','--hall-pole-n':'#d55e00',
+'--hall-pole-s':'#0072b2','--hall-fb':'#cc79a7','--hall-fe':'#009e73','--hall-efield':'#009e73',
+'--hall-databox-border':'#0072b2','--hall-needle':'#d55e00'},
+hc:{'--hall-bg':'#000000','--hall-bg2':'#000000','--hall-bench':'#111111','--hall-bench-text':'#ffffff',
+'--hall-text':'#ffffff','--hall-struct':'#ffffff','--hall-wire':'#ffcc00',
+'--hall-lead-pos':'#ff5555','--hall-lead-neg':'#ffffff','--hall-cu':'#333333','--hall-si':'#333333',
+'--hall-neg':'#33aaff','--hall-pos':'#ff5555','--hall-glyph':'#000000',
+'--hall-bfield':'#ffffff','--hall-pole-n':'#ff5555','--hall-pole-s':'#33aaff',
+'--hall-fb':'#ff66ff','--hall-fe':'#66ff66','--hall-efield':'#66ff66',
+'--hall-databox-bg':'#000000','--hall-databox-border':'#ffffff',
+'--hall-meter-body':'#222222','--hall-meter-face':'#000000','--hall-meter-ink':'#ffffff','--hall-needle':'#ffff00',
+'--hall-lcd-bg':'#000000','--hall-lcd-fg':'#ffff00','--hall-supply':'#222222','--hall-toolbar':'#000'}
+};
+var cur = {};
+function applyVars(){
+if (!ROOT) return;
+var p, order = ['lm','cb','hc'];
+cur = {}; for (p in DEFS) cur[p] = DEFS[p];
+for (var i=0; i<order.length; i++){ if (states[order[i]]){ var t = THEMES[order[i]]; for (p in t) cur[p] = t[p]; } }
+for (p in cur) ROOT.style.setProperty(p, cur[p]);
+ROOT.classList.toggle('hal_hc', states.hc); ROOT.classList.toggle('hal_lm', states.lm); ROOT.classList.toggle('hal_cb', states.cb);
+}
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.classList.toggle('hal_a11yon', on);
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function apply(){
+if(!ROOT)return;
+applyVars();
+var nb=document.getElementById('hallNarBar'); if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('hallBtnNR'); if(btn) btn.textContent='NARRATION: '+(states.nr?'ON':'OFF');
+styleBtn('hallBtnNR',states.nr); styleBtn('hallBtnHC',states.hc);
+styleBtn('hallBtnLM',states.lm); styleBtn('hallBtnCB',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('hallRoot'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+if (typeof hallSim !== 'undefined' && hallSim.refresh) hallSim.refresh();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('hallNarBar'); if(nb) nb.textContent=msg;
+},
+col:function(prop,def){ return cur[prop] || DEFS[prop] || def; }
+};
+})();
+hallA11y.init();
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VGG (Van de Graaff) example.
+- var simObj = function() { ... rst(); return {pl,ps,step,rst,describe,refresh}; }
+- var simObj = new simObj();
+- Animation: recursive window.setTimeout(runMotion, 40) guarded by runFlag
+Physics (slab of width w along y, thickness t along z, conventional current I along +x,
+B along z; B > 0 means out of the page):
+drift speed           v_d = I / (n |q| w t)
+magnetic force        F_B = q v x B  -> pushes carriers of EITHER sign toward the same edge
+        (bottom edge when B is out of the page)
+equilibrium           q E_H = q v_d B
+Hall voltage          V_H = V_top - V_bottom = -I B / (n q t)   (q signed)
+-> positive for electrons, negative for holes when B is out of the page
+The build-up fraction s rises from 0 to 1; the meter reads s * V_H and the magnetic
+sideways push on a carrier is reduced by the growing Hall field, (1 - s).
+-->
+<script>
+var hallGen = function(){
+var canvas = document.getElementById('hallCanvas');
+var ctx    = canvas.getContext('2d');
+var W = 640, H = 400, DPR = window.devicePixelRatio || 1;
+canvas.width = W*DPR; canvas.height = H*DPR;        /* CSS scales it to the panel width (phones) */
+ctx.scale(DPR, DPR);
+var FONT = 'Calibri, Arial, sans-serif';
+var timer, runFlag = 0;
+/* ── physical constants and materials ── */
+var QE = 1.602e-19, WSLAB = 0.01, IMAX = 100, BMAX = 1;
+var MATS = {
+cu:  { name:'Copper',         short:'Copper',      n:8.49e28, q:-1, t:25e-6,  carrier:'electrons', col:'--hall-cu' },
+nsi: { name:'n-type silicon', short:'n-type Si',   n:1.0e22,  q:-1, t:0.5e-3, carrier:'electrons', col:'--hall-si' },
+psi: { name:'p-type silicon', short:'p-type Si',   n:1.0e22,  q:+1, t:0.5e-3, carrier:'holes',     col:'--hall-si' }
+};
+/* ── layout (fixed) ── */
+var SX0 = 150, SX1 = 490, SY0 = 175, SY1 = 285, DX = 16, DY = 10;
+var XL = SX0 + 6, XR = SX1 - 6, YT = SY0 + 17, YB = SY1 - 17;
+var NP = 36, VMAX = 4, DEFL = 1.6, JIT = 0.8, RATE = 0.025;
+/* ── state ── */
+var Ima, Bt, mat, parts, s, frameCount, eqNarrated, lastMsg;
+var narrationEvery = 75;     /* ~ every 3 s at 25 fps */
+function el(id){ return document.getElementById(id); }
+function c(p, d){ return hallA11y.col(p, d); }
+/* ══════════ physics helpers ══════════ */
+function dirX(){ return mat.q < 0 ? -1 : 1; }                       /* carrier drift direction on screen */
+function deflDir(){ return Bt > 0 ? 1 : (Bt < 0 ? -1 : 0); }         /* +1 = toward bottom edge */
+function active(){ return Ima > 0 && Bt !== 0; }
+function phys(){
+var I = Ima/1000, n = mat.n, t = mat.t;
+var vd    = I / (n*QE*WSLAB*t);
+var VHeq  = -I*Bt / (n*(mat.q*QE)*t);
+var VH    = s*VHeq;
+var VHmax = (IMAX/1000)*BMAX / (n*QE*t);
+return { vd:vd, VHeq:VHeq, VH:VH, EH:Math.abs(VH)/WSLAB, VHmax:VHmax };
+}
+function edgeSigns(){   /* sign of the charge piling up on the top and bottom edges */
+var d = deflDir();
+return { top: d > 0 ? -mat.q : mat.q, bottom: d > 0 ? mat.q : -mat.q };
+}
+/* ══════════ formatting ══════════ */
+var SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+function sci(x){
+var e = Math.floor(Math.log10(x)), m = x/Math.pow(10,e);
+return m.toFixed(2) + ' × 10' + String(e).split('').map(function(ch){ return SUP[ch]; }).join('');
+}
+function fmtV(v){
+var a = Math.abs(v);
+if (a === 0) return '0 V';
+if (a < 1e-6) return (v*1e9).toFixed(1) + ' nV';
+if (a < 1e-3) return (v*1e6).toFixed(2) + ' µV';
+if (a < 1)    return (v*1e3).toFixed(2) + ' mV';
+return v.toFixed(3) + ' V';
+}
+function fmtSpeed(v){
+if (v === 0) return '0 m/s';
+if (v < 1e-3) return (v*1e6).toFixed(1) + ' µm/s';
+if (v < 1)    return (v*1e3).toFixed(2) + ' mm/s';
+return v.toFixed(2) + ' m/s';
+}
+function fmtLen(t){ return t < 1e-3 ? (t*1e6).toFixed(0) + ' µm' : (t*1e3).toFixed(2) + ' mm'; }
+/* with I to the right: (V_H > 0 and B out) or (V_H < 0 and B in)  ->  negative carriers */
+function signClue(v){
+var neg = v*Bt > 0;
+return 'A ' + (v > 0 ? 'positive' : 'negative') + ' reading with the field ' + bWord() +
+ ' means the carriers are ' + (neg ? 'negative.' : 'positive.');
+}
+function bWord(){ return Bt > 0 ? 'out of the page' : (Bt < 0 ? 'into the page' : 'switched off'); }
+/* ══════════ low-level canvas helpers ══════════ */
+function rrect(x,y,w,h,r){
+r = Math.min(r, w/2, h/2);
+ctx.beginPath(); ctx.moveTo(x+r,y);
+ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function poly(pts, col, lw){
+ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath();
+ctx.moveTo(pts[0][0], pts[0][1]);
+for (var i=1; i<pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+ctx.stroke();
+}
+function arrow(x1,y1,x2,y2,col,lw){
+var a = Math.atan2(y2-y1, x2-x1), hs = 4 + 2*lw;
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw;
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2 - 0.6*hs*Math.cos(a), y2 - 0.6*hs*Math.sin(a)); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x2,y2);
+ctx.lineTo(x2 - hs*Math.cos(a-0.4), y2 - hs*Math.sin(a-0.4));
+ctx.lineTo(x2 - hs*Math.cos(a+0.4), y2 - hs*Math.sin(a+0.4));
+ctx.closePath(); ctx.fill();
+}
+/* text with subscripts written as {..}:  rich('v{d} = 3 mm/s', ...) */
+function rich(str, x, y, size, col, bold){
+var bits = str.split(/(\{[^}]*\})/), cx = x, w = bold ? 'bold ' : '';
+ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+for (var i=0; i<bits.length; i++){
+var b = bits[i]; if (!b) continue;
+if (b.charAt(0) === '{'){
+b = b.slice(1,-1); ctx.font = w + (size-3) + 'px ' + FONT; ctx.fillText(b, cx, y+3);
+} else { ctx.font = w + size + 'px ' + FONT; ctx.fillText(b, cx, y); }
+cx += ctx.measureText(b).width;
+}
+return cx;
+}
+function fieldSym(x, y, r, out, col){
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.3;
+ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI); ctx.stroke();
+if (out){ ctx.beginPath(); ctx.arc(x, y, r*0.28, 0, 2*Math.PI); ctx.fill(); }
+else {
+var k = r*0.62;
+ctx.beginPath(); ctx.moveTo(x-k,y-k); ctx.lineTo(x+k,y+k); ctx.moveTo(x+k,y-k); ctx.lineTo(x-k,y+k); ctx.stroke();
+}
+}
+function chargeDot(x, y, r, sign){
+ctx.fillStyle = sign < 0 ? c('--hall-neg') : c('--hall-pos');
+ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI); ctx.fill();
+ctx.fillStyle = c('--hall-glyph'); ctx.font = 'bold ' + Math.round(r*1.9) + 'px ' + FONT;
+ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText(sign < 0 ? '−' : '+', x, y + 0.5);
+ctx.textBaseline = 'alphabetic';
+}
+/* ══════════ props ══════════ */
+function drawRoom(){
+var g = ctx.createLinearGradient(0, 0, 0, 382);
+g.addColorStop(0, c('--hall-bg')); g.addColorStop(1, c('--hall-bg2'));
+ctx.fillStyle = g; ctx.fillRect(0, 0, W, 382);
+ctx.fillStyle = c('--hall-bench'); ctx.fillRect(0, 382, W, H-382);
+ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
+for (var k=0; k<3; k++){
+ctx.beginPath(); ctx.moveTo(0, 386 + 5*k);
+for (var xx=0; xx<=W; xx+=40) ctx.lineTo(xx, 386 + 5*k + 1.5*Math.sin(xx/37 + k));
+ctx.stroke();
+}
+}
+function drawMagnet(){
+if (Bt === 0) return;
+var pc = Bt > 0 ? c('--hall-pole-n') : c('--hall-pole-s');
+ctx.save();
+ctx.globalAlpha = 0.12 + 0.18*Math.abs(Bt)/BMAX; ctx.fillStyle = pc;
+rrect(118, 154, 404, 148, 16); ctx.fill();
+ctx.globalAlpha = 0.7; ctx.strokeStyle = pc; ctx.lineWidth = 2; ctx.setLineDash([6,4]); ctx.stroke();
+ctx.restore();
+ctx.fillStyle = pc; ctx.font = 'bold 10px ' + FONT; ctx.textAlign = 'left';
+ctx.fillText((Bt > 0 ? 'N' : 'S') + ' pole face behind the slab', 126, 297);
+}
+function drawSupply(){
+var iF = Ima/IMAX;
+ctx.fillStyle = c('--hall-supply'); rrect(250, 338, 140, 42, 5); ctx.fill();
+ctx.strokeStyle = c('--hall-struct'); ctx.lineWidth = 1.2; ctx.stroke();
+ctx.fillStyle = c('--hall-lcd-bg'); rrect(272, 346, 72, 18, 2); ctx.fill();
+ctx.fillStyle = c('--hall-lcd-fg'); ctx.font = 'bold 11px monospace'; ctx.textAlign = 'right';
+ctx.fillText(Ima + ' mA', 340, 359);
+/* knob: pointer turns with the current setting */
+ctx.fillStyle = c('--hall-struct'); ctx.beginPath(); ctx.arc(368, 359, 9, 0, 2*Math.PI); ctx.fill();
+var ka = -2.4 + 4.8*iF;
+ctx.strokeStyle = c('--hall-supply'); ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(368, 359); ctx.lineTo(368 + 7*Math.sin(ka), 359 - 7*Math.cos(ka)); ctx.stroke();
+/* terminal posts */
+ctx.fillStyle = c('--hall-lead-pos'); ctx.fillRect(261, 330, 8, 8);
+ctx.fillStyle = c('--hall-lead-neg'); ctx.fillRect(371, 330, 8, 8);
+ctx.strokeStyle = c('--hall-struct'); ctx.lineWidth = 0.8;
+ctx.strokeRect(261, 330, 8, 8); ctx.strokeRect(371, 330, 8, 8);
+ctx.fillStyle = c('--hall-text'); ctx.font = 'bold 12px ' + FONT; ctx.textAlign = 'center';
+ctx.fillText('+', 253, 337); ctx.fillText('−', 388, 337);
+ctx.font = '8px ' + FONT; ctx.textAlign = 'left';
+ctx.fillText('DC current supply', 258, 376);
+}
+function drawWires(){
+var wc = c('--hall-wire');
+poly([[SX0,230],[60,230],[60,325],[265,325],[265,330]], wc, 2.5);
+poly([[SX1,230],[580,230],[580,325],[375,325],[375,330]], wc, 2.5);
+/* voltmeter leads: red to the top edge, black to the bottom edge (hops over the supply wire) */
+poly([[320,SY0],[320,150],[500,150],[500,137]], c('--hall-lead-pos'), 2);
+var lc = c('--hall-lead-neg');
+poly([[320,SY1],[320,305],[574,305]], lc, 2);
+ctx.beginPath(); ctx.arc(580, 305, 6, Math.PI, 0, false); ctx.stroke();
+poly([[586,305],[628,305],[628,150],[575,150],[575,137]], lc, 2);
+/* conventional-current arrows */
+if (Ima > 0){
+var tc = c('--hall-text');
+arrow(88, 230, 116, 230, tc, 2); arrow(522, 230, 550, 230, tc, 2);
+ctx.fillStyle = tc; ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'center';
+ctx.fillText('I', 102, 222); ctx.fillText('I', 536, 222);
+}
+}
+function drawSlab(){
+var fc = c(mat.col);
+ctx.fillStyle = fc; ctx.fillRect(SX0, SY0, SX1-SX0, SY1-SY0);
+/* top face */
+ctx.beginPath(); ctx.moveTo(SX0,SY0); ctx.lineTo(SX1,SY0); ctx.lineTo(SX1+DX,SY0-DY); ctx.lineTo(SX0+DX,SY0-DY); ctx.closePath();
+ctx.fillStyle = fc; ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fill();
+ctx.strokeStyle = c('--hall-struct'); ctx.lineWidth = 1; ctx.stroke();
+/* right face */
+ctx.beginPath(); ctx.moveTo(SX1,SY0); ctx.lineTo(SX1+DX,SY0-DY); ctx.lineTo(SX1+DX,SY1-DY); ctx.lineTo(SX1,SY1); ctx.closePath();
+ctx.fillStyle = fc; ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fill(); ctx.stroke();
+ctx.strokeRect(SX0, SY0, SX1-SX0, SY1-SY0);
+ctx.fillStyle = c('--hall-text'); ctx.font = '10px ' + FONT; ctx.textAlign = 'left';
+ctx.fillText(mat.short + ' slab: w = 1.0 cm, t = ' + fmtLen(mat.t), 334, 297);
+}
+function drawField(){
+if (Bt === 0) return;
+ctx.save(); ctx.globalAlpha = 0.25 + 0.3*Math.abs(Bt)/BMAX;
+for (var row=0; row<3; row++) for (var k=0; k<7; k++)
+fieldSym(170 + 50*k, 205 + 25*row, 7, Bt > 0, c('--hall-bfield'));
+ctx.restore();
+}
+function drawHallField(){
+if (!active() || s < 0.05) return;
+var sg = edgeSigns(), down = sg.top > 0;   /* E points from + edge to - edge */
+var col = c('--hall-efield'), xs = [200, 268, 380, 440];
+ctx.save(); ctx.globalAlpha = 0.2 + 0.6*s;
+for (var i=0; i<xs.length; i++){
+if (down) arrow(xs[i], SY0+18, xs[i], SY1-18, col, 2); else arrow(xs[i], SY1-18, xs[i], SY0+18, col, 2);
+}
+ctx.restore();
+rich('E{H}', 448, 234, 13, col, true);
+}
+function drawEdgeCharges(){
+if (!active()) return;
+var n = Math.round(18*s*Math.sqrt(Math.abs((Ima/IMAX)*(Bt/BMAX))));
+if (s > 0.04 && n < 1) n = 1;
+if (n === 0) return;
+var sg = edgeSigns(), sp = (SX1 - SX0 - 20)/n;
+for (var k=0; k<n; k++){
+var x = SX0 + 10 + sp*(k + 0.5);
+chargeDot(x, SY0 + 8, 6, sg.top);
+chargeDot(x, SY1 - 8, 6, sg.bottom);
+}
+}
+function drawCarriers(){
+for (var i=1; i<parts.length; i++) chargeDot(parts[i].x, parts[i].y, 4.5, mat.q);
+var tp = parts[0];
+chargeDot(tp.x, tp.y, 6, mat.q);
+ctx.strokeStyle = c('--hall-text'); ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.arc(tp.x, tp.y, 9.5, 0, 2*Math.PI); ctx.stroke();
+var cb = el('hallForces');
+if ((cb && !cb.checked) || Ima === 0) return;
+var iF = Ima/IMAX, vx = dirX()*(12 + 16*iF);
+arrow(tp.x + dirX()*10, tp.y, tp.x + vx + dirX()*10, tp.y, c('--hall-text'), 1.5);
+rich('v{d}', tp.x + vx + dirX()*10 + (dirX() < 0 ? -16 : 4), tp.y - 6, 12, c('--hall-text'), true);
+if (!active()) return;
+var Lb = 14 + 34*Math.sqrt(Math.abs(iF*Bt/BMAX)), d = deflDir();
+arrow(tp.x, tp.y + d*10, tp.x, tp.y + d*(10 + Lb), c('--hall-fb'), 2.5);
+rich('F{B}', tp.x + 6, tp.y + d*(10 + Lb) + (d > 0 ? 0 : 8), 12, c('--hall-fb'), true);
+var Le = s*Lb;
+if (Le > 3){
+arrow(tp.x, tp.y - d*10, tp.x, tp.y - d*(10 + Le), c('--hall-fe'), 2.5);
+if (Le > 8) rich('F{E}', tp.x + 6, tp.y - d*(10 + Le) + (d > 0 ? 8 : 0), 12, c('--hall-fe'), true);
+}
+}
+function drawContacts(){
+ctx.fillStyle = c('--hall-lead-pos'); ctx.beginPath(); ctx.arc(320, SY0, 3.5, 0, 2*Math.PI); ctx.fill();
+ctx.fillStyle = c('--hall-lead-neg'); ctx.beginPath(); ctx.arc(320, SY1, 3.5, 0, 2*Math.PI); ctx.fill();
+ctx.strokeStyle = c('--hall-struct'); ctx.lineWidth = 0.8;
+ctx.beginPath(); ctx.arc(320, SY0, 3.5, 0, 2*Math.PI); ctx.stroke();
+ctx.beginPath(); ctx.arc(320, SY1, 3.5, 0, 2*Math.PI); ctx.stroke();
+}
+function drawMeter(p){
+var cx = 540, cy = 92, ink = c('--hall-meter-ink');
+ctx.fillStyle = c('--hall-meter-body'); rrect(468, 12, 144, 130, 8); ctx.fill();
+ctx.fillStyle = c('--hall-meter-face'); rrect(480, 22, 120, 74, 4); ctx.fill();
+ctx.strokeStyle = ink; ctx.lineWidth = 1;
+for (var k=-5; k<=5; k++){
+var a = k*10*Math.PI/180, r1 = (k%5 === 0) ? 44 : 47;
+ctx.beginPath(); ctx.moveTo(cx + r1*Math.sin(a), cy - r1*Math.cos(a)); ctx.lineTo(cx + 52*Math.sin(a), cy - 52*Math.cos(a)); ctx.stroke();
+}
+ctx.fillStyle = ink; ctx.font = 'bold 11px ' + FONT; ctx.textAlign = 'center';
+ctx.fillText('−', cx - 46, 52); ctx.fillText('0', cx, 34); ctx.fillText('+', cx + 46, 52);
+var f = Math.max(-1.1, Math.min(1.1, p.VHmax > 0 ? p.VH/p.VHmax : 0)), na = f*50*Math.PI/180;
+ctx.strokeStyle = c('--hall-needle'); ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 54*Math.sin(na), cy - 54*Math.cos(na)); ctx.stroke();
+ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 2*Math.PI); ctx.fill();
+ctx.fillStyle = c('--hall-lcd-bg'); rrect(488, 100, 104, 18, 2); ctx.fill();
+ctx.fillStyle = c('--hall-lcd-fg'); ctx.font = 'bold 11px monospace'; ctx.textAlign = 'right';
+ctx.fillText(fmtV(p.VH), 588, 113);
+ctx.fillStyle = '#dddddd'; ctx.font = '8px ' + FONT; ctx.textAlign = 'center';
+ctx.fillText('Hall voltmeter', cx, 127);
+ctx.fillStyle = c('--hall-lead-pos'); ctx.beginPath(); ctx.arc(500, 132, 5, 0, 2*Math.PI); ctx.fill();
+ctx.fillStyle = c('--hall-lead-neg'); ctx.beginPath(); ctx.arc(575, 132, 5, 0, 2*Math.PI); ctx.fill();
+ctx.strokeStyle = '#999999'; ctx.lineWidth = 1;
+ctx.beginPath(); ctx.arc(500, 132, 5, 0, 2*Math.PI); ctx.stroke();
+ctx.beginPath(); ctx.arc(575, 132, 5, 0, 2*Math.PI); ctx.stroke();
+ctx.fillStyle = '#dddddd'; ctx.textAlign = 'left'; ctx.fillText('+', 508, 135);
+ctx.textAlign = 'right'; ctx.fillText('COM', 567, 135);
+}
+function drawData(p){
+ctx.fillStyle = c('--hall-databox-bg'); ctx.fillRect(8, 8, 252, 124);
+ctx.strokeStyle = c('--hall-databox-border'); ctx.lineWidth = 1.5; ctx.strokeRect(8, 8, 252, 124);
+var tc = c('--hall-text'), y = 22, dy = 14, x = 14;
+rich(mat.name + ' (carriers: ' + mat.carrier + ')', x, y, 11, tc, true); y += dy;
+rich('n = ' + sci(mat.n) + ' m⁻³,  t = ' + fmtLen(mat.t), x, y, 11, tc); y += dy;
+rich('I = ' + Ima + ' mA,  B = ' + (Bt > 0 ? '+' : '') + Bt.toFixed(2) + ' T (' + (Bt > 0 ? 'out' : Bt < 0 ? 'in' : 'off') + ')', x, y, 11, tc); y += dy;
+rich('Drift speed v{d} = ' + fmtSpeed(Ima > 0 ? p.vd : 0), x, y, 11, tc); y += dy;
+rich('Hall field E{H} = ' + fmtV(p.EH) + '/m', x, y, 11, tc); y += dy;
+rich('Meter V{H} (top − bottom) = ' + fmtV(p.VH), x, y, 11, tc, true); y += dy;
+rich('Predicted |V{H}| = IB/(n|q|t) = ' + fmtV(Math.abs(p.VHeq)), x, y, 11, tc); y += dy;
+rich('Charge build-up: ' + Math.round(100*s) + ' %', x, y, 11, tc);
+}
+function drawCaption(){
+ctx.fillStyle = c('--hall-text'); ctx.font = 'bold 13px ' + FONT; ctx.textAlign = 'left';
+ctx.fillText(mat.name, 14, 26);
+ctx.font = '11px ' + FONT; ctx.fillText('carriers: ' + mat.carrier + ' (' + (mat.q < 0 ? 'negative' : 'positive') + ')', 14, 42);
+ctx.fillText('I = ' + Ima + ' mA,  B = ' + (Bt > 0 ? '+' : '') + Bt.toFixed(1) + ' T', 14, 58);
+}
+function drawLegend(){
+var tc = c('--hall-bench-text'), x = 10, y = 395;
+ctx.font = '10px ' + FONT; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+function txt(t){ ctx.font = '10px ' + FONT; ctx.textAlign = 'left'; ctx.fillStyle = tc; ctx.fillText(t, x, y); x += ctx.measureText(t).width + 12; }
+fieldSym(x+5, y-3, 5, true, tc); x += 14; txt('B out of page');
+fieldSym(x+5, y-3, 5, false, tc); x += 14; txt('B into page');
+chargeDot(x+5, y-3, 5, -1); x += 14; txt('electron');
+chargeDot(x+5, y-3, 5, 1); x += 14; txt('hole');
+ctx.strokeStyle = tc; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x+5, y-3, 5, 0, 2*Math.PI); ctx.stroke(); x += 14; txt('tracer');
+ctx.fillStyle = c('--hall-fb'); ctx.fillRect(x, y-5, 14, 4); x += 18; txt('magnetic force');
+ctx.fillStyle = c('--hall-fe'); ctx.fillRect(x, y-5, 14, 4); x += 18; txt('electric force');
+}
+/* ── full redraw ── */
+function drawFrame(){
+var p = phys();
+ctx.clearRect(0, 0, W, H);
+drawRoom();
+drawMagnet();
+drawWires();
+drawSupply();
+drawSlab();
+drawField();
+drawHallField();
+drawEdgeCharges();
+drawCarriers();
+drawContacts();
+drawMeter(p);
+drawCaption();
+drawLegend();
+updateReadouts(p);
+}
+/* ── HTML readout panel (readable on phones) ── */
+var roCount = 0;
+function updateReadouts(p){
+if (runFlag === 1 && (roCount++ % 3) !== 0) return;
+function set(id, t){ var e = el(id); if (e) e.textContent = t; }
+set('r_VH', fmtV(p.VH));
+set('r_VHeq', active() ? fmtV(Math.abs(p.VHeq)) : '0 V');
+set('r_vd', fmtSpeed(Ima > 0 ? p.vd : 0));
+set('r_EH', fmtV(p.EH) + '/m');
+set('r_s', Math.round(100*s) + ' %');
+set('r_n', sci(mat.n) + ' m\u207b\u00b3 (' + mat.carrier + ')');
+set('r_clue', !active() ? (Ima === 0 ? 'No current: no Hall voltage.' : 'No field: no Hall voltage.') : (s < 0.3 ? 'Charge is still building up...' : signClue(p.VH)));
+set('diagLabel', 'HALL PROBE -- ' + mat.name);
+}
+/* ── narration ── */
+function sceneNarration(force){
+var p = phys(), carr = mat.carrier, dx = dirX() < 0 ? 'left' : 'right';
+var msg = mat.name + ' slab. ';
+if (Ima === 0){
+msg += 'The current is zero, so the ' + carr + ' only jiggle randomly. Nothing pushes them sideways, and the voltmeter reads zero.';
+} else if (Bt === 0){
+msg += 'A current of ' + Ima + ' mA flows from left to right, carried by ' + carr + ' drifting to the ' + dx + '. ';
+msg += 'With no magnetic field they travel straight across, so no charge separates and the voltmeter reads zero.';
+} else {
+var d = deflDir(), edge = d > 0 ? 'bottom' : 'top', other = d > 0 ? 'top' : 'bottom';
+var sg = mat.q < 0 ? 'negative' : 'positive', og = mat.q < 0 ? 'positive' : 'negative';
+msg += 'The ' + carr + ' drift to the ' + dx + '. The magnetic field, pointing ' + bWord() + ', pushes them toward the ' + edge + ' edge. ';
+if (s < 0.3)       msg += 'Charge is starting to pile up: ' + sg + ' on the ' + edge + ' edge, ' + og + ' on the ' + other + ' edge. ';
+else if (s < 0.97) msg += 'The separated charges create a Hall electric field that pushes back, so the carrier paths bend less and less. ';
+else               msg += 'Equilibrium: the electric force now balances the magnetic force, so the carriers drift straight. ';
+msg += 'Voltmeter, top minus bottom: ' + fmtV(p.VH) + '. Predicted Hall voltage I B over n q t: ' + fmtV(Math.abs(p.VHeq)) + '.';
+}
+if (force || msg !== lastMsg){ hallA11y.narrate(msg); lastMsg = msg; }
+}
+function describe(){
+var p = phys();
+var msg = mat.name + ' slab, 1 cm wide and ' + fmtLen(mat.t) + ' thick, with charge carriers that are ' + mat.carrier +
+' (' + (mat.q < 0 ? 'negative' : 'positive') + '). ';
+msg += (Ima > 0 ? 'Current ' + Ima + ' mA flowing left to right. ' : 'No current is flowing. ') + 'Magnetic field ' + Math.abs(Bt).toFixed(1) + ' tesla, ' + bWord() + '. ';
+if (Ima > 0) msg += 'Drift speed of the carriers: ' + fmtSpeed(p.vd) + '. ';
+msg += 'Charge build-up ' + Math.round(100*s) + ' percent. Voltmeter reading, top minus bottom: ' + fmtV(p.VH) + '. ';
+if (active()) msg += 'At equilibrium it will read ' + fmtV(p.VHeq) + '. ' + signClue(p.VHeq);
+hallA11y.narrate(msg); lastMsg = msg;
+}
+/* ── one physics step ── */
+function physicsStep(){
+frameCount++;
+var iF = Ima/IMAX, bF = Math.abs(Bt)/BMAX, d = deflDir(), dx = dirX();
+if (active()) s += RATE*(1 - s);
+var vx = dx*VMAX*iF;
+for (var i=0; i<parts.length; i++){
+var pt = parts[i], jit = i === 0 ? JIT*0.4 : JIT;
+var vy = d*(1 - s)*Math.abs(vx)*DEFL*bF;
+pt.x += vx + (Math.random() - 0.5)*jit;
+pt.y += vy + (Math.random() - 0.5)*jit;
+if (pt.y < YT) pt.y = YT; if (pt.y > YB) pt.y = YB;
+var out = (dx < 0 && pt.x < XL) || (dx > 0 && pt.x > XR);
+if (out && Ima > 0){                          /* leaves one end, re-enters at the other */
+pt.x = dx < 0 ? XR : XL;
+pt.y = i === 0 ? (YT + YB)/2 : YT + Math.random()*(YB - YT);
+}
+if (pt.x < XL) pt.x = XL; if (pt.x > XR) pt.x = XR;
+}
+/* milestone: equilibrium reached */
+if (active() && !eqNarrated && s > 0.97){
+eqNarrated = true;
+var p = phys();
+hallA11y.narrate('Equilibrium reached. The Hall electric force now balances the magnetic force, so the ' + mat.carrier +
+' drift straight through. Hall voltage, top minus bottom: ' + fmtV(p.VH) + '. ' +
+signClue(p.VH));
+lastMsg = '';
+return;
+}
+if (!eqNarrated && frameCount % narrationEvery === 0) sceneNarration(false);
+}
+/* ── animation loop ── */
+function runMotion(){
+physicsStep();
+drawFrame();
+if (runFlag === 1) timer = window.setTimeout(runMotion, 40);
+}
+/* ── public: play ── */
+function pl(){ window.clearTimeout(timer); runFlag = 1; setPlayLabel(); runMotion(); }
+function setPlayLabel(){ var b = el('hallPlay'); if (b) b.innerHTML = runFlag === 1 ? '&#10074;&#10074; Pause' : '&#9654; Play'; }
+function toggle(){ if (runFlag === 1) ps(); else pl(); }
+/* ── public: pause ── */
+function ps(){ window.clearTimeout(timer); runFlag = 0; setPlayLabel(); }
+/* ── public: single step ── */
+function step(){ window.clearTimeout(timer); runFlag = 0; setPlayLabel(); physicsStep(); drawFrame(); sceneNarration(true); }
+/* ── public: redraw (theme toggle, checkbox) ── */
+function refresh(){ drawFrame(); }
+/* ── public: restart ── */
+function rst(){
+window.clearTimeout(timer); runFlag = 0;
+var iEl = el('hallI'), bEl = el('hallB'), mEl = el('hallMat');
+Ima = iEl ? parseFloat(iEl.value) : 50;
+Bt  = bEl ? Math.round(parseFloat(bEl.value)*10)/10 : 0.5;
+if (Bt === 0) Bt = 0;
+mat = MATS[mEl ? mEl.value : 'nsi'] || MATS.nsi;
+s = 0; frameCount = 0; eqNarrated = false; lastMsg = '';
+parts = [];
+for (var i=0; i<NP; i++) parts.push({ x: XL + Math.random()*(XR - XL), y: YT + Math.random()*(YB - YT) });
+parts[0].x = dirX() < 0 ? XR - 30 : XL + 30; parts[0].y = (YT + YB)/2;
+var e;
+if ((e = el('hallIVal'))) e.textContent = String(Ima);
+if ((e = el('hallBVal'))) e.textContent = Bt.toFixed(1);
+if ((e = el('hallBDir'))) e.textContent = Bt > 0 ? 'out of page' : (Bt < 0 ? 'into page' : 'off');
+setPlayLabel();
+drawFrame();
+hallA11y.narrate('Ready. ' + mat.name + ' slab, current ' + Ima + ' mA, magnetic field ' + Math.abs(Bt).toFixed(1) +
+' T ' + bWord() + '. Press Play to watch the ' + mat.carrier + '.');
+}
+/* ── public: a control changed (keeps running; the charge build-up starts again) ── */
+function setParam(){
+var iEl = el('hallI'), bEl = el('hallB'), mEl = el('hallMat');
+var oldDir = mat ? dirX() : 0;
+Ima = iEl ? parseFloat(iEl.value) : 50;
+Bt  = bEl ? Math.round(parseFloat(bEl.value)*10)/10 : 0.5;
+if (Bt === 0) Bt = 0;
+mat = MATS[mEl ? mEl.value : 'nsi'] || MATS.nsi;
+s = 0; eqNarrated = false; lastMsg = '';
+if (dirX() !== oldDir){ parts[0].x = dirX() < 0 ? XR - 30 : XL + 30; parts[0].y = (YT + YB)/2; }
+var e;
+if ((e = el('hallIVal'))) e.textContent = String(Ima);
+if ((e = el('hallBVal'))) e.textContent = Bt.toFixed(1);
+if ((e = el('hallBDir'))) e.textContent = Bt > 0 ? 'out of page' : (Bt < 0 ? 'into page' : 'off');
+if (runFlag !== 1) drawFrame();
+clearTimeout(narrT); narrT = setTimeout(function(){ sceneNarration(true); }, 400);
+}
+var narrT = null;
+/* ── keyboard shortcuts (template) ── */
+var ROOTEL = el('hallRoot');
+if (ROOTEL){
+ROOTEL.setAttribute('tabindex', '0');
+ROOTEL.addEventListener('keydown', function(ev){
+var tag = document.activeElement.tagName;
+if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+var k = ev.key.toLowerCase();
+if (k === 'h') hallA11y.toggle('hc'); else if (k === 'l') hallA11y.toggle('lm'); else if (k === 'c') hallA11y.toggle('cb'); else if (k === 'n') hallA11y.toggle('nr');
+else if (k === 'p') toggle(); else if (k === 's') step(); else if (k === 'r') rst(); else return;
+ev.preventDefault();
+});
+}
+document.addEventListener('visibilitychange', function(){ if (document.hidden && runFlag === 1) ps(); });
+/* boot */
+rst();
+return { pl:pl, ps:ps, toggle:toggle, step:step, rst:rst, describe:describe, refresh:refresh, setParam:setParam };
+};
+var hallSim = new hallGen();
+</script>
+</main>
+</body>
+</html>

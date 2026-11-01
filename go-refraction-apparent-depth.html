@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Refraction: Seeing Through Water</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of refraction at a water surface: apparent depth, a clown in a pool, and Snell's window.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="rfRoot" class="rf_root" role="region" aria-label="Refraction: apparent depth, the pool and Snell's window">
+<div class="rf_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="rf_a11ybtn" id="rfBtnHC" onclick="rfSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rf_a11ybtn" id="rfBtnLM" onclick="rfSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rf_a11ybtn" id="rfBtnCB" onclick="rfSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rf_a11ybtn rf_a11yon" id="rfBtnNR" onclick="rfSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="rf_header"><p class="rf_h1">Refraction: Seeing Through Water</p><p class="rf_sub">apparent depth &middot; the pool &middot; Snell's window</p></div>
+<div class="rf_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="rf_tab" id="rfT0" aria-selected="true" onclick="rfSim.tab(0)">Apparent depth</button>
+<button type="button" role="tab" class="rf_tab" id="rfT1" aria-selected="false" onclick="rfSim.tab(1)">The pool</button>
+<button type="button" role="tab" class="rf_tab" id="rfT2" aria-selected="false" onclick="rfSim.tab(2)">Snell's window</button>
+</div>
+<div class="rf_diag"><div class="rf_dlabel"><b id="rfLab1">SIDE VIEW</b><span id="rfHint"></span></div>
+<canvas id="rfSide" width="780" height="480" role="img" aria-label="Side view of the water surface, the object, the eye and the rays."></canvas></div>
+<div class="rf_row2" id="rfRow2">
+<div class="rf_diag"><div class="rf_dlabel"><b id="rfLab2"></b></div><canvas id="rfA" width="380" height="300" role="img" aria-label="The view."></canvas></div>
+<div class="rf_diag"><div class="rf_dlabel"><b id="rfLab3"></b></div><canvas id="rfB" width="380" height="300" role="img" aria-label="Comparison or graph."></canvas></div>
+</div>
+<div class="rf_diag" id="rfPlotBox"><div class="rf_dlabel"><b>APPARENT DEPTH AGAINST THE VIEWING ANGLE</b></div><canvas id="rfPlot" width="780" height="230" role="img" aria-label="Graph of the apparent depth against the viewing angle."></canvas></div>
+<div class="rf_bbar" id="rfBtns"></div>
+<div class="rf_panels">
+<div class="rf_panel"><div class="rf_ptitle">Settings</div><div class="rf_pbody" id="rfCtl"></div></div>
+<div class="rf_panel"><div class="rf_ptitle">Readout</div><div class="rf_pbody rf_read" id="rfRead"></div></div>
+</div>
+<div class="rf_eqs" id="rfEqs"></div>
+<div id="rfNar" class="rf_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="rf_descwrap">
+<button type="button" class="rf_descbtn" id="rfDescBtn" aria-expanded="false" aria-controls="rfDesc" onclick="rfSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="rf_desc" id="rfDesc" role="region" aria-labelledby="rfDescBtn" style="display:none">
+<p>This simulation shows how refraction at a water surface changes what we see. Light from an object under water bends as it leaves the water, following Snell's law,</p>
+<p class="rf_eq">`n_w sin theta_w = n_a sin theta_a`,</p>
+<p>so the rays that reach the eye seem to come from a point closer to the surface: the <b>image</b>. The simulation finds the ray from the object to the eye by Fermat's principle (light takes the path of least time), and locates the image where neighbouring rays, traced backwards, meet.</p>
+<p><b>Apparent depth.</b> Looking straight down, an object at depth `d` appears at depth `d/n`, three-quarters of its depth in water. Looking at a slant, the image rises further and shifts toward the eye: there is no single image position, and a long object looks bent and squeezed. The graph compares the apparent depth with `d/n` at every viewing angle. Drag the object, the eye, or draw your own shape. Put the eye underwater, and an object in the air looks higher than it is.</p>
+<p><b>The pool.</b> A clown stands in a pool; the view from the eye is computed by tracing a refracted ray in three dimensions for every pixel. The submerged part looks shorter, shifted and wider at the bottom, like legs in a swimming pool. Compare with the empty pool.</p>
+<p><b>Snell's window.</b> Seen from under water, light from the whole sky arrives within a cone of half-angle `theta_c = arcsin(1/n)`, 48.8&deg; for water: the sky is squeezed into a bright circle, and everything near the horizon crowds at its rim. Beyond the critical angle the surface is a mirror (total internal reflection) showing the pool floor.</p>
+</div></div>
+</div><!-- #rfRoot -->
+<style>
+#rfRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#rfRoot * { box-sizing:border-box; }
+#rfRoot.rf_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#rfRoot.rf_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#rfRoot .rf_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#rfRoot .rf_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#rfRoot .rf_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#rfRoot .rf_header { text-align:center; }
+#rfRoot .rf_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#rfRoot .rf_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#rfRoot .rf_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#rfRoot .rf_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#rfRoot .rf_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#rfRoot .rf_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#rfRoot .rf_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#rfRoot .rf_dlabel b { color:var(--c-accent); }
+#rfRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#rfRoot .rf_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#rfRoot .rf_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#rfRoot .rf_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#rfRoot .rf_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#rfRoot .rf_btn:hover { border-color:var(--c-accent); }
+#rfRoot .rf_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#rfRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#rfRoot .rf_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#rfRoot .rf_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#rfRoot .rf_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#rfRoot .rf_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#rfRoot .rf_ctrl { display:flex; flex-direction:column; gap:3px; }
+#rfRoot .rf_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#rfRoot .rf_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#rfRoot .rf_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#rfRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#rfRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rfRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rfRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#rfRoot .rf_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#rfRoot .rf_rkey { color:var(--c-dim); }
+#rfRoot .rf_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#rfRoot .rf_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#rfRoot .rf_eqs b { color:var(--c-val); }
+#rfRoot .rf_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#rfRoot .rf_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#rfRoot .rf_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#rfRoot .rf_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#rfRoot .rf_desc p { margin:0 0 9px; }
+#rfRoot .rf_eq { text-align:center; font-size:1rem; }
+#rfRoot button:focus-visible, #rfRoot input:focus-visible, #rfRoot select:focus-visible, #rfRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #rfRoot .rf_row2, #rfRoot .rf_panels { grid-template-columns:minmax(0,1fr); } #rfRoot .rf_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #rfRoot input[type=range] { height:8px; } #rfRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #rfRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #rfRoot .rf_a11ybtn { min-height:40px; } #rfRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Units: m. The water surface is y = 0; water below. The ray from an object to the eye is found by Fermat's principle: the surface point x that
+minimises n_o |OS| + n_e |SE| (golden-section search; the optical path is convex in x). The image is where two neighbouring refracted rays,
+traced back, meet. The pool view traces one ray per pixel in 3D, with the vector form of Snell's law. No dollar signs or backticks in the code.
+-->
+<script>
+var rfSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('rfRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var SD = hi('rfSide'), CA = hi('rfA'), CB = hi('rfB'), PL = hi('rfPlot');
+var DEG = Math.PI/180;
+var S = { tab:0, n:1.33, eqs:true,
+  d:{ obj:'point', ox:-0.4, oy:-1.0, ex:1.4, ey:1.0, fan:true, locus:false, pts:[], drawing:false },
+  p:{ he:0.9, D:2.4, H:1.05, empty:false },
+  w:{ de:1.2, Hp:2.4 } };
+var th = { hc:false, lm:false, cb:false, nr:true };
+/* ── the clown ── */
+var CL = { img:new Image(), ok:false, data:null, w:0, h:0 };
+CL.img.onload = function(){ var c = document.createElement('canvas'); c.width = CL.img.naturalWidth; c.height = CL.img.naturalHeight; var g = c.getContext('2d'); g.drawImage(CL.img, 0, 0);
+  CL.w = c.width; CL.h = c.height; CL.data = g.getImageData(0, 0, c.width, c.height).data; CL.ok = true; draw(); };
+CL.img.src = 'data:image/png;base64,' + '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';
+/* ══════════ optics ══════════ */
+function nAt(y){ return y < 0 ? S.n : 1; }
+function crossX(ox, oy, ex, ey){
+  /* Fermat: the surface point of least optical path n_o|OS| + n_e|SE| */
+  var no = nAt(oy), ne = nAt(ey), a = Math.min(ox, ex), b = Math.max(ox, ex);
+  if (b - a < 1e-9) return ox;
+  var f = function(x){ return no*Math.hypot(x - ox, oy) + ne*Math.hypot(ex - x, ey); }, G = 0.381966011, x1 = a + G*(b - a), x2 = b - G*(b - a), f1 = f(x1), f2 = f(x2);
+  for (var i=0; i<90; i++){ if (f1 < f2){ b = x2; x2 = x1; f2 = f1; x1 = a + G*(b - a); f1 = f(x1); } else { a = x1; x1 = x2; f1 = f2; x2 = b - G*(b - a); f2 = f(x2); } }
+  return (a + b)/2;
+}
+function refr(ox, oy, xs, no, ne){
+  /* the ray from the object through the surface point (xs, 0), after refraction: a unit direction, or null (total internal reflection) */
+  var dx = xs - ox, dy = -oy, L = Math.hypot(dx, dy), s2 = no/ne*dx/L;
+  if (Math.abs(s2) >= 1) return null; var c2 = Math.sqrt(1 - s2*s2); return { x:s2, y:(dy > 0 ? c2 : -c2) };
+}
+function imageAt(ox, oy, xs){
+  /* where two neighbouring refracted rays, traced back, meet */
+  var no = nAt(oy), ne = no === S.n ? 1 : S.n, dl = 2e-4, x1 = xs - dl, x2 = xs + dl, d1 = refr(ox, oy, x1, no, ne), d2 = refr(ox, oy, x2, no, ne);
+  if (!d1 || !d2) return null;
+  var den = d1.x*d2.y - d1.y*d2.x; if (Math.abs(den) < 1e-15) return { x:ox, y:oy };
+  var t1 = (x2 - x1)*d2.y/den; return { x:x1 + t1*d1.x, y:t1*d1.y };
+}
+function view(ox, oy, ex, ey){
+  /* how the eye at (ex, ey) sees the point (ox, oy): the surface point, the image, and whether light gets there at all */
+  if ((oy < 0) === (ey < 0)) return { direct:true, I:{ x:ox, y:oy } };
+  var xs = crossX(ox, oy, ex, ey), I = imageAt(ox, oy, xs);
+  return { direct:false, xs:xs, I:I || { x:ox, y:oy }, tir:!I };
+}
+/* ══════════ palettes ══════════ */
+function pal(){
+  if (th.hc) return { air:'#000', water:'#06223a', line:'#fff', text:'#fff', ray:'#ffff00', fan:'rgba(255,255,0,0.35)', obj:'#00ffff', img:'#ff66ff', eye:'#fff', grid:'rgba(255,255,255,0.2)', floor:'#444' };
+  var p = { air:'#eef4fa', water:'#bcd6e8', line:'#2c4a66', text:'#1d2a36', ray:'#e07a00', fan:'rgba(214,40,40,0.28)', obj:'#16a3c4', img:'#2952c9', eye:'#222', grid:'rgba(0,0,0,0.12)', floor:'#9aa8b5' };
+  if (th.cb){ p.ray = '#e69f00'; p.fan = 'rgba(213,94,0,0.28)'; p.obj = '#009e73'; p.img = '#0072b2'; }
+  return p;
+}
+function T(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function eyeIcon(g, x, y, look, p){ g.save(); g.translate(x, y); g.rotate(look); g.fillStyle = '#fff'; g.strokeStyle = p.eye; g.lineWidth = 1.5; g.beginPath(); g.ellipse(0, 0, 13, 8, 0, 0, 2*Math.PI); g.fill(); g.stroke(); g.fillStyle = '#2e6db4'; g.beginPath(); g.arc(4, 0, 4.5, 0, 2*Math.PI); g.fill(); g.fillStyle = '#111'; g.beginPath(); g.arc(5, 0, 2.2, 0, 2*Math.PI); g.fill(); g.restore(); }
+/* textured triangle: maps the image triangle (s) onto the canvas triangle (d) */
+function texTri(g, img, s0, s1, s2, d0, d1, d2){
+  var den = (s1.x - s0.x)*(s2.y - s0.y) - (s2.x - s0.x)*(s1.y - s0.y); if (Math.abs(den) < 1e-9) return;
+  var a = ((d1.x - d0.x)*(s2.y - s0.y) - (d2.x - d0.x)*(s1.y - s0.y))/den, b = ((d1.y - d0.y)*(s2.y - s0.y) - (d2.y - d0.y)*(s1.y - s0.y))/den;
+  var c = ((d2.x - d0.x)*(s1.x - s0.x) - (d1.x - d0.x)*(s2.x - s0.x))/den, d = ((d2.y - d0.y)*(s1.x - s0.x) - (d1.y - d0.y)*(s2.x - s0.x))/den;
+  var e = d0.x - a*s0.x - c*s0.y, f = d0.y - b*s0.x - d*s0.y;
+  g.save(); g.beginPath(); var cx = (d0.x + d1.x + d2.x)/3, cy = (d0.y + d1.y + d2.y)/3;
+  [d0, d1, d2].forEach(function(q, i){ var px = q.x + (q.x - cx)*0.04, py = q.y + (q.y - cy)*0.04; if (i) g.lineTo(px, py); else g.moveTo(px, py); });
+  g.closePath(); g.clip(); g.transform(a, b, c, d, e, f); g.drawImage(img, 0, 0); g.restore();
+}
+/* ══════════ tab 0: apparent depth ══════════ */
+var D0 = { S:110, X0:390, Y0:190 };
+/* the surface's height in the view follows the eye: under water, room for the object and its (higher) image in the air */
+function fitY0(){ if (!drag) D0.Y0 = S.d.ey < 0 ? 340 : 190; }
+function yMax(){ return D0.Y0/D0.S - 0.08; } function yMin(){ return -(SD.H - D0.Y0)/D0.S + 0.08; }
+function wx(x){ return D0.X0 + x*D0.S; } function wy(y){ return D0.Y0 - y*D0.S; }
+function ix(px){ return (px - D0.X0)/D0.S; } function iy(py){ return (D0.Y0 - py)/D0.S; }
+var FISH = [[-.32,0],[-.2,.09],[0,.12],[.16,.08],[.27,.02],[.36,.1],[.36,-.1],[.27,-.02],[.16,-.08],[0,-.12],[-.2,-.09]];
+function shapePts(){
+  var o = S.d, base;
+  if (o.obj === 'rect') base = [[-.25,.15],[.25,.15],[.25,-.15],[-.25,-.15]];
+  else if (o.obj === 'fish') base = FISH;
+  else if (o.obj === 'draw') base = o.pts;
+  else return [];
+  var out = [];
+  for (var i=0; i<base.length; i++){ var a = base[i], b = base[(i + 1) % base.length]; if (o.obj === 'draw' && i === base.length - 1) { out.push([o.ox + a[0], o.oy + a[1]]); break; }
+    for (var k=0; k<10; k++){ var t = k/10; out.push([o.ox + a[0] + (b[0] - a[0])*t, o.oy + a[1] + (b[1] - a[1])*t]); } }
+  return out;
+}
+var CLW = 0.42, CLH = 0.89;   /* the clown in the depth tab: 0.89 m tall */
+function drawSide0(){
+  fitY0(); var g = SD.g, W = SD.W, H = SD.H, p = pal(), o = S.d;
+  g.fillStyle = p.air; g.fillRect(0, 0, W, wy(0)); g.fillStyle = p.water; g.fillRect(0, wy(0), W, H - wy(0));
+  seg(g, 0, wy(0), W, wy(0), p.line, 2);
+  T(g, 'air  n = 1.00', 10, wy(0) - 12, p.text); T(g, 'water  n = ' + S.n.toFixed(2), 10, wy(0) + 14, p.text);
+  var V = view(o.ox, o.oy, o.ex, o.ey), no = nAt(o.oy), ne = nAt(o.ey);
+  /* the fan of rays from the object */
+  if (o.fan && !V.direct){
+    for (var a = -86; a <= 86; a += 4){
+      var ux = Math.sin(a*DEG), uy = o.oy < 0 ? Math.cos(a*DEG) : -Math.cos(a*DEG), t0 = -o.oy/uy, xs = o.ox + t0*ux, d = refr(o.ox, o.oy, xs, no, ne);
+      seg(g, wx(o.ox), wy(o.oy), wx(xs), wy(0), p.fan, 1);
+      if (d) seg(g, wx(xs), wy(0), wx(xs + d.x*8), wy(d.y*8), p.fan, 1);
+      else seg(g, wx(xs), wy(0), wx(xs + ux*8), wy(-uy*8), 'rgba(120,120,120,0.25)', 1, [3, 3]);
+    }
+  }
+  /* where the image is, for every viewing direction */
+  if (o.locus && !V.direct){
+    g.strokeStyle = p.img; g.lineWidth = 1.3; g.setLineDash([2, 3]); g.beginPath(); var st = false;
+    for (var k=-88; k<=88; k+=0.5){ var sa = Math.sin(k*DEG)*ne/no; if (Math.abs(sa) >= 1) continue; var xs2 = o.ox + Math.abs(o.oy)*Math.tan(Math.asin(sa)); var I2 = imageAt(o.ox, o.oy, xs2); if (!I2) continue;
+      if (st) g.lineTo(wx(I2.x), wy(I2.y)); else { g.moveTo(wx(I2.x), wy(I2.y)); st = true; } }
+    g.stroke(); g.setLineDash([]);
+  }
+  /* the object and its image */
+  if (o.obj === 'point'){
+    g.fillStyle = p.obj; g.beginPath(); g.arc(wx(o.ox), wy(o.oy), 7, 0, 2*Math.PI); g.fill(); T(g, 'object', wx(o.ox) + 11, wy(o.oy) + 2, p.text);
+  } else if (o.obj === 'clown'){
+    if (CL.ok){ g.globalAlpha = 0.3; g.drawImage(CL.img, wx(o.ox - CLW/2), wy(o.oy + CLH/2), CLW*D0.S, CLH*D0.S); g.globalAlpha = 1; T(g, 'real clown', wx(o.ox + CLW/2) + 4, wy(o.oy - CLH/2) - 6, p.text); }   /* faded: the image is what the eye sees */
+  } else {
+    var P = shapePts(); if (P.length > 1){ g.beginPath(); P.forEach(function(q, i){ if (i) g.lineTo(wx(q[0]), wy(q[1])); else g.moveTo(wx(q[0]), wy(q[1])); }); if (o.obj !== 'draw') g.closePath();
+      g.fillStyle = o.obj === 'draw' ? 'rgba(0,0,0,0)' : p.obj; g.globalAlpha = 0.75; g.fill(); g.globalAlpha = 1; g.strokeStyle = p.obj; g.lineWidth = 2; g.stroke(); }
+  }
+  if (!V.direct){
+    /* the ray that reaches the eye, and its back-extension to the image */
+    seg(g, wx(o.ox), wy(o.oy), wx(V.xs), wy(0), p.ray, 2.4); seg(g, wx(V.xs), wy(0), wx(o.ex), wy(o.ey), p.ray, 2.4);
+    seg(g, wx(V.xs), wy(0), wx(V.I.x), wy(V.I.y), p.ray, 1.4, [5, 4]);
+    seg(g, wx(V.xs), wy(0) - 60, wx(V.xs), wy(0) + 60, p.grid, 1, [2, 3]);
+    if (o.obj === 'point' && (wy(V.I.y) < 8 || wy(V.I.y) > H - 8)){   /* the image is out of view: an arrow at the edge, with its height */
+      var up_ = wy(V.I.y) < 8, ax_ = Math.max(30, Math.min(W - 30, wx(V.I.x))), ay_ = up_ ? 12 : H - 12; g.fillStyle = p.img; g.beginPath(); g.moveTo(ax_, ay_ + (up_ ? -8 : 8)); g.lineTo(ax_ - 8, ay_ + (up_ ? 6 : -6)); g.lineTo(ax_ + 8, ay_ + (up_ ? 6 : -6)); g.closePath(); g.fill();
+      T(g, 'image ' + (up_ ? 'above' : 'below') + ': ' + f2(Math.abs(V.I.y)) + ' m ' + (up_ ? 'up' : 'down'), ax_ + 12, ay_ + (up_ ? 6 : -6), p.img, 'left', 'bold 12px Arial, sans-serif'); }
+    if (o.obj === 'point'){ g.strokeStyle = p.img; g.lineWidth = 2.5; g.beginPath(); g.arc(wx(V.I.x), wy(V.I.y), 7, 0, 2*Math.PI); g.stroke(); T(g, 'image', wx(V.I.x) + 11, wy(V.I.y) - 2, p.img, 'left', 'bold 12px Arial, sans-serif'); }
+    else if (o.obj === 'clown' && CL.ok) drawClownImage(g, o);
+    else { var Q = shapePts().map(function(q){ var v = view(q[0], q[1], o.ex, o.ey); return v.I; }); if (Q.length > 1){ g.strokeStyle = p.img; g.lineWidth = 2; g.setLineDash([6, 3]); g.beginPath();
+      Q.forEach(function(q, i){ if (i) g.lineTo(wx(q.x), wy(q.y)); else g.moveTo(wx(q.x), wy(q.y)); }); if (o.obj !== 'draw') g.closePath(); g.stroke(); g.setLineDash([]);
+      T(g, 'image', wx(Q[0].x) - 6, wy(Q[0].y) - 12, p.img, 'right', 'bold 12px Arial, sans-serif'); } }
+  } else T(g, 'object and eye in the same medium: no refraction, the eye sees the object where it is', W/2, 16, p.text, 'center');
+  eyeIcon(g, wx(o.ex), wy(o.ey), Math.atan2(wy(V.direct ? o.oy : 0) - wy(o.ey), wx(V.direct ? o.ox : V.xs) - wx(o.ex)), p); T(g, 'eye', wx(o.ex), wy(o.ey) - 18, p.text, 'center');
+  if (o.drawing) T(g, 'draw your shape: press and drag', W/2, H - 14, p.img, 'center', 'bold 13px Arial, sans-serif');
+}
+function drawClownImage(g, o){
+  /* the clown as the eye sees it: a mesh of its picture, each corner moved to its image */
+  var NX = 8, NY = 18, pts = [];
+  for (var j=0; j<=NY; j++){ pts[j] = []; for (var i=0; i<=NX; i++){ var wx0 = o.ox - CLW/2 + CLW*i/NX, wy0 = o.oy + CLH/2 - CLH*j/NY, v = view(wx0, wy0, o.ex, o.ey); pts[j][i] = { x:wx(v.I.x), y:wy(v.I.y) }; } }
+  var iw = CL.img.naturalWidth, ih = CL.img.naturalHeight; g.globalAlpha = 1;
+  for (var j2=0; j2<NY; j2++) for (var i2=0; i2<NX; i2++){
+    var s00 = { x:iw*i2/NX, y:ih*j2/NY }, s10 = { x:iw*(i2 + 1)/NX, y:ih*j2/NY }, s01 = { x:iw*i2/NX, y:ih*(j2 + 1)/NY }, s11 = { x:iw*(i2 + 1)/NX, y:ih*(j2 + 1)/NY };
+    texTri(g, CL.img, s00, s10, s11, pts[j2][i2], pts[j2][i2 + 1], pts[j2 + 1][i2 + 1]); texTri(g, CL.img, s00, s11, s01, pts[j2][i2], pts[j2 + 1][i2 + 1], pts[j2 + 1][i2]); }
+  g.globalAlpha = 1;
+  var tl = pts[0][0]; T(g, 'image', tl.x - 6, tl.y - 4, pal().img, 'right', 'bold 12px Arial, sans-serif');
+}
+function depthInfo(){
+  var o = S.d, V = view(o.ox, o.oy, o.ex, o.ey);
+  if (V.direct) return { V:V };
+  var no = nAt(o.oy), ne = nAt(o.ey), dObj = Math.abs(o.oy), dImg = Math.abs(V.I.y), ang = Math.atan2(Math.abs(o.ex - V.xs), Math.abs(o.ey))/DEG, angW = Math.atan2(Math.abs(V.xs - o.ox), dObj)/DEG;
+  return { V:V, d:dObj, di:dImg, ratio:dImg/dObj, paraxial:ne/no, ang:ang, angW:angW, shift:V.I.x - o.ox, no:no, ne:ne };
+}
+function drawPlot0(){
+  var g = PL.g, W = PL.W, H = PL.H, p = pal(), o = S.d, X0 = 56, X1 = W - 20, Y0 = H - 34, Y1 = 14;
+  g.fillStyle = th.hc ? '#000' : '#ffffff'; g.fillRect(0, 0, W, H);
+  var no = nAt(o.oy), ne = nAt(o.ey); if ((o.oy < 0) === (o.ey < 0)){ T(g, 'Put the eye and the object on opposite sides of the surface.', W/2, H/2, p.text, 'center'); return; }
+  var below = o.oy < 0, rmax = below ? 1 : 4, rmin = 0;
+  function X(a){ return X0 + a/90*(X1 - X0); } function Y(r){ return Y0 - (r - rmin)/(rmax - rmin)*(Y0 - Y1); }
+  g.strokeStyle = p.grid; g.lineWidth = 1; for (var a=0; a<=90; a+=15){ seg(g, X(a), Y0, X(a), Y1, p.grid, 1); T(g, a + '\u00B0', X(a), Y0 + 12, p.text, 'center', '11px Arial'); }
+  for (var r=rmin; r<=rmax + 1e-9; r+=(below ? 0.25 : 1)){ seg(g, X0, Y(r), X1, Y(r), p.grid, 1); T(g, r.toFixed(2), X0 - 6, Y(r), p.text, 'right', '11px Arial'); }
+  T(g, 'viewing angle at the eye (from the vertical)', (X0 + X1)/2, H - 8, p.text, 'center', '11px Arial');
+  g.save(); g.translate(14, (Y0 + Y1)/2); g.rotate(-Math.PI/2); T(g, below ? 'apparent depth / real depth' : 'apparent height / real height', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+  seg(g, X0, Y(ne/no), X1, Y(ne/no), p.obj, 1.5, [6, 4]); T(g, (below ? 'd/n' : 'n h') + ' (looking straight ' + (below ? 'down' : 'up') + ') = ' + (ne/no).toFixed(3), X1 - 4, Y(ne/no) - 9, p.obj, 'right', '11px Arial');
+  g.strokeStyle = p.img; g.lineWidth = 2.2; g.beginPath(); var st = false;
+  for (var ae=0.2; ae<89.5; ae+=0.5){ var sw = Math.sin(ae*DEG)*ne/no; if (sw >= 1) break; var xs = o.ox + Math.abs(o.oy)*Math.tan(Math.asin(sw)), I = imageAt(o.ox, o.oy, xs); if (!I) break;
+    var rr = Math.abs(I.y)/Math.abs(o.oy); if (rr > rmax) break; if (st) g.lineTo(X(ae), Y(rr)); else { g.moveTo(X(ae), Y(rr)); st = true; } }
+  g.stroke();
+  var inf = depthInfo(); if (inf.ratio !== undefined && inf.ratio <= rmax){ g.fillStyle = p.ray; g.beginPath(); g.arc(X(inf.ang), Y(inf.ratio), 6, 0, 2*Math.PI); g.fill(); T(g, 'your eye', X(inf.ang) + 9, Y(inf.ratio) - 9, p.ray, 'left', 'bold 11px Arial'); }
+}
+/* ══════════ tab 1: the pool ══════════ */
+var PZ = { z0:-0.25, z1:4.6, y0:-1.9, y1:1.6 };
+function pzMap(){ var W = SD.W, H = SD.H, s = Math.min((W - 40)/(PZ.z1 - PZ.z0), (H - 30)/(PZ.y1 - PZ.y0)); return { s:s, X:function(z){ return 20 + (z - PZ.z0)*s; }, Y:function(y){ return 15 + (PZ.y1 - y)*s; } }; }
+var CLR_H = 1.75, CLR_W = 0.82;
+function drawSide1(){
+  var g = SD.g, W = SD.W, H = SD.H, p = pal(), P = S.p, M = pzMap(), Yw = M.Y(0);
+  PZ.z1 = Math.max(4.0, P.D + 1.2); PZ.y0 = -P.H - 0.5; PZ.y1 = Math.max(1.2, P.he + 0.5); M = pzMap(); Yw = M.Y(0);
+  g.fillStyle = p.air; g.fillRect(0, 0, W, H); g.fillStyle = p.water; g.fillRect(M.X(-0.05), Yw, W, M.Y(-P.H) - Yw);
+  g.fillStyle = p.floor; g.fillRect(M.X(-0.05), M.Y(-P.H), W, H - M.Y(-P.H)); g.fillRect(0, Yw, M.X(-0.05), H - Yw);
+  seg(g, M.X(-0.05), Yw, W, Yw, p.line, 2); T(g, 'water  n = ' + (P.empty ? '1.00 (empty pool)' : S.n.toFixed(2)), M.X(0) + 6, Yw + 14, p.text);
+  /* the clown (drawn facing us, standing at distance D) */
+  var cz = P.D, fy = -P.H;
+  if (CL.ok){ g.globalAlpha = 0.95; g.drawImage(CL.img, M.X(cz) - CLR_W*M.s/2, M.Y(fy + CLR_H), CLR_W*M.s, CLR_H*M.s); g.globalAlpha = 1; }
+  T(g, 'real clown', M.X(cz) + CLR_W*M.s/2 + 4, M.Y(fy + CLR_H) + 10, p.text);
+  /* the apparent clown: each row of its picture moved to the image of that height */
+  if (CL.ok && !P.empty){ var rows = 60, ih = CL.img.naturalHeight, iw = CL.img.naturalWidth; g.globalAlpha = 0.55;
+    for (var r=0; r<rows; r++){ var y0 = fy + CLR_H*(1 - r/rows), y1 = fy + CLR_H*(1 - (r + 1)/rows), a = poolImage(cz, y0), b = poolImage(cz, y1), sc = a.sc;
+      var hh = Math.max(0.6, M.Y(b.y) - M.Y(a.y)); g.drawImage(CL.img, 0, ih*r/rows, iw, ih/rows, M.X(a.z) - CLR_W*M.s*sc/2, M.Y(a.y), CLR_W*M.s*sc, hh); }
+    g.globalAlpha = 1; var top = poolImage(cz, Math.min(-0.001, fy + CLR_H)); T(g, 'apparent clown', M.X(top.z) - CLR_W*M.s/2 - 6, M.Y(fy) - 6, p.img, 'right', 'bold 12px Arial, sans-serif'); }
+  /* rays from the eye to the feet, the knees and the waist */
+  [[0.04, 'feet'], [0.5, 'knees'], [0.95, 'waist']].forEach(function(q){ var yy = fy + q[0]*CLR_H; if (yy >= 0) return; var xs = crossX(cz, yy, 0, P.he), I = poolImage(cz, yy);
+    seg(g, M.X(0), M.Y(P.he), M.X(xs), Yw, p.ray, 1.6); seg(g, M.X(xs), Yw, M.X(cz), M.Y(yy), p.ray, 1.6); if (!P.empty) seg(g, M.X(xs), Yw, M.X(I.z), M.Y(I.y), p.ray, 1, [4, 3]); });
+  eyeIcon(g, M.X(0), M.Y(P.he), Math.atan2(M.Y(fy + 0.9) - M.Y(P.he), M.X(cz) - M.X(0)), p); T(g, 'eye', M.X(0), M.Y(P.he) - 18, p.text, 'center');
+}
+function poolImage(z, y){
+  /* in the vertical plane through the eye: where the eye sees the point (z, y) of the clown */
+  var P = S.p; if (y >= 0 || P.empty) return { z:z, y:y, sc:1 };
+  var v = view(z, y, 0, P.he); return { z:v.I.x, y:v.I.y, sc:Math.max(0.3, v.I.x/z) };
+}
+function renderPool(C, empty){
+  var g = C.g, W = C.W, H = C.H, P = S.p, n = empty ? 1 : S.n, he = P.he, D = P.D, Hd = P.H;
+  var img = g.createImageData(Math.round(W*DPR), Math.round(H*DPR)), dd = img.data, Wp = img.width, Hp = img.height;
+  var target = -Hd + 0.85, pitch = Math.atan2(he - target, D), fov = 2*Math.atan2(1.15, D), f = (Hp/2)/Math.tan(fov/2);
+  var fz = Math.cos(pitch), fy = -Math.sin(pitch), uz = Math.sin(pitch), uy = Math.cos(pitch);
+  for (var py=0; py<Hp; py++){
+    for (var px=0; px<Wp; px++){
+      var a = (px - Wp/2)/f, b = (Hp/2 - py)/f, dx = a, dy = fy + b*uy, dz = fz + b*uz, L = Math.sqrt(dx*dx + dy*dy + dz*dz); dx /= L; dy /= L; dz /= L;
+      var X = 0, Y = he, Z = 0, wet = 0, col = null;
+      if (dy < 0){ var ts = he/(-dy), zs = ts*dz;
+        if (zs < D){ X = ts*dx; Y = 0; Z = zs;
+          /* Snell's law, vector form: from air (1) into water (n) */
+          var ci = -dy, r = 1/n, k = 1 - r*r*(1 - ci*ci), cs = Math.sqrt(Math.max(0, k)); dx = r*dx; dz = r*dz; dy = r*dy + (r*ci - cs); var L2 = Math.sqrt(dx*dx + dy*dy + dz*dz); dx /= L2; dy /= L2; dz /= L2; wet = 1; } }
+      var tp = (D - Z)/dz, Yp = Y + tp*dy, Xp = X + tp*dx;
+      if (wet && Yp < -Hd){ var tf = (-Hd - Y)/dy, Xf = X + tf*dx, Zf = Z + tf*dz; col = floorCol(Xf, Zf); wet = Math.hypot(tf*dx, tf*dz, tf*dy); }
+      else { col = planeCol(Xp, Yp, -Hd); wet = wet ? Math.abs(tp) : 0; }
+      if (wet && !empty){ var k2 = Math.exp(-wet*0.25); col = [col[0]*k2 + 40*(1 - k2), col[1]*k2 + 120*(1 - k2), col[2]*k2 + 150*(1 - k2)]; col = [col[0]*0.86, col[1]*0.95, col[2]]; }
+      var q = 4*(py*Wp + px); dd[q] = col[0]; dd[q + 1] = col[1]; dd[q + 2] = col[2]; dd[q + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.restore();
+}
+function planeCol(x, y, floorY){
+  /* the vertical plane through the clown: the clown, the pool wall below the water, a fence and sky above */
+  if (CL.ok && Math.abs(x) < CLR_W/2 && y > floorY && y < floorY + CLR_H){
+    var u = Math.floor((x/CLR_W + 0.5)*CL.w), v = Math.floor((1 - (y - floorY)/CLR_H)*CL.h), q = 4*(v*CL.w + u);
+    if (u >= 0 && u < CL.w && v >= 0 && v < CL.h && CL.data[q + 3] > 128) return [CL.data[q], CL.data[q + 1], CL.data[q + 2]]; }
+  if (y < 0){ var tx = ((x % 0.15) + 0.15) % 0.15, ty = ((y % 0.15) + 0.15) % 0.15; return (tx < 0.008 || ty < 0.008) ? [170, 205, 220] : [92, 170, 205]; }
+  if (y < 0.06) return [230, 232, 236];
+  if (y < 1.1){ var pl = ((y*10) % 1 + 1) % 1; return pl < 0.08 ? [120, 92, 60] : [176, 140, 98]; }
+  var s = Math.min(1, (y - 1.1)/1.5); return [150 + 60*(1 - s), 196 + 40*(1 - s), 235];
+}
+function floorCol(x, z){ var tx = ((x % 0.3) + 0.3) % 0.3, tz = ((z % 0.3) + 0.3) % 0.3; return (tx < 0.012 || tz < 0.012) ? [170, 205, 220] : [110, 182, 212]; }
+function poolInfo(){
+  var P = S.p, fy = -P.H, surfH = Math.min(CLR_H, P.H), feet = poolImage(P.D, fy + 0.001);
+  return { real:surfH, app:Math.abs(feet.y), ratio:Math.abs(feet.y)/surfH, feet:feet, vAngle:Math.atan2(P.he + P.H, P.D)/DEG };
+}
+/* ══════════ tab 2: Snell's window ══════════ */
+function crit(){ return Math.asin(1/S.n); }
+function fresnelT(ai){ /* unpolarised transmission from water (n) into air, angle ai in water */ var n = S.n, st = n*Math.sin(ai); if (st >= 1) return 0; var at = Math.asin(st), ci = Math.cos(ai), ct = Math.cos(at);
+  var rs = (n*ci - ct)/(n*ci + ct), rp = (ci - n*ct)/(ci + n*ct); return 1 - (rs*rs + rp*rp)/2; }
+function drawSide2(){
+  var g = SD.g, W = SD.W, H = SD.H, p = pal(), w = S.w, s = 95, X0 = W/2, Y0 = 120;
+  function X(x){ return X0 + x*s; } function Y(y){ return Y0 - y*s; }
+  g.fillStyle = p.air; g.fillRect(0, 0, W, Y0); g.fillStyle = p.water; g.fillRect(0, Y0, W, H - Y0); g.fillStyle = p.floor; g.fillRect(0, Y(-w.Hp), W, H - Y(-w.Hp));
+  seg(g, 0, Y0, W, Y0, p.line, 2); T(g, 'air', 10, Y0 - 12, p.text); T(g, 'water  n = ' + S.n.toFixed(2), 10, Y0 + 14, p.text);
+  var ey = -w.de, tc = crit();
+  for (var a = -88; a <= 88; a += 4){
+    var ar = a*DEG, xs = Math.tan(ar)*w.de, inside = Math.abs(ar) < tc, Tr = fresnelT(Math.abs(ar));
+    if (inside){ var b = Math.asin(S.n*Math.sin(ar)); seg(g, X(0), Y(ey), X(xs), Y0, 'rgba(224,122,0,' + (0.25 + 0.65*Tr).toFixed(2) + ')', 1.6); seg(g, X(xs), Y0, X(xs + Math.sin(b)*3), Y(Math.cos(b)*3), 'rgba(224,122,0,' + (0.2 + 0.7*Tr).toFixed(2) + ')', 1.4); }
+    else { seg(g, X(0), Y(ey), X(xs), Y0, 'rgba(41,82,201,0.6)', 1.4); var xf = xs + Math.tan(Math.abs(ar))*w.Hp*Math.sign(ar); seg(g, X(xs), Y0, X(xf), Y(-w.Hp), 'rgba(41,82,201,0.45)', 1.2, [4, 3]); }
+  }
+  [-1, 1].forEach(function(sg){ var xc = Math.tan(tc)*w.de*sg; seg(g, X(0), Y(ey), X(xc), Y0, p.img, 2.4); });
+  g.strokeStyle = p.ray; g.lineWidth = 2; g.beginPath(); g.arc(X(0), Y(ey), 40, -Math.PI/2 - tc, -Math.PI/2 + tc); g.stroke();
+  T(g, '2\u03B8c = ' + (2*tc/DEG).toFixed(1) + '\u00B0', X(0), Y(ey) - 52, p.ray, 'center', 'bold 13px Arial, sans-serif');
+  T(g, "Snell's window", X(0), Y0 - 12, p.img, 'center', 'bold 13px Arial, sans-serif');
+  T(g, 'beyond \u03B8c: total internal reflection,', X(Math.tan(tc)*w.de) + 14, Y0 + 24, '#2952c9', 'left', '12px Arial'); T(g, 'the surface is a mirror', X(Math.tan(tc)*w.de) + 14, Y0 + 40, '#2952c9', 'left', '12px Arial');
+  eyeIcon(g, X(0), Y(ey), -Math.PI/2, p); T(g, 'eye', X(0) + 18, Y(ey) + 4, p.text);
+}
+function renderWindow(C){
+  var g = C.g, W = C.W, H = C.H, w = S.w, n = S.n, tc = crit(), img = g.createImageData(Math.round(W*DPR), Math.round(H*DPR)), dd = img.data, Wp = img.width, Hp = img.height, cx = Wp/2, cy = Hp/2, R = Math.min(Wp, Hp)/2 - 4;
+  for (var py=0; py<Hp; py++) for (var px=0; px<Wp; px++){
+    var dx = px - cx, dy = py - cy, r = Math.sqrt(dx*dx + dy*dy)/R, q = 4*(py*Wp + px), col;
+    if (r > 1){ col = th.hc ? [0, 0, 0] : [24, 28, 32]; }
+    else { var al = r*Math.PI/2, az = Math.atan2(dy, dx), Tr = fresnelT(al), refl = floorDir(al, az, w), sky;
+      if (al < tc){ var be = Math.asin(n*Math.sin(al)); sky = skyCol(be, az); col = [sky[0]*Tr + refl[0]*(1 - Tr), sky[1]*Tr + refl[1]*(1 - Tr), sky[2]*Tr + refl[2]*(1 - Tr)]; }
+      else col = refl;
+      col = [col[0]*0.92 + 4, col[1]*0.96 + 6, col[2]]; }
+    dd[q] = col[0]; dd[q + 1] = col[1]; dd[q + 2] = col[2]; dd[q + 3] = 255; }
+  g.putImageData(img, 0, 0);
+}
+function skyCol(be, az){
+  /* the scene above the water, by direction: be from the zenith, az around the vertical */
+  var sunB = 32*DEG, sunA = -0.7, dS = Math.acos(Math.min(1, Math.cos(be)*Math.cos(sunB) + Math.sin(be)*Math.sin(sunB)*Math.cos(az - sunA)));
+  if (dS < 4*DEG) return [255, 250, 220];
+  var elev = Math.PI/2 - be;
+  /* the clown at the pool's edge, 3 m away: from 1.75 m above the ground down to the ground */
+  var ca = 1.9, cw = Math.atan2(CLR_W/2, 3.0), dA = Math.atan2(Math.sin(az - ca), Math.cos(az - ca));
+  if (CL.ok && Math.abs(dA) < cw && elev > 0 && elev < Math.atan2(CLR_H, 3.0)){ var u = Math.floor((dA/cw/2 + 0.5)*CL.w), v = Math.floor((1 - Math.tan(elev)*3.0/CLR_H)*CL.h), qq = 4*(v*CL.w + u);
+    if (u >= 0 && u < CL.w && v >= 0 && v < CL.h && CL.data[qq + 3] > 128) return [CL.data[qq], CL.data[qq + 1], CL.data[qq + 2]]; }
+  var tree = 6 + 5*Math.sin(az*3) + 3*Math.sin(az*7 + 1); if (elev < tree*DEG && elev > -0.01) return [46, 110 + 20*Math.sin(az*5), 52];
+  var t = Math.min(1, elev/(Math.PI/2)); return [150 - 110*t, 200 - 80*t, 245 - 20*t];
+}
+function floorDir(al, az, w){
+  /* a ray reflected at the surface, down to the pool floor: its tiles */
+  var Rr = (w.de + w.Hp)*Math.tan(Math.min(al, 89*DEG)), x = Rr*Math.cos(az), z = Rr*Math.sin(az), tx = ((x % 0.4) + 0.4) % 0.4, tz = ((z % 0.4) + 0.4) % 0.4, fade = Math.exp(-Rr/14);
+  var base = (tx < 0.02 || tz < 0.02) ? [175, 210, 222] : [100, 176, 206]; return [base[0]*fade + 30*(1 - fade), base[1]*fade + 90*(1 - fade), base[2]*fade + 120*(1 - fade)];
+}
+function drawWindowPlot(C){
+  var g = C.g, W = C.W, H = C.H, p = pal(), X0 = 44, X1 = W - 14, Y0 = H - 34, Y1 = 14, tc = crit();
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  function X(a){ return X0 + a/90*(X1 - X0); } function Y(v){ return Y0 - v*(Y0 - Y1); }
+  for (var a=0; a<=90; a+=15){ seg(g, X(a), Y0, X(a), Y1, p.grid, 1); T(g, a + '\u00B0', X(a), Y0 + 12, p.text, 'center', '11px Arial'); }
+  for (var v=0; v<=1.0001; v+=0.25){ seg(g, X0, Y(v), X1, Y(v), p.grid, 1); T(g, v.toFixed(2), X0 - 5, Y(v), p.text, 'right', '10px Arial'); }
+  g.strokeStyle = p.ray; g.lineWidth = 2.2; g.beginPath(); for (var k=0; k<=900; k++){ var aa = k/10; var tt = fresnelT(aa*DEG); if (k) g.lineTo(X(aa), Y(tt)); else g.moveTo(X(aa), Y(tt)); } g.stroke();
+  g.strokeStyle = p.img; g.lineWidth = 2; g.setLineDash([5, 3]); g.beginPath(); for (var k2=0; k2<=900; k2++){ var a2 = k2/10; if (a2*DEG >= tc) break; var be = Math.asin(S.n*Math.sin(a2*DEG))/(Math.PI/2); if (k2) g.lineTo(X(a2), Y(be)); else g.moveTo(X(a2), Y(be)); } g.stroke(); g.setLineDash([]);
+  seg(g, X(tc/DEG), Y0, X(tc/DEG), Y1, p.text, 1.2, [2, 3]); T(g, '\u03B8c = ' + (tc/DEG).toFixed(1) + '\u00B0', X(tc/DEG) + 4, Y1 + 8, p.text, 'left', 'bold 11px Arial');
+  T(g, 'transmitted fraction', X(4), Y(0.97) + 10, p.ray, 'left', '11px Arial'); T(g, 'direction in air (0\u201390\u00B0)', X(4), Y(0.62), p.img, 'left', '11px Arial');
+  T(g, 'angle of the ray under water (from the vertical)', (X0 + X1)/2, H - 8, p.text, 'center', '11px Arial');
+}
+/* ══════════ readout, equations, narration ══════════ */
+function rrow(k, v){ return '<div class="rf_rrow"><span class="rf_rkey">' + k + '</span><span class="rf_rval">' + v + '</span></div>'; }
+function f2(v, n){ return (+v).toFixed(n === undefined ? 2 : n); }
+function readout(){
+  var r = '', e = '';
+  if (S.tab === 0){ var I = depthInfo();
+    if (I.V.direct){ r = rrow('object and eye', 'same medium') + rrow('apparent position', 'the real one'); e = 'The eye and the object are on the same side of the surface: light reaches the eye in a straight line.'; }
+    else { var down = S.d.oy < 0;
+      r = rrow(down ? 'real depth d' : 'real height h', f2(I.d) + ' m') + rrow(down ? 'apparent depth' : 'apparent height', f2(I.di) + ' m') + rrow('ratio', f2(I.ratio, 3)) + rrow(down ? 'd/n (straight down)' : 'n h (straight up)', f2(I.d*I.paraxial) + ' m') + rrow('viewing angle at the eye', f2(I.ang, 1) + '\u00B0') + rrow('angle in ' + (down ? 'water' : 'air'), f2(I.angW, 1) + '\u00B0') + rrow('image shifted toward the eye by', f2(Math.abs(I.shift)) + ' m');
+      e = 'Snell: <b>' + f2(I.no) + ' sin ' + f2(I.angW, 1) + '\u00B0 = ' + f2(I.no*Math.sin(I.angW*DEG), 4) + '</b> = ' + f2(I.ne) + ' sin ' + f2(I.ang, 1) + '\u00B0 = <b>' + f2(I.ne*Math.sin(I.ang*DEG), 4) + '</b> (the ray found by least time obeys it)<br>'
+        + 'Looking straight ' + (down ? 'down: apparent depth = d/n = ' : 'up: apparent height = n h = ') + f2(I.d) + (down ? ' / ' : ' \u00D7 ') + f2(S.n) + ' = <b>' + f2(I.d*I.paraxial) + ' m</b>; at ' + f2(I.ang, 0) + '\u00B0 it is <b>' + f2(I.di) + ' m</b>: ' + (down ? 'the slant raises the image further.' : 'the image depends on the angle.'); } }
+  if (S.tab === 1){ var Q = poolInfo();
+    r = rrow('submerged part, real', f2(Q.real) + ' m') + rrow('submerged part, apparent', f2(Q.app) + ' m') + rrow('looks', f2(Q.ratio*100, 0) + ' % as tall') + rrow('eye height', f2(S.p.he) + ' m') + rrow('distance to the clown', f2(S.p.D) + ' m') + rrow('looking down at the feet', f2(Q.vAngle, 1) + '\u00B0');
+    e = 'The feet, ' + f2(S.p.H) + ' m deep, appear only <b>' + f2(Q.app) + ' m</b> below the surface: the legs look <b>' + f2(Q.ratio*100, 0) + ' %</b> as long. Straight down they would look ' + f2(100/S.n, 0) + ' % (1/n); at a slant, less. Each pixel of the view: a ray from the eye, refracted at the surface by Snell\u2019s law in vector form, <b>t = (1/n) d + ((1/n) cos i \u2212 cos r) N</b>.'; }
+  if (S.tab === 2){ var tc = crit();
+    r = rrow('critical angle \u03B8c = arcsin(1/n)', f2(tc/DEG, 1) + '\u00B0') + rrow('window, angular diameter', f2(2*tc/DEG, 1) + '\u00B0') + rrow('window radius on the surface', f2(S.w.de*Math.tan(tc)) + ' m') + rrow('eye depth', f2(S.w.de) + ' m') + rrow('a ray 5\u00B0 inside \u03B8c leaves at', f2(Math.asin(S.n*Math.sin(tc - 5*DEG))/DEG, 1) + '\u00B0');
+    e = 'Critical angle: sin \u03B8c = 1/n = 1/' + f2(S.n) + ', <b>\u03B8c = ' + f2(tc/DEG, 1) + '\u00B0</b>. The whole sky, 180\u00B0 across, is squeezed into a circle ' + f2(2*tc/DEG, 1) + '\u00B0 across, of radius ' + f2(S.w.de) + ' tan \u03B8c = <b>' + f2(S.w.de*Math.tan(tc)) + ' m</b> on the surface. Near its rim the transmitted light fades to zero (Fresnel), and the horizon crowds into a thin ring.'; }
+  el('rfRead').innerHTML = r; el('rfEqs').innerHTML = e; el('rfEqs').style.display = S.eqs ? '' : 'none';
+}
+function summary(){
+  if (S.tab === 0){ var I = depthInfo(); if (I.V.direct) return 'The eye and the object are on the same side of the surface, so there is no refraction.';
+    var down = S.d.oy < 0; return (down ? 'The object is ' + f2(I.d) + ' metres under water. Seen at ' + f2(I.ang, 0) + ' degrees from the vertical, it appears ' + f2(I.di) + ' metres deep, ' + f2(I.ratio*100, 0) + ' percent of its real depth; straight down it would appear ' + f2(I.d*I.paraxial) + ' metres deep. The image is also shifted ' + f2(Math.abs(I.shift)) + ' metres toward the eye.'
+      : 'The eye is under water, the object ' + f2(I.d) + ' metres above the surface. It appears ' + f2(I.di) + ' metres up, higher than it is.'); }
+  if (S.tab === 1){ var Q = poolInfo(); return 'The clown stands ' + f2(S.p.H) + ' metres deep, ' + f2(S.p.D) + ' metres away, seen from ' + f2(S.p.he) + ' metres above the water. ' + (S.p.empty ? 'With the pool empty, it looks as it is.' : 'Its legs look only ' + f2(Q.ratio*100, 0) + ' percent as long, its feet ' + f2(Q.app) + ' metres below the surface: the underwater part looks shorter and wider.'); }
+  var tc = crit(); return 'From ' + f2(S.w.de) + ' metres under water, the whole sky appears in a circle ' + f2(2*tc/DEG, 1) + ' degrees across, Snell\u2019s window, ' + f2(S.w.de*Math.tan(tc)) + ' metres in radius on the surface. Outside it, total internal reflection mirrors the pool floor.';
+}
+function narrate(m){ if (!th.nr) return; el('rfNar').textContent = m; }
+var nT = null; function later(){ clearTimeout(nT); nT = setTimeout(function(){ narrate(summary()); }, 400); }
+var LABS = [['SIDE VIEW', 'drag the object or the eye', '', ''], ['SIDE VIEW: THE CLOWN IN THE POOL', '', 'WHAT THE EYE SEES', 'THE SAME, WITH THE POOL EMPTY'], ['SIDE VIEW: LOOKING UP', '', 'WHAT THE EYE SEES (FISHEYE, STRAIGHT UP)', 'TRANSMISSION AND DIRECTION']];
+function draw(){
+  var t = S.tab; el('rfRow2').style.display = t === 0 ? 'none' : ''; el('rfPlotBox').style.display = t === 0 ? '' : 'none';
+  el('rfLab1').textContent = LABS[t][0]; el('rfHint').textContent = LABS[t][1]; el('rfLab2').textContent = LABS[t][2]; el('rfLab3').textContent = LABS[t][3];
+  if (t === 0){ drawSide0(); drawPlot0(); }
+  if (t === 1){ drawSide1(); renderPool(CA, S.p.empty); renderPool(CB, true); }
+  if (t === 2){ drawSide2(); renderWindow(CA); drawWindowPlot(CB); }
+  readout();
+}
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="rf_ctrl"><div class="rf_ctrlhdr"><label class="rf_ctrlname" for="' + id + '">' + label + '</label><span class="rf_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function nTxt(){ return S.n.toFixed(2) + ({ '1.33':' (water)', '1.50':' (glass)', '2.42':' (diamond)', '1.00':' (no water)' }[S.n.toFixed(2)] || ''); }
+function buildCtl(){
+  var b = '', c = row('rfN', 'index of refraction n', 1, 2.5, 0.01, S.n, nTxt());
+  if (S.tab === 0){ var o = S.d;
+    b = '<label>Object <select id="rfObj"><option value="point">a point</option><option value="rect">a rectangle</option><option value="fish">a fish</option><option value="clown">the clown</option><option value="draw">your own drawing</option></select></label>'
+      + '<button type="button" class="rf_btn" id="rfDraw">Draw a shape</button><button type="button" class="rf_btn" id="rfFlip">' + (o.ey < 0 ? 'Eye above the water' : 'Eye under water') + '</button>'
+      + '<label><input type="checkbox" id="rfFan"' + (o.fan ? ' checked' : '') + '> all rays</label><label><input type="checkbox" id="rfLoc"' + (o.locus ? ' checked' : '') + '> image for every angle</label>';
+    c += row('rfOX', 'object: across', -3, 3, 0.01, o.ox, f2(o.ox) + ' m') + row('rfOY', 'object: height (+) or depth (\u2212)', -2.5, 3, 0.01, o.oy, f2(o.oy) + ' m') + row('rfEX', 'eye: across', -3.2, 3.2, 0.01, o.ex, f2(o.ex) + ' m') + row('rfEY', 'eye: height (+) or depth (\u2212)', -2.5, 3, 0.01, o.ey, f2(o.ey) + ' m'); }
+  if (S.tab === 1){ b = '<label><input type="checkbox" id="rfEmpty"' + (S.p.empty ? ' checked' : '') + '> empty the pool</label>';
+    c += row('rfHE', 'eye above the water', 0.05, 1.5, 0.01, S.p.he, f2(S.p.he) + ' m') + row('rfDD', 'distance to the clown', 1.2, 5, 0.01, S.p.D, f2(S.p.D) + ' m') + row('rfHH', 'water depth at the clown', 0.3, 1.6, 0.01, S.p.H, f2(S.p.H) + ' m'); }
+  if (S.tab === 2) c += row('rfDE', 'eye depth', 0.2, 2, 0.01, S.w.de, f2(S.w.de) + ' m') + row('rfHP', 'pool floor below the surface', 1, 4, 0.05, S.w.Hp, f2(S.w.Hp) + ' m');
+  b += '<button type="button" class="rf_btn" id="rfPw">water</button><button type="button" class="rf_btn" id="rfPg">glass</button><button type="button" class="rf_btn" id="rfPd">diamond</button>'
+    + '<label><input type="checkbox" id="rfEq"' + (S.eqs ? ' checked' : '') + '> math</label><button type="button" class="rf_btn" id="rfDsc">Describe</button>';
+  el('rfBtns').innerHTML = b; el('rfCtl').innerHTML = c;
+  function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+  if (el('rfObj')) el('rfObj').value = S.d.obj;
+  on('rfN', 'input', function(){ S.n = +this.value; el('rfNv').textContent = nTxt(); schedule(); later(); });
+  [['rfPw', 1.33, 'water'], ['rfPg', 1.5, 'glass'], ['rfPd', 2.42, 'diamond']].forEach(function(q){ on(q[0], 'click', function(){ S.n = q[1]; buildCtl(); schedule(); narrate('Index of refraction ' + q[1] + ', ' + q[2] + '. ' + summary()); }); });
+  on('rfEq', 'change', function(){ S.eqs = this.checked; schedule(); });
+  on('rfDsc', 'click', describe);
+  on('rfObj', 'change', function(){ S.d.obj = this.value; if (this.value === 'clown'){ var o = S.d; o.ox = -0.25; o.oy = -0.85; o.ex = 0.9; o.ey = 1.15; syncSliders(); }   /* a viewpoint that shows the squashing well */ if (this.value === 'draw' && !S.d.pts.length){ S.d.drawing = true; narrate('Press and drag on the side view to draw your shape.'); } schedule(); later(); });
+  on('rfDraw', 'click', function(){ S.d.obj = 'draw'; S.d.drawing = true; var os_ = el('rfObj'); if (os_) os_.value = 'draw'; schedule(); narrate('Press and drag on the side view to draw your shape; it can be in the water or in the air.'); });
+  on('rfFlip', 'click', function(){ var o = S.d; if (o.ey > 0){ o.ey = -1.2; o.oy = 0.8; } else { o.ey = 1.0; o.oy = -1.0; } buildCtl(); schedule(); narrate(o.ey < 0 ? 'The eye is now under water, looking up at the object in the air. ' + summary() : 'The eye is above the water again. ' + summary()); });
+  on('rfFan', 'change', function(){ S.d.fan = this.checked; schedule(); }); on('rfLoc', 'change', function(){ S.d.locus = this.checked; schedule(); narrate(this.checked ? 'The dashed curve shows where the image appears for every viewing angle: there is no single image point.' : 'Image curve hidden.'); });
+  [['rfOX', 'ox'], ['rfOY', 'oy'], ['rfEX', 'ex'], ['rfEY', 'ey']].forEach(function(q){ on(q[0], 'input', function(){ S.d[q[1]] = +this.value; if (Math.abs(S.d.ey) < 0.05) S.d.ey = S.d.ey < 0 ? -0.05 : 0.05; el(q[0] + 'v').textContent = f2(S.d[q[1]]) + ' m'; schedule(); later(); }); });
+  on('rfEmpty', 'change', function(){ S.p.empty = this.checked; schedule(); later(); });
+  [['rfHE', 'he'], ['rfDD', 'D'], ['rfHH', 'H']].forEach(function(q){ on(q[0], 'input', function(){ S.p[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(S.p[q[1]]) + ' m'; schedule(); later(); }); });
+  [['rfDE', 'de'], ['rfHP', 'Hp']].forEach(function(q){ on(q[0], 'input', function(){ S.w[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(S.w[q[1]]) + ' m'; schedule(); later(); }); });
+}
+function syncSliders(){ [['rfOX', 'ox'], ['rfOY', 'oy'], ['rfEX', 'ex'], ['rfEY', 'ey']].forEach(function(q){ var e = el(q[0]); if (e){ e.value = S.d[q[1]]; el(q[0] + 'v').textContent = f2(S.d[q[1]]) + ' m'; } }); }
+/* ── pointer: drag the object or the eye, or draw ── */
+var drag = null;
+function pt(e){ var r = SD.c.getBoundingClientRect(), q = e.touches ? e.touches[0] : e; return { x:(q.clientX - r.left)*SD.W/r.width, y:(q.clientY - r.top)*SD.H/r.height }; }
+function down(e){
+  if (S.tab !== 0) return; var q = pt(e), o = S.d;
+  if (Math.hypot(q.x - wx(o.ex), q.y - wy(o.ey)) < 22) drag = 'eye';
+  else if (o.drawing){ drag = 'draw'; o.ox = ix(q.x); o.oy = iy(q.y); o.pts = [[0, 0]]; }
+  else { var ext = o.obj === 'clown' ? 0.5 : 0.42; if (Math.abs(ix(q.x) - o.ox) < ext && Math.abs(iy(q.y) - o.oy) < ext) drag = 'obj'; }
+  if (drag && e.cancelable) e.preventDefault();
+}
+function move(e){
+  if (!drag) return; var q = pt(e), o = S.d, x = Math.max(-3.2, Math.min(3.2, ix(q.x))), y = Math.max(yMin(), Math.min(yMax(), iy(q.y)));
+  if (drag === 'eye'){ o.ex = x; o.ey = Math.abs(y) < 0.05 ? (y < 0 ? -0.05 : 0.05) : y; }
+  else if (drag === 'obj'){ o.ox = x; o.oy = Math.abs(y) < 0.04 ? (y < 0 ? -0.04 : 0.04) : y; }
+  else if (drag === 'draw'){ var l = o.pts[o.pts.length - 1], rx = x - o.ox, ry = y - o.oy; if (Math.hypot(rx - l[0], ry - l[1]) > 0.02) o.pts.push([rx, ry]); }
+  if (e.cancelable) e.preventDefault(); schedule(); syncSliders();
+}
+function up(){ if (!drag) return; var wasEye = drag === 'eye'; if (drag === 'draw'){ S.d.drawing = false; narrate('Your shape is drawn: the dashed outline is how the eye sees it. Drag the shape or the eye to explore.'); } else later(); drag = null; if (wasEye) schedule();   /* refit the view once the eye is let go */ }
+SD.c.addEventListener('mousedown', down); window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+SD.c.addEventListener('touchstart', down, { passive:false }); SD.c.addEventListener('touchmove', move, { passive:false }); SD.c.addEventListener('touchend', up);
+function tab(i){ S.tab = i; for (var k=0; k<3; k++) el('rfT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false'); buildCtl(); draw(); narrate(summary()); }
+function theme(k){
+  th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('rf_hc', th.hc); ROOT.classList.toggle('rf_lm', th.lm);
+  [['hc', 'rfBtnHC'], ['lm', 'rfBtnLM'], ['cb', 'rfBtnCB'], ['nr', 'rfBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('rf_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('rfBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('rfNar').style.display = th.nr ? '' : 'none'; draw();
+}
+function describe(){ narrate(['The side view shows the water surface, the object, the eye, the ray that reaches the eye and, dashed, its extension back to the image. Below, the apparent depth against the viewing angle. ', 'The side view shows the eye, the water and the clown, with the apparent clown in blue. Below, what the eye sees, and the same scene with the pool empty. ', 'The side view shows rays from an eye under water: inside the cone they leave the water, outside they reflect. Below, a fisheye view looking straight up, and the transmission against the angle. '][S.tab] + summary()); }
+function toggleDesc(){ var b = el('rfDescBtn'), d = el('rfDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+buildCtl(); draw(); narrate('Ready. ' + summary());
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc,
+  set:function(k, v){ var a = k.split('.'); if (a.length === 2) S[a[0]][a[1]] = v; else S[k] = v; buildCtl(); draw(); },
+  _state:function(){ var I = depthInfo(); return { S:JSON.parse(JSON.stringify(S)), depth:I.V.direct ? null : { d:I.d, di:I.di, ratio:I.ratio, ang:I.ang, angW:I.angW, xs:I.V.xs, I:I.V.I, no:I.no, ne:I.ne }, pool:poolInfo(), crit:crit()/DEG, clown:CL.ok }; },
+  _fresnel:fresnelT, _view:view };
+})();
+</script>
+</main>
+</body>
+</html>

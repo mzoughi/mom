@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Fiber Optics -- Total Internal Reflection</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, fiber optics, optical fiber, total internal reflection, critical angle, numerical aperture, acceptance angle, cladding, bending loss, modal dispersion, lesson, scientific">
+<meta name="description" content="Interactive fiber optics simulation: light guided by total internal reflection, the acceptance cone and numerical aperture, leaks at tight bends, the role of the cladding, and pulse spreading.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="foRoot" class="fo_root" role="region" aria-label="Fiber optics simulator">
+<!-- Display options -->
+<div class="fo_a11y" id="foA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="fo_a11ybtn" id="foBtnHC" onclick="foA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fo_a11ybtn" id="foBtnLM" onclick="foA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fo_a11ybtn" id="foBtnCB" onclick="foA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fo_a11ybtn fo_a11yon" id="foBtnNR" onclick="foA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="fo_header">
+<p class="fo_h1">Fiber Optics</p>
+<p class="fo_sub">Light guided by total internal reflection -- the acceptance cone, leaks at bends, and pulse spreading</p>
+</div>
+<!-- The fiber -->
+<div class="fo_diagpanel">
+<div class="fo_diaglabel"><b>THE FIBER (SIDE VIEW)</b><span class="fo_diagnote">not to scale: a real core is about 0.05 mm wide &middot; drag the laser up or down to tilt the beam</span></div>
+<canvas id="foCv" width="900" height="456" role="img" aria-label="Side view of an optical fiber: a laser on the left shines into the core; rays reflect at the core-cladding boundary. Light that is not totally reflected leaks into the cladding. The readout and narration describe the result."></canvas>
+<div class="fo_runbar">
+<button type="button" class="fo_btn fo_primary" onclick="foSim.preset('guided')">Guided</button>
+<button type="button" class="fo_btn fo_primary" onclick="foSim.preset('escape')">Too steep</button>
+<button type="button" class="fo_btn fo_primary" onclick="foSim.preset('bend')">Tight bend</button>
+<button type="button" class="fo_btn" onclick="foSim.preset('fan')">Fan of rays</button>
+<button type="button" class="fo_btn" onclick="foSim.preset('water')">Bare rod in water</button>
+<button type="button" class="fo_btn" onclick="foSim.describe()">Describe</button>
+<button type="button" class="fo_btn fo_warn" onclick="foSim.preset('reset')">Reset</button>
+</div>
+</div>
+<!-- Readout and pulse -->
+<div class="fo_grid">
+<div class="fo_panel" role="region" aria-labelledby="foReadHd">
+<div class="fo_paneltitle" id="foReadHd">Readout</div>
+<div class="fo_rgrid">
+<div class="fo_rrow"><span class="fo_rkey">Critical angle &phi;<sub>c</sub></span><span class="fo_rval" id="foRoCrit">--</span></div>
+<div class="fo_rrow"><span class="fo_rkey">Numerical aperture NA</span><span class="fo_rval" id="foRoNA">--</span></div>
+<div class="fo_rrow fo_wide"><span class="fo_rkey">Acceptance angle &theta;<sub>max</sub></span><span class="fo_rval fo_hi" id="foRoAcc">--</span></div>
+<div class="fo_rrow"><span class="fo_rkey">Inside the core &theta;<sub>1</sub></span><span class="fo_rval" id="foRoTh1">--</span></div>
+<div class="fo_rrow"><span class="fo_rkey">At the wall &phi;</span><span class="fo_rval" id="foRoPhi">--</span></div>
+<div class="fo_rrow"><span class="fo_rkey">Reflections</span><span class="fo_rval" id="foRoRef">--</span></div>
+<div class="fo_rrow"><span class="fo_rkey">Light delivered</span><span class="fo_rval fo_hi" id="foRoOut">--</span></div>
+<div class="fo_rrow fo_wide"><span class="fo_rkey">Result</span><span class="fo_rval fo_hi" id="foRoSee">--</span></div>
+</div>
+</div>
+<div class="fo_panel" role="region" aria-labelledby="foPulseHd">
+<div class="fo_paneltitle" id="foPulseHd">A short pulse, before and after the fiber</div>
+<canvas id="foPulse" width="440" height="190" role="img" aria-label="Graph of light power against time: the short input pulse and the longer, lower pulse that arrives at the far end."></canvas>
+<div class="fo_rgrid fo_rgrid1">
+<div class="fo_rrow"><span class="fo_rkey">Largest spread over L (all guided rays)</span><span class="fo_rval fo_hi" id="foRoDt">--</span></div>
+</div>
+</div>
+</div>
+<!-- Controls -->
+<div class="fo_controls">
+<div class="fo_panel" role="group" aria-labelledby="foFibHd">
+<div class="fo_paneltitle" id="foFibHd">The fiber</div>
+<div class="fo_panelbody">
+<div class="fo_ctrl">
+<div class="fo_ctrlhdr"><label for="foN1" class="fo_ctrlname">Core index n<sub>1</sub></label><span class="fo_sval" id="foN1Val">1.50</span></div>
+<input type="range" id="foN1" min="1.30" max="1.80" step="0.01" value="1.50" oninput="foSim.set('n1',this.value)">
+</div>
+<div class="fo_ctrl">
+<div class="fo_ctrlhdr"><label for="foN2" class="fo_ctrlname">Cladding index n<sub>2</sub></label><span class="fo_sval" id="foN2Val">1.40</span></div>
+<input type="range" id="foN2" min="1.00" max="1.80" step="0.01" value="1.40" oninput="foSim.set('n2',this.value)">
+</div>
+<div class="fo_ctrl">
+<label for="foN0" class="fo_ctrlname">Outside the fiber</label>
+<select id="foN0" onchange="foSim.set('n0',this.value)">
+<option value="1.00">Air (n<sub>0</sub> = 1.00)</option>
+<option value="1.33">Water (n<sub>0</sub> = 1.33)</option>
+</select>
+</div>
+<label class="fo_chk"><input type="checkbox" id="foBare" onchange="foSim.set('bare',this.checked)"> No cladding (the outside touches the core)</label>
+<label class="fo_chk"><input type="checkbox" id="foBend" onchange="foSim.set('bend',this.checked)"> Bend the fiber (90&deg;)</label>
+<div class="fo_ctrl">
+<div class="fo_ctrlhdr"><label for="foRc" class="fo_ctrlname">Bend radius (core widths)</label><span class="fo_sval" id="foRcVal">4.0</span></div>
+<input type="range" id="foRc" min="1.2" max="9" step="0.1" value="4" oninput="foSim.set('rc',this.value)">
+</div>
+</div>
+</div>
+<div class="fo_panel" role="group" aria-labelledby="foLasHd">
+<div class="fo_paneltitle" id="foLasHd">The laser</div>
+<div class="fo_panelbody">
+<div class="fo_ctrl">
+<div class="fo_ctrlhdr"><label for="foTh" class="fo_ctrlname">Launch angle &theta;<sub>0</sub></label><span class="fo_sval"><span id="foThVal">20</span>&deg;</span></div>
+<input type="range" id="foTh" min="-85" max="85" step="1" value="20" oninput="foSim.set('th',this.value)">
+</div>
+<div class="fo_ctrl">
+<div class="fo_ctrlhdr"><label for="foH" class="fo_ctrlname">Where it enters the core</label><span class="fo_sval" id="foHVal">center</span></div>
+<input type="range" id="foH" min="-0.9" max="0.9" step="0.05" value="0" oninput="foSim.set('h',this.value)">
+</div>
+<div class="fo_ctrl">
+<label for="foMode" class="fo_ctrlname">The beam</label>
+<select id="foMode" onchange="foSim.set('mode',this.value)">
+<option value="single">A single ray</option>
+<option value="fan">A fan of rays (focused light)</option>
+</select>
+</div>
+<div class="fo_ctrl">
+<div class="fo_ctrlhdr"><label for="foSp" class="fo_ctrlname">Fan half-angle</label><span class="fo_sval"><span id="foSpVal">40</span>&deg;</span></div>
+<input type="range" id="foSp" min="5" max="80" step="1" value="40" oninput="foSim.set('spread',this.value)">
+</div>
+</div>
+</div>
+<div class="fo_panel" role="group" aria-labelledby="foPulHd">
+<div class="fo_paneltitle" id="foPulHd">The pulse</div>
+<div class="fo_panelbody">
+<div class="fo_ctrl">
+<div class="fo_ctrlhdr"><label for="foL" class="fo_ctrlname">Fiber length L</label><span class="fo_sval"><span id="foLVal">1.0</span> km</span></div>
+<input type="range" id="foL" min="0.1" max="10" step="0.1" value="1" oninput="foSim.set('L',this.value)">
+</div>
+<p class="fo_note">The pulse graph uses the rays traced in the side view: each ray's path, scaled to the length L, sets its travel time. A fan of rays shows the spreading best.</p>
+</div>
+</div>
+</div>
+<!-- Formula strip -->
+<div class="fo_formulastrip">
+<span class="fo_formulatxt">Entering: n<sub>0</sub> sin &theta;<sub>0</sub> = n<sub>1</sub> sin &theta;<sub>1</sub> &nbsp;|&nbsp; guided when &phi; &ge; &phi;<sub>c</sub>, sin &phi;<sub>c</sub> = n<sub>2</sub>/n<sub>1</sub> &nbsp;|&nbsp; NA = n<sub>0</sub> sin &theta;<sub>max</sub> = &radic;(n<sub>1</sub><sup>2</sup> &minus; n<sub>2</sub><sup>2</sup>) &nbsp;|&nbsp; spread &Delta;t = (L n<sub>1</sub>/c)(n<sub>1</sub>/n<sub>2</sub> &minus; 1)</span>
+</div>
+<div id="foNarBar" class="fo_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="fo_descwrap">
+<button type="button" class="fo_descbtn" id="foDescBtn" aria-expanded="false" aria-controls="foDesc" onclick="foA11y.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="fo_desc" id="foDesc" role="region" aria-labelledby="foDescBtn" style="display:none">
+<p>This simulation shows how an optical fiber guides light. A step-index fiber has a glass core of refractive index `n_1` surrounded by a cladding of slightly lower index `n_2`. Light that enters the core keeps bouncing off the boundary between the core and the cladding, and so it follows the fiber, even around bends.</p>
+<p>When the light enters the end of the fiber from the outside medium (index `n_0`), it is refracted:</p>
+<p class="fo_eq">`n_0 sin theta_0 = n_1 sin theta_1`.</p>
+<p>Inside the core the ray meets the core-cladding boundary at the angle `phi = 90^@ - theta_1` from the normal. If `phi` is larger than the critical angle `phi_c`, given by</p>
+<p class="fo_eq">`sin phi_c = n_2/n_1`,</p>
+<p>the light is totally reflected and none of it is lost. If `phi` is smaller, only part of the light is reflected at each bounce (as given by the Fresnel equations), and the rest leaks into the cladding, where the coating absorbs it. After a few bounces, almost nothing is left.</p>
+<p>Combining the two conditions gives the largest launch angle that is still guided, the acceptance angle `theta_"max"`. It is described by the numerical aperture</p>
+<p class="fo_eq">`"NA" = n_0 sin theta_"max" = sqrt(n_1^2 - n_2^2)`.</p>
+<p>Light that arrives within this acceptance cone is guided; light that arrives more steeply escapes. When `n_1^2 - n_2^2` is larger than `n_0^2`, every launch angle is guided.</p>
+<p>The cladding is what protects the guiding. A bare glass rod in air also guides light, but water, dirt or a finger touching it raises the index outside the glass, so the light leaks out where it touches. With a cladding, the guiding happens at the core-cladding boundary, which nothing outside can touch.</p>
+<p>When the fiber is bent, the rays meet the outer wall of the bend at a smaller angle `phi`. In a gentle bend this changes little; in a tight bend, rays that were guided in the straight part meet the outer wall below the critical angle and leak out. This is why fibers have a minimum bend radius. (The fiber here is drawn far wider than a real one, so even its gentlest bend, a few core widths across, would be extremely tight for a real fiber, whose core is only about 0.05 mm wide.)</p>
+<p>Rays that enter at different angles travel different distances: the steepest guided ray zig-zags the most and arrives last. A short pulse of light therefore spreads out as it travels. For a step-index fiber of length `L`, the difference in travel time between the straight ray and the steepest guided ray is</p>
+<p class="fo_eq">`Delta t = (L n_1)/c (n_1/n_2 - 1)`,</p>
+<p>where `c` is the speed of light in vacuum. This modal dispersion limits how close together the pulses carrying data can be sent. The pulse graph shows a short pulse before and after the chosen length of fiber, using the paths of the rays traced in the side view.</p>
+<p>Users can change the indices of the core and the cladding, the outside medium, the launch angle and the point of entry, send a single ray or a fan of rays, bend the fiber with a chosen radius, and choose the fiber length for the pulse. Drag the laser up or down in the side view to tilt the beam.</p>
+<p>This simulation is useful for studying total internal reflection, the critical angle, the acceptance angle and numerical aperture of a fiber, the role of the cladding, bending losses, and modal dispersion.</p>
+</div>
+</div>
+</div><!-- #foRoot -->
+<!-- Questions -->
+<div class="fo_qwrap">
+<hr>
+<ol type="a">
+<li>With a single ray and the default fiber, find by trial the largest launch angle for which the light is still guided. Compare it with the acceptance angle from `"NA" = n_0 sin theta_"max" = sqrt(n_1^2 - n_2^2)`.</li>
+<li>Calculate the critical angle at the core-cladding boundary from `sin phi_c = n_2/n_1` and check it with the readout.</li>
+<li>Press <b>Too steep</b>. Describe what happens to the light at each reflection, and explain why.</li>
+<li>Press <b>Tight bend</b>, then make the bend more gentle. What happens to the light, and why do fibers have a minimum bend radius?</li>
+<li>Press <b>Bare rod in water</b>: a glass rod without cladding, in water. Then change the outside back to air. Explain why real fibers need a cladding.</li>
+<li>Press <b>Fan of rays</b>. Use `Delta t = (L n_1)/c (n_1/n_2 - 1)` to calculate the spread of a pulse after 1 km, and compare it with the readout.</li>
+</ol>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #foRoot (Hall effect template) ════════ */
+#foRoot {
+--fo-chassis:#1a1c1f; --fo-panel:#22262b; --fo-panel-hi:#2c3138; --fo-panel-lo:#14161a;
+--fo-border:#3a4048; --fo-border-hi:#525c66; --fo-text:#c8d0d8; --fo-dim:#8a94a3;
+--fo-accent:#e8a020; --fo-green:#3ad08f; --fo-val:#ffdd66;
+--fo-focus:#e8a020; --fo-nar-bg:#2a2410; --fo-nar-border:#e0b040; --fo-nar-text:#f0e2b8;
+background:var(--fo-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--fo-text);
+display:flex; flex-direction:column; align-items:stretch;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:940px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#foRoot.fo_lm {
+--fo-chassis:#e9edf1; --fo-panel:#ffffff; --fo-panel-hi:#f1f4f7; --fo-panel-lo:#f4f6f9;
+--fo-border:#c3cad3; --fo-border-hi:#9aa3ae; --fo-text:#1d232a; --fo-dim:#556070;
+--fo-accent:#a8620a; --fo-green:#12805a; --fo-val:#8a4a00;
+--fo-focus:#a8620a; --fo-nar-bg:#ffefc0; --fo-nar-border:#e0b040; --fo-nar-text:#333333;
+background-image:none;
+}
+#foRoot.fo_hc {
+--fo-chassis:#000000; --fo-panel:#000000; --fo-panel-hi:#111111; --fo-panel-lo:#000000;
+--fo-border:#ffffff; --fo-border-hi:#ffffff; --fo-text:#ffffff; --fo-dim:#e0e0e0;
+--fo-accent:#ffd700; --fo-green:#00ff88; --fo-val:#ffff00;
+--fo-focus:#ffff00; --fo-nar-bg:#000000; --fo-nar-border:#ffd700; --fo-nar-text:#ffffff;
+background-image:none;
+}
+#foRoot.fo_hc .fo_panel, #foRoot.fo_hc .fo_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#foRoot :not(mjx-container):not(mjx-container *), #foRoot :not(mjx-container):not(mjx-container *)::before, #foRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; padding:0; }
+#foRoot input:focus-visible, #foRoot button:focus-visible, #foRoot select:focus-visible { outline:2px solid var(--fo-focus); outline-offset:2px; }
+/* toolbar */
+#foRoot .fo_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#foRoot .fo_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--fo-panel-hi); border:1px solid var(--fo-border-hi); color:var(--fo-dim); }
+#foRoot .fo_a11ybtn:hover { border-color:var(--fo-accent); color:var(--fo-accent); }
+#foRoot .fo_a11yon { background:rgba(58,208,143,.14); border-color:var(--fo-green); color:var(--fo-green); font-weight:bold; }
+/* header */
+#foRoot .fo_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#foRoot .fo_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--fo-accent); text-align:center; }
+#foRoot .fo_sub { font-size:.7rem; color:var(--fo-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* picture */
+#foRoot .fo_diagpanel { background:var(--fo-panel); border:1px solid var(--fo-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#foRoot .fo_diaglabel { background:var(--fo-panel-lo); border-bottom:1px solid var(--fo-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--fo-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#foRoot .fo_diaglabel b { color:var(--fo-accent); }
+#foRoot .fo_diagnote { text-transform:none; letter-spacing:.02em; }
+#foRoot canvas { display:block; width:100%; height:auto; margin:0 auto; background:#000; }
+#foRoot #foCv { max-width:900px; }
+#foRoot #foPulse { max-width:440px; }
+#foRoot .fo_runbar { display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:6px; padding:8px 10px; background:var(--fo-panel-lo); border-top:1px solid var(--fo-border); }
+#foRoot .fo_btn { padding:8px 4px; font-family:monospace; font-size:.7rem; letter-spacing:.04em; cursor:pointer; background:var(--fo-panel-hi); border:1px solid var(--fo-border-hi); color:var(--fo-text); border-radius:3px; text-transform:uppercase; line-height:1.25; }
+#foRoot .fo_btn:hover { border-color:var(--fo-accent); }
+#foRoot .fo_primary { font-weight:bold; border-color:var(--fo-accent); color:var(--fo-accent); }
+#foRoot .fo_warn { color:#e0605a; border-color:#a04040; }
+#foRoot.fo_lm .fo_warn { color:#b02020; border-color:#c06060; }
+/* panels */
+#foRoot .fo_grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; }
+#foRoot .fo_controls { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
+#foRoot .fo_panel { background:var(--fo-panel); border:1px solid var(--fo-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#foRoot .fo_paneltitle { background:var(--fo-panel-lo); border-bottom:1px solid var(--fo-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--fo-dim); }
+#foRoot .fo_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#foRoot .fo_ctrl { display:flex; flex-direction:column; gap:4px; }
+#foRoot .fo_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#foRoot .fo_ctrlname { font-size:.72rem; font-weight:600; color:var(--fo-dim); }
+#foRoot .fo_sval { font-family:monospace; font-size:.74rem; color:var(--fo-val); white-space:nowrap; }
+#foRoot .fo_note { font-size:.68rem; color:var(--fo-dim); line-height:1.4; }
+#foRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--fo-panel-lo); border:1px solid var(--fo-border); }
+#foRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--fo-accent); border:2px solid var(--fo-panel); cursor:pointer; }
+#foRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--fo-accent); border:2px solid var(--fo-panel); cursor:pointer; }
+#foRoot select { width:100%; background:var(--fo-panel-hi); color:var(--fo-text); border:1px solid var(--fo-border-hi); border-radius:3px; padding:4px 6px; font-size:.76rem; }
+#foRoot .fo_chk { display:flex; align-items:center; gap:7px; font-size:.76rem; color:var(--fo-text); cursor:pointer; }
+#foRoot .fo_chk input { accent-color:var(--fo-accent); width:15px; height:15px; flex-shrink:0; }
+/* readout */
+#foRoot .fo_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px 10px; }
+#foRoot .fo_rgrid1 { grid-template-columns:1fr; padding-top:0; }
+#foRoot .fo_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--fo-panel-lo); border:1px solid var(--fo-border); border-radius:3px; }
+#foRoot .fo_rkey { font-family:monospace; font-size:.64rem; color:var(--fo-dim); letter-spacing:.02em; }
+#foRoot .fo_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--fo-text); }
+#foRoot .fo_hi { color:var(--fo-val); font-weight:bold; }
+#foRoot .fo_wide { grid-column:1 / -1; }
+/* formula strip, narration */
+#foRoot .fo_formulastrip { background:var(--fo-panel-lo); border:1px solid var(--fo-border); border-radius:4px; padding:7px 14px; }
+#foRoot .fo_formulatxt { font-family:monospace; font-size:.66rem; color:var(--fo-dim); letter-spacing:.04em; line-height:1.6; }
+#foRoot .fo_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--fo-nar-bg); border-left:4px solid var(--fo-nar-border); font-size:.82rem; color:var(--fo-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* SIM description (toggle) */
+#foRoot .fo_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#foRoot .fo_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--fo-panel-hi); border:1px solid var(--fo-accent); color:var(--fo-accent); border-radius:3px; font-weight:bold; }
+#foRoot .fo_descbtn:hover { background:var(--fo-panel); }
+#foRoot .fo_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#foRoot .fo_desc { width:100%; background:var(--fo-panel); border:1px solid var(--fo-border); border-left:4px solid var(--fo-accent); border-radius:4px; padding:12px 16px; color:var(--fo-text); font-size:.86rem; line-height:1.55; }
+#foRoot .fo_desc p { margin:0 0 9px 0; }
+#foRoot .fo_desc p:last-child { margin-bottom:0; }
+#foRoot .fo_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.fo_qwrap { width:100%; max-width:940px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.fo_qwrap ol { padding-left:24px; }
+.fo_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+/* narrow screens */
+@media (max-width:820px) {
+#foRoot .fo_controls, #foRoot .fo_grid { grid-template-columns:minmax(0,1fr); }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#foRoot input[type=range] { height:8px; }
+#foRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#foRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#foRoot .fo_btn, #foRoot .fo_a11ybtn, #foRoot .fo_descbtn { min-height:40px; }
+#foRoot select { min-height:36px; font-size:16px; }
+#foRoot .fo_chk input { width:22px; height:22px; }
+#foRoot .fo_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#foRoot { padding:10px 6px 14px; }
+#foRoot .fo_rgrid { grid-template-columns:1fr; }
+}
+</style>
+<!-- ════════ DISPLAY OPTIONS ════════ -->
+<script>
+var foA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+function styleBtn(id, on){
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('fo_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function apply(){
+if (!ROOT) return;
+ROOT.classList.toggle('fo_hc', states.hc); ROOT.classList.toggle('fo_lm', states.lm); ROOT.classList.toggle('fo_cb', states.cb);
+var nb = document.getElementById('foNarBar'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('foBtnNR'); if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('foBtnNR', states.nr); styleBtn('foBtnHC', states.hc); styleBtn('foBtnLM', states.lm); styleBtn('foBtnCB', states.cb);
+}
+return {
+init:function(){ ROOT = document.getElementById('foRoot'); apply(); },
+toggle:function(k){
+states[k] = !states[k];
+if (k==='hc' && states.hc) states.lm = false;
+if (k==='lm' && states.lm) states.hc = false;
+apply();
+if (typeof foSim !== 'undefined' && foSim.refresh) foSim.refresh();
+},
+cb:function(){ return states.cb; }, hc:function(){ return states.hc; },
+narrate:function(msg){ if (!states.nr) return; var nb = document.getElementById('foNarBar'); if (nb) nb.textContent = msg; },
+/* SIM description: show or hide it; typeset its AsciiMath when it opens (MathJax 3 or 2, whichever the page has) */
+toggleDesc:function(){
+var b = document.getElementById('foDescBtn'), d = document.getElementById('foDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+};
+})();
+foA11y.init();
+</script>
+<!-- ════════ SIMULATION ════════
+2-D side view of a step-index fiber; lengths in core half-widths (a = 1). The core walls are straight lines, and in
+the bend two concentric arcs. A ray enters through the end face (n0 sin th0 = n1 sin th1) and is traced from wall to
+wall. At each wall, with angle of incidence phi: if n1 sin phi >= n2 it is totally reflected; otherwise the Fresnel
+reflectance R = (rs^2 + rp^2)/2 is reflected and 1 - R leaks into the cladding (absorbed by the coating).
+Light reaching the far end face is delivered. Pulse: each delivered ray's path length, divided by the length of the
+fiber's center line and scaled to the length L, gives its travel time  t = (L n1/c)(path/centerline).
+-->
+<script>
+var foSim = (function(){
+function el(id){ return document.getElementById(id); }
+var cv = el('foCv'), g = cv.getContext('2d'), pc = el('foPulse'), gp = pc.getContext('2d');
+var LW = cv.width, LH = cv.height, PW = pc.width, PH = pc.height, DPR = window.devicePixelRatio || 1;
+cv.width = LW*DPR; cv.height = LH*DPR; g.scale(DPR, DPR);
+pc.width = PW*DPR; pc.height = PH*DPR; gp.scale(DPR, DPR);
+var FONT = 'Calibri, Arial, sans-serif', DEG = Math.PI/180, C_LIGHT = 2.998e8;
+/* ── geometry, in core half-widths ── */
+var S = 30, YMID = LH/2;
+function X(x){ return x*S; } function Y(y){ return YMID - y*S; }
+var A = 1, CL = 0.6, XIN = 2.4, XEND = 29, XB = 13.5, YB = 4.2, YEXIT = -7.3;
+var DEF = { n1:1.50, n2:1.40, n0:1.00, bare:false, th:20, h:0, mode:'single', spread:40, bend:false, rc:4, L:1 };
+var P = {}, narrT = null, last = null, drag = false;
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function axisY(){ return P.bend ? YB : 0; }
+/* the index just outside the core: the cladding, or the outside medium itself when there is no cladding */
+function n2(){ return P.bare ? P.n0 : P.n2; }
+/* the core walls; each has the normal that points out of the core */
+function walls(){
+var w = [], yb = axisY();
+if (!P.bend){
+w.push({ k:'line', ax:XIN, ay:yb + A, bx:XEND, by:yb + A, n:[0,1], name:'wall' });
+w.push({ k:'line', ax:XIN, ay:yb - A, bx:XEND, by:yb - A, n:[0,-1], name:'wall' });
+w.push({ k:'exit', ax:XEND, ay:yb - A, bx:XEND, by:yb + A, n:[1,0] });
+} else {
+var R = P.rc, cx = XB, cy = yb - R;
+w.push({ k:'line', ax:XIN, ay:yb + A, bx:XB, by:yb + A, n:[0,1], name:'wall' });
+w.push({ k:'line', ax:XIN, ay:yb - A, bx:XB, by:yb - A, n:[0,-1], name:'wall' });
+w.push({ k:'arc', cx:cx, cy:cy, r:R + A, s:1, name:'bend' });         /* outer wall of the bend */
+w.push({ k:'arc', cx:cx, cy:cy, r:R - A, s:-1, name:'bend' });        /* inner wall of the bend */
+w.push({ k:'line', ax:cx + R + A, ay:cy, bx:cx + R + A, by:YEXIT, n:[1,0], name:'wall' });
+w.push({ k:'line', ax:cx + R - A, ay:cy, bx:cx + R - A, by:YEXIT, n:[-1,0], name:'wall' });
+w.push({ k:'exit', ax:cx + R - A, ay:YEXIT, bx:cx + R + A, by:YEXIT, n:[0,-1] });
+}
+w.push({ k:'entr', ax:XIN, ay:yb - A, bx:XIN, by:yb + A, n:[-1,0] });
+return w;
+}
+function centerLength(){ return P.bend ? (XB - XIN) + P.rc*Math.PI/2 + (axisY() - P.rc - YEXIT) : XEND - XIN; }
+/* nearest wall hit along p + t d */
+function hit(p, d, W){
+var best = null, bt = Infinity;
+for (var i=0; i<W.length; i++){
+var w = W[i], t = Infinity, q, n;
+if (w.k === 'arc'){
+var ox = p[0] - w.cx, oy = p[1] - w.cy, b = d[0]*ox + d[1]*oy, c = ox*ox + oy*oy - w.r*w.r, disc = b*b - c;
+if (disc < 0) continue;
+var sq = Math.sqrt(disc), ts = [-b - sq, -b + sq];
+for (var j=0; j<2; j++){
+var tt = ts[j]; if (tt <= 1e-7 || tt >= t) continue;
+var hx = p[0] + tt*d[0], hy = p[1] + tt*d[1];
+if (hx - w.cx < -1e-9 || hy - w.cy < -1e-9) continue;        /* only the quarter circle of the bend */
+t = tt; q = [hx, hy]; var rr = Math.hypot(hx - w.cx, hy - w.cy); n = [w.s*(hx - w.cx)/rr, w.s*(hy - w.cy)/rr];
+}
+} else {
+var ex = w.bx - w.ax, ey = w.by - w.ay, den = d[0]*ey - d[1]*ex;
+if (Math.abs(den) < 1e-12) continue;
+var tt2 = ((w.ax - p[0])*ey - (w.ay - p[1])*ex)/den, s = ((w.ax - p[0])*d[1] - (w.ay - p[1])*d[0])/den;
+if (tt2 > 1e-7 && s >= -1e-9 && s <= 1 + 1e-9){ t = tt2; q = [p[0] + t*d[0], p[1] + t*d[1]]; n = w.n; }
+}
+if (t < bt){ bt = t; best = { t:t, q:q, n:n, w:w }; }
+}
+return best;
+}
+function fresnel(n1, n2, ci, ct){
+var rs = (n1*ci - n2*ct)/(n1*ci + n2*ct), rp = (n2*ci - n1*ct)/(n2*ci + n1*ct);
+return (rs*rs + rp*rp)/2;
+}
+/* trace one ray launched at angle th0 (degrees) into the core */
+function trace(th0){
+var W = walls(), yb = axisY(), p = [XIN, yb + P.h*A], s1 = P.n0*Math.sin(th0*DEG)/P.n1;
+var th1 = Math.asin(clamp(s1, -1, 1)), d = [Math.cos(th1), Math.sin(th1)];
+var pw = 1, path = 0, refl = 0, segs = [], leaks = [], out = null, lostAt = null, firstPhi = null, minPhi = 90;
+for (var step=0; step<900; step++){
+var h = hit(p, d, W); if (!h) break;
+segs.push({ a:p, b:h.q, pw:pw }); path += h.t;
+if (h.w.k === 'exit'){
+var ci = d[0]*h.n[0] + d[1]*h.n[1], sin2 = P.n1/P.n0*Math.sqrt(Math.max(0, 1 - ci*ci));
+if (sin2 < 1){ var ct = Math.sqrt(1 - sin2*sin2), eta = P.n1/P.n0;
+var dt = [eta*d[0] + (ct - eta*ci)*h.n[0], eta*d[1] + (ct - eta*ci)*h.n[1]]; out = { q:h.q, d:dt, pw:pw, path:path }; }
+else lostAt = 'exit';
+break;
+}
+if (h.w.k === 'entr'){ lostAt = 'back'; break; }
+var cosi = d[0]*h.n[0] + d[1]*h.n[1], phi = Math.acos(clamp(cosi, -1, 1))/DEG;
+if (firstPhi === null) firstPhi = phi; if (phi < minPhi) minPhi = phi;
+var sint = P.n1/n2()*Math.sin(phi*DEG);
+var dr = [d[0] - 2*cosi*h.n[0], d[1] - 2*cosi*h.n[1]];
+if (sint < 1){
+/* partial reflection: the rest of the light leaks into the cladding */
+var ct2 = Math.sqrt(1 - sint*sint), R = fresnel(P.n1, n2(), cosi, ct2), eta2 = P.n1/n2();
+var dl = [eta2*d[0] + (ct2 - eta2*cosi)*h.n[0], eta2*d[1] + (ct2 - eta2*cosi)*h.n[1]];
+leaks.push({ q:h.q, d:dl, pw:pw*(1 - R), where:h.w.name, ct:ct2 });
+pw *= R;
+if (lostAt === null && (1 - R) > 0.02) lostAt = h.w.name;
+}
+refl++; d = dr; p = [h.q[0] - h.n[0]*1e-7, h.q[1] - h.n[1]*1e-7];
+if (pw < 0.002) break;
+}
+return { th0:th0, th1:th1/DEG, segs:segs, leaks:leaks, out:out, refl:refl, firstPhi:firstPhi, minPhi:minPhi, lostAt:lostAt, path:path };
+}
+function denseFan(){
+var out = [], n = 121;
+for (var i=0; i<n; i++){ var a = P.th - P.spread + 2*P.spread*i/(n - 1); if (Math.abs(a) < 89) out.push(trace(a)); }
+return out;
+}
+function launchAngles(){
+if (P.mode === 'single') return [P.th];
+var n = 21, out = [];
+for (var i=0; i<n; i++){ var a = P.th - P.spread + 2*P.spread*i/(n - 1); if (Math.abs(a) < 89) out.push(a); }
+return out;
+}
+/* ══════════ optics summary ══════════ */
+function optics(){
+var na2 = P.n1*P.n1 - n2()*n2(), na = na2 > 0 ? Math.sqrt(na2) : 0;
+var crit = n2() < P.n1 ? Math.asin(n2()/P.n1)/DEG : 90;
+var acc = na <= 0 ? 0 : (na >= P.n0 ? 90 : Math.asin(na/P.n0)/DEG);
+var dtMax = n2() < P.n1 ? P.L*1000*P.n1/C_LIGHT*(P.n1/n2() - 1) : 0;
+return { na:na, crit:crit, acc:acc, dtMax:dtMax };
+}
+/* ══════════ drawing ══════════ */
+function colors(){
+var cb = foA11y.cb();
+return { ray: cb ? '#ffb000' : '#ff3030', leak: cb ? '#56b4e9' : '#ffa040', core: 'rgba(120,200,255,0.10)', coreLine:'#7fc8ff', clad:'rgba(160,160,160,0.16)', cladLine:'#8a8a8a' };
+}
+function fiberPath(off){
+/* the fiber outline at a lateral offset off from the center line (+ = top/outer) */
+var yb = axisY();
+g.beginPath();
+if (!P.bend){ g.moveTo(X(XIN), Y(yb + off)); g.lineTo(X(XEND), Y(yb + off)); return; }
+var R = P.rc, cx = XB, cy = yb - R;
+g.moveTo(X(XIN), Y(yb + off)); g.lineTo(X(XB), Y(yb + off));
+g.arc(X(cx), Y(cy), (R + off)*S, -Math.PI/2, 0, false);
+g.lineTo(X(cx + R + off), Y(YEXIT));
+}
+function drawFiber(C){
+var yb = axisY();
+/* cladding and core as thick strokes along the center line, then their edges */
+g.save(); g.lineCap = 'butt';
+fiberPath(0); g.strokeStyle = C.clad; g.lineWidth = 2*(A + CL)*S; g.stroke();
+fiberPath(0); g.strokeStyle = C.core; g.lineWidth = 2*A*S; g.stroke();
+[[A + CL, C.cladLine, 1.2], [-(A + CL), C.cladLine, 1.2], [A, C.coreLine, 1.6], [-A, C.coreLine, 1.6]].forEach(function(e){ fiberPath(e[0]); g.strokeStyle = e[1]; g.lineWidth = e[2]; g.stroke(); });
+g.restore();
+/* end faces */
+g.strokeStyle = '#cfe8ff'; g.lineWidth = 2;
+g.beginPath(); g.moveTo(X(XIN), Y(yb + A + CL)); g.lineTo(X(XIN), Y(yb - A - CL)); g.stroke();
+if (!P.bend){ g.beginPath(); g.moveTo(X(XEND), Y(A + CL)); g.lineTo(X(XEND), Y(-A - CL)); g.stroke(); }
+else { var ex = XB + P.rc; g.beginPath(); g.moveTo(X(ex - A - CL), Y(YEXIT)); g.lineTo(X(ex + A + CL), Y(YEXIT)); g.stroke(); }
+g.font = '12px ' + FONT; g.fillStyle = '#9fd4ff'; g.textAlign = 'left';
+g.fillText('core n\u2081 = ' + P.n1.toFixed(2), X(XIN) + 8, Y(yb) + 4);
+g.fillStyle = '#bbbbbb'; g.fillText(P.bare ? 'no cladding: ' + (P.n0 > 1.1 ? 'water' : 'air') + ' touches the core' : 'cladding n\u2082 = ' + n2().toFixed(2), X(XIN) + 8, Y(yb + A) - 5);
+g.fillStyle = '#888888'; g.fillText((P.n0 > 1.1 ? 'water' : 'air') + ' n\u2080 = ' + P.n0.toFixed(2), 8, 16);
+}
+function drawRays(rays, C){
+var cnt = rays.length, wFan = cnt > 1;
+rays.forEach(function(r){
+/* the beam outside, up to the entrance face */
+var yb = axisY(), pin = [XIN, yb + P.h*A], back = 2.0, ang = r.th0*DEG;
+g.globalAlpha = wFan ? 0.6 : 1; g.strokeStyle = C.ray; g.lineWidth = wFan ? 1.2 : 2.2;
+g.beginPath(); g.moveTo(X(pin[0] - back*Math.cos(ang)), Y(pin[1] - back*Math.sin(ang))); g.lineTo(X(pin[0]), Y(pin[1])); g.stroke();
+/* inside the core: brightness follows the power that is left */
+r.segs.forEach(function(sg){ g.globalAlpha = Math.max(0.06, sg.pw)*(wFan ? 0.75 : 1); g.beginPath(); g.moveTo(X(sg.a[0]), Y(sg.a[1])); g.lineTo(X(sg.b[0]), Y(sg.b[1])); g.stroke(); });
+/* leaks: through the cladding and out */
+g.strokeStyle = C.leak;
+r.leaks.forEach(function(lk){ if (lk.pw < 0.004) return; var L = CL/Math.max(0.15, lk.ct) + 0.9;
+g.globalAlpha = Math.min(1, 0.15 + lk.pw)*(wFan ? 0.75 : 1); g.setLineDash([5, 4]);
+g.beginPath(); g.moveTo(X(lk.q[0]), Y(lk.q[1])); g.lineTo(X(lk.q[0] + L*lk.d[0]), Y(lk.q[1] + L*lk.d[1])); g.stroke(); g.setLineDash([]); });
+/* the light that comes out of the far end */
+if (r.out){ g.strokeStyle = C.ray; g.globalAlpha = Math.max(0.08, r.out.pw)*(wFan ? 0.75 : 1);
+g.beginPath(); g.moveTo(X(r.out.q[0]), Y(r.out.q[1])); g.lineTo(X(r.out.q[0] + 1.6*r.out.d[0]), Y(r.out.q[1] + 1.6*r.out.d[1])); g.stroke(); }
+g.globalAlpha = 1;
+});
+}
+function drawLaser(C){
+var yb = axisY(), pin = [XIN, yb + P.h*A], ang = P.th*DEG, back = 2.0;
+var lx = pin[0] - back*Math.cos(ang), ly = pin[1] - back*Math.sin(ang);
+g.save(); g.translate(X(lx), Y(ly)); g.rotate(-ang);
+g.fillStyle = '#555c66'; g.fillRect(-26, -8, 26, 16); g.fillStyle = C.ray; g.fillRect(-3, -4, 4, 8);
+g.restore();
+/* the acceptance cone, drawn faintly at the entrance */
+var o = optics();
+if (o.acc > 0 && o.acc < 90){
+g.save(); g.globalAlpha = 0.09; g.fillStyle = '#ffffff';
+g.beginPath(); g.moveTo(X(pin[0]), Y(pin[1]));
+g.lineTo(X(pin[0] - 2.2*Math.cos(o.acc*DEG)), Y(pin[1] + 2.2*Math.sin(o.acc*DEG)));
+g.lineTo(X(pin[0] - 2.2*Math.cos(o.acc*DEG)), Y(pin[1] - 2.2*Math.sin(o.acc*DEG))); g.closePath(); g.fill(); g.restore();
+g.font = '12px ' + FONT; g.fillStyle = '#d0d0d0'; g.textAlign = 'left';
+g.fillText('acceptance cone \u00B1' + o.acc.toFixed(1) + '\u00B0 (faint wedge)', X(XIN) + 8, Y(axisY() + A + CL) - 10);
+}
+}
+function drawPulse(rays){
+var o = optics(), cl = centerLength(), C = colors();
+gp.fillStyle = '#000'; gp.fillRect(0, 0, PW, PH);
+var arr = [];
+rays.forEach(function(r){ if (r.out && r.out.pw > 0.002){ arr.push({ t:P.L*1000*P.n1/C_LIGHT*(r.out.path/cl)*1e9, w:r.out.pw/rays.length, guided:r.out.pw > 0.5 }); } });
+/* the spread is measured over the guided light; rays that leak but still deliver a trace are drawn, not counted */
+var gd = arr.filter(function(a){ return a.guided; }), gt = gd.map(function(a){ return a.t; });
+var t0 = P.L*1000*P.n1/C_LIGHT*1e9;          /* travel time of light along the center line */
+var tin = Math.max(2, 0.04*Math.max(o.dtMax*1e9, 1));
+var tmin = arr.length ? Math.min.apply(null, arr.map(function(a){ return a.t; })) : t0;
+var tmax = arr.length ? Math.max.apply(null, arr.map(function(a){ return a.t; })) : t0;
+var span = Math.max(tmax - tmin, o.dtMax*1e9, 20) + 8*tin, ta = tmin - 4*tin;
+var ml = 36, mr = 10, mt = 14, mb = 30, pw = PW - ml - mr, ph = PH - mt - mb;
+function TX(t){ return ml + (t - ta)/span*pw; } function PY(v){ return mt + ph - v*ph; }
+gp.strokeStyle = '#444'; gp.lineWidth = 1; gp.beginPath(); gp.moveTo(ml, mt); gp.lineTo(ml, mt + ph); gp.lineTo(ml + pw, mt + ph); gp.stroke();
+gp.fillStyle = '#aaa'; gp.font = '11px ' + FONT; gp.textAlign = 'center';
+gp.fillText('arrival time after ' + P.L.toFixed(1) + ' km (ns, from ' + Math.round(ta) + ')', ml + pw/2, PH - 6);
+gp.save(); gp.translate(11, mt + ph/2); gp.rotate(-Math.PI/2); gp.fillText('power', 0, 0); gp.restore();
+/* the pulse that went in (drawn at the arrival time of the straight ray), and the one that comes out */
+function gauss(t, c){ return Math.exp(-0.5*((t - c)/tin)*((t - c)/tin)); }
+gp.setLineDash([4, 3]); gp.strokeStyle = '#bbbbbb'; gp.beginPath();
+for (var i=0; i<=pw; i++){ var t = ta + span*i/pw, v = gauss(t, tmin); if (i) gp.lineTo(ml + i, PY(v)); else gp.moveTo(ml + i, PY(v)); } gp.stroke(); gp.setLineDash([]);
+gp.strokeStyle = C.ray; gp.lineWidth = 2; gp.beginPath();
+for (var k=0; k<=pw; k++){ var tk = ta + span*k/pw, s = 0; for (var j=0; j<arr.length; j++) s += arr[j].w*gauss(tk, arr[j].t); if (k) gp.lineTo(ml + k, PY(s)); else gp.moveTo(ml + k, PY(s)); } gp.stroke();
+gp.textAlign = 'left'; gp.font = '11px ' + FONT;
+gp.fillStyle = '#bbbbbb'; gp.fillText('- - in', ml + 6, mt + 10);
+gp.fillStyle = C.ray; gp.fillText('\u2014 out', ml + 46, mt + 10);
+return { spread:gt.length ? Math.max.apply(null, gt) - Math.min.apply(null, gt) : 0, n:gd.length };
+}
+/* ══════════ readout and narration ══════════ */
+function verdict(rays){
+var o = optics();
+if (n2() >= P.n1) return 'The cladding index is not lower than the core index: there is no total internal reflection and the light leaks out.';
+if (P.mode === 'single'){
+var r = rays[0], pct = r.out ? 100*r.out.pw : 0;
+if (pct > 99) return 'Guided by total internal reflection: all the light reaches the far end.';
+if (r.lostAt === 'bend') return 'Guided in the straight part, but in the bend the ray meets the outer wall below the critical angle and leaks out (' + pct.toFixed(0) + ' % delivered).';
+if (r.lostAt === 'back') return 'The light is reflected back toward the entrance.';
+return 'Too steep: the ray meets the wall below the critical angle, so part of the light leaks out at every reflection (' + pct.toFixed(pct < 1 ? 1 : 0) + ' % delivered).';
+}
+var tot = 0; rays.forEach(function(r){ if (r.out) tot += r.out.pw; });
+return 'Of the light in the fan, ' + (100*tot/rays.length).toFixed(0) + ' % is delivered; the rays outside the acceptance cone' + (P.bend ? ' or too steep for the bend' : '') + ' leak out.';
+}
+function readouts(rays, pulse){
+var o = optics(), r = rays[0];
+function set(id, t){ var e = el(id); if (e) e.textContent = t; }
+set('foRoCrit', n2() < P.n1 ? o.crit.toFixed(1) + '\u00B0' : 'none (n\u2082 \u2265 n\u2081)');
+set('foRoNA', o.na.toFixed(3));
+set('foRoAcc', o.acc >= 90 ? 'every angle (NA \u2265 n\u2080)' : (o.acc > 0 ? '\u00B1' + o.acc.toFixed(1) + '\u00B0' : 'no guiding'));
+var single = P.mode === 'single';
+set('foRoTh1', single ? r.th1.toFixed(1) + '\u00B0' : 'fan');
+set('foRoPhi', single ? (r.firstPhi === null ? '--' : r.firstPhi.toFixed(1) + '\u00B0' + (P.bend && r.minPhi < r.firstPhi - 0.5 ? ' (bend: ' + r.minPhi.toFixed(1) + '\u00B0)' : '')) : 'fan');
+set('foRoRef', single ? String(r.refl) : '--');
+var tot = 0; rays.forEach(function(q){ if (q.out) tot += q.out.pw; });
+set('foRoOut', (100*tot/rays.length).toFixed(1) + ' %');
+set('foRoSee', verdict(rays));
+set('foRoDt', n2() < P.n1 ? (o.dtMax*1e9).toFixed(1) + ' ns over ' + P.L.toFixed(1) + ' km' + (pulse.n > 1 ? ' (fan: ' + pulse.spread.toFixed(1) + ' ns)' : '') : '--');
+}
+function summary(){
+var o = optics(), rays = last || [];
+var s = 'Core ' + P.n1.toFixed(2) + ', ' + (P.bare ? 'no cladding' : 'cladding ' + n2().toFixed(2)) + ', outside ' + P.n0.toFixed(2) + '. ';
+if (n2() < P.n1) s += 'Critical angle ' + o.crit.toFixed(1) + ' degrees; ' + (o.acc >= 90 ? 'every launch angle is accepted. ' : 'acceptance angle ' + o.acc.toFixed(1) + ' degrees. ');
+s += (P.mode === 'single' ? 'Launched at ' + P.th + ' degrees. ' : 'A fan of rays around ' + P.th + ' degrees, half-angle ' + P.spread + '. ');
+if (P.bend) s += 'Bent by 90 degrees with a radius of ' + P.rc.toFixed(1) + ' core widths. ';
+return s + (rays.length ? verdict(rays) : '');
+}
+function later(){ clearTimeout(narrT); narrT = setTimeout(function(){ foA11y.narrate(summary()); }, 400); }
+function refresh(){
+var C = colors();
+g.fillStyle = '#000'; g.fillRect(0, 0, LW, LH);
+drawFiber(C);
+var rays = launchAngles().map(trace); last = rays;
+drawRays(rays, C); drawLaser(C);
+var pulse = drawPulse(P.mode === 'fan' ? denseFan() : rays);
+readouts(rays, pulse);
+}
+/* ══════════ controls ══════════ */
+function syncInputs(){
+function sv(id, v, t){ var e = el(id + ''); if (e) e.value = v; var tv = el(id + 'Val'); if (tv) tv.textContent = t; }
+sv('foN1', P.n1, P.n1.toFixed(2)); sv('foN2', P.n2, P.n2.toFixed(2)); sv('foTh', P.th, P.th); sv('foSp', P.spread, P.spread);
+sv('foRc', P.rc, P.rc.toFixed(1)); sv('foL', P.L, P.L.toFixed(1));
+sv('foH', P.h, Math.abs(P.h) < 0.03 ? 'center' : (P.h > 0 ? 'above center' : 'below center'));
+el('foN0').value = P.n0.toFixed(2); el('foMode').value = P.mode; el('foBend').checked = P.bend; el('foBare').checked = P.bare;
+el('foN2').disabled = P.bare;
+}
+function set(k, v){
+if (k === 'mode') P.mode = v; else if (k === 'bend' || k === 'bare') P[k] = !!v; else P[k] = parseFloat(v);
+syncInputs(); refresh(); later();
+}
+function preset(name){
+for (var k in DEF) P[k] = DEF[k];
+if (name === 'escape') P.th = 45;
+if (name === 'bend'){ P.bend = true; P.rc = 1.6; P.th = 10; }
+if (name === 'fan'){ P.mode = 'fan'; P.th = 0; P.spread = 45; }
+if (name === 'water'){ P.bare = true; P.n0 = 1.33; P.th = 40; }
+syncInputs(); refresh();
+var msg = { reset:'Reset. ', guided:'Launched inside the acceptance cone. ', escape:'Launched outside the acceptance cone. ', bend:'A tight bend. ',
+fan:'A fan of rays, as when light is focused into the fiber. ', water:'A bare glass rod, without cladding: water around it takes the place of the cladding. ' }[name] || '';
+foA11y.narrate(msg + summary());
+}
+function describe(){
+var rays = last || [], r = rays[0];
+var msg = 'Side view of a ' + (P.bend ? 'fiber with a 90 degree bend' : 'straight fiber') + ': a core of index ' + P.n1.toFixed(2) + ' inside a cladding of index ' + n2().toFixed(2) + '. A laser on the left shines into the end of the core. ';
+if (P.mode === 'single' && r) msg += 'The ray is launched at ' + P.th + ' degrees, is bent to ' + r.th1.toFixed(1) + ' degrees inside the core, and meets the wall at ' + (r.firstPhi === null ? 'no' : r.firstPhi.toFixed(1)) + ' degrees from the normal; it reflects ' + r.refl + ' times. ';
+msg += summary();
+foA11y.narrate(msg);
+}
+/* ══════════ pointer: drag the laser up or down to tilt the beam ══════════ */
+function evPt(cx, cy){ var r = cv.getBoundingClientRect(); return { x:(cx - r.left)*(LW/r.width), y:(cy - r.top)*(LH/r.height), k:LW/r.width }; }
+function onLaser(p, touch){
+var yb = axisY(), pin = [XIN, yb + P.h*A], ang = P.th*DEG, lx = X(pin[0] - 2.0*Math.cos(ang)), ly = Y(pin[1] - 2.0*Math.sin(ang));
+return Math.hypot(p.x - lx, p.y - ly) < 24 + (touch ? 10*p.k : 0);
+}
+function aimFrom(p){
+var yb = axisY(), px = X(XIN), py = Y(yb + P.h*A), dx = px - p.x, dy = p.y - py;
+if (dx < 4) dx = 4;
+P.th = clamp(Math.round(Math.atan2(-dy, dx)/DEG), -85, 85); syncInputs(); refresh(); later();
+}
+cv.addEventListener('mousedown', function(e){ var p = evPt(e.clientX, e.clientY); if (onLaser(p, false)){ drag = true; cv.style.cursor = 'grabbing'; } });
+window.addEventListener('mousemove', function(e){ if (!drag) { var p0 = evPt(e.clientX, e.clientY); cv.style.cursor = onLaser(p0, false) ? 'grab' : 'default'; return; } aimFrom(evPt(e.clientX, e.clientY)); });
+window.addEventListener('mouseup', function(){ drag = false; });
+cv.addEventListener('touchstart', function(e){ var t = e.touches[0], p = evPt(t.clientX, t.clientY); if (onLaser(p, true)){ drag = true; e.preventDefault(); } }, { passive:false });
+cv.addEventListener('touchmove', function(e){ if (!drag) return; e.preventDefault(); var t = e.touches[0]; aimFrom(evPt(t.clientX, t.clientY)); }, { passive:false });
+cv.addEventListener('touchend', function(){ drag = false; });
+/* boot */
+for (var k0 in DEF) P[k0] = DEF[k0];
+syncInputs(); refresh();
+foA11y.narrate('Ready. ' + summary());
+return { set:set, preset:preset, describe:describe, refresh:refresh,
+_state:function(){ var o = optics(); return { P:JSON.parse(JSON.stringify(P)), o:o, rays:(last || []).map(function(r){ return { th0:r.th0, th1:r.th1, refl:r.refl, firstPhi:r.firstPhi, minPhi:r.minPhi, lostAt:r.lostAt, out:r.out ? { pw:r.out.pw, path:r.out.path } : null }; }), cl:centerLength() }; } };
+})();
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: The Room of Mirrors -- 3-D Specular Reflections</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, geometrical optics, plane mirror, law of reflection, specular reflection, multiple reflections, laser, flashlight, beam divergence, reflectivity, room of mirrors, ray tracing, 3D, lesson, scientific">
+<meta name="description" content="Interactive 3-D room of mirrors: a laser or flashlight beam reflects specularly from mirror walls in a dark room, with a ray-traced view of what the viewer sees.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="rmRoot" class="rm_root" role="region" aria-label="Room of mirrors 3-D simulator">
+<!-- Display options -->
+<div class="rm_a11y" id="rmA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="rm_a11ybtn" id="rmBtnHC" onclick="rmA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rm_a11ybtn" id="rmBtnLM" onclick="rmA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rm_a11ybtn" id="rmBtnCB" onclick="rmA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rm_a11ybtn rm_a11yon" id="rmBtnNR" onclick="rmA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="rm_header">
+<p class="rm_h1">The Room of Mirrors</p>
+<p class="rm_sub">A laser or flashlight in a dark room -- every reflection is specular, so the light lands on only a few spots</p>
+</div>
+<!-- Instrument grid -->
+<div class="rm_instrument">
+<!-- Left column -->
+<div class="rm_leftcol">
+<div class="rm_diagpanel">
+<div class="rm_diaglabel"><b>THE ROOM (3-D)</b><span class="rm_diagnote">drag to turn &middot; scroll or pinch to zoom</span></div>
+<canvas id="rmRoom" width="560" height="400" tabindex="0" role="img" aria-label="Three-dimensional view of the room: mirror walls, the light source, the reflected rays, the spots where light lands, and the viewer's eye. The readout and narration describe the beam."></canvas>
+<div class="rm_runbar">
+<button type="button" class="rm_btn" onclick="rmSim.view('3d')">3-D</button>
+<button type="button" class="rm_btn" onclick="rmSim.view('top')">Top</button>
+<button type="button" class="rm_btn" onclick="rmSim.view('side')">Side</button>
+<button type="button" class="rm_btn" onclick="rmSim.zoom(1/1.15)">Zoom +</button>
+<button type="button" class="rm_btn" onclick="rmSim.zoom(1.15)">Zoom &minus;</button>
+</div>
+</div>
+<div class="rm_diagpanel">
+<div class="rm_diaglabel"><b>VIEWER'S SCREEN</b><span class="rm_diagnote">what the viewer's eye sees &middot; drag to look around</span></div>
+<canvas id="rmView" width="480" height="360" tabindex="0" role="img" aria-label="What the viewer sees: a mostly dark room, the spots where the light lands, their images in the mirrors, and the beam itself when haze is on."></canvas>
+<div class="rm_runbar">
+<button type="button" class="rm_btn rm_primary" onclick="rmSim.preset('laser')">Laser</button>
+<button type="button" class="rm_btn rm_primary" onclick="rmSim.preset('flash')">Flashlight</button>
+<button type="button" class="rm_btn" onclick="rmSim.preset('corridor')">Two mirrors</button>
+<button type="button" class="rm_btn" onclick="rmSim.describe()">Describe</button>
+<button type="button" class="rm_btn rm_warn" onclick="rmSim.preset('reset')">Reset</button>
+</div>
+</div>
+<!-- Readout -->
+<div class="rm_panel" role="region" aria-labelledby="rmReadHd">
+<div class="rm_paneltitle" id="rmReadHd">Readout -- the central ray of the beam</div>
+<div class="rm_rgrid">
+<div class="rm_rrow"><span class="rm_rkey">Reflections before it lands</span><span class="rm_rval rm_hi" id="rmRoN">--</span></div>
+<div class="rm_rrow"><span class="rm_rkey">Path length L</span><span class="rm_rval" id="rmRoL">--</span></div>
+<div class="rm_rrow"><span class="rm_rkey">Intensity left R<sup>n</sup></span><span class="rm_rval rm_hi" id="rmRoI">--</span></div>
+<div class="rm_rrow"><span class="rm_rkey">Spot diameter</span><span class="rm_rval" id="rmRoD">--</span></div>
+<div class="rm_rrow rm_wide"><span class="rm_rkey">Lands on</span><span class="rm_rval" id="rmRoLand">--</span></div>
+<div class="rm_rrow rm_wide"><span class="rm_rkey">First reflections (angle of incidence = angle of reflection)</span><span class="rm_rval" id="rmRoHits">--</span></div>
+<div class="rm_rrow rm_wide"><span class="rm_rkey">Part of the room lit directly by the beam</span><span class="rm_rval rm_hi" id="rmRoLit">--</span></div>
+<div class="rm_rrow rm_wide"><span class="rm_rkey">Light reflected diffusely by matte surfaces</span><span class="rm_rval" id="rmRoScat">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="rm_rightcol">
+<div class="rm_panel" role="group" aria-labelledby="rmLightHd">
+<div class="rm_paneltitle" id="rmLightHd">Light source</div>
+<div class="rm_panelbody">
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmSpread" class="rm_ctrlname">Beam spread (0 = laser)</label><span class="rm_sval"><span id="rmSpreadVal">0</span>&deg;</span></div>
+<input type="range" id="rmSpread" min="0" max="25" step="0.5" value="0" oninput="rmSim.set('spread',this.value)">
+</div>
+<div class="rm_ctrl">
+<label for="rmColor" class="rm_ctrlname">Color</label>
+<select id="rmColor" onchange="rmSim.set('color',this.value)">
+<option value="red">Red laser light</option>
+<option value="green">Green laser light</option>
+<option value="white">White flashlight light</option>
+</select>
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmLyaw" class="rm_ctrlname">Aim: turn</label><span class="rm_sval"><span id="rmLyawVal">30</span>&deg;</span></div>
+<input type="range" id="rmLyaw" min="-180" max="180" step="1" value="30" oninput="rmSim.set('lyaw',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmLpitch" class="rm_ctrlname">Aim: tilt up / down</label><span class="rm_sval"><span id="rmLpitchVal">-8</span>&deg;</span></div>
+<input type="range" id="rmLpitch" min="-89" max="89" step="1" value="-8" oninput="rmSim.set('lpitch',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmLx" class="rm_ctrlname">Position x</label><span class="rm_sval"><span id="rmLxVal">0.50</span> m</span></div>
+<input type="range" id="rmLx" min="0.1" max="3.9" step="0.05" value="0.5" oninput="rmSim.set('lx',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmLy" class="rm_ctrlname">Position y</label><span class="rm_sval"><span id="rmLyVal">0.60</span> m</span></div>
+<input type="range" id="rmLy" min="0.1" max="2.9" step="0.05" value="0.6" oninput="rmSim.set('ly',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmLz" class="rm_ctrlname">Height z</label><span class="rm_sval"><span id="rmLzVal">1.30</span> m</span></div>
+<input type="range" id="rmLz" min="0.1" max="2.4" step="0.05" value="1.3" oninput="rmSim.set('lz',this.value)">
+</div>
+</div>
+</div>
+<div class="rm_panel" role="group" aria-labelledby="rmMirHd">
+<div class="rm_paneltitle" id="rmMirHd">Mirrors</div>
+<div class="rm_panelbody">
+<div class="rm_ctrl">
+<label for="rmMirrors" class="rm_ctrlname">Mirror surfaces</label>
+<select id="rmMirrors" onchange="rmSim.set('mirrors',this.value)">
+<option value="none">None (an ordinary room)</option>
+<option value="two">Two facing walls</option>
+<option value="walls" selected>All four walls</option>
+<option value="wallsceil">Four walls and the ceiling</option>
+<option value="all">Walls, ceiling and floor</option>
+</select>
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmR" class="rm_ctrlname">Reflectivity R</label><span class="rm_sval"><span id="rmRVal">95</span> %</span></div>
+<input type="range" id="rmR" min="50" max="100" step="1" value="95" oninput="rmSim.set('R',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmB" class="rm_ctrlname">Most reflections followed</label><span class="rm_sval"><span id="rmBVal">15</span></span></div>
+<input type="range" id="rmB" min="1" max="40" step="1" value="15" oninput="rmSim.set('bounces',this.value)">
+</div>
+</div>
+</div>
+<div class="rm_panel" role="group" aria-labelledby="rmEyeHd">
+<div class="rm_paneltitle" id="rmEyeHd">Viewer</div>
+<div class="rm_panelbody">
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmVyaw" class="rm_ctrlname">Look: turn</label><span class="rm_sval"><span id="rmVyawVal">150</span>&deg;</span></div>
+<input type="range" id="rmVyaw" min="-180" max="180" step="1" value="150" oninput="rmSim.set('vyaw',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmVpitch" class="rm_ctrlname">Look: up / down</label><span class="rm_sval"><span id="rmVpitchVal">-10</span>&deg;</span></div>
+<input type="range" id="rmVpitch" min="-80" max="80" step="1" value="-10" oninput="rmSim.set('vpitch',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmVx" class="rm_ctrlname">Position x</label><span class="rm_sval"><span id="rmVxVal">3.50</span> m</span></div>
+<input type="range" id="rmVx" min="0.1" max="3.9" step="0.05" value="3.5" oninput="rmSim.set('vx',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmVy" class="rm_ctrlname">Position y</label><span class="rm_sval"><span id="rmVyVal">0.40</span> m</span></div>
+<input type="range" id="rmVy" min="0.1" max="2.9" step="0.05" value="0.4" oninput="rmSim.set('vy',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmVz" class="rm_ctrlname">Eye height z</label><span class="rm_sval"><span id="rmVzVal">1.60</span> m</span></div>
+<input type="range" id="rmVz" min="0.1" max="2.4" step="0.05" value="1.6" oninput="rmSim.set('vz',this.value)">
+</div>
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmFov" class="rm_ctrlname">Field of view</label><span class="rm_sval"><span id="rmFovVal">70</span>&deg;</span></div>
+<input type="range" id="rmFov" min="30" max="110" step="1" value="70" oninput="rmSim.set('fov',this.value)">
+</div>
+</div>
+</div>
+<div class="rm_panel" role="group" aria-labelledby="rmShowHd">
+<div class="rm_paneltitle" id="rmShowHd">Room &amp; display</div>
+<div class="rm_panelbody">
+<div class="rm_ctrl">
+<div class="rm_ctrlhdr"><label for="rmAmb" class="rm_ctrlname">Room lights</label><span class="rm_sval"><span id="rmAmbVal">0</span> %</span></div>
+<input type="range" id="rmAmb" min="0" max="100" step="1" value="0" oninput="rmSim.set('amb',this.value)">
+</div>
+<label class="rm_chk"><input type="checkbox" id="rmDiff" checked onchange="rmSim.set('diffuse',this.checked)"> Diffuse reflection by matte surfaces</label>
+<label class="rm_chk"><input type="checkbox" id="rmHaze" checked onchange="rmSim.set('haze',this.checked)"> Haze in the air (shows the beam)</label>
+<label class="rm_chk"><input type="checkbox" id="rmRays" checked onchange="rmSim.set('rays',this.checked)"> Rays in the 3-D view</label>
+<label class="rm_chk"><input type="checkbox" id="rmObj" checked onchange="rmSim.set('objects',this.checked)"> Objects in the room</label>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="rm_formulastrip">
+<span class="rm_formulatxt">Law of reflection &theta;<sub>r</sub> = &theta;<sub>i</sub> &nbsp;|&nbsp; reflected direction r = d &minus; 2(d&middot;n)n &nbsp;|&nbsp; intensity after n reflections I<sub>n</sub> = R<sup>n</sup> I<sub>0</sub> &nbsp;|&nbsp; spot diameter D &asymp; 2 L tan &alpha; for a beam of half-angle &alpha; after a path L &nbsp;|&nbsp; diffuse: E &asymp; &rho;E<sub>0</sub>A cos&theta;<sub>e</sub> cos&theta;<sub>r</sub>/(&pi;r<sup>2</sup>)</span>
+</div>
+</div><!-- instrument -->
+<div id="rmNarBar" class="rm_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="rm_descwrap">
+<button type="button" class="rm_descbtn" id="rmDescBtn" aria-expanded="false" aria-controls="rmDesc" onclick="rmA11y.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="rm_desc" id="rmDesc" role="region" aria-labelledby="rmDescBtn" style="display:none">
+<p>This simulation explores a room whose walls (and, if you choose, ceiling and floor) are plane mirrors. A light source -- anything from a narrow laser to a wide flashlight beam -- shines into the otherwise dark room. Every reflection is specular: each ray leaves a mirror at the same angle at which it arrived, so the light is never scattered around the room. As a result, the light lands on only a few small spots, and most of what is in the room stays in the dark.</p>
+<p>Surfaces that are not mirrors -- the floor, an ordinary wall, the objects -- reflect diffusely. Each lit point sends light in all directions and acts like a weak point source, so a little light reaches the rest of the room and makes it faintly visible. A small lit patch of area `A`, receiving the irradiance `E_0` and reflecting the fraction `rho` of it, produces at a distance `r` the irradiance</p>
+<p class="rm_eq">`E ~~ (rho E_0 A cos theta_e cos theta_r)/(pi r^2)`,</p>
+<p>where `theta_e` and `theta_r` are the angles between the line joining the two surfaces and their normals. The simulation follows this diffuse reflection once, including its images in the mirrors. With diffuse reflection turned off, only the specular path of the beam is followed.</p>
+<p>Mirrors do not absorb this scattered light; they pass it on. In a room whose surfaces are all mirrors, the light scattered from the spot where the beam lands keeps reflecting until it reaches the objects, the only surfaces that can absorb it. So, surprisingly, the objects in an all-mirror room glow more brightly than in an ordinary room, where the walls, floor and ceiling absorb most of the scattered light. Only objects that absorb all light, perfectly black ones, would leave nothing but the laser spot to be seen.</p>
+<p>The 3-D view shows the room from outside. Mirror surfaces are tinted, and the rays of the beam are traced from the source through every reflection until they land on a surface that is not a mirror, such as the floor or one of the objects. Where they land, the surface is lit. The 3-D view can be turned and zoomed, and it also shows where the viewer stands and which way the viewer looks.</p>
+<p>The viewer's screen shows what the viewer's eye actually sees. It is computed by following rays backward from the eye: whenever such a ray meets a mirror, it is reflected and followed further. This is why the lit spots appear many times, once directly and again as images in the mirrors -- the "infinite" corridors of a room of mirrors. With haze in the air, a little light is scattered sideways from the beam itself, so the path of the beam becomes visible.</p>
+<p>At every mirror the ray obeys the law of reflection</p>
+<p class="rm_eq">`theta_r = theta_i`,</p>
+<p>which, for a ray travelling in the direction `vec d` toward a mirror whose unit normal is `hat n`, gives the reflected direction</p>
+<p class="rm_eq">`vec r = vec d - 2 (vec d * hat n) hat n`.</p>
+<p>Real mirrors are not perfect. A mirror of reflectivity `R` keeps only the fraction `R` of the light at each reflection, so after `n` reflections the intensity is</p>
+<p class="rm_eq">`I_n = R^n I_0`.</p>
+<p>A flashlight beam also spreads out. A beam of half-angle `alpha` that has travelled a total path `L` (reflections included) has a spot of diameter about</p>
+<p class="rm_eq">`D ~~ 2 L tan alpha`,</p>
+<p>so the same light covers a larger area and each part of the spot is dimmer. A laser has almost no spread, which is why its spot stays small and bright even after many reflections.</p>
+<p>The readout follows the central ray of the beam: how many reflections it makes before it lands, its path length, the fraction of its intensity that is left, the diameter of the spot, the angle of incidence at the first mirrors, and the fraction of the room's non-mirror surfaces that the light actually reaches.</p>
+<p>Users can change the spread and color of the beam, aim it and move it, choose which surfaces are mirrors and how well they reflect, move the viewer and choose where the viewer looks, and turn on the room lights to see what the dark room really contains. Presets set up a laser, a flashlight, and two facing mirrors that produce a long row of repeated images.</p>
+<p>This simulation is useful for studying the law of reflection, specular and diffuse reflection, plane mirrors, images formed by mirrors, multiple reflections, the loss of intensity at each reflection, beam divergence, and why a room of mirrors can be so dark and so confusing at the same time.</p>
+</div>
+</div>
+</div><!-- #rmRoot -->
+<!-- Questions -->
+<div class="rm_qwrap">
+<hr>
+<ol type="a">
+<li>Press <b>Laser</b>. The beam reflects many times, yet most of the room stays dark. Explain why, using the readout of the lit part of the room.</li>
+<li>Read the angle of incidence at the first mirror. What is the angle between the reflected ray and the mirror's normal? Which law does this show?</li>
+<li>With R = 95 %, what fraction of the laser's intensity is left after 10 reflections? Check your answer with the readout.</li>
+<li>Press <b>Flashlight</b>. How does the size of the lit spot change as the path length increases? Use D &asymp; 2 L tan &alpha; to check the spot diameter in the readout.</li>
+<li>Press <b>Two mirrors</b>. Describe what the viewer sees and explain where the repeated images come from.</li>
+<li>Turn the haze off. Can the viewer still see the beam travelling through the air? Explain why the haze makes it visible.</li>
+<li>Choose <b>None (an ordinary room)</b>, press <b>Laser</b>, and keep the room lights off. Why can the viewer faintly see the objects, even though the laser lights only one small spot? Turn off the diffuse reflection to compare.</li>
+</ol>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #rmRoot (Hall effect template) ════════ */
+#rmRoot {
+--rm-chassis:#1a1c1f; --rm-panel:#22262b; --rm-panel-hi:#2c3138; --rm-panel-lo:#14161a;
+--rm-border:#3a4048; --rm-border-hi:#525c66; --rm-text:#c8d0d8; --rm-dim:#8a94a3;
+--rm-accent:#e8a020; --rm-green:#3ad08f; --rm-val:#ffdd66;
+--rm-focus:#e8a020; --rm-nar-bg:#2a2410; --rm-nar-border:#e0b040; --rm-nar-text:#f0e2b8;
+background:var(--rm-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--rm-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:900px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#rmRoot.rm_lm {
+--rm-chassis:#e9edf1; --rm-panel:#ffffff; --rm-panel-hi:#f1f4f7; --rm-panel-lo:#f4f6f9;
+--rm-border:#c3cad3; --rm-border-hi:#9aa3ae; --rm-text:#1d232a; --rm-dim:#556070;
+--rm-accent:#a8620a; --rm-green:#12805a; --rm-val:#8a4a00;
+--rm-focus:#a8620a; --rm-nar-bg:#ffefc0; --rm-nar-border:#e0b040; --rm-nar-text:#333333;
+background-image:none;
+}
+#rmRoot.rm_hc {
+--rm-chassis:#000000; --rm-panel:#000000; --rm-panel-hi:#111111; --rm-panel-lo:#000000;
+--rm-border:#ffffff; --rm-border-hi:#ffffff; --rm-text:#ffffff; --rm-dim:#e0e0e0;
+--rm-accent:#ffd700; --rm-green:#00ff88; --rm-val:#ffff00;
+--rm-focus:#ffff00; --rm-nar-bg:#000000; --rm-nar-border:#ffd700; --rm-nar-text:#ffffff;
+background-image:none;
+}
+#rmRoot.rm_hc .rm_panel, #rmRoot.rm_hc .rm_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#rmRoot :not(mjx-container):not(mjx-container *), #rmRoot :not(mjx-container):not(mjx-container *)::before, #rmRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; padding:0; }
+#rmRoot input:focus-visible, #rmRoot button:focus-visible, #rmRoot select:focus-visible, #rmRoot canvas:focus-visible { outline:2px solid var(--rm-focus); outline-offset:2px; }
+/* toolbar */
+#rmRoot .rm_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#rmRoot .rm_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--rm-panel-hi); border:1px solid var(--rm-border-hi); color:var(--rm-dim); }
+#rmRoot .rm_a11ybtn:hover { border-color:var(--rm-accent); color:var(--rm-accent); }
+#rmRoot .rm_a11yon { background:rgba(58,208,143,.14); border-color:var(--rm-green); color:var(--rm-green); font-weight:bold; }
+/* header */
+#rmRoot .rm_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#rmRoot .rm_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--rm-accent); text-align:center; }
+#rmRoot .rm_sub { font-size:.7rem; color:var(--rm-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* grid */
+#rmRoot .rm_instrument { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:12px; width:100%; }
+#rmRoot .rm_leftcol, #rmRoot .rm_rightcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#rmRoot .rm_diagpanel { background:var(--rm-panel); border:1px solid var(--rm-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#rmRoot .rm_diaglabel { background:var(--rm-panel-lo); border-bottom:1px solid var(--rm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--rm-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#rmRoot .rm_diaglabel b { color:var(--rm-accent); }
+#rmRoot .rm_diagnote { text-transform:none; letter-spacing:.02em; }
+#rmRoot canvas { display:block; width:100%; height:auto; margin:0 auto; touch-action:none; cursor:grab; background:#000; }
+#rmRoot #rmRoom { max-width:560px; }
+#rmRoot #rmView { max-width:480px; }
+#rmRoot .rm_runbar { display:grid; grid-template-columns:repeat(auto-fit, minmax(84px, 1fr)); gap:6px; padding:8px 10px; background:var(--rm-panel-lo); border-top:1px solid var(--rm-border); }
+#rmRoot .rm_btn { padding:8px 4px; font-family:monospace; font-size:.7rem; letter-spacing:.04em; cursor:pointer; background:var(--rm-panel-hi); border:1px solid var(--rm-border-hi); color:var(--rm-text); border-radius:3px; text-transform:uppercase; }
+#rmRoot .rm_btn:hover { border-color:var(--rm-accent); }
+#rmRoot .rm_primary { font-weight:bold; border-color:var(--rm-accent); color:var(--rm-accent); }
+#rmRoot .rm_warn { color:#e0605a; border-color:#a04040; }
+#rmRoot.rm_lm .rm_warn { color:#b02020; border-color:#c06060; }
+/* panels */
+#rmRoot .rm_panel { background:var(--rm-panel); border:1px solid var(--rm-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#rmRoot .rm_paneltitle { background:var(--rm-panel-lo); border-bottom:1px solid var(--rm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--rm-dim); }
+#rmRoot .rm_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#rmRoot .rm_ctrl { display:flex; flex-direction:column; gap:4px; }
+#rmRoot .rm_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#rmRoot .rm_ctrlname { font-size:.72rem; font-weight:600; color:var(--rm-dim); }
+#rmRoot .rm_sval { font-family:monospace; font-size:.74rem; color:var(--rm-val); white-space:nowrap; }
+#rmRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--rm-panel-lo); border:1px solid var(--rm-border); }
+#rmRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--rm-accent); border:2px solid var(--rm-panel); cursor:pointer; }
+#rmRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--rm-accent); border:2px solid var(--rm-panel); cursor:pointer; }
+#rmRoot select { width:100%; background:var(--rm-panel-hi); color:var(--rm-text); border:1px solid var(--rm-border-hi); border-radius:3px; padding:4px 6px; font-size:.76rem; }
+#rmRoot .rm_chk { display:flex; align-items:center; gap:7px; font-size:.76rem; color:var(--rm-text); cursor:pointer; }
+#rmRoot .rm_chk input { accent-color:var(--rm-accent); width:15px; height:15px; flex-shrink:0; }
+/* readout */
+#rmRoot .rm_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px 10px; }
+#rmRoot .rm_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--rm-panel-lo); border:1px solid var(--rm-border); border-radius:3px; }
+#rmRoot .rm_rkey { font-family:monospace; font-size:.64rem; color:var(--rm-dim); letter-spacing:.02em; }
+#rmRoot .rm_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--rm-text); }
+#rmRoot .rm_hi { color:var(--rm-val); font-weight:bold; }
+#rmRoot .rm_wide { grid-column:1 / 3; }
+/* formula strip, narration */
+#rmRoot .rm_formulastrip { grid-column:1 / 3; background:var(--rm-panel-lo); border:1px solid var(--rm-border); border-radius:4px; padding:7px 14px; }
+#rmRoot .rm_formulatxt { font-family:monospace; font-size:.66rem; color:var(--rm-dim); letter-spacing:.04em; line-height:1.6; }
+#rmRoot .rm_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--rm-nar-bg); border-left:4px solid var(--rm-nar-border); font-size:.82rem; color:var(--rm-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* SIM description (toggle) */
+#rmRoot .rm_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#rmRoot .rm_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--rm-panel-hi); border:1px solid var(--rm-accent); color:var(--rm-accent); border-radius:3px; font-weight:bold; }
+#rmRoot .rm_descbtn:hover { background:var(--rm-panel); }
+#rmRoot .rm_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#rmRoot .rm_desc { width:100%; background:var(--rm-panel); border:1px solid var(--rm-border); border-left:4px solid var(--rm-accent); border-radius:4px; padding:12px 16px; color:var(--rm-text); font-size:.86rem; line-height:1.55; }
+#rmRoot .rm_desc p { margin:0 0 9px 0; }
+#rmRoot .rm_desc p:last-child { margin-bottom:0; }
+#rmRoot .rm_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.rm_qwrap { width:100%; max-width:900px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.rm_qwrap ol { padding-left:24px; }
+.rm_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+/* narrow screens: stack the columns */
+@media (max-width:840px) {
+#rmRoot .rm_instrument { grid-template-columns:minmax(0,1fr); }
+#rmRoot .rm_formulastrip { grid-column:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#rmRoot input[type=range] { height:8px; }
+#rmRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#rmRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#rmRoot .rm_btn, #rmRoot .rm_a11ybtn, #rmRoot .rm_descbtn { min-height:40px; }
+#rmRoot select { min-height:36px; font-size:16px; }
+#rmRoot .rm_chk input { width:22px; height:22px; }
+#rmRoot .rm_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#rmRoot { padding:10px 6px 14px; }
+#rmRoot .rm_rgrid { grid-template-columns:1fr; }
+#rmRoot .rm_wide { grid-column:auto; }
+}
+</style>
+<!-- ════════ DISPLAY OPTIONS ════════ -->
+<script>
+var rmA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var DEFS = {
+'--rmc-bg':'#0d0f14','--rmc-floor':'#3a3630','--rmc-mirror':'rgba(120,180,255,0.10)','--rmc-mirroredge':'#6fa8dc','--rmc-matte':'rgba(200,200,200,0.06)',
+'--rmc-edge':'#59616d','--rmc-text':'#c8d0d8','--rmc-eye':'#ffffff','--rmc-frustum':'rgba(255,255,255,0.35)','--rmc-lamp':'#ffd34d',
+'--rmc-obj1':'#cfcabb','--rmc-obj2':'#3f9aa5','--rmc-obj3':'#c84040'
+};
+var THEMES = {
+cb:{ '--rmc-mirroredge':'#56b4e9','--rmc-obj2':'#0072b2','--rmc-obj3':'#d55e00' },
+hc:{ '--rmc-bg':'#000000','--rmc-floor':'#222222','--rmc-mirror':'rgba(120,200,255,0.18)','--rmc-mirroredge':'#66ccff','--rmc-edge':'#ffffff',
+'--rmc-text':'#ffffff','--rmc-frustum':'rgba(255,255,255,0.7)','--rmc-lamp':'#ffff00' }
+};
+var cur = {};
+function applyVars(){
+var p, order = ['cb','hc'];
+cur = {}; for (p in DEFS) cur[p] = DEFS[p];
+for (var i=0; i<order.length; i++){ if (states[order[i]]){ var t = THEMES[order[i]]; for (p in t) cur[p] = t[p]; } }
+ROOT.classList.toggle('rm_hc', states.hc); ROOT.classList.toggle('rm_lm', states.lm); ROOT.classList.toggle('rm_cb', states.cb);
+}
+function styleBtn(id, on){
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('rm_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function apply(){
+if (!ROOT) return;
+applyVars();
+var nb = document.getElementById('rmNarBar'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('rmBtnNR'); if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('rmBtnNR', states.nr); styleBtn('rmBtnHC', states.hc); styleBtn('rmBtnLM', states.lm); styleBtn('rmBtnCB', states.cb);
+}
+return {
+init:function(){ ROOT = document.getElementById('rmRoot'); apply(); },
+toggle:function(k){
+states[k] = !states[k];
+if (k==='hc' && states.hc) states.lm = false;
+if (k==='lm' && states.lm) states.hc = false;
+apply();
+if (typeof rmSim !== 'undefined' && rmSim.redraw3d) rmSim.redraw3d();
+},
+narrate:function(msg){ if (!states.nr) return; var nb = document.getElementById('rmNarBar'); if (nb) nb.textContent = msg; },
+/* SIM description: show or hide it; typeset its AsciiMath when it opens (MathJax 3 or 2, whichever the page has) */
+toggleDesc:function(){
+var b = document.getElementById('rmDescBtn'), d = document.getElementById('rmDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+},
+col:function(p){ return cur[p] || DEFS[p]; }
+};
+})();
+rmA11y.init();
+</script>
+<!-- ════════ SIMULATION ════════
+Room 4 m (x) by 3 m (y) by 2.5 m (z, up). Each of the six surfaces is either a plane mirror (specular, reflectivity R)
+or a matte surface. Light: N rays sampled uniformly inside a cone of half-angle alpha (one ray for a laser), each traced
+through specular reflections  r = d - 2 (d.n) n  until it lands on a matte surface or an object, where its energy
+(R^k / N) is stored in a light map (energy per area). Viewer's screen: rays are traced backward from the eye, reflected
+by the mirrors, and shaded at the first matte surface from the light map plus the room lights. With haze, light
+scattered sideways from the central ray of the beam is added along each eye ray.
+-->
+<script>
+var rmSim = (function(){
+var c3 = document.getElementById('rmRoom'), g3 = c3.getContext('2d');
+var cs = document.getElementById('rmView'), gs = cs.getContext('2d');
+var L3W = c3.width, L3H = c3.height, LSW = cs.width, LSH = cs.height, DPR = window.devicePixelRatio || 1;
+c3.width = L3W*DPR; c3.height = L3H*DPR; g3.scale(DPR, DPR);
+cs.width = LSW*DPR; cs.height = LSH*DPR; gs.scale(DPR, DPR);
+var off = document.createElement('canvas'), og = off.getContext('2d');
+var FONT = 'Calibri, Arial, sans-serif', DEG = Math.PI/180;
+/* ── room ── */
+var W = 4, D = 3, H = 2.5;
+var FACE_NAME = ['left wall','right wall','front wall','back wall','floor','ceiling'];
+var FACE_N = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];          /* inward normals */
+var FACE_ALB = [[0.62,0.6,0.56],[0.62,0.6,0.56],[0.62,0.6,0.56],[0.62,0.6,0.56],[0.42,0.38,0.33],[0.72,0.72,0.72]];
+var CELL = 0.04;                                                            /* light-map cell, m */
+var OBJS = [
+{ type:'sphere', c:[1.3,2.1,0.45], r:0.45, alb:[0.9,0.88,0.8], name:'white ball' },
+{ type:'box', mn:[2.6,0.9,0], mx:[3.1,1.4,0.9], alb:[0.25,0.6,0.65], name:'pedestal' },
+{ type:'sphere', c:[2.85,1.15,1.08], r:0.18, alb:[0.9,0.25,0.22], name:'red ball' }
+];
+var LIGHTCOL = { red:[1,0.12,0.08], green:[0.15,1,0.25], white:[1,0.95,0.85] };
+var K_LIGHT = 0.45, AMB_IRR = 12, HAZE_K = 0.006, LAMP_R = 0.05;
+var DEF = { spread:0, color:'red', lyaw:30, lpitch:-8, lx:0.5, ly:0.6, lz:1.3, mirrors:'walls', R:95, bounces:15,
+vyaw:150, vpitch:-10, vx:3.5, vy:0.4, vz:1.6, fov:70, amb:0, haze:true, rays:true, objects:true, diffuse:true };
+var P = {}, cam = { yaw:-55, pitch:28, dist:7.2 };
+var faceGrid = [], objGrid = [], mirror = [false,false,false,false,false,false];
+var beam = { paths:[], central:null, segs:[], lit:0 };
+var narrT = null, idleT = null;
+function el(id){ return document.getElementById(id); }
+function col(p){ return rmA11y.col(p); }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+/* ── vectors ── */
+function add(a,b){ return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; }
+function sub(a,b){ return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+function mul(a,s){ return [a[0]*s, a[1]*s, a[2]*s]; }
+function dot(a,b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function crs(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+function nrm(a){ var l = Math.sqrt(dot(a,a)) || 1; return [a[0]/l, a[1]/l, a[2]/l]; }
+function reflect(d, n){ var k = 2*dot(d,n); return [d[0]-k*n[0], d[1]-k*n[1], d[2]-k*n[2]]; }
+function dirOf(yaw, pitch){ var cp = Math.cos(pitch*DEG); return [cp*Math.cos(yaw*DEG), cp*Math.sin(yaw*DEG), Math.sin(pitch*DEG)]; }
+/* ══════════ scene geometry ══════════ */
+function setMirrors(){
+var m = P.mirrors;
+mirror = [m!=='none', m!=='none', m==='walls'||m==='wallsceil'||m==='all', m==='walls'||m==='wallsceil'||m==='all', m==='all', m==='wallsceil'||m==='all'];
+}
+function faceDims(f){ return f < 2 ? [D,H] : (f < 4 ? [W,H] : [W,D]); }
+function faceUV(f, p){ return f < 2 ? [p[1]/D, p[2]/H] : (f < 4 ? [p[0]/W, p[2]/H] : [p[0]/W, p[1]/D]); }
+/* light maps: G.d holds the beam's own (direct) light on a fine grid; G.i holds the light that matte surfaces
+   reflect diffusely onto other surfaces, on a coarse grid (diffuse light varies smoothly) */
+var G = { d:null, i:null };
+function gridSet(cell, sphNu, sphNv, boxN, exactArea){
+var faces = [];
+for (var f=0; f<6; f++){ var d = faceDims(f), nu = Math.max(1, Math.round(d[0]/cell)), nv = Math.max(1, Math.round(d[1]/cell));
+faces.push({ nu:nu, nv:nv, g:new Float32Array(nu*nv), area:exactArea ? (d[0]/nu)*(d[1]/nv) : cell*cell }); }
+var objs = OBJS.map(function(o){
+if (o.type === 'sphere'){ var ar = new Float32Array(sphNv);
+for (var j=0; j<sphNv; j++) ar[j] = o.r*o.r*(2*Math.PI/sphNu)*(Math.cos(j*Math.PI/sphNv) - Math.cos((j+1)*Math.PI/sphNv));
+return { nu:sphNu, nv:sphNv, g:new Float32Array(sphNu*sphNv), ar:ar }; }
+var bfs = [];
+for (var k=0; k<6; k++) bfs.push({ nu:boxN, nv:boxN, g:new Float32Array(boxN*boxN) });
+return { faces:bfs };
+});
+return { faces:faces, objs:objs };
+}
+function makeGrids(){
+G.d = gridSet(CELL, 48, 24, 16, false); G.i = gridSet(0.2, 16, 8, 4, true);
+faceGrid = G.d.faces; objGrid = G.d.objs;
+}
+/* nearest hit inside the room. returns { t, kind:'face'|'obj'|'lamp', f, i, n, u, v } */
+function hitScene(o, d, withObj, withLamp){
+var best = { t:Infinity }, t;
+if (d[0] > 1e-12){ t = (W - o[0])/d[0]; if (t < best.t) best = { t:t, kind:'face', f:1 }; } else if (d[0] < -1e-12){ t = -o[0]/d[0]; if (t < best.t) best = { t:t, kind:'face', f:0 }; }
+if (d[1] > 1e-12){ t = (D - o[1])/d[1]; if (t < best.t) best = { t:t, kind:'face', f:3 }; } else if (d[1] < -1e-12){ t = -o[1]/d[1]; if (t < best.t) best = { t:t, kind:'face', f:2 }; }
+if (d[2] > 1e-12){ t = (H - o[2])/d[2]; if (t < best.t) best = { t:t, kind:'face', f:5 }; } else if (d[2] < -1e-12){ t = -o[2]/d[2]; if (t < best.t) best = { t:t, kind:'face', f:4 }; }
+if (withObj){
+for (var i=0; i<OBJS.length; i++){
+var ob = OBJS[i];
+if (ob.type === 'sphere'){
+var oc = sub(o, ob.c), b = dot(oc, d), cc = dot(oc, oc) - ob.r*ob.r, disc = b*b - cc;
+if (disc > 0){ var sq = Math.sqrt(disc), t1 = -b - sq; if (t1 < 1e-6) t1 = -b + sq; if (t1 > 1e-6 && t1 < best.t) best = { t:t1, kind:'obj', i:i }; }
+} else {
+var tmin = -Infinity, tmax = Infinity, fa = -1;
+for (var a=0; a<3; a++){
+if (Math.abs(d[a]) < 1e-12){ if (o[a] < ob.mn[a] || o[a] > ob.mx[a]){ tmin = Infinity; break; } continue; }
+var ta = (ob.mn[a] - o[a])/d[a], tb = (ob.mx[a] - o[a])/d[a], fA = 2*a, fB = 2*a + 1;
+if (ta > tb){ var tt = ta; ta = tb; tb = tt; var ff = fA; fA = fB; fB = ff; }
+if (ta > tmin){ tmin = ta; fa = fA; } if (tb < tmax) tmax = tb;
+}
+if (tmin <= tmax && tmin > 1e-6 && tmin < best.t) best = { t:tmin, kind:'obj', i:i, bf:fa };
+}
+}
+}
+if (withLamp){
+var lp = [P.lx, P.ly, P.lz], ol = sub(o, lp), bl = dot(ol, d), cl = dot(ol, ol) - LAMP_R*LAMP_R, dl = bl*bl - cl;
+if (dl > 0){ var tl = -bl - Math.sqrt(dl); if (tl > 1e-6 && tl < best.t) best = { t:tl, kind:'lamp' }; }
+}
+return best;
+}
+/* light-map cell of a matte hit at point p */
+function cellOf(h, p, S){
+S = S || G.d;
+if (h.kind === 'face'){ var fg = S.faces[h.f], uv = faceUV(h.f, p);
+return { grid:fg, k:clamp(Math.floor(uv[1]*fg.nv),0,fg.nv-1)*fg.nu + clamp(Math.floor(uv[0]*fg.nu),0,fg.nu-1), area:fg.area, uv:uv }; }
+var ob = OBJS[h.i], og2 = S.objs[h.i];
+if (ob.type === 'sphere'){
+var n = mul(sub(p, ob.c), 1/ob.r), u = (Math.atan2(n[1], n[0])/(2*Math.PI) + 1) % 1, v = Math.acos(clamp(n[2],-1,1))/Math.PI;
+var j = clamp(Math.floor(v*og2.nv),0,og2.nv-1);
+return { grid:og2, k:j*og2.nu + clamp(Math.floor(u*og2.nu),0,og2.nu-1), area:og2.ar[j], uv:[u,v], n:n };
+}
+var bf = h.bf, ax = bf >> 1, a1 = (ax + 1) % 3, a2 = (ax + 2) % 3, fg2 = og2.faces[bf];
+var uu = (p[a1] - ob.mn[a1])/(ob.mx[a1] - ob.mn[a1]), vv = (p[a2] - ob.mn[a2])/(ob.mx[a2] - ob.mn[a2]);
+var nn = [0,0,0]; nn[ax] = (bf & 1) ? 1 : -1;
+var bn = fg2.nu;
+return { grid:fg2, k:clamp(Math.floor(vv*bn),0,bn-1)*bn + clamp(Math.floor(uu*bn),0,bn-1),
+area:((ob.mx[a1]-ob.mn[a1])/bn)*((ob.mx[a2]-ob.mn[a2])/bn), uv:[uu,vv], n:nn };
+}
+/* ══════════ the beam: light map ══════════ */
+/* each ray stands for a small patch of the beam: its energy is spread over a disc whose radius grows with the
+   distance travelled (rf), stretched by 1/cos(incidence) on the surface; a laser ray keeps a tiny footprint */
+function deposit(h, p, E, rf, cosi){
+var cl = cellOf(h, p), gr = cl.grid, nu = gr.nu, nv = gr.nv, cw, ch;
+if (h.kind === 'face'){ cw = CELL; ch = CELL; }
+else if (OBJS[h.i].type === 'sphere'){ var ob = OBJS[h.i], th = Math.max(0.05, Math.sin(cl.uv[1]*Math.PI)); cw = ob.r*th*2*Math.PI/nu; ch = ob.r*Math.PI/nv; }
+else { var ob2 = OBJS[h.i], ax = h.bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3; cw = (ob2.mx[a1]-ob2.mn[a1])/16; ch = (ob2.mx[a2]-ob2.mn[a2])/16; }
+var rad = rf/Math.max(0.25, cosi), ru = Math.min(25, rad/cw), rv = Math.min(25, rad/ch);
+if (ru < 0.5 && rv < 0.5){ gr.g[cl.k] += E/cl.area; return; }
+var cu = cl.uv[0]*nu - 0.5, cv = cl.uv[1]*nv - 0.5, iu0 = Math.floor(cu - ru), iu1 = Math.ceil(cu + ru), iv0 = Math.max(0, Math.floor(cv - rv)), iv1 = Math.min(nv-1, Math.ceil(cv + rv));
+var cells = [], wsum = 0;
+for (var j=iv0; j<=iv1; j++) for (var i=iu0; i<=iu1; i++){
+var du = (i - cu)/Math.max(ru, 0.5), dv = (j - cv)/Math.max(rv, 0.5), q = du*du + dv*dv; if (q > 1) continue;
+var ii = h.kind === 'obj' && OBJS[h.i].type === 'sphere' ? ((i % nu) + nu) % nu : i; if (ii < 0 || ii >= nu) continue;
+var w = 1 - q; cells.push([j*nu + ii, w, j]); wsum += w;
+}
+if (!wsum){ gr.g[cl.k] += E/cl.area; return; }
+for (var c=0; c<cells.length; c++){ var a = (h.kind === 'obj' && gr.ar) ? gr.ar[cells[c][2]] : cl.area; gr.g[cells[c][0]] += E*cells[c][1]/wsum/a; }
+}
+function coneDirs(d0, alpha){
+if (alpha < 0.05*DEG) return [d0];
+var N = 1500, up = Math.abs(d0[2]) < 0.9 ? [0,0,1] : [1,0,0], e1 = nrm(crs(up, d0)), e2 = crs(d0, e1), out = [], ga = Math.PI*(3 - Math.sqrt(5)), ca = Math.cos(alpha);
+for (var i=0; i<N; i++){
+var ct = 1 - (i + 0.5)/N*(1 - ca), st = Math.sqrt(1 - ct*ct), ph = i*ga;
+out.push(add(add(mul(e1, st*Math.cos(ph)), mul(e2, st*Math.sin(ph))), mul(d0, ct)));
+}
+return out;
+}
+function buildBeam(){
+setMirrors();
+faceGrid.forEach(function(fg){ fg.g.fill(0); });
+objGrid.forEach(function(og2){ if (og2.g) og2.g.fill(0); else og2.faces.forEach(function(f){ f.g.fill(0); }); });
+var src = [P.lx, P.ly, P.lz], d0 = nrm(dirOf(P.lyaw, P.lpitch)), alpha = P.spread*DEG, R = P.R/100, maxB = P.bounces;
+var dirs = coneDirs(d0, alpha), E0 = 1/dirs.length, every = Math.max(1, Math.floor(dirs.length/40));
+/* angular radius of the patch of beam each ray stands for: the cone's solid angle shared among the rays */
+var rs0 = alpha > 0 ? 0.025 : 0.0015, rayAng = dirs.length > 1 ? Math.sqrt(2*(1 - Math.cos(alpha))/dirs.length) : Math.tan(alpha);
+beam.paths = []; var landed = 0;
+for (var r=0; r<dirs.length; r++){
+var o = src, d = dirs[r], E = E0, k = 0, pts = [o], keep = (r % every === 0), Ls = 0;
+for (var step=0; step<=maxB + 1; step++){
+var h = hitScene(o, d, P.objects, false), p = add(o, mul(d, h.t));
+pts.push(p); Ls += h.t;
+if (h.kind === 'face' && mirror[h.f]){
+if (k >= maxB){ break; }
+E *= R; k++; d = reflect(d, FACE_N[h.f]); o = add(p, mul(FACE_N[h.f], 1e-7)); continue;
+}
+var nh = h.kind === 'face' ? FACE_N[h.f] : cellOf(h, p).n; deposit(h, p, E, rs0 + Ls*rayAng, Math.abs(dot(d, nh))); landed += E; break;
+}
+if (keep) beam.paths.push({ pts:pts, E:E/E0 });
+}
+/* central ray: details for the readout and the haze */
+var o2 = src, d2 = d0, s = 0, k2 = 0, hits = [], segs = [], rs = alpha > 0 ? 0.025 : 0.0015, land = null, I = 1, pts2 = [src];
+for (var st2=0; st2<=maxB + 1; st2++){
+var h2 = hitScene(o2, d2, P.objects, false), p2 = add(o2, mul(d2, h2.t));
+segs.push({ a:o2, d:d2, len:h2.t, s0:s, I:I }); s += h2.t; pts2.push(p2);
+if (h2.kind === 'face' && mirror[h2.f]){
+var ang = Math.acos(clamp(-dot(d2, FACE_N[h2.f]), -1, 1))/DEG;
+if (k2 >= maxB){ land = { what:'still reflecting', more:true }; break; }
+hits.push({ name:FACE_NAME[h2.f], ang:ang }); I *= P.R/100; k2++;
+d2 = reflect(d2, FACE_N[h2.f]); o2 = add(p2, mul(FACE_N[h2.f], 1e-7)); continue;
+}
+land = { what:(h2.kind === 'face' ? FACE_NAME[h2.f] : OBJS[h2.i].name), p:p2 }; break;
+}
+beam.central = { n:k2, L:s, I:I, hits:hits, land:land, spot:2*(rs + s*Math.tan(alpha)), pts:pts2 };
+beam.segs = segs; beam.rs = rs; beam.tanA = Math.tan(alpha);
+beam.lit = litFraction(); beam.landed = landed;
+/* bookkeeping for checks: energy that landed vs. energy stored in the light maps */
+var stored = 0; for (var f=0; f<6; f++){ var gg = faceGrid[f].g; for (var q=0; q<gg.length; q++) stored += gg[q]*CELL*CELL; }
+OBJS.forEach(function(o, i){ var og2 = objGrid[i]; if (o.type === 'sphere'){ for (var j=0; j<og2.nv; j++) for (var u=0; u<og2.nu; u++) stored += og2.g[j*og2.nu+u]*og2.ar[j]; }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/256; for (var k=0; k<256; k++) stored += fc.g[k]*ca; }); });
+beam.stored = stored;
+}
+/* ══════════ diffuse reflection by matte surfaces (one bounce) ══════════ */
+var seed = 1;
+function rnd(){ seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0)/4294967296; }
+function meanAlb(a){ return (a[0] + a[1] + a[2])/3; }
+function clearSet(S){ S.faces.forEach(function(f){ f.g.fill(0); }); S.objs.forEach(function(o){ if (o.g) o.g.fill(0); else o.faces.forEach(function(f){ f.g.fill(0); }); }); }
+function emitters(){
+/* every lit matte cell of the direct map, with the power it reflects diffusely: rho * irradiance * area */
+var em = [], cum = [], tot = 0;
+function push(e, P){ if (P <= 1e-9) return; tot += P; em.push(e); cum.push(tot); }
+for (var f=0; f<6; f++){ if (mirror[f]) continue; var fg = G.d.faces[f], rho = meanAlb(FACE_ALB[f]);
+for (var k=0; k<fg.g.length; k++) if (fg.g[k] > 0) push({ t:'f', f:f, iu:k % fg.nu, iv:Math.floor(k/fg.nu), nu:fg.nu, nv:fg.nv }, rho*fg.g[k]*fg.area); }
+if (P.objects) OBJS.forEach(function(o, i){ var og2 = G.d.objs[i], rho2 = meanAlb(o.alb);
+if (o.type === 'sphere'){ for (var k2=0; k2<og2.g.length; k2++) if (og2.g[k2] > 0) push({ t:'s', i:i, iu:k2 % og2.nu, iv:Math.floor(k2/og2.nu), nu:og2.nu, nv:og2.nv }, rho2*og2.g[k2]*og2.ar[Math.floor(k2/og2.nu)]); }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/(fc.nu*fc.nv);
+for (var k3=0; k3<fc.g.length; k3++) if (fc.g[k3] > 0) push({ t:'b', i:i, bf:bf, iu:k3 % fc.nu, iv:Math.floor(k3/fc.nu), nu:fc.nu, nv:fc.nv }, rho2*fc.g[k3]*ca); });
+});
+return { em:em, cum:cum, tot:tot };
+}
+function emitPoint(e){
+/* a random point inside the emitting cell, and the surface normal there */
+var u = (e.iu + rnd())/e.nu, v = (e.iv + rnd())/e.nv;
+if (e.t === 'f'){ var f = e.f, p = f < 2 ? [f ? W : 0, u*D, v*H] : (f < 4 ? [u*W, f === 3 ? D : 0, v*H] : [u*W, v*D, f === 5 ? H : 0]); return { p:p, n:FACE_N[f] }; }
+var o = OBJS[e.i];
+if (e.t === 's'){ var ph = u*2*Math.PI, th = v*Math.PI, n = [Math.sin(th)*Math.cos(ph), Math.sin(th)*Math.sin(ph), Math.cos(th)]; return { p:add(o.c, mul(n, o.r)), n:n }; }
+var ax = e.bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, q = [0,0,0], nn = [0,0,0];
+q[ax] = (e.bf & 1) ? o.mx[ax] : o.mn[ax]; q[a1] = o.mn[a1] + u*(o.mx[a1]-o.mn[a1]); q[a2] = o.mn[a2] + v*(o.mx[a2]-o.mn[a2]); nn[ax] = (e.bf & 1) ? 1 : -1;
+return { p:q, n:nn };
+}
+function lambertDir(n){
+/* cosine-weighted direction about the normal n (Lambert's law) */
+var u1 = rnd(), u2 = rnd(), rr = Math.sqrt(u1), ph = 2*Math.PI*u2, up = Math.abs(n[2]) < 0.9 ? [0,0,1] : [1,0,0], t1 = nrm(crs(up, n)), t2 = crs(n, t1);
+return nrm(add(add(mul(t1, rr*Math.cos(ph)), mul(t2, rr*Math.sin(ph))), mul(n, Math.sqrt(1 - u1))));
+}
+function depositInd(h, p, E){
+/* bilinear share among the four nearest coarse cells (energy conserving) */
+var cl = cellOf(h, p, G.i), gr = cl.grid, nu = gr.nu, nv = gr.nv, x = cl.uv[0]*nu - 0.5, y = cl.uv[1]*nv - 0.5;
+var x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0, wrap = h.kind === 'obj' && OBJS[h.i].type === 'sphere';
+var ob = h.kind === 'obj' ? OBJS[h.i] : null, boxA = 0;
+if (ob && ob.type === 'box'){ var ax = h.bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3; boxA = (ob.mx[a1]-ob.mn[a1])*(ob.mx[a2]-ob.mn[a2])/(nu*nv); }
+[[x0,y0,(1-fx)*(1-fy)],[x0+1,y0,fx*(1-fy)],[x0,y0+1,(1-fx)*fy],[x0+1,y0+1,fx*fy]].forEach(function(c){
+var ix = c[0], iy = clamp(c[1], 0, nv-1);
+if (wrap) ix = ((ix % nu) + nu) % nu; else ix = clamp(ix, 0, nu-1);
+var a = h.kind === 'face' ? gr.area : (wrap ? gr.ar[iy] : boxA);
+gr.g[iy*nu + ix] += E*c[2]/a;
+});
+}
+function blurSet(S){
+/* one gentle 3 x 3 smoothing pass of the coarse face maps, to tame the Monte Carlo noise */
+S.faces.forEach(function(fg){ var src = Float32Array.from(fg.g), nu = fg.nu, nv = fg.nv;
+for (var j=0; j<nv; j++) for (var i=0; i<nu; i++){ var s2 = 0, w = 0;
+for (var dj=-1; dj<=1; dj++) for (var di=-1; di<=1; di++){ var ii = i+di, jj = j+dj; if (ii < 0 || jj < 0 || ii >= nu || jj >= nv) continue; var ww = (di || dj) ? 0.5 : 1; s2 += ww*src[jj*nu+ii]; w += ww; }
+fg.g[j*nu+i] = s2/w; } });
+}
+var indN = 0;
+function buildIndirect(N){
+clearSet(G.i); beam.scat = 0; beam.indLanded = 0; indN = N;
+if (!P.diffuse) return;
+var E = emitters(); beam.scat = E.tot;
+if (E.tot <= 0 || !E.em.length) return;
+seed = 12345;
+var R = P.R/100, maxB = P.bounces, Eray = E.tot/N, landed = 0;
+for (var r=0; r<N; r++){
+var x = rnd()*E.tot, lo = 0, hi = E.cum.length - 1;
+while (lo < hi){ var mid = (lo + hi) >> 1; if (E.cum[mid] < x) lo = mid + 1; else hi = mid; }
+var ep = emitPoint(E.em[lo]), d = lambertDir(ep.n), o = add(ep.p, mul(ep.n, 1e-5)), e = Eray, k = 0;
+for (var step=0; step<=maxB + 1; step++){
+var h = hitScene(o, d, P.objects, false), p = add(o, mul(d, h.t));
+if (h.kind === 'face' && mirror[h.f]){ if (k >= maxB) break; e *= R; k++; d = reflect(d, FACE_N[h.f]); o = add(p, mul(FACE_N[h.f], 1e-7)); continue; }
+depositInd(h, p, e); landed += e; break;
+}
+}
+blurSet(G.i);
+beam.indLanded = landed;
+}
+function indStored(){
+var s2 = 0; G.i.faces.forEach(function(fg){ for (var k=0; k<fg.g.length; k++) s2 += fg.g[k]*fg.area; });
+OBJS.forEach(function(o, i){ var og2 = G.i.objs[i];
+if (o.type === 'sphere'){ for (var k2=0; k2<og2.g.length; k2++) s2 += og2.g[k2]*og2.ar[Math.floor(k2/og2.nu)]; }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/(fc.nu*fc.nv); for (var k3=0; k3<fc.g.length; k3++) s2 += fc.g[k3]*ca; }); });
+return s2;
+}
+function litFraction(){
+var lit = 0, tot = 0, thr = 0.1;   /* light-map level that shows as a visible patch on the viewer's screen */
+for (var f=0; f<6; f++){ if (mirror[f]) continue; var g = faceGrid[f].g; tot += g.length*CELL*CELL; for (var k=0; k<g.length; k++) if (g[k] > thr) lit += CELL*CELL; }
+if (P.objects) OBJS.forEach(function(o, i){
+var og2 = objGrid[i];
+if (o.type === 'sphere'){ for (var j=0; j<og2.nv; j++) for (var u=0; u<og2.nu; u++){ tot += og2.ar[j]; if (og2.g[j*og2.nu+u] > thr) lit += og2.ar[j]; } }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/256;
+for (var k=0; k<256; k++){ tot += ca; if (fc.g[k] > thr) lit += ca; } });
+});
+return tot > 0 ? lit/tot : 0;
+}
+function irrAt(cl){
+var gr = cl.grid, nu = gr.nu, nv = gr.nv, x = cl.uv[0]*nu - 0.5, y = cl.uv[1]*nv - 0.5;
+var x0 = clamp(Math.floor(x),0,nu-1), y0 = clamp(Math.floor(y),0,nv-1), x1 = Math.min(x0+1,nu-1), y1 = Math.min(y0+1,nv-1), fx = clamp(x - x0,0,1), fy = clamp(y - y0,0,1);
+var g = gr.g;
+return (g[y0*nu+x0]*(1-fx) + g[y0*nu+x1]*fx)*(1-fy) + (g[y1*nu+x0]*(1-fx) + g[y1*nu+x1]*fx)*fy;
+}
+/* ══════════ viewer's screen: rays traced backward from the eye ══════════ */
+function segDist(a0, ad, alen, b0, bd, blen){
+/* closest points between segments a0 + s ad (0..alen) and b0 + t bd (0..blen), unit directions */
+var w0 = sub(a0, b0), b = dot(ad, bd), dd = dot(ad, w0), e = dot(bd, w0), den = 1 - b*b, s, t;
+if (den < 1e-9){ s = 0; t = e; } else { s = (b*e - dd)/den; t = (e - b*dd)/den; }
+s = clamp(s, 0, alen); t = clamp(b*s + e, 0, blen); s = clamp(b*t - dd, 0, alen);
+var pa = add(a0, mul(ad, s)), pb = add(b0, mul(bd, t)), df = sub(pa, pb);
+return { d:Math.sqrt(dot(df, df)), s:s, t:t };
+}
+function shade(o, d, pixAng, out){
+var T = 1, acc = [0,0,0], glow = 0, se = 0, lc = LIGHTCOL[P.color], R = P.R/100, maxB = Math.min(P.bounces, 20);
+var amb = P.amb/100*AMB_IRR;
+for (var b=0; b<=maxB; b++){
+var h = hitScene(o, d, P.objects, true), p = add(o, mul(d, h.t));
+if (P.haze && b < 6){
+for (var j=0; j<beam.segs.length && j < 24; j++){
+var sg = beam.segs[j], q = segDist(o, d, h.t, sg.a, sg.d, sg.len);
+var sb = sg.s0 + q.t, rb = beam.rs + sb*beam.tanA, reff = Math.max(rb, 0.75*pixAng*(se + q.s), 0.003);
+if (q.d < 3*reff) glow += T*sg.I*Math.exp(-(q.d*q.d)/(reff*reff))/reff*HAZE_K/Math.max(1, rb/0.1);
+}
+}
+se += h.t;
+if (h.kind === 'lamp'){
+var toEye = nrm(sub([P.vx,P.vy,P.vz], [P.lx,P.ly,P.lz])), ld = nrm(dirOf(P.lyaw, P.lpitch));
+var inBeam = Math.acos(clamp(dot(toEye, ld),-1,1)) <= P.spread*DEG + 1.5*DEG;
+var e = inBeam ? 6 : 0.6*amb*0.08;
+for (var c=0; c<3; c++) acc[c] += T*(inBeam ? lc[c]*e : e);
+break;
+}
+if (h.kind === 'face' && mirror[h.f]){
+/* a thin frame where two surfaces meet, so the shape of the room can be seen */
+var uv = faceUV(h.f, p), dm = faceDims(h.f), fr = Math.min(uv[0]*dm[0], (1-uv[0])*dm[0], uv[1]*dm[1], (1-uv[1])*dm[1]);
+if (fr < 0.022){ for (var c2=0; c2<3; c2++) acc[c2] += T*0.3*amb*0.08; break; }
+T *= R; d = reflect(d, FACE_N[h.f]); o = add(p, mul(FACE_N[h.f], 1e-7));
+if (T < 0.01) break;
+continue;
+}
+var cl = cellOf(h, p), irr = irrAt(cl) + (P.diffuse ? irrAt(cellOf(h, p, G.i)) : 0), alb = h.kind === 'face' ? FACE_ALB[h.f] : OBJS[h.i].alb;
+/* matte surfaces: the light map, plus the room lights (shaded a little by the surface's tilt) */
+var nn = h.kind === 'face' ? FACE_N[h.f] : cl.n, lam = 0.55 + 0.45*Math.abs(nn[2]);
+for (var c3i=0; c3i<3; c3i++) acc[c3i] += T*alb[c3i]*(irr*K_LIGHT*lc[c3i] + amb*lam*0.08);
+break;
+}
+for (var c4=0; c4<3; c4++) out[c4] = 1 - Math.exp(-(acc[c4] + glow*lc[c4]));
+}
+function renderView(res){
+var w = res, h = Math.round(res*LSH/LSW);
+off.width = w; off.height = h;
+var img = og.createImageData(w, h), px = img.data;
+var eye = [P.vx, P.vy, P.vz], f = nrm(dirOf(P.vyaw, P.vpitch)), r = nrm(crs(f, [0,0,1])), u = crs(r, f);
+var th = Math.tan(P.fov*DEG/2), asp = w/h, pixAng = 2*th/w, out = [0,0,0];
+for (var y=0; y<h; y++){
+var vy = (1 - 2*(y + 0.5)/h)*th/asp;
+for (var x=0; x<w; x++){
+var vx = (2*(x + 0.5)/w - 1)*th;
+var d = nrm([f[0] + r[0]*vx + u[0]*vy, f[1] + r[1]*vx + u[1]*vy, f[2] + r[2]*vx + u[2]*vy]);
+shade(eye, d, pixAng, out);
+var i = (y*w + x)*4;
+px[i] = 255*Math.sqrt(out[0]); px[i+1] = 255*Math.sqrt(out[1]); px[i+2] = 255*Math.sqrt(out[2]); px[i+3] = 255;
+}
+}
+og.putImageData(img, 0, 0);
+gs.save(); gs.imageSmoothingEnabled = true; gs.drawImage(off, 0, 0, LSW, LSH); gs.restore();
+var lbl = (P.haze ? 'haze on' : 'haze off') + ' \u00B7 room lights ' + P.amb + ' %';
+gs.font = '11px ' + FONT; gs.textAlign = 'left'; gs.fillStyle = 'rgba(0,0,0,0.6)'; gs.fillRect(4, 4, gs.measureText(lbl).width + 10, 17);
+gs.fillStyle = 'rgba(255,255,255,0.85)'; gs.fillText(lbl, 9, 16);
+}
+/* ══════════ 3-D room view ══════════ */
+var F3 = 470, camBasis = null;
+function setCam(){
+var cp = Math.cos(cam.pitch*DEG), tgt = [W/2, D/2, H/2];
+var pos = add(tgt, mul([cp*Math.cos(cam.yaw*DEG), cp*Math.sin(cam.yaw*DEG), Math.sin(cam.pitch*DEG)], cam.dist));
+var fw = nrm(sub(tgt, pos)), rt = nrm(crs(fw, [0,0,1])); if (!isFinite(rt[0]) || Math.abs(dot(fw,[0,0,1])) > 0.999) rt = [0,1,0];
+camBasis = { pos:pos, f:fw, r:rt, u:crs(rt, fw) };
+}
+function pr(p){ var v = sub(p, camBasis.pos), z = dot(v, camBasis.f); if (z < 0.05) z = 0.05;
+return [L3W/2 + F3*dot(v, camBasis.r)/z, L3H/2 - F3*dot(v, camBasis.u)/z, z]; }
+function poly(pts, fill, stroke, lw){
+var g = g3; g.beginPath(); pts.forEach(function(p, i){ var q = pr(p); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath();
+if (fill){ g.fillStyle = fill; g.fill(); } if (stroke){ g.strokeStyle = stroke; g.lineWidth = lw || 1; g.stroke(); }
+}
+function faceQuad(f){
+var x0=0,x1=W,y0=0,y1=D,z0=0,z1=H;
+switch(f){ case 0: return [[0,y0,z0],[0,y1,z0],[0,y1,z1],[0,y0,z1]]; case 1: return [[W,y0,z0],[W,y1,z0],[W,y1,z1],[W,y0,z1]];
+case 2: return [[x0,0,z0],[x1,0,z0],[x1,0,z1],[x0,0,z1]]; case 3: return [[x0,D,z0],[x1,D,z0],[x1,D,z1],[x0,D,z1]];
+case 4: return [[x0,y0,0],[x1,y0,0],[x1,y1,0],[x0,y1,0]]; default: return [[x0,y0,H],[x1,y0,H],[x1,y1,H],[x0,y1,H]]; }
+}
+function draw3d(){
+setCam();
+var g = g3, lc = LIGHTCOL[P.color], lcs = 'rgb(' + Math.round(255*lc[0]) + ',' + Math.round(255*lc[1]) + ',' + Math.round(255*lc[2]) + ')';
+g.fillStyle = col('--rmc-bg'); g.fillRect(0, 0, L3W, L3H);
+/* surfaces, far ones first */
+var order = [0,1,2,3,4,5].map(function(f){ var q = faceQuad(f), c = mul(add(add(q[0],q[1]),add(q[2],q[3])), 0.25); return { f:f, z:pr(c)[2] }; }).sort(function(a,b){ return b.z - a.z; });
+order.forEach(function(o){
+var f = o.f, fill = mirror[f] ? col('--rmc-mirror') : (f === 4 ? col('--rmc-floor') : col('--rmc-matte'));
+poly(faceQuad(f), fill, mirror[f] ? col('--rmc-mirroredge') : col('--rmc-edge'), mirror[f] ? 1.4 : 1);
+});
+/* lit spots on the matte surfaces */
+for (var f=0; f<6; f++){ if (mirror[f]) continue; var fg = faceGrid[f], dm = faceDims(f);
+for (var k=0; k<fg.g.length; k++){ var e = fg.g[k]; if (e < 0.3) continue;
+var u = ((k % fg.nu) + 0.5)/fg.nu, v = (Math.floor(k/fg.nu) + 0.5)/fg.nv, p;
+if (f < 2) p = [f ? W : 0, u*D, v*H]; else if (f < 4) p = [u*W, f === 3 ? D : 0, v*H]; else p = [u*W, v*D, f === 5 ? H : 0];
+var q = pr(p), a = Math.min(1, 1 - Math.exp(-e*K_LIGHT)); g.fillStyle = lcs; g.globalAlpha = a; var sz = Math.max(1.5, 0.045*F3/q[2]); g.fillRect(q[0]-sz/2, q[1]-sz/2, sz, sz); }
+}
+g.globalAlpha = 1;
+/* objects */
+if (P.objects) OBJS.forEach(function(o, i){
+if (o.type === 'sphere'){ var q = pr(o.c), rr = F3*o.r/q[2];
+var gr = g.createRadialGradient(q[0]-rr*0.35, q[1]-rr*0.35, rr*0.1, q[0], q[1], rr);
+gr.addColorStop(0, i === 0 ? col('--rmc-obj1') : col('--rmc-obj3')); gr.addColorStop(1, 'rgba(20,20,20,0.9)');
+g.fillStyle = gr; g.beginPath(); g.arc(q[0], q[1], rr, 0, 2*Math.PI); g.fill();
+var og2 = objGrid[i]; for (var k2=0; k2<og2.g.length; k2++){ var e2 = og2.g[k2]; if (e2 < 0.3) continue;
+var uu = ((k2 % og2.nu) + 0.5)/og2.nu*2*Math.PI, vv = (Math.floor(k2/og2.nu) + 0.5)/og2.nv*Math.PI, n = [Math.sin(vv)*Math.cos(uu), Math.sin(vv)*Math.sin(uu), Math.cos(vv)];
+if (dot(n, sub(camBasis.pos, o.c)) < 0) continue;
+var q2 = pr(add(o.c, mul(n, o.r))); g.fillStyle = lcs; g.globalAlpha = Math.min(1, 1 - Math.exp(-e2*K_LIGHT)); g.fillRect(q2[0]-1.5, q2[1]-1.5, 3, 3); }
+g.globalAlpha = 1;
+} else {
+var mn = o.mn, mx = o.mx, faces = [[[mn[0],mn[1],mn[2]],[mn[0],mx[1],mn[2]],[mn[0],mx[1],mx[2]],[mn[0],mn[1],mx[2]]],[[mx[0],mn[1],mn[2]],[mx[0],mx[1],mn[2]],[mx[0],mx[1],mx[2]],[mx[0],mn[1],mx[2]]],
+[[mn[0],mn[1],mn[2]],[mx[0],mn[1],mn[2]],[mx[0],mn[1],mx[2]],[mn[0],mn[1],mx[2]]],[[mn[0],mx[1],mn[2]],[mx[0],mx[1],mn[2]],[mx[0],mx[1],mx[2]],[mn[0],mx[1],mx[2]]],
+[[mn[0],mn[1],mx[2]],[mx[0],mn[1],mx[2]],[mx[0],mx[1],mx[2]],[mn[0],mx[1],mx[2]]]];
+var nrms = [[-1,0,0],[1,0,0],[0,-1,0],[0,1,0],[0,0,1]], ctr = mul(add(mn, mx), 0.5);
+faces.forEach(function(q3, j){ var fc = mul(add(add(q3[0],q3[1]),add(q3[2],q3[3])), 0.25); if (dot(nrms[j], sub(camBasis.pos, fc)) <= 0) return;
+poly(q3, col('--rmc-obj2'), 'rgba(0,0,0,0.5)', 1); });
+}
+});
+/* rays */
+if (P.rays){
+g.lineWidth = 1;
+beam.paths.forEach(function(pa){
+for (var s=0; s<pa.pts.length-1; s++){ var a = pr(pa.pts[s]), b = pr(pa.pts[s+1]); g.strokeStyle = lcs; g.globalAlpha = 0.18 + 0.25*Math.pow(P.R/100, s);
+g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+});
+g.globalAlpha = 1; g.lineWidth = 2.2;
+var cp2 = beam.central.pts;
+for (var s2=0; s2<cp2.length-1; s2++){ var a2 = pr(cp2[s2]), b2 = pr(cp2[s2+1]); g.strokeStyle = lcs; g.globalAlpha = 0.35 + 0.65*Math.pow(P.R/100, s2);
+g.beginPath(); g.moveTo(a2[0], a2[1]); g.lineTo(b2[0], b2[1]); g.stroke(); }
+g.globalAlpha = 1;
+}
+/* light source and its direction */
+var lp = [P.lx, P.ly, P.lz], ld = nrm(dirOf(P.lyaw, P.lpitch)), ql = pr(lp), qa = pr(add(lp, mul(ld, 0.35)));
+g.strokeStyle = col('--rmc-lamp'); g.lineWidth = 3; g.beginPath(); g.moveTo(ql[0], ql[1]); g.lineTo(qa[0], qa[1]); g.stroke();
+g.fillStyle = col('--rmc-lamp'); g.beginPath(); g.arc(ql[0], ql[1], 5, 0, 2*Math.PI); g.fill();
+/* viewer: eye and the edges of the field of view */
+var ep = [P.vx, P.vy, P.vz], fwd = nrm(dirOf(P.vyaw, P.vpitch)), rt = nrm(crs(fwd, [0,0,1])), up = crs(rt, fwd), th = Math.tan(P.fov*DEG/2), as = LSW/LSH, qe = pr(ep);
+var corners = [[-1,-1],[1,-1],[1,1],[-1,1]].map(function(cn){ return add(ep, mul(nrm(add(add(fwd, mul(rt, cn[0]*th)), mul(up, cn[1]*th/as))), 0.7)); });
+g.strokeStyle = col('--rmc-frustum'); g.lineWidth = 1;
+corners.forEach(function(cn){ var q = pr(cn); g.beginPath(); g.moveTo(qe[0], qe[1]); g.lineTo(q[0], q[1]); g.stroke(); });
+poly(corners, null, col('--rmc-frustum'), 1);
+g.fillStyle = col('--rmc-eye'); g.beginPath(); g.arc(qe[0], qe[1], 4.5, 0, 2*Math.PI); g.fill();
+g.font = '11px ' + FONT; g.fillStyle = col('--rmc-text'); g.textAlign = 'left';
+g.fillText('viewer', qe[0] + 7, qe[1] - 6); g.fillText('light', ql[0] + 7, ql[1] - 6);
+g.fillText('mirrors: ' + el('rmMirrors').options[el('rmMirrors').selectedIndex].text.toLowerCase(), 8, 16);
+}
+/* ══════════ readout and narration ══════════ */
+function readouts(){
+var c = beam.central;
+function set(id, t){ var e = el(id); if (e) e.textContent = t; }
+set('rmRoN', c.land && c.land.more ? 'more than ' + c.n : String(c.n));
+set('rmRoL', c.L.toFixed(2) + ' m');
+set('rmRoI', (100*c.I).toFixed(1) + ' %');
+set('rmRoD', (100*c.spot).toFixed(1) + ' cm');
+set('rmRoLand', c.land && c.land.more ? 'still reflecting after ' + P.bounces + ' reflections' : 'the ' + c.land.what);
+set('rmRoHits', c.hits.length ? c.hits.slice(0, 3).map(function(h){ return h.name + ' ' + h.ang.toFixed(0) + '\u00B0'; }).join(', ') + (c.hits.length > 3 ? ', ...' : '') : 'none -- it lands without meeting a mirror');
+set('rmRoLit', (100*beam.lit).toFixed(1) + ' % (the rest stays dark)');
+set('rmRoScat', !P.diffuse ? 'not followed (turned off)' : (100*(beam.scat || 0)).toFixed(1) + ' % of the beam, ' + (100*(beam.indLanded || 0)).toFixed(1) + ' % lands on other surfaces');
+}
+function summary(){
+var c = beam.central, kind = P.spread > 0 ? 'A flashlight beam spreading ' + P.spread + ' degrees' : 'A laser beam';
+var s = kind + ' reflects ' + (c.land && c.land.more ? 'more than ' + c.n + ' times' : c.n + (c.n === 1 ? ' time' : ' times')) + ', travelling ' + c.L.toFixed(1) + ' m';
+s += c.land && c.land.more ? ' without landing. ' : ' before it lands on the ' + c.land.what + '. ';
+s += 'Its central ray keeps ' + (100*c.I).toFixed(0) + ' % of its intensity; the spot is about ' + (100*c.spot).toFixed(0) + ' cm across. ';
+s += 'Only ' + (100*beam.lit).toFixed(1) + ' % of the room\u2019s non-mirror surfaces are lit directly.';
+if (P.diffuse && beam.scat > 0.001) s += ' Matte surfaces reflect ' + (100*beam.scat).toFixed(0) + ' % of the beam diffusely, faintly lighting the rest of the room.';
+return s;
+}
+function narrate(){ rmA11y.narrate(summary()); }
+function later(){ clearTimeout(narrT); narrT = setTimeout(narrate, 400); }
+/* ══════════ update cycle: quick preview while changing, full detail when idle ══════════ */
+var pending = false;
+function update(beamToo){
+if (beamToo){ buildBeam(); buildIndirect(6000); }
+draw3d(); readouts();
+if (!pending){ pending = true; requestAnimationFrame(function(){ pending = false; renderView(120); }); }
+clearTimeout(idleT); idleT = setTimeout(function(){ if (P.diffuse && indN < 40000){ buildIndirect(40000); readouts(); } renderView(240); }, 220);
+}
+function syncInputs(){
+function sv(id, v, txt){ var e = el(id + ''); if (e) e.value = v; var t = el(id + 'Val'); if (t) t.textContent = txt; }
+sv('rmSpread', P.spread, P.spread); sv('rmLyaw', P.lyaw, P.lyaw); sv('rmLpitch', P.lpitch, P.lpitch);
+sv('rmLx', P.lx, P.lx.toFixed(2)); sv('rmLy', P.ly, P.ly.toFixed(2)); sv('rmLz', P.lz, P.lz.toFixed(2));
+sv('rmR', P.R, P.R); sv('rmB', P.bounces, P.bounces);
+sv('rmVyaw', P.vyaw, P.vyaw); sv('rmVpitch', P.vpitch, P.vpitch); sv('rmVx', P.vx, P.vx.toFixed(2)); sv('rmVy', P.vy, P.vy.toFixed(2)); sv('rmVz', P.vz, P.vz.toFixed(2));
+sv('rmFov', P.fov, P.fov); sv('rmAmb', P.amb, P.amb);
+el('rmColor').value = P.color; el('rmMirrors').value = P.mirrors;
+el('rmHaze').checked = P.haze; el('rmDiff').checked = P.diffuse; el('rmRays').checked = P.rays; el('rmObj').checked = P.objects;
+}
+var BEAM_KEYS = { spread:1, color:0, lyaw:1, lpitch:1, lx:1, ly:1, lz:1, mirrors:1, R:1, bounces:1, objects:1, diffuse:1 };
+function set(k, v){
+if (typeof v === 'string' && k !== 'color' && k !== 'mirrors') v = parseFloat(v);
+P[k] = v; syncInputs(); update(!!BEAM_KEYS[k]); later();
+}
+function preset(name){
+var keep = { vyaw:P.vyaw, vpitch:P.vpitch, vx:P.vx, vy:P.vy, vz:P.vz, fov:P.fov };
+for (var k in DEF) P[k] = DEF[k];
+if (name === 'laser'){ for (var k2 in keep) P[k2] = keep[k2]; }
+if (name === 'flash'){ for (var k3 in keep) P[k3] = keep[k3]; P.spread = 12; P.color = 'white'; P.lyaw = 40; P.lpitch = -22; P.lx = 0.4; P.ly = 0.5; P.lz = 1.6; }
+if (name === 'corridor'){ P.mirrors = 'two'; P.amb = 40; P.spread = 10; P.color = 'white'; P.lx = 2.0; P.ly = 2.7; P.lz = 2.2; P.lyaw = -90; P.lpitch = -55;
+P.vx = 0.6; P.vy = 1.5; P.vz = 1.3; P.vyaw = 0; P.vpitch = -4; P.fov = 75; P.haze = false; }
+if (name === 'reset'){ cam = { yaw:-55, pitch:28, dist:7.2 }; }
+syncInputs(); update(true);
+var msg = { laser:'Laser: a narrow beam. ', flash:'Flashlight: a beam spreading 12 degrees. ', corridor:'Two facing mirrors with the room lights on: look along the row of images. ', reset:'Reset. ' }[name] || '';
+rmA11y.narrate(msg + summary());
+}
+function view(v){
+if (v === '3d'){ cam.yaw = -55; cam.pitch = 28; } else if (v === 'top'){ cam.yaw = -90; cam.pitch = 89; } else if (v === 'side'){ cam.yaw = -90; cam.pitch = 2; }
+draw3d();
+}
+function zoom(f){ cam.dist = clamp(cam.dist*f, 3.5, 16); draw3d(); }
+function describe(){
+var m = el('rmMirrors').options[el('rmMirrors').selectedIndex].text.toLowerCase();
+var msg = 'Room 4 m by 3 m by 2.5 m; mirrors: ' + m + ', reflectivity ' + P.R + ' %. The light is ' + P.lx.toFixed(1) + ', ' + P.ly.toFixed(1) + ' m from the corner, ' + P.lz.toFixed(1) + ' m high. ';
+msg += summary() + ' ';
+var c = beam.central;
+if (c.hits.length) msg += 'At the first mirror (' + c.hits[0].name + ') the angle of incidence is ' + c.hits[0].ang.toFixed(0) + ' degrees, and so is the angle of reflection. ';
+msg += 'The viewer stands at ' + P.vx.toFixed(1) + ', ' + P.vy.toFixed(1) + ' m, eyes ' + P.vz.toFixed(1) + ' m high. Room lights ' + P.amb + ' %, haze ' + (P.haze ? 'on.' : 'off.');
+rmA11y.narrate(msg);
+}
+/* ══════════ pointer: turn the 3-D view, look around on the viewer's screen ══════════ */
+function dragger(cv, onMove){
+var pts = {}, last = null, pinch = null;
+function npt(){ return Object.keys(pts).length; }
+function pdist(){ var k = Object.keys(pts); return Math.max(10, Math.hypot(pts[k[0]].x - pts[k[1]].x, pts[k[0]].y - pts[k[1]].y)); }
+cv.addEventListener('pointerdown', function(e){ pts[e.pointerId] = { x:e.clientX, y:e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch(err){}
+if (npt() === 2 && cv === c3){ last = null; pinch = { d:pdist(), dist:cam.dist }; } else { last = { x:e.clientX, y:e.clientY }; } cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!pts[e.pointerId]) return; pts[e.pointerId] = { x:e.clientX, y:e.clientY };
+if (pinch && npt() === 2){ cam.dist = clamp(pinch.dist*pinch.d/pdist(), 3.5, 16); draw3d(); return; }
+if (!last) return; var dx = e.clientX - last.x, dy = e.clientY - last.y; last = { x:e.clientX, y:e.clientY }; onMove(dx, dy); });
+function up(e){ delete pts[e.pointerId]; if (npt() < 2) pinch = null; if (!npt()){ last = null; cv.style.cursor = ''; } }
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+}
+dragger(c3, function(dx, dy){ cam.yaw -= dx*0.4; cam.pitch = clamp(cam.pitch + dy*0.4, -10, 89); draw3d(); });
+dragger(cs, function(dx, dy){ var k = cs.getBoundingClientRect().width/LSW;
+P.vyaw = Math.round(((P.vyaw + dx*0.25/k + 540) % 360) - 180); P.vpitch = clamp(Math.round(P.vpitch - dy*0.25/k), -80, 80); syncInputs(); update(false); later(); });
+c3.addEventListener('wheel', function(e){ e.preventDefault(); zoom(e.deltaY > 0 ? 1.1 : 1/1.1); }, { passive:false });
+c3.addEventListener('keydown', function(e){ var k = e.key;
+if (k === 'ArrowLeft'){ cam.yaw += 5; } else if (k === 'ArrowRight'){ cam.yaw -= 5; } else if (k === 'ArrowUp'){ cam.pitch = clamp(cam.pitch + 5, -10, 89); } else if (k === 'ArrowDown'){ cam.pitch = clamp(cam.pitch - 5, -10, 89); }
+else if (k === '+' || k === '='){ zoom(1/1.15); return; } else if (k === '-'){ zoom(1.15); return; } else return; e.preventDefault(); draw3d(); });
+cs.addEventListener('keydown', function(e){ var k = e.key;
+if (k === 'ArrowLeft') P.vyaw = ((P.vyaw + 5 + 540) % 360) - 180; else if (k === 'ArrowRight') P.vyaw = ((P.vyaw - 5 + 540) % 360) - 180;
+else if (k === 'ArrowUp') P.vpitch = clamp(P.vpitch + 5, -80, 80); else if (k === 'ArrowDown') P.vpitch = clamp(P.vpitch - 5, -80, 80); else return;
+e.preventDefault(); syncInputs(); update(false); later(); });
+/* boot */
+makeGrids();
+for (var k0 in DEF) P[k0] = DEF[k0];
+syncInputs(); update(true);
+rmA11y.narrate('Ready. A red laser in a dark room with four mirror walls. ' + summary() + ' Drag the 3-D view to turn it, or drag the viewer\u2019s screen to look around.');
+return { set:set, preset:preset, view:view, zoom:zoom, describe:describe, redraw3d:draw3d,
+_state:function(){ return { P:JSON.parse(JSON.stringify(P)), central:{ n:beam.central.n, L:beam.central.L, I:beam.central.I, spot:beam.central.spot, land:beam.central.land, hits:beam.central.hits }, lit:beam.lit, landed:beam.landed, stored:beam.stored, scat:beam.scat, indLanded:beam.indLanded, indStored:indStored() }; },
+_ind:function(f, q){ return irrAt(cellOf({ kind:'face', f:f }, q, G.i)); }, _indTime:function(N){ var t0 = performance.now(); buildIndirect(N); return performance.now() - t0; },
+_objInd:function(){ var e = 0, a = 0; OBJS.forEach(function(o, i){ var og2 = G.i.objs[i];
+if (o.type === 'sphere'){ for (var k=0; k<og2.g.length; k++){ var ar = og2.ar[Math.floor(k/og2.nu)]; e += og2.g[k]*ar; a += ar; } }
+else og2.faces.forEach(function(fc, bf){ var ax = bf >> 1, a1 = (ax+1)%3, a2 = (ax+2)%3, ca = (o.mx[a1]-o.mn[a1])*(o.mx[a2]-o.mn[a2])/(fc.nu*fc.nv); for (var k2=0; k2<fc.g.length; k2++){ e += fc.g[k2]*ca; a += ca; } }); });
+return { energy:e, area:a }; },
+_render:function(res){ var t0 = performance.now(); renderView(res || 240); return performance.now() - t0; } };
+})();
+</script>
+</main>
+</body>
+</html>

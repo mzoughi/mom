@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Ising Model -- Spin Lattice Simulation</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, magnetism, magnetic field, physics simulation, lesson, scientific">
+<meta name="description" content="Ising Model -- Spin Lattice Simulation -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="imroot" role="main" aria-label="Ising model spin lattice simulation">
+<p class="im_h1">Ising Model -- Spin Lattice Simulation</p>
+<!-- Accessibility toolbar -->
+<div class="im_a11ybar" role="toolbar" aria-label="Accessibility options">
+<input type="button" id="btnHC"   value="High Contrast"    class="im_abtn" onclick="isingModel.toggleHC()">
+<input type="button" id="btnCB"   value="Color-Blind Safe" class="im_abtn" onclick="isingModel.toggleCB()">
+<input type="button" id="btnNarr" value="Narration: ON"    class="im_abtn im_abtnon" onclick="isingModel.toggleNarr()">
+</div>
+<!-- Reduced-motion notice -->
+<div id="motionNotice" class="im_motionnotice" role="status">
+⚠ Reduced motion is enabled in your OS settings.
+The animation is paused. Current lattice state is shown statically.
+</div>
+<!-- Simulation canvases -->
+<div class="im_mainpanel" role="group" aria-label="Simulation display">
+<canvas id="grid" width="300" height="300" role="img" aria-label="Spin lattice grid" aria-describedby="gridDesc">
+</canvas>
+<p id="gridDesc" class="im_sronly">
+A 50×50 grid of magnetic spins. Each cell is colored to show its spin state.
+</p>
+<canvas id="graph" width="380" height="300" role="img" aria-label="Magnetization vs time graph" aria-describedby="graphDesc">
+</canvas>
+<p id="graphDesc" class="im_sronly">
+A line graph showing magnetization (−1 to +1) as a function of simulation time.
+</p>
+</div>
+<!-- Controls -->
+<div class="im_controls" id="im_controls">
+<!-- Playback + field -->
+<div class="im_ctrlrow">
+<input type="button" value="Play"    class="im_btn" onclick="isingModel.startSim()"   aria-label="Play simulation">
+<input type="button" value="Pause"   class="im_btn" onclick="isingModel.pauseSim()"   aria-label="Pause simulation">
+<input type="button" value="Restart" class="im_btn" onclick="isingModel.restartSim()" aria-label="Restart simulation">
+<span class="im_spacer"></span>
+<span class="im_templbl" id="tempLabel" aria-live="polite">Low temperature:</span>
+<input type="button" id="btnBpos" value="B &gt; 0" class="im_fieldbtn" aria-pressed="false" aria-label="Set field positive" onclick "isingModel.setField(1)">
+<input type="button" id="btnB0"   value="B = 0"   class="im_fieldbtn im_fieldbtnon" aria-pressed="true"  aria-label="Set field to zero"  onclick="isingModel.setField(0)">
+<input type="button" id="btnBneg" value="B &lt; 0" class="im_fieldbtn" aria-pressed="false" aria-label="Set field negative" onclick="isingModel.setField(-1)">
+</div>
+<!-- Temperature -->
+<div class="im_ctrlrow">
+<input type="button" value="▼ Decrease Temp" class="im_btn" aria-label="Decrease temperature" onclick="isingModel.decreaseTemp()">
+<input type="button" value="▲ Increase Temp" class="im_btn" aria-label="Increase temperature" onclick="isingModel.increaseTemp()">
+<span id="tempDisplay" class="im_tempdisplay" aria-live="polite">T = 1.00</span>
+</div>
+<!-- Keyboard hints -->
+<p class="im_kbdhint">
+<kbd>P</kbd> Play &nbsp;
+<kbd>U</kbd> Pause &nbsp;
+<kbd>R</kbd> Restart &nbsp;
+<kbd>+</kbd> Increase T &nbsp;
+<kbd>−</kbd> Decrease T &nbsp;
+<kbd>1</kbd> B&gt;0 &nbsp;
+<kbd>2</kbd> B=0 &nbsp;
+<kbd>3</kbd> B&lt;0
+</p>
+<!-- Live readout panel -->
+<div class="im_box" role="region" aria-labelledby="readHd"
+ aria-live="polite" aria-atomic="false" aria-relevant="text">
+<h2 id="readHd">Live Readings</h2>
+<div class="im_rgrid">
+<span class="im_rglbl">Magnetization M:</span>
+<span class="im_rgval" id="r_M">0.000</span>
+<span class="im_rglbl">Temperature T:</span>
+<span class="im_rgval" id="r_T">1.00</span>
+<span class="im_rglbl">Field B:</span>
+<span class="im_rgval" id="r_B">0.00</span>
+<span class="im_rglbl">Regime:</span>
+<span class="im_rgval" id="r_regime">Low T</span>
+<span class="im_rglbl">Spin-up (↑):</span>
+<span class="im_rgval" id="r_up">50.0%</span>
+<span class="im_rglbl">Spin-down (↓):</span>
+<span class="im_rgval" id="r_dn">50.0%</span>
+<span class="im_rglbl">Time steps:</span>
+<span class="im_rgval" id="r_time">0</span>
+<span class="im_rglbl">Status:</span>
+<span class="im_rgval" id="r_status" role="status">Ready</span>
+</div>
+</div>
+<!-- Narration panel -->
+<div class="im_box" id="narrationBox"
+ role="region" aria-labelledby="narrHd"
+ aria-live="polite" aria-atomic="true">
+<h2 id="narrHd">What's happening</h2>
+<p id="narration" class="im_narrtext">
+The lattice is initialized with all spins random (B = 0).
+Temperature T = 1.00 -- well below the critical temperature of 2.27.
+At this low temperature, spins tend to align with their neighbors.
+Press Play to begin the simulation.
+</p>
+</div>
+<!-- Physics info -->
+<div class="im_infobox" role="note">
+<strong>2D Ising Model (Metropolis algorithm):</strong><br>
+Each spin s = ±1 interacts with its 4 neighbors.
+Flip probability: if ΔE &lt; 0, always flip; else flip with probability e<sup>−ΔE/T</sup>.<br>
+Critical temperature T<sub>c</sub> ≈ 2.27 J/k<sub>B</sub>.
+Below T<sub>c</sub>: ordered (ferromagnetic). Above: disordered (paramagnetic).<br>
+<strong>Colors:</strong> <span id="colorLegend">Green = spin up (+1) &nbsp; Red = spin down (−1)</span>
+</div>
+</div><!-- im_controls -->
+<div id="srAnnounce" class="im_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="im_credit">Simulation by Taha Mzoughi © 2025 -- Accessibility layer added</p>
+</div><!-- #imroot -->
+<style>
+/* ════════════════════════════════════════════════
+All rules scoped to #imroot
+Theme class .hc toggled on #imroot
+════════════════════════════════════════════════ */
+#imroot {
+--bg:        #c0c0c0;
+--panel-bg:  #d8d8d8;
+--panel-bd:  #555;
+--text:      #111;
+--text-dim:  #444;
+--btn-bg:    #dddddd;
+--btn-active:#aaaaff;
+--narr-bg:   #eef4ff;
+--narr-bd:   #6699cc;
+--narr-text: #112244;
+--info-bg:   #fffbe6;
+--info-bd:   #ccaa00;
+--focus-ring:#0066cc;
+background: var(--bg);
+font-family: Arial, sans-serif;
+font-size: 14px;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 16px;
+box-sizing: border-box;
+width: 100%;
+max-width: 720px;
+margin: 0 auto;
+position: relative;
+border-radius: 4px;
+color: var(--text);
+}
+#imroot *, #imroot *::before, #imroot *::after {
+box-sizing: border-box; margin: 0; padding: 0;
+}
+/* ── High contrast ── */
+#imroot.hc {
+--bg:        #ffffff; --panel-bg:  #f0f0f0; --panel-bd:  #000000;
+--text:      #000000; --text-dim:  #000000; --btn-bg:    #ffffff;
+--btn-active:#ccccff; --narr-bg:   #e8f0ff; --narr-bd:   #000099;
+--narr-text: #000000; --info-bg:   #ffffcc; --info-bd:   #000000;
+}
+/* ── Focus ── */
+#imroot input:focus-visible {
+outline: 3px solid var(--focus-ring); outline-offset: 2px;
+}
+/* ── Heading ── */
+#imroot .im_h1 {
+font-size: 1rem; font-weight: bold; color: var(--text);
+margin-bottom: 8px; letter-spacing: 0.05em; text-align: center;
+}
+/* ── A11y toolbar ── */
+#imroot .im_a11ybar {
+display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center;
+}
+#imroot .im_abtn {
+font-size: 0.75rem; padding: 4px 10px; background: var(--panel-bg);
+border: 1px solid var(--panel-bd); border-radius: 3px; cursor: pointer;
+color: var(--text); font-weight: bold;
+}
+#imroot .im_abtn:hover { filter: brightness(0.9); }
+#imroot .im_abtnon     { background: #333; color: #fff; border-color: #000; }
+/* ── Motion notice ── */
+#imroot .im_motionnotice {
+display: none; background: #ffffcc; border: 2px solid #888;
+border-radius: 4px; padding: 8px 12px; font-size: 0.8rem; color: #333;
+margin-bottom: 10px; text-align: center; max-width: 700px;
+}
+/* ── Canvas panel ── */
+#imroot .im_mainpanel {
+display: flex; gap: 0; border: 2px solid var(--panel-bd); background: #fff;
+}
+#imroot.hc .im_mainpanel { border: 3px solid #000; }
+#imroot #grid { display: block; image-rendering: pixelated; }
+#imroot #graph {
+display: block; background: #fff; border-left: 2px solid var(--panel-bd);
+}
+#imroot.hc #graph { border-left: 3px solid #000; }
+/* ── Controls ── */
+#imroot .im_controls {
+width: 100%; max-width: 700px; margin-top: 8px;
+display: flex; flex-direction: column; gap: 8px;
+}
+#imroot .im_ctrlrow {
+display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+#imroot .im_spacer { width: 12px; }
+/* ── Buttons ── */
+#imroot .im_btn {
+padding: 5px 14px; font-size: 0.82rem; font-weight: bold;
+background: var(--btn-bg); border: 2px outset var(--panel-bd);
+border-radius: 3px; cursor: pointer; color: var(--text);
+}
+#imroot .im_btn:active { border-style: inset; }
+#imroot.hc .im_btn { border: 2px solid #000; }
+/* ── Field buttons ── */
+#imroot .im_fieldbtn {
+padding: 4px 12px; font-size: 0.8rem; font-weight: bold;
+background: var(--btn-bg); border: 2px outset var(--panel-bd);
+border-radius: 3px; cursor: pointer; color: var(--text);
+}
+#imroot .im_fieldbtnon { background: var(--btn-active); border-style: inset; }
+#imroot.hc .im_fieldbtnon { background: #aaaaff; border: 2px inset #000; }
+/* ── Temp label + display ── */
+#imroot .im_templbl { font-weight: bold; font-size: 0.85rem; color: var(--text); }
+#imroot .im_tempdisplay { font-size: 0.82rem; font-weight: bold; color: var(--text); min-width: 70px; }
+/* ── Box (readout + narration) ── */
+#imroot .im_box {
+background: var(--narr-bg); border: 2px solid var(--narr-bd);
+border-radius: 4px; padding: 9px 14px;
+}
+#imroot.hc .im_box { border: 2px solid #000; background: #f0f0ff; }
+#imroot .im_box h2 {
+font-size: 0.82rem; font-weight: bold; color: var(--narr-text);
+border-bottom: 1px solid var(--narr-bd); padding-bottom: 4px; margin-bottom: 7px;
+}
+#imroot.hc .im_box h2 { border-bottom-color: #000; color: #000; }
+/* ── Readout grid ── */
+#imroot .im_rgrid {
+display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px 10px; font-size: 0.8rem;
+}
+#imroot .im_rglbl { color: var(--text-dim); }
+#imroot .im_rgval { font-weight: bold; color: #003399; }
+#imroot.hc .im_rgval { color: #000099; }
+/* ── Narration text ── */
+#imroot .im_narrtext { font-size: 0.8rem; color: var(--narr-text); line-height: 1.55; min-height: 48px; }
+/* ── Info box ── */
+#imroot .im_infobox {
+background: var(--info-bg); border: 1px solid var(--info-bd);
+border-radius: 4px; padding: 8px 12px; font-size: 0.75rem;
+color: var(--text-dim); line-height: 1.5;
+}
+#imroot.hc .im_infobox { border: 2px solid #000; }
+#imroot .im_infobox strong { color: var(--text); }
+/* ── Keyboard hints ── */
+#imroot .im_kbdhint { font-size: 0.68rem; color: var(--text-dim); text-align: center; }
+#imroot .im_kbdhint kbd {
+background: #ddd; border: 1px solid #999; border-radius: 3px;
+padding: 1px 4px; font-size: 0.7rem; font-family: monospace; color: #222;
+}
+#imroot.hc .im_kbdhint kbd { border: 2px solid #000; background: #fff; }
+/* ── Misc ── */
+#imroot .im_credit { margin-top: 12px; font-size: 0.7rem; color: var(--text-dim); }
+#imroot .im_sronly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+
+/* ════ layout by the width the sim actually gets (in a MOM column it can be much narrower than the window);
+   the @media rules above stay as the fallback for browsers without container queries ════ */
+#imroot { container-type:inline-size; }
+#imroot .im_mainpanel { flex-wrap:wrap; justify-content:center; }
+#imroot #grid { width:100%; max-width:300px; height:auto; }
+#imroot #graph { width:100%; max-width:382px; height:auto; }   /* 380 px drawing + its 2 px border */
+@media (max-width:700px) { #imroot .im_mainpanel { flex-direction:column; align-items:center; } #imroot #graph { border-left:none; border-top:2px solid var(--panel-bd); } }
+@container (max-width:640px) { #imroot .im_mainpanel { flex-direction:column; align-items:center; } #imroot #graph { border-left:none; border-top:2px solid var(--panel-bd); } }
+
+</style>
+<script>
+var isingModel = function() {
+/* ── Refs ── */
+var ROOT       = document.getElementById('imroot');
+var gridCanvas = document.getElementById('grid');
+var gridCtx    = gridCanvas.getContext('2d');
+var graphCanvas= document.getElementById('graph');
+var graphCtx   = graphCanvas.getContext('2d');
+var GW = graphCanvas.width, GH = graphCanvas.height;
+/* ── Palettes ── */
+var PALETTES = {
+def: {
+spinUp:'#00dd00', spinDn:'#dd0000', graphLine:'#cc0000', graphDot:'#cc0000',
+upLabel:'Green = spin up (+1)', dnLabel:'Red = spin down (\u22121)'
+},
+colorblind: {
+spinUp:'#0072b2', spinDn:'#e69f00', graphLine:'#0072b2', graphDot:'#0072b2',
+upLabel:'Blue = spin up (+1)', dnLabel:'Orange = spin down (\u22121)'
+},
+highcontrast: {
+spinUp:'#000000', spinDn:'#ffffff', graphLine:'#000000', graphDot:'#000000',
+upLabel:'Black = spin up (+1)', dnLabel:'White = spin down (\u22121)'
+}
+};
+var pal = PALETTES.def;
+var hcMode=false, cbMode=false, showNarration=true;
+/* ── Physics constants ── */
+var GRID_N=50, CELL=6, J=1.0, MAX_HIST=500;
+var T=1.0, B=0, running=false, animId=null;
+var time=0, frameCount=0, spins=[], magHistory=[];
+var TEMP_LEVELS=[0.5,1.0,1.5,2.0,2.27,2.8,3.5,5.0,8.0], tempIdx=1;
+var narrFrame=0;
+var PAD={top:30,right:20,bottom:40,left:55};
+/* ── Reduced motion ── */
+var prefersReducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(prefersReducedMotion){var mn=document.getElementById('motionNotice');if(mn)mn.style.display='block';}
+/* ── Helpers ── */
+function set(id,txt){var el=document.getElementById(id);if(el)el.textContent=txt;}
+/* ── Physics ── */
+function initSpins(){
+var N=GRID_N, fresh=new Array(N);
+for(var i=0;i<N;i++){
+fresh[i]=new Int8Array(N);
+for(var j=0;j<N;j++){
+if(B>0)fresh[i][j]=1; else if(B<0)fresh[i][j]=-1;
+else fresh[i][j]=Math.random()<0.5?1:-1;
+}
+}
+spins=fresh; time=0; frameCount=0; magHistory=[];
+}
+function isingStep(){
+if(!spins||spins.length!==GRID_N)return;
+var beta=1.0/Math.max(T,0.01), N=GRID_N;
+for(var k=0;k<N*N;k++){
+var i=(Math.random()*N)|0, j=(Math.random()*N)|0;
+var s=spins[i][j];
+var nb=spins[(i+1)%N][j]+spins[(i-1+N)%N][j]+spins[i][(j+1)%N]+spins[i][(j-1+N)%N];
+var dE=2*s*(J*nb+B);
+if(dE<0||Math.random()<Math.exp(-beta*dE))spins[i][j]=-s;
+}
+}
+function magnetization(){
+if(!spins||spins.length!==GRID_N)return 0;
+var sum=0;
+for(var i=0;i<GRID_N;i++)for(var j=0;j<GRID_N;j++)sum+=spins[i][j];
+return sum/(GRID_N*GRID_N);
+}
+function spinCounts(){
+if(!spins||spins.length!==GRID_N)return{up:0,dn:0,total:GRID_N*GRID_N};
+var up=0;
+for(var i=0;i<GRID_N;i++)for(var j=0;j<GRID_N;j++)if(spins[i][j]===1)up++;
+return{up:up,dn:GRID_N*GRID_N-up,total:GRID_N*GRID_N};
+}
+function getRegime(){
+if(T<2.27)return 'Low T (ordered)';
+if(T<3.5) return 'Near T_c (critical)';
+return 'High T (disordered)';
+}
+/* ── Drawing ── */
+function drawGrid(){
+if(!spins||spins.length!==GRID_N||!spins[0])return;
+var N=GRID_N;
+for(var i=0;i<N;i++){
+for(var j=0;j<N;j++){
+gridCtx.fillStyle=spins[i][j]===1?pal.spinUp:pal.spinDn;
+gridCtx.fillRect(j*CELL,i*CELL,CELL,CELL);
+}
+}
+updateGridDesc();
+}
+function updateGridDesc(){
+var m=magHistory.length>0?magHistory[magHistory.length-1].m:magnetization();
+var counts=spinCounts();
+var upPct=(counts.up/counts.total*100).toFixed(1), dnPct=(counts.dn/counts.total*100).toFixed(1);
+var bStr=B>0?'positive':B<0?'negative':'zero';
+set('gridDesc','50\u00d750 spin lattice. '+upPct+'% of spins are up, '+dnPct+'% are down. '
++'Net magnetization M = '+m.toFixed(3)+'. T = '+T.toFixed(2)+', regime: '+getRegime()+'. Field B is '+bStr+'.');
+}
+function drawGraph(){
+var ctx=graphCtx;
+ctx.clearRect(0,0,GW,GH); ctx.fillStyle='#fff'; ctx.fillRect(0,0,GW,GH);
+var axColor='#000';
+ctx.fillStyle=axColor; ctx.font='bold '+(hcMode?14:13)+'px Arial';
+ctx.textAlign='center'; ctx.fillText('Magnetization as a function of time',GW/2,18);
+var plotW=GW-PAD.left-PAD.right, plotH=GH-PAD.top-PAD.bottom;
+ctx.strokeStyle=axColor; ctx.lineWidth=hcMode?2:1.5;
+ctx.beginPath(); ctx.moveTo(PAD.left,PAD.top); ctx.lineTo(PAD.left,PAD.top+plotH);
+ctx.lineTo(PAD.left+plotW,PAD.top+plotH); ctx.stroke();
+ctx.save(); ctx.font='11px Arial'; ctx.fillStyle=axColor;
+ctx.translate(12,PAD.top+plotH/2); ctx.rotate(-Math.PI/2);
+ctx.textAlign='center'; ctx.fillText('M',0,0); ctx.restore();
+ctx.font='10px Arial'; ctx.textAlign='right'; ctx.fillStyle=axColor;
+[-1,-0.5,0,0.5,1].forEach(function(v){
+var y=PAD.top+plotH*(1-(v+1)/2);
+ctx.beginPath();ctx.moveTo(PAD.left-4,y);ctx.lineTo(PAD.left,y);ctx.stroke();
+ctx.fillText(v.toFixed(2),PAD.left-6,y+3);
+ctx.save();ctx.strokeStyle=hcMode?'#ccc':'#ddd';ctx.lineWidth=0.5;
+ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+plotW,y);ctx.stroke();ctx.restore();
+});
+ctx.textAlign='center'; ctx.fillStyle=axColor; ctx.font='11px Arial';
+ctx.fillText('Time',PAD.left+plotW/2,GH-5);
+if(magHistory.length<2)return;
+var tMin=magHistory[0].t, tMax=Math.max(magHistory[magHistory.length-1].t,tMin+1), tRange=tMax-tMin;
+ctx.font='9px Arial'; ctx.textAlign='center';
+for(var ti=0;ti<=4;ti++){
+var tv=tMin+tRange*ti/4, x=PAD.left+plotW*ti/4;
+ctx.strokeStyle=axColor;ctx.lineWidth=1;
+ctx.beginPath();ctx.moveTo(x,PAD.top+plotH);ctx.lineTo(x,PAD.top+plotH+4);ctx.stroke();
+ctx.fillStyle=axColor; ctx.fillText(tv.toFixed(0),x,PAD.top+plotH+14);
+}
+ctx.beginPath(); ctx.strokeStyle=pal.graphLine; ctx.lineWidth=hcMode?2:1;
+for(var idx=0;idx<magHistory.length;idx++){
+var pt=magHistory[idx];
+var px=PAD.left+plotW*(pt.t-tMin)/tRange, py=PAD.top+plotH*(1-(pt.m+1)/2);
+if(idx===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);
+}
+ctx.stroke();
+ctx.fillStyle=pal.graphDot;
+for(var idx2=0;idx2<magHistory.length;idx2++){
+var pt2=magHistory[idx2];
+var px2=PAD.left+plotW*(pt2.t-tMin)/tRange, py2=PAD.top+plotH*(1-(pt2.m+1)/2);
+ctx.beginPath();ctx.arc(px2,py2,hcMode?3:2,0,Math.PI*2);ctx.fill();
+}
+updateGraphDesc();
+}
+function updateGraphDesc(){
+if(magHistory.length<2)return;
+var latest=magHistory[magHistory.length-1].m, oldest=magHistory[0].m;
+var trend=latest>oldest+0.05?'increasing':latest<oldest-0.05?'decreasing':'roughly stable';
+set('graphDesc','Magnetization graph from time '+magHistory[0].t+' to '+magHistory[magHistory.length-1].t+'. '
++'Current M = '+latest.toFixed(3)+', trend is '+trend+'. Range: \u22121 to +1.');
+}
+/* ── Readouts & narration ── */
+function updateColorLegend(){
+set('colorLegend', pal.upLabel+' \u00a0 '+pal.dnLabel);
+}
+function updateReadouts(){
+var m=magnetization(), counts=spinCounts();
+var upPct=(counts.up/counts.total*100).toFixed(1), dnPct=(counts.dn/counts.total*100).toFixed(1);
+set('r_M',      m.toFixed(3));
+set('r_T',      T.toFixed(2));
+set('r_B',      B.toFixed(2));
+set('r_regime', getRegime());
+set('r_up',     upPct+'%');
+set('r_dn',     dnPct+'%');
+set('r_time',   time);
+set('r_status', running?'Running':'Paused');
+narrFrame++;
+if(narrFrame%60===0||!running)updateNarration(m,upPct,dnPct);
+}
+function updateNarration(m,upPct,dnPct){
+if(!showNarration)return;
+if(m===undefined){
+m=magnetization(); var c=spinCounts();
+upPct=(c.up/c.total*100).toFixed(1); dnPct=(c.dn/c.total*100).toFixed(1);
+}
+var regime=getRegime();
+var bDesc=B>0?'positive (favoring spin-up)':B<0?'negative (favoring spin-down)':'zero (no external field)';
+var orderDesc;
+if(Math.abs(m)>0.8)      orderDesc='nearly fully ordered \u2014 most spins aligned';
+else if(Math.abs(m)>0.5) orderDesc='partially ordered';
+else if(Math.abs(m)>0.2) orderDesc='weakly ordered with some alignment';
+else                      orderDesc='disordered \u2014 spins roughly balanced';
+var trendDesc='';
+if(magHistory.length>=10){
+var recent=magHistory.slice(-10), dM=recent[recent.length-1].m-recent[0].m;
+if(dM>0.05)trendDesc=' Magnetization is currently increasing.';
+else if(dM<-0.05)trendDesc=' Magnetization is currently decreasing.';
+else trendDesc=' Magnetization is stable.';
+}
+set('narration',
+'Temperature T = '+T.toFixed(2)+' \u2014 '+regime+'. '
++'External field B is '+bDesc+'. '
++upPct+'% of spins are up, '+dnPct+'% are down. '
++'Net magnetization M = '+m.toFixed(3)+' \u2014 lattice is '+orderDesc+'.'
++trendDesc);
+}
+/* ── Simulation loop ── */
+function loop(){
+if(!running)return;
+isingStep(); time++; frameCount++;
+if(frameCount%2===0){
+var m=magnetization();
+magHistory.push({t:time,m:m});
+if(magHistory.length>MAX_HIST)magHistory.shift();
+}
+drawGrid(); drawGraph(); updateReadouts();
+animId=requestAnimationFrame(loop);
+}
+/* ── Controls ── */
+function startSim(){
+if(prefersReducedMotion){srAnnounce('Reduced motion is enabled. Animation is paused by your OS settings.');return;}
+if(running)return;
+running=true; set('r_status','Running'); loop();
+srAnnounce('Simulation started.');
+}
+function pauseSim(){
+if(!running)return;
+running=false; if(animId)cancelAnimationFrame(animId);
+set('r_status','Paused'); updateNarration();
+var n=document.getElementById('narration');
+srAnnounce('Simulation paused. '+(n?n.textContent:''));
+}
+function restartSim(){
+running=false; if(animId)cancelAnimationFrame(animId);
+frameCount=0; initSpins(); drawGrid(); drawGraph(); updateReadouts(); updateNarration();
+var n=document.getElementById('narration');
+srAnnounce('Simulation restarted. '+(n?n.textContent:''));
+}
+function increaseTemp(){
+if(tempIdx<TEMP_LEVELS.length-1)tempIdx++;
+T=TEMP_LEVELS[tempIdx]; updateTempLabel(); updateNarration();
+srAnnounce('Temperature increased to T = '+T.toFixed(2)+'. '+getRegime()+'.');
+}
+function decreaseTemp(){
+if(tempIdx>0)tempIdx--;
+T=TEMP_LEVELS[tempIdx]; updateTempLabel(); updateNarration();
+srAnnounce('Temperature decreased to T = '+T.toFixed(2)+'. '+getRegime()+'.');
+}
+function updateTempLabel(){
+set('tempDisplay','T = '+T.toFixed(2));
+set('r_T',        T.toFixed(2));
+set('r_regime',   getRegime());
+var label=T<2.27?'Low temperature:':T<3.5?'Near critical point:':'High temperature:';
+set('tempLabel',  label);
+}
+function setField(val){
+B=val*0.5;
+var ids=['btnBpos','btnB0','btnBneg'], vals=[1,0,-1];
+for(var i=0;i<ids.length;i++){
+var btn=document.getElementById(ids[i]); if(!btn)continue;
+var isActive=(vals[i]===val);
+if(isActive){ if(btn.className.indexOf('im_fieldbtnon')<0)btn.className+=' im_fieldbtnon'; }
+else { btn.className=btn.className.replace(' im_fieldbtnon',''); }
+btn.setAttribute('aria-pressed',isActive);
+}
+set('r_B',B.toFixed(2));
+var bLabel=val>0?'B greater than 0 \u2014 field favors spin-up.':
+val<0?'B less than 0 \u2014 field favors spin-down.':
+'B equals 0 \u2014 no external field.';
+srAnnounce('Field set: '+bLabel); updateNarration();
+}
+/* ── A11y toggles ── */
+function setBtnOn(id,on){
+var b=document.getElementById(id); if(!b)return;
+if(on){ if(b.className.indexOf('im_abtnon')<0)b.className+=' im_abtnon'; }
+else { b.className=b.className.replace(' im_abtnon',''); }
+b.setAttribute('aria-pressed',on);
+}
+function toggleHC(){
+hcMode=!hcMode;
+ROOT.classList.toggle('hc',hcMode);
+setBtnOn('btnHC',hcMode);
+pal=hcMode?PALETTES.highcontrast:(cbMode?PALETTES.colorblind:PALETTES.def);
+updateColorLegend(); drawGrid(); drawGraph();
+srAnnounce('High contrast mode '+(hcMode?'enabled.':'disabled.'));
+}
+function toggleCB(){
+cbMode=!cbMode;
+ROOT.classList.toggle('cb',cbMode);
+setBtnOn('btnCB',cbMode);
+if(!hcMode)pal=cbMode?PALETTES.colorblind:PALETTES.def;
+updateColorLegend(); drawGrid(); drawGraph();
+srAnnounce('Color-blind safe palette '+(cbMode?'enabled.':'disabled.'));
+}
+function toggleNarr(){
+showNarration=!showNarration;
+var box=document.getElementById('narrationBox'); if(box)box.style.display=showNarration?'':'none';
+var b=document.getElementById('btnNarr');
+if(b){b.value=showNarration?'Narration: ON':'Narration: OFF';b.setAttribute('aria-pressed',showNarration);}
+setBtnOn('btnNarr',showNarration);
+}
+/* ── SR announcer ── */
+var srTimer=null;
+function srAnnounce(msg){
+var el=document.getElementById('srAnnounce'); if(!el)return;
+el.textContent=''; clearTimeout(srTimer);
+srTimer=setTimeout(function(){el.textContent=msg;},60);
+}
+/* ── Keyboard shortcuts scoped to ROOT ── */
+ROOT.setAttribute('tabindex','0');
+ROOT.addEventListener('keydown',function(e){
+var tag=document.activeElement.tagName;
+if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+switch(e.key){
+case 'p': case 'P': startSim();     e.preventDefault(); break;
+case 'u': case 'U': pauseSim();     e.preventDefault(); break;
+case 'r': case 'R': restartSim();   e.preventDefault(); break;
+case '+': case '=': increaseTemp(); e.preventDefault(); break;
+case '-': case '_': decreaseTemp(); e.preventDefault(); break;
+case '1': setField(1);  e.preventDefault(); break;
+case '2': setField(0);  e.preventDefault(); break;
+case '3': setField(-1); e.preventDefault(); break;
+}
+});
+/* ── Boot ── */
+setField(0);
+initSpins();
+drawGrid();
+drawGraph();
+updateReadouts();
+updateNarration();
+/* ── Public API ── */
+return {
+startSim:startSim, pauseSim:pauseSim, restartSim:restartSim,
+increaseTemp:increaseTemp, decreaseTemp:decreaseTemp, setField:setField,
+toggleHC:toggleHC, toggleCB:toggleCB, toggleNarr:toggleNarr
+};
+};
+</script>
+<script>
+var isingModel = new isingModel();
+</script>
+<hr><h2>Part 3: Magnetic Domains:</h2>
+<hr>
+<ol>
+<li>In the magnetization‑over‑time simulation, what happens to the overall magnetization when a small external field is applied to a disordered region?
+
+<li>As the applied field becomes larger, what happens to the rate at which alignment spreads across the region?
+
+<li>If the field is turned off after the magnetization becomes strong, what change happens to the magnetization curve?
+
+<li>When the field is reversed, what feature is commonly seen in the magnetization‑versus‑time graph?
+
+<li>When the external field remains constant, what determines whether the magnetization stabilizes or continues to fluctuate?
+
+<li>What happens to the magnetic domains when the external magnetic field is turned off and time is allowed to pass?
+</li>
+<li>How does increasing the temperature affect the magnetic domains in a ferromagnetic material?
+</li>
+</ol>
+<hr>
+<p>Discuss your results about the last two parts of the experiment:
+</p>
+</main>
+</body>
+</html>

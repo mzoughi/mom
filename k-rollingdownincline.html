@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Motion: Rolling Down Incline</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,motion,acceleration,time,displacement,graph,lab,experiment,incline, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<!-- ═══════════════════════════════════════════════════════
+SIM 2 -- Block Released from Rest on Incline: Multi-Variable Data Collection
+MOM format: every id / global / class carries 0925
+Question variables: $d (release distance), $m (mass), $th (angle in degrees)
+A11y: High Contrast | Light Mode | Color-Blind Safe | Narration
++ keyboard control of canvas, labelled sliders, screen-reader
+descriptions of the canvas and the graph, focus outlines
+$d = rrand(0.5,1.5,0.1)
+$m = rrand(0.2,1.5,0.1)
+$th = rand(15,35)
+═══════════════════════════════════════════════════════ -->
+<div id="rlRoot0925">
+<!-- ── Accessibility toolbar ── -->
+<div class="rl_a11y0925" role="toolbar" aria-label="Display options">
+<button type="button" class="rl_a11ybtn0925" id="rlBtnHC0925" onclick="rlA11y0925.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rl_a11ybtn0925" id="rlBtnLM0925" onclick="rlA11y0925.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rl_a11ybtn0925" id="rlBtnCB0925" onclick="rlA11y0925.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rl_a11ybtn0925 rl_a11yon0925" id="rlBtnNR0925" onclick="rlA11y0925.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="rl_tbar0925"><h3>Inclined Track: Release-from-Rest Data Collection</h3></div>
+<div class="rl_mcontent0925">
+<canvas id="simCanvas0925" width="680" height="360" tabindex="0" role="img" aria-label="Wheeled block released from rest on an inclined track" aria-describedby="canvasDesc0925 rlKbHint0925"></canvas>
+<p id="canvasDesc0925" class="rl_sronly0925">A wheeled block is released from rest at an adjustable distance up a frictionless inclined track and rolls down under gravity.</p>
+</div>
+<p id="rlKbHint0925" class="rl_kbhint0925">Keyboard: focus the track, then Space = release / pause, S = step, R = reset.</p>
+<!-- Narration bar -->
+<div id="rlNarBar0925" class="rl_narbar0925" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- Playback buttons -->
+<div class="rl_bbar0925" role="group" aria-label="Playback controls">
+<button type="button" id="btnPlay0925"  class="rl_btnplay0925"  onclick="sim10925.playSim()"><span aria-hidden="true">&#9654;</span> Release</button>
+<button type="button" id="btnPause0925" onclick="sim10925.pauseSim()"><span aria-hidden="true">&#10074;&#10074;</span> Pause</button>
+<button type="button" id="btnStep0925"  onclick="sim10925.stepSim()"><span aria-hidden="true">&#9197;</span> Step</button>
+<button type="button" id="btnReset0925" class="rl_btnreset0925" onclick="sim10925.resetSim()"><span aria-hidden="true">&#8634;</span> Reset</button>
+</div>
+<!-- Parameters + Info -->
+<div class="rl_fbar0925">
+<div class="rl_params0925" role="group" aria-labelledby="rlParamHd0925">
+<div class="rl_boxhd0925" id="rlParamHd0925">Parameters</div>
+<div class="rl_prow0925">
+<label class="rl_plbl0925" for="dSlider0925">Release distance d (m):</label>
+<input type="range" class="rl_slider0925" id="dSlider0925" min="0.3" max="1.8" step="0.1" value="1.1"
+oninput="sim10925.setDist(this.value)" onchange="sim10925.setDist(this.value)">
+<span id="dVal0925" class="rl_pval0925" aria-hidden="true">1.1</span>
+</div>
+<div class="rl_prow0925">
+<label class="rl_plbl0925" for="mSlider0925">Block mass m (kg):</label>
+<input type="range" class="rl_slider0925" id="mSlider0925" min="0.1" max="2" step="0.1" value="1.3"
+oninput="sim10925.setMass(this.value)" onchange="sim10925.setMass(this.value)">
+<span id="mVal0925" class="rl_pval0925" aria-hidden="true">1.3</span>
+</div>
+<div class="rl_prow0925">
+<label class="rl_plbl0925" for="angleSlider0925">Track angle &theta; (&deg;):</label>
+<input type="range" class="rl_slider0925" id="angleSlider0925" min="5" max="40" step="1" value="28"
+oninput="sim10925.setAngle(this.value)" onchange="sim10925.setAngle(this.value)">
+<span id="angleVal0925" class="rl_pval0925" aria-hidden="true">28&deg;</span>
+</div>
+<div class="rl_prow0925">
+<label class="rl_plbl0925" for="speedSlider0925">Sim speed:</label>
+<input type="range" class="rl_slider0925" id="speedSlider0925" min="1" max="80" step="1" value="20"
+oninput="sim10925.setSpeed(this.value)" onchange="sim10925.setSpeed(this.value)">
+<span id="speedVal0925" class="rl_pval0925" aria-hidden="true">0.20&times;</span>
+</div>
+<div class="rl_prow0925" style="margin-bottom:0;">
+<span class="rl_plbl0925">Vertical height h (m):</span>
+<span id="hVal0925" class="rl_pval0925">--</span>
+</div>
+</div>
+<div class="rl_info0925" role="note">
+<strong>Physics (no friction):</strong><br>
+`a = g sin theta` (independent of `m`!)<br>
+`v(t) = a t`<br>
+`s(t) = 1/2 a t^2`<br>
+`h = d sin theta`<br>
+<br><em>Block has wheels, so `mu = 0`</em>
+</div>
+</div>
+<!-- Live readings (not aria-live: the narration bar and announcer handle speech) -->
+<div class="rl_fbar0925">
+<div class="rl_readout0925" role="group" aria-labelledby="rlReadHd0925">
+<div class="rl_boxhd0925" id="rlReadHd0925">Live Readings</div>
+<div class="rl_rrow0925"><span>Velocity v:</span>           <span id="r_v0925"     class="rl_rv0925">0.000 m/s</span></div>
+<div class="rl_rrow0925"><span>Distance traveled s:</span>  <span id="r_s0925"     class="rl_rv0925">0.000 m</span></div>
+<div class="rl_rrow0925"><span>Acceleration a:</span>       <span id="r_a0925"     class="rl_rv0925">0.000 m/s&sup2;</span></div>
+<div class="rl_rrow0925"><span>Time t:</span>               <span id="r_t0925"     class="rl_rv0925">0.000 s</span></div>
+<div class="rl_rrow0925"><span>Status:</span>               <span id="r_state0925" class="rl_badge0925">Ready</span></div>
+</div>
+</div>
+<!-- ── Data Collection & Graph ── -->
+<div class="rl_fbar0925 rl_datasec0925">
+<div class="rl_boxhd0925 rl_fullw0925">Data collection: change d, &theta;, or m to set up a new run, then record</div>
+<div class="rl_axisbar0925">
+<label class="rl_axislbl0925">Y-axis:
+<select id="yAxisSel0925" onchange="sim10925.setYAxis(this.value)">
+<option value="s">Displacement s</option>
+<option value="v">Velocity v</option>
+<option value="a">Acceleration a</option>
+</select>
+</label>
+<label class="rl_axislbl0925">X-axis:
+<select id="xAxisSel0925" onchange="sim10925.setXAxis(this.value)">
+<option value="t">Time t (single run)</option>
+<option value="mass">Mass m (all runs)</option>
+<option value="angle">Angle &theta; (all runs)</option>
+<option value="dist">Release distance d (all runs)</option>
+<option value="ttotal">Total slide time T (all runs)</option>
+<option value="tsq">Time squared T&sup2; (all runs)</option>
+</select>
+</label>
+<label class="rl_axislbl0925" id="runSelWrap0925">Run:
+<select id="fitRun0925" onchange="sim10925.redrawGraph()">
+<option value="-1">Current (unsaved)</option>
+</select>
+</label>
+</div>
+<div class="rl_graphrow0925">
+<div class="rl_graphcol0925">
+<div class="rl_hint0925" id="graphHint0925">Displacement s vs. time t: select a run above.</div>
+<canvas id="vtCanvas0925" width="420" height="240" role="img" aria-label="Data graph" aria-describedby="graphDesc0925"></canvas>
+<p id="graphDesc0925" class="rl_sronly0925">No data yet.</p>
+<div class="rl_graphbar0925">
+<label class="rl_fitlabel0925"><input id="showFit0925" type="checkbox" onchange="sim10925.redrawGraph()"> Show linear fit</label>
+<button type="button" class="rl_btnclr0925"  onclick="sim10925.clearGraph()">Clear graph</button>
+<button type="button" class="rl_btnclrall0925" onclick="sim10925.clearData()">Clear all data</button>
+</div>
+<div id="fitResult0925" role="status" aria-live="polite" class="rl_fitresult0925"></div>
+</div>
+<div class="rl_tblbox0925">
+<div class="rl_boxhd0925">Recorded Runs</div>
+<p id="noDataMsg0925" class="rl_nodatamsg0925">Run the simulation and select "Record this run".</p>
+<table id="dataTable0925" class="rl_table0925" style="display:none;">
+<caption class="rl_sronly0925">Recorded run data</caption>
+<thead><tr>
+<th scope="col">Run</th><th scope="col">&theta; (&deg;)</th><th scope="col">m (kg)</th><th scope="col">d (m)</th>
+<th scope="col">a (m/s&sup2;)</th><th scope="col">v<sub>f</sub> (m/s)</th><th scope="col">T (s)</th>
+</tr></thead>
+<tbody id="dataTableBody0925"></tbody>
+</table>
+</div>
+</div>
+<div class="rl_recrow0925">
+<button type="button" id="btnRecord0925" class="rl_btnrec0925" onclick="sim10925.recordRun()"><span aria-hidden="true">&#8853;</span> Record this run</button>
+<span id="recordMsg0925" class="rl_recmsg0925" role="status">Let the block reach the bottom (or pause it), then select Record to save this run's data.</span>
+</div>
+</div>
+<div id="srAnnounce0925" class="rl_sronly0925" aria-live="assertive" aria-atomic="true"></div>
+<hr>
+$hintlink[10]
+<hr>
+<ol type="a" class="rl_qs0925">
+<li>Record three runs with the same `theta` and `d` but different masses. How does the measured acceleration depend on the mass `m`?<br /></li>
+<li>Keeping `m` and `d` fixed, record runs at several angles. How does the acceleration change as `theta` increases?<br /></li>
+<li>For one of your runs, compare the measured acceleration to `g sin theta` with `g = 9.80` m/s&sup2;. What is the percent difference?<br /></li>
+<li>Holding `theta` fixed, record runs at several release distances. Graph displacement vs. `T^2` and show the linear fit. How is the slope related to the acceleration?<br /></li>
+<li>Use the release height `h` to predict the final speed from `v_f = sqrt(2gh)`. How does your prediction compare with the recorded `v_f`?<br /></li>
+</ol>
+</div><!-- #rlRoot0925 -->
+<style>
+#rlRoot0925 { width:683px; margin:0; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#f4f4f4; color:#111; }
+#rlRoot0925 *, #rlRoot0925 *::before, #rlRoot0925 *::after { box-sizing:border-box; }
+#rlRoot0925 h3 { margin:0; font-size:1rem; color:#222; }
+#rlRoot0925 p  { margin:0; }
+/* toolbar (matches Snell template) */
+#rlRoot0925 .rl_a11y0925 { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; }
+#rlRoot0925 .rl_a11ybtn0925 {
+padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #5a6680; color:#c0cadf; transition:border-color .15s, color .15s;
+}
+#rlRoot0925 .rl_a11ybtn0925:hover { border-color:#00e8d0; color:#00e8d0; }
+#rlRoot0925 .rl_a11ybtn0925.rl_a11yon0925 { background:rgba(0,232,208,.15); border-color:#00e8d0; color:#00e8d0; }
+/* visible keyboard focus everywhere */
+#rlRoot0925 button:focus-visible, #rlRoot0925 input:focus-visible,
+#rlRoot0925 select:focus-visible, #rlRoot0925 canvas:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+#rlRoot0925 .rl_tbar0925 { height:30px; background:#f90; display:flex; align-items:center; justify-content:center; }
+#rlRoot0925 .rl_mcontent0925 { background:#fff; }
+#rlRoot0925 #simCanvas0925 { display:block; border-bottom:2px solid #888; }
+#rlRoot0925 .rl_kbhint0925 { font-size:.74rem; color:#444; padding:3px 10px; background:#fff; }
+#rlRoot0925 .rl_narbar0925 {
+min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.85rem; color:#333; font-style:italic;
+}
+#rlRoot0925 .rl_bbar0925 { min-height:46px; background:#df9; padding:8px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center; }
+#rlRoot0925 .rl_bbar0925 button { font-size:.8rem; padding:4px 12px; border:1px solid #666; border-radius:3px; cursor:pointer; font-weight:bold; background:#d4d4d4; color:#111; }
+#rlRoot0925 .rl_bbar0925 .rl_btnplay0925  { background:#8bc4f0; border-color:#3d7fb3; }
+#rlRoot0925 .rl_bbar0925 .rl_btnreset0925 { background:#f0b8b8; border-color:#b34a3a; }
+#rlRoot0925 .rl_fbar0925 { min-height:60px; background:#fec; padding:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:flex-start; }
+#rlRoot0925 .rl_datasec0925 { flex-direction:column; }
+#rlRoot0925 .rl_fullw0925 { width:100%; }
+#rlRoot0925 .rl_params0925  { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:2; min-width:200px; }
+#rlRoot0925 .rl_readout0925 { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:1; min-width:140px; }
+#rlRoot0925 .rl_info0925 { background:#fffbe6; border:1px solid #ccaa00; border-radius:4px; padding:9px 11px; font-size:.8rem; color:#444; line-height:1.6; flex:1; min-width:140px; }
+#rlRoot0925 .rl_boxhd0925 { font-size:.85rem; font-weight:bold; border-bottom:1px solid #888; padding-bottom:3px; margin-bottom:7px; }
+#rlRoot0925 .rl_prow0925 { display:flex; align-items:center; gap:5px; margin-bottom:6px; font-size:.82rem; }
+#rlRoot0925 .rl_plbl0925 { min-width:160px; font-size:.8rem; }
+#rlRoot0925 .rl_slider0925 { flex:1; }
+#rlRoot0925 .rl_pval0925 { font-size:.82rem; font-weight:bold; min-width:50px; text-align:right; color:#003399; }
+#rlRoot0925 .rl_rrow0925 { display:flex; justify-content:space-between; margin-bottom:4px; font-size:.82rem; }
+#rlRoot0925 .rl_rv0925 { font-weight:bold; color:#b31d00; }
+#rlRoot0925 .rl_badge0925 { font-weight:bold; color:#004400; background:#ccffcc; border-radius:3px; padding:0 5px; }
+#rlRoot0925 .rl_sronly0925 { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* graph + table */
+#rlRoot0925 .rl_axisbar0925 { display:flex; gap:14px; flex-wrap:wrap; align-items:center; background:#fff; border:1px solid #888; border-radius:4px; padding:6px 10px; width:100%; }
+#rlRoot0925 .rl_axislbl0925 { font-size:.78rem; font-weight:bold; color:#333; display:flex; align-items:center; gap:5px; }
+#rlRoot0925 .rl_axislbl0925 select { font-size:.78rem; padding:2px 4px; }
+#rlRoot0925 .rl_graphrow0925 { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start; width:100%; }
+#rlRoot0925 .rl_graphcol0925 { flex:2; min-width:280px; }
+#rlRoot0925 #vtCanvas0925 { border:1px solid #888; background:#fafafa; display:block; }
+#rlRoot0925 .rl_hint0925 { font-size:.78rem; color:#444; margin-bottom:2px; }
+#rlRoot0925 .rl_graphbar0925 { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:3px; }
+#rlRoot0925 .rl_fitlabel0925 { font-size:.78rem; display:flex; align-items:center; gap:4px; cursor:pointer; }
+#rlRoot0925 .rl_btnclr0925    { font-size:.75rem; padding:3px 8px; cursor:pointer; background:#ffe0a0; border:1px solid #996f00; border-radius:3px; color:#111; }
+#rlRoot0925 .rl_btnclrall0925 { font-size:.75rem; padding:3px 8px; cursor:pointer; background:#f0b8b8; border:1px solid #b34a3a; border-radius:3px; color:#111; }
+#rlRoot0925 .rl_fitresult0925 { font-size:.78rem; font-weight:bold; min-height:15px; color:#005500; margin-top:2px; }
+#rlRoot0925 .rl_tblbox0925 { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:1; min-width:190px; }
+#rlRoot0925 .rl_nodatamsg0925 { font-size:.74rem; color:#444; margin-top:3px; }
+#rlRoot0925 .rl_table0925 { width:100%; border-collapse:collapse; font-size:.7rem; margin-top:3px; }
+#rlRoot0925 .rl_table0925 th { background:#d4d4d4; border:1px solid #888; padding:2px 4px; text-align:center; }
+#rlRoot0925 .rl_table0925 td { border:1px solid #ccc; padding:2px 4px; text-align:center; }
+#rlRoot0925 .rl_recrow0925 { display:flex; gap:8px; align-items:center; width:100%; flex-wrap:wrap; }
+#rlRoot0925 .rl_btnrec0925 { font-size:.82rem; padding:5px 14px; cursor:pointer; background:#8bc4f0; border:1px solid #3d7fb3; border-radius:3px; font-weight:bold; color:#111; }
+#rlRoot0925 .rl_recmsg0925 { font-size:.78rem; color:#444; }
+#rlRoot0925 ol.rl_qs0925 { padding:8px 8px 8px 28px; margin:0; background:#fff; }
+#rlRoot0925 ol.rl_qs0925 li { margin-bottom:10px; }
+/* ── HIGH CONTRAST (dark) ── */
+#rlRoot0925.rl_hc0925 { background:#000; color:#fff; }
+#rlRoot0925.rl_hc0925 .rl_tbar0925 { background:#000; border-bottom:2px solid #ffcc00; }
+#rlRoot0925.rl_hc0925 h3 { color:#ffcc00; }
+#rlRoot0925.rl_hc0925 .rl_mcontent0925,
+#rlRoot0925.rl_hc0925 .rl_kbhint0925 { background:#000; color:#ddd; }
+#rlRoot0925.rl_hc0925 .rl_narbar0925 { background:#1a1400; color:#ffe680; border-left-color:#ffcc00; }
+#rlRoot0925.rl_hc0925 .rl_bbar0925 { background:#0d1a0d; }
+#rlRoot0925.rl_hc0925 .rl_bbar0925 button { background:#000; color:#fff; border:2px solid #fff; }
+#rlRoot0925.rl_hc0925 .rl_bbar0925 .rl_btnplay0925  { color:#00ffff; border-color:#00ffff; }
+#rlRoot0925.rl_hc0925 .rl_bbar0925 .rl_btnreset0925 { color:#ff7777; border-color:#ff7777; }
+#rlRoot0925.rl_hc0925 .rl_fbar0925 { background:#0a0a14; }
+#rlRoot0925.rl_hc0925 .rl_params0925,
+#rlRoot0925.rl_hc0925 .rl_readout0925,
+#rlRoot0925.rl_hc0925 .rl_tblbox0925,
+#rlRoot0925.rl_hc0925 .rl_axisbar0925 { background:#000; border-color:#fff; color:#fff; }
+#rlRoot0925.rl_hc0925 .rl_info0925 { background:#000; border-color:#ffcc00; color:#fff; }
+#rlRoot0925.rl_hc0925 .rl_boxhd0925 { color:#fff; border-bottom-color:#fff; }
+#rlRoot0925.rl_hc0925 .rl_pval0925 { color:#9fbfff; }
+#rlRoot0925.rl_hc0925 .rl_rv0925 { color:#ff9a9a; }
+#rlRoot0925.rl_hc0925 .rl_badge0925 { background:#003300; color:#88ff88; }
+#rlRoot0925.rl_hc0925 .rl_axislbl0925,
+#rlRoot0925.rl_hc0925 .rl_hint0925,
+#rlRoot0925.rl_hc0925 .rl_nodatamsg0925,
+#rlRoot0925.rl_hc0925 .rl_recmsg0925 { color:#ddd; }
+#rlRoot0925.rl_hc0925 select { background:#000; color:#fff; border:1px solid #fff; }
+#rlRoot0925.rl_hc0925 .rl_fitresult0925 { color:#88ff88; }
+#rlRoot0925.rl_hc0925 .rl_table0925 th { background:#333; color:#fff; border-color:#fff; }
+#rlRoot0925.rl_hc0925 .rl_table0925 td { border-color:#888; }
+#rlRoot0925.rl_hc0925 .rl_btnclr0925,
+#rlRoot0925.rl_hc0925 .rl_btnclrall0925 { background:#000; color:#fff; border:1px solid #fff; }
+#rlRoot0925.rl_hc0925 .rl_btnrec0925 { background:#000; color:#00ffff; border:2px solid #00ffff; }
+#rlRoot0925.rl_hc0925 #vtCanvas0925 { border-color:#fff; }
+#rlRoot0925.rl_hc0925 ol.rl_qs0925 { background:#000; color:#fff; }
+/* ── LIGHT MODE (crisp black-on-white, heavier lines) ── */
+#rlRoot0925.rl_lm0925 { background:#fff; color:#000; }
+#rlRoot0925.rl_lm0925 .rl_tbar0925 { background:#ffb000; }
+#rlRoot0925.rl_lm0925 h3 { color:#000; }
+#rlRoot0925.rl_lm0925 .rl_kbhint0925 { color:#000; }
+#rlRoot0925.rl_lm0925 .rl_narbar0925 { background:#fff8dc; color:#000; font-style:normal; border-left-color:#8a6000; }
+#rlRoot0925.rl_lm0925 .rl_bbar0925 { background:#e8f5d0; }
+#rlRoot0925.rl_lm0925 .rl_bbar0925 button { border:2px solid #000; color:#000; }
+#rlRoot0925.rl_lm0925 .rl_fbar0925 { background:#fff7e6; }
+#rlRoot0925.rl_lm0925 .rl_params0925,
+#rlRoot0925.rl_lm0925 .rl_readout0925,
+#rlRoot0925.rl_lm0925 .rl_tblbox0925,
+#rlRoot0925.rl_lm0925 .rl_axisbar0925,
+#rlRoot0925.rl_lm0925 .rl_info0925 { border:2px solid #000; color:#000; }
+#rlRoot0925.rl_lm0925 .rl_boxhd0925 { color:#000; border-bottom-color:#000; }
+#rlRoot0925.rl_lm0925 .rl_pval0925 { color:#002080; }
+#rlRoot0925.rl_lm0925 .rl_rv0925 { color:#8a0000; }
+#rlRoot0925.rl_lm0925 .rl_badge0925 { background:#ccffcc; color:#002200; border:1px solid #002200; }
+#rlRoot0925.rl_lm0925 .rl_axislbl0925,
+#rlRoot0925.rl_lm0925 .rl_hint0925,
+#rlRoot0925.rl_lm0925 .rl_nodatamsg0925,
+#rlRoot0925.rl_lm0925 .rl_recmsg0925 { color:#000; }
+#rlRoot0925.rl_lm0925 .rl_fitresult0925 { color:#003300; }
+#rlRoot0925.rl_lm0925 .rl_table0925 th { background:#ccc; border-color:#000; color:#000; }
+#rlRoot0925.rl_lm0925 .rl_table0925 td { border-color:#666; }
+#rlRoot0925.rl_lm0925 #vtCanvas0925 { border-color:#000; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var rlA11y0925 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var CLS = { hc:'rl_hc0925', lm:'rl_lm0925', cb:'rl_cb0925' };
+var BTN = { hc:'rlBtnHC0925', lm:'rlBtnLM0925', cb:'rlBtnCB0925', nr:'rlBtnNR0925' };
+var NAMES = { hc:'High contrast', lm:'Light mode', cb:'Color-blind safe colors', nr:'Narration' };
+var srTimer = null;
+function styleBtn(id, active){
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('rl_a11yon0925', active);
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function announce(msg){
+var el = document.getElementById('srAnnounce0925'); if (!el) return;
+el.textContent = ''; clearTimeout(srTimer);
+srTimer = setTimeout(function(){ el.textContent = msg; }, 60);
+}
+function apply(){
+if (!ROOT) return;
+for (var k in CLS) ROOT.classList.toggle(CLS[k], states[k]);
+var nb = document.getElementById('rlNarBar0925');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var nbtn = document.getElementById(BTN.nr);
+if (nbtn) nbtn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+for (var k2 in BTN) styleBtn(BTN[k2], states[k2]);
+if (typeof sim10925 !== 'undefined' && sim10925.refresh) sim10925.refresh();
+}
+return {
+init: function(){ ROOT = document.getElementById('rlRoot0925'); apply(); },
+toggle: function(k){
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+announce(NAMES[k] + (states[k] ? ' on.' : ' off.'));
+},
+narrate: function(msg){
+if (!states.nr) return;
+var nb = document.getElementById('rlNarBar0925');
+if (nb && nb.textContent !== msg) nb.textContent = msg;
+},
+announce: announce,
+is: function(k){ return !!states[k]; }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var sim10925 = (function(){
+/* ── Canvas refs ── */
+var canvas = document.getElementById('simCanvas0925');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var vtC = document.getElementById('vtCanvas0925');
+var vtx = vtC.getContext('2d');
+var VW = vtC.width, VH = vtC.height;
+var VP = { l:50, r:14, t:14, b:32 };
+/* ── Palettes: every canvas color comes from here ── */
+var PAL = {
+def: { canvas:'#ffffff', block1:'#66ee44', block2:'#228800', blockText:'#0b2a00',
+ track1:'#bbbbbb', track2:'#666666', trackEdge:'#555555', post:'#888888', postHatch:'#666666',
+ stop:'#cc3333', angle:'#ff6600', angleFill:'rgba(255,150,0,0.15)',
+ wheel:'#222222', axle:'#888888', hub:'#cccccc',
+ arrow:'#cc0033', gate:'#0055cc', height:'#886600',
+ tsBg:'#ffff00', tsText:'#000000',
+ graphBg:'#fafafa', graphAxis:'#333333', graphGrid:'#cccccc', graphEmpty:'#999999',
+ fitLine:'#1155aa', pointEdge:'#333333',
+ runCols:['#cc2200','#0055cc','#007700','#880088','#cc7700','#007799'], lw:1 },
+hc:  { canvas:'#000000', block1:'#ffff00', block2:'#ffcc00', blockText:'#000000',
+ track1:'#ffffff', track2:'#bbbbbb', trackEdge:'#ffffff', post:'#dddddd', postHatch:'#000000',
+ stop:'#ff5555', angle:'#ffaa00', angleFill:'rgba(255,170,0,0.25)',
+ wheel:'#555555', axle:'#ffffff', hub:'#ffffff',
+ arrow:'#00ffff', gate:'#66ff66', height:'#ff88ff',
+ tsBg:'#ffff00', tsText:'#000000',
+ graphBg:'#000000', graphAxis:'#ffffff', graphGrid:'#777777', graphEmpty:'#aaaaaa',
+ fitLine:'#ffff00', pointEdge:'#ffffff',
+ runCols:['#00ffff','#ffff00','#66ff66','#ff88ff','#ffaa00','#ffffff'], lw:1.6 },
+lm:  { canvas:'#ffffff', block1:'#1f7a00', block2:'#0a3300', blockText:'#ffffff',
+ track1:'#999999', track2:'#222222', trackEdge:'#000000', post:'#444444', postHatch:'#bbbbbb',
+ stop:'#b00000', angle:'#b34700', angleFill:'rgba(179,71,0,0.15)',
+ wheel:'#000000', axle:'#aaaaaa', hub:'#ffffff',
+ arrow:'#a0001c', gate:'#002f99', height:'#5c3d00',
+ tsBg:'#ffe000', tsText:'#000000',
+ graphBg:'#ffffff', graphAxis:'#000000', graphGrid:'#999999', graphEmpty:'#555555',
+ fitLine:'#002f99', pointEdge:'#000000',
+ runCols:['#b00000','#002f99','#005c00','#660066','#8a4b00','#005c66'], lw:1.6 }
+};
+/* Okabe-Ito overlays for color-blind safe mode (light and dark backgrounds) */
+var CB_LIGHT = { block1:'#e69f00', block2:'#8a5a00', blockText:'#000000',
+ stop:'#d55e00', angle:'#009e73', angleFill:'rgba(0,158,115,0.15)',
+ arrow:'#d55e00', gate:'#0072b2', height:'#cc79a7', fitLine:'#0072b2',
+ runCols:['#d55e00','#0072b2','#009e73','#cc79a7','#e69f00','#56b4e9'] };
+var CB_DARK  = { block1:'#e69f00', block2:'#f0e442', blockText:'#000000',
+ stop:'#d55e00', angle:'#009e73', angleFill:'rgba(0,158,115,0.3)',
+ arrow:'#56b4e9', gate:'#f0e442', height:'#cc79a7', fitLine:'#f0e442',
+ runCols:['#e69f00','#56b4e9','#009e73','#f0e442','#cc79a7','#d55e00'] };
+function merged(base, over){
+var o = {}, k;
+for (k in base) o[k] = base[k];
+if (over) for (k in over) o[k] = over[k];
+return o;
+}
+function buildPal(){
+var hc = rlA11y0925.is('hc'), lm = rlA11y0925.is('lm'), cb = rlA11y0925.is('cb');
+var base = hc ? PAL.hc : (lm ? PAL.lm : PAL.def);
+return merged(base, cb ? (hc ? CB_DARK : CB_LIGHT) : null);
+}
+var pal = buildPal();
+function F(px){ return Math.round(px * (pal.lw > 1 ? 1.15 : 1)); }  /* font size bump in HC / LM */
+/* ── Physics ── */
+var G = 9.80;
+var relDist = 1.1, mass = 1.3, theta_deg = 28;
+var theta = theta_deg * Math.PI / 180;
+var simSpeed = 0.20;
+/* ── Sim state ── */
+var running = false, animId = null, lastTS = null;
+var pos = relDist, vel = 0, phase = 'ready', simTime = 0;  /* pos = remaining distance to base (m) */
+var TOP_X = 70, TRACK_Y = 290, BASE_X = 470, TRACK_THICK = 18, BLOCK_W = 48, BLOCK_H = 34;
+var PX_PER_M = 200;
+function blockLP(){ return BASE_X - pos * PX_PER_M; }
+/* ── Data collection ── */
+var currentTrace = [];
+var allRuns = [];
+var ERROR_FRAC = 0.02;
+function noise(v){ return v + Math.abs(v) * ERROR_FRAC * (Math.random() - 0.5) * 2 * 1.7; }
+var yAxis = 's', xAxis = 't';
+function el(id){ return document.getElementById(id); }
+function setText(id, txt){ var e = el(id); if (e) e.textContent = txt; }
+/* ── Slider display + screen-reader values ── */
+function updateSliderText(){
+var d  = parseFloat(el('dSlider0925').value);
+var m  = parseFloat(el('mSlider0925').value);
+var th = parseFloat(el('angleSlider0925').value);
+var sp = parseFloat(el('speedSlider0925').value) / 100;
+setText('dVal0925', d.toFixed(2));
+setText('mVal0925', m.toFixed(2));
+setText('angleVal0925', th.toFixed(0) + '\u00B0');
+setText('speedVal0925', sp.toFixed(2) + '\u00D7');
+el('dSlider0925').setAttribute('aria-valuetext', d.toFixed(1) + ' meters');
+el('mSlider0925').setAttribute('aria-valuetext', m.toFixed(1) + ' kilograms');
+el('angleSlider0925').setAttribute('aria-valuetext', th.toFixed(0) + ' degrees');
+el('speedSlider0925').setAttribute('aria-valuetext', sp.toFixed(2) + ' times real time');
+setText('hVal0925', (d * Math.sin(th * Math.PI / 180)).toFixed(2));
+}
+function readSliders(){
+relDist   = parseFloat(el('dSlider0925').value);
+mass      = parseFloat(el('mSlider0925').value);
+theta_deg = parseFloat(el('angleSlider0925').value);
+theta     = theta_deg * Math.PI / 180;
+}
+/* New values apply at the next reset; they never change a run in progress */
+function setDist(v){ updateSliderText(); if (!running) resetSim(true); }
+function setMass(v){ updateSliderText(); if (!running) resetSim(true); }
+function setAngle(v){ updateSliderText(); if (!running) resetSim(true); }
+function setSpeed(v){ simSpeed = parseFloat(v) / 100; updateSliderText(); }
+/* ── Physics step (frictionless: mass does NOT affect motion) ── */
+function step(dt){
+dt = Math.min(dt, 0.016);
+if (phase === 'sliding'){
+var aDown = G * Math.sin(theta);
+vel += aDown * dt;
+pos -= vel * dt;
+simTime += dt;
+if (pos <= 0){ pos = 0; phase = 'stopped'; }
+var lastT = currentTrace.length > 0 ? currentTrace[currentTrace.length - 1].t : -99;
+if (simTime - lastT >= 0.04 || phase === 'stopped'){
+currentTrace.push({
+t: parseFloat(noise(simTime).toFixed(4)),
+s: parseFloat(noise(relDist - pos).toFixed(4)),
+v: parseFloat(noise(vel).toFixed(4)),
+a: parseFloat(noise(aDown).toFixed(4))
+});
+}
+}
+}
+/* ── Draw ── */
+function draw(){
+ctx.clearRect(0, 0, CW, CH);
+ctx.fillStyle = pal.canvas; ctx.fillRect(0, 0, CW, CH);
+ctx.save();
+ctx.translate(BASE_X, TRACK_Y); ctx.rotate(theta); ctx.translate(-BASE_X, -TRACK_Y);
+drawTrack(); drawReleaseGate(); drawBlock(); drawVelocityArrow();
+ctx.restore();
+drawAngleArc();
+drawHeightIndicator();
+drawTimestamp();
+}
+function drawTrack(){
+var gr = ctx.createLinearGradient(0, TRACK_Y, 0, TRACK_Y + TRACK_THICK);
+gr.addColorStop(0, pal.track1); gr.addColorStop(0.4, pal.track2); gr.addColorStop(1, pal.track2);
+ctx.fillStyle = gr; ctx.fillRect(TOP_X - 5, TRACK_Y, (BASE_X + 40) - (TOP_X - 5), TRACK_THICK);
+ctx.strokeStyle = pal.trackEdge; ctx.lineWidth = pal.lw;
+ctx.beginPath(); ctx.moveTo(TOP_X - 5, TRACK_Y); ctx.lineTo(BASE_X + 40, TRACK_Y); ctx.stroke();
+/* top support post */
+ctx.fillStyle = pal.post; ctx.fillRect(TOP_X - 18, TRACK_Y - 70, 18, 70 + TRACK_THICK);
+ctx.strokeStyle = pal.postHatch; ctx.lineWidth = 1;
+for (var yi = TRACK_Y - 69; yi < TRACK_Y + TRACK_THICK - 10; yi += 12){
+ctx.beginPath(); ctx.moveTo(TOP_X - 16, yi); ctx.lineTo(TOP_X - 4, yi + 12); ctx.stroke();
+}
+/* bottom stop marker (s = 0 is the base; distance traveled is measured from the release point) */
+ctx.strokeStyle = pal.stop; ctx.lineWidth = 2 * pal.lw;
+ctx.setLineDash([5, 4]);
+ctx.beginPath(); ctx.moveTo(BASE_X, TRACK_Y - 38); ctx.lineTo(BASE_X, TRACK_Y + TRACK_THICK); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle = pal.stop; ctx.font = 'bold ' + F(10) + 'px Arial'; ctx.textAlign = 'center';
+ctx.fillText('bottom', BASE_X, TRACK_Y - 42);
+}
+function drawReleaseGate(){
+var gateX = BASE_X - relDist * PX_PER_M;
+ctx.strokeStyle = pal.gate; ctx.lineWidth = 1.5 * pal.lw;
+ctx.setLineDash([4, 3]);
+ctx.beginPath(); ctx.moveTo(gateX, TRACK_Y - 45); ctx.lineTo(gateX, TRACK_Y); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle = pal.gate; ctx.font = 'bold ' + F(9) + 'px Arial'; ctx.textAlign = 'center';
+ctx.fillText('release', gateX, TRACK_Y - 48);
+}
+function drawBlock(){
+var bx = blockLP(), by = TRACK_Y - BLOCK_H, bw = BLOCK_W, bh = BLOCK_H;
+if (pal.lw === 1){
+var gr = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+gr.addColorStop(0, pal.block1); gr.addColorStop(1, pal.block2);
+ctx.fillStyle = gr;
+} else { ctx.fillStyle = pal.block1; }
+ctx.fillRect(bx, by, bw, bh);
+ctx.strokeStyle = pal.block2; ctx.lineWidth = 1.5 * pal.lw;
+ctx.strokeRect(bx, by, bw, bh);
+ctx.fillStyle = pal.blockText; ctx.font = 'bold ' + F(10) + 'px Arial'; ctx.textAlign = 'center';
+ctx.fillText(mass.toFixed(1) + ' kg', bx + bw / 2, by + bh / 2 + 4);
+drawWheels(bx, by + bh, bw);
+}
+function drawWheels(bx, trackY, bw){
+var wr = 7, axY = trackY - 2;
+var wx = [bx + 10, bx + bw - 10];
+for (var i = 0; i < wx.length; i++){
+ctx.beginPath(); ctx.arc(wx[i], axY, wr, 0, Math.PI * 2);
+ctx.fillStyle = pal.wheel; ctx.fill();
+ctx.strokeStyle = pal.axle; ctx.lineWidth = 1;
+for (var a = 0; a < 3; a++){
+var ang = a * Math.PI / 3;
+ctx.beginPath(); ctx.moveTo(wx[i], axY);
+ctx.lineTo(wx[i] + wr * 0.85 * Math.cos(ang), axY + wr * 0.85 * Math.sin(ang));
+ctx.stroke();
+}
+ctx.beginPath(); ctx.arc(wx[i], axY, 2, 0, Math.PI * 2);
+ctx.fillStyle = pal.hub; ctx.fill();
+}
+}
+function drawVelocityArrow(){
+if (Math.abs(vel) < 0.05) return;
+var bx = blockLP(), midY = TRACK_Y - BLOCK_H + BLOCK_H / 2;
+var arrowLen = Math.min(Math.abs(vel) * 14, 80);
+var startX = bx + BLOCK_W, endX = startX + arrowLen;
+ctx.strokeStyle = pal.arrow; ctx.fillStyle = pal.arrow; ctx.lineWidth = 2.5 * pal.lw;
+ctx.beginPath(); ctx.moveTo(startX, midY); ctx.lineTo(endX, midY); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(endX, midY);
+ctx.lineTo(endX - 10, midY - 6); ctx.lineTo(endX - 10, midY + 6);
+ctx.closePath(); ctx.fill();
+ctx.font = 'bold ' + F(11) + 'px Arial'; ctx.textAlign = 'left';
+ctx.fillText('v=' + Math.abs(vel).toFixed(2) + ' m/s', endX + 4, midY - 8);
+}
+function drawAngleArc(){
+if (theta < 0.005) return;
+var ox = BASE_X - 32, oy = TRACK_Y + 8, r = 30;
+ctx.save();
+ctx.strokeStyle = pal.angle; ctx.fillStyle = pal.angleFill; ctx.lineWidth = 1.5 * pal.lw;
+ctx.beginPath(); ctx.moveTo(ox, oy); ctx.arc(ox, oy, r, -Math.PI, theta - Math.PI); ctx.closePath();
+ctx.fill(); ctx.stroke();
+ctx.fillStyle = pal.angle; ctx.font = 'bold ' + F(10) + 'px Arial'; ctx.textAlign = 'center';
+ctx.fillText('\u03B8=' + theta_deg.toFixed(0) + '\u00B0', ox - 25, oy + r - 10);
+ctx.restore();
+}
+/* true-vertical height guide from the release point down to the base level */
+function drawHeightIndicator(){
+var dxRel = -relDist * PX_PER_M;
+var sx = BASE_X + dxRel * Math.cos(theta);
+var sy = TRACK_Y + dxRel * Math.sin(theta);
+var baseY = TRACK_Y;
+ctx.save();
+ctx.strokeStyle = pal.height; ctx.lineWidth = 1.3 * pal.lw;
+ctx.setLineDash([3, 3]);
+ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, baseY); ctx.stroke();
+ctx.setLineDash([]);
+ctx.beginPath(); ctx.moveTo(sx - 5, sy); ctx.lineTo(sx + 5, sy); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(sx - 5, baseY); ctx.lineTo(sx + 5, baseY); ctx.stroke();
+ctx.fillStyle = pal.height; ctx.font = F(9) + 'px Arial'; ctx.textAlign = 'left';
+ctx.fillText('h=' + (relDist * Math.sin(theta)).toFixed(2) + 'm', sx - 45, TRACK_Y + 8);
+ctx.restore();
+}
+function drawTimestamp(){
+ctx.fillStyle = pal.tsBg; ctx.fillRect(CW - 110, 0, 110, 20);
+ctx.font = F(13) + 'px Arial'; ctx.fillStyle = pal.tsText; ctx.textAlign = 'left';
+ctx.fillText('t = ' + simTime.toFixed(2) + ' s', CW - 106, 15);
+}
+/* ── Readouts, canvas description, narration ── */
+var STATUS = { ready:'Ready', sliding:'Sliding down', stopped:'Stopped at bottom' };
+function statusText(){ return (phase === 'sliding' && !running) ? 'Paused' : (STATUS[phase] || phase); }
+function updateReadouts(){
+setText('r_v0925', vel.toFixed(3) + ' m/s');
+setText('r_s0925', (relDist - pos).toFixed(3) + ' m');
+setText('r_a0925', (phase === 'sliding' ? G * Math.sin(theta) : 0).toFixed(3) + ' m/s\u00B2');
+setText('r_t0925', simTime.toFixed(3) + ' s');
+setText('r_state0925', statusText());
+canvas.setAttribute('aria-label',
+'Wheeled block, ' + mass.toFixed(1) + ' kg, on a ' + theta_deg.toFixed(0) + ' degree frictionless incline, released ' +
+relDist.toFixed(2) + ' m up the track (height ' + (relDist * Math.sin(theta)).toFixed(2) + ' m). Status: ' +
+statusText() + '. Speed ' + vel.toFixed(2) + ' m/s, distance traveled ' + (relDist - pos).toFixed(2) + ' m.');
+updateNarration(false);
+}
+var lastNarr = 0;
+function updateNarration(force){
+var now = Date.now();
+if (!force && running && now - lastNarr < 1000) return;   /* throttle while moving */
+lastNarr = now;
+var h = (relDist * Math.sin(theta)).toFixed(2);
+var txt = 'Block (' + mass.toFixed(1) + ' kg) on a ' + theta_deg.toFixed(0) + '\u00B0 frictionless incline, released ' +
+relDist.toFixed(2) + ' m up the track (height ' + h + ' m). ';
+if (phase === 'ready') txt += 'Press Release, or Space on the track, to let it roll.';
+else if (phase === 'sliding') txt += (running ? 'Rolling down' : 'Paused') + ': v = ' + vel.toFixed(2) +
+' m/s, traveled ' + (relDist - pos).toFixed(2) + ' m, t = ' + simTime.toFixed(2) + ' s.';
+else txt += 'Reached the bottom at v = ' + vel.toFixed(2) + ' m/s after ' + simTime.toFixed(2) + ' s. ' +
+currentTrace.length + ' data points collected. Select Record this run to save.';
+rlA11y0925.narrate(txt);
+}
+/* ── Animation loop ── */
+function loop(ts){
+if (!running) return;
+if (lastTS === null) lastTS = ts;
+var dt = Math.min((ts - lastTS) / 1000, 0.05) * simSpeed; lastTS = ts;
+for (var i = 0; i < 8; i++) step(dt / 8);
+draw(); updateReadouts();
+if (phase !== 'stopped'){ animId = requestAnimationFrame(loop); }
+else {
+running = false;
+updateReadouts(); updateNarration(true);
+if (el('xAxisSel0925').value === 't') redrawGraph();
+rlA11y0925.announce('Stopped at bottom after ' + simTime.toFixed(2) + ' seconds. ' + currentTrace.length + ' data points. Select Record to save.');
+}
+}
+/* ── Playback ── */
+function playSim(){
+if (running) return;
+if (phase === 'stopped') resetSim(true);
+phase = 'sliding';
+running = true; lastTS = null; animId = requestAnimationFrame(loop);
+updateNarration(true);
+rlA11y0925.announce('Released.');
+}
+function pauseSim(){
+if (!running) return;
+running = false; if (animId) cancelAnimationFrame(animId);
+updateReadouts(); updateNarration(true);
+if (el('xAxisSel0925').value === 't') redrawGraph();
+rlA11y0925.announce('Paused at t = ' + simTime.toFixed(2) + ' seconds.');
+}
+function stepSim(){
+if (running){ running = false; if (animId) cancelAnimationFrame(animId); }
+if (phase === 'stopped') return;
+if (phase === 'ready') phase = 'sliding';
+var dt = 0.005 * simSpeed * 8;
+for (var i = 0; i < 8; i++) step(dt / 8);
+draw(); updateReadouts(); updateNarration(true);
+}
+function togglePlay(){ if (running) pauseSim(); else playSim(); }
+function resetSim(silent){
+running = false; if (animId) cancelAnimationFrame(animId); lastTS = null;
+readSliders();
+pos = relDist; vel = 0; phase = 'ready'; simTime = 0;
+currentTrace = [];
+updateSliderText();
+draw(); updateReadouts(); updateNarration(true);
+if (el('xAxisSel0925').value === 't') redrawGraph();
+if (silent !== true) rlA11y0925.announce('Reset. Ready to release.');
+}
+/* keyboard control when the track canvas has focus */
+canvas.addEventListener('keydown', function(e){
+var k = e.key;
+if (k === ' ' || k === 'Enter'){ e.preventDefault(); togglePlay(); }
+else if (k === 's' || k === 'S'){ e.preventDefault(); stepSim(); }
+else if (k === 'r' || k === 'R'){ e.preventDefault(); resetSim(); }
+});
+/* ── Record run ── */
+function recordRun(){
+if (currentTrace.length < 3){
+var msg = 'No data yet. Release the block first, then record.';
+setText('recordMsg0925', msg);
+rlA11y0925.announce(msg);
+return;
+}
+var fit = linFitTV(currentTrace);
+var last = currentTrace[currentTrace.length - 1];
+allRuns.push({ theta_deg:theta_deg, mass:mass, dist:relDist, trace:currentTrace.slice(),
+ aMeasured: fit ? fit.slope : null, aSE: fit ? fit.se : null,
+ vFinal:last.v, totalTime:last.t });
+updateRunSelector(); updateDataTable(); redrawGraph();
+var m2 = 'Run ' + allRuns.length + ' recorded: angle ' + theta_deg.toFixed(0) + ' degrees, mass ' + mass.toFixed(1) +
+' kg, distance ' + relDist.toFixed(1) + ' m, final speed ' + last.v.toFixed(2) + ' m/s, time ' + last.t.toFixed(2) + ' s.';
+setText('recordMsg0925', 'Run ' + allRuns.length + ' recorded.');
+rlA11y0925.announce(m2);
+}
+function updateRunSelector(){
+var sel = el('fitRun0925');
+while (sel.options.length > 1) sel.remove(1);
+for (var i = 0; i < allRuns.length; i++){
+var r = allRuns[i];
+var opt = document.createElement('option');
+opt.value = i;
+opt.textContent = 'Run ' + (i + 1) + ' (\u03B8=' + r.theta_deg.toFixed(0) + '\u00B0, m=' + r.mass.toFixed(1) + ', d=' + r.dist.toFixed(1) + ')';
+sel.appendChild(opt);
+}
+if (allRuns.length > 0) sel.value = allRuns.length - 1;
+}
+/* ── Linear fit ── */
+function linFitXY(pts){
+var n = pts.length; if (n < 2) return null;
+var sx = 0, sy = 0, sxx = 0, sxy = 0;
+for (var i = 0; i < n; i++){ var xi = pts[i].x, yi = pts[i].y; sx += xi; sy += yi; sxx += xi * xi; sxy += xi * yi; }
+var dn = n * sxx - sx * sx; if (Math.abs(dn) < 1e-12) return null;
+var sl = (n * sxy - sx * sy) / dn, ic = (sy - sl * sx) / n;
+var ss = 0; for (var j = 0; j < n; j++){ var rr = pts[j].y - (sl * pts[j].x + ic); ss += rr * rr; }
+var se = Math.sqrt(ss / Math.max(n - 2, 1) / Math.max(sxx - sx * sx / n, 1e-9));
+return { slope:sl, intercept:ic, se:se };
+}
+function linFitTV(trace){ return linFitXY(trace.map(function(p){ return { x:p.t, y:p.v }; })); }
+/* ── Axes ── */
+function setYAxis(v){ yAxis = v; redrawGraph(); }
+function setXAxis(v){
+xAxis = v;
+el('runSelWrap0925').style.display = (xAxis === 't') ? '' : 'none';
+redrawGraph();
+}
+var Y_LABELS = { s:'Displacement s (m)', v:'Velocity v (m/s)', a:'Acceleration a (m/s\u00B2)' };
+var X_LABELS = { t:'t (s)', mass:'Mass m (kg)', angle:'Angle \u03B8 (\u00B0)', dist:'Release distance d (m)',
+ ttotal:'Total slide time T (s)', tsq:'Time squared T\u00B2 (s\u00B2)' };
+var Y_WORDS = { s:'displacement', v:'velocity', a:'acceleration' };
+var X_WORDS = { t:'time', mass:'mass', angle:'angle', dist:'release distance', ttotal:'total slide time', tsq:'time squared' };
+function buildDisplayData(){
+if (xAxis === 't'){
+var selVal = parseInt(el('fitRun0925').value, 10);
+var trace = null, label = '';
+if (selVal >= 0 && selVal < allRuns.length){ trace = allRuns[selVal].trace; label = 'Run ' + (selVal + 1); }
+else if (currentTrace.length > 1){ trace = currentTrace; label = 'Current run (unsaved)'; }
+if (!trace) return { pts:[], label:label };
+return { pts: trace.map(function(p){ return { x:p.t, y:p[yAxis] }; }), label:label };
+}
+var keyMap = { mass:'mass', angle:'theta_deg', dist:'dist', ttotal:'totalTime' };
+var key = keyMap[xAxis];
+var pts = allRuns.map(function(r){
+var yv = (yAxis === 's') ? r.dist : (yAxis === 'v') ? r.vFinal : r.aMeasured;
+var xv = (xAxis === 'tsq') ? r.totalTime * r.totalTime : r[key];
+return { x:xv, y:yv };
+}).filter(function(p){ return p.y !== null && p.y !== undefined && !isNaN(p.y); });
+pts.sort(function(a, b){ return a.x - b.x; });
+return { pts:pts, label:'All recorded runs' };
+}
+/* text alternative for the graph */
+function describeGraph(pts, label, fit){
+var s = 'Graph of ' + Y_WORDS[yAxis] + ' versus ' + X_WORDS[xAxis] + '. ';
+if (pts.length === 0){
+s += (xAxis === 't') ? 'No run selected yet.' : 'No recorded runs yet.';
+} else {
+var xs = pts.map(function(p){ return p.x; }), ys = pts.map(function(p){ return p.y; });
+var xmin = Math.min.apply(null, xs), xmax = Math.max.apply(null, xs);
+var ymin = Math.min.apply(null, ys), ymax = Math.max.apply(null, ys);
+s += label + ': ' + pts.length + ' points. Horizontal values from ' + xmin.toFixed(2) + ' to ' + xmax.toFixed(2) +
+ '; vertical values from ' + ymin.toFixed(2) + ' to ' + ymax.toFixed(2) + '. ';
+var tf = fit || linFitXY(pts);
+if (tf){
+var ymean = ys.reduce(function(a, b){ return a + b; }, 0) / ys.length;
+var change = Math.abs(tf.slope * (xmax - xmin));
+var trend = (change < 0.05 * Math.max(Math.abs(ymean), 1e-6)) ? 'roughly constant' : (tf.slope > 0 ? 'increasing' : 'decreasing');
+s += 'Overall trend: ' + trend + '.';
+if (fit) s += ' Linear fit slope ' + fit.slope.toFixed(3) + ' plus or minus ' + fit.se.toFixed(3) + '.';
+}
+}
+setText('graphDesc0925', s);
+}
+/* ── Graph ── */
+function redrawGraph(){
+vtx.clearRect(0, 0, VW, VH);
+vtx.fillStyle = pal.graphBg; vtx.fillRect(0, 0, VW, VH);
+var pW = VW - VP.l - VP.r, pH = VH - VP.t - VP.b;
+var data = buildDisplayData(), pts = data.pts;
+setText('graphHint0925', { s:'Displacement s', v:'Velocity v', a:'Acceleration a' }[yAxis] + ' vs. ' +
+{ t:'time t', mass:'mass m', angle:'angle \u03B8', dist:'release distance d', ttotal:'total slide time T', tsq:'time squared T\u00B2' }[xAxis] +
+(xAxis === 't' ? ': select a run above.' : ': one point per recorded run.'));
+var allX = [0], allY = [0, 1];
+pts.forEach(function(p){ allX.push(p.x); allY.push(p.y); });
+var xMax = Math.max.apply(null, allX) * 1.1 || 1;
+var xMin = xAxis === 't' ? 0 : Math.min.apply(null, allX) * 0.9;
+var yMin = Math.min.apply(null, allY), yMax = Math.max.apply(null, allY);
+var yPad = (yMax - yMin) * 0.15 || 0.5;
+yMin -= yPad; yMax += yPad;
+function px(x){ return VP.l + pW * ((x - xMin) / (xMax - xMin || 1)); }
+function py(y){ return VP.t + pH * (1 - (y - yMin) / (yMax - yMin)); }
+var ac = pal.graphAxis;
+vtx.strokeStyle = ac; vtx.lineWidth = 1.5 * pal.lw;
+vtx.beginPath(); vtx.moveTo(VP.l, VP.t); vtx.lineTo(VP.l, VP.t + pH); vtx.lineTo(VP.l + pW, VP.t + pH); vtx.stroke();
+if (yMin < 0 && yMax > 0){
+vtx.save(); vtx.setLineDash([4, 4]); vtx.strokeStyle = pal.graphGrid; vtx.lineWidth = 1;
+vtx.beginPath(); vtx.moveTo(VP.l, py(0)); vtx.lineTo(VP.l + pW, py(0)); vtx.stroke();
+vtx.restore();
+}
+vtx.fillStyle = ac; vtx.font = F(10) + 'px Arial'; vtx.textAlign = 'center';
+vtx.fillText(X_LABELS[xAxis], VP.l + pW / 2, VH - 2);
+vtx.save(); vtx.translate(12, VP.t + pH / 2); vtx.rotate(-Math.PI / 2);
+vtx.fillText(Y_LABELS[yAxis], 0, 0); vtx.restore();
+vtx.font = F(9) + 'px Arial';
+[xMin, (xMin + xMax) / 2, xMax].forEach(function(xv){ vtx.textAlign = 'center'; vtx.fillText(xv.toFixed(2), px(xv), VP.t + pH + 14); });
+[yMin, (yMin + yMax) / 2, yMax].forEach(function(yv){ vtx.textAlign = 'right'; vtx.fillText(yv.toFixed(2), VP.l - 4, py(yv) + 3); });
+var col = pal.runCols[0];
+if (pts.length > 0){
+if (xAxis === 't' && pts.length > 1){
+vtx.strokeStyle = col; vtx.lineWidth = 2 * pal.lw;
+vtx.beginPath();
+pts.forEach(function(p, i){ if (i === 0) vtx.moveTo(px(p.x), py(p.y)); else vtx.lineTo(px(p.x), py(p.y)); });
+vtx.stroke();
+}
+pts.forEach(function(p){
+vtx.beginPath(); vtx.arc(px(p.x), py(p.y), xAxis === 't' ? 2.5 : 4, 0, Math.PI * 2);
+vtx.fillStyle = col; vtx.fill();
+if (xAxis !== 't'){ vtx.strokeStyle = pal.pointEdge; vtx.lineWidth = 1; vtx.stroke(); }
+});
+vtx.fillStyle = col; vtx.font = 'bold ' + F(9) + 'px Arial'; vtx.textAlign = 'left';
+vtx.fillText(data.label, VP.l + 4, VP.t + 12);
+} else {
+vtx.fillStyle = pal.graphEmpty; vtx.font = F(11) + 'px Arial'; vtx.textAlign = 'center';
+vtx.fillText(xAxis === 't' ? 'Select a run above' : 'Record some runs to see this graph', VP.l + pW / 2, VP.t + pH / 2);
+}
+var sfEl = el('showFit0925'), frEl = el('fitResult0925'), fitShown = null;
+if (sfEl && sfEl.checked && pts.length >= 2){
+var fit = linFitXY(pts);
+if (fit){
+fitShown = fit;
+vtx.save(); vtx.strokeStyle = pal.fitLine; vtx.lineWidth = 2 * pal.lw;
+vtx.setLineDash([6, 3]);
+vtx.beginPath();
+vtx.moveTo(px(xMin), py(fit.slope * xMin + fit.intercept));
+vtx.lineTo(px(xMax), py(fit.slope * xMax + fit.intercept));
+vtx.stroke(); vtx.restore();
+frEl.textContent = 'slope = ' + fit.slope.toFixed(3) + ' \u00B1 ' + fit.se.toFixed(3) + '  (n=' + pts.length + ')';
+} else { frEl.textContent = 'Need more spread in x to fit.'; }
+} else if (frEl){ frEl.textContent = ''; }
+describeGraph(pts, data.label, fitShown);
+}
+/* ── Data table ── */
+function updateDataTable(){
+var tb = el('dataTableBody0925'), tbl = el('dataTable0925'), nm = el('noDataMsg0925');
+if (!tb || !tbl || !nm) return;
+tb.innerHTML = '';
+if (allRuns.length === 0){ tbl.style.display = 'none'; nm.style.display = ''; return; }
+tbl.style.display = ''; nm.style.display = 'none';
+for (var i = 0; i < allRuns.length; i++){
+var r = allRuns[i];
+var aStr = r.aMeasured !== null ? r.aMeasured.toFixed(2) + '\u00B1' + r.aSE.toFixed(2) : '--';
+var tr = document.createElement('tr');
+tr.innerHTML = '<th scope="row">' + (i + 1) + '</th><td>' + r.theta_deg.toFixed(0) + '</td><td>' + r.mass.toFixed(1) +
+'</td><td>' + r.dist.toFixed(1) + '</td><td>' + aStr + '</td><td>' + r.vFinal.toFixed(2) + '</td><td>' + r.totalTime.toFixed(2) + '</td>';
+tb.appendChild(tr);
+}
+}
+function clearGraph(){
+vtx.clearRect(0, 0, VW, VH);
+vtx.fillStyle = pal.graphBg; vtx.fillRect(0, 0, VW, VH);
+el('fitResult0925').textContent = '';
+el('showFit0925').checked = false;
+setText('graphDesc0925', 'Graph cleared.');
+rlA11y0925.announce('Graph cleared. Data preserved.');
+}
+function clearData(){
+allRuns = []; currentTrace = [];
+var sel = el('fitRun0925');
+while (sel.options.length > 1) sel.remove(1);
+el('fitResult0925').textContent = '';
+redrawGraph(); updateDataTable();
+rlA11y0925.announce('All recorded data cleared.');
+}
+/* called by the accessibility controller whenever a display mode changes */
+function refresh(){ pal = buildPal(); draw(); redrawGraph(); }
+/* ── Boot ── */
+resetSim(true);
+redrawGraph();
+return {
+playSim:playSim, pauseSim:pauseSim, stepSim:stepSim, resetSim:resetSim,
+setDist:setDist, setMass:setMass, setAngle:setAngle, setSpeed:setSpeed,
+setYAxis:setYAxis, setXAxis:setXAxis,
+recordRun:recordRun, clearData:clearData, clearGraph:clearGraph, redrawGraph:redrawGraph,
+refresh:refresh
+};
+})();
+</script>
+<script>
+rlA11y0925.init();
+rlA11y0925.narrate('Incline sim ready. A wheeled block is released from rest on a frictionless track. Change d, \u03B8, or m, press Release, then Record each run to build your data set.');
+</script>
+</body>
+</html>

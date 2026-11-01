@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Storing Bits: Hard Disks and Solid-State Drives</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of magnetic recording on hard disks (writing, reading, thermal stability, HAMR) and of flash memory cells in solid-state drives.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="hdRoot" class="hd_root" role="region" aria-label="Storing data: magnetic recording on a hard disk, and flash memory in a solid-state drive">
+<div class="hd_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="hd_a11ybtn" id="hdBtnHC" onclick="hdSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="hd_a11ybtn" id="hdBtnLM" onclick="hdSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="hd_a11ybtn" id="hdBtnCB" onclick="hdSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="hd_a11ybtn hd_a11yon" id="hdBtnNR" onclick="hdSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="hd_header"><p class="hd_h1">Storing Bits: Hard Disks and Solid-State Drives</p><p class="hd_sub">magnetic grains on a spinning disk &middot; electrons trapped in a flash memory cell</p></div>
+<div class="hd_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="hd_tab" id="hdTab3" aria-selected="true" aria-controls="hdV3" onclick="hdSim.tab(3)">Inside a hard drive</button>
+<button type="button" role="tab" class="hd_tab" id="hdTab0" aria-selected="false" aria-controls="hdV0" onclick="hdSim.tab(0)">Writing &amp; reading</button>
+<button type="button" role="tab" class="hd_tab" id="hdTab1" aria-selected="false" aria-controls="hdV1" onclick="hdSim.tab(1)">Keeping the bits</button>
+<button type="button" role="tab" class="hd_tab" id="hdTab2" aria-selected="false" aria-controls="hdV2" onclick="hdSim.tab(2)">A flash memory cell</button>
+<button type="button" role="tab" class="hd_tab" id="hdTab4" aria-selected="false" aria-controls="hdV4" onclick="hdSim.tab(4)">Inside an SSD</button>
+</div>
+<!-- ═════ TAB: inside a hard drive ═════ -->
+<div id="hdV3" role="tabpanel" aria-labelledby="hdTab3">
+<div class="hd_diag"><div class="hd_dlabel"><b>AN OPENED HARD DRIVE, SEEN FROM ABOVE</b><span id="hdHint4"></span></div><canvas id="hdDrive" width="780" height="420" role="img" aria-label="An opened hard drive seen from above: the platter on its spindle, the actuator arm with the head at its tip, swung by the voice-coil actuator about its axis, the parking ramp and the connectors. A highlighted sector turns with the platter."></canvas></div>
+<div class="hd_bbar"><button type="button" class="hd_btn hd_btnon" id="hdRd">&#9654; Read a random sector</button><button type="button" class="hd_btn" id="hdNext" disabled>Next step &#9656;</button><label><input type="checkbox" id="hdStepM"> pause after each step</label><button type="button" class="hd_btn" id="hdPark">Park the heads</button><button type="button" class="hd_btn" id="hdSpin">Stop the platters</button><label><input type="checkbox" id="hdLab" checked> labels</label></div>
+<div class="hd_row2">
+<div class="hd_diag"><div class="hd_dlabel"><b>FROM THE SIDE: PLATTERS, HEADS, AND THE TIME A READ TAKES</b></div><canvas id="hdStack" width="380" height="270" role="img" aria-label="Side view of a stack of three platters with a head on each face, and a bar of the time a read takes: seek, settle, latency and read."></canvas></div>
+<div class="hd_panel"><div class="hd_ptitle">Settings</div><div class="hd_pbody" id="hdCtl4"></div></div>
+</div>
+<div class="hd_panels"><div class="hd_panel"><div class="hd_ptitle">Readout</div><div class="hd_pbody" id="hdRead4"></div></div>
+<div class="hd_panel"><div class="hd_ptitle">How close is 3 nm?</div><div class="hd_pbody" style="font-size:.82rem;line-height:1.45"><p style="margin:0">The head flies on a cushion of air dragged along by the spinning platter, a few nanometres above it. A smoke particle (about 1000 nm), a fingerprint (about 15 000 nm) or a hair (about 80 000 nm) is a mountain at that scale: if the head hits one, or touches the surface (a <b>head crash</b>), it scrapes away the magnetic coating and the data on it. That is why drives are assembled in clean rooms and sealed, some filled with helium, which lets the platters spin more smoothly.</p></div></div></div>
+</div>
+<!-- ═════ TAB: inside an SSD ═════ -->
+<div id="hdV4" role="tabpanel" aria-labelledby="hdTab4" hidden>
+<div class="hd_diag"><div class="hd_dlabel"><b>AN SSD, AND INSIDE ITS CHIPS</b></div><canvas id="hdBoard" width="780" height="240" role="img" aria-label="An M.2 solid-state drive: the controller, a DRAM cache and four NAND flash chips; inside a chip, cells stacked in strings along vertical channels (3D NAND)."></canvas></div>
+<div class="hd_diag"><div class="hd_dlabel"><b>PAGES AND BLOCKS: WRITE BY PAGES, ERASE BY BLOCKS</b></div><canvas id="hdBlocks" width="780" height="290" role="img" aria-label="Eight blocks of eight pages each; pages are free, valid (with a file letter) or stale; under each block, how many times it has been erased."></canvas></div>
+<div class="hd_bbar"><button type="button" class="hd_btn" data-ss="save">Save a file</button><button type="button" class="hd_btn" data-ss="edit">Edit a file</button><button type="button" class="hd_btn" data-ss="del">Delete a file (TRIM)</button><button type="button" class="hd_btn" data-ss="gc">Garbage collection</button><button type="button" class="hd_btn" data-ss="many">40 operations: one busy file</button><button type="button" class="hd_btn" data-ss="reset">New drive</button><label><input type="checkbox" id="hdWL" checked> wear levelling</label></div>
+<div class="hd_panels"><div class="hd_panel"><div class="hd_ptitle">Readout</div><div class="hd_pbody" id="hdRead5"></div></div>
+<div class="hd_panel"><div class="hd_ptitle">Why a controller is needed</div><div class="hd_pbody" style="font-size:.82rem;line-height:1.45"><p style="margin:0">A flash page can be written only once until its whole block is erased, and each erase wears the cells (about 1000 to 100 000 times, depending on the bits per cell). So the controller never overwrites in place: it writes the new version elsewhere, keeps a map from the computer's block numbers to the pages, collects stale pages into blocks it can erase, and spreads the erases evenly (<b>wear levelling</b>). The extra writes this needs are the <b>write amplification</b>.</p></div></div></div>
+</div>
+<!-- ═════ TAB 1: a track, the write head, the read sensor ═════ -->
+<div id="hdV0" role="tabpanel" aria-labelledby="hdTab0" hidden>
+<div class="hd_bbar"><label>Message <input type="text" id="hdMsg" value="HI!" maxlength="6" style="width:80px"></label><span class="hd_sval" id="hdBits"></span></div>
+<div class="hd_diag"><div class="hd_dlabel"><b>A TRACK, SEEN FROM THE SIDE</b><span id="hdHint0">the disk moves to the left under the head</span></div><canvas id="hdTrack" width="780" height="270" role="img" aria-label="Side view of a disk track: grains magnetized up or down move under the write pole and the read sensor."></canvas></div>
+<div class="hd_diag"><div class="hd_dlabel"><b>THE READ SENSOR'S SIGNAL, AND THE BITS IT GIVES BACK</b></div><canvas id="hdSig" width="780" height="200" role="img" aria-label="The signal from the read sensor, aligned with the track, and the bits decoded from it compared with the bits written." aria-describedby="hdDec"></canvas></div>
+<div class="hd_bbar"><button type="button" class="hd_btn hd_btnon" id="hdGo">&#9654; Write &amp; read</button><button type="button" class="hd_btn" id="hdBit">One bit &#9656;</button><button type="button" class="hd_btn" id="hdNow">Skip to the end</button><button type="button" class="hd_btn" id="hdErase">New disk</button>
+<label><input type="radio" name="hdMode" value="perp" checked> perpendicular (today)</label><label><input type="radio" name="hdMode" value="long"> longitudinal (before 2005)</label></div>
+<div class="hd_panels"><div class="hd_panel"><div class="hd_ptitle">Settings</div><div class="hd_pbody" id="hdCtl0"></div></div>
+<div class="hd_panel"><div class="hd_ptitle">Readout</div><div class="hd_pbody" id="hdRead0"></div></div></div>
+<div class="hd_eqs" id="hdDec"></div>
+</div>
+<!-- ═════ TAB 2: thermal stability, the trilemma, HAMR ═════ -->
+<div id="hdV1" role="tabpanel" aria-labelledby="hdTab1" hidden>
+<div class="hd_bbar"><label>Medium <select id="hdPre"><option value="old">CoCrPt grains, 8 nm: drives of the 2010s</option><option value="small">the same alloy, 6 nm grains: more density?</option><option value="fept">FePt grains, 4 nm: very stable, but writable?</option><option value="hamr">FePt, 4 nm, heated while writing (HAMR)</option><option value="own">(your own settings)</option></select></label></div>
+<div class="hd_row2">
+<div class="hd_diag"><div class="hd_dlabel"><b>GRAINS SEEN FROM ABOVE</b><span id="hdHint1"></span></div><canvas id="hdGrains" width="380" height="300" role="img" aria-label="The grains of the disk seen from above, forming bits; grains that have flipped on their own are outlined."></canvas></div>
+<div class="hd_diag"><div class="hd_dlabel"><b>THE THREE REQUIREMENTS</b></div><canvas id="hdTri" width="380" height="300" role="img" aria-label="Three gauges: the signal (grains per bit), the stability (energy barrier over thermal energy), and the writability (anisotropy field against the head's field)."></canvas></div>
+</div>
+<div class="hd_panels"><div class="hd_panel"><div class="hd_ptitle">Settings</div><div class="hd_pbody" id="hdCtl1"></div></div>
+<div class="hd_panel"><div class="hd_ptitle">Readout</div><div class="hd_pbody" id="hdRead1"></div></div></div>
+<div class="hd_eqs" id="hdEq1"></div>
+</div>
+<!-- ═════ TAB 3: a flash memory cell ═════ -->
+<div id="hdV2" role="tabpanel" aria-labelledby="hdTab2" hidden>
+<div class="hd_row2">
+<div class="hd_diag"><div class="hd_dlabel"><b>A FLASH MEMORY CELL</b><span id="hdHint2"></span></div><canvas id="hdCell" width="380" height="320" role="img" aria-label="Cross-section of a flash memory cell: the control gate, the floating gate holding electrons, the thin tunnel oxide, and the channel between source and drain."></canvas></div>
+<div class="hd_diag"><div class="hd_dlabel"><b>READING IT: CURRENT AGAINST GATE VOLTAGE</b></div><canvas id="hdIV" width="380" height="320" role="img" aria-label="The transistor's current against the control-gate voltage; the stored electrons shift the curve to the right."></canvas></div>
+</div>
+<div class="hd_bbar"><label>programming by <select id="hdMeth"><option value="fn">tunnelling (NAND)</option><option value="hei">hot electrons (NOR)</option></select></label><button type="button" class="hd_btn" id="hdPgm">Program pulse</button><button type="button" class="hd_btn" id="hdStep1">One programming step</button><button type="button" class="hd_btn" id="hdErs">Erase</button><span id="hdLvBtns"></span></div>
+<div class="hd_diag"><div class="hd_dlabel"><b>A MILLION CELLS: THE THRESHOLD VOLTAGES OF EACH LEVEL</b><span id="hdHint3"></span></div><canvas id="hdDist" width="780" height="230" role="img" aria-label="Histogram of the threshold voltages of many cells, one peak for each stored level, with the read voltages between them."></canvas></div>
+<div class="hd_panels"><div class="hd_panel"><div class="hd_ptitle">Settings</div><div class="hd_pbody" id="hdCtl2"></div></div>
+<div class="hd_panel"><div class="hd_ptitle">Readout</div><div class="hd_pbody" id="hdRead2"></div></div></div>
+<div class="hd_eqs" id="hdEq2"></div>
+</div>
+<div id="hdNar" class="hd_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="hd_descwrap">
+<button type="button" class="hd_descbtn" id="hdDescBtn" aria-expanded="false" aria-controls="hdDesc" onclick="hdSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="hd_desc" id="hdDesc" role="region" aria-labelledby="hdDescBtn" style="display:none">
+<p><b>Inside a hard drive.</b> One or more rigid platters (aluminium or glass, coated with a magnetic film on both faces) spin together on a spindle at a constant 5400 to 15 000 revolutions per minute. Each face has its own read/write head, at the tip of an arm; all the arms pivot together about one axis, swung by a voice-coil actuator (a coil between permanent magnets: the force on a current in a magnetic field). The heads fly a few nanometres above the surface on a cushion of air dragged by the platter; touching the surface (a head crash) destroys the data there, so drives are sealed, and the heads are parked on a ramp before the platters stop. The data lie on concentric tracks, cut into sectors; the outer tracks, longer, hold more sectors. Reading a sector takes a seek (the arm accelerates, then brakes), a short settling time, a wait for the sector to come round (on average half a turn) and the read itself: in all several milliseconds, almost all of it mechanical.</p>
+<p><b>Writing and reading a disk.</b> A hard disk stores bits in a thin magnetic film made of tiny grains, each a few nanometres across, magnetized one way or the other. The write head is an electromagnet: a current in its coil makes a strong field under its narrow pole, which sets the grains passing beneath it. Reversing the current reverses the magnetization written from then on. Drives store a 1 as a reversal (a transition) and a 0 as no reversal. The read sensor, a magnetoresistive sensor (GMR or TMR) whose resistance depends on the field, flies a few nanometres above the disk and picks up the field of the grains passing under it. In perpendicular recording (used since about 2005) the grains point up or down and the signal follows the magnetization; in the older longitudinal recording they lie along the track, and the signal is a pulse at each transition. Because the grains have random sizes, transitions are jagged; because the sensor is not infinitely close, neighbouring bits blur together. Both limit how short a bit can be.</p>
+<p><b>Keeping the bits.</b> More grains per bit give a cleaner signal, so denser disks need smaller grains. But a grain's magnetization is held in place by an energy barrier `K_u V` (the anisotropy energy density times the volume), and thermal energy `k_B T` keeps trying to flip it. A grain flips on its own after a time</p>
+<p class="hd_eq">`tau = tau_0 e^(K_u V // k_B T)`, with `tau_0 ~~ 1 ns`.</p>
+<p>Keeping data for ten years needs `K_u V // k_B T` of about 50 or more. Smaller grains need a "harder" material (larger `K_u`), but its anisotropy field `mu_0 H_k = 2 K_u // M_s` then exceeds what a write head can make (about 2 T). Signal, stability and writability cannot all be satisfied: the recording trilemma. Heat-assisted magnetic recording (HAMR) escapes it by heating the grains with a laser for an instant while writing, which lowers `K_u` and so `H_k`; they cool down stable.</p>
+<p><b>The solid-state drive.</b> A flash memory cell is a transistor with an extra, isolated electrode, the floating gate, buried in insulating oxide. A high voltage on the control gate pulls electrons from the channel through the thin tunnel oxide by quantum tunnelling (Fowler-Nordheim tunnelling): the current density</p>
+<p class="hd_eq">`J = A E^2 e^(-B // E)`</p>
+<p>rises steeply with the field `E` in the oxide. The trapped electrons push the transistor's threshold voltage up by `Delta V_t = N e // C`, about 40 mV per electron here; they stay for years, since without a high field there is almost no tunnelling. Erasing pulls them out the same way. Reading applies a voltage between the levels and asks whether the transistor conducts. Storing 2, 3 or 4 bits in one cell (MLC, TLC, QLC) means telling apart 4, 8 or 16 threshold levels. Every program and erase damages the oxide a little: the levels broaden, and over time they lose charge and drift down, until neighbouring levels overlap and bits are misread. Error-correcting codes fix a few errors; more levels per cell leave less room, which is why QLC drives wear out sooner.</p>
+<p>Two ways put electrons on the floating gate. In NAND flash (SSDs, memory cards), a high voltage on the control gate makes them tunnel through the oxide. In NOR flash, 12 V on the drain speeds electrons along the channel, and near the drain some gain enough energy to jump over the oxide barrier (hot-electron injection). Both are erased by tunnelling.</p>
+<p><b>Inside an SSD.</b> An SSD has no moving parts: a controller (a small processor), often a DRAM cache, and NAND flash chips, whose cells are stacked in layers (3D NAND). Flash is written by pages (about 16 kB) but erased only by whole blocks (several MB), and a page cannot be rewritten before its block is erased. So the controller writes each new version elsewhere and marks the old page stale; deleting a file only marks its pages stale (the TRIM command). Garbage collection copies the valid pages of a block elsewhere and erases it. Since each block survives only so many erases, the controller spreads them (wear levelling), even moving data that never changes. These extra writes make the flash write more than the computer asked: the write amplification.</p>
+</div></div>
+</div><!-- #hdRoot -->
+<style>
+#hdRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#hdRoot * { box-sizing:border-box; }
+#hdRoot.hd_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#hdRoot.hd_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#hdRoot .hd_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#hdRoot .hd_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#hdRoot .hd_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#hdRoot .hd_header { text-align:center; }
+#hdRoot .hd_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#hdRoot .hd_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#hdRoot .hd_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#hdRoot .hd_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#hdRoot .hd_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#hdRoot .hd_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#hdRoot .hd_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#hdRoot .hd_dlabel b { color:var(--c-accent); }
+#hdRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#hdRoot .hd_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#hdRoot .hd_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#hdRoot .hd_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#hdRoot .hd_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#hdRoot .hd_btn:hover { border-color:var(--c-accent); }
+#hdRoot .hd_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#hdRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#hdRoot .hd_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#hdRoot .hd_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#hdRoot .hd_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#hdRoot .hd_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#hdRoot .hd_ctrl { display:flex; flex-direction:column; gap:3px; }
+#hdRoot .hd_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#hdRoot .hd_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#hdRoot .hd_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#hdRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#hdRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#hdRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#hdRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#hdRoot .hd_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#hdRoot .hd_rkey { color:var(--c-dim); }
+#hdRoot .hd_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#hdRoot .hd_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#hdRoot .hd_eqs b { color:var(--c-val); }
+#hdRoot .hd_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#hdRoot .hd_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#hdRoot .hd_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#hdRoot .hd_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#hdRoot .hd_desc p { margin:0 0 9px; }
+#hdRoot .hd_eq { text-align:center; font-size:1rem; }
+#hdRoot button:focus-visible, #hdRoot input:focus-visible, #hdRoot select:focus-visible, #hdRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #hdRoot .hd_row2, #hdRoot .hd_panels { grid-template-columns:minmax(0,1fr); } #hdRoot .hd_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #hdRoot input[type=range] { height:8px; } #hdRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #hdRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #hdRoot .hd_a11ybtn { min-height:40px; } #hdRoot input[type=checkbox] { width:22px; height:22px; } }
+#hdRoot .hd_chk { display:flex; gap:6px; align-items:center; font-size:.8rem; color:var(--c-text); }
+</style>
+<!-- ════════ SIMULATION ════════
+Tab 1: grains of random widths along a track; the write current follows the bits (a 1 reverses it); a grain takes the current's direction
+as it passes the write pole's trailing edge. The read signal: perpendicular, the magnetization smoothed by the sensor's response (a Gaussian
+of width set by the flying height); longitudinal, its derivative (a pulse at each transition). Tab 2: tau = tau0 exp(Ku V/kT); the fraction of
+grains flipped after a time t: (1 - exp(-2t/tau))/2; mu0 Hk = 2 Ku/Ms; HAMR: Ku(T) = Ku0 (1 - T/Tc)^2. Tab 3: Fowler-Nordheim tunnelling,
+J = A E^2 exp(-B/E), into the floating gate; Vt = Vt0 + N e/Ccg. No dollar signs or backticks in the code.
+-->
+<script>
+var hdSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('hdRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var th = { hc:false, lm:false, cb:false, nr:true }, TAB = 0;
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.1)', up:'#d62828', dn:'#1f5fd6', ok:'#12805a', bad:'#c0392b', head:'#6b7684', coil:'#c47f17', el:'#1f5fd6', ox:'#e9e2c8', poly:'#9aa7b4', si:'#d9d2c3', n:'#c8b8e8', acc:'#c2185b' };
+  if (th.cb){ p.up = '#d55e00'; p.dn = '#0072b2'; p.ok = '#009e73'; p.bad = '#cc79a7'; }
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.25)'; p.up = '#ff5555'; p.dn = '#55aaff'; p.ok = '#00ff88'; p.bad = '#ff66aa'; p.head = '#aaa'; p.ox = '#333'; p.poly = '#666'; p.si = '#222'; p.n = '#553388'; p.acc = '#ffff00'; }
+  return p; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('hdNar').textContent = m; }
+function rrow(k, v){ return '<div class="hd_rrow"><span class="hd_rkey">' + k + '</span><span class="hd_rval">' + v + '</span></div>'; }
+function row(id, label, min, max, step, val, txt){ return '<div class="hd_ctrl"><div class="hd_ctrlhdr"><label class="hd_ctrlname" for="' + id + '">' + label + '</label><span class="hd_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function rnd(seed){ var s = seed >>> 0; return function(){ s = (s*1664525 + 1013904223) >>> 0; return s/4294967296; }; }
+function timeStr(s){ if (s < 1e-6) return f2(s*1e9, 1) + ' ns'; if (s < 1e-3) return f2(s*1e6, 1) + ' \u00B5s'; if (s < 1) return f2(s*1e3, 1) + ' ms'; if (s < 120) return f2(s, 1) + ' s'; if (s < 7200) return f2(s/60, 1) + ' minutes'; if (s < 172800) return f2(s/3600, 1) + ' hours';
+  if (s < 6.3e7) return f2(s/86400, 1) + ' days'; var y = s/3.156e7; if (y < 1e3) return f2(y, y < 10 ? 1 : 0) + ' years'; if (y < 1e6) return f2(y/1e3, 0) + ' thousand years'; if (y < 1e9) return f2(y/1e6, 0) + ' million years'; if (y < 1e12) return f2(y/1e9, 1) + ' billion years'; return 'far longer than the age of the universe'; }
+/* ══════════════════ TAB 1: writing and reading a track ══════════════════ */
+var CT = hi('hdTrack'), CG = hi('hdSig');
+var D1 = { B:20, g:7, h:5, mode:'perp', speed:1 };
+var TR = null, OFF = 0, RUN = false, raf = null, last = 0, READ = -1e9, ANIM = false;   /* RUN: a write in progress; ANIM: the animation playing */   /* READ: the medium coordinate read so far */
+var XW = 560, XR = 250, PX0 = 0;   /* the write pole's trailing edge and the read sensor, in screen pixels */
+function msgBits(){ var m = el('hdMsg').value || '', b = []; for (var i=0; i<m.length; i++){ var c = m.charCodeAt(i) & 255; for (var k=7; k>=0; k--) b.push((c >> k) & 1); } return b; }
+function newTrack(){
+  var bits = msgBits(), r = rnd(7 + bits.length*13 + Math.round(D1.g*10)), pre = 4, N = bits.length, Xs = 0, L = (N + pre + 6)*D1.B, gr = [], x = -pre*D1.B - 400;
+  while (x < L + 400){ var w = D1.g*(0.55 + 0.9*r()); gr.push({ x:x, w:w, m:r() < 0.5 ? 1 : -1, set:false }); x += w; }   /* an old, random magnetization */
+  var cur = [], c = 1; for (var j=0; j<N; j++){ if (bits[j]) c = -c; cur.push(c); }
+  TR = { bits:bits, cur:cur, gr:gr, Xs:Xs, N:N, sig:null, L:L };
+  el('hdBits').textContent = bits.length ? bits.join('').match(/.{1,8}/g).join(' ') : '(type a message)';
+}
+/* screen x of medium coordinate xm: the medium moves left as OFF grows */
+var KX = 2.2; function SX(xm){ return XW + (xm - OFF)*KX; }
+function writeStep(){ /* grains whose centre has passed the trailing edge take the write current's direction */
+  var xm = OFF, j = Math.floor((xm - TR.Xs)/D1.B), on = j >= 0 && j < TR.N, c = on ? TR.cur[j] : null;
+  if (j < 0) c = 1;   /* the lead-in: written with the starting current */
+  TR.gr.forEach(function(q){ var ctr = q.x + q.w/2; if (!q.set && ctr <= xm && ctr > xm - 40 && c !== null && j < TR.N){ q.m = c; q.set = true; } });
+}
+function kernelSig(){ /* the read signal at every 0.5 nm of the track */
+  var s0 = (D1.h + 4)*0.55, step = 0.5, x0 = -3*D1.B, x1 = TR.L, n = Math.ceil((x1 - x0)/step), S = new Float32Array(n);
+  function erf(x){ var t = 1/(1 + 0.3275911*Math.abs(x)), y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x); return x >= 0 ? y : -y; }
+  for (var i=0; i<n; i++){ var xr = x0 + i*step, v = 0;
+    for (var k=0; k<TR.gr.length; k++){ var q = TR.gr[k]; if (q.x > xr + 4*s0 || q.x + q.w < xr - 4*s0) continue;
+      if (D1.mode === 'perp') v += q.m*0.5*(erf((q.x + q.w - xr)/(s0*1.4142)) - erf((q.x - xr)/(s0*1.4142)));
+      else v += q.m*(Math.exp(-(q.x - xr)*(q.x - xr)/(2*s0*s0)) - Math.exp(-(q.x + q.w - xr)*(q.x + q.w - xr)/(2*s0*s0)))*1.6; }
+    S[i] = v; }
+  return { x0:x0, step:step, S:S };
+}
+function sigAt(xm){ var s = TR.sig; if (!s) return 0; var i = Math.round((xm - s.x0)/s.step); return (i >= 0 && i < s.S.length) ? s.S[i] : 0; }
+function decode(){ /* the bits read back from the signal */
+  var out = [], prev = 1, read = READ;
+  for (var j=0; j<TR.N; j++){ var c0 = TR.Xs + j*D1.B; if (c0 + D1.B > read) break;
+    if (D1.mode === 'perp'){ var v = sigAt(c0 + D1.B/2), m = v >= 0 ? 1 : -1; out.push(m !== prev ? 1 : 0); prev = m; }
+    else { var vmax = 0; for (var d=-0.3*D1.B; d<=0.3*D1.B; d+=0.5){ var vv = Math.abs(sigAt(c0 + d)); if (vv > vmax) vmax = vv; } out.push(vmax > 0.45 ? 1 : 0); } }
+  return out;
+}
+function drawTrack(){
+  var g = CT.g, W = CT.W, H = CT.H, p = pal(), yT = 150, yB = 200, perp = D1.mode === 'perp', hpx = Math.max(3, D1.h*KX);
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  /* the soft underlayer (perpendicular), the substrate */
+  if (perp){ g.fillStyle = th.hc ? '#333' : '#cfd5db'; g.fillRect(0, yB, W, 22); Tx(g, 'soft magnetic underlayer', 8, yB + 11, p.dim, 'left', '10px Arial'); }
+  g.fillStyle = th.hc ? '#222' : '#e3e6ea'; g.fillRect(0, yB + (perp ? 22 : 0), W, H - yB);
+  /* the grains */
+  TR.gr.forEach(function(q){ var x1 = SX(q.x), x2 = SX(q.x + q.w); if (x2 < 0 || x1 > W) return;
+    g.fillStyle = q.m > 0 ? (th.hc ? '#661111' : '#f6c9c4') : (th.hc ? '#112266' : '#c6d6f3'); g.fillRect(x1, yT, x2 - x1, yB - yT); seg(g, x1, yT, x1, yB, th.hc ? '#888' : '#7d8794', 1);
+    var cx = (x1 + x2)/2, col = q.m > 0 ? p.up : p.dn; g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 2;
+    if (perp){ var a = q.m > 0 ? yT + 8 : yB - 8, b = q.m > 0 ? yB - 8 : yT + 8; g.beginPath(); g.moveTo(cx, b); g.lineTo(cx, a); g.stroke(); g.beginPath(); g.moveTo(cx, a); g.lineTo(cx - 4, a + (q.m > 0 ? 7 : -7)); g.lineTo(cx + 4, a + (q.m > 0 ? 7 : -7)); g.fill(); }
+    else { var w2 = Math.max(4, (x2 - x1)/2 - 3), ym = (yT + yB)/2, ax = cx + q.m*w2; g.beginPath(); g.moveTo(cx - q.m*w2, ym); g.lineTo(ax, ym); g.stroke(); g.beginPath(); g.moveTo(ax, ym); g.lineTo(ax - q.m*7, ym - 4); g.lineTo(ax - q.m*7, ym + 4); g.fill(); } });
+  seg(g, 0, yT, W, yT, th.hc ? '#fff' : '#555', 1); seg(g, 0, yB, W, yB, th.hc ? '#fff' : '#555', 1);
+  /* the bit cells, above the medium */
+  for (var j=0; j<TR.N; j++){ var bx = SX(TR.Xs + j*D1.B), bx2 = SX(TR.Xs + (j + 1)*D1.B); if (bx2 < 0 || bx > W) continue; seg(g, bx, yT - 6, bx, yT - 1, p.dim, 1); Tx(g, String(TR.bits[j]), (bx + bx2)/2, yT - 8, p.dim, 'center', '10px monospace'); }
+  /* the head: the write pole with its coil, the return pole, the read sensor between its shields */
+  var gy = yT - hpx - 12, cur = writing() ? currentNow() : null;
+  g.fillStyle = p.head; g.beginPath(); g.moveTo(XW - 2, gy); g.lineTo(XW - 2 - 10, 20); g.lineTo(XW + 70, 20); g.lineTo(XW + 70, gy - 34); g.lineTo(XW + 14, gy - 34); g.lineTo(XW + 6, gy); g.closePath(); g.fill();
+  g.fillRect(XW + 70, 20, 40, gy - 20); Tx(g, 'write pole', XW - 16, 12, p.text, 'right', 'bold 11px Arial'); Tx(g, 'return pole', XW + 118, gy - 6, p.text, 'left', '10px Arial');
+  for (var k=0; k<3; k++){ var cy = gy - 54 - k*0; var cx2 = XW + 26 + k*16; g.strokeStyle = p.coil; g.lineWidth = 2; g.beginPath(); g.arc(cx2, gy - 50, 6, 0, 2*Math.PI); g.stroke();
+    if (cur !== null){ g.fillStyle = p.coil; if (cur > 0){ g.beginPath(); g.arc(cx2, gy - 50, 2, 0, 2*Math.PI); g.fill(); } else { seg(g, cx2 - 3, gy - 53, cx2 + 3, gy - 47, p.coil, 1.5); seg(g, cx2 + 3, gy - 53, cx2 - 3, gy - 47, p.coil, 1.5); } } }
+  Tx(g, 'coil' + (cur === null ? ' (off)' : ''), XW + 42, gy - 66, p.coil, 'center', '10px Arial');
+  if (cur !== null){ /* the field from the pole into the medium */ var fc = cur > 0 ? p.up : p.dn; g.strokeStyle = fc; g.lineWidth = 2; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(XW + 2, gy); g.lineTo(XW + 2, perp ? yB + 10 : yB - 18); if (perp){ g.lineTo(XW + 90, yB + 10); g.lineTo(XW + 90, gy); } g.stroke(); g.setLineDash([]);
+    Tx(g, cur > 0 ? '\u2193 field' : '\u2191 field', XW + 8, yT - hpx - 4, fc, 'left', 'bold 10px Arial'); }
+  g.fillStyle = p.head; g.fillRect(XR - 26, 30, 18, gy - 30); g.fillRect(XR + 8, 30, 18, gy - 30); g.fillStyle = p.acc; g.fillRect(XR - 3, gy - 30, 6, 30);
+  Tx(g, 'read sensor (TMR)', XR, 12, p.text, 'center', 'bold 11px Arial'); Tx(g, 'shields', XR + 30, 40, p.dim, 'left', '10px Arial');
+  seg(g, XR + 30, gy, XR + 30, yT, p.text, 1); Tx(g, 'flying ' + f2(D1.h, 0) + ' nm above', XR + 36, (gy + yT)/2, p.text, 'left', '10px Arial');
+  Tx(g, '\u2190 the disk moves', 10, H - 12, p.dim, 'left', '11px Arial');
+  Tx(g, D1.B + ' nm per bit', W - 10, H - 12, p.dim, 'right', '11px Arial');
+}
+function SH(){ return RUN ? (XW - XR)/KX : 0; }   /* while reading, the signal lines up with the sensor; afterwards, with the grains above */
+function writing(){ var j = Math.floor((OFF - TR.Xs)/D1.B); return RUN && j >= -1 && j < TR.N; }
+function currentNow(){ var j = Math.floor((OFF - TR.Xs)/D1.B); return j < 0 ? 1 : TR.cur[Math.min(j, TR.N - 1)]; }
+function drawSig(){
+  var g = CG.g, W = CG.W, H = CG.H, p = pal(), y0 = 70, A = 45, read = READ;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); seg(g, 0, y0, W, y0, p.grid, 1);
+  Tx(g, 'signal', 6, 12, p.dim, 'left', '10px Arial');
+  if (TR.sig){ g.strokeStyle = th.hc ? '#ffff00' : '#1d2a36'; g.lineWidth = 2; g.beginPath(); var on = false;
+    for (var x=0; x<W; x++){ var xm = OFF + (x - XW)/KX + SH(); if (xm > read){ break; } var v = sigAt(xm); if (on) g.lineTo(x, y0 - A*v); else { g.moveTo(x, y0 - A*v); on = true; } } g.stroke(); }
+  if (RUN){ seg(g, XR, 0, XR, H, p.acc, 1, [3, 3]); Tx(g, 'sensor', XR + 4, 12, p.acc, 'left', '10px Arial'); }
+  /* the bits: written, and read back */
+  var dec = decode(), errs = 0;
+  Tx(g, 'written', 6, 140, p.dim, 'left', '10px Arial'); Tx(g, 'read back', 6, 166, p.dim, 'left', '10px Arial');
+  for (var j=0; j<TR.N; j++){ var bx = SX(TR.Xs + j*D1.B) - SH()*KX, bx2 = SX(TR.Xs + (j + 1)*D1.B) - SH()*KX; if (bx2 < 60 || bx > W) continue;
+    Tx(g, String(TR.bits[j]), (bx + bx2)/2, 140, p.text, 'center', 'bold 12px monospace');
+    if (j < dec.length){ var ok = dec[j] === TR.bits[j]; if (!ok) errs++; g.fillStyle = ok ? 'rgba(18,128,90,0.15)' : 'rgba(192,57,43,0.25)'; g.fillRect(bx + 1, 155, bx2 - bx - 2, 22); Tx(g, String(dec[j]), (bx + bx2)/2, 166, ok ? p.ok : p.bad, 'center', 'bold 12px monospace'); }
+    if (D1.mode === 'perp' && j < dec.length){ var sx = (bx + bx2)/2; g.fillStyle = p.acc; g.beginPath(); g.arc(sx, y0 - A*sigAt(TR.Xs + (j + 0.5)*D1.B), 2.5, 0, 2*Math.PI); g.fill(); } }
+  return { dec:dec, errs:errs };
+}
+function decodeText(dec){ var s = ''; for (var i=0; i + 8 <= dec.length; i+=8){ var c = 0; for (var k=0; k<8; k++) c = c*2 + dec[i + k]; s += (c >= 32 && c < 127) ? String.fromCharCode(c) : '\u25A1'; } return s; }
+function info0(R){
+  var dens = 6.4516e14/(D1.B*4*D1.B), per = D1.B*4*D1.B/(D1.g*D1.g), v = 30.2;
+  el('hdRead0').innerHTML = rrow('bit length', D1.B + ' nm') + rrow('areal density (tracks 4 bits wide)', f2(dens/1e12, 2) + ' Tb per square inch') + rrow('grains per bit', '\u2248 ' + f2(per, 0)) + rrow('at 7200 rpm, 4 cm from the centre', f2(v, 0) + ' m/s: ' + f2(v/(D1.B*1e-9)/1e9, 1) + ' Gbit/s')
+    + rrow('bits read so far', R.dec.length + ' of ' + TR.N) + rrow('errors', R.errs + (R.dec.length ? ' (' + f2(100*R.errs/R.dec.length, 0) + ' %)' : ''));
+  var txt = R.dec.length >= 8 ? decodeText(R.dec) : '';
+  el('hdDec').innerHTML = 'A <b>1</b> is a reversal of the magnetization, a <b>0</b> is none. ' + (D1.mode === 'perp' ? 'Perpendicular grains point up or down: the signal follows the magnetization, and is sampled in the middle of each bit (the dots).' : 'Longitudinal grains lie along the track: their field leaks out at each transition, giving a pulse, and a pulse means a 1.')
+    + (txt ? '<br>Message read back: <b>' + txt.replace(/</g, '&lt;') + '</b>' + (R.errs ? ' (' + R.errs + ' bit error' + (R.errs > 1 ? 's' : '') + ')' : '') : '');
+}
+function draw0(){ if (!TR) return; drawTrack(); var R = drawSig(); R.errs = 0; R.dec.forEach(function(b, j){ if (b !== TR.bits[j]) R.errs++; }); info0(R); return R; }   /* every bit read back, on screen or not */
+function tick(t){ if (!RUN || !ANIM){ ANIM = false; return; } var dt = Math.min(50, t - (last || t)); last = t; OFF += dt*0.008*D1.B*D1.speed; writeStep(); READ = Math.max(READ, OFF - (XW - XR)/KX);
+  if (OFF - (XW - XR)/KX > TR.Xs + TR.N*D1.B + D1.B){ RUN = false; ANIM = false; TR.sig = kernelSig(); look(0); var R = draw0(); narrate('Done: ' + TR.N + ' bits written and read back, ' + R.errs + ' error' + (R.errs === 1 ? '' : 's') + '. ' + (R.errs ? 'The bits are too short for these grains and this flying height: they blur together.' : 'Every bit came back.')); el('hdGo').innerHTML = '\u25B6 Write & read'; return; }
+  if (!TR.sig || (Math.round(OFF) % 3 === 0)) TR.sig = kernelSig(); draw0(); raf = requestAnimationFrame(tick); }
+function start(){ newTrack(); OFF = -6*D1.B; READ = -1e9; RUN = true; ANIM = true; last = 0; TR.sig = kernelSig(); el('hdGo').innerHTML = '\u23F8 Writing\u2026'; narrate('Writing: the coil\u2019s current reverses for every 1; the pole sets each grain as it passes its trailing edge. The read sensor, behind, turns the grains\u2019 field into a signal.'); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
+function skip(){ if (!TR) newTrack(); if (!RUN){ newTrack(); OFF = -6*D1.B; } RUN = true; var end = TR.Xs + TR.N*D1.B + D1.B + (XW - XR)/KX; while (OFF < end){ OFF += 0.5; writeStep(); } READ = end - (XW - XR)/KX; RUN = false; TR.sig = kernelSig(); cancelAnimationFrame(raf); look(0); var R = draw0(); el('hdGo').innerHTML = '\u25B6 Write & read';
+  narrate(TR.N + ' bits written and read back: ' + R.errs + ' error' + (R.errs === 1 ? '' : 's') + '. Message read back: ' + decodeText(R.dec) + '.'); }
+function stepBit(){ /* one bit cell further: the write pole writes it; the sensor, behind, reads an earlier one */
+  if (!RUN){ newTrack(); OFF = -6*D1.B; READ = -1e9; RUN = true; TR.sig = kernelSig(); }
+  ANIM = false; cancelAnimationFrame(raf); el('hdGo').innerHTML = '\u25B6 Continue';
+  var j0 = Math.floor((OFF - TR.Xs)/D1.B), target = (j0 < 0 ? TR.Xs : TR.Xs + (j0 + 1)*D1.B) + 0.5*D1.B;
+  while (OFF < target){ OFF += 0.5; writeStep(); } READ = Math.max(READ, OFF - (XW - XR)/KX); TR.sig = kernelSig();
+  var j = Math.floor((OFF - TR.Xs)/D1.B), end = TR.Xs + TR.N*D1.B + D1.B;
+  if (READ > end){ RUN = false; look(0); var R = draw0(); el('hdGo').innerHTML = '\u25B6 Write & read'; narrate('Done: the whole message is written and read back, ' + R.errs + ' error' + (R.errs === 1 ? '' : 's') + '.'); return; }
+  draw0(); var m = '';
+  if (j >= 0 && j < TR.N){ var b = TR.bits[j], c = TR.cur[j]; m = 'Bit ' + (j + 1) + ' of ' + TR.N + ' is a ' + b + ': ' + (b ? 'the coil current reverses, so the grains passing the write pole from now on point ' : 'no reversal: the current stays, and the grains passing the pole keep pointing ') + (c > 0 ? 'down' : 'up') + '.'; }
+  else if (j >= TR.N) m = 'The whole message is written; the read sensor, behind the write pole, is still reading the last bits.';
+  else m = 'The lead-in: the pole writes a known pattern before the data, so the reader can synchronize.';
+  var rb = Math.floor((READ - TR.Xs)/D1.B); if (rb >= 0 && rb < TR.N) m += ' Meanwhile the read sensor has reached bit ' + (rb + 1) + '.';
+  narrate(m); }
+var LOOK = 0;
+function look(f){ LOOK = f; if (!TR) return; var span = Math.max(0, TR.N*D1.B - (W0() - 120)/KX); OFF = TR.Xs - (80 - XW)/KX + f*span; var e = el('hdLk'); if (e){ e.value = f; e.disabled = RUN || READ < TR.Xs; } }
+function W0(){ return CT.W; }
+/* ══════════════════ TAB 2: keeping the bits ══════════════════ */
+var CGR = hi('hdGrains'), CTR = hi('hdTri');
+var PRE2 = { old:{ D:8, Ku:0.4, Ms:0.7, hamr:false, dens:0.6 }, small:{ D:6, Ku:0.4, Ms:0.7, hamr:false, dens:1.0 }, fept:{ D:4, Ku:6.6, Ms:1.1, hamr:false, dens:2.0 }, hamr:{ D:4, Ku:6.6, Ms:1.1, hamr:true, dens:2.0 } };
+var D2 = { D:8, Ku:0.4, Ms:0.7, Hhead:2.0, T:300, t:7, hamr:false, dens:0.6 };   /* t: log10 of the time in seconds */
+var KB = 1.380649e-23, TC = 750, TW = 650;
+function barrier(Ku, D, T){ var V = Math.PI*Math.pow(D*1e-9/2, 2)*12e-9; return Ku*1e6*V/(KB*T); }
+function tauOf(x){ return 1e-9*Math.exp(Math.min(x, 700)); }
+function grainsPerBit(){ var A = 6.4516e14/(D2.dens*1e12); return A/((D2.D + 1)*(D2.D + 1)); }
+function drawGrains(){
+  var g = CGR.g, W = CGR.W, H = CGR.H, p = pal(), pitch = Math.max(5, Math.min(30, 120/Math.sqrt(grainsPerBit())*(D2.D + 1)/8)), r = rnd(11), t = Math.pow(10, D2.t), nflip = 0, ntot = 0;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  var bitPx = Math.sqrt(grainsPerBit())*pitch, bw = bitPx, bh = bitPx;   /* a bit, about square here */
+  for (var gy=0, row_=0; gy<H + pitch; gy+=pitch*0.866, row_++){ for (var gx=(row_ % 2 ? pitch/2 : 0); gx<W + pitch; gx+=pitch){
+      var bi = Math.floor(gx/bw), bj = Math.floor(gy/bh), m = ((bi*7 + bj*3 + (bi*bj) % 5) % 3 === 0) ? -1 : 1;   /* a pattern of bits */
+      var Dg = D2.D*(0.8 + 0.4*r()), x = barrier(D2.Ku, Dg, D2.T), tau = tauOf(x), pf = 0.5*(1 - Math.exp(-2*t/tau)), flip = r() < pf; ntot++; if (flip){ nflip++; m = -m; }
+      var rad = pitch*0.46*(Dg/D2.D); g.fillStyle = m > 0 ? (th.hc ? '#aa2222' : '#e9908a') : (th.hc ? '#2244aa' : '#8fb0e8'); g.beginPath(); g.arc(gx, gy, rad, 0, 2*Math.PI); g.fill();
+      if (flip){ g.strokeStyle = th.hc ? '#ffff00' : '#111'; g.lineWidth = 1.5; g.stroke(); } } }
+  g.strokeStyle = th.hc ? '#fff' : 'rgba(0,0,0,0.55)'; g.lineWidth = 1.5; g.setLineDash([4, 3]); for (var bx=0; bx<W; bx+=bw){ g.beginPath(); g.moveTo(bx, 0); g.lineTo(bx, H); g.stroke(); } for (var by=0; by<H; by+=bh){ g.beginPath(); g.moveTo(0, by); g.lineTo(W, by); g.stroke(); } g.setLineDash([]);
+  g.fillStyle = 'rgba(255,255,255,0.85)'; g.fillRect(4, H - 24, W - 8, 20); Tx(g, 'after ' + timeStr(t) + ': ' + f2(100*nflip/ntot, 1) + ' % of the grains flipped (outlined)', W/2, H - 14, '#1d2a36', 'center', 'bold 11px Arial');
+  el('hdHint1').textContent = 'dashed squares: bits; red up, blue down';
+  return nflip/ntot;
+}
+function gauge(g, x, y, w, label, frac, ok, val){ var p = pal(); Tx(g, label, x, y, p.text, 'left', 'bold 12px Arial'); g.fillStyle = th.hc ? '#333' : '#e6eaee'; g.fillRect(x, y + 12, w, 16); g.fillStyle = ok ? p.ok : p.bad; g.fillRect(x, y + 12, w*Math.max(0.02, Math.min(1, frac)), 16);
+  Tx(g, (ok ? '\u2713 ' : '\u2717 ') + val, x, y + 42, ok ? p.ok : p.bad, 'left', 'bold 11px Arial'); }
+function drawTri(){
+  var g = CTR.g, W = CTR.W, H = CTR.H, p = pal(), N = grainsPerBit(), snr = 10*Math.log10(Math.max(1, N)), x = barrier(D2.Ku, D2.D, D2.T), Hk = 2*D2.Ku*1e6/(D2.Ms*1e6);
+  var KuW = D2.hamr ? D2.Ku*Math.pow(1 - TW/TC, 2) : D2.Ku, HkW = 2*KuW*1e6/(D2.Ms*1e6);
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  var okS = snr >= 10, okT = x >= 50, okW = HkW <= D2.Hhead;
+  gauge(g, 16, 18, W - 32, 'signal: grains per bit', snr/18, okS, f2(N, 0) + ' grains: signal-to-noise \u2248 ' + f2(snr, 0) + ' dB (needs \u2248 10)');
+  gauge(g, 16, 104, W - 32, 'stability: K\u1D64V / k\u1D2ET', x/80, okT, f2(x, 0) + ': a grain flips on its own after ' + timeStr(tauOf(x)));
+  gauge(g, 16, 190, W - 32, 'writability: the head must beat \u03BC\u2080H\u2096', D2.Hhead/Math.max(HkW, 0.1)/1.5, okW, '\u03BC\u2080H\u2096 = ' + f2(HkW, 1) + ' T' + (D2.hamr ? ' (heated to ' + TW + ' K; ' + f2(Hk, 1) + ' T cold)' : '') + ' vs head ' + f2(D2.Hhead, 1) + ' T');
+  Tx(g, okS && okT && okW ? 'all three met: this disk works' : 'not all three can be met: the trilemma', W/2, H - 18, okS && okT && okW ? p.ok : p.bad, 'center', 'bold 12px Arial');
+  return { okS:okS, okT:okT, okW:okW, x:x, N:N, snr:snr, Hk:Hk, HkW:HkW };
+}
+function draw1(){ var f = drawGrains(), R = drawTri();
+  el('hdRead1').innerHTML = rrow('grain diameter', f2(D2.D, 1) + ' nm (12 nm thick)') + rrow('anisotropy K\u1D64', f2(D2.Ku, 2) + ' MJ/m\u00B3') + rrow('energy barrier / thermal energy', f2(R.x, 0)) + rrow('a grain flips on its own after', timeStr(tauOf(R.x)))
+    + rrow('grains flipped after ' + timeStr(Math.pow(10, D2.t)), f2(100*f, 1) + ' %') + rrow('areal density', f2(D2.dens, 2) + ' Tb/in\u00B2');
+  el('hdEq1').innerHTML = 'Each grain is held by an energy barrier <b>K\u1D64V</b>; heat (k\u1D2ET) flips it after <b>\u03C4 = \u03C4\u2080 e^(K\u1D64V/k\u1D2ET)</b>, \u03C4\u2080 \u2248 1 ns. Ten years needs K\u1D64V/k\u1D2ET \u2273 50. Writing needs a head field above <b>\u03BC\u2080H\u2096 = 2K\u1D64/M\u209B</b>.' + (D2.hamr ? ' With HAMR a laser heats the grains near their Curie temperature (' + TC + ' K) while writing: K\u1D64 drops, and so does H\u2096.' : '');
+  return R; }
+function sum1(R){ return (R.okT ? '' : 'The grains are too small for this material: thermal energy flips them within ' + timeStr(tauOf(R.x)) + '. ') + (R.okW ? '' : 'The material is too hard to write: it needs ' + f2(R.HkW, 1) + ' tesla, the head makes ' + f2(D2.Hhead, 1) + '. ') + (R.okS ? '' : 'Too few grains per bit for a clean signal. ') + (R.okS && R.okT && R.okW ? 'Signal, stability and writability are all met.' : ''); }
+/* ══════════════════ TAB 3: a flash memory cell ══════════════════ */
+var CC = hi('hdCell'), CI = hi('hdIV'), CD = hi('hdDist');
+var QE = 1.602e-19, CCG = 4e-18, AG = 0.6, AS = 0.35, CTOT = CCG/AG, TOX = 7e-9, AREA = Math.pow(22e-9, 2), FNA = 1.25e-6, FNB = 2.54e10, VT0 = 0.5;
+var D3 = { N:-50, Vpgm:16, bits:2, cyc:2, ret:0, Vg:3, busy:false, flow:[], meth:'fn', step:null, term:null };   /* cyc: log10 of program/erase cycles; ret: log10 of 1 + hours */
+function Vt(){ return VT0 + D3.N*QE/CCG; }
+function levels(){ var L = 1 << D3.bits, out = [-2.4]; for (var k=1; k<L; k++) out.push(0.4 + (k - 1)*(5.6 - 0.4)/Math.max(1, L - 2)); if (L === 2) out[1] = 2.5; return out; }
+function refs(){ var lv = levels(), r = []; for (var k=1; k<lv.length; k++) r.push((lv[k - 1] + lv[k])/2); return r; }
+function gray(k, b){ var gcode = k ^ (k >> 1), s = ''; for (var i=b - 1; i>=0; i--) s += (gcode >> i) & 1; return s; }
+function pulse(Vg, Vsub, T){ /* Fowler-Nordheim tunnelling through the oxide for T seconds */
+  var t = 0, n0 = D3.N, guard = 0;
+  while (t < T && guard++ < 200000){ var E = (AG*Vg + AS*Vsub - D3.N*QE/CTOT - Vsub)/TOX, aE = Math.abs(E), rate = aE < 1e8 ? 0 : FNA*E*E*Math.exp(-FNB/aE)*AREA/QE;   /* electrons per second */
+    if (rate*(T - t) < 1e-3) break; var dt = Math.min(T - t, 0.5/rate); D3.N += (E > 0 ? 1 : -1)*rate*dt; t += dt; }   /* at most half an electron per step */
+  return D3.N - n0; }
+function wear(){ return Math.pow(10, D3.cyc); }
+function sigma(){ return 0.05*Math.sqrt(1 + wear()/1500); }
+function retShift(v){ /* charge loss: the higher levels lose most; faster after wear */ var hrs = Math.pow(10, D3.ret) - 1; return -(Math.max(0, v - VT0))*0.004*(1 + wear()/3000)*Math.log10(1 + hrs); }
+function errRate(){ var lv = levels(), rf = refs(), s = sigma(), tot = 0;
+  function Q(z){ return 0.5*erfc(z/Math.SQRT2); } function erfc(x){ var t = 1/(1 + 0.5*Math.abs(x)), y = t*Math.exp(-x*x - 1.26551223 + t*(1.00002368 + t*(0.37409196 + t*(0.09678418 + t*(-0.18628806 + t*(0.27886807 + t*(-1.13520398 + t*(1.48851587 + t*(-0.82215223 + t*0.17087277))))))))); return x >= 0 ? y : 2 - y; }
+  lv.forEach(function(v, k){ var m = v + retShift(v), sk = k === 0 ? 0.25 : s; if (k > 0) tot += Q((m - rf[k - 1])/sk); if (k < lv.length - 1) tot += Q((rf[k] - m)/sk); });
+  return tot/lv.length/D3.bits; }   /* per bit: Gray coding makes most misreads one bit */
+function drawCell(){
+  var g = CC.g, W = CC.W, H = CC.H, p = pal(), cx = W/2, yCG = 40, yIP = 92, yFG = 108, yTO = 160, ySi = 172;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = p.si; g.fillRect(0, ySi, W, H - ySi); Tx(g, 'p-type silicon', 10, H - 14, p.dim, 'left', '10px Arial');
+  g.fillStyle = p.n; g.fillRect(10, ySi, 80, 40); g.fillRect(W - 90, ySi, 80, 40); Tx(g, 'source', 50, ySi + 20, p.text, 'center', '11px Arial'); Tx(g, 'drain', W - 50, ySi + 20, p.text, 'center', '11px Arial');
+  g.fillStyle = p.ox; g.fillRect(90, yCG + 40, W - 180, ySi - yCG - 40); Tx(g, 'tunnel oxide (7 nm)', W - 96, yTO + 6, p.dim, 'right', '10px Arial');
+  g.fillStyle = p.poly; g.fillRect(100, yFG, W - 200, yTO - yFG); Tx(g, 'floating gate', 106, yFG + 10, p.text, 'left', 'bold 10px Arial');
+  g.fillStyle = th.hc ? '#555' : '#6e7b88'; g.fillRect(96, yCG, W - 192, yIP - yCG); Tx(g, 'control gate (word line): ' + (D3.term ? D3.term.g : f2(D3.Vg, 1) + ' V'), cx, yCG + 14, '#fff', 'center', 'bold 11px Arial');
+  Tx(g, 'blocking oxide', cx, yIP + 8, p.dim, 'center', '9px Arial');
+  /* the electrons on the floating gate (or holes, if over-erased) */
+  var r = rnd(5), n = Math.round(Math.abs(D3.N)), show = Math.min(n, 220);
+  for (var i=0; i<show; i++){ var ex = 108 + r()*(W - 216), ey = yFG + 16 + r()*(yTO - yFG - 22);
+    if (D3.N > 0){ g.fillStyle = p.el; g.beginPath(); g.arc(ex, ey, 2.4, 0, 2*Math.PI); g.fill(); } else { Tx(g, '+', ex, ey, p.up, 'center', 'bold 10px Arial'); } }
+  Tx(g, D3.N >= 0 ? n + ' extra electrons' : n + ' electrons missing (erased)', cx, yFG - 8, p.text, 'center', 'bold 11px Arial');
+  /* electrons tunnelling, during a pulse */
+  D3.flow.forEach(function(f){ g.fillStyle = p.el; g.beginPath(); g.arc(f.x, f.y, 2.6, 0, 2*Math.PI); g.fill(); });
+  if (D3.term){ var T_ = D3.term; Tx(g, 'source ' + T_.s, 50, ySi + 54, p.acc, 'center', 'bold 11px Arial'); Tx(g, 'drain ' + T_.d, W - 50, ySi + 54, p.acc, 'center', 'bold 11px Arial'); Tx(g, 'substrate ' + T_.b, cx, H - 14, p.acc, 'center', 'bold 11px Arial'); }
+  /* the channel: on or off at the read voltage */
+  var on = !D3.busy && D3.Vg > Vt(); if (on){ g.fillStyle = 'rgba(31,95,214,0.35)'; g.fillRect(90, ySi, W - 180, 7); Tx(g, 'channel conducts', cx, ySi + 22, p.dn, 'center', 'bold 11px Arial'); } else if (!D3.busy) Tx(g, 'no channel: the cell is off', cx, ySi + 22, p.dim, 'center', '11px Arial');
+  el('hdHint2').textContent = 'threshold voltage ' + f2(Vt(), 2) + ' V';
+}
+function drawIV(){
+  var g = CI.g, W = CI.W, H = CI.H, p = pal(), X0 = 46, X1 = W - 14, Y0 = H - 40, Y1 = 16, vmin = -4, vmax = 8, imax = 20;
+  function X(v){ return X0 + (v - vmin)/(vmax - vmin)*(X1 - X0); } function Y(i){ return Y0 - Math.min(i, imax)/imax*(Y0 - Y1); }
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  for (var v=vmin; v<=vmax; v+=2){ seg(g, X(v), Y0, X(v), Y1, p.grid, 1); Tx(g, String(v), X(v), Y0 + 12, p.text, 'center', '10px Arial'); }
+  for (var i=0; i<=imax; i+=5){ seg(g, X0, Y(i), X1, Y(i), p.grid, 1); Tx(g, String(i), X0 - 4, Y(i), p.text, 'right', '10px Arial'); }
+  function curve(vt, col, dash){ g.strokeStyle = col; g.lineWidth = 2.2; g.setLineDash(dash || []); g.beginPath(); for (var k=0; k<=200; k++){ var vg = vmin + (vmax - vmin)*k/200, id = vg > vt ? 1.2*(vg - vt)*(vg - vt) : 0.02*Math.exp((vg - vt)/0.12); if (k) g.lineTo(X(vg), Y(id)); else g.moveTo(X(vg), Y(id)); } g.stroke(); g.setLineDash([]); }
+  curve(VT0 - 50*QE/CCG, p.dim, [5, 4]); curve(Vt(), p.acc);
+  seg(g, X(D3.Vg), Y0, X(D3.Vg), Y1, p.ok, 1.5, [3, 3]); Tx(g, 'read at ' + f2(D3.Vg, 1) + ' V', X(D3.Vg) + 4, Y1 + 8, p.ok, 'left', 'bold 10px Arial');
+  refs().forEach(function(rv){ seg(g, X(rv), Y0, X(rv), Y0 - 8, p.text, 2); });
+  Tx(g, 'control-gate voltage (V)', (X0 + X1)/2, H - 10, p.text, 'center', '11px Arial');
+  g.save(); g.translate(12, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, 'current (\u00B5A)', 0, 0, p.text, 'center', '11px Arial'); g.restore();
+  Tx(g, 'dashed: erased', X1, Y1 + 24, p.dim, 'right', '10px Arial'); Tx(g, 'this cell', X1, Y1 + 38, p.acc, 'right', 'bold 10px Arial');
+}
+function drawDist(){
+  var g = CD.g, W = CD.W, H = CD.H, p = pal(), X0 = 30, X1 = W - 14, Y0 = H - 34, Y1 = 14, vmin = -4, vmax = 7, lv = levels(), rf = refs(), s = sigma();
+  function X(v){ return X0 + (v - vmin)/(vmax - vmin)*(X1 - X0); }
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  for (var v=vmin; v<=vmax; v++){ seg(g, X(v), Y0, X(v), Y0 + 4, p.text, 1); Tx(g, String(v), X(v), Y0 + 12, p.text, 'center', '10px Arial'); }
+  var cols = ['#7f8c99', '#d62828', '#e67e22', '#c9a227', '#12805a', '#1f8fb0', '#1f5fd6', '#7d3cc8', '#b03a8a', '#8a5a2b', '#4a7a3a', '#2a6a8a', '#6a4a9a', '#9a3a5a', '#5a5a5a', '#2a2a8a'];
+  lv.forEach(function(lvv, k){ var m = lvv + retShift(lvv), sk = k === 0 ? 0.25 : s; g.fillStyle = cols[k % cols.length]; g.globalAlpha = 0.55; g.beginPath(); g.moveTo(X(m - 4*sk), Y0);
+    for (var j=0; j<=80; j++){ var vv = m - 4*sk + 8*sk*j/80, y = Math.exp(-(vv - m)*(vv - m)/(2*sk*sk)); g.lineTo(X(vv), Y0 - y*(Y0 - Y1 - 18)*Math.min(1, 0.12/sk)); } g.lineTo(X(m + 4*sk), Y0); g.closePath(); g.fill(); g.globalAlpha = 1;
+    Tx(g, gray(k, D3.bits), X(m), Y1 + 4, cols[k % cols.length], 'center', 'bold ' + (D3.bits > 3 ? 9 : 11) + 'px monospace'); });
+  rf.forEach(function(rv){ seg(g, X(rv), Y0, X(rv), Y1 + 14, p.text, 1, [3, 3]); });
+  seg(g, X(Vt()), Y0, X(Vt()), Y1 + 14, p.acc, 2.5); Tx(g, 'this cell', X(Vt()) + 4, Y1 + 20, p.acc, 'left', 'bold 10px Arial');
+  Tx(g, 'threshold voltage (V)', (X0 + X1)/2, H - 8, p.text, 'center', '11px Arial');
+  el('hdHint3').textContent = (1 << D3.bits) + ' levels, ' + D3.bits + ' bit' + (D3.bits > 1 ? 's' : '') + ' per cell; dashed: the read voltages';
+}
+function stateOf(){ var rf = refs(), v = Vt(), k = 0; while (k < rf.length && v > rf[k]) k++; return k; }
+function draw2(){ drawCell(); drawIV(); drawDist(); var ber = errRate(), k = stateOf(), names = ['SLC', 'MLC', 'TLC', 'QLC'];
+  el('hdRead2').innerHTML = rrow('electrons on the floating gate', f2(D3.N, 0)) + rrow('threshold voltage', f2(Vt(), 2) + ' V') + rrow('stored (' + names[D3.bits - 1] + ', ' + (1 << D3.bits) + ' levels)', 'level ' + k + ': ' + gray(k, D3.bits))
+    + rrow('program/erase cycles', f2(wear(), 0)) + rrow('time since programming', D3.ret < 0.01 ? 'just now' : timeStr((Math.pow(10, D3.ret) - 1)*3600)) + rrow('raw bit error rate', ber < 1e-15 ? '< 1 in 10\u00B9\u2075' : '1 in ' + (1/ber < 1e6 ? f2(1/ber, 0) : (1/ber).toExponential(1)) + (ber > 1e-3 ? ' \u2717 beyond error correction' : ' \u2713 correctable'));
+  el('hdEq2').innerHTML = 'Programming: a high voltage on the control gate pulls electrons through the tunnel oxide by <b>Fowler\u2013Nordheim tunnelling</b>, <b>J = A E\u00B2 e^(\u2212B/E)</b>; as electrons collect, the field drops and the tunnelling slows. They raise the threshold by <b>\u0394V\u209C = N e / C</b> \u2248 ' + f2(QE/CCG*1000, 0) + ' mV per electron. ' + (1 << D3.bits) + ' levels must fit between \u22123 and +6 V: each wears and drifts, and where they overlap, bits are misread.';
+  return ber; }
+function heiPulse(){ /* hot electrons: gate 12 V, drain 12 V, source 0 V for 1 microsecond; fewer get in as the gate fills up */ var dN = 70*Math.exp(-Math.max(0, Vt() - 2)/1.2); D3.N += dN; return dN; }
+function terms(kind){ var hei = D3.meth === 'hei'; if (kind === 'pgm') return hei ? { g:'12 V', s:'0 V', d:'12 V', b:'0 V' } : { g:f2(D3.Vpgm, 1) + ' V', s:'0 V', d:'0 V', b:'0 V' };
+  return hei ? { g:'0 V', s:'open', d:'12 V', b:'0 V' } : { g:'0 V', s:'open', d:'open', b:'13 V' }; }
+function animatePulse(kind){ if (D3.busy) return; D3.busy = true; D3.busyV = kind === 'pgm' ? (D3.meth === 'hei' ? 12 : D3.Vpgm) : 0; D3.term = terms(kind); D3.step = null; var before = D3.N, done = false, steps = 0, hei = D3.meth === 'hei';
+  var dN = kind === 'pgm' ? (hei ? heiPulse() : pulse(D3.Vpgm, 0, 10e-6)) : pulse(0, 13, 1e-3); var target = D3.N; D3.N = before;
+  function frame(){ steps++; var f = Math.min(1, steps/40); D3.N = before + (target - before)*f;
+    if (Math.random() < 0.9 && Math.abs(dN) > 0.5){ if (kind === 'pgm' && hei) D3.flow.push({ x:92, y:176, vx:3.2, v:0, hei:true }); else D3.flow.push({ x:110 + Math.random()*(CC.W - 220), y:kind === 'pgm' ? 176 : 150, v:kind === 'pgm' ? -1.4 : 1.4, vx:hei && kind !== 'pgm' ? 0.8 : 0 }); }
+    D3.flow.forEach(function(q){ if (q.hei && q.v === 0 && q.x > CC.W - 160 && Math.random() < 0.25) q.v = -1.6; q.x += q.vx || 0; q.y += q.v; });   /* hot electrons speed along the channel; near the drain, some jump the oxide */
+    D3.flow = D3.flow.filter(function(q){ return q.y > 140 && q.y < 182 && q.x < CC.W - 88; });
+    draw2(); if (f < 1) requestAnimationFrame(frame); else { D3.flow = []; D3.busy = false; D3.term = null; draw2(); narrate((kind === 'pgm' ? (hei ? 'Hot-electron injection: 12 V on the drain speeds electrons along the channel; near the drain some gain enough energy to jump over the oxide barrier, pulled up by 12 V on the gate. In 1 microsecond, ' + f2(dN, 0) + ' electrons reached the floating gate' : 'A ' + D3.Vpgm + ' V, 10 microsecond pulse: ' + f2(dN, 0) + ' electrons tunnelled onto the floating gate') : (hei ? 'Erase by tunnelling, as in NOR flash: 12 V on the drain, 0 V on the gate, pulled ' + f2(-dN, 0) + ' electrons out through the thin oxide' : 'Erase: 13 V on the substrate for 1 ms pulled ' + f2(-dN, 0) + ' electrons off the floating gate')) + '. The threshold voltage is now ' + f2(Vt(), 2) + ' volts: level ' + stateOf() + ', read as ' + gray(stateOf(), D3.bits) + '.'); } }
+  requestAnimationFrame(frame); }
+function stepProgram(){ if (D3.busy) return; var hei = D3.meth === 'hei', n0 = D3.N;
+  if (D3.step === null) D3.step = { V:12, n:0 };
+  var dN = hei ? heiPulse() : pulse(D3.step.V, 0, 10e-6); D3.step.n++; var Vp = D3.step.V; D3.step.V += 0.25; draw2();
+  narrate('Step ' + D3.step.n + ': ' + (hei ? 'a 1 microsecond hot-electron pulse' : 'a 10 microsecond pulse at ' + f2(Vp, 2) + ' V') + ' added ' + f2(dN, 1) + ' electrons. Verify: a read finds the threshold at ' + f2(Vt(), 2) + ' V, level ' + stateOf() + ' (' + gray(stateOf(), D3.bits) + '). ' + (hei ? '' : 'The next pulse will be 0.25 V higher.') + ' Real chips stop when the threshold reaches the target level.'); }
+function programTo(k){ /* incremental step-pulse programming: pulses of rising voltage, each followed by a verify, until the threshold reaches the level */
+  if (D3.busy) return; var lv = levels(); D3.step = null;
+  pulse(0, 13, 1e-3);   /* a cell is always erased first */
+  if (k === 0){ draw2(); narrate('Erased: 13 V on the substrate for 1 ms pulled the electrons off the floating gate. Threshold ' + f2(Vt(), 2) + ' V: level 0, read as ' + gray(0, D3.bits) + '.'); return; }
+  var tgt = lv[k] - 0.1, V = 12, n = 0; while (Vt() < tgt && n < 80){ pulse(V, 0, 10e-6); V += 0.25; n++; }   /* incremental step pulses, each followed by a verify */
+  draw2(); narrate('Programmed to level ' + k + ' (' + gray(k, D3.bits) + ') by ' + n + ' pulses of rising voltage, from 12 to ' + f2(V - 0.25, 2) + ' V, each checked by a read: ' + f2(D3.N, 0) + ' electrons, threshold ' + f2(Vt(), 2) + ' V.'); }
+/* ══════════════════ TAB: inside a hard drive ══════════════════
+   Top view of an opened drive: the platter spins; the voice-coil actuator swings the arm about its axis. A read: the arm accelerates and
+   brakes (a seek), settles, waits for the sector to come round (the rotational latency), and reads it while it passes (the transfer).
+   Real times in milliseconds; the animation runs in slow motion. The platter: 3.5-inch drive, data from r = 1.8 cm to 4.6 cm. */
+var CH = hi('hdDrive'), CK = hi('hdStack');
+var HD = { rpm:7200, slow:400, labels:true, ang:0, arm:null, phase:'idle', t0:0, from:0, to:0, tseek:0, tgt:null, tline:null, parked:true, stepMode:false, spin:1, last:0, raf:null, armAt:0 };
+var PC = { x:300, y:206 }, PR = 168, PIV = { x:655, y:318 }, AL = 330, RMIN = 0.39, RMAX = 0.97;   /* the spindle, the platter's radius (px); the actuator axis; the arm */
+var RPX = 0.046/PR;   /* metres per pixel */
+function armAngleFor(r){ /* the arm angle that puts the head at radius r (px) from the spindle */
+  var dx = PC.x - PIV.x, dy = PC.y - PIV.y, d = Math.hypot(dx, dy), c = (AL*AL + d*d - r*r)/(2*AL*d); c = Math.max(-1, Math.min(1, c));
+  return Math.atan2(dy, dx) + Math.acos(c); }
+function headPos(a){ return { x:PIV.x + AL*Math.cos(a), y:PIV.y + AL*Math.sin(a) }; }
+function headR(a){ var h = headPos(a); return Math.hypot(h.x - PC.x, h.y - PC.y); }
+var A_PARK = armAngleFor(PR + 26), A_IN = armAngleFor(PR*RMIN), A_OUT = armAngleFor(PR*RMAX);
+HD.arm = A_PARK;
+var ALPHA = 4*Math.abs(A_OUT - A_IN)/Math.pow(0.012, 2);   /* a full-stroke seek takes 12 ms, accelerating then braking */
+function omega(){ return HD.rpm/60*2*Math.PI; }   /* rad/s */
+function zoneSectors(r){ return Math.round(8 + 22*(r/PR - RMIN)/(RMAX - RMIN)); }   /* drawn sectors per track: more on the outer tracks (zone bit recording) */
+function trackR(i){ return PR*(RMIN + (RMAX - RMIN)*i/11); }   /* 12 tracks drawn (a real surface has hundreds of thousands) */
+function realSectors(r){ return Math.round(2*Math.PI*r*RPX/((4096*8*1.1)*13e-9)); }   /* 4 kB sectors (plus 10 % overhead) at 13 nm per bit: about 260 near the centre, 670 near the edge */
+function newTarget(ti, si){ var r = trackR(ti), n = zoneSectors(r); return { ti:ti, r:r, n:n, si:si, a0:2*Math.PI*si/n, w:2*Math.PI/n, nReal:realSectors(r) }; }
+function seekTime(a1, a2){ var d = Math.abs(a2 - a1); return d < 1e-6 ? 0 : 2*Math.sqrt(d/ALPHA); }
+var SETTLE = 0.8e-3;
+function startRead(ti, si){
+  HD.tgt = newTarget(ti, si); HD.parked = false; HD.from = HD.arm; HD.to = armAngleFor(HD.tgt.r); HD.tseek = seekTime(HD.from, HD.to); HD.t0 = 0; HD.phase = 'seek'; HD.tline = { seek:HD.tseek, settle:SETTLE, lat:null, xfer:2*Math.PI/HD.tgt.nReal/omega() };
+  say4('Seek: the voice-coil actuator swings the arm toward track ' + (ti + 1) + '. It accelerates as hard as it can, then brakes as hard as it can: ' + f2(HD.tseek*1000, 2) + ' ms.'); }
+function say4(m){ narrate(m); }
+function phaseNext(){ /* step mode: go on to the next phase */ HD.hold = false; }
+function headAngleOnPlatter(){ var h = headPos(HD.arm); return Math.atan2(h.y - PC.y, h.x - PC.x); }
+function advanceDrive(dtReal){
+  HD.ang = (HD.ang + HD.spin*omega()*dtReal) % (2*Math.PI);
+  if (HD.hold) return;
+  if (HD.phase === 'seek'){ HD.t0 += dtReal; var T = HD.tseek, t = Math.min(HD.t0, T), d = HD.to - HD.from, s = Math.sign(d), half = T/2;
+    var x = t < half ? 0.5*ALPHA*t*t : Math.abs(d) - 0.5*ALPHA*(T - t)*(T - t); HD.arm = HD.from + s*Math.min(Math.abs(d), x);
+    if (HD.t0 >= T){ HD.arm = HD.to; HD.phase = 'settle'; HD.t0 = 0; endPhase('Settle: braking that hard makes the arm vibrate; the drive waits ' + f2(SETTLE*1000, 1) + ' ms for the head to settle on the track, guided by the servo marks.'); } }
+  else if (HD.phase === 'settle'){ HD.t0 += dtReal; HD.arm = HD.to + 0.004*Math.exp(-HD.t0/(SETTLE/4))*Math.sin(HD.t0*2*Math.PI/(SETTLE/3));
+    if (HD.t0 >= SETTLE){ HD.arm = HD.to; HD.phase = 'wait'; HD.t0 = 0; var lag = (( HD.tgt.a0 + HD.ang - headAngleOnPlatter()) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI); HD.tline.lat = (2*Math.PI - lag) % (2*Math.PI)/omega();
+      endPhase('Wait: the head is on the track; the sector must come round under it. Rotational latency: ' + f2(HD.tline.lat*1000, 2) + ' ms (on average half a turn, ' + f2(30000/HD.rpm, 2) + ' ms at ' + HD.rpm + ' rpm).'); } }
+  else if (HD.phase === 'wait'){ HD.t0 += dtReal; if (HD.t0 >= HD.tline.lat){ HD.phase = 'xfer'; HD.t0 = 0; endPhase('Read: this track holds about ' + HD.tgt.nReal + ' sectors of 4 kB (the drawing shows fewer); one passes under the head in ' + f2(HD.tline.xfer*1000, 3) + ' ms. Its preamble, header, data and checksum are read.'); } }
+  else if (HD.phase === 'xfer'){ HD.t0 += dtReal; if (HD.t0 >= Math.max(HD.tline.xfer, HD.tgt.w/omega())){   /* long enough to see the drawn sector pass */ HD.phase = 'done'; var tot = HD.tline.seek + HD.tline.settle + HD.tline.lat + HD.tline.xfer; endPhase('Done: ' + f2(tot*1000, 2) + ' ms in all. Almost all of it is mechanical: moving the arm and waiting for the disk. An SSD reads a page in about 0.05 ms.'); } }
+  else if (HD.phase === 'park'){ HD.t0 += dtReal; var T2 = HD.tseek, t2 = Math.min(HD.t0, T2), d2 = HD.to - HD.from, half2 = T2/2, x2 = t2 < half2 ? 0.5*ALPHA*t2*t2 : Math.abs(d2) - 0.5*ALPHA*(T2 - t2)*(T2 - t2); HD.arm = HD.from + Math.sign(d2)*Math.min(Math.abs(d2), x2);
+    if (HD.t0 >= T2){ HD.arm = HD.to; HD.phase = 'idle'; HD.parked = true; say4('Parked: the heads rest on the ramp, off the platters. Only now can the disk stop spinning: without the air cushion, a head on the surface would scrape it.'); } }
+  else if (HD.phase === 'spindown'){ HD.spin = Math.max(0, HD.spin - dtReal*40); if (HD.spin === 0){ HD.phase = 'idle'; say4('The platters have stopped.'); } }
+  else if (HD.phase === 'spinup'){ HD.spin = Math.min(1, HD.spin + dtReal*40); if (HD.spin === 1){ HD.phase = 'idle'; say4('Up to speed: ' + HD.rpm + ' rpm. The heads can now leave the ramp and fly.'); } }
+}
+function endPhase(m){ say4(m); if (HD.stepMode && HD.phase !== 'done') HD.hold = true; }
+function drawDrive(){
+  var g = CH.g, W = CH.W, H = CH.H, p = pal(), dark = th.hc;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  /* the case, open */
+  g.fillStyle = dark ? '#222' : '#8c949c'; rr(g, 40, 10, 720, 400, 18); g.fill(); g.fillStyle = dark ? '#111' : '#aab1b8'; rr(g, 52, 22, 696, 376, 12); g.fill();
+  /* the platter */
+  var gr = g.createRadialGradient(PC.x - 50, PC.y - 60, 20, PC.x, PC.y, PR); gr.addColorStop(0, dark ? '#666' : '#eef1f4'); gr.addColorStop(0.6, dark ? '#444' : '#c6ccd3'); gr.addColorStop(1, dark ? '#333' : '#9aa3ad');
+  g.fillStyle = gr; g.beginPath(); g.arc(PC.x, PC.y, PR, 0, 2*Math.PI); g.fill();
+  /* tracks and sectors (they turn with the platter) */
+  for (var i=0; i<12; i++){ var r = trackR(i); g.strokeStyle = 'rgba(40,50,60,' + (dark ? 0.5 : 0.22) + ')'; g.lineWidth = 1; g.beginPath(); g.arc(PC.x, PC.y, r, 0, 2*Math.PI); g.stroke(); }
+  [0, 6, 11].forEach(function(i){ var r = trackR(i), n = zoneSectors(r); for (var k=0; k<n; k++){ var a = HD.ang + 2*Math.PI*k/n; seg(g, PC.x + (r - 5)*Math.cos(a), PC.y + (r - 5)*Math.sin(a), PC.x + (r + 5)*Math.cos(a), PC.y + (r + 5)*Math.sin(a), 'rgba(40,50,60,0.45)', 1); } });
+  if (HD.tgt){ var t = HD.tgt, a1 = t.a0 + HD.ang, col = HD.phase === 'xfer' || HD.phase === 'done' ? p.ok : p.acc; g.strokeStyle = col; g.lineWidth = 7; g.beginPath(); g.arc(PC.x, PC.y, t.r, a1, a1 + t.w); g.stroke(); }
+  /* the spindle hub (it turns: a mark shows it) */
+  g.fillStyle = dark ? '#888' : '#d7dbe0'; g.beginPath(); g.arc(PC.x, PC.y, 34, 0, 2*Math.PI); g.fill(); g.strokeStyle = '#666'; g.lineWidth = 1.5; g.stroke();
+  for (var s=0; s<6; s++){ var aa = HD.ang + s*Math.PI/3; g.fillStyle = '#6b737b'; g.beginPath(); g.arc(PC.x + 20*Math.cos(aa), PC.y + 20*Math.sin(aa), 3, 0, 2*Math.PI); g.fill(); }
+  /* the ramp, where the heads park */
+  var ra = A_PARK, rh = headPos(ra); g.fillStyle = dark ? '#555' : '#3c4248'; g.save(); g.translate(rh.x, rh.y); g.rotate(ra + Math.PI/2); g.fillRect(-10, -18, 20, 36); g.restore();
+  /* the voice-coil actuator: magnets, and the coil on the arm's tail */
+  g.fillStyle = dark ? '#333' : '#4d545b'; g.beginPath(); g.moveTo(PIV.x + 30, PIV.y + 10); g.arc(PIV.x, PIV.y, 95, 0.05, 1.05); g.lineTo(PIV.x, PIV.y); g.closePath(); g.fill();
+  var tail = HD.arm + Math.PI, cx = PIV.x + 62*Math.cos(tail + 0.15), cy = PIV.y + 62*Math.sin(tail + 0.15);
+  g.save(); g.translate(cx, cy); g.rotate(tail); g.strokeStyle = p.coil; g.lineWidth = 5; rr(g, -22, -16, 44, 32, 6); g.stroke(); g.restore();
+  /* the arm and the head */
+  var hp = headPos(HD.arm), nx = Math.cos(HD.arm + Math.PI/2), ny = Math.sin(HD.arm + Math.PI/2);
+  g.fillStyle = dark ? '#bbb' : '#c9b27a'; g.beginPath(); g.moveTo(PIV.x + 16*nx, PIV.y + 16*ny); g.lineTo(hp.x + 4*nx, hp.y + 4*ny); g.lineTo(hp.x - 4*nx, hp.y - 4*ny); g.lineTo(PIV.x - 16*nx, PIV.y - 16*ny); g.closePath(); g.fill(); g.strokeStyle = '#7d6a3d'; g.lineWidth = 1; g.stroke();
+  g.fillStyle = p.acc; g.fillRect(hp.x - 4, hp.y - 4, 8, 8);
+  g.fillStyle = dark ? '#999' : '#6d757d'; g.beginPath(); g.arc(PIV.x, PIV.y, 14, 0, 2*Math.PI); g.fill();
+  /* the connectors on the edge */
+  g.fillStyle = '#222'; g.fillRect(700, 330, 28, 60); g.fillRect(700, 250, 28, 60); for (var c=0; c<7; c++){ g.fillStyle = '#c9a227'; g.fillRect(704, 334 + c*8, 20, 3); g.fillRect(704, 254 + c*8, 20, 3); }
+  /* the labels */
+  if (HD.labels){ var L = function(t, x, y, tx, ty, al){ seg(g, x, y, tx, ty, p.text, 1); var a = al || (tx < x ? 'right' : 'left'); Tx(g, t, tx + (a === 'right' ? -4 : 4), ty, dark ? '#fff' : '#111', a, 'bold 11px Arial'); };
+    g.font = 'bold 11px Arial';
+    L('platter (magnetic coating on both faces)', PC.x - 110, PC.y + 100, 70, 400, 'left'); L('spindle (motor below)', PC.x - 20, PC.y - 26, 90, 30, 'left');
+    L('head (on a slider, flying)', hp.x, hp.y - 6, hp.x + 40, 42); L('actuator arm', (PIV.x + hp.x)/2, (PIV.y + hp.y)/2, 520, 70); L('actuator axis', PIV.x, PIV.y - 14, 610, 110);
+    L('voice-coil actuator: coil between magnets', cx, cy + 14, 470, 372, 'right'); L('ramp: the heads park here', rh.x + 8, rh.y, 488, 168);
+    L('data connector', 714, 280, 640, 236); L('power', 714, 360, 650, 380); }
+  el('hdHint4').textContent = 'slow motion: 1/' + Math.round(HD.slow) + ' of real speed \u00B7 ' + HD.rpm + ' rpm';
+}
+function rr(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function drawStack(){
+  /* side view: platters on one spindle, a head on each face, all arms on one axis (a cylinder) */
+  var g = CK.g, W = CK.W, H = CK.H, p = pal(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  var r = headR(HD.arm), f = Math.max(0, Math.min(1, (r/PR - RMIN)/(RMAX - RMIN))), x0 = 40, x1 = 300, hx = x0 + 30 + f*(x1 - x0 - 40);
+  var Hs = H - 50; g.fillStyle = th.hc ? '#888' : '#9aa3ad'; g.fillRect(x0 - 8, 20, 16, Hs - 40); Tx(g, 'spindle', x0 + 14, 30, p.text, 'left', '10px Arial');
+  for (var k=0; k<3; k++){ var y = 50 + k*58; g.fillStyle = th.hc ? '#666' : '#c6ccd3'; g.fillRect(x0, y, x1 - x0, 10); g.fillStyle = p.acc; g.globalAlpha = 0.6; g.fillRect(x0, y - 1, x1 - x0, 2); g.fillRect(x0, y + 9, x1 - x0, 2); g.globalAlpha = 1;
+    [y - 7, y + 17].forEach(function(yy, j){ g.fillStyle = th.hc ? '#bbb' : '#c9b27a'; g.fillRect(hx, yy - 2, W - 60 - hx, 4); g.fillStyle = p.acc; g.fillRect(hx - 6, yy + (j ? -6 : 2), 10, 4); }); }
+  g.fillStyle = th.hc ? '#999' : '#6d757d'; g.fillRect(W - 62, 30, 16, Hs - 70); Tx(g, 'one axis: all heads move together', W - 54, Hs - 22, p.text, 'center', '10px Arial');
+  Tx(g, '3 platters, 6 surfaces, 6 heads', 12, 10, p.text, 'left', 'bold 11px Arial'); Tx(g, 'the tracks under all the heads form a cylinder', 12, Hs - 6, p.dim, 'left', '10px Arial');
+}
+function drawTimeline(){
+  var g = CK.g, W = CK.W, H = CK.H, p = pal(), x0 = 12, y = H - 22, w = W - 24, tl = HD.tline; if (!tl) return;
+  var parts = [['seek', tl.seek, p.up], ['settle', tl.settle, p.coil], ['latency', tl.lat || 0, p.dn], ['read', tl.xfer, p.ok]], tot = parts.reduce(function(a, b){ return a + b[1]; }, 0) || 1, x = x0;
+  parts.forEach(function(q){ var ww = Math.max(2, w*q[1]/tot); g.fillStyle = q[2]; g.fillRect(x, y, ww, 12); x += ww; });
+  Tx(g, 'seek ' + f2(tl.seek*1000, 2) + ' + settle ' + f2(tl.settle*1000, 1) + ' + latency ' + (tl.lat === null ? '?' : f2(tl.lat*1000, 2)) + ' + read ' + f2(tl.xfer*1000, 3) + ' ms', x0, y - 8, p.text, 'left', '10px Arial');
+}
+function draw4(){ drawDrive(); drawStack(); drawTimeline(); var r = headR(HD.arm), v = omega()*r*RPX;
+  el('hdRead4').innerHTML = rrow('spindle speed', HD.rpm + ' rpm = ' + f2(HD.rpm/60, 0) + ' turns per second') + rrow('one turn', f2(60000/HD.rpm, 2) + ' ms; average latency ' + f2(30000/HD.rpm, 2) + ' ms')
+    + rrow('the head is at', HD.parked ? 'parked on the ramp' : 'r = ' + f2(r*RPX*100, 1) + ' cm') + rrow('the disk moves under it at', HD.parked ? '\u2014' : f2(v, 1) + ' m/s (' + f2(v*3.6, 0) + ' km/h)')
+    + rrow('flying height', 'about 3 nm: 1/25 000 of a hair') + rrow('a full-stroke seek', '12 ms; average seek about ' + f2(seekTime(A_IN, A_IN + (A_OUT - A_IN)/3)*1000 + SETTLE*1000, 1) + ' ms');
+}
+function loop4(t){ if (TAB !== 3){ HD.raf = null; return; } var dt = Math.min(0.05, (t - (HD.last || t))/1000); HD.last = t; advanceDrive(dt/HD.slow); draw4(); HD.raf = requestAnimationFrame(loop4); }
+function run4(){ if (!HD.raf){ HD.last = 0; HD.raf = requestAnimationFrame(loop4); } }
+
+/* ══════════════════ TAB: inside an SSD ══════════════════
+   The board (controller, DRAM cache, NAND packages, connector) and NAND's organisation (cells in strings, pages, blocks; 3D stacking).
+   Then 8 blocks of 8 pages: flash writes whole pages, but erases only whole blocks, and never overwrites in place. An edit writes the new
+   version elsewhere and marks the old page stale; TRIM marks a deleted file's pages stale; garbage collection copies a block's valid pages
+   away and erases it. Wear levelling picks the least-erased block. Write amplification = pages written to flash / pages the computer wrote. */
+var CB = hi('hdBoard'), CQ = hi('hdBlocks');
+var NB = 8, NP = 8, SS = null;
+function ssReset(){ SS = { blk:[], files:{}, next:65, host:0, nand:0, wl:true, active:-1, flash:null }; for (var b=0; b<NB; b++){ var pg = []; for (var k=0; k<NP; k++) pg.push({ s:'free', f:null }); SS.blk.push({ pg:pg, erases:0 }); } }
+ssReset();
+function freePages(){ var n = 0; SS.blk.forEach(function(b){ b.pg.forEach(function(q){ if (q.s === 'free') n++; }); }); return n; }
+function pickBlock(){ /* the block to write into: keep filling the open one; else a block with free pages (wear levelling: the least erased) */
+  if (SS.active >= 0 && SS.blk[SS.active].pg.some(function(q){ return q.s === 'free'; })) return SS.active;
+  var c = []; SS.blk.forEach(function(b, i){ if (b.pg.every(function(q){ return q.s === 'free'; })) c.push(i); });
+  if (!c.length) SS.blk.forEach(function(b, i){ if (b.pg.some(function(q){ return q.s === 'free'; })) c.push(i); });
+  if (!c.length) return -1;
+  if (SS.wl) c.sort(function(a, b){ return SS.blk[a].erases - SS.blk[b].erases || a - b; }); else c.sort(function(a, b){ return a - b; });
+  SS.active = c[0]; return c[0]; }
+function writePage(f, host){ var b = pickBlock(); if (b < 0) return null; var pg = SS.blk[b].pg, k = pg.findIndex(function(q){ return q.s === 'free'; }); pg[k] = { s:'valid', f:f }; SS.nand++; if (host) SS.host++; SS.flash = { b:b, k:k, kind:'w' }; return [b, k]; }
+function staticWL(){ /* static wear levelling: if the least-erased block holds old (cold) data while others wear, move that data away and erase it, so it takes its share */
+  if (!SS.wl) return ''; var es = SS.blk.map(function(b){ return b.erases; }), mn = Math.min.apply(null, es), mx = Math.max.apply(null, es); if (mx - mn < 3) return '';
+  var cold = es.indexOf(mn), vb = SS.blk[cold], keep = vb.pg.filter(function(q){ return q.s === 'valid'; }).map(function(q){ return q.f; }); if (freePages() - vb.pg.filter(function(q){ return q.s === 'free'; }).length < keep.length) return '';
+  if (SS.active === cold) SS.active = -1; vb.pg.forEach(function(q){ q.s = 'busy'; }); keep.forEach(function(f){ writePage(f, false); }); vb.pg = vb.pg.map(function(){ return { s:'free', f:null }; }); vb.erases++;
+  return ' Static wear levelling: block ' + (cold + 1) + ' held cold data and had been erased only ' + mn + ' times; its data moved, and the block erased, so it shares the wear.'; }
+function gc(){ /* garbage collection: the block with the most stale pages; its valid pages copied away, then the whole block erased */
+  var best = -1, most = 0; SS.blk.forEach(function(b, i){ var st = b.pg.filter(function(q){ return q.s === 'stale'; }).length; if (st > most){ most = st; best = i; } });
+  if (best < 0) return 'Nothing to collect: no stale pages.';
+  var vb = SS.blk[best], moved = 0; if (SS.active === best) SS.active = -1;
+  vb.pg.forEach(function(q){ if (q.s === 'valid'){ q.s = 'moving'; } });
+  var keep = vb.pg.filter(function(q){ return q.s === 'moving'; }).map(function(q){ return q.f; });
+  vb.pg.forEach(function(q){ q.s = 'stale'; });   /* (it is about to be erased) */
+  var saveActive = SS.active; vb.pg.forEach(function(q){ q.s = 'busy'; });
+  keep.forEach(function(f){ if (writePage(f, false)) moved++; });
+  vb.pg = vb.pg.map(function(){ return { s:'free', f:null }; }); vb.erases++; SS.flash = { b:best, k:-1, kind:'e' };
+  var swl = staticWL();
+  return 'Garbage collection: block ' + (best + 1) + ' held ' + most + ' stale page' + (most > 1 ? 's' : '') + '. Its ' + moved + ' valid page' + (moved === 1 ? '' : 's') + ' were copied to another block (extra writes), then the whole block was erased at once (' + vb.erases + ' erase' + (vb.erases > 1 ? 's' : '') + ' so far).' + swl; }
+function ensureFree(n){ var msgs = []; var guard = 0; while (freePages() < n + 2 && guard++ < 6){ var m = gc(); msgs.push(m); if (/Nothing/.test(m)) break; } return msgs; }
+function ssSave(){ var f = String.fromCharCode(SS.next); SS.next = SS.next >= 90 ? 65 : SS.next + 1; var n = 2 + Math.floor(Math.random()*2), pre = ensureFree(n);
+  if (freePages() < n) return 'The drive is full: delete a file first.';
+  var out = []; for (var i=0; i<n; i++){ var w = writePage(f, true); if (w) out.push(w); } SS.files[f] = n;
+  return (pre.length ? pre.join(' ') + ' ' : '') + 'Saved file ' + f + ': ' + n + ' pages written into free pages of block ' + (out[0][0] + 1) + '. Flash writes whole pages (here about 16 kB each).'; }
+function ssEdit(hot){ var names = Object.keys(SS.files); if (!names.length) return 'No file to edit: save one first.'; var f = hot && SS.hot && SS.files[SS.hot] ? SS.hot : names[Math.floor(Math.random()*names.length)], loc = null;
+  SS.blk.forEach(function(b, i){ b.pg.forEach(function(q, k){ if (!loc && q.s === 'valid' && q.f === f) loc = [i, k]; }); });
+  var pre = ensureFree(1); SS.blk.forEach(function(b, i){ b.pg.forEach(function(q, k){ if (!loc && q.s === 'valid' && q.f === f) loc = [i, k]; }); });
+  if (!loc || freePages() < 1) return 'No free page: the drive is full.';
+  SS.blk[loc[0]].pg[loc[1]].s = 'stale'; var w = writePage(f, true);
+  return (pre.length ? pre.join(' ') + ' ' : '') + 'Edited file ' + f + ': flash cannot overwrite a page in place, so the new version went to a free page in block ' + (w[0] + 1) + ', and the old page in block ' + (loc[0] + 1) + ' is now stale (grey).'; }
+function ssDelete(){ var names = Object.keys(SS.files); if (!names.length) return 'No file to delete.'; var f = names[Math.floor(Math.random()*names.length)], n = 0;
+  SS.blk.forEach(function(b){ b.pg.forEach(function(q){ if (q.s === 'valid' && q.f === f){ q.s = 'stale'; n++; } }); }); delete SS.files[f];
+  return 'Deleted file ' + f + ': the computer tells the drive (the TRIM command) that its ' + n + ' pages are no longer needed. They are only marked stale; they will be erased later, a whole block at a time.'; }
+function drawBoard(){
+  var g = CB.g, W = CB.W, H = CB.H, p = pal(), dark = th.hc; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  /* an M.2 drive: the board, the connector, the chips */
+  var x0 = 20, y0 = 30, bw = 470, bh = 150; g.fillStyle = dark ? '#063' : '#1f6b4a'; rr(g, x0, y0, bw, bh, 8); g.fill();
+  for (var c=0; c<14; c++){ g.fillStyle = '#d4af37'; g.fillRect(x0 + bw - 2, y0 + 12 + c*9, 14, 5); }
+  function chip(x, y, w, h, t, sub){ g.fillStyle = '#1b1d20'; rr(g, x, y, w, h, 3); g.fill(); Tx(g, t, x + w/2, y + h/2 - (sub ? 6 : 0), '#e8e8e8', 'center', 'bold 11px Arial'); if (sub) Tx(g, sub, x + w/2, y + h/2 + 9, '#bbb', 'center', '9px Arial'); }
+  chip(x0 + 300, y0 + 30, 110, 90, 'controller', 'a processor'); chip(x0 + 220, y0 + 40, 60, 70, 'DRAM', 'cache');
+  chip(x0 + 18, y0 + 18, 90, 52, 'NAND', 'flash'); chip(x0 + 118, y0 + 18, 90, 52, 'NAND', 'flash'); chip(x0 + 18, y0 + 80, 90, 52, 'NAND', 'flash'); chip(x0 + 118, y0 + 80, 90, 52, 'NAND', 'flash');
+  Tx(g, 'An SSD: no moving parts', x0, 14, p.text, 'left', 'bold 12px Arial'); Tx(g, 'connector (to the computer)', x0 + bw + 14, y0 + bh + 14, p.dim, 'right', '10px Arial');
+  Tx(g, 'The controller maps each block the computer asks for to a page in the flash, spreads the wear, and corrects errors.', x0, y0 + bh + 28, p.text, 'left', '11px Arial');
+  /* inside a NAND chip: cells in series (a string) along a vertical channel, word lines stacked: 3D NAND */
+  var X = 530; Tx(g, 'Inside a chip: 3D NAND', X, 14, p.text, 'left', 'bold 12px Arial');
+  for (var l=0; l<8; l++){ var y = 40 + l*17; g.fillStyle = dark ? '#444' : '#9aa7b4'; g.fillRect(X, y, 220, 11); Tx(g, l === 0 ? 'word lines (control gates), stacked' : '', X + 222, y + 5, p.dim, 'left', '9px Arial'); }
+  for (var s=0; s<5; s++){ var sx = X + 22 + s*42; g.fillStyle = dark ? '#335' : '#c8b8e8'; g.fillRect(sx, 34, 10, 148); for (var l2=0; l2<8; l2++){ g.fillStyle = p.el; g.beginPath(); g.arc(sx + 5, 46 + l2*17, 2, 0, 2*Math.PI); g.fill(); } }
+  Tx(g, 'each crossing is one cell; a column is a string', X, 196, p.text, 'left', '10px Arial'); Tx(g, '(real chips stack 100 to 300 layers)', X, 210, p.dim, 'left', '10px Arial');
+  Tx(g, 'page = a row of cells read or written at once (about 16 kB) \u00B7 block = all the pages erased together (several MB)', 20, H - 10, p.text, 'left', 'bold 10px Arial');
+}
+function drawBlocks(){
+  var g = CQ.g, W = CQ.W, H = CQ.H, p = pal(), cw = (W - 40)/NB, ch = 24, y0 = 34;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  SS.blk.forEach(function(b, i){ var x = 20 + i*cw; Tx(g, 'block ' + (i + 1), x + cw/2, 14, p.text, 'center', 'bold 11px Arial');
+    b.pg.forEach(function(q, k){ var y = y0 + k*ch, c = q.s === 'free' ? (th.hc ? '#111' : '#f4f6f8') : q.s === 'valid' ? (th.cb ? '#56b4e9' : '#7fd1a8') : (th.hc ? '#555' : '#b9bec4');
+      g.fillStyle = c; g.fillRect(x + 4, y, cw - 8, ch - 3); g.strokeStyle = th.hc ? '#888' : '#c9ced4'; g.lineWidth = 1; g.strokeRect(x + 4, y, cw - 8, ch - 3);
+      if (q.s === 'stale'){ g.strokeStyle = th.hc ? '#999' : '#8a9097'; for (var d=-20; d<cw; d+=8){ g.beginPath(); g.moveTo(x + 4 + Math.max(0, d), y + Math.max(0, -d)); g.lineTo(x + 4 + Math.min(cw - 8, d + ch - 3), y + Math.min(ch - 3, ch - 3)); g.stroke(); } }
+      if (q.f) Tx(g, q.f, x + cw/2, y + ch/2 - 1, q.s === 'valid' ? '#0b3d27' : '#555', 'center', 'bold 12px monospace');
+      if (SS.flash && SS.flash.b === i && (SS.flash.k === k || SS.flash.k === -1)){ g.strokeStyle = SS.flash.kind === 'e' ? p.bad : p.acc; g.lineWidth = 2.5; g.strokeRect(x + 3, y - 1, cw - 6, ch - 1); } });
+    var e = b.erases, maxE = Math.max(1, Math.max.apply(null, SS.blk.map(function(z){ return z.erases; }))); g.fillStyle = e > 0.8*maxE && e > 2 ? p.bad : p.dim; g.fillRect(x + 6, y0 + NP*ch + 8, (cw - 12)*e/Math.max(5, maxE), 8);
+    Tx(g, 'erased ' + e + '\u00D7', x + cw/2, y0 + NP*ch + 28, p.text, 'center', '10px Arial'); });
+  Tx(g, 'green: valid data \u00B7 grey, striped: stale (old versions, deleted) \u00B7 white: free (erased)', 20, H - 8, p.dim, 'left', '10px Arial');
+  var es = SS.blk.map(function(z){ return z.erases; });
+  el('hdRead5').innerHTML = rrow('pages written by the computer', SS.host) + rrow('pages written to the flash', SS.nand + ' (including garbage collection copies)') + rrow('write amplification', SS.host ? f2(SS.nand/SS.host, 2) : '\u2014')
+    + rrow('free pages', freePages() + ' of ' + NB*NP) + rrow('erases per block', 'fewest ' + Math.min.apply(null, es) + ', most ' + Math.max.apply(null, es)) + rrow('wear levelling', SS.wl ? 'on: writes go to the least-worn block' : 'off: always the first free block');
+}
+function draw5(){ drawBoard(); drawBlocks(); }
+function ssDo(kind){ var m = kind === 'save' ? ssSave() : kind === 'edit' ? ssEdit() : kind === 'del' ? ssDelete() : gc(); draw5(); narrate(m); return m; }
+function ssMany(){ /* a realistic mix: a few files saved once and never touched (cold data), and one file edited again and again (hot data: a log, a database) */
+  var n = 0; if (Object.keys(SS.files).length < 4){ for (var c=0; c<4; c++) ssSave(); SS.hot = String.fromCharCode(SS.next === 65 ? 90 : SS.next - 1); }
+  for (var i=0; i<40; i++){ var r = Math.random(); if (r < 0.85) ssEdit(true); else if (r < 0.95) ssSave(); else { var names = Object.keys(SS.files).filter(function(f){ return f !== SS.hot; }); if (names.length > 4){ var f = names[names.length - 1]; SS.blk.forEach(function(b){ b.pg.forEach(function(q){ if (q.s === 'valid' && q.f === f) q.s = 'stale'; }); }); delete SS.files[f]; } } n++; } draw5();
+  var es = SS.blk.map(function(z){ return z.erases; });
+  narrate(n + ' operations, most of them edits of one busy file (' + SS.hot + '), the rest of the files left untouched. Write amplification ' + f2(SS.nand/Math.max(1, SS.host), 2) + ': the flash wrote more pages than the computer asked, because garbage collection copies valid pages. Erases per block: from ' + Math.min.apply(null, es) + ' to ' + Math.max.apply(null, es) + (SS.wl ? ': wear levelling, moving even the untouched data now and then, spreads the erases.' : ': without wear levelling, the blocks holding the busy file take all the erases, while those holding untouched files are never erased. The busy blocks would wear out first.')); }
+
+/* ══════════════════ controls ══════════════════ */
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function build0(){ el('hdCtl0').innerHTML = row('hdB', 'bit length', 8, 40, 1, D1.B, D1.B + ' nm') + row('hdG', 'average grain size', 3, 14, 0.5, D1.g, f2(D1.g, 1) + ' nm') + row('hdH', 'flying height of the head', 2, 20, 0.5, D1.h, f2(D1.h, 1) + ' nm') + row('hdSp', 'speed of the animation', 0.02, 2, 0.01, D1.speed, f2(D1.speed, 2) + '\u00D7') + row('hdLk', 'look along the track (after reading)', 0, 1, 0.01, LOOK, '');
+  on('hdLk', 'input', function(){ if (RUN) return; look(+this.value); draw0(); });
+  [['hdB', 'B', 0, ' nm'], ['hdG', 'g', 1, ' nm'], ['hdH', 'h', 1, ' nm'], ['hdSp', 'speed', 2, '\u00D7']].forEach(function(q){ on(q[0], 'input', function(){ D1[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(D1[q[1]], q[2]) + q[3]; if (q[1] !== 'speed'){ RUN = false; cancelAnimationFrame(raf); newTrack(); OFF = -6*D1.B; READ = -1e9; TR.sig = kernelSig(); draw0(); el('hdGo').innerHTML = '\u25B6 Write & read'; } }); }); }
+function build1(){ el('hdCtl1').innerHTML = row('hdD', 'grain diameter', 2, 14, 0.25, D2.D, f2(D2.D, 2) + ' nm') + row('hdKu', 'anisotropy K\u1D64 (hardness)', 0.1, 10, 0.05, D2.Ku, f2(D2.Ku, 2) + ' MJ/m\u00B3') + row('hdHh', 'the write head\u2019s field', 1, 2.6, 0.05, D2.Hhead, f2(D2.Hhead, 2) + ' T')
+    + row('hdDn', 'areal density', 0.1, 6, 0.05, D2.dens, f2(D2.dens, 2) + ' Tb/in\u00B2') + row('hdT', 'time since writing (log)', -3, 17, 0.1, D2.t, timeStr(Math.pow(10, D2.t))) + '<label class="hd_chk"><input type="checkbox" id="hdHm"' + (D2.hamr ? ' checked' : '') + '> heat while writing (HAMR)</label>';
+  [['hdD', 'D', 2, ' nm'], ['hdKu', 'Ku', 2, ' MJ/m\u00B3'], ['hdHh', 'Hhead', 2, ' T'], ['hdDn', 'dens', 2, ' Tb/in\u00B2']].forEach(function(q){ on(q[0], 'input', function(){ D2[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(D2[q[1]], q[2]) + q[3]; el('hdPre').value = 'own'; later1(); }); });
+  on('hdT', 'input', function(){ D2.t = +this.value; el('hdTv').textContent = timeStr(Math.pow(10, D2.t)); later1(); }); on('hdHm', 'change', function(){ D2.hamr = this.checked; el('hdPre').value = 'own'; later1(); }); }
+var t1 = null; function later1(){ var R = draw1(); clearTimeout(t1); t1 = setTimeout(function(){ narrate(sum1(R)); }, 400); }
+function build4(){ el('hdCtl4').innerHTML = '<div class="hd_ctrl"><label class="hd_ctrlname" for="hdRpm">spindle speed</label><select id="hdRpm">' + [5400, 7200, 10000, 15000].map(function(v){ return '<option value="' + v + '"' + (v === HD.rpm ? ' selected' : '') + '>' + v + ' rpm</option>'; }).join('') + '</select></div>'
+    + row('hdSlow', 'slow motion (log): real speed divided by', 1.3, 4.3, 0.05, Math.log10(HD.slow), Math.round(HD.slow) + '');
+  on('hdRpm', 'change', function(){ HD.rpm = +this.value; draw4(); narrate(HD.rpm + ' rpm: one turn takes ' + f2(60000/HD.rpm, 2) + ' ms, so on average a sector arrives under the head after half a turn, ' + f2(30000/HD.rpm, 2) + ' ms.'); });
+  on('hdSlow', 'input', function(){ HD.slow = Math.pow(10, +this.value); el('hdSlowv').textContent = Math.round(HD.slow); }); }
+function build2(){ el('hdCtl2').innerHTML = '<div class="hd_ctrl"><span class="hd_ctrlname">bits per cell</span><div>' + ['SLC: 1', 'MLC: 2', 'TLC: 3', 'QLC: 4'].map(function(t, i){ return '<label><input type="radio" name="hdBpc" value="' + (i + 1) + '"' + (D3.bits === i + 1 ? ' checked' : '') + '> ' + t + '</label>'; }).join(' ') + '</div></div>'
+    + row('hdVp', 'program pulse voltage', 12, 20, 0.5, D3.Vpgm, f2(D3.Vpgm, 1) + ' V') + row('hdVr', 'read voltage on the control gate', -3, 7, 0.1, D3.Vg, f2(D3.Vg, 1) + ' V') + row('hdCy', 'program/erase cycles (log)', 0, 5, 0.05, D3.cyc, f2(wear(), 0)) + row('hdRt', 'time since programming (log)', 0, 5, 0.05, D3.ret, D3.ret < 0.01 ? 'now' : timeStr((Math.pow(10, D3.ret) - 1)*3600));
+  [].forEach.call(document.getElementsByName('hdBpc'), function(r){ r.addEventListener('change', function(){ D3.bits = +this.value; lvBtns(); draw2(); narrate((1 << D3.bits) + ' threshold levels in the same voltage window: ' + D3.bits + ' bit' + (D3.bits > 1 ? 's' : '') + ' per cell. Raw bit error rate about ' + errRate().toExponential(1) + '.'); }); });
+  on('hdVp', 'input', function(){ D3.Vpgm = +this.value; el('hdVpv').textContent = f2(D3.Vpgm, 1) + ' V'; }); on('hdVr', 'input', function(){ D3.Vg = +this.value; el('hdVrv').textContent = f2(D3.Vg, 1) + ' V'; draw2(); });
+  on('hdCy', 'input', function(){ D3.cyc = +this.value; el('hdCyv').textContent = f2(wear(), 0); var b = draw2(); narrate('After ' + f2(wear(), 0) + ' program/erase cycles, the damaged oxide makes every level wider. Raw bit error rate about ' + b.toExponential(1) + '.'); });
+  on('hdRt', 'input', function(){ D3.ret = +this.value; el('hdRtv').textContent = D3.ret < 0.01 ? 'now' : timeStr((Math.pow(10, D3.ret) - 1)*3600); var b = draw2(); narrate('After ' + el('hdRtv').textContent + ', electrons have slowly leaked away: the levels drift down, the highest most. Raw bit error rate about ' + b.toExponential(1) + '.'); }); }
+function lvBtns(){ el('hdLvBtns').innerHTML = 'program to: ' + levels().map(function(v, k){ return '<button type="button" class="hd_btn" data-k="' + k + '">' + gray(k, D3.bits) + '</button>'; }).join('');
+  [].forEach.call(el('hdLvBtns').querySelectorAll('button'), function(b){ b.addEventListener('click', function(){ programTo(+b.getAttribute('data-k')); }); }); }
+on('hdGo', 'click', function(){
+  if (RUN && ANIM){ ANIM = false; cancelAnimationFrame(raf); el('hdGo').innerHTML = '\u25B6 Continue'; narrate('Paused. Press One bit to go on a bit at a time, or Continue.'); return; }
+  if (RUN && !ANIM){ ANIM = true; last = 0; el('hdGo').innerHTML = '\u23F8 Writing\u2026'; raf = requestAnimationFrame(tick); return; }
+  start(); });
+on('hdBit', 'click', stepBit);
+on('hdNow', 'click', skip); on('hdErase', 'click', function(){ RUN = false; cancelAnimationFrame(raf); newTrack(); OFF = -6*D1.B; READ = -1e9; TR.sig = kernelSig(); draw0(); el('hdGo').innerHTML = '\u25B6 Write & read'; narrate('A fresh piece of track: its grains have random old magnetization. Press Write & read.'); });
+on('hdMsg', 'input', function(){ RUN = false; cancelAnimationFrame(raf); newTrack(); OFF = -6*D1.B; READ = -1e9; TR.sig = kernelSig(); draw0(); });
+[].forEach.call(document.getElementsByName('hdMode'), function(r){ r.addEventListener('change', function(){ D1.mode = this.value; RUN = false; cancelAnimationFrame(raf); newTrack(); OFF = -6*D1.B; READ = -1e9; TR.sig = kernelSig(); draw0(); narrate(D1.mode === 'perp' ? 'Perpendicular recording: grains point up or down, with a soft underlayer that guides the field. The signal follows the magnetization.' : 'Longitudinal recording: grains lie along the track; the signal is a pulse at every transition.'); }); });
+on('hdPre', 'change', function(){ var P = PRE2[this.value]; if (!P) return; for (var k in P) D2[k] = P[k]; build1(); later1(); });
+on('hdPgm', 'click', function(){ animatePulse('pgm'); }); on('hdErs', 'click', function(){ D3.step = null; animatePulse('ers'); }); on('hdStep1', 'click', stepProgram);
+on('hdMeth', 'change', function(){ D3.meth = this.value; D3.step = null; narrate(D3.meth === 'hei' ? 'Hot-electron injection (NOR flash): 12 V on the drain and on the gate. Electrons racing along the channel gain enough energy near the drain to jump the oxide barrier. Fast (about a microsecond), but it needs current.' : 'Tunnelling (NAND flash): a high voltage on the gate alone makes the oxide field strong enough for electrons to tunnel through it. Slower, but almost no current: it suits millions of cells programmed at once.'); });
+on('hdRd', 'click', function(){ if (HD.spin < 1){ narrate('Start the platters first.'); return; } startRead(Math.floor(Math.random()*12), Math.floor(Math.random()*8)); el('hdNext').disabled = !HD.stepMode; run4(); });
+on('hdNext', 'click', function(){ HD.hold = false; });
+on('hdStepM', 'change', function(){ HD.stepMode = this.checked; el('hdNext').disabled = !this.checked; if (!this.checked) HD.hold = false; });
+on('hdPark', 'click', function(){ if (HD.parked) return; HD.phase = 'park'; HD.from = HD.arm; HD.to = A_PARK; HD.tseek = seekTime(HD.from, HD.to); HD.t0 = 0; HD.tgt = null; HD.hold = false; narrate('Parking: before power-off, the arm swings the heads off the platter onto the ramp.'); run4(); });
+on('hdSpin', 'click', function(){ if (HD.spin > 0 && HD.phase !== 'spinup'){ if (!HD.parked){ narrate('Park the heads first: stopping with the heads over the platter would make them land on it.'); return; } HD.phase = 'spindown'; el('hdSpin').textContent = 'Start the platters'; narrate('Spinning down.'); }
+  else { HD.phase = 'spinup'; el('hdSpin').textContent = 'Stop the platters'; narrate('Spinning up to ' + HD.rpm + ' rpm.'); } run4(); });
+on('hdLab', 'change', function(){ HD.labels = this.checked; draw4(); });
+[].forEach.call(el('hdV4').querySelectorAll('button[data-ss]'), function(b){ b.addEventListener('click', function(){ var k = b.getAttribute('data-ss'); if (k === 'many') ssMany(); else if (k === 'reset'){ var wl = SS.wl; ssReset(); SS.wl = wl; draw5(); narrate('A new, empty drive: every page is free.'); } else ssDo(k); }); });
+on('hdWL', 'change', function(){ SS.wl = this.checked; draw5(); narrate(SS.wl ? 'Wear levelling on: new data go to the least-erased blocks.' : 'Wear levelling off: new data always go to the first block with room. Try 40 operations a few times.'); });
+function tab(k){ TAB = k; for (var i=0; i<5; i++){ el('hdV' + i).hidden = i !== k; el('hdTab' + i).setAttribute('aria-selected', i === k ? 'true' : 'false'); }
+  if (k === 3){ draw4(); run4(); narrate('An opened hard drive. Press Read a random sector to watch the arm seek, settle, wait for the sector and read it, in slow motion. Tick pause after each step to go one step at a time.'); }
+  if (k === 4){ draw5(); narrate('Inside an SSD: no moving parts, only chips. Save, edit and delete files to see how the controller writes pages and erases blocks.'); }
+  if (k === 0){ draw0(); narrate('A disk track from the side. Type a message and press Write & read: the head writes it as grains magnetized up or down, and the sensor reads it back.'); }
+  if (k === 1){ narrate(sum1(draw1()) + ' Move the grain size, the hardness and the time.'); }
+  if (k === 2){ draw2(); narrate('A flash memory cell. Press Program pulse to tunnel electrons onto the floating gate, or program it straight to a level; then add wear and time, and watch the levels blur.'); } }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('hd_hc', th.hc); ROOT.classList.toggle('hd_lm', th.lm);
+  [['hc', 'hdBtnHC'], ['lm', 'hdBtnLM'], ['cb', 'hdBtnCB'], ['nr', 'hdBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('hd_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('hdBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('hdNar').style.display = th.nr ? '' : 'none'; draw0(); draw1(); draw2(); draw4(); draw5(); }
+function toggleDesc(){ var b = el('hdDescBtn'), d = el('hdDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+build0(); build1(); build2(); build4(); lvBtns(); newTrack(); OFF = -6*D1.B; READ = -1e9; TR.sig = kernelSig(); draw0(); draw1(); pulse(0, 13, 1e-3); draw2(); draw5(); TAB = 3; draw4(); run4();
+narrate('Ready. Five tabs: inside a hard drive; writing and reading its track; how long the bits last; a flash memory cell; and inside an SSD.');
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, skip:skip, start:start, programTo:programTo, stepBit:stepBit, stepProgram:stepProgram,
+  _hd:function(){ return { phase:HD.phase, arm:HD.arm, r:headR(HD.arm)*RPX, tl:HD.tline, parked:HD.parked, spin:HD.spin }; }, _read:function(ti, si){ startRead(ti, si); run4(); }, _advance:function(dt){ advanceDrive(dt); draw4(); }, _ss:function(){ return { host:SS.host, nand:SS.nand, free:freePages(), erases:SS.blk.map(function(b){ return b.erases; }), wl:SS.wl }; }, _ssDo:ssDo, _ssMany:ssMany, _ssReset:function(wl){ ssReset(); SS.wl = wl; draw5(); },
+  _s0:function(){ return { D1:D1, N:TR.N, bits:TR.bits.slice(), dec:decode(), off:OFF }; }, _set0:function(k, v){ D1[k] = v; newTrack(); OFF = -6*D1.B; READ = -1e9; TR.sig = kernelSig(); draw0(); }, _look:look,
+  _s1:function(){ var R = drawTri(); return { x:R.x, tau:tauOf(R.x), N:R.N, HkW:R.HkW, Hk:R.Hk, ok:[R.okS, R.okT, R.okW] }; }, _set1:function(k, v){ D2[k] = v; draw1(); },
+  _s3:function(){ return { N:D3.N, Vt:Vt(), level:stateOf(), ber:errRate(), refs:refs(), levels:levels() }; }, _pulse:function(V, T){ return pulse(V, 0, T); }, _pulseS:function(V, Vs, T){ return pulse(V, Vs, T); }, _set3:function(k, v){ D3[k] = v; draw2(); } };
+})();
+</script>
+</main>
+</body>
+</html>

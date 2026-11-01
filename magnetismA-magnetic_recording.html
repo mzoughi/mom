@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Magnetic Recording</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, magnetic recording, tape, record head, playback head, AC bias, hysteresis, wavelength, gap loss, data, hard drive, lesson, scientific">
+<meta name="description" content="Interactive tape-deck simulation of magnetic recording: erase, record and playback heads, AC bias, tape wavelength, gap loss, equalization, data bits, and a recordable tune.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="recroot" role="region" aria-label="Magnetic recording simulator">
+<!-- Accessibility toolbar -->
+<div class="rec_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="rec_a11ybtn" id="btnHC" onclick="recSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rec_a11ybtn" id="btnLight" onclick="recSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rec_a11ybtn" id="btnCB" onclick="recSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rec_a11ybtn rec_a11yon" id="btnNarr" onclick="recSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="rec_header">
+<p class="rec_h1">Magnetic Recording</p>
+<p class="rec_sub">A three-head tape deck: erase, record and playback heads -- the tape remembers through hysteresis</p>
+</div>
+<div id="recMotionNotice" class="rec_motionnotice" role="status">Reduced motion is enabled. The reels do not spin; the tape still moves while recording or playing.</div>
+<!-- Instrument grid -->
+<div class="rec_instrument">
+<!-- Left column -->
+<div class="rec_leftcol">
+<div class="rec_diagpanel">
+<div class="rec_diaglabel"><span id="diagLabel">TAPE DECK</span><span class="rec_diagnote">tape motion in slow motion &middot; wavelengths and gap drawn on a compressed scale</span></div>
+<canvas id="recCanvas" width="560" height="420" role="img" aria-label="Tape deck" aria-describedby="recCanvasDesc"></canvas>
+<p id="recCanvasDesc" class="rec_sronly">Tape deck with erase, record and playback heads.</p>
+<div class="rec_hoverbar" id="recHoverReadout" role="status" aria-live="polite" aria-atomic="true">Hover over the heads, the tape or the displays to read values</div>
+</div>
+<!-- Readout -->
+<div class="rec_panel" role="region" aria-labelledby="readHd">
+<div class="rec_paneltitle" id="readHd">Readout</div>
+<div class="rec_rinner rec_rgrid">
+<div class="rec_rrow"><span class="rec_rkey">Wavelength &lambda; = v/f</span><span class="rec_rval rec_hi" id="r_lam">--</span></div>
+<div class="rec_rrow"><span class="rec_rkey">Gap null f = v/g</span><span class="rec_rval" id="r_null">--</span></div>
+<div class="rec_rrow"><span class="rec_rkey">Playback level</span><span class="rec_rval rec_hi" id="r_out">--</span></div>
+<div class="rec_rrow" id="r_thdrow"><span class="rec_rkey">Distortion (THD)</span><span class="rec_rval" id="r_thd">--</span></div>
+<div class="rec_rrow"><span class="rec_rkey">Bias</span><span class="rec_rval" id="r_bias">--</span></div>
+<div class="rec_rrow"><span class="rec_rkey">On the tape</span><span class="rec_rval" id="r_tape">--</span></div>
+<div class="rec_rrow"><span class="rec_rkey">Bit density</span><span class="rec_rval" id="r_dens">--</span></div>
+<div class="rec_rrow" id="r_errrow"><span class="rec_rkey">Bits read back</span><span class="rec_rval" id="r_err">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="rec_rightcol">
+<!-- Source -->
+<div class="rec_panel" role="group" aria-labelledby="srcHd">
+<div class="rec_paneltitle" id="srcHd">Signal Source</div>
+<div class="rec_panelbody">
+<div class="rec_srcbtns3" role="group" aria-label="Signal to record">
+<button type="button" class="rec_srcbtn rec_srcon" id="btnTone" onclick="recSim.setSource('tone')" aria-pressed="true">TONE</button>
+<button type="button" class="rec_srcbtn" id="btnTune" onclick="recSim.setSource('tune')" aria-pressed="false">TUNE</button>
+<button type="button" class="rec_srcbtn" id="btnData" onclick="recSim.setSource('data')" aria-pressed="false">DATA</button>
+</div>
+<div class="rec_ctrlhdr"><label for="slF" class="rec_ctrlname">Tone frequency</label><span class="rec_sval" id="vF">1000 Hz</span></div>
+<input type="range" id="slF" min="0" max="100" step="0.5" value="56.5" aria-label="Tone frequency, 50 to 10000 hertz, logarithmic" oninput="recSim.onSlider('F', this.value)">
+<label for="selOct" class="rec_ctrlname">Tune octave</label>
+<select id="selOct" aria-label="Octave of the tune" onchange="recSim.onSlider('O', this.value)">
+<option value="3">Low (C3 &asymp; 131 Hz)</option>
+<option value="4" selected>Middle (C4 &asymp; 262 Hz)</option>
+<option value="6">High (C6 &asymp; 1047 Hz)</option>
+<option value="7">Very high (C7 &asymp; 2093 Hz)</option>
+</select>
+<div class="rec_ctrlhdr"><label for="slBit" class="rec_ctrlname">Bit length on tape</label><span class="rec_sval" id="vBit">5.0 &micro;m</span></div>
+<input type="range" id="slBit" min="0.5" max="20" step="0.5" value="5" aria-label="Length of one bit on the tape in micrometres" oninput="recSim.onSlider('Bit', this.value)">
+<div class="rec_ctrlhdr"><label for="slLev" class="rec_ctrlname">Record level</label><span class="rec_sval" id="vLev">0 dB</span></div>
+<input type="range" id="slLev" min="-24" max="12" step="1" value="0" aria-label="Recording level in decibels" oninput="recSim.onSlider('Lev', this.value)">
+<p class="rec_hint" id="srcHint">--</p>
+</div>
+</div>
+<!-- Recorder -->
+<div class="rec_panel" role="group" aria-labelledby="rcHd">
+<div class="rec_paneltitle" id="rcHd">Recorder</div>
+<div class="rec_panelbody">
+<label for="selSpd" class="rec_ctrlname">Tape speed v</label>
+<select id="selSpd" aria-label="Tape speed" onchange="recSim.onSlider('V', this.value)">
+<option value="2.4">2.4 cm/s (microcassette)</option>
+<option value="4.76" selected>4.76 cm/s (compact cassette)</option>
+<option value="9.5">9.5 cm/s (reel-to-reel)</option>
+<option value="19">19 cm/s (reel-to-reel)</option>
+<option value="38">38 cm/s (studio)</option>
+</select>
+<div class="rec_ctrlhdr"><label for="slBias" class="rec_ctrlname">AC bias</label><span class="rec_sval" id="vBias">100%</span></div>
+<input type="range" id="slBias" min="0" max="150" step="5" value="100" aria-label="AC bias as a percentage of the optimum" oninput="recSim.onSlider('Bias', this.value)">
+<div class="rec_btnrow">
+<button type="button" class="rec_btn rec_warn" id="btnRec" onclick="recSim.record()">&#9679; Rec</button>
+<button type="button" class="rec_btn" id="btnPlay" onclick="recSim.play()">&#9654; Play</button>
+<button type="button" class="rec_btn" id="btnStop" onclick="recSim.stop()">&#9632; Stop</button>
+</div>
+<label class="rec_chk"><input type="checkbox" id="chkMon" checked onchange="recSim.onOpt('mon', this.checked)"> Hear the input while recording</label>
+<p class="rec_hint">The erase head wipes the tape just before the record head writes on it.</p>
+</div>
+</div>
+<!-- Playback -->
+<div class="rec_panel" role="group" aria-labelledby="pbHd">
+<div class="rec_paneltitle" id="pbHd">Playback Head</div>
+<div class="rec_panelbody">
+<div class="rec_ctrlhdr"><label for="slGap" class="rec_ctrlname">Gap width g</label><span class="rec_sval" id="vGap">2.0 &micro;m</span></div>
+<input type="range" id="slGap" min="0.5" max="20" step="0.5" value="2" aria-label="Playback head gap width in micrometres" oninput="recSim.onSlider('Gap', this.value)">
+<label class="rec_chk"><input type="checkbox" id="chkEQ" checked onchange="recSim.onOpt('eq', this.checked)"> Equalizer (integrates the emf)</label>
+<label for="selPS" class="rec_ctrlname">Play at</label>
+<select id="selPS" aria-label="Playback speed relative to recording speed" onchange="recSim.onSlider('PS', this.value)">
+<option value="0.5">half speed</option>
+<option value="1" selected>recording speed</option>
+<option value="2">double speed</option>
+</select>
+<div class="rec_ctrlhdr"><label for="slVol" class="rec_ctrlname">Volume</label><span class="rec_sval" id="vVol">40%</span></div>
+<input type="range" id="slVol" min="0" max="100" step="1" value="40" aria-label="Volume in percent" oninput="recSim.onSlider('Vol', this.value)">
+<button type="button" class="rec_btn" onclick="recSim.playOriginal()">Hear the original signal</button>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="rec_formulastrip">
+<span class="rec_formulatxt">The tape keeps the remanent M left by the record head &nbsp;|&nbsp; &lambda; = v/f &nbsp;|&nbsp; Playback emf = &minus;N d&Phi;/dt &prop; f, so an equalizer integrates it &nbsp;|&nbsp; Gap loss sin(&pi;g/&lambda;)/(&pi;g/&lambda;): zero at &lambda; = g &nbsp;|&nbsp; AC bias straightens the hysteresis &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>N</kbd> <kbd>R</kbd> rec <kbd>P</kbd> play <kbd>S</kbd> stop</span>
+</div>
+</div><!-- instrument -->
+<div id="recNarrBox" class="rec_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="recNarration">--</span></div>
+<div id="recSrAnnounce" class="rec_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="rec_credit">Simulation by Taha Mzoughi &copy; 2026 -- MOM adaptation</p>
+</div><!-- #recroot -->
+<style>
+/* ════════ All simulator rules scoped to #recroot ════════ */
+#recroot {
+--rec-chassis:#1a1c1f; --rec-panel:#22262b; --rec-panel-hi:#2c3138; --rec-panel-lo:#14161a;
+--rec-border:#3a4048; --rec-border-hi:#525c66; --rec-text:#c8d0d8; --rec-dim:#8a94a3; --rec-bright:#e8eef5;
+--rec-accent:#e8a020; --rec-green:#3ad08f; --rec-val:#ffdd66; --rec-warnc:#ff6a5a;
+--rec-focus:#e8a020; --rec-nar-bg:#2a2410; --rec-nar-border:#e0b040; --rec-nar-text:#f0e2b8;
+background:var(--rec-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--rec-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#recroot.rec_lm {
+--rec-chassis:#e9edf1; --rec-panel:#ffffff; --rec-panel-hi:#f1f4f7; --rec-panel-lo:#f4f6f9;
+--rec-border:#c3cad3; --rec-border-hi:#9aa3ae; --rec-text:#1d232a; --rec-dim:#556070; --rec-bright:#000000;
+--rec-accent:#a8620a; --rec-green:#12805a; --rec-val:#8a4a00; --rec-warnc:#b02020;
+--rec-focus:#a8620a; --rec-nar-bg:#ffefc0; --rec-nar-border:#e0b040; --rec-nar-text:#333333;
+background-image:none;
+}
+#recroot.rec_hc {
+--rec-chassis:#000000; --rec-panel:#000000; --rec-panel-hi:#111111; --rec-panel-lo:#000000;
+--rec-border:#ffffff; --rec-border-hi:#ffffff; --rec-text:#ffffff; --rec-dim:#e0e0e0; --rec-bright:#ffffff;
+--rec-accent:#ffd700; --rec-green:#00ff88; --rec-val:#ffff00; --rec-warnc:#ff5555;
+--rec-focus:#ffff00; --rec-nar-bg:#000000; --rec-nar-border:#ffd700; --rec-nar-text:#ffffff;
+background-image:none;
+}
+#recroot.rec_cb { --rec-warnc:#D55E00; }
+#recroot.rec_hc .rec_panel, #recroot.rec_hc .rec_diagpanel { border-width:2px; }
+#recroot *, #recroot *::before, #recroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#recroot input:focus-visible, #recroot button:focus-visible, #recroot select:focus-visible { outline:2px solid var(--rec-focus); outline-offset:2px; }
+/* toolbar */
+#recroot .rec_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#recroot .rec_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--rec-panel-hi); border:1px solid var(--rec-border-hi); color:var(--rec-dim); }
+#recroot .rec_a11ybtn:hover { border-color:var(--rec-accent); color:var(--rec-accent); }
+#recroot .rec_a11yon { background:rgba(58,208,143,.14); border-color:var(--rec-green); color:var(--rec-green); font-weight:bold; }
+/* header */
+#recroot .rec_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#recroot .rec_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--rec-accent); text-align:center; }
+#recroot .rec_sub { font-size:.7rem; color:var(--rec-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#recroot .rec_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--rec-panel); border:1px solid var(--rec-border); border-radius:4px; color:var(--rec-dim); }
+/* grid */
+#recroot .rec_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#recroot .rec_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#recroot .rec_row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#recroot .rec_diagpanel { background:var(--rec-panel); border:1px solid var(--rec-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#recroot .rec_diaglabel { background:var(--rec-panel-lo); border-bottom:1px solid var(--rec-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--rec-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#recroot #diagLabel { color:var(--rec-accent); font-weight:bold; }
+#recroot .rec_diagnote { text-transform:none; letter-spacing:.02em; }
+#recroot canvas { display:block; width:100%; max-width:560px; height:auto; cursor:crosshair; margin:0 auto; }
+#recroot .rec_hoverbar { background:var(--rec-panel-lo); border-top:1px solid var(--rec-border); padding:6px 12px; font-family:monospace; font-size:.72rem; color:var(--rec-val); min-height:28px; line-height:1.4; }
+/* right column */
+#recroot .rec_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#recroot .rec_panel { background:var(--rec-panel); border:1px solid var(--rec-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#recroot .rec_paneltitle { background:var(--rec-panel-lo); border-bottom:1px solid var(--rec-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--rec-dim); }
+#recroot .rec_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#recroot .rec_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#recroot .rec_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--rec-panel-hi); border:1px solid var(--rec-border-hi); color:var(--rec-dim); border-radius:3px; }
+#recroot .rec_srcbtn:hover { border-color:var(--rec-accent); color:var(--rec-text); }
+#recroot .rec_srcon { background:var(--rec-accent); color:#111; border-color:var(--rec-accent); font-weight:bold; }
+#recroot .rec_srcon:hover { color:#111; }
+#recroot .rec_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#recroot .rec_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--rec-dim); text-transform:uppercase; }
+#recroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--rec-panel-lo); border:1px solid var(--rec-border); }
+#recroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--rec-accent); border:2px solid var(--rec-panel); cursor:pointer; }
+#recroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--rec-accent); border:2px solid var(--rec-panel); cursor:pointer; }
+#recroot input[type=range]:disabled { opacity:.35; cursor:default; }
+#recroot .rec_sval { font-family:monospace; font-size:.74rem; color:var(--rec-val); min-width:56px; text-align:right; }
+#recroot .rec_hint { font-size:.66rem; color:var(--rec-dim); line-height:1.4; }
+#recroot .rec_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#recroot .rec_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--rec-panel-lo); border:1px solid var(--rec-border); border-radius:3px; }
+#recroot .rec_rrow.rec_alert { border-color:var(--rec-warnc); }
+#recroot .rec_rrow.rec_alert .rec_rval { color:var(--rec-warnc); font-weight:bold; }
+#recroot .rec_rkey { font-family:monospace; font-size:.6rem; color:var(--rec-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#recroot .rec_rval { font-family:monospace; font-size:.7rem; text-align:right; color:var(--rec-text); }
+#recroot .rec_hi { color:var(--rec-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#recroot .rec_formulastrip { grid-column:1 / 3; background:var(--rec-panel-lo); border:1px solid var(--rec-border); border-radius:4px; padding:7px 14px; }
+#recroot .rec_formulatxt { font-family:monospace; font-size:.66rem; color:var(--rec-dim); letter-spacing:.04em; line-height:1.6; }
+#recroot .rec_formulatxt kbd { border:1px solid var(--rec-border-hi); border-radius:2px; padding:0 4px; color:var(--rec-accent); font-family:monospace; }
+#recroot .rec_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--rec-nar-bg); border-left:4px solid var(--rec-nar-border); font-size:.82rem; color:var(--rec-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#recroot .rec_credit { font-size:.62rem; color:var(--rec-dim); text-align:center; }
+#recroot .rec_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* checkboxes, selects, buttons */
+#recroot .rec_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--rec-text); cursor:pointer; }
+#recroot .rec_chk input { accent-color:var(--rec-accent); width:14px; height:14px; }
+#recroot .rec_dispbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:6px 12px; background:var(--rec-panel-lo); border-top:1px solid var(--rec-border); }
+#recroot select { width:100%; background:var(--rec-panel-hi); color:var(--rec-text); border:1px solid var(--rec-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#recroot .rec_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:4px; }
+#recroot .rec_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+#recroot .rec_btn { padding:6px 3px; font-family:monospace; font-size:.64rem; letter-spacing:.04em; cursor:pointer; background:var(--rec-panel-hi); border:1px solid var(--rec-border-hi); color:var(--rec-text); border-radius:3px; text-transform:uppercase; }
+#recroot .rec_btn:hover { border-color:var(--rec-accent); }
+#recroot .rec_btn:disabled { opacity:.4; cursor:default; }
+#recroot .rec_btn.rec_active { background:var(--rec-green); border-color:var(--rec-green); color:#111; font-weight:bold; }
+#recroot .rec_warn { color:#e0605a; border-color:#a04040; }
+#recroot.rec_lm .rec_warn { color:#b02020; border-color:#c06060; }
+#recroot .rec_sub2 { border-top:1px dashed var(--rec-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#recroot .rec_derived { font-family:monospace; font-size:.68rem; color:var(--rec-dim); line-height:1.4; }
+#recroot .rec_derived b { color:var(--rec-val); font-weight:bold; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#recroot .rec_instrument { grid-template-columns:minmax(0,1fr); }
+#recroot .rec_rightcol { width:auto; }
+#recroot .rec_formulastrip { grid-column:auto; }
+}
+@media (max-width:560px) { #recroot .rec_row2 { grid-template-columns:1fr; } }
+#recroot .rec_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#recroot .rec_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#recroot .rec_small { padding:3px 8px; margin-left:auto; }
+@media (max-width:560px) { #recroot .rec_rgrid { grid-template-columns:1fr; } }
+#recroot .rec_scalebtns { display:flex; gap:5px; margin-left:auto; }
+#recroot .rec_small { padding:3px 8px; margin-left:0; }
+#recroot .rec_srcbtns3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#recroot .rec_srcbtn:disabled, #recroot select:disabled { opacity:.4; cursor:default; }
+/* question section below the simulator */
+.rec_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.rec_qwrap ol { padding-left:24px; }
+.rec_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<script>
+/* ════════ SIMULATION ════════
+Pattern: mirrors the solenoid (magnetism) example:
+var simObj = function() { ... return { public methods }; };  var simObj = new simObj();
+Physics (simplified, normalized units):
+  Record: the head field h (signal x level, plus AC bias) leaves a remanent magnetization m = R(h) on the tape.
+    No bias:  R is the remanence curve of a hysteretic material: a dead zone for small h (crossover distortion),
+              then a steep rise and saturation.
+    AC bias:  the bias field cycles the particles many times as they leave the gap (anhysteretic recording),
+              so R becomes nearly linear: R = tanh(k h). Over-bias lowers k and erases short wavelengths.
+  Tape: a signal of frequency f becomes a pattern of wavelength lambda = v/f.
+  Playback: the head collects the flux of the tape under its gap (averaged over the gap width g):
+    gap loss sin(pi g/lambda)/(pi g/lambda), zero when lambda = g.
+    emf = -N dPhi/dt is proportional to f, so an equalizer integrates it (flat response).
+  Data: bits are written as saturated +/- regions; the head sees the flux averaged over its gap. When a bit is
+    shorter than the gap, neighbouring bits blur together (intersymbol interference) and noise causes errors.
+  Audio: the tone or the tune is processed sample by sample through the same model (22 050 samples/s) and played.
+*/
+var recGen = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('recroot');
+var canvas = document.getElementById('recCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+function el(id) { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function fmtF(f) { return f >= 1000 ? (f/1000).toFixed(f >= 10000 ? 1 : 2) + ' kHz' : Math.round(f) + ' Hz'; }
+function fmtL(L) { return L >= 1e-3 ? (L*1e3).toFixed(2) + ' mm' : (L*1e6).toFixed(L < 1e-5 ? 2 : 1) + ' \u00b5m'; }
+function fmtDb(d) { if (!isFinite(d) || d < -80) return 'silent'; return (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ' dB'; }
+function gauss() { var u = Math.max(1e-9, Math.random()), v = Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function sinc(x) { return Math.abs(x) < 1e-9 ? 1 : Math.sin(x)/x; }
+
+/* ── State ── */
+var source = 'tone', freq = 1000, octave = 4, bitLen = 5e-6, levelDb = 0, vTape = 0.0476, bias = 1.0, gap = 2e-6, eqOn = true, playRate = 1, volume = 0.4, monitor = true;
+var hcMode = false, lightMode = false, cbMode = false, showNarr = true;
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var state = 'stop';            /* stop | record | play */
+var stored = null;             /* what is on the tape */
+var A0 = 0.4, LREC = 0.4e-6, FS = 22050;
+
+/* ── Recording transfer curve R(h) ── */
+function R0(h) { var x = Math.abs(h), x3 = x*x*x, s = Math.tanh(x/0.55)*x3/(x3 + 0.0328); return h < 0 ? -s : s; }   /* 0.32^3 */
+function kBias(b) { return b <= 1 ? 1.4 : 1.4/(1 + 1.5*(b - 1)); }
+function Rec(h, b) { var w = Math.pow(clamp(b, 0, 1), 1.3); return (1 - w)*R0(h) + w*Math.tanh(kBias(b)*h); }
+function ampOf(db) { return A0*Math.pow(10, db/20); }
+function recSmooth(b) { return LREC + (b > 1 ? (b - 1)*4e-6 : 0); }
+/* fundamental and THD of R(a sin) by a 128-point DFT */
+function harmonics(a, b) {
+  var Nn = 128, c = [], k, n;
+  for (k = 1; k <= 9; k++) { var re = 0, im = 0; for (n = 0; n < Nn; n++) { var th = 2*Math.PI*n/Nn, y = Rec(a*Math.sin(th), b); re += y*Math.cos(k*th); im += y*Math.sin(k*th); } c.push(2*Math.sqrt(re*re + im*im)/Nn); }
+  var hsum = 0; for (k = 1; k < 9; k++) hsum += c[k]*c[k];
+  return { c1: c[0], thd: c[0] > 1e-9 ? Math.sqrt(hsum)/c[0] : 0 };
+}
+/* playback amplitude for a tone of frequency f (recorded at speed v, record bias b), relative units */
+function respAmp(f, a, b, v, g, eq, r) {
+  var lam = v/f, h = harmonics(a, b);
+  var amp = h.c1*Math.abs(sinc(Math.PI*recSmooth(b)/lam))*Math.abs(sinc(Math.PI*g/lam));
+  if (!eq) amp *= (f/1000)*r;
+  return amp;
+}
+var REF = respAmp(1000, A0, 1, 0.0476, 2e-6, true, 1);
+function relDb(f) { return 20*Math.log10(Math.max(1e-12, respAmp(f, ampOf(levelDb), bias, vTape, gap, eqOn, playRate))/REF); }
+
+/* ── The tune: first two phrases of Twinkle, Twinkle, Little Star (traditional) ── */
+var TUNE_TXT = 'C C G G A A G2 F F E E D D C2', SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }, BEAT = 0.4;
+function tuneNotes(oct) {
+  var t = 0, out = [];
+  TUNE_TXT.split(' ').forEach(function(tok) { var len = tok.length > 1 ? 2 : 1, midi = 12*(oct + 1) + SEMI[tok.charAt(0)]; out.push({ name: tok.charAt(0) + oct, f: 440*Math.pow(2, (midi - 69)/12), t: t, d: len*BEAT }); t += len*BEAT; });
+  return out;
+}
+function noteAt(notes, t) { for (var i = 0; i < notes.length; i++) if (t >= notes[i].t && t < notes[i].t + notes[i].d) return i; return -1; }
+function env(t, d) { return Math.min(1, t/0.02)*Math.min(1, Math.max(0, (d - t)/0.05)); }
+
+/* ── Audio ── */
+var actx = null, master = null, srcNode = null;
+function ensureAudio() {
+  if (!actx) { try { var AC = window.AudioContext || window.webkitAudioContext; actx = new AC(); master = actx.createGain(); master.gain.value = volume; master.connect(actx.destination); } catch (e) { actx = null; } }
+  if (actx && actx.state === 'suspended') { try { actx.resume(); } catch (e) {} }
+  return !!actx;
+}
+function stopAudio() { if (srcNode) { try { srcNode.onended = null; srcNode.stop(); } catch (e) {} srcNode = null; } }
+function playBuffer(data, rate, onEnd) {
+  if (!ensureAudio()) return false;
+  stopAudio();
+  var buf = actx.createBuffer(1, data.length, FS), ch = buf.getChannelData(0); for (var i = 0; i < data.length; i++) ch[i] = clamp(data[i], -1, 1);
+  srcNode = actx.createBufferSource(); srcNode.buffer = buf; srcNode.playbackRate.value = rate || 1;
+  srcNode.connect(master); srcNode.onended = function() { srcNode = null; if (onEnd) onEnd(); };
+  srcNode.start(); return true;
+}
+/* the input signal x(t) as audio samples */
+function sourceSamples(kind) {
+  var a = ampOf(levelDb), x, n, i;
+  if (kind === 'tune') {
+    var notes = tuneNotes(octave), T = notes[notes.length - 1].t + notes[notes.length - 1].d + 0.3; n = Math.floor(T*FS); x = new Float32Array(n);
+    var ph = 0;
+    for (i = 0; i < n; i++) { var t = i/FS, k = noteAt(notes, t); if (k < 0) { x[i] = 0; continue; } var nt = notes[k]; ph += 2*Math.PI*nt.f/FS; x[i] = a*env(t - nt.t, nt.d)*Math.sin(ph); }
+  } else {
+    n = Math.floor(5*FS); x = new Float32Array(n);
+    for (i = 0; i < n; i++) x[i] = a*Math.min(1, i/400, (n - i)/400)*Math.sin(2*Math.PI*freq*i/FS);
+  }
+  return x;
+}
+/* boxcar average over L samples (fractional), centred */
+function boxcar(arr, L) {
+  if (L <= 1.05) return arr;
+  var n = arr.length, S = new Float64Array(n + 1), out = new Float32Array(n), i;
+  for (i = 0; i < n; i++) S[i + 1] = S[i] + arr[i];
+  function Sf(p) { p = clamp(p, 0, n); var i0 = Math.floor(p), fr = p - i0; return i0 >= n ? S[n] : S[i0] + fr*(S[i0 + 1] - S[i0]); }
+  for (i = 0; i < n; i++) out[i] = (Sf(i + 0.5 + L/2) - Sf(i + 0.5 - L/2))/L;
+  return out;
+}
+/* record: input samples -> magnetization on the tape */
+function recordAudio(x) {
+  var m = new Float32Array(x.length), i;
+  for (i = 0; i < x.length; i++) m[i] = Rec(x[i], bias);
+  m = boxcar(m, recSmooth(bias)/vTape*FS);
+  for (i = 0; i < m.length; i++) m[i] += 0.002*gauss();                /* particle noise (tape hiss) */
+  return m;
+}
+/* playback: tape magnetization -> output samples, with the current head and equalizer */
+function playbackAudio(m, vRec, r) {
+  var y = boxcar(m, gap/vRec*FS), out = new Float32Array(y.length), i, g = A0/REF;
+  if (eqOn) { var hp = 0, prev = 0, al = 1/(1 + 2*Math.PI*20/FS); for (i = 0; i < y.length; i++) { hp = al*(hp + y[i] - prev); prev = y[i]; out[i] = hp*g; } }
+  else { var sc = FS/(2*Math.PI*1000)*r; for (i = 1; i < y.length; i++) out[i] = (y[i] - y[i - 1])*sc*g; }
+  for (i = 0; i < out.length; i++) out[i] = clamp(out[i], -1, 1);
+  return out;
+}
+
+/* ── Visual tape (compressed length scale; the ratio lambda/g is preserved) ── */
+function P(L) { return 24*Math.pow(L/47.6e-6, 0.4); }
+var XER = 150, XREC = 270, XPLAY = 390, TY = 140, TH = 12, CELL = 2, NC = 8192;
+var tapeM = new Float32Array(NC), tapeBit = new Int16Array(NC).fill(-1), tapeCtr = new Uint8Array(NC);
+var scroll = 0, tvis = 0, visPhase = 0, reelAng = 0, visV = 50;
+var recInfo = null;            /* visual recording: start/end positions, kind, speed */
+var lastH = 0, phi = 0, phiPrev = 0, outV = 0, scopeBuf = [], SB_N = 260, vu = -40;
+var bits = [], decoded = [], errors = 0;
+function cidx(p) { return ((Math.floor(p/CELL) % NC) + NC) % NC; }
+function visInput(t) {
+  /* the input field in the slow-motion picture, at visual time t since the start of recording */
+  var a = ampOf(levelDb);
+  if (source === 'data') { var b = Math.floor(t*visV/P(bitLen)); if (b >= bits.length) return { h: 0, bit: -1 }; return { h: bits[b] ? 1.2 : -1.2, bit: b }; }
+  if (source === 'tune') { var notes = tuneNotes(octave), k = noteAt(notes, t); if (k < 0) return { h: 0, bit: -1, f: 0 }; return { h: a*env(t - notes[k].t, notes[k].d), f: notes[k].f, bit: -1 }; }
+  return { h: a, f: freq, bit: -1 };
+}
+function recordStep(dt) {
+  var oldS = scroll, t0 = tvis;
+  scroll += visV*dt; tvis += dt;
+  /* erase head */
+  for (var e = -6; e <= 6; e += CELL) tapeM[cidx(XER - scroll + e)] = 0;
+  /* cells crossing the record gap */
+  var pHi = XREC - oldS, pLo = XREC - scroll, c0 = Math.floor(pHi/CELL), c1 = Math.floor(pLo/CELL);
+  var inp0 = visInput(t0 - recInfo.t0), fv = inp0.f ? visV/P(vTape/inp0.f) : 0, dph = 2*Math.PI*fv*dt;
+  for (var c = c0; c > c1; c--) {
+    var fr = (pHi - c*CELL)/(pHi - pLo || 1), t = t0 + fr*dt, inp = visInput(t - recInfo.t0), h, idx = ((c % NC) + NC) % NC;
+    if (source === 'data') { h = inp.h; tapeBit[idx] = inp.bit; }
+    else h = inp.f ? inp.h*Math.sin(visPhase + fr*dph) : 0;
+    tapeM[idx] = (source === 'data' ? Rec(h, 1) : Rec(h, bias)) + 0.02*gauss();
+  }
+  visPhase += dph;
+  var inpN = visInput(tvis - recInfo.t0);
+  lastH = source === 'data' ? inpN.h : (inpN.f ? inpN.h*Math.sin(visPhase) : 0);
+  if (source === 'data') {
+    /* mark bit centres */
+    var bl = P(bitLen);
+    for (var b = 0; b < bits.length; b++) { var pc = recInfo.p0 - (b + 0.5)*bl; if (pc <= pHi && pc > pLo) tapeCtr[cidx(pc)] = 1; }
+  }
+  recInfo.p1 = pLo;
+}
+function fluxAt(p) {           /* flux collected by a head whose gap is centred on tape position p */
+  var g = Math.max(CELL, P(gap)), s = 0, n = 0;
+  for (var x = -g/2 + CELL/2; x < g/2; x += CELL/2) { s += tapeM[cidx(p + x)]; n++; }
+  return n ? s/n : tapeM[cidx(p)];
+}
+function readStep(dt, rate) {
+  phiPrev = phi; phi = fluxAt(XPLAY - scroll);
+  var fref = visV*rate/P(vTape/1000), raw = eqOn ? phi : (dt > 0 ? (phi - phiPrev)/dt/(2*Math.PI*fref) : 0);
+  outV = eqOn ? raw : outV + (raw - outV)*0.5;
+}
+/* flux at the centre of bit b, computed in real lengths (the picture uses a compressed scale) */
+function physFlux(b) {
+  var bl = recInfo.bitLen, xc = (b + 0.5)*bl, s = 0, Nn = 40;
+  for (var k = 0; k < Nn; k++) { var x = xc + gap*(k + 0.5)/Nn - gap/2, i = Math.floor(x/bl); s += (i >= 0 && i < recInfo.bits.length) ? (recInfo.bits[i] ? 0.93 : -0.93) : 0; }
+  return s/Nn;
+}
+function decodeStep(oldS) {
+  if (!recInfo || recInfo.kind !== 'data') return;
+  var pHi = XPLAY - oldS, pLo = XPLAY - scroll;
+  for (var c = Math.floor(pHi/CELL); c > Math.floor(pLo/CELL); c--) {
+    var idx = ((c % NC) + NC) % NC;
+    if (tapeCtr[idx]) { var b = tapeBit[idx]; if (b >= 0 && decoded.length === b) { var bitv = (physFlux(b) + 0.08*gauss()) > 0 ? 1 : 0; decoded.push(bitv); if (bitv !== recInfo.bits[b]) errors++; } }
+  }
+}
+
+/* ── Transport ── */
+var tStart = 0;
+function record() {
+  if (state !== 'stop') stop(true);
+  state = 'record'; tvis = 0; visPhase = 0; decoded = []; errors = 0; scopeBuf = [];
+  visV = source === 'tune' ? 120 : 50;
+  if (source === 'data') { bits = []; for (var i = 0; i < 24; i++) bits.push(Math.random() < 0.5 ? 1 : 0); }
+  tapeCtr.fill(0); tapeBit.fill(-1);
+  recInfo = { kind: source, t0: 0, p0: XREC - scroll, p1: XREC - scroll, v: vTape, visV: visV, bits: bits.slice(), bitLen: bitLen, gapAtRec: gap };
+  if (source === 'data') { recInfo.dur = bits.length*P(bitLen)/visV + 0.05; stored = { kind: 'data', v: vTape }; }
+  else {
+    var x = sourceSamples(source);
+    stored = { kind: source, v: vTape, m: recordAudio(x), bias: bias, level: levelDb, f: freq, oct: octave };
+    recInfo.dur = x.length/FS;
+    if (monitor) { var mon = new Float32Array(x.length); for (var k = 0; k < x.length; k++) mon[k] = x[k]; playBuffer(mon, 1); }
+  }
+  updateButtons(); scheduleUpdate(false);
+  updateNarration('Recording ' + (source === 'data' ? '24 bits' : (source === 'tune' ? 'the tune' : 'a ' + fmtF(freq) + ' tone')) + ' at ' + (vTape*100).toFixed(2) + ' cm/s.');
+}
+function play() {
+  if (!stored || !recInfo) { updateNarration('The tape is blank. Record something first.'); return; }
+  if (state !== 'stop') stop(true);
+  state = 'play'; decoded = []; errors = 0; scopeBuf = []; visV = recInfo.visV;
+  scroll = XPLAY - 2 - recInfo.p0; tvis = 0;
+  if (stored.kind !== 'data') playBuffer(playbackAudio(stored.m, stored.v, playRate), playRate);
+  updateButtons(); scheduleUpdate(false);
+  updateNarration('Playing back' + (playRate !== 1 ? ' at ' + (playRate > 1 ? 'double' : 'half') + ' speed' : '') + '.');
+}
+function stop(silent) {
+  var was = state; state = 'stop'; stopAudio(); updateButtons(); scheduleUpdate(false);
+  if (silent !== true) {
+    if (was === 'play' && recInfo && recInfo.kind === 'data') updateNarration('Read back ' + decoded.length + ' bits with ' + errors + ' error' + (errors === 1 ? '' : 's') + '.');
+    else updateNarration(was === 'record' ? 'Recording finished. Press Play to hear the tape.' : 'Stopped.');
+  }
+}
+function playOriginal() { var x = sourceSamples(source === 'data' ? 'tone' : source); playBuffer(x, 1); updateNarration('Playing the original signal, straight from the source.'); }
+
+/* ── Animation loop ── */
+var rafId = null, lastTs = null, roTimer = 0;
+function advance(dt) {
+  var rate = state === 'play' ? playRate : 1;
+  if (state === 'record') {
+    recordStep(dt);
+    readStep(dt, 1);
+    vu = vu + (20*Math.log10(Math.max(1e-4, Math.abs(lastH))/A0) - vu)*Math.min(1, dt*6);
+    if (tvis >= recInfo.dur) stop();
+  } else if (state === 'play') {
+    var oldS = scroll; scroll += visV*rate*dt; tvis += dt;
+    readStep(dt, rate); decodeStep(oldS);
+    vu = vu + (20*Math.log10(Math.max(1e-4, Math.abs(outV))/0.55) - vu)*Math.min(1, dt*6);
+    if (XPLAY - scroll < recInfo.p1 - 20) stop();
+  } else { vu += (-40 - vu)*Math.min(1, dt*3); }
+  if (state !== 'stop') {
+    reelAng += visV*rate*dt/40;
+    scopeBuf.push({ i: state === 'record' ? lastH/1.3 : null, f: phi, o: outV }); if (scopeBuf.length > SB_N) scopeBuf.shift();
+  }
+}
+function frame(ts) {
+  rafId = null;
+  if (lastTs === null) lastTs = ts;
+  var dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+  advance(dt); redraw();
+  roTimer += dt; if (roTimer > 0.2) { roTimer = 0; updateReadouts(); }
+  if (!document.hidden) rafId = window.requestAnimationFrame(frame);
+}
+function startLoop() { if (!rafId && window.requestAnimationFrame) { lastTs = null; rafId = window.requestAnimationFrame(frame); } }
+
+/* ── Canvas palette ── */
+function pal() {
+  var p;
+  if (hcMode) p = { bg:'#000000', edge:'#ffffff', deck:'#000000', reel:'#bbbbbb', hub:'#000000', tape:'#3a2a10', head:'#888888', coil:'#ffaa00', up:'#ff5555', down:'#55aaff',
+    text:'#ffffff', dim:'#e0e0e0', field:'#ffff00', bias:'#00e8d0', screen:'#000000', sgrid:'#333333', ti:'#ffd700', tf:'#00ff88', to:'#55aaff', warn:'#ff5555', vuface:'#000000', needle:'#ffffff', ok:'#00ff88', lw:1.6 };
+  else if (lightMode) p = { bg:'#ffffff', edge:'#9aa3ae', deck:'#f1f4f7', reel:'#c3cad3', hub:'#ffffff', tape:'#7a5a30', head:'#9aa3ae', coil:'#b8702a', up:'#c0262a', down:'#1f5fc0',
+    text:'#1d232a', dim:'#556070', field:'#a8620a', bias:'#127a8a', screen:'#f4f6f9', sgrid:'#dde2e8', ti:'#a8620a', tf:'#12805a', to:'#1f5fc0', warn:'#c0262a', vuface:'#fff6d9', needle:'#1d232a', ok:'#12805a', lw:1.1 };
+  else p = { bg:'#0d0f12', edge:'#3a4048', deck:'#16191d', reel:'#3a4048', hub:'#22262b', tape:'#5a4020', head:'#6b737d', coil:'#c8813a', up:'#ff6a5a', down:'#5aa0ff',
+    text:'#c8d0d8', dim:'#8a94a3', field:'#e8a020', bias:'#3ac0d0', screen:'#0a0c0f', sgrid:'#1f252d', ti:'#e8a020', tf:'#3ad08f', to:'#5aa0ff', warn:'#ff5a52', vuface:'#e8dcb0', needle:'#111111', ok:'#3ad08f', lw:1.1 };
+  if (cbMode && !hcMode) { p.up = '#D55E00'; p.down = lightMode ? '#0072B2' : '#56B4E9'; p.ti = '#E69F00'; p.tf = '#009E73'; p.to = lightMode ? '#0072B2' : '#56B4E9'; p.warn = '#D55E00'; }
+  return p;
+}
+function rect(x, y, w, h, fill, stroke, lw) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
+}
+function mixCol(p, m) { return m >= 0 ? p.up : p.down; }
+
+/* ── Drawing ── */
+function drawReel(p, cx, cy, r) {
+  ctx.fillStyle = p.tape; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = p.hub; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+  var a = reducedMotion ? 0 : reelAng*(40/r);
+  ctx.strokeStyle = p.reel; ctx.lineWidth = 3;
+  for (var k = 0; k < 3; k++) { var t = a + k*2*Math.PI/3; ctx.beginPath(); ctx.moveTo(cx + 5*Math.cos(t), cy + 5*Math.sin(t)); ctx.lineTo(cx + 13*Math.cos(t), cy + 13*Math.sin(t)); ctx.stroke(); }
+}
+function drawDeck(p) {
+  rect(4, 4, 552, 206, p.deck, p.edge);
+  var used = recInfo ? clamp((recInfo.p0 - recInfo.p1)/600, 0, 1) : 0;
+  drawReel(p, 70, 66, 46 - 8*used); drawReel(p, 490, 66, 38 + 8*used);
+  /* tape path */
+  ctx.strokeStyle = p.tape; ctx.lineWidth = 3; ctx.beginPath();
+  ctx.moveTo(30, 66 + 10); ctx.lineTo(24, TY + 6); ctx.moveTo(530, 66 + 10); ctx.lineTo(536, TY + 6); ctx.stroke();
+  ctx.fillStyle = p.reel; [24, 536].forEach(function(x) { ctx.beginPath(); ctx.arc(x, TY + 6, 6, 0, 2*Math.PI); ctx.fill(); });
+  /* tape cells */
+  rect(24, TY, 512, TH, p.tape);
+  for (var x = 24; x < 536; x += CELL) {
+    var m = tapeM[cidx(x - scroll)];
+    if (Math.abs(m) > 0.03) { ctx.globalAlpha = clamp(Math.abs(m), 0.1, 1); ctx.fillStyle = mixCol(p, m); ctx.fillRect(x, TY + 1, CELL, TH - 2); }
+  }
+  ctx.globalAlpha = 1;
+  /* arrows showing M every 12 px */
+  for (var xa = 30 + ((scroll % 12) + 12) % 12; xa < 532; xa += 12) {
+    var mm = tapeM[cidx(xa - scroll)]; if (Math.abs(mm) < 0.12) continue;
+    var len = 3 + 4*Math.min(1, Math.abs(mm)), d = mm > 0 ? 1 : -1;
+    ctx.strokeStyle = p.text; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(xa - d*len, TY - 5); ctx.lineTo(xa + d*len, TY - 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xa + d*len, TY - 5); ctx.lineTo(xa + d*(len - 3), TY - 7.5); ctx.lineTo(xa + d*(len - 3), TY - 2.5); ctx.closePath(); ctx.fillStyle = p.text; ctx.fill();
+  }
+  /* heads */
+  drawHead(p, XER, 'erase', 12, state === 'record');
+  drawHead(p, XREC, 'record', 5, state === 'record');
+  drawHead(p, XPLAY, 'playback', Math.max(CELL, P(gap)), state !== 'stop');
+  /* field from the record head */
+  if (state === 'record') {
+    var hv = lastH, col = hv >= 0 ? p.up : p.down;
+    ctx.strokeStyle = col; ctx.globalAlpha = clamp(Math.abs(hv), 0.15, 1); ctx.lineWidth = 1.5;
+    for (var k = 1; k <= 3; k++) { ctx.beginPath(); ctx.ellipse(XREC, TY + TH, 6 + 6*k, 4 + 5*k, 0, Math.PI, 2*Math.PI); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    if (bias > 0.02 && source !== 'data') {
+      ctx.strokeStyle = p.bias; ctx.lineWidth = 1; ctx.beginPath();
+      for (var z = 0; z <= 30; z++) { var zx = XREC + 22 + z, zy = TY + TH + 20 + (z % 2 ? -1 : 1)*3*Math.min(1.5, bias)*(0.6 + 0.4*Math.random()); if (z === 0) ctx.moveTo(zx, zy); else ctx.lineTo(zx, zy); }
+      ctx.stroke(); ctx.fillStyle = p.bias; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.fillText('+ AC bias', XREC + 38, TY + TH + 34);
+    }
+    ctx.strokeStyle = p.bias; ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+    for (var q = 0; q < 3; q++) { ctx.beginPath(); ctx.arc(XER, TY + TH, 6 + 5*q + Math.random()*2, Math.PI, 2*Math.PI); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+  /* labels */
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('supply reel', 70, 128); ctx.fillText('take-up reel', 490, 128);
+  ctx.fillText('tape \u2192', 520, TY - 4);
+  ctx.fillStyle = state === 'record' ? p.warn : (state === 'play' ? p.ok : p.dim); ctx.font = 'bold 11px monospace';
+  ctx.fillText(state === 'record' ? '\u25cf REC' : (state === 'play' ? '\u25b6 PLAY' + (playRate !== 1 ? ' \u00d7' + playRate : '') : '\u25a0 STOP'), 280, 30);
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace';
+  ctx.fillText('v = ' + (vTape*100).toFixed(2) + ' cm/s', 280, 46);
+  ctx.fillText(stored ? 'tape holds: ' + (stored.kind === 'data' ? '24 bits' : stored.kind === 'tune' ? 'the tune' : 'a ' + fmtF(stored.f) + ' tone') : 'tape is blank', 280, 60);
+}
+function drawHead(p, x, name, g, active) {
+  var top = TY + TH + 1;
+  ctx.fillStyle = p.head; ctx.strokeStyle = p.edge; ctx.lineWidth = 1;
+  /* ring core: two halves meeting at the gap */
+  ctx.beginPath(); ctx.moveTo(x - g/2, top); ctx.lineTo(x - 18, top + 6); ctx.lineTo(x - 18, top + 36); ctx.lineTo(x - 2, top + 36); ctx.lineTo(x - 2, top + 28); ctx.lineTo(x - 10, top + 28); ctx.lineTo(x - 10, top + 10); ctx.lineTo(x - g/2, top + 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + g/2, top); ctx.lineTo(x + 18, top + 6); ctx.lineTo(x + 18, top + 36); ctx.lineTo(x + 2, top + 36); ctx.lineTo(x + 2, top + 28); ctx.lineTo(x + 10, top + 28); ctx.lineTo(x + 10, top + 10); ctx.lineTo(x + g/2, top + 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+  /* coil */
+  ctx.strokeStyle = p.coil; ctx.lineWidth = 1.5;
+  for (var k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(x - 21, top + 14 + k*4); ctx.lineTo(x - 7, top + 16 + k*4); ctx.stroke(); }
+  ctx.fillStyle = active ? p.ok : p.dim; ctx.beginPath(); ctx.arc(x + 14, top + 44, 2.5, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.fillText(name + ' head', x, top + 50);
+  if (name === 'playback') ctx.fillText('gap ' + fmtL(gap), x, top + 60);
+}
+function drawTransfer(p) {
+  var x0 = 8, y0 = 214, w = 172, h = 108, cx = x0 + w/2, cy = y0 + 14 + (h - 18)/2, sx = (w - 16)/3, sy = (h - 26)/2;
+  rect(x0, y0, w, h, p.screen, p.edge);
+  ctx.strokeStyle = p.sgrid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + 4, cy); ctx.lineTo(x0 + w - 4, cy); ctx.moveTo(cx, y0 + 16); ctx.lineTo(cx, y0 + h - 4); ctx.stroke();
+  ctx.setLineDash([2, 3]); ctx.strokeStyle = p.dim; ctx.beginPath(); ctx.moveTo(cx - 1.5*sx, cy + 1.5*1.4*sy*0.45); ctx.lineTo(cx + 1.5*sx, cy - 1.5*1.4*sy*0.45); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = p.ti; ctx.lineWidth = 1.8; ctx.beginPath();
+  var b = source === 'data' ? 1 : bias;
+  for (var k = 0; k <= 60; k++) { var hh = -1.5 + 3*k/60, X = cx + hh*sx, Y = cy - Rec(hh, b)*sy; if (k === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
+  ctx.stroke();
+  if (state === 'record') { ctx.fillStyle = p.text; ctx.beginPath(); ctx.arc(cx + clamp(lastH, -1.5, 1.5)*sx, cy - Rec(lastH, b)*sy, 3.5, 0, 2*Math.PI); ctx.fill(); }
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('RECORD TRANSFER', x0 + 5, y0 + 11);
+  ctx.fillStyle = p.dim; ctx.font = '8px monospace'; ctx.textAlign = 'right'; ctx.fillText('remanent M', cx - 3, y0 + 22); ctx.fillText('head field', x0 + w - 4, cy + 12);
+  ctx.textAlign = 'left'; ctx.fillText(source === 'data' ? 'data: saturated' : 'bias ' + Math.round(bias*100) + '%', x0 + 5, y0 + h - 5);
+}
+function drawVU(p) {
+  var x0 = 186, y0 = 214, w = 146, h = 108, cx = x0 + w/2, cy = y0 + h - 16, r = 70;
+  rect(x0, y0, w, h, p.screen, p.edge);
+  ctx.fillStyle = p.vuface; ctx.beginPath(); ctx.moveTo(cx - r - 6, cy); ctx.arc(cx, cy, r + 6, Math.PI, 2*Math.PI); ctx.closePath(); ctx.fill();
+  function ang(db) { return Math.PI + (clamp(db, -20, 3) + 20)/23*Math.PI*0.8 + Math.PI*0.1; }
+  ctx.lineWidth = 3; ctx.strokeStyle = '#555555'; ctx.beginPath(); ctx.arc(cx, cy, r - 4, ang(-20), ang(0)); ctx.stroke();
+  ctx.strokeStyle = '#c0262a'; ctx.beginPath(); ctx.arc(cx, cy, r - 4, ang(0), ang(3)); ctx.stroke();
+  ctx.fillStyle = '#333333'; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+  [-20, -10, -5, 0, 3].forEach(function(db) { var a = ang(db); ctx.fillText(String(db), cx + (r - 14)*Math.cos(a), cy + (r - 14)*Math.sin(a) + 3); });
+  ctx.fillStyle = '#333333'; ctx.font = 'bold 10px monospace'; ctx.fillText('VU', cx, cy - 20);
+  var a = ang(vu); ctx.strokeStyle = p.needle; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + (r - 2)*Math.cos(a), cy + (r - 2)*Math.sin(a)); ctx.stroke();
+  ctx.fillStyle = p.text; ctx.font = '8px monospace'; ctx.textAlign = 'left'; ctx.fillText(state === 'play' ? 'output' : 'input', x0 + 5, y0 + 11);
+}
+function drawInfo(p) {
+  var x0 = 338, y0 = 214, w = 216, h = 108, f = source === 'tune' ? 440*Math.pow(2, octave - 4) : freq;
+  rect(x0, y0, w, h, p.screen, p.edge);
+  ctx.fillStyle = p.text; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'left'; ctx.fillText('ON THE TAPE', x0 + 6, y0 + 11);
+  ctx.font = '9px monospace'; ctx.fillStyle = p.dim;
+  if (source === 'data' || (recInfo && recInfo.kind === 'data' && state === 'play')) {
+    var bl = recInfo && recInfo.kind === 'data' ? recInfo.bitLen : bitLen;
+    ctx.fillText('bit length ' + fmtL(bl) + ', gap ' + fmtL(gap), x0 + 6, y0 + 26);
+    ctx.fillText('density ' + (1e-3/bl).toFixed(0) + ' bits/mm', x0 + 6, y0 + 38);
+    var sent = recInfo && recInfo.kind === 'data' ? recInfo.bits : [];
+    ctx.fillText('sent:', x0 + 6, y0 + 58); ctx.fillText('read:', x0 + 6, y0 + 74);
+    ctx.font = '9px monospace';
+    for (var i = 0; i < sent.length; i++) {
+      var xx = x0 + 40 + i*7 + Math.floor(i/8)*4;
+      ctx.fillStyle = p.text; ctx.fillText(String(sent[i]), xx, y0 + 58);
+      if (i < decoded.length) { ctx.fillStyle = decoded[i] === sent[i] ? p.ok : p.warn; ctx.fillText(String(decoded[i]), xx, y0 + 74); }
+    }
+    ctx.fillStyle = errors ? p.warn : p.ok; ctx.font = 'bold 9px monospace';
+    if (decoded.length) ctx.fillText(errors + ' error' + (errors === 1 ? '' : 's') + ' in ' + decoded.length + ' bits', x0 + 6, y0 + 94);
+    else { ctx.fillStyle = p.dim; ctx.font = '9px monospace'; ctx.fillText(recInfo && recInfo.kind === 'data' ? 'press Play to read the bits' : 'press Rec to write 24 bits', x0 + 6, y0 + 94); }
+  } else {
+    var lam = vTape/f, nul = vTape/gap;
+    ctx.fillText((source === 'tune' ? 'note A' + octave + ' ' : '') + 'f = ' + fmtF(f), x0 + 6, y0 + 26);
+    ctx.fillText('\u03bb = v/f = ' + fmtL(lam), x0 + 6, y0 + 38);
+    ctx.fillText('gap g = ' + fmtL(gap) + '  (\u03bb/g = ' + (lam/gap).toFixed(1) + ')', x0 + 6, y0 + 50);
+    ctx.fillText('gap null at f = v/g = ' + fmtF(nul), x0 + 6, y0 + 62);
+    var d = relDb(f), hm = harmonics(ampOf(levelDb), bias);
+    ctx.fillStyle = p.text; ctx.fillText('playback ' + fmtDb(d), x0 + 6, y0 + 80);
+    ctx.fillStyle = hm.thd > 0.05 ? p.warn : p.ok; ctx.fillText('distortion ' + (hm.thd*100).toFixed(1) + '%', x0 + 6, y0 + 94);
+    ctx.fillStyle = p.dim; ctx.fillText(eqOn ? 'equalizer on' : 'equalizer OFF: emf \u221d f', x0 + 6, y0 + 104);
+  }
+}
+function drawScope(p) {
+  var x0 = 8, y0 = 328, w = 546, h = 88, mid = y0 + h/2 + 6, amp = h/2 - 12;
+  rect(x0, y0, w, h, p.screen, p.edge);
+  ctx.strokeStyle = p.sgrid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + 4, mid + 0.5); ctx.lineTo(x0 + w - 4, mid + 0.5); ctx.stroke();
+  function tr(key, col) {
+    var n = scopeBuf.length; if (n < 2) return;
+    ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath(); var started = false;
+    for (var i = 0; i < n; i++) { var v = scopeBuf[i][key]; if (v === null) { started = false; continue; } var x = x0 + w - 4 - (n - 1 - i)*(w - 8)/SB_N, y = mid - clamp(v, -1.15, 1.15)*amp; if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  tr('i', p.ti); tr('f', p.tf); tr('o', p.to);
+  ctx.font = '9px monospace'; ctx.textAlign = 'left';
+  ctx.fillStyle = p.ti; ctx.fillText('\u2014 record-head field', x0 + 6, y0 + 11);
+  ctx.fillStyle = p.tf; ctx.fillText('\u2014 tape M under playback head', x0 + 136, y0 + 11);
+  ctx.fillStyle = p.to; ctx.fillText('\u2014 playback output' + (eqOn ? '' : ' (emf, no EQ)'), x0 + 324, y0 + 11);
+  if (scopeBuf.length < 2) { ctx.fillStyle = p.dim; ctx.textAlign = 'center'; ctx.fillText('Press Rec, then Play', x0 + w/2, mid + 16); }
+}
+function redraw() {
+  var p = pal();
+  ctx.clearRect(0, 0, CW, CH); ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+  drawDeck(p); drawTransfer(p); drawVU(p); drawInfo(p); drawScope(p);
+}
+
+/* ── Readouts & narration ── */
+function biasText() { if (source === 'data') return 'not used (saturation)'; if (bias < 0.05) return 'off'; if (bias < 0.8) return Math.round(bias*100) + '% (under-biased)'; if (bias <= 1.15) return Math.round(bias*100) + '% (optimum)'; return Math.round(bias*100) + '% (over-biased)'; }
+function updateReadouts() {
+  var f = source === 'tune' ? 440*Math.pow(2, octave - 4) : freq, lam = vTape/f, hm = harmonics(ampOf(levelDb), bias);
+  if (source === 'data') { set('r_lam', 'bit ' + fmtL(bitLen)); set('r_out', '--'); set('r_thd', '--'); }
+  else { set('r_lam', fmtL(lam) + (source === 'tune' ? ' (A' + octave + ')' : '')); set('r_out', fmtDb(relDb(f))); set('r_thd', (hm.thd*100).toFixed(1) + '%'); }
+  set('r_null', fmtF(vTape/gap));
+  set('r_bias', biasText());
+  set('r_tape', stored ? (stored.kind === 'data' ? '24 bits at ' : (stored.kind === 'tune' ? 'tune at ' : fmtF(stored.f) + ' tone at ') ) + (stored.v*100).toFixed(2) + ' cm/s' : 'blank');
+  set('r_dens', (1e-3/bitLen).toFixed(0) + ' bits/mm');
+  set('r_err', recInfo && recInfo.kind === 'data' && decoded.length ? errors + ' errors / ' + decoded.length : '--');
+  var tr = el('r_thdrow'); if (tr) tr.classList.toggle('rec_alert', source !== 'data' && hm.thd > 0.05);
+  var er = el('r_errrow'); if (er) er.classList.toggle('rec_alert', errors > 0);
+}
+function statusText() {
+  var s = '', f = source === 'tune' ? 440*Math.pow(2, octave - 4) : freq;
+  s += 'Tape speed ' + (vTape*100).toFixed(2) + ' cm/s, playback gap ' + fmtL(gap) + '. ';
+  if (source === 'data') s += 'Data: 24 bits, each ' + fmtL(bitLen) + ' long on the tape (' + (1e-3/bitLen).toFixed(0) + ' bits per mm), written by saturating the tape. ' + (bitLen < gap ? 'The bits are shorter than the gap, so the head blurs neighbouring bits together. ' : '');
+  else {
+    var hm = harmonics(ampOf(levelDb), bias);
+    s += (source === 'tune' ? 'Tune in octave ' + octave + ' (A' + octave + ' = ' + fmtF(f) + ')' : 'Tone of ' + fmtF(f)) + ', recorded as a wavelength of ' + fmtL(vTape/f) + '. ';
+    s += 'Bias ' + biasText() + ', record level ' + levelDb + ' dB: distortion ' + (hm.thd*100).toFixed(1) + '%. ';
+    s += 'Playback level ' + fmtDb(relDb(f)) + ' with the equalizer ' + (eqOn ? 'on' : 'off') + '. ';
+  }
+  if (recInfo && recInfo.kind === 'data' && decoded.length) s += 'Read back ' + decoded.length + ' bits with ' + errors + ' errors. ';
+  return s;
+}
+var narrTimer = null;
+function updateNarration(prefix) {
+  if (!showNarr) return;
+  clearTimeout(narrTimer);
+  var go = function() { set('recNarration', (prefix ? prefix + ' ' : '') + statusText()); };
+  if (prefix) go(); else narrTimer = setTimeout(go, 450);
+}
+function updateCanvasDesc() { var d = 'Tape deck, ' + state + '. ' + statusText(); set('recCanvasDesc', d); canvas.setAttribute('aria-label', d); }
+function updateLabels() {
+  set('vF', fmtF(freq)); set('vBit', (bitLen*1e6).toFixed(1) + ' \u00b5m'); set('vLev', (levelDb > 0 ? '+' : '') + levelDb + ' dB');
+  set('vBias', Math.round(bias*100) + '%'); set('vGap', (gap*1e6).toFixed(1) + ' \u00b5m'); set('vVol', Math.round(volume*100) + '%');
+  set('srcHint', source === 'tone' ? 'A steady tone: compare frequencies, speeds, gaps and bias.' : (source === 'tune' ? 'Twinkle, Twinkle, Little Star (traditional): record it, then listen to how the tape changes it.' : 'Random bits written as saturated regions, like a hard drive or a credit-card stripe.'));
+  set('diagLabel', 'TAPE DECK -- ' + (source === 'data' ? 'DATA' : source === 'tune' ? 'TUNE' : 'TONE ' + fmtF(freq)));
+  var busy = state !== 'stop';
+  ['slF', 'slLev', 'slBias', 'selSpd', 'selOct', 'slBit'].forEach(function(id) { var e = el(id); if (e) e.disabled = busy; });
+  var eF = el('slF'); if (eF && source !== 'tone') eF.disabled = true;
+  var eO = el('selOct'); if (eO && source !== 'tune') eO.disabled = true;
+  var eB = el('slBit'); if (eB && source !== 'data') eB.disabled = true;
+  var eBi = el('slBias'); if (eBi && source === 'data') eBi.disabled = true;
+  ['btnTone', 'btnTune', 'btnData'].forEach(function(id) { var e = el(id); if (e) e.disabled = busy; });
+}
+function updateButtons() {
+  [['tone', 'btnTone'], ['tune', 'btnTune'], ['data', 'btnData']].forEach(function(q) { var b = el(q[1]); if (b) { b.classList.toggle('rec_srcon', q[0] === source); b.setAttribute('aria-pressed', q[0] === source ? 'true' : 'false'); } });
+  var r = el('btnRec'); if (r) r.classList.toggle('rec_active', state === 'record');
+  var pl = el('btnPlay'); if (pl) { pl.classList.toggle('rec_active', state === 'play'); pl.disabled = !stored; }
+}
+var pending = false;
+function scheduleUpdate(narrate) {
+  if (pending) return; pending = true;
+  var go = function() { pending = false; updateLabels(); updateButtons(); redraw(); updateReadouts(); updateCanvasDesc(); if (narrate !== false) updateNarration(); };
+  if (window.requestAnimationFrame) window.requestAnimationFrame(go); else setTimeout(go, 16);
+}
+
+/* ── Controls ── */
+function onSlider(key, raw) {
+  var v = parseFloat(raw);
+  if (key === 'F') freq = 50*Math.pow(200, v/100);
+  else if (key === 'O') octave = parseInt(raw, 10);
+  else if (key === 'Bit') bitLen = v*1e-6;
+  else if (key === 'Lev') levelDb = Math.round(v);
+  else if (key === 'V') vTape = v/100;
+  else if (key === 'Bias') bias = v/100;
+  else if (key === 'Gap') gap = v*1e-6;
+  else if (key === 'PS') playRate = v;
+  else if (key === 'Vol') { volume = v/100; if (master && actx) master.gain.setTargetAtTime(volume, actx.currentTime, 0.03); }
+  scheduleUpdate();
+}
+function setSource(s) { if (state !== 'stop') return; source = s; scheduleUpdate(false); updateNarration({ tone: 'Source: a steady tone.', tune: 'Source: the tune.', data: 'Source: digital data.' }[s]); }
+function onOpt(k, on) { if (k === 'eq') eqOn = on; else if (k === 'mon') monitor = on; scheduleUpdate(); }
+
+/* ── Canvas interaction: hover readout ── */
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function describePoint(x, y) {
+  if (y >= TY - 10 && y <= TY + TH + 2 && x >= 24 && x <= 536) { var m = tapeM[cidx(x - scroll)]; return 'Tape: remanent magnetization ' + (Math.abs(m) < 0.03 ? '\u2248 0 (blank or erased)' : (m > 0 ? '+' : '\u2212') + Math.abs(m).toFixed(2) + ' of saturation') + '. The particles keep it after the head has passed: hysteresis is the memory.'; }
+  if (y > TY + TH && y < 205) {
+    if (Math.abs(x - XER) < 24) return 'Erase head: a strong high-frequency field demagnetizes the tape (like the Demagnetize button in the hysteresis sim).';
+    if (Math.abs(x - XREC) < 24) return 'Record head: the signal current (plus AC bias) makes a field that leaks out of the gap and magnetizes the tape.';
+    if (Math.abs(x - XPLAY) < 24) return 'Playback head: the tape\'s flux passes through the core; as it changes, the coil gives an emf = \u2212N d\u03a6/dt. Gap ' + fmtL(gap) + '.';
+  }
+  if (y < TY - 10) return 'Reels: the tape moves from the supply reel past the heads to the take-up reel at ' + (vTape*100).toFixed(2) + ' cm/s.';
+  if (y >= 214 && y <= 322) {
+    if (x < 182) return 'Record transfer: the remanent M left on the tape against the head field. Without bias it has a dead zone (hysteresis); with AC bias it is nearly straight.';
+    if (x < 334) return 'VU meter: the signal level in decibels. Above 0 the tape starts to saturate.';
+    return 'Wavelength on the tape, the gap null and the playback quality.';
+  }
+  if (y > 324) return 'Scope (slow motion): amber is the record-head field, green the tape M under the playback head, blue the playback output.';
+  return 'Magnetic tape deck.';
+}
+canvas.addEventListener('mousemove', function(e) { var c = canvasXY(e.clientX, e.clientY); set('recHoverReadout', describePoint(c[0], c[1])); });
+canvas.addEventListener('mouseleave', function() { set('recHoverReadout', 'Hover over the heads, the tape or the displays to read values'); });
+canvas.addEventListener('touchstart', function(e) { var t = e.touches[0], c = canvasXY(t.clientX, t.clientY); set('recHoverReadout', describePoint(c[0], c[1])); }, { passive: true });
+
+/* ── Display options ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('rec_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+  ROOT.classList.toggle('rec_hc', hcMode); ROOT.classList.toggle('rec_lm', lightMode); ROOT.classList.toggle('rec_cb', cbMode);
+  setBtnOn('btnHC', hcMode); setBtnOn('btnLight', lightMode); setBtnOn('btnCB', cbMode); setBtnOn('btnNarr', showNarr);
+  var nb = el('btnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+  var box = el('recNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate(false); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate(false); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(''); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e = el('recSrAnnounce'); if (!e) return; e.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e.textContent = msg; }, 60); }
+
+/* ── Keyboard shortcuts ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+  var tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  switch (e.key) {
+    case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+    case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+    case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+    case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+    case 'r': case 'R': record(); e.preventDefault(); break;
+    case 'p': case 'P': play(); e.preventDefault(); break;
+    case 's': case 'S': stop(); e.preventDefault(); break;
+  }
+});
+document.addEventListener('visibilitychange', function() { if (document.hidden) { if (state !== 'stop') stop(true); } else startLoop(); });
+if (reducedMotion) { var mn = el('recMotionNotice'); if (mn) mn.style.display = 'block'; }
+
+/* ── Boot ── */
+applyDisplay(); scheduleUpdate(false);
+updateNarration('Ready. Choose a tone, the tune or data, press Rec, then Play. Try recording without bias, at a slow tape speed, or with a wide playback gap.');
+startLoop();
+return { onSlider: onSlider, setSource: setSource, onOpt: onOpt, record: record, play: play, stop: stop, playOriginal: playOriginal,
+         toggleHC: toggleHC, toggleLight: toggleLight, toggleCB: toggleCB, toggleNarr: toggleNarr };
+};
+</script>
+<script>
+var recSim = new recGen();
+</script>
+</main>
+</body>
+</html>

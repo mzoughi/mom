@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab: Physics Simulations-Optics: Snell's Law: Half Disk Refractions</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, geometrical optics, Snell law, refraction, half disk, semicircular block, total internal reflection, critical angle, protractor, lesson, scientific">
+<meta name="description" content="Interactive Snell's law simulation with an inverted half disk: light leaves a semicircular block, with protractors to read the angles.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="snellRoot" class="sn_root" role="region" aria-label="Snell's Law: Half Disk Refractions simulator">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y" id="snellA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn" id="snBtnHC" onclick="snellA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn" id="snBtnLM" onclick="snellA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn" id="snBtnCB" onclick="snellA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sn_a11ybtn sn_a11yon" id="snBtnNR" onclick="snellA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div id="canvasesdiv" class="tbar"><h3>Snell's Law Lab: Inverted Half Disk</h3></div>
+<!-- Instrument grid -->
+<div class="sn_instrument">
+<!-- Left column -->
+<div class="sn_leftcol">
+<div class="sn_diagpanel">
+<div class="sn_diaglabel"><b>LIGHT RAYS</b><span class="sn_diagnote">drag the light source to change the angle &middot; drag the aim point along the flat face &middot; drag a protractor sideways</span></div>
+<div class="mcontent"><canvas id="myCanvas" style="margin:auto;border:1px solid;touch-action:none;cursor:grab" width="500" height="470" role="img" aria-label="A beam from outside enters a half disk through its curved face and meets its flat face from inside. The light source, the aim point on the flat face and the protractors can be dragged."></canvas>
+</div>
+</div>
+<!-- Narration bar -->
+<div id="snNarBar" class="sn_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="sn_rightcol">
+<div class="sn_panel" role="group" aria-label="Controls">
+<div class="sn_paneltitle">Controls</div>
+<div class="sn_panelbody">
+<!-- Repeated 80px sections -->
+<div class="bbar">
+<div class="right"><label><input type="checkbox" id="showP1" onchange="snell.toggleP1(this)"> Show Protractor 1</label></div>
+<div class="right"><label><input type="checkbox" id="showP2" onchange="snell.toggleP2(this)"> Show Protractor 2</label></div>
+</div>
+<div class="footer">
+<div class="left">incidence block/medium interface:</div>
+<div class="center">`theta_i`: <input class=islide type="range" id="incidentAngleSlider" min="-90" max="90" value="20" step=".1" oninput="snell.setIncidentAngle(this.value)" onchange="snell.setIncidentAngle(this.value)"> <span id="incidentAngleValue">20</span>`""^@`</div>
+</div>
+<div class="footer">
+<div class="left">Aim point on the flat face (from the centre):</div>
+<div class="center"><input class=islide type="range" id="entrySlider" min="-9" max="9" value="0" step="0.1" aria-label="Aim point, in centimetres from the centre of the flat face" oninput="snell.setEntry(this.value)" onchange="snell.setEntry(this.value)"> <span id="entryValue">0.0 cm</span><br><button type="button" class="sn_a11ybtn" onclick="snell.setEntry(0, true)">Back to the centre</button></div>
+</div>
+<div class="footer">
+<div class="left">Protractors:</div>
+<div class="center"><button type="button" class="sn_a11ybtn" onclick="snell.protTo('hit')">Centre them where the beam meets the flat face</button> <button type="button" class="sn_a11ybtn" onclick="snell.protTo('centre')">On the centre</button></div>
+</div>
+<div class="footer">
+<div class="left">Index of refraction of the surrounding:</div>
+<div class="center">`n_1:\ ` <input class=islide type="range" id="n1Value" min="1.00" max="2.50" value="1.00" step="0.05" oninput="snell.shown1(this.value)" onchange="snell.shown1(this.value)"> <span id="initialn1Value">1.00</span></div>
+</div>
+<div class="footer">
+<div class="left">Index of refraction of the block:</div>
+<div class="center">`n_2:\ ` <input class=islide type="range" id="n2Value" min="1.00" max="2.50" value="1.50" step="0.05" oninput="snell.shown2(this.value)" onchange="snell.shown2(this.value)"> <span id="initialn2Value">1.50</span></div>
+</div>
+</div>
+</div>
+</div><!-- right column -->
+</div><!-- instrument -->
+<div class="dc_wrap" role="region" aria-labelledby="dcHd">
+<div class="dc_hd" id="dcHd"><b>DATA COLLECTION</b> &middot; set an angle, record the run; repeat; then graph any two quantities</div>
+<div class="dc_bar">
+<button type="button" class="dc_btn dc_rec" onclick="snDC.record()">&#8853; Record this run</button>
+<label>Experimental error <select id="dcErr" aria-describedby="dcErrNote"><option value="0">none (exact)</option><option value="0.5">small (&plusmn;0.5&deg;)</option><option value="1.5" selected>typical (&plusmn;1.5&deg;)</option><option value="3">large (&plusmn;3&deg;)</option></select></label><span class="dc_note" id="dcErrNote">each angle is read on the protractor with a random error (the beam has a width, and judging its centre is not exact); at typical and large, the protractor is also slightly misaligned</span>
+<button type="button" class="dc_btn" onclick="snDC.undo()">Delete last run</button>
+<button type="button" class="dc_btn" onclick="snDC.clear()">Clear all data</button>
+<button type="button" class="dc_btn" onclick="snDC.copy()">Copy table (CSV)</button>
+</div>
+<div class="dc_bar">
+<label>Y-axis <select id="dcY" onchange="snDC.draw()"></select></label>
+<label>X-axis <select id="dcX" onchange="snDC.draw()"></select></label>
+<label><input type="checkbox" id="dcFit" checked onchange="snDC.draw()"> linear fit</label>
+<label><input type="checkbox" id="dcOrig" onchange="snDC.draw()"> through origin</label>
+<label><input type="checkbox" id="dcStat" onchange="snDC.draw()"> mean &plusmn; SD of y</label>
+</div>
+<div class="dc_body">
+<div><canvas id="dcG" width="440" height="300" role="img" aria-label="Graph of the recorded runs" aria-describedby="dcFitTxt"></canvas><div class="dc_fit" id="dcFitTxt" role="status" aria-live="polite"></div></div>
+<div class="dc_tblwrap"><table class="dc_tbl" aria-label="Recorded runs"><thead id="dcTH"></thead><tbody id="dcTB"></tbody></table></div>
+</div>
+<div class="dc_msg" id="dcMsg">No runs yet: set an angle of incidence and press Record this run.</div>
+</div>
+<style>
+#snellRoot .dc_wrap { width:100%; background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#snellRoot .dc_hd { background:var(--tp-panel-lo); border-bottom:1px solid var(--tp-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--tp-dim); }
+#snellRoot .dc_hd b { color:var(--tp-accent); }
+#snellRoot .dc_bar { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--tp-border); color:var(--tp-text); font-size:.8rem; }
+#snellRoot .dc_bar label { display:flex; align-items:center; gap:5px; cursor:pointer; }
+#snellRoot .dc_bar select { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.8rem; max-width:100%; }
+#snellRoot .dc_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#snellRoot .dc_btn:hover { border-color:var(--tp-accent); }
+#snellRoot .dc_rec { border-color:var(--tp-accent); color:var(--tp-accent); font-weight:bold; }
+#snellRoot .dc_body { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:10px; padding:10px; }
+#snellRoot .dc_body canvas { display:block; width:100%; height:auto; background:#fff; border:1px solid var(--tp-border); border-radius:3px; }
+#snellRoot .dc_fit { margin-top:6px; font-family:monospace; font-size:.78rem; color:var(--tp-val); line-height:1.5; }
+#snellRoot .dc_tblwrap { overflow:auto; max-height:300px; border:1px solid var(--tp-border); border-radius:3px; }
+#snellRoot .dc_tbl { border-collapse:collapse; width:100%; font-family:monospace; font-size:.72rem; }
+#snellRoot .dc_tbl th { position:sticky; top:0; background:var(--tp-panel-lo); color:var(--tp-dim); padding:4px 5px; border-bottom:1px solid var(--tp-border); text-align:right; white-space:nowrap; }
+#snellRoot .dc_tbl td { padding:3px 5px; border-bottom:1px solid var(--tp-border); color:var(--tp-text); text-align:right; white-space:nowrap; }
+#snellRoot .dc_note { font-size:.72rem; color:var(--tp-dim); font-style:italic; flex:1 1 220px; }
+#snellRoot .dc_msg { padding:6px 12px 10px; font-size:.8rem; color:var(--tp-dim); font-style:italic; }
+@media (max-width:640px) { #snellRoot .dc_body { grid-template-columns:minmax(0,1fr); } }
+</style>
+<script>
+/* ════════ DATA COLLECTION: record the angles of each run; graph any two quantities, with a least-squares fit ════════
+The angles are those at the flat face. CFG names the media for this simulation; get() reads the simulation's state.
+No dollar signs or backticks in the code. */
+var snDC = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var CFG = { nin:'n\u2082', nout:'n\u2081', xlabel:'aim x', hasSet:true, unknown:'in',
+get:function(){ var s = snell._state(), r = s.ray; if (!r || r.entryTIR || r.missed || r.thQ === undefined) return null;
+var ti = Math.abs(r.thQ); return { ti:ti, tset:Math.abs(s.thI), tr:ti, tt:r.tir ? null : r.thT, n1:s.n1, n2:s.n2, nIn:s.n2, nOut:s.n1, x:s.x2*2 }; } };
+var runs = [];
+/* the data are kept in the browser, so that they survive submitting the answers (the page reloads) */
+var KEY = 'snLabData|' + location.pathname + '|inverted-half-disk|q';
+function store(){ try { var o = { runs:runs, offset:OFFSET, ui:{ x:el('dcX').value, y:el('dcY').value, fit:el('dcFit').checked, orig:el('dcOrig').checked, stat:el('dcStat').checked, err:el('dcErr').value } }; localStorage.setItem(KEY, JSON.stringify(o)); } catch(e){} }
+function restore(){ try { var t = localStorage.getItem(KEY); return t ? JSON.parse(t) : null; } catch(e){ return null; } }
+var SAVED = restore();
+var D2R = Math.PI/180;
+function f(v, n){ return (v === null || v === undefined || !isFinite(v)) ? '\u2014' : (+v).toFixed(n); }
+/* the quantities on offer: key, label, unit, how to get it from a run */
+var Q = [
+['run', 'run #', '', function(r){ return r.k; }],
+['ti', '\u03B8\u1D62', '\u00B0', function(r){ return r.ti; }],
+['tr', '\u03B8\u1D63', '\u00B0', function(r){ return r.tr; }],
+['tt', '\u03B8\u209C', '\u00B0', function(r){ return r.tt; }],
+['si', 'sin \u03B8\u1D62', '', function(r){ return Math.sin(r.ti*D2R); }],
+['sr', 'sin \u03B8\u1D63', '', function(r){ return Math.sin(r.tr*D2R); }],
+['st', 'sin \u03B8\u209C', '', function(r){ return r.tt === null ? null : Math.sin(r.tt*D2R); }],
+['nsi', CFG.nin + ' sin \u03B8\u1D62', '', function(r){ return r.nIn*Math.sin(r.ti*D2R); }],
+['nst', CFG.nout + ' sin \u03B8\u209C', '', function(r){ return r.tt === null ? null : r.nOut*Math.sin(r.tt*D2R); }],
+['n1', 'n\u2081', '', function(r){ return r.n1; }],
+['n2', 'n\u2082', '', function(r){ return r.n2; }],
+['x', CFG.xlabel, 'cm', function(r){ return r.x; }]
+];
+if (CFG.hasSet) Q.splice(2, 0, ['tset', '\u03B8 aimed', '\u00B0', function(r){ return r.tset; }]);
+function q(k){ for (var i=0; i<Q.length; i++) if (Q[i][0] === k) return Q[i]; return Q[0]; }
+function fill(){ ['dcY', 'dcX'].forEach(function(id){ var s = el(id); s.innerHTML = Q.map(function(e){ return '<option value="' + e[0] + '">' + e[1] + (e[2] ? ' (' + e[2] + ')' : '') + '</option>'; }).join(''); }); el('dcY').value = 'st'; el('dcX').value = 'si'; }
+/* experimental error: each reading with a random (Gaussian) error of the chosen size; at typical and large, a protractor
+misaligned by a fixed amount for the session (a systematic error), so the data do not fall exactly on a line through the origin */
+var OFFSET = (SAVED && typeof SAVED.offset === 'number') ? SAVED.offset : (Math.random()*2 - 1)*0.4;   /* kept with the data: one misaligned protractor for the whole set */
+function sigma(){ return Number(el('dcErr').value) || 0; }
+function gauss(){ var u = 1 - Math.random(), v = Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function reading(theta){ var sg = sigma(); if (!sg) return theta; var r = theta + sg*0.6*gauss() + (sg >= 1 ? OFFSET : 0); return Math.abs(r); }   /* the error stays within about the stated range */
+function record(){
+var r = CFG.get(); if (!r){ say('No beam reaches the flat face: nothing to record.'); return; }
+r.ti = Math.round(reading(r.ti)*10)/10; r.tr = Math.round(reading(r.tr)*10)/10; if (r.tt !== null) r.tt = Math.round(reading(r.tt)*10)/10;   /* each angle read separately; a protractor reads from 0 */
+r.k = runs.length + 1; runs.push(r); table(); draw(); store();
+say('Run ' + r.k + ' recorded: incidence ' + f(r.ti, 1) + ' degrees' + (r.tt === null ? ', total internal reflection: no refracted beam.' : ', refraction ' + f(r.tt, 1) + ' degrees.'));
+}
+function undo(){ if (!runs.length) return; runs.pop(); table(); draw(); store(); say(runs.length ? 'Last run deleted.' : 'No runs left.'); }
+function clear(){ runs = []; OFFSET = (Math.random()*2 - 1)*0.4; table(); draw(); store(); say('All data cleared.'); }
+function say(m){ el('dcMsg').textContent = m; if (typeof snellA11y !== 'undefined') snellA11y.narrate(m); }
+function table(){
+var cols = ['run', 'ti'].concat(CFG.hasSet ? ['tset'] : []).concat(['tr', 'tt', 'si', 'st', 'nsi', 'nst', 'x']);
+el('dcTH').innerHTML = '<tr>' + cols.map(function(c){ var e = q(c); return '<th scope="col">' + (c === 'run' ? '#' : e[1].replace(/ \(.*\)/, '')) + (e[2] ? ' (' + e[2] + ')' : '') + '</th>'; }).join('') + '</tr>';
+el('dcTB').innerHTML = runs.map(function(r){ return '<tr>' + cols.map(function(c){ var v = q(c)[3](r), dg = (c === 'run') ? 0 : (c === 'si' || c === 'st' || c === 'nsi' || c === 'nst') ? 4 : 1; if (c === 'tt' && r.tt === null) return '<td>TIR</td>'; return '<td>' + f(v, dg) + '</td>'; }).join('') + '</tr>'; }).join('');
+if (!runs.length) say('No runs yet: set an angle of incidence and press Record this run.');
+}
+function fit(P, orig){
+var n = P.length; if (n < 2) return null; var sx = 0, sy = 0, sxx = 0, sxy = 0, syy = 0;
+P.forEach(function(p){ sx += p[0]; sy += p[1]; sxx += p[0]*p[0]; sxy += p[0]*p[1]; syy += p[1]*p[1]; });
+var m, b; if (orig){ if (sxx === 0) return null; m = sxy/sxx; b = 0; } else { var d = n*sxx - sx*sx; if (Math.abs(d) < 1e-12) return null; m = (n*sxy - sx*sy)/d; b = (sy - m*sx)/n; }
+var my = sy/n, ssr = 0, sst = 0; P.forEach(function(p){ var e = p[1] - (m*p[0] + b); ssr += e*e; sst += (p[1] - my)*(p[1] - my); });
+/* standard errors: s^2 = sum of squared residuals/(degrees of freedom); free fit: n - 2, through the origin: n - 1 */
+var sm = null, sb = null, dof = orig ? n - 1 : n - 2;
+if (dof >= 1){ var s2 = ssr/dof; if (orig){ sm = Math.sqrt(s2/sxx); sb = 0; } else { var Sxx = sxx - sx*sx/n; if (Sxx > 0){ sm = Math.sqrt(s2/Sxx); sb = Math.sqrt(s2*(1/n + (sx/n)*(sx/n)/Sxx)); } } }
+return { m:m, b:b, r2:sst > 0 ? 1 - ssr/sst : 1, sm:sm, sb:sb, dof:dof };
+}
+function pm(v, u){ /* a value with its uncertainty: the uncertainty to two significant figures, the value to the same decimal */
+if (u === null || u === undefined || !isFinite(u)) return v.toFixed(4); if (u === 0) return v.toFixed(4);
+var d = Math.max(0, Math.min(6, 1 - Math.floor(Math.log(u)/Math.LN10))); return '(' + v.toFixed(d) + ' \u00B1 ' + u.toFixed(d) + ')'; }
+function draw(){ if (ready) store();
+var C = el('dcG'), DPR = window.devicePixelRatio || 1, W = 440, H = 300; if (C.width !== W*DPR){ C.width = W*DPR; C.height = H*DPR; }
+var g = C.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+var qx = q(el('dcX').value), qy = q(el('dcY').value), P = [], skipped = 0;
+runs.forEach(function(r){ var x = qx[3](r), y = qy[3](r); if (x === null || y === null || !isFinite(x) || !isFinite(y)) skipped++; else P.push([x, y]); });
+var X0 = 58, X1 = W - 14, Y0 = H - 40, Y1 = 14;
+var xs = P.map(function(p){ return p[0]; }), ys = P.map(function(p){ return p[1]; });
+var xmin = Math.min.apply(null, xs.concat([0])), xmax = Math.max.apply(null, xs.concat([qx[2] === '\u00B0' ? 90 : (qx[0] === 'run' ? 5 : 1)]));
+var ymin = Math.min.apply(null, ys.concat([0])), ymax = Math.max.apply(null, ys.concat([qy[2] === '\u00B0' ? 90 : (qy[0] === 'run' ? 5 : 1)]));
+if (P.length){ xmax = Math.max.apply(null, xs)*1.08 + 1e-9; ymax = Math.max.apply(null, ys)*1.08 + 1e-9; if (Math.min.apply(null, xs) < 0) xmin = Math.min.apply(null, xs)*1.08; if (Math.min.apply(null, ys) < 0) ymin = Math.min.apply(null, ys)*1.08; }
+if (qx[0] === 'run'){ xmin = 0; xmax = Math.max(5, runs.length + 1); }
+/* with the statistics shown, the y-axis zooms to the data: mean +- 3 SD, and every point */
+if (el('dcStat').checked && ys.length > 1){ var mu = ys.reduce(function(a2, b2){ return a2 + b2; }, 0)/ys.length, sdv = Math.sqrt(ys.reduce(function(a2, b2){ return a2 + (b2 - mu)*(b2 - mu); }, 0)/(ys.length - 1)), half = Math.max(3*sdv, 0.02*Math.abs(mu), 1e-3);
+ymin = Math.min(mu - half, Math.min.apply(null, ys)); ymax = Math.max(mu + half, Math.max.apply(null, ys)); }
+if (xmax - xmin < 1e-9) xmax = xmin + 1; if (ymax - ymin < 1e-9) ymax = ymin + 1;
+function X(v){ return X0 + (v - xmin)/(xmax - xmin)*(X1 - X0); } function Y(v){ return Y0 - (v - ymin)/(ymax - ymin)*(Y0 - Y1); }
+g.strokeStyle = 'rgba(0,0,0,0.12)'; g.lineWidth = 1; g.font = '10px Arial'; g.fillStyle = '#333'; g.textAlign = 'center'; g.textBaseline = 'top';
+if (qx[0] === 'run'){ var stp = Math.max(1, Math.ceil(xmax/10)); for (var ir=0; ir<=xmax; ir+=stp){ var pr = X(ir); g.beginPath(); g.moveTo(pr, Y0); g.lineTo(pr, Y1); g.stroke(); g.fillText(String(ir), pr, Y0 + 4); } }   /* whole numbers */
+else for (var i=0; i<=5; i++){ var vx = xmin + (xmax - xmin)*i/5, px = X(vx); g.beginPath(); g.moveTo(px, Y0); g.lineTo(px, Y1); g.stroke(); g.fillText(nice(vx), px, Y0 + 4); }
+g.textAlign = 'right'; g.textBaseline = 'middle'; for (var j=0; j<=5; j++){ var vy = ymin + (ymax - ymin)*j/5, py = Y(vy); g.beginPath(); g.moveTo(X0, py); g.lineTo(X1, py); g.stroke(); g.fillText(nice(vy), X0 - 4, py); }
+g.strokeStyle = '#333'; g.beginPath(); g.moveTo(X0, Y1); g.lineTo(X0, Y0); g.lineTo(X1, Y0); g.stroke();
+g.fillStyle = '#222'; g.font = 'bold 12px Arial'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText(qx[1] + (qx[2] ? ' (' + qx[2] + ')' : ''), (X0 + X1)/2, H - 6);
+g.save(); g.translate(14, (Y0 + Y1)/2); g.rotate(-Math.PI/2); g.fillText(qy[1] + (qy[2] ? ' (' + qy[2] + ')' : ''), 0, 0); g.restore();
+var ST = null;
+if (el('dcStat').checked && P.length){ var n = P.length, mean = ys.reduce(function(a, b){ return a + b; }, 0)/n, sd = n > 1 ? Math.sqrt(ys.reduce(function(a, b){ return a + (b - mean)*(b - mean); }, 0)/(n - 1)) : 0;
+ST = { n:n, mean:mean, sd:sd, se:n > 1 ? sd/Math.sqrt(n) : 0 };
+var yb0 = Math.max(Y1, Y(mean + sd)), yb1 = Math.min(Y0, Y(mean - sd)); g.fillStyle = 'rgba(18,128,90,0.14)'; g.fillRect(X0 + 1, yb0, X1 - X0 - 1, yb1 - yb0);
+g.strokeStyle = 'rgba(18,128,90,0.7)'; g.lineWidth = 1; g.setLineDash([4, 3]); [mean + sd, mean - sd].forEach(function(v){ if (Y(v) >= Y1 && Y(v) <= Y0){ g.beginPath(); g.moveTo(X0, Y(v)); g.lineTo(X1, Y(v)); g.stroke(); } }); g.setLineDash([]);
+g.strokeStyle = '#12805a'; g.lineWidth = 2; g.beginPath(); g.moveTo(X0, Y(mean)); g.lineTo(X1, Y(mean)); g.stroke();
+g.fillStyle = '#12805a'; g.font = 'bold 11px Arial'; g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText('mean', X1 - 4, Y(mean) - 2); g.textBaseline = 'top'; g.fillText('\u00B11 SD', X1 - 4, Math.min(Y0 - 12, yb1 + 2)); }
+g.fillStyle = '#c2185b'; P.forEach(function(p){ g.beginPath(); g.arc(X(p[0]), Y(p[1]), 3.2, 0, 2*Math.PI); g.fill(); });
+var txt = '';
+if (!runs.length) txt = 'Record some runs to graph them.';
+else if (P.length < 2) txt = 'Record at least two runs with values for both axes to fit a line.' ;
+if (P.length >= 2 && el('dcFit').checked){ var F = fit(P, el('dcOrig').checked);
+if (F){ g.strokeStyle = '#1f5fd6'; g.lineWidth = 2; g.beginPath(); g.moveTo(X(xmin), Y(F.m*xmin + F.b)); g.lineTo(X(xmax), Y(F.m*xmax + F.b)); g.stroke();
+txt = 'fit: y = ' + pm(F.m, F.sm) + ' x' + (el('dcOrig').checked ? '' : (F.b >= 0 ? ' + ' : ' \u2212 ') + pm(Math.abs(F.b), F.sb)) + '   R\u00B2 = ' + F.r2.toFixed(4) + (F.sm === null ? '\n(record at least ' + (el('dcOrig').checked ? 2 : 3) + ' runs for the uncertainty of the slope)' : '') + interpret(qx[0], qy[0], F.m, F.sm); } }
+if (ST){ var u = qy[2], dg = u === '\u00B0' ? 2 : 4, un = u ? ' ' + u : '';
+var stx = qy[1] + ':  mean = ' + ST.mean.toFixed(dg) + un + (ST.n > 1 ? ',  SD = ' + ST.sd.toFixed(dg) + un + ',  standard error = ' + ST.se.toFixed(dg) + un : '') + '   (n = ' + ST.n + ')';
+if (ST.n < 2) stx += '\nrecord at least two runs for a standard deviation';
+var allTIR = runs.length && runs.every(function(r){ return r.tt === null; });
+if (qy[0] === 'ti' && allTIR && ST.n > 1) stx += '\nevery run is at total internal reflection: if each was recorded just as the refracted beam vanished, the critical angle is \u03B8c \u2248 ' + ST.mean.toFixed(1) + ' \u00B1 ' + ST.sd.toFixed(1) + '\u00B0';
+txt = txt && txt.indexOf('Record') !== 0 ? stx + '\n' + txt : stx; }
+if (skipped) txt += (txt ? '\n' : '') + skipped + ' run' + (skipped > 1 ? 's' : '') + ' with total internal reflection left out (no refracted angle).';
+el('dcFitTxt').textContent = txt; el('dcFitTxt').style.whiteSpace = 'pre-line';
+}
+function nice(v){ var a = Math.abs(v); return a >= 100 ? v.toFixed(0) : (a >= 10 ? v.toFixed(1) : v.toFixed(2)); }
+function interpret(xk, yk, m, sm){
+function idx(v, u){ return u === null || u === undefined ? v.toFixed(3) : pm(v, u).replace(/^\(|\)$/g, ''); }
+function one(){ if (sm === null || sm === undefined || !(sm > 0)) return ''; var k = Math.abs(m - 1)/sm; return '\nyour slope ' + pm(m, sm) + ': ' + (k <= 2 ? 'consistent with 1 (within ' + (k < 1 ? '1 standard error' : '2 standard errors') + ')' : 'differs from 1 by ' + k.toFixed(1) + ' standard errors'); }
+/* what the slope means, by Snell's law: n_in sin(theta_i) = n_out sin(theta_t) */
+var r = runs[runs.length - 1], nIn = r.nIn, nOut = r.nOut, same = runs.every(function(z){ return z.n1 === r.n1 && z.n2 === r.n2; });
+if (!same) return '';
+/* the unknown is the block's index, n2: on the far side (light entering the block) or the near side (light leaving it) */
+if (xk === 'si' && yk === 'st') return '\nslope = ' + CFG.nin + '/' + CFG.nout + ':  ' + (CFG.unknown === 'out' ? CFG.nout + ' = ' + CFG.nin + '/slope = ' + idx(nIn/m, sm === null ? null : nIn*sm/(m*m)) + '  (set: ' + nOut.toFixed(2) + ')' : CFG.nin + ' = slope \u00D7 ' + CFG.nout + ' = ' + idx(m*nOut, sm === null ? null : nOut*sm) + '  (set: ' + nIn.toFixed(2) + ')');
+if (xk === 'st' && yk === 'si') return '\nslope = ' + CFG.nout + '/' + CFG.nin + ':  ' + (CFG.unknown === 'out' ? CFG.nout + ' = slope \u00D7 ' + CFG.nin + ' = ' + idx(m*nIn, sm === null ? null : nIn*sm) + '  (set: ' + nOut.toFixed(2) + ')' : CFG.nin + ' = ' + CFG.nout + '/slope = ' + idx(nOut/m, sm === null ? null : nOut*sm/(m*m)) + '  (set: ' + nIn.toFixed(2) + ')');
+if (xk === 'nsi' && yk === 'nst') return '\nslope 1 is Snell\u2019s law: ' + CFG.nin + ' sin \u03B8\u1D62 = ' + CFG.nout + ' sin \u03B8\u209C' + one();
+if ((xk === 'ti' && yk === 'tr') || (xk === 'si' && yk === 'sr')) return '\nslope 1: the angle of reflection equals the angle of incidence' + one();
+if (xk === 'ti' && yk === 'tt') return '\n(the angles are not proportional: graph their sines instead)';
+return '';
+}
+function copy(){
+var cols = ['run', 'ti'].concat(CFG.hasSet ? ['tset'] : []).concat(['tr', 'tt', 'si', 'st', 'nsi', 'nst', 'n1', 'n2', 'x']);
+var lines = [cols.map(function(c){ var e = q(c); return e[1] + (e[2] ? ' (' + e[2] + ')' : ''); }).join(',')].concat(runs.map(function(r){ return cols.map(function(c){ if (c === 'tt' && r.tt === null) return 'TIR'; var v = q(c)[3](r); return v === null ? '' : String(Math.round(v*1e6)/1e6); }).join(','); }));
+var t = lines.join('\n');
+try { navigator.clipboard.writeText(t).then(function(){ say('The table is copied (CSV): paste it into a spreadsheet.'); }, function(){ fallback(t); }); } catch(e){ fallback(t); }
+}
+function fallback(t){ var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); say('The table is copied (CSV).'); } catch(e){ say('Copy is blocked here: select the table and copy it by hand.'); } document.body.removeChild(ta); }
+var ready = false;
+fill();
+if (SAVED){ if (SAVED.runs && SAVED.runs.length) runs = SAVED.runs; var u = SAVED.ui || {};
+  ['x', 'y'].forEach(function(k){ var e = el(k === 'x' ? 'dcX' : 'dcY'); if (u[k] && [].some.call(e.options, function(o){ return o.value === u[k]; })) e.value = u[k]; });
+  if (typeof u.fit === 'boolean') el('dcFit').checked = u.fit; if (typeof u.orig === 'boolean') el('dcOrig').checked = u.orig; if (typeof u.stat === 'boolean') el('dcStat').checked = u.stat;
+  if (u.err !== undefined && [].some.call(el('dcErr').options, function(o){ return o.value === u.err; })) el('dcErr').value = u.err; }
+el('dcErr').addEventListener('change', store);
+table(); draw(); ready = true;
+if (runs.length) say(runs.length + ' run' + (runs.length > 1 ? 's' : '') + ' kept from before (they are saved in this browser). Clear all data to start again.');
+return { record:record, undo:undo, clear:clear, copy:copy, draw:draw, _runs:function(){ return runs; } };
+})();
+</script>
+<div class="sn_descwrap">
+<button type="button" class="sn_descbtn" id="snDescBtn" aria-expanded="false" aria-controls="snDesc" onclick="snDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="sn_desc" id="snDesc" role="region" aria-labelledby="snDescBtn" style="display:none">
+<p>This simulation shows a beam of light entering a half-disk (a semicircular block of index `n_2`) through its curved face and meeting its flat face from inside; the block is surrounded by a medium of index `n_1`. Two protractors, one over the block and one below the flat face, measure the angles from the normal.</p>
+<p>Aimed at the centre of the flat face, the beam crosses the curved face along a radius, that is along the normal, and enters without bending. At the flat face it obeys Snell's law, from the block into the surrounding medium,</p>
+<p class="sn_eq">`n_2 sin theta_i = n_1 sin theta_t`,</p>
+<p>and part of it is reflected at an angle equal to the angle of incidence. When the block has the higher index (`n_2 &gt; n_1`), the transmitted beam bends away from the normal; at the critical angle, `sin theta_c = n_1/n_2`, it runs along the flat face, and beyond it all the light is reflected: total internal reflection.</p>
+<p><b>Why the centre is special.</b> Drag the aim point away from the centre. The beam no longer crosses the curved face along a radius: it is bent as it enters (the dashed line shows where it would have gone), so it meets the flat face somewhere else, and at a different angle. Only a beam aimed at the centre keeps the angle that was set, which is why measurements are made there. The light source and the protractors can be dragged; the protractors slide along the flat face.</p>
+</div>
+</div>
+<script>
+function snDesc(){
+var b = document.getElementById('snDescBtn'), d = document.getElementById('snDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+</div><!-- #snellRoot -->
+<!--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-->
+<style>
+#snellRoot {
+--sn-toolbar-bg:   #222;
+--sn-incident:     red;
+--sn-reflect:      red;
+--sn-refract:      purple;
+--sn-dot:          red;
+--sn-normal:       #494;
+}
+/* ════════ Hall effect template, scoped to #snellRoot (mobile friendly) ════════ */
+#snellRoot {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3; --tp-bright:#e8eef5;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66; --tp-warn:#e0605a;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--tp-text);
+display:flex; flex-direction:column; gap:12px; padding:16px 10px 20px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#snellRoot.sn_lm {
+--tp-chassis:#e9edf1; --tp-panel:#ffffff; --tp-panel-hi:#f1f4f7; --tp-panel-lo:#f4f6f9;
+--tp-border:#c3cad3; --tp-border-hi:#9aa3ae; --tp-text:#1d232a; --tp-dim:#556070; --tp-bright:#000000;
+--tp-accent:#a8620a; --tp-green:#12805a; --tp-val:#8a4a00; --tp-warn:#b02020;
+--tp-focus:#a8620a; --tp-nar-bg:#ffefc0; --tp-nar-border:#e0b040; --tp-nar-text:#333333; background-image:none;
+}
+#snellRoot.sn_hc {
+--tp-chassis:#000000; --tp-panel:#000000; --tp-panel-hi:#111111; --tp-panel-lo:#000000;
+--tp-border:#ffffff; --tp-border-hi:#ffffff; --tp-text:#ffffff; --tp-dim:#e0e0e0; --tp-bright:#ffffff;
+--tp-accent:#ffd700; --tp-green:#00ff88; --tp-val:#ffff00; --tp-warn:#ff5555;
+--tp-focus:#ffff00; --tp-nar-bg:#000000; --tp-nar-border:#ffd700; --tp-nar-text:#ffffff; background-image:none;
+}
+#snellRoot.sn_hc .sn_panel, #snellRoot.sn_hc .sn_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#snellRoot :not(mjx-container):not(mjx-container *), #snellRoot :not(mjx-container):not(mjx-container *)::before, #snellRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; }
+#snellRoot input:focus-visible, #snellRoot button:focus-visible, #snellRoot select:focus-visible, #snellRoot canvas:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+/* display options */
+#snellRoot .sn_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; padding:0; background:none; }
+#snellRoot .sn_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-dim); }
+#snellRoot .sn_a11ybtn:hover { border-color:var(--tp-accent); color:var(--tp-accent); }
+#snellRoot .sn_a11yon { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* header */
+#snellRoot .tbar { height:auto; padding:0 4px; background:none; text-align:center; line-height:1.35; }
+#snellRoot .tbar h3 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent); text-align:center; }
+/* grid */
+#snellRoot .sn_instrument { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:12px; width:100%; }
+#snellRoot .sn_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#snellRoot .sn_rightcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#snellRoot .sn_diagpanel { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#snellRoot .sn_diaglabel, #snellRoot .sn_paneltitle { background:var(--tp-panel-lo); border-bottom:1px solid var(--tp-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--tp-dim); }
+#snellRoot .sn_diaglabel b { color:var(--tp-accent); }
+#snellRoot .mcontent { height:auto; background:#ffffff; padding:0; }
+#snellRoot canvas { display:block; width:100%; max-width:500px; height:auto; margin:0 auto; }
+#snellRoot .sn_panel { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#snellRoot .sn_panelbody { padding:8px 12px 10px; display:flex; flex-direction:column; gap:4px; }
+/* narration */
+#snellRoot .sn_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--tp-nar-bg); border:none; border-left:4px solid var(--tp-nar-border); font-size:.82rem; color:var(--tp-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* checkbox bar */
+#snellRoot .bbar { height:auto; width:auto; background:none; padding:0 0 6px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; text-align:left; font-size:.78rem; color:var(--tp-text); border-bottom:1px dashed var(--tp-border); }
+#snellRoot .bbar &gt; div { width:auto; padding:0; flex:1 1 100%; }
+#snellRoot .bbar &gt; p { flex:1 1 100%; }
+#snellRoot .bbar label { display:flex; align-items:center; gap:6px; cursor:pointer; white-space:normal; }
+#snellRoot input[type=checkbox] { accent-color:var(--tp-accent); width:15px; height:15px; flex-shrink:0; }
+/* slider rows */
+#snellRoot .footer { height:auto; min-height:0; width:auto; display:flex; flex-direction:column; align-items:stretch; gap:3px; padding:7px 0; background:none !important; text-align:left; border-bottom:1px dashed var(--tp-border); font-size:.78rem; }
+#snellRoot .footer:last-child { border-bottom:none; }
+#snellRoot .footer .left { width:auto; padding:0; font-size:.72rem; font-weight:600; letter-spacing:.02em; color:var(--tp-dim); }
+#snellRoot .footer .center { width:auto; flex:none; padding:0; display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; color:var(--tp-text); }
+#snellRoot .footer input[type=range] { flex:1 1 120px; width:auto !important; min-width:0; accent-color:var(--tp-accent); }
+#snellRoot .footer .center &gt; span[id] { font-family:monospace; color:var(--tp-val); font-weight:bold; }
+#snellRoot select { max-width:100%; background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:3px 5px; font-size:.76rem; }
+#snellRoot hr { border:none; border-top:1px solid var(--tp-border); }
+#snellRoot .REM { font-size:.7rem; color:var(--tp-dim); font-style:italic; line-height:1.4; }
+/* questions (outside the instrument, on the page) */
+.sn_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.sn_qwrap ol { padding-left:24px; }
+.sn_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#snellRoot .sn_instrument { grid-template-columns:minmax(0,1fr); }
+#snellRoot .sn_instrument &gt; * { grid-column:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#snellRoot input[type=range] { height:28px; }
+#snellRoot .sn_a11ybtn { min-height:36px; }
+#snellRoot input[type=button], #snellRoot button { min-height:40px; }
+#snellRoot select { min-height:36px; font-size:16px; }
+#snellRoot input[type=checkbox] { width:22px; height:22px; }
+#snellRoot .bbar { gap:10px; }
+}
+@media (max-width:560px) {
+#snellRoot { padding:10px 6px 14px; }
+}
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var snellA11y = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+var THEMES = {
+hc: {
+'--sn-incident': '#ffff00',
+'--sn-reflect':  '#ffaa00',
+'--sn-refract':  '#00ffff',
+'--sn-dot':      '#ffff00',
+'--sn-normal':   '#00ff88',
+'--sn-toolbar-bg': '#000'
+},
+lm: {
+'--sn-incident': '#cc0000',
+'--sn-reflect':  '#cc0000',
+'--sn-refract':  '#6600cc',
+'--sn-dot':      '#cc0000',
+'--sn-normal':   '#226622',
+'--sn-toolbar-bg': '#333'
+},
+cb: {
+'--sn-incident': '#d55e00',
+'--sn-reflect':  '#e69f00',
+'--sn-refract':  '#0072b2',
+'--sn-dot':      '#d55e00',
+'--sn-normal':   '#009e73'
+}
+};
+var DEFAULTS = {
+'--sn-incident': 'red',
+'--sn-reflect':  'red',
+'--sn-refract':  'purple',
+'--sn-dot':      'red',
+'--sn-normal':   '#494',
+'--sn-toolbar-bg': '#222'
+};
+function applyVars(theme, on) {
+if (!ROOT) return;
+var vars = THEMES[theme];
+for (var p in vars) ROOT.style.setProperty(p, on ? vars[p] : DEFAULTS[p]);
+}
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('sn_a11yon', active);
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('snellRoot').querySelector('canvas');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('snNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR', states.nr); }
+}
+function apply() {
+if (!ROOT) return;
+applyVars('hc', states.hc);
+applyVars('lm', states.lm);
+applyVars('cb', states.cb);
+applyCanvas();
+ROOT.classList.toggle('sn_hc', states.hc); ROOT.classList.toggle('sn_lm', states.lm); ROOT.classList.toggle('sn_cb', states.cb);
+styleBtn('snBtnHC', states.hc);
+styleBtn('snBtnLM', states.lm);
+styleBtn('snBtnCB', states.cb);
+applyNarBar();
+}
+function getCol(prop) {
+if (!ROOT) return DEFAULTS[prop];
+return getComputedStyle(ROOT).getPropertyValue(prop).trim() || DEFAULTS[prop];
+}
+return {
+init: function() {
+ROOT = document.getElementById('snellRoot');
+apply();
+},
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+},
+isNarOn: function() { return states.nr; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('snNarBar');
+if (nb) nb.textContent = msg;
+},
+col: function(role) { return getCol('--sn-' + role); }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var snell = function() {
+/* ── TIR narration helper ──
+Light travels from n2 (disk) outward to n1 at the flat base.
+TIR condition: n2 > n1, critical angle = arcsin(n1/n2).          */
+function tirMsg(n1val, n2val) {
+if (n2val > n1val) {
+var sinC = n1val / n2val;
+return 'Critical angle at flat base \u03B8c = '
++ ((180 / Math.PI) * Math.asin(sinC)).toFixed(1)
++ '\u00B0 (TIR possible above this angle).';
+}
+return 'n\u2082 \u2264 n\u2081 \u2014 no total internal reflection at flat base.';
+}
+function shown1(newValue) {
+var display = document.getElementById("initialn1Value");
+display.innerHTML = newValue;
+n1 = Number(newValue);
+//     drawMotion();
+redraw();
+snellA11y.narrate('n\u2081 = ' + n1.toFixed(2) + '. ' + tirMsg(n1, n2));
+}
+function shown2(newValue) {
+var display = document.getElementById("initialn2Value");
+display.innerHTML = newValue;
+n2 = Number(newValue);
+//drawMotion();
+redraw();
+snellA11y.narrate('n\u2082 = ' + n2.toFixed(2) + '. ' + tirMsg(n1, n2));
+}
+function setSource(newValue) {
+source = Number(newValue);
+drawMotion();
+}
+var canvas = document.getElementById('myCanvas');
+var ctx = canvas.getContext('2d');
+/* sharp on phones: draw at device resolution; CSS scales the canvas to the page. LW/LH keep the logical size the drawing code uses */
+var LW = canvas.width, LH = canvas.height, DPR = window.devicePixelRatio || 1;
+canvas.width = LW*DPR; canvas.height = LH*DPR; ctx.scale(DPR, DPR);
+var index = 0;
+var xBase = 250;
+var xBfy = 40, xBtw = 250, xW = 500;
+var yBase = 250;
+var yBfy = 40, yBtw = 220, yW = 220;
+var rStart = 300, aMag = 65;
+var radius = 6;
+var runFlag = 1;
+var time = 0.0;
+var timer;
+var n1 = 1.00;
+var n2 = 1.50;
+var redness, greenness, blueness;
+var redString = "0", greenString = "0", blueString = "0", colorString = "0";
+var x1 = -1.710101;
+var y1 = 4.698463;
+var x2 = 0.0, y2 = 0.0;   /* the aim point on the flat face (units of 40 px from the centre) */
+var thI = Math.atan2(-x1, y1)*180/Math.PI, rayInfo = null, srcPt = { x:0, y:0 };
+var x3 = 5.5, y3 = -5.5;
+var x4, y4;
+var xMin = x2, xMax = x2;
+var source = 1;
+/* ── Protractors built in code as SVG (no external images) ──
+makeProtractorSVG(dirY): dirY = -1 opens upward (over the block),
+dirY = +1 opens downward (below the flat base). Angles are read
+from the normal: 0 along the normal, 90 along the flat base.
+Note: no dollar signs or backticks here, since MyOpenMath treats
+those specially in question text.                                  */
+var protractorWidth  = 420;
+var protractorHeight = 220;
+var protR  = 200;               /* matches the disk radius */
+var protCx = 210;               /* center x inside the SVG */
+function protCy(dirY) { return (dirY < 0) ? 212 : 8; }
+function f1(v) { return (Math.round(v*100)/100).toString(); }
+function makeProtractorSVG(dirY) {
+var W = protractorWidth, H = protractorHeight, R = protR;
+var cx = protCx, cy = protCy(dirY);
+var sweep = (dirY < 0) ? 1 : 0;
+var s = [];
+s.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">');
+/* Body */
+s.push('<path d="M ' + (cx-R) + ' ' + cy + ' A ' + R + ' ' + R + ' 0 0 ' + sweep + ' ' + (cx+R) + ' ' + cy + ' Z" fill="rgba(255,255,255,0.35)" stroke="#222" stroke-width="1.2"/>');
+/* Inner reading arc */
+var Ri = 120;
+s.push('<path d="M ' + (cx-Ri) + ' ' + cy + ' A ' + Ri + ' ' + Ri + ' 0 0 ' + sweep + ' ' + (cx+Ri) + ' ' + cy + '" fill="none" stroke="#444" stroke-width="0.8"/>');
+/* Baseline */
+s.push('<line x1="' + (cx-R) + '" y1="' + cy + '" x2="' + (cx+R) + '" y2="' + cy + '" stroke="#222" stroke-width="1"/>');
+for (var a = 0; a <= 90; a++) {
+for (var side = -1; side <= 1; side += 2) {
+if (a === 0 && side === 1) continue;     /* draw the normal only once */
+var rad = a * Math.PI / 180;
+var ux = side * Math.sin(rad);
+var uy = dirY * Math.cos(rad);
+var len = (a % 10 === 0) ? 18 : ((a % 5 === 0) ? 11 : 6);
+var w   = (a % 10 === 0) ? 1.2 : 0.7;
+/* Outer scale ticks */
+s.push('<line x1="' + f1(cx + R*ux) + '" y1="' + f1(cy + R*uy) + '" x2="' + f1(cx + (R-len)*ux) + '" y2="' + f1(cy + (R-len)*uy) + '" stroke="#222" stroke-width="' + w + '"/>');
+/* Inner arc ticks every 5 degrees */
+if (a % 5 === 0) {
+var il = (a % 10 === 0) ? 8 : 5;
+s.push('<line x1="' + f1(cx + Ri*ux) + '" y1="' + f1(cy + Ri*uy) + '" x2="' + f1(cx + (Ri+il)*ux) + '" y2="' + f1(cy + (Ri+il)*uy) + '" stroke="#444" stroke-width="0.8"/>');
+}
+if (a % 10 === 0) {
+/* Faint guide line from near the center out to the labels */
+s.push('<line x1="' + f1(cx + 14*ux) + '" y1="' + f1(cy + 14*uy) + '" x2="' + f1(cx + (R-44)*ux) + '" y2="' + f1(cy + (R-44)*uy) + '" stroke="rgba(0,0,0,0.22)" stroke-width="0.6" stroke-dasharray="3 3"/>');
+/* Degree label (90 is left off: it sits on the flat base, where both protractors meet) */
+if (a < 90) {
+var lr = R - 31;
+s.push('<text x="' + f1(cx + lr*ux) + '" y="' + f1(cy + lr*uy) + '" dy="0.35em" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#111">' + a + '\u00B0</text>');
+}
+}
+}
+}
+/* Center crosshair */
+s.push('<circle cx="' + cx + '" cy="' + cy + '" r="3.5" fill="none" stroke="#222" stroke-width="1"/>');
+s.push('<line x1="' + (cx-8) + '" y1="' + cy + '" x2="' + (cx+8) + '" y2="' + cy + '" stroke="#222" stroke-width="1"/>');
+s.push('<line x1="' + cx + '" y1="' + (cy-8) + '" x2="' + cx + '" y2="' + (cy+8) + '" stroke="#222" stroke-width="1"/>');
+/* Caption */
+s.push('<text x="' + cx + '" y="' + f1(cy + dirY*62) + '" dy="0.35em" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" fill="#333">angle from normal</text>');
+s.push('</svg>');
+return s.join('');
+}
+function svgToImage(svgText) {
+var img = new Image();
+img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
+return img;
+}
+/* Protractor state -- both off by default */
+var showP1 = false;
+var showP2 = false;
+var protractorP1Img = svgToImage(makeProtractorSVG(-1));   /* upright: over the block   */
+var protractorP2Img = svgToImage(makeProtractorSVG(1));    /* downright: below the base */
+/* Position each image so its center sits exactly on (xBase, yBase) */
+var p1X = xBase - protCx;
+var p1Y = yBase - protCy(-1);
+var p2X = xBase - protCx;
+var p2Y = yBase - protCy(1);
+/* Draw both protractors according to toggle state */
+function drawProtractors() {
+if (showP1 && protractorP1Img.complete) {
+ctx.drawImage(protractorP1Img, p1X, p1Y, protractorWidth, protractorHeight);
+}
+if (showP2 && protractorP2Img.complete) {
+ctx.drawImage(protractorP2Img, p2X, p2Y, protractorWidth, protractorHeight);
+}
+}
+/* Kick off image loads -- redraw once both are ready */
+var imgsLoaded = 0;
+function onImgLoad() {
+imgsLoaded += 1;
+if (imgsLoaded >= 2) redraw();
+}
+protractorP1Img.onload = onImgLoad;
+protractorP2Img.onload = onImgLoad;
+ctx.clearRect(0, 0, LW, LH);
+ctx.fillStyle = "#ffd";
+ctx.fillRect(0, 0, LW, LH);
+ctx.strokeStyle = '#999';
+drawMotion();
+function draw(img, ix, iy) {
+ctx.drawImage(img, ix, iy);
+}
+function redraw() {
+drawMotion();
+drawProtractors();
+drawHandles();
+}
+function drawDisk() {
+var DR = 200;
+var DX = LW/2, DY = yBase;
+ctx.beginPath();
+ctx.arc(DX, DY, DR, Math.PI, 0, false);
+ctx.closePath();
+ctx.fill();
+}
+function drawMotion() {
+runFlag = 1;
+if (runFlag == 1) {
+index = index + 1;
+ctx.fillStyle = "#ffd";
+ctx.strokeStyle = '#999';
+/* Medium 1 background */
+redness = Math.floor(220 - 50*(n1 - 1.0));
+redString = redness.toString(16); if (redString.length == 1) redString = "0" + redString;
+greenString = redString;
+blueness = Math.floor(255);
+blueString = blueness.toString(16); if (blueString.length == 1) blueString = "0" + blueString;
+colorString = "#" + redString + greenString + blueString;
+ctx.strokeStyle = colorString;
+ctx.fillStyle = colorString;
+//ctx.fillRect(xBase - xBtw, yBase - yBtw, xW, 2*yW);
+ctx.fillRect(0, 0, LW, LH);
+/* Normal line */
+ctx.beginPath();
+ctx.strokeStyle = snellA11y.col('normal');
+ctx.lineWidth = 1;
+ctx.moveTo(xBase, yBase - yW);
+ctx.lineTo(xBase, yBase + yW);
+ctx.globalAlpha = 1;
+ctx.stroke();
+ctx.lineWidth = 1;
+/* Medium 2 disk */
+redness = Math.floor(220 - 50*(n2 - 1.0));
+redString = redness.toString(16); if (redString.length == 1) redString = "0" + redString;
+greenString = redString;
+blueness = Math.floor(255);
+blueString = blueness.toString(16); if (blueString.length == 1) blueString = "0" + blueString;
+colorString = "#" + redString + greenString + blueString;
+ctx.strokeStyle = colorString;
+ctx.fillStyle = colorString;
+drawDisk();
+ctx.font = '16pt Calibri';
+ctx.fillStyle = "blue";
+if (source == 1) {
+traceRays();
+}
+/* Source dot */
+ctx.beginPath();
+ctx.arc(srcPt.x, srcPt.y, radius, 0, 2*Math.PI, false);
+ctx.fillStyle = snellA11y.col('dot');
+ctx.fill();
+ctx.font = '16pt Calibri';
+}
+}
+/* ── the beam, traced: aimed at the point P on the flat face; refracted at the curved face (unless it crosses it along
+a radius, which only happens when P is the centre), reflected and refracted where it meets the flat face ── */
+function seg(x0, y0, x1_, y1_, col, w, dash){ ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1_, y1_); ctx.stroke(); ctx.restore(); }
+function hitCircle(px, py, dx, dy){ var ox = px - xBase, oy = py - yBase, b = ox*dx + oy*dy, c = ox*ox + oy*oy - 200*200, D = b*b - c; return D < 0 ? null : -b + Math.sqrt(D); }
+function snellVec(dx, dy, nx, ny, eta){ /* n points against the incoming ray */ var ci = -(dx*nx + dy*ny), k = 1 - eta*eta*(1 - ci*ci); if (k < 0) return null; var tx = eta*dx + (eta*ci - Math.sqrt(k))*nx, ty = eta*dy + (eta*ci - Math.sqrt(k))*ny, l = Math.hypot(tx, ty); return { x:tx/l, y:ty/l }; }
+function traceRays(){
+var th = thI*Math.PI/180, dx = Math.sin(th), dy = Math.cos(th), Px = xBase + xBfy*x2, Py = yBase, cInc = snellA11y.col('incident'), cRef = snellA11y.col('reflect'), cOut = snellA11y.col('refract'), cN = snellA11y.col('normal');
+/* where the straight line toward P crosses the curved face, coming from outside */
+var tb = hitCircle(Px, Py, -dx, -dy); if (tb === null){ rayInfo = null; return; }
+var Ex = Px - tb*dx, Ey = Py - tb*dy, Sx0 = Px - (tb + 110)*dx, Sy0 = Py - (tb + 110)*dy; srcPt = { x:Px - (tb + 16)*dx, y:Py - (tb + 16)*dy };   /* the source handle: just outside the curved face, always on screen */
+drawArrow((Ex - Sx0)/5, (Sy0 - Ey)/5, Sx0, Sy0, cInc, 4);
+var nx = (Ex - xBase)/200, ny = (Ey - yBase)/200, centred = Math.abs(x2) < 0.01;
+seg(Ex - 30*nx, Ey - 30*ny, Ex + 30*nx, Ey + 30*ny, cN, 1, [5, 4]);   /* the curved face's normal: a radius */
+var t1 = snellVec(dx, dy, nx, ny, n1/n2);
+if (!t1){ var rx = dx - 2*(dx*nx + dy*ny)*nx, ry = dy - 2*(dx*nx + dy*ny)*ny; seg(Ex, Ey, Ex + 120*rx, Ey + 120*ry, cRef, 2); rayInfo = { entryTIR:true }; return; }
+var bend = Math.acos(Math.max(-1, Math.min(1, dx*t1.x + dy*t1.y)))*180/Math.PI;
+if (!centred) seg(Ex, Ey, Px, Py, cInc, 1.2, [4, 4]);   /* where the beam would have gone, unbent */
+/* inside, down to the flat face */
+if (t1.y <= 0.01){ rayInfo = null; return; }
+var sQ = (yBase - Ey)/t1.y, Qx = Ex + sQ*t1.x, Qy = yBase;
+if (Math.abs(Qx - xBase) > 199){ var tc = hitCircle(Ex + 1e-3*t1.x, Ey + 1e-3*t1.y, t1.x, t1.y); seg(Ex, Ey, Ex + tc*t1.x, Ey + tc*t1.y, cInc, 4); rayInfo = { missed:true, bend:bend }; return; }
+seg(Ex, Ey, Qx, Qy, cInc, 4);
+seg(Qx, yBase - 150, Qx, yBase + 150, cN, 1, [2, 3]);   /* the flat face's normal, where the beam meets it */
+var thQ = Math.atan2(t1.x, t1.y)*180/Math.PI;
+/* reflected, back up through the block and out through the curved face */
+var rx2 = t1.x, ry2 = -t1.y, tr = hitCircle(Qx, Qy, rx2, ry2), Fx = Qx + tr*rx2, Fy = Qy + tr*ry2;
+seg(Qx, Qy, Fx, Fy, cRef, 2);
+var nfx = (Fx - xBase)/200, nfy = (Fy - yBase)/200, t2 = snellVec(rx2, ry2, -nfx, -nfy, n2/n1);
+if (t2) drawArrow(t2.x*14, -t2.y*14, Fx, Fy, cRef, 2);
+/* transmitted, out through the flat face */
+var sOut = n2*Math.sin(thQ*Math.PI/180)/n1, tir = Math.abs(sOut) > 1;
+if (!tir){ var co = Math.sqrt(1 - sOut*sOut); drawArrow(aMag*sOut, -aMag*co, Qx, Qy, cOut, 2); }
+rayInfo = { centred:centred, bend:bend, thQ:thQ, Qcm:(Qx - xBase)/20, Pcm:2*x2, tir:tir, thT:tir ? null : Math.asin(Math.abs(sOut))*180/Math.PI };
+}
+function drawHandles(){
+var Px = xBase + xBfy*x2;
+ctx.beginPath(); ctx.arc(srcPt.x, srcPt.y, radius + 2, 0, 2*Math.PI); ctx.fillStyle = snellA11y.col('dot'); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+ctx.fillStyle = '#c2185b'; ctx.beginPath(); ctx.moveTo(Px, yBase - 9); ctx.lineTo(Px + 8, yBase); ctx.lineTo(Px, yBase + 9); ctx.lineTo(Px - 8, yBase); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+ctx.fillStyle = '#c2185b'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.fillText('aim point', Px, yBase + 24); ctx.textAlign = 'left';
+if (Math.abs(x2) > 0.01){ ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(xBase, yBase, 3, 0, 2*Math.PI); ctx.fill(); ctx.font = '11px Arial'; ctx.textAlign = 'center'; ctx.fillText('centre', xBase, yBase + 38); ctx.textAlign = 'left'; }
+}
+function setEntry(v, say){
+x2 = Math.max(-4.5, Math.min(4.5, Number(v)/2));   /* the disk is 20 cm across: 1 unit = 2 cm */
+var r = thI*Math.PI/180; x1 = x2 - 5*Math.sin(r); y1 = 5*Math.cos(r);
+var sl = document.getElementById('entrySlider'); if (sl) sl.value = (2*x2).toFixed(1); var vv = document.getElementById('entryValue'); if (vv) vv.textContent = (2*x2).toFixed(1) + ' cm';
+redraw(); if (say !== false) narrateAim();
+}
+function narrateAim(){
+var e = rayInfo; if (!e) return;
+if (e.entryTIR){ snellA11y.narrate('The beam is reflected at the curved face: it does not enter the block.'); return; }
+if (e.missed){ snellA11y.narrate('Bent at the curved face, the beam misses the flat face.'); return; }
+var m = e.centred ? 'Aimed at the centre, the beam crosses the curved face along a radius and enters without bending; it meets the flat face at the centre, at ' + Math.abs(e.thQ).toFixed(1) + ' degrees, the angle you set.'
+: 'Aimed ' + Math.abs(e.Pcm).toFixed(1) + ' cm ' + (e.Pcm < 0 ? 'left' : 'right') + ' of the centre, the beam is bent by ' + e.bend.toFixed(1) + ' degrees at the curved face; it meets the flat face ' + Math.abs(e.Qcm - e.Pcm).toFixed(1) + ' cm from where it was aimed, at ' + Math.abs(e.thQ).toFixed(1) + ' degrees instead of ' + Math.abs(thI).toFixed(1) + '.';
+m += e.tir ? ' There it is totally reflected.' : ' It leaves the flat face at ' + e.thT.toFixed(1) + ' degrees.';
+snellA11y.narrate(m);
+}
+/* ── dragging: the light source (rotation about the aim point), the aim point, the protractors (sideways) ── */
+var drag = null;
+function cpt(e){ var r = canvas.getBoundingClientRect(); return { x:(e.clientX - r.left)*LW/r.width, y:(e.clientY - r.top)*LH/r.height }; }
+canvas.addEventListener('pointerdown', function(e){
+var p = cpt(e), Px = xBase + xBfy*x2, c1x = p1X + protCx, c2x = p2X + protCx;
+if (Math.hypot(p.x - srcPt.x, p.y - srcPt.y) < 18) drag = { t:'src' };
+else if (Math.hypot(p.x - Px, p.y - yBase) < 14) drag = { t:'pt' };
+else if (showP1 && p.y <= yBase + 4 && Math.hypot(p.x - c1x, p.y - yBase) <= protR) drag = { t:'p1', x0:p.x, i0:p1X };
+else if (showP2 && p.y >= yBase - 4 && Math.hypot(p.x - c2x, p.y - yBase) <= protR) drag = { t:'p2', x0:p.x, i0:p2X };
+if (drag){ try { canvas.setPointerCapture(e.pointerId); } catch(err){} canvas.style.cursor = 'grabbing'; e.preventDefault(); } });
+canvas.addEventListener('pointermove', function(e){
+if (!drag) return; var p = cpt(e), Px = xBase + xBfy*x2;
+if (drag.t === 'src'){ var vx = p.x - Px, vy = Math.min(-1, p.y - yBase), a = Math.atan2(-vx, -vy)*180/Math.PI; a = Math.max(-89.9, Math.min(89.9, a));
+var sl = document.getElementById('incidentAngleSlider'); if (sl) sl.value = a.toFixed(1); setIncidentAngle(a.toFixed(1), true); }
+if (drag.t === 'pt') setEntry(2*(p.x - xBase)/xBfy, false);
+if (drag.t === 'p1' || drag.t === 'p2'){ var nx_ = Math.max(-protCx + 30, Math.min(LW - protCx - 30, drag.i0 + (p.x - drag.x0))); if (drag.t === 'p1') p1X = nx_; else p2X = nx_; redraw(); }
+e.preventDefault(); });
+canvas.addEventListener('pointerup', function(){ if (!drag) return; var t = drag.t; drag = null; canvas.style.cursor = 'grab';
+if (t === 'pt') narrateAim(); else if (t === 'src') setIncidentAngle(thI.toFixed(1)); else snellA11y.narrate('Protractor ' + (t === 'p1' ? '1' : '2') + ' is centred ' + (((t === 'p1' ? p1X : p2X) + protCx - xBase)/20).toFixed(1) + ' cm from the centre of the flat face.'); });
+function protTo(w){ var cx = (w === 'hit' && rayInfo && rayInfo.Qcm !== undefined) ? xBase + 20*rayInfo.Qcm : xBase; p1X = cx - protCx; p2X = cx - protCx; redraw();
+snellA11y.narrate((showP1 || showP2 ? '' : 'Tick Show Protractor 1 or 2 to see them. ') + (w === 'hit' ? 'The protractors are centred where the beam meets the flat face.' : 'The protractors are centred on the centre of the flat face.')); }
+function drawArrow(Fx, Fy, Px, Py, arrowColor, lineW) {
+var theta = Math.atan2(Fy, Fx);
+ctx.strokeStyle = arrowColor;
+if (!lineW) lineW = 4;
+ctx.lineWidth = lineW;
+ctx.beginPath();
+ctx.moveTo(Px, Py);
+ctx.lineTo(Px + 5*Fx, Py - 5*Fy);
+ctx.stroke();
+ctx.lineWidth = 2;
+var Fmag = Math.sqrt(Fx*Fx + Fy*Fy);
+if (Fmag > 5) Fmag = 5;
+ctx.fillStyle = arrowColor;
+ctx.beginPath();
+ctx.moveTo(Px + 5*Fx - 3*Fmag*Math.cos(theta + 0.25*(3.1416/2)),
+Py - 5*Fy + 3*Fmag*Math.sin(theta + 0.25*(3.1416/2)));
+ctx.lineTo(Px + 5*Fx, Py - 5*Fy);
+ctx.lineTo(Px + 5*Fx - 3*Fmag*Math.cos(theta - 0.25*(3.1416/2)),
+Py - 5*Fy + 3*Fmag*Math.sin(theta - 0.25*(3.1416/2)));
+ctx.stroke();
+ctx.fill();
+}
+function runMotion() {
+drawMotion();
+if (runFlag == 1) timer = window.setTimeout(runMotion, 1000/30);
+}
+function setIncidentAngle(degrees, quiet) {
+document.getElementById("incidentAngleValue").innerHTML = degrees;
+thI = Number(degrees);
+var radians = degrees * Math.PI / 180;
+var length = 5;
+x1 = x2 - length * Math.sin(radians);
+y1 =  length * Math.cos(radians);
+redraw();
+if (quiet) return;
+if (Math.abs(x2) > 0.01){ narrateAim(); return; }
+/* ── Narration ──
+At the flat base, light travels from n2 (disk) into n1 (outside).
+sin2 = n1 * sin(thetaI) / n2  (Snell's law at flat base).
+TIR when |sin2| > 1.                                               */
+var normA  = Math.sqrt((x2 - x1)*(x2 - x1) + y1*y1);
+/* Light goes from n2 (disk) into n1 (outside): sin2 = n2*sin(thetaI)/n1 */
+var sin2   = n2 * (x2 - x1) / (n1 * normA);
+var thetaI = Math.abs(parseFloat(degrees));
+var msg    = '\u03B8i = ' + thetaI.toFixed(1) + '\u00B0. ';
+msg += '\u03B8r = ' + thetaI.toFixed(1) + '\u00B0 (reflection). ';
+if (Math.abs(sin2) <= 1) {
+var theta2   = (180 / Math.PI) * Math.asin(Math.abs(sin2));
+/* n2>n1: exiting dense disk into sparse medium -> bends away from normal */
+var bendDir  = (n2 > n1) ? 'bends away from normal (n2>n1)' : 'bends toward normal (n1>n2)';
+msg += '\u03B8t = ' + theta2.toFixed(1) + '\u00B0 (' + bendDir + ').';
+} else {
+msg += 'Total internal reflection at flat base'
++ ' \u2014 no transmitted beam'
++ ' (n\u2082=' + n2.toFixed(2) + ' > n\u2081=' + n1.toFixed(2) + ').';
+}
+snellA11y.narrate(msg);
+}
+function toggleP1(cb) {
+showP1 = cb.checked;
+redraw();
+snellA11y.narrate('Protractor for Medium 1 ' + (showP1 ? 'shown.' : 'hidden.'));
+}
+function toggleP2(cb) {
+showP2 = cb.checked;
+redraw();
+snellA11y.narrate('Protractor for Medium 2 ' + (showP2 ? 'shown.' : 'hidden.'));
+}
+return { shown1: shown1, shown2: shown2, setIncidentAngle: setIncidentAngle, setEntry: setEntry, protTo: protTo, redraw: redraw,
+_state: function(){ return { x1:x1, y1:y1, x2:x2, thI:thI, p1X:p1X, p2X:p2X, ray:rayInfo, src:srcPt, n1:n1, n2:n2 }; },
+toggleP1: toggleP1,
+toggleP2: toggleP2
+};
+};
+</script>
+<script>
+var snell = new snell();
+snellA11y.init();
+snellA11y.narrate('Ready. n\u2081 = 1.00, n\u2082 = 1.50, \u03B8i = 20\u00B0. Adjust sliders to explore Snell\u2019s law.');
+</script>
+<div class="sn_qwrap">
+<hr>
+
+<hr>
+<ol type="a">
+<li>Keeping the default settings, measure the incidence angle that is first to produce total internal reflection (TIR). Repeat the process five time, <span style=color:blue>each time starting with `theta_i=0^@` and changing `theta_i` until you get TIR</span>. Each time you make a measurement, press "RECORD THIS RUN" to save the data. Graph then `theta_i` versus  `"run #"`. <br>
+What is the average `theta_i` for this graph?<br />`bartheta_c\ =\ bartheta_i\ =\ ` _____ `\ pm\ ` _____ `""^@`</li>
+<li>Take a snap of your graph and paste it in the box below: </li>
+</ol>
+</div>
+</main>
+</body>
+</html>

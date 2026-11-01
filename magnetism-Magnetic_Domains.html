@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Magnetic Domain Simulator</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, magnetism, magnetic field, physics simulation, lesson, scientific">
+<meta name="description" content="Magnetic Domain Simulator -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mdroot" role="main" aria-label="Magnetic domain simulator">
+<p class="md_h1">Magnetic Domain Simulator</p>
+<p class="md_sub">Ferromagnetic Domain Reorientation</p>
+<!-- Accessibility toolbar -->
+<div class="md_a11ybar" role="toolbar" aria-label="Accessibility options">
+<input type="button" id="btnHC"    value="High Contrast"    class="md_abtn" onclick="magDomains.toggleHC()">
+<input type="button" id="btnLight" value="Light Mode"       class="md_abtn" onclick="magDomains.toggleLight()">
+<input type="button" id="btnCB"    value="Color-Blind Safe" class="md_abtn" onclick="magDomains.toggleCB()">
+<input type="button" id="btnNarr"  value="Narration: ON"    class="md_abtn md_abtnon" onclick="magDomains.toggleNarr()">
+</div>
+<!-- Reduced motion notice -->
+<div id="motionNotice" class="md_motionnotice" role="status">
+⚠ Reduced motion is enabled. Domain reorientation jumps to final state without animation.
+</div>
+<!-- Canvas -->
+<div class="md_wrapper">
+<canvas id="domainCanvas" width="600" height="340" role="img" aria-label="Magnetic domain simulation" aria-describedby="canvasDesc">
+</canvas>
+</div>
+<p id="canvasDesc" class="md_sronly">
+A diagram showing ferromagnetic domains as irregular polygons, each with an arrow
+indicating the local magnetic orientation. Domain arrows reorient when the external
+field B is changed. Current alignment is described in the readings panel below.
+</p>
+<!-- Controls -->
+<div class="md_controls" id="md_controls">
+<!-- B slider -->
+<div class="md_fieldrow" role="group" aria-labelledby="fieldLbl">
+<span class="md_fieldlbl" id="fieldLbl">B (T)</span>
+<span class="md_poleLbl" aria-hidden="true">◀ −</span>
+<input type="range" id="fieldSlider" min="-100" max="100" value="0" step="1" aria-label="Applied magnetic field B" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0.00 T" onchange="magDomains.onSlider(this.value)">
+<span class="md_poleLbl" aria-hidden="true">+ ▶</span>
+<span class="md_fieldval" id="fieldDisplay" aria-live="off">0.00 T</span>
+</div>
+<!-- Preset buttons -->
+<div class="md_btnrow" role="group" aria-label="Field presets and randomize">
+<input type="button" value="Randomize Domains" class="md_btn" aria-label="Randomize all domain orientations" onclick="magDomains.randomize()">
+<input type="button" value="B = 0"    class="md_btn" aria-label="Set field to zero"           onclick="magDomains.setField(0)">
+<input type="button" value="B → Max +" class="md_btn" aria-label="Set field to maximum positive" onclick="magDomains.setField(80)">
+<input type="button" value="B ← Max −" class="md_btn" aria-label="Set field to maximum negative" onclick="magDomains.setField(-80)">
+</div>
+<!-- Keyboard hints -->
+<p class="md_kbdhint">
+<kbd>R</kbd> Randomize &nbsp;
+<kbd>Z</kbd> B=0 &nbsp;
+<kbd>M</kbd> B max+ &nbsp;
+<kbd>N</kbd> B max− &nbsp;
+<kbd>← →</kbd> adjust field
+</p>
+<!-- Live readouts -->
+<div class="md_readout" role="region" aria-labelledby="readHd"
+ aria-live="polite" aria-atomic="false" aria-relevant="text">
+<h2 id="readHd">Live Readings</h2>
+<div class="md_rg">
+<span class="md_rglbl">Field B:</span>
+<span class="md_rgval" id="r_B">0.00 T</span>
+<span class="md_rgval" id="r_regime">No field</span>
+<span class="md_rglbl">Aligned →:</span>
+<span class="md_rgval" id="r_right">--</span>
+<span class="md_rglbl">Aligned ←:</span>
+<span class="md_rgval" id="r_left">--</span>
+<span class="md_rglbl">Unaligned:</span>
+<span class="md_rgval" id="r_random">--</span>
+</div>
+</div>
+<!-- Narration -->
+<div class="md_narrbox" id="narrationBox"
+ role="region" aria-labelledby="narrHd"
+ aria-live="polite" aria-atomic="true">
+<h2 id="narrHd">What's happening</h2>
+<p id="narration" class="md_narrtext">
+28 ferromagnetic domains are shown with random initial orientations.
+No external field is applied (B = 0 T). Each domain has a different
+coercive field -- the minimum field needed to flip it. Apply a field
+using the slider or preset buttons to begin alignment.
+</p>
+</div>
+<!-- Physics note -->
+<p class="md_info" role="note">
+Domains align with applied field -- stronger B causes more uniform alignment.<br>
+Each domain has a unique coercive field threshold (hysteresis behavior).
+</p>
+</div><!-- md_controls -->
+<div id="srAnnounce" class="md_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="md_credit">Simulation by Taha Mzoughi © 2025 -- Accessibility layer added</p>
+</div><!-- #mdroot -->
+<style>
+/* ════════════════════════════════════════════════
+All rules scoped to #mdroot -- no global leaks.
+Theme classes .hc / .light / .cb toggled on #mdroot.
+════════════════════════════════════════════════ */
+/* ── CSS variables -- dark theme default ── */
+#mdroot {
+--bg:           #1a1a2e;
+--text:         #e0e0e0;
+--text-dim:     #888;
+--accent:       #7eb8f7;
+--wrapper-bg:   #0d0d1a;
+--wrapper-bd:   #2a2a4a;
+--row-bg:       #111128;
+--row-bd:       #2a2a4a;
+--btn-bg:       #1a1a3a;
+--btn-bd:       #3a3a6a;
+--btn-hover:    #2a2a5a;
+--narr-bg:      #0d1a2e;
+--narr-bd:      #2255aa;
+--narr-text:    #b8d4f7;
+--info-color:   #555;
+--canvas-bg:    #f0ede5;
+--focus-ring:   #7eb8f7;
+background: var(--bg);
+color: var(--text);
+font-family: 'Courier New', monospace;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 20px 16px;
+box-sizing: border-box;
+width: 100%;
+max-width: 680px;
+margin: 0 auto;
+position: relative;
+border-radius: 6px;
+}
+#mdroot *, #mdroot *::before, #mdroot *::after {
+box-sizing: border-box; margin: 0; padding: 0;
+}
+/* ── High contrast ── */
+#mdroot.hc {
+--bg:           #000000; --text:         #ffffff; --text-dim:     #cccccc;
+--accent:       #88ccff; --wrapper-bg:   #111111; --wrapper-bd:   #ffffff;
+--row-bg:       #111111; --row-bd:       #ffffff; --btn-bg:       #000000;
+--btn-bd:       #ffffff; --btn-hover:    #222222; --narr-bg:      #000033;
+--narr-bd:      #aaaaff; --narr-text:    #ffffff; --info-color:   #aaaaaa;
+--canvas-bg:    #ffffff; --focus-ring:   #ffff00;
+}
+/* ── Light theme ── */
+#mdroot.light {
+--bg:           #e8e8f0; --text:         #111111; --text-dim:     #555555;
+--accent:       #1144aa; --wrapper-bg:   #ffffff; --wrapper-bd:   #8888aa;
+--row-bg:       #f0f0f8; --row-bd:       #aaaacc; --btn-bg:       #ddddee;
+--btn-bd:       #8888aa; --btn-hover:    #ccccdd; --narr-bg:      #eef4ff;
+--narr-bd:      #6699cc; --narr-text:    #112244; --info-color:   #666666;
+--canvas-bg:    #f5f5f0; --focus-ring:   #0066cc;
+}
+/* ── Focus ── */
+#mdroot input:focus-visible {
+outline: 3px solid var(--focus-ring); outline-offset: 2px;
+}
+/* ── Headings ── */
+#mdroot .md_h1 {
+font-size: 1.1rem; letter-spacing: 0.2em; text-transform: uppercase;
+color: var(--accent); margin-bottom: 4px; text-align: center;
+}
+#mdroot .md_sub {
+font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.1em;
+margin-bottom: 14px; text-align: center; font-family: Arial, sans-serif;
+}
+/* ── A11y toolbar ── */
+#mdroot .md_a11ybar {
+display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; justify-content: center;
+}
+#mdroot .md_abtn {
+font-size: 0.68rem; padding: 3px 9px; background: var(--btn-bg);
+border: 1px solid var(--btn-bd); border-radius: 3px; cursor: pointer;
+color: var(--accent); font-family: 'Courier New', monospace;
+letter-spacing: 0.05em; text-transform: uppercase;
+}
+#mdroot .md_abtn:hover { background: var(--btn-hover); }
+#mdroot .md_abtnon     { background: #2244aa; color: #fff; border-color: #4466cc; }
+#mdroot.hc   .md_abtnon { background: #333366; border-color: #fff; }
+#mdroot.light .md_abtnon { background: #3355aa; color: #fff; }
+/* ── Motion notice ── */
+#mdroot .md_motionnotice {
+display: none; background: #ffffcc; border: 2px solid #888;
+border-radius: 4px; padding: 8px 12px; font-size: 0.78rem; color: #333;
+margin-bottom: 10px; text-align: center; max-width: 600px; font-family: Arial, sans-serif;
+}
+/* ── Canvas wrapper ── */
+#mdroot .md_wrapper {
+background: var(--wrapper-bg); border: 1px solid var(--wrapper-bd);
+border-radius: 4px; padding: 12px;
+box-shadow: 0 0 40px rgba(80,120,220,0.15);
+}
+#mdroot.hc .md_wrapper   { border: 2px solid #fff; box-shadow: none; }
+#mdroot.light .md_wrapper { box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+#mdroot #domainCanvas {
+display: block; background: var(--canvas-bg);
+border: 2px solid #333; cursor: crosshair;
+}
+#mdroot.hc #domainCanvas { border: 3px solid #fff; }
+/* ── Controls ── */
+#mdroot .md_controls {
+margin-top: 14px; width: 100%; max-width: 600px;
+display: flex; flex-direction: column; gap: 8px;
+}
+/* ── Field row ── */
+#mdroot .md_fieldrow {
+display: flex; align-items: center; gap: 10px;
+background: var(--row-bg); border: 1px solid var(--row-bd);
+border-radius: 4px; padding: 10px 14px;
+}
+#mdroot.hc .md_fieldrow { border: 2px solid #fff; }
+#mdroot .md_fieldlbl { font-size: 0.75rem; color: var(--accent); letter-spacing: 0.1em; min-width: 50px; }
+#mdroot .md_poleLbl  { font-size: 0.7rem; color: var(--text-dim); }
+#mdroot .md_fieldrow input[type=range] {
+flex: 1; -webkit-appearance: none; height: 5px; cursor: pointer;
+background: linear-gradient(to right, #3060c0, #888, #c04030); border-radius: 2px; outline: none;
+}
+#mdroot .md_fieldrow input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+background: var(--accent); cursor: pointer; border: 2px solid #fff;
+box-shadow: 0 0 6px rgba(126,184,247,0.6);
+}
+#mdroot.hc .md_fieldrow input[type=range]::-webkit-slider-thumb { box-shadow: none; border: 3px solid #fff; }
+#mdroot .md_fieldval { font-size: 0.82rem; color: var(--text); min-width: 68px; text-align: right; font-weight: bold; }
+/* ── Button row ── */
+#mdroot .md_btnrow { display: flex; gap: 7px; flex-wrap: wrap; }
+#mdroot .md_btn {
+flex: 1; padding: 7px 10px; background: var(--btn-bg); border: 1px solid var(--btn-bd);
+color: var(--accent); font-family: 'Courier New', monospace; font-size: 0.7rem;
+letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: 3px; font-weight: bold;
+}
+#mdroot .md_btn:hover  { background: var(--btn-hover); }
+#mdroot.hc .md_btn { border: 2px solid #fff; color: #fff; }
+/* ── Readout panel ── */
+#mdroot .md_readout {
+background: var(--row-bg); border: 1px solid var(--row-bd);
+border-radius: 4px; padding: 10px 14px; font-size: 0.78rem;
+}
+#mdroot.hc .md_readout { border: 2px solid #fff; }
+#mdroot .md_readout h2 {
+font-size: 0.75rem; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase;
+border-bottom: 1px solid var(--row-bd); padding-bottom: 5px; margin-bottom: 8px; font-family: 'Courier New', monospace;
+}
+#mdroot.hc .md_readout h2 { border-bottom-color: #aaa; }
+#mdroot .md_rg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px 12px; }
+#mdroot .md_rglbl { color: var(--text-dim); font-size: 0.72rem; }
+#mdroot .md_rgval { color: var(--accent); font-weight: bold; font-size: 0.78rem; font-family: 'Courier New', monospace; }
+#mdroot.hc    .md_rgval { color: #aaddff; }
+#mdroot.light .md_rgval { color: #1144aa; }
+/* ── Narration panel ── */
+#mdroot .md_narrbox {
+background: var(--narr-bg); border: 1px solid var(--narr-bd);
+border-radius: 4px; padding: 10px 14px; font-family: Arial, sans-serif;
+}
+#mdroot.hc .md_narrbox { border: 2px solid #aaaaff; }
+#mdroot .md_narrbox h2 {
+font-size: 0.75rem; font-weight: bold; color: var(--narr-text);
+text-transform: uppercase; letter-spacing: 0.08em;
+border-bottom: 1px solid var(--narr-bd); padding-bottom: 4px; margin-bottom: 7px;
+}
+#mdroot .md_narrtext { font-size: 0.78rem; color: var(--narr-text); line-height: 1.55; min-height: 44px; }
+/* ── Keyboard hints ── */
+#mdroot .md_kbdhint { font-size: 0.65rem; color: var(--text-dim); text-align: center; font-family: Arial, sans-serif; line-height: 1.6; }
+#mdroot .md_kbdhint kbd {
+background: var(--btn-bg); border: 1px solid var(--btn-bd); border-radius: 2px;
+padding: 1px 4px; font-size: 0.68rem; font-family: monospace; color: var(--accent);
+}
+#mdroot.hc .md_kbdhint kbd { border-color: #fff; color: #fff; }
+/* ── Misc ── */
+#mdroot .md_info { font-size: 0.65rem; color: var(--info-color); text-align: center; letter-spacing: 0.07em; line-height: 1.4; font-family: Arial, sans-serif; }
+#mdroot .md_credit { margin-top: 14px; font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.08em; font-family: Arial, sans-serif; }
+#mdroot .md_sronly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+
+/* ════ layout by the width the sim actually gets (in a MOM column it can be much narrower than the window);
+   the @media rules above stay as the fallback for browsers without container queries ════ */
+#mdroot { container-type:inline-size; }
+#mdroot #domainCanvas { width:100%; max-width:604px; height:auto; margin:0 auto; }   /* 600 px drawing + 2 px borders */
+@media (max-width:560px) { #mdroot .md_wrapper { padding:6px; } }
+@container (max-width:560px) { #mdroot .md_wrapper { padding:6px; } }
+
+</style>
+<script>
+var magDomains = function() {
+/* ── Refs ── */
+var ROOT   = document.getElementById('mdroot');
+var canvas = document.getElementById('domainCanvas');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+/* ── Palettes ── */
+var PALETTES = {
+def: {
+domainFill:   '#eeebe3', domainBg: '#f0ede5', domainStroke: '#333333',
+arrowColor:   '#2244cc', dotColor: '#111111', arrowLabel: 'Blue arrows'
+},
+colorblind: {
+domainFill:   '#f5f0e8', domainBg: '#f5f0e8', domainStroke: '#444444',
+arrowColor:   '#d55e00', dotColor: '#222222', arrowLabel: 'Vermillion/orange arrows'
+},
+highcontrast: {
+domainFill:   '#ffffff', domainBg: '#ffffff', domainStroke: '#000000',
+arrowColor:   '#000000', dotColor: '#000000', arrowLabel: 'Black arrows'
+}
+};
+var pal = PALETTES.def;
+var hcMode=false, lightMode=false, cbMode=false, showNarration=true;
+/* ── Simulation state ── */
+var ROWS=4, COLS=7, N=ROWS*COLS;
+var domains=[], fieldB=0, animFrame=null;
+/* ── Reduced motion ── */
+var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(prefersReducedMotion){ var mn=document.getElementById('motionNotice'); if(mn)mn.style.display='block'; }
+/* ── Helpers ── */
+function set(id,txt){var el=document.getElementById(id);if(el)el.textContent=txt;}
+/* ── Voronoi geometry ── */
+function generateSeeds(){
+var seeds=[], cellW=W/COLS, cellH=H/ROWS;
+for(var r=0;r<ROWS;r++){
+for(var c=0;c<COLS;c++){
+seeds.push({x:cellW*c+cellW*0.2+Math.random()*cellW*0.6, y:cellH*r+cellH*0.2+Math.random()*cellH*0.6});
+}
+}
+return seeds;
+}
+function buildVoronoi(seeds){
+var step=4, buckets=seeds.map(function(){return [];});
+for(var y=0;y<H;y+=step){
+for(var x=0;x<W;x+=step){
+var best=0, bestD=Infinity;
+for(var i=0;i<seeds.length;i++){var dx=x-seeds[i].x,dy=y-seeds[i].y,d=dx*dx+dy*dy;if(d<bestD){bestD=d;best=i;}}
+buckets[best].push([x,y]);
+}
+}
+return buckets;
+}
+function convexHull(pts){
+if(pts.length<3)return pts;
+pts=[].concat(pts).sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});
+function cross(O,A,B){return(A[0]-O[0])*(B[1]-O[1])-(A[1]-O[1])*(B[0]-O[0]);}
+var lower=[], upper=[];
+for(var i=0;i<pts.length;i++){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],pts[i])<=0)lower.pop();lower.push(pts[i]);}
+for(var j=pts.length-1;j>=0;j--){while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],pts[j])<=0)upper.pop();upper.push(pts[j]);}
+upper.pop(); lower.pop();
+return lower.concat(upper);
+}
+/* ── Domain logic ── */
+function randomize(){
+var seeds=generateSeeds(), buckets=buildVoronoi(seeds);
+domains=seeds.map(function(s,i){
+return{seed:s, hull:convexHull(buckets[i]), angle:Math.random()*Math.PI*2,
+targetAngle:0, coercivity:0.15+(i%5)*0.08};
+});
+updateTargets(); draw(); updateReadouts(); updateNarration();
+srAnnounce('Domains randomized. '+getAlignmentSummary());
+}
+function setField(val){
+fieldB=Math.max(-100,Math.min(100,val));
+var slider=document.getElementById('fieldSlider');
+var bT=(fieldB/20).toFixed(2);
+if(slider){slider.value=fieldB;slider.setAttribute('aria-valuenow',fieldB);slider.setAttribute('aria-valuetext',bT+' Tesla');}
+set('fieldDisplay',bT+' T');
+updateTargets(); animateToTarget(); updateReadouts();
+}
+function onSlider(val){
+fieldB=parseInt(val);
+var bT=(fieldB/20).toFixed(2);
+set('fieldDisplay',bT+' T');
+var slider=document.getElementById('fieldSlider');
+if(slider){slider.setAttribute('aria-valuenow',fieldB);slider.setAttribute('aria-valuetext',bT+' Tesla');}
+updateTargets(); animateToTarget(); updateReadouts();
+}
+function updateTargets(){
+var b=fieldB/100;
+for(var i=0;i<domains.length;i++){
+var d=domains[i], absB=Math.abs(b);
+if(absB<d.coercivity){ d.targetAngle=d.angle; }
+else {
+var preferred=b>0?0:Math.PI;
+var spread=(1-absB)*0.5;
+var jitter=((i*137.5)%1-0.5)*spread*Math.PI*0.4;
+d.targetAngle=preferred+jitter;
+}
+}
+}
+function animateToTarget(){
+if(animFrame)cancelAnimationFrame(animFrame);
+if(prefersReducedMotion){
+for(var i=0;i<domains.length;i++)domains[i].angle=domains[i].targetAngle;
+draw(); updateReadouts(); updateNarration(); return;
+}
+var startAngles=domains.map(function(d){return d.angle;}), totalSteps=40, step=0;
+function tick(){
+step++;
+var t=step/totalSteps, ease=t<0.5?2*t*t:-1+(4-2*t)*t;
+for(var i=0;i<domains.length;i++){
+var delta=domains[i].targetAngle-startAngles[i];
+while(delta>Math.PI) delta-=2*Math.PI;
+while(delta<-Math.PI)delta+=2*Math.PI;
+domains[i].angle=startAngles[i]+delta*ease;
+}
+draw();
+if(step<totalSteps){ animFrame=requestAnimationFrame(tick); }
+else{ updateReadouts(); updateNarration(); srAnnounce(getAlignmentSummary()); }
+}
+animFrame=requestAnimationFrame(tick);
+}
+/* ── Drawing ── */
+function draw(){
+if(!domains.length)return;
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle=pal.domainBg; ctx.fillRect(0,0,W,H);
+for(var i=0;i<domains.length;i++){
+var d=domains[i]; if(d.hull.length<3)continue;
+ctx.beginPath(); ctx.moveTo(d.hull[0][0],d.hull[0][1]);
+for(var j=1;j<d.hull.length;j++)ctx.lineTo(d.hull[j][0],d.hull[j][1]);
+ctx.closePath();
+ctx.fillStyle=pal.domainFill; ctx.fill();
+ctx.strokeStyle=pal.domainStroke; ctx.lineWidth=hcMode?2:1.5; ctx.stroke();
+drawArrow(d);
+}
+updateCanvasDesc();
+}
+function drawArrow(d){
+var cx=d.seed.x, cy=d.seed.y, len=18;
+var ax=Math.cos(d.angle)*len, ay=Math.sin(d.angle)*len;
+ctx.beginPath(); ctx.arc(cx,cy,hcMode?5:4,0,Math.PI*2);
+ctx.fillStyle=pal.dotColor; ctx.fill();
+ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+ax,cy+ay);
+ctx.strokeStyle=pal.arrowColor; ctx.lineWidth=hcMode?2.5:2; ctx.stroke();
+var headLen=8;
+ctx.beginPath();
+ctx.moveTo(cx+ax,cy+ay);
+ctx.lineTo(cx+ax+Math.cos(d.angle+2.8)*headLen, cy+ay+Math.sin(d.angle+2.8)*headLen);
+ctx.moveTo(cx+ax,cy+ay);
+ctx.lineTo(cx+ax+Math.cos(d.angle-2.8)*headLen, cy+ay+Math.sin(d.angle-2.8)*headLen);
+ctx.strokeStyle=pal.arrowColor; ctx.lineWidth=hcMode?2.5:2; ctx.stroke();
+}
+/* ── Readouts ── */
+function classifyDomains(){
+var right=0,left=0,random=0;
+for(var i=0;i<domains.length;i++){
+var a=((domains[i].angle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+var diff0=Math.min(a,2*Math.PI-a), diffP=Math.abs(a-Math.PI);
+if(diff0<Math.PI/4)right++; else if(diffP<Math.PI/4)left++; else random++;
+}
+return{right:right,left:left,random:random,total:domains.length};
+}
+function getFieldRegime(){
+var bT=Math.abs(fieldB/20);
+if(fieldB===0)return 'No field';
+if(bT<1.0)return 'Weak field';
+if(bT<3.0)return 'Moderate field';
+return 'Strong field';
+}
+function getAlignmentSummary(){
+var c=classifyDomains();
+if(fieldB===0)return 'No field applied. '+c.random+' of '+c.total+' domains are unaligned.';
+return c.right+' domains point right, '+c.left+' point left, '+c.random+' are intermediate.';
+}
+function updateReadouts(){
+if(!domains.length)return;
+var bT=(fieldB/20).toFixed(2), c=classifyDomains();
+function pct(v){return Math.round(v/c.total*100)+'%';}
+set('r_B',      bT+' T');
+set('r_regime', getFieldRegime());
+set('r_right',  c.right +' ('+pct(c.right)+')');
+set('r_left',   c.left  +' ('+pct(c.left)+')');
+set('r_random', c.random+' ('+pct(c.random)+')');
+}
+function updateNarration(){
+if(!showNarration||!domains.length)return;
+var bT=(fieldB/20).toFixed(2), c=classifyDomains();
+function pct(v){return Math.round(v/c.total*100);}
+var fieldDesc=fieldB===0?'No external field is applied (B = 0 T).':
+fieldB>0?'A positive field of '+bT+' T is applied, pointing right.':
+'A negative field of '+bT+' T is applied, pointing left.';
+var alignDesc;
+if(pct(c.right)>70)     alignDesc='Most domains ('+pct(c.right)+'%) are aligned to the right -- strong positive magnetization.';
+else if(pct(c.left)>70) alignDesc='Most domains ('+pct(c.left)+'%) are aligned to the left -- strong negative magnetization.';
+else if(pct(c.random)>60)alignDesc='Domains are largely disordered -- '+pct(c.random)+'% show no clear alignment.';
+else alignDesc='Domains are mixed: '+c.right+' pointing right, '+c.left+' pointing left, '+c.random+' intermediate.';
+var coercDesc='';
+if(fieldB!==0){
+var flipped=c.right+c.left, stayed=c.random;
+coercDesc=' '+flipped+' domains exceeded their coercive field threshold and realigned; '+stayed+' have not yet flipped.';
+}
+set('narration', fieldDesc+' '+alignDesc+coercDesc);
+}
+function updateCanvasDesc(){
+if(!domains.length)return;
+var c=classifyDomains(), bT=(fieldB/20).toFixed(2);
+set('canvasDesc','Magnetic domain diagram with '+c.total+' domains. Applied field B = '+bT+' T. '
++c.right+' domains point right, '+c.left+' point left, '+c.random+' are intermediate. '
++pal.arrowLabel+' show local magnetic orientation.');
+}
+/* ── A11y toggles ── */
+function syncPalette(){
+if(hcMode)       pal=PALETTES.highcontrast;
+else if(cbMode)  pal=PALETTES.colorblind;
+else             pal=PALETTES.def;
+}
+function setBtnOn(id,on){
+var b=document.getElementById(id); if(!b)return;
+if(on){ if(b.className.indexOf('md_abtnon')<0)b.className+=' md_abtnon'; }
+else { b.className=b.className.replace(' md_abtnon',''); }
+b.setAttribute('aria-pressed',on);
+}
+function toggleHC(){
+hcMode=!hcMode;
+if(hcMode){lightMode=false;ROOT.classList.remove('light');setBtnOn('btnLight',false);}
+ROOT.classList.toggle('hc',hcMode);
+setBtnOn('btnHC',hcMode);
+syncPalette(); draw();
+srAnnounce('High contrast mode '+(hcMode?'enabled.':'disabled.'));
+}
+function toggleLight(){
+lightMode=!lightMode;
+if(lightMode){hcMode=false;ROOT.classList.remove('hc');setBtnOn('btnHC',false);}
+ROOT.classList.toggle('light',lightMode);
+setBtnOn('btnLight',lightMode);
+syncPalette(); draw();
+srAnnounce('Light mode '+(lightMode?'enabled.':'disabled.'));
+}
+function toggleCB(){
+cbMode=!cbMode;
+ROOT.classList.toggle('cb',cbMode);
+setBtnOn('btnCB',cbMode);
+syncPalette(); draw();
+srAnnounce('Color-blind safe palette '+(cbMode?'enabled. '+PALETTES.colorblind.arrowLabel+' used.':'disabled.'));
+}
+function toggleNarr(){
+showNarration=!showNarration;
+var box=document.getElementById('narrationBox'); if(box)box.style.display=showNarration?'':'none';
+var b=document.getElementById('btnNarr');
+if(b){b.value=showNarration?'Narration: ON':'Narration: OFF';b.setAttribute('aria-pressed',showNarration);}
+setBtnOn('btnNarr',showNarration);
+}
+/* ── SR announcer ── */
+var srTimer=null;
+function srAnnounce(msg){
+var el=document.getElementById('srAnnounce'); if(!el)return;
+el.textContent=''; clearTimeout(srTimer);
+srTimer=setTimeout(function(){el.textContent=msg;},60);
+}
+/* ── Keyboard shortcuts scoped to ROOT ── */
+ROOT.setAttribute('tabindex','0');
+ROOT.addEventListener('keydown',function(e){
+var tag=document.activeElement.tagName;
+if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA'){
+if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+if(document.activeElement.id==='fieldSlider')return;
+}
+switch(e.key.toLowerCase()){
+case 'r': randomize();        e.preventDefault(); break;
+case 'z': setField(0);        e.preventDefault(); break;
+case 'm': setField(80);       e.preventDefault(); break;
+case 'n': setField(-80);      e.preventDefault(); break;
+case 'arrowleft':  setField(fieldB-5); e.preventDefault(); break;
+case 'arrowright': setField(fieldB+5); e.preventDefault(); break;
+}
+});
+/* ── Boot ── */
+randomize();
+/* ── Public API ── */
+return {
+randomize:randomize, setField:setField, onSlider:onSlider,
+toggleHC:toggleHC, toggleLight:toggleLight, toggleCB:toggleCB, toggleNarr:toggleNarr
+};
+};
+</script>
+<script>
+var magDomains = new magDomains();
+</script>
+<hr><h2>Part 3: Magnetic Domains:</h2>
+<hr>
+<ol>
+<li>In the domain simulation, what happens to the domain arrows when a small external magnetic field is applied? _____
+<li>If the external magnetic field is gradually increased, how do the domains respond over time? _____
+<li>When the external field is set to zero, what do the domain arrows tend to do? _____
+<li>If the field is applied in the opposite direction, what change occurs in the domain orientations? _____
+<li>In the simulation, why do some domains flip direction before others when the external field is increased? _____
+<li>What pattern is observed when the field magnitude is strong compared to the original random domain orientations? _____
+<li>When the field is applied diagonally, how do the domain arrows tend to orient themselves? _____
+<li>If the external field is suddenly removed after full alignment, what happens to the domain pattern? _____
+<li>When two nearby regions of domains point in opposite directions, what typically happens when a moderate external field is applied? _____
+<li>In the simulation, breaking the rectangular magnet into two pieces causes what main effect on the domains in each piece? _____<hr>
+<li>What is the orientation of magnetic domains in a ferromagnetic material when no external magnetic field is applied?
+</li>
+<li>What happens to the magnetic domains when a positive magnetic field is applied to a ferromagnetic material?
+</li>
+<li>What happens to the magnetic domains when a negative magnetic field is applied?
+</li>
+<li>What happens when a bar magnet is broken in half?
+</li>
+<li>When a bar magnet is broken into two pieces, what happens to the strength of each piece compared to the original magnet?
+</li>
+<li>When a magnet shown in the domain simulation is broken into two pieces, what happens to the magnetic domains inside each piece?
+</li>
+<li>After breaking the magnet into two pieces in the domain simulation, what happens to the poles of each new piece?
+</li>
+</ol>
+</main>
+</body>
+</html>

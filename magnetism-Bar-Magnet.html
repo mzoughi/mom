@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Magnetism: Bar Magnet Field Simulator</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,magnetism, magnet, teach, learn,force, current, bar magnet, magnetic field, field lines, poles, compass, superposition, Gilbert model, lesson, scientific">
+<meta name="description" content="Interactive bar magnet simulation: field map, field lines and compass for up to three magnets, with flipping, rotating and splitting a magnet.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mmroot" role="region" aria-label="Bar magnet field simulator">
+<!-- Accessibility toolbar -->
+<div class="mm_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="mm_a11ybtn" id="mmBtnHC" onclick="multiMagnetSim.toggleHC()" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="mm_a11ybtn" id="mmBtnLM" onclick="multiMagnetSim.toggleLight()" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="mm_a11ybtn" id="mmBtnCB" onclick="multiMagnetSim.toggleCB()" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="mm_a11ybtn mm_a11yon" id="mmBtnNarr" onclick="multiMagnetSim.toggleNarr()" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="mm_header">
+<p class="mm_h1">Bar Magnet Field Simulator</p>
+<p class="mm_sub">Gilbert pole model -- superposition of up to 3 magnets -- drag or use sliders</p>
+</div>
+<div id="mmMotionNotice" class="mm_motionnotice" role="status">Reduced motion is enabled. Redraws are instant.</div>
+<!-- Instrument grid -->
+<div class="mm_instrument">
+<!-- Diagram panel -->
+<div class="mm_diagpanel">
+<div class="mm_diaglabel"><span id="mmDiagLabel">FIELD MAP</span><span class="mm_diagnote">arrows: direction of B · color and length: strength (log scale)</span></div>
+<canvas id="mmCanvas" width="560" height="460" role="img" aria-label="Magnetic field map" aria-describedby="mmCanvasDesc"></canvas>
+<p id="mmCanvasDesc" class="mm_sronly">Arrow grid and field lines showing superimposed bar magnet fields.</p>
+<div class="mm_hoverbar" id="mmHoverReadout" role="status" aria-live="polite">Hover over or tap the field to read B at that point</div>
+<div class="mm_dispbar">
+<label class="mm_chk"><input type="checkbox" id="mmShowFL" checked onchange="multiMagnetSim.toggleFL()"> Field lines</label>
+<span class="mm_hint">Field lines are redrawn when you release a magnet or a slider.</span>
+</div>
+</div>
+<!-- Right column -->
+<div class="mm_rightcol">
+<!-- Scene -->
+<div class="mm_panel" role="group" aria-labelledby="mmSceneHd">
+<div class="mm_paneltitle" id="mmSceneHd">Scene</div>
+<div class="mm_panelbody">
+<div class="mm_btnrow2">
+<button type="button" class="mm_btn" id="mmBtnAddB" onclick="multiMagnetSim.addMagnetB()">+ Magnet B</button>
+<button type="button" class="mm_btn" id="mmBtnAddC" onclick="multiMagnetSim.addMagnetC()" disabled>+ Magnet C</button>
+</div>
+<div class="mm_btnrow2">
+<button type="button" class="mm_btn mm_warn" onclick="multiMagnetSim.clearExtra()">Clear B &amp; C</button>
+<button type="button" class="mm_btn" id="mmBtnSplit" onclick="multiMagnetSim.splitMagnetA()">Split A in two</button>
+<button type="button" class="mm_btn mm_warn" id="mmBtnUnsplit" style="display:none" onclick="multiMagnetSim.unsplitMagnetA()">Unsplit A</button>
+</div>
+</div>
+</div>
+<!-- Magnet A (+ half A2 when split) -->
+<div class="mm_panel" id="mmBoxA" role="group" aria-labelledby="mmLblA">
+<div class="mm_paneltitle" id="mmLblA">Magnet A <span id="mmSplitBadge" style="display:none">(split into A1 + A2)</span></div>
+<div class="mm_panelbody">
+<div class="mm_maghead"><span class="mm_magdot" id="mmDot0"></span><span id="mmLblA1">Magnet A</span></div>
+<div class="mm_btnrow">
+<button type="button" class="mm_btn" aria-label="Flip polarity of magnet A" onclick="multiMagnetSim.flipMagnet(0)">Flip</button>
+<button type="button" class="mm_btn" aria-label="Rotate magnet A by plus 90 degrees" onclick="multiMagnetSim.rotateMagnet(0,90)">+90°</button>
+<button type="button" class="mm_btn" aria-label="Rotate magnet A by minus 90 degrees" onclick="multiMagnetSim.rotateMagnet(0,-90)">−90°</button>
+</div>
+<div class="mm_srow"><label for="mmSlAx" class="mm_slbl">x</label><input type="range" id="mmSlAx" min="-1.5" max="1.5" step="0.05" value="0" aria-label="Magnet A x in metres" oninput="multiMagnetSim.onMagSlider(0,'x',this.value,true)" onchange="multiMagnetSim.onMagSlider(0,'x',this.value,false)"><span class="mm_sval" id="mmVAx">+0.00 m</span></div>
+<div class="mm_srow"><label for="mmSlAy" class="mm_slbl">y</label><input type="range" id="mmSlAy" min="-1.5" max="1.5" step="0.05" value="0" aria-label="Magnet A y in metres" oninput="multiMagnetSim.onMagSlider(0,'y',this.value,true)" onchange="multiMagnetSim.onMagSlider(0,'y',this.value,false)"><span class="mm_sval" id="mmVAy">+0.00 m</span></div>
+<div class="mm_srow"><label for="mmSlAang" class="mm_slbl">θ</label><input type="range" id="mmSlAang" min="-180" max="180" step="5" value="0" aria-label="Magnet A angle in degrees" oninput="multiMagnetSim.onMagSlider(0,'ang',this.value,true)" onchange="multiMagnetSim.onMagSlider(0,'ang',this.value,false)"><span class="mm_sval" id="mmVAang">0°</span></div>
+<div class="mm_sub2" id="mmSecA2" style="display:none">
+<div class="mm_maghead"><span class="mm_magdot" id="mmDot1"></span><span>Half A2</span></div>
+<div class="mm_srow"><label for="mmSlA2x" class="mm_slbl">x</label><input type="range" id="mmSlA2x" min="-1.5" max="1.5" step="0.05" value="0" aria-label="Half A2 x in metres" oninput="multiMagnetSim.onMagSlider(1,'x',this.value,true)" onchange="multiMagnetSim.onMagSlider(1,'x',this.value,false)"><span class="mm_sval" id="mmVA2x">+0.00 m</span></div>
+<div class="mm_srow"><label for="mmSlA2y" class="mm_slbl">y</label><input type="range" id="mmSlA2y" min="-1.5" max="1.5" step="0.05" value="0" aria-label="Half A2 y in metres" oninput="multiMagnetSim.onMagSlider(1,'y',this.value,true)" onchange="multiMagnetSim.onMagSlider(1,'y',this.value,false)"><span class="mm_sval" id="mmVA2y">+0.00 m</span></div>
+<div class="mm_srow"><label for="mmSlA2ang" class="mm_slbl">θ</label><input type="range" id="mmSlA2ang" min="-180" max="180" step="5" value="0" aria-label="Half A2 angle in degrees" oninput="multiMagnetSim.onMagSlider(1,'ang',this.value,true)" onchange="multiMagnetSim.onMagSlider(1,'ang',this.value,false)"><span class="mm_sval" id="mmVA2ang">0°</span></div>
+</div>
+</div>
+</div>
+<!-- Magnet B -->
+<div class="mm_panel" id="mmBoxB" style="display:none" role="group" aria-labelledby="mmLblB">
+<div class="mm_paneltitle" id="mmLblB">Magnet B</div>
+<div class="mm_panelbody">
+<div class="mm_maghead"><span class="mm_magdot" id="mmDot2"></span><span>Magnet B</span></div>
+<div class="mm_btnrow">
+<button type="button" class="mm_btn" aria-label="Flip polarity of magnet B" onclick="multiMagnetSim.flipMagnet('B')">Flip</button>
+<button type="button" class="mm_btn" aria-label="Rotate magnet B by plus 90 degrees" onclick="multiMagnetSim.rotateMagnet('B',90)">+90°</button>
+<button type="button" class="mm_btn" aria-label="Rotate magnet B by minus 90 degrees" onclick="multiMagnetSim.rotateMagnet('B',-90)">−90°</button>
+</div>
+<div class="mm_srow"><label for="mmSlBx" class="mm_slbl">x</label><input type="range" id="mmSlBx" min="-1.5" max="1.5" step="0.05" value="0.7" aria-label="Magnet B x in metres" oninput="multiMagnetSim.onMagSlider('B','x',this.value,true)" onchange="multiMagnetSim.onMagSlider('B','x',this.value,false)"><span class="mm_sval" id="mmVBx">+0.70 m</span></div>
+<div class="mm_srow"><label for="mmSlBy" class="mm_slbl">y</label><input type="range" id="mmSlBy" min="-1.5" max="1.5" step="0.05" value="0" aria-label="Magnet B y in metres" oninput="multiMagnetSim.onMagSlider('B','y',this.value,true)" onchange="multiMagnetSim.onMagSlider('B','y',this.value,false)"><span class="mm_sval" id="mmVBy">+0.00 m</span></div>
+<div class="mm_srow"><label for="mmSlBang" class="mm_slbl">θ</label><input type="range" id="mmSlBang" min="-180" max="180" step="5" value="0" aria-label="Magnet B angle in degrees" oninput="multiMagnetSim.onMagSlider('B','ang',this.value,true)" onchange="multiMagnetSim.onMagSlider('B','ang',this.value,false)"><span class="mm_sval" id="mmVBang">0°</span></div>
+</div>
+</div>
+<!-- Magnet C -->
+<div class="mm_panel" id="mmBoxC" style="display:none" role="group" aria-labelledby="mmLblC">
+<div class="mm_paneltitle" id="mmLblC">Magnet C</div>
+<div class="mm_panelbody">
+<div class="mm_maghead"><span class="mm_magdot" id="mmDot3"></span><span>Magnet C</span></div>
+<div class="mm_btnrow">
+<button type="button" class="mm_btn" aria-label="Flip polarity of magnet C" onclick="multiMagnetSim.flipMagnet('C')">Flip</button>
+<button type="button" class="mm_btn" aria-label="Rotate magnet C by plus 90 degrees" onclick="multiMagnetSim.rotateMagnet('C',90)">+90°</button>
+<button type="button" class="mm_btn" aria-label="Rotate magnet C by minus 90 degrees" onclick="multiMagnetSim.rotateMagnet('C',-90)">−90°</button>
+</div>
+<div class="mm_srow"><label for="mmSlCx" class="mm_slbl">x</label><input type="range" id="mmSlCx" min="-1.5" max="1.5" step="0.05" value="-0.7" aria-label="Magnet C x in metres" oninput="multiMagnetSim.onMagSlider('C','x',this.value,true)" onchange="multiMagnetSim.onMagSlider('C','x',this.value,false)"><span class="mm_sval" id="mmVCx">−0.70 m</span></div>
+<div class="mm_srow"><label for="mmSlCy" class="mm_slbl">y</label><input type="range" id="mmSlCy" min="-1.5" max="1.5" step="0.05" value="0" aria-label="Magnet C y in metres" oninput="multiMagnetSim.onMagSlider('C','y',this.value,true)" onchange="multiMagnetSim.onMagSlider('C','y',this.value,false)"><span class="mm_sval" id="mmVCy">+0.00 m</span></div>
+<div class="mm_srow"><label for="mmSlCang" class="mm_slbl">θ</label><input type="range" id="mmSlCang" min="-180" max="180" step="5" value="0" aria-label="Magnet C angle in degrees" oninput="multiMagnetSim.onMagSlider('C','ang',this.value,true)" onchange="multiMagnetSim.onMagSlider('C','ang',this.value,false)"><span class="mm_sval" id="mmVCang">0°</span></div>
+</div>
+</div>
+<!-- Readout -->
+<div class="mm_panel" role="region" aria-labelledby="mmReadHd">
+<div class="mm_paneltitle" id="mmReadHd">Readout at the compass</div>
+<div class="mm_rinner">
+<div class="mm_rrow"><span class="mm_rkey">|B|</span><span class="mm_rval mm_hi" id="mmR_Bc">--</span></div>
+<div class="mm_rrow"><span class="mm_rkey">Direction</span><span class="mm_rval" id="mmR_dir">--</span></div>
+<div class="mm_rrow"><span class="mm_rkey">Compass (x, y)</span><span class="mm_rval" id="mmR_cpos">--</span></div>
+<div class="mm_rrow"><span class="mm_rkey">Peak |B| on grid</span><span class="mm_rval" id="mmR_Bmax">--</span></div>
+<div class="mm_rrow"><span class="mm_rkey">Magnets active</span><span class="mm_rval" id="mmR_count">1</span></div>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="mm_formulastrip">
+<span class="mm_formulatxt">Gilbert model: each pole face acts as a sheet of magnetic "charge" &nbsp;|&nbsp; field lines leave N poles and enter S poles &nbsp;|&nbsp; drag magnets or the compass &nbsp;|&nbsp; Keys: <kbd>H</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>F</kbd> <kbd>N</kbd></span>
+</div>
+</div><!-- instrument -->
+<div id="mmNarrBox" class="mm_narbar" role="status" aria-live="polite" aria-atomic="true"><span id="mmNarration">--</span></div>
+<div id="mmSrAnnounce" class="mm_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="mm_credit">Simulation by Taha Mzoughi © 2025 -- MOM adaptation</p>
+</div><!-- #mmroot -->
+<div class="mm_qwrap">
+<hr><h2>Part 1: Magnets:</h2>
+<hr>
+<!--ol&gt;
+<li>Using the large magnet, determine which objects on and around you are affected by the magnet. What do the affected objects have in common?</li>
+<li>What do the affected objects have in common?</li>
+<li>Which materials block the magnetic field?</li>
+<li>Why does a paper clip become magnetized after being stroked several times with a strong magnet?</li>
+<li>Why does a paper clip lose its magnetism after being struck several times or heated?</li>
+<li>How can you identify the poles of a magnet?</li>
+<li>How do compasses help visualize the direction of magnetic field lines around a bar magnet, as shown in the PhET simulations?</li>
+&lt;/ol-->
+<ol>
+<li>In the simulation, what happens when a single magnet is flipped from horizontal to horizontal‑flipped?</li>
+<li>When placing two magnets side‑by‑side and flipping only the left magnet, what change is most noticeable in the field pattern?</li>
+<li>With two magnets facing each other north‑to‑north, what happens when one magnet is flipped so its south pole faces the other magnet?</li>
+<li>When three magnets are arranged in a row, how does flipping the middle magnet affect the field along the line of magnets?</li>
+<li>After breaking a magnet into two pieces, what property do the two pieces immediately gain?</li>
+<li>When one magnet is vertical and another horizontal, what best describes the resulting field?</li>
+<li>Two broken magnets are brought close together. Which configuration produces the strongest field gradient?</li>
+<li>When you rotate a single magnet through all four orientations, which orientation produces the strongest field directly above the magnet?</li>
+<li>In a triangular arrangement of three magnets, how does flipping only one magnet affect the central field region?</li>
+<li>When two broken pieces of a magnet are moved close together again, what happens to the combined field pattern?</li>
+</ol>
+<hr>
+<p>Discuss your results about this part of the experiment:</p>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #mmroot ════════ */
+#mmroot {
+--mm-chassis:#1a1c1f; --mm-panel:#22262b; --mm-panel-hi:#2c3138; --mm-panel-lo:#14161a;
+--mm-border:#3a4048; --mm-border-hi:#525c66; --mm-text:#c8d0d8; --mm-dim:#8a94a3; --mm-bright:#e8eef5;
+--mm-accent:#e8a020; --mm-green:#3ad08f; --mm-val:#ffdd66;
+--mm-focus:#e8a020; --mm-nar-bg:#2a2410; --mm-nar-border:#e0b040; --mm-nar-text:#f0e2b8;
+background:var(--mm-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--mm-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#mmroot.mm_lm {
+--mm-chassis:#e9edf1; --mm-panel:#ffffff; --mm-panel-hi:#f1f4f7; --mm-panel-lo:#f4f6f9;
+--mm-border:#c3cad3; --mm-border-hi:#9aa3ae; --mm-text:#1d232a; --mm-dim:#556070; --mm-bright:#000000;
+--mm-accent:#a8620a; --mm-green:#12805a; --mm-val:#8a4a00;
+--mm-focus:#a8620a; --mm-nar-bg:#ffefc0; --mm-nar-border:#e0b040; --mm-nar-text:#333333;
+background-image:none;
+}
+#mmroot.mm_hc {
+--mm-chassis:#000000; --mm-panel:#000000; --mm-panel-hi:#111111; --mm-panel-lo:#000000;
+--mm-border:#ffffff; --mm-border-hi:#ffffff; --mm-text:#ffffff; --mm-dim:#e0e0e0; --mm-bright:#ffffff;
+--mm-accent:#ffd700; --mm-green:#00ff88; --mm-val:#ffff00;
+--mm-focus:#ffff00; --mm-nar-bg:#000000; --mm-nar-border:#ffd700; --mm-nar-text:#ffffff;
+background-image:none;
+}
+#mmroot.mm_hc .mm_panel, #mmroot.mm_hc .mm_diagpanel { border-width:2px; }
+#mmroot *, #mmroot *::before, #mmroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#mmroot input:focus-visible, #mmroot button:focus-visible { outline:2px solid var(--mm-focus); outline-offset:2px; }
+/* toolbar */
+#mmroot .mm_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#mmroot .mm_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--mm-panel-hi); border:1px solid var(--mm-border-hi); color:var(--mm-dim); }
+#mmroot .mm_a11ybtn:hover { border-color:var(--mm-accent); color:var(--mm-accent); }
+#mmroot .mm_a11yon { background:rgba(58,208,143,.14); border-color:var(--mm-green); color:var(--mm-green); font-weight:bold; }
+/* header */
+#mmroot .mm_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#mmroot .mm_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--mm-accent); text-align:center; }
+#mmroot .mm_sub { font-size:.7rem; color:var(--mm-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+#mmroot .mm_motionnotice { display:none; width:100%; padding:5px 12px; font-size:.74rem; text-align:center; background:var(--mm-panel); border:1px solid var(--mm-border); border-radius:4px; color:var(--mm-dim); }
+/* grid */
+#mmroot .mm_instrument { display:grid; grid-template-columns:1fr auto; gap:12px; width:100%; }
+#mmroot .mm_diagpanel { background:var(--mm-panel); border:1px solid var(--mm-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; align-self:start; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#mmroot .mm_diaglabel { background:var(--mm-panel-lo); border-bottom:1px solid var(--mm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--mm-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#mmroot #diagLabel { color:var(--mm-accent); font-weight:bold; }
+#mmroot .mm_diagnote { text-transform:none; letter-spacing:.02em; }
+#mmroot #fieldCanvas { display:block; max-width:100%; cursor:crosshair; margin:0 auto; }
+#mmroot .mm_hoverbar { background:var(--mm-panel-lo); border-top:1px solid var(--mm-border); padding:6px 12px; font-family:monospace; font-size:.74rem; color:var(--mm-val); min-height:28px; }
+/* right column */
+#mmroot .mm_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#mmroot .mm_panel { background:var(--mm-panel); border:1px solid var(--mm-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#mmroot .mm_paneltitle { background:var(--mm-panel-lo); border-bottom:1px solid var(--mm-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--mm-dim); }
+#mmroot .mm_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:5px; }
+#mmroot .mm_srcbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#mmroot .mm_srcbtn { padding:6px 4px; font-family:monospace; font-size:.66rem; letter-spacing:.06em; cursor:pointer; background:var(--mm-panel-hi); border:1px solid var(--mm-border-hi); color:var(--mm-dim); border-radius:3px; }
+#mmroot .mm_srcbtn:hover { border-color:var(--mm-accent); color:var(--mm-text); }
+#mmroot .mm_srcon { background:var(--mm-accent); color:#111; border-color:var(--mm-accent); font-weight:bold; }
+#mmroot .mm_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#mmroot .mm_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--mm-dim); text-transform:uppercase; }
+#mmroot .mm_srow { display:flex; align-items:center; gap:6px; }
+#mmroot .mm_slbl { font-size:.72rem; color:var(--mm-dim); min-width:14px; font-weight:600; }
+#mmroot input[type=range] { flex:1; width:100%; -webkit-appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--mm-panel-lo); border:1px solid var(--mm-border); }
+#mmroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--mm-accent); border:2px solid var(--mm-panel); cursor:pointer; }
+#mmroot .mm_sval { font-family:monospace; font-size:.74rem; color:var(--mm-val); min-width:56px; text-align:right; }
+#mmroot .mm_hint { font-size:.66rem; color:var(--mm-dim); line-height:1.4; }
+#mmroot .mm_rinner { padding:8px 10px; display:flex; flex-direction:column; gap:4px; }
+#mmroot .mm_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--mm-panel-lo); border:1px solid var(--mm-border); border-radius:3px; }
+#mmroot .mm_rkey { font-family:monospace; font-size:.6rem; color:var(--mm-dim); letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+#mmroot .mm_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--mm-text); }
+#mmroot .mm_hi { color:var(--mm-val); font-weight:bold; }
+/* formula strip, narration, credit */
+#mmroot .mm_formulastrip { grid-column:1 / 3; background:var(--mm-panel-lo); border:1px solid var(--mm-border); border-radius:4px; padding:7px 14px; }
+#mmroot .mm_formulatxt { font-family:monospace; font-size:.66rem; color:var(--mm-dim); letter-spacing:.04em; }
+#mmroot .mm_formulatxt kbd { border:1px solid var(--mm-border-hi); border-radius:2px; padding:0 4px; color:var(--mm-accent); font-family:monospace; }
+#mmroot .mm_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--mm-nar-bg); border-left:4px solid var(--mm-nar-border); font-size:.82rem; color:var(--mm-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+#mmroot .mm_credit { font-size:.62rem; color:var(--mm-dim); text-align:center; }
+#mmroot .mm_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* extra controls shared by the magnetism sims */
+#mmroot .mm_chk { display:flex; align-items:center; gap:6px; font-size:.74rem; color:var(--mm-text); cursor:pointer; }
+#mmroot .mm_chk input { accent-color:var(--mm-accent); width:14px; height:14px; }
+#mmroot .mm_dispbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:6px 12px; background:var(--mm-panel-lo); border-top:1px solid var(--mm-border); }
+#mmroot select { width:100%; background:var(--mm-panel-hi); color:var(--mm-text); border:1px solid var(--mm-border-hi); border-radius:3px; padding:3px 5px; font-size:.72rem; }
+#mmroot .mm_btnrow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+#mmroot .mm_btnrow2 { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#mmroot .mm_btn { padding:5px 3px; font-family:monospace; font-size:.62rem; letter-spacing:.04em; cursor:pointer; background:var(--mm-panel-hi); border:1px solid var(--mm-border-hi); color:var(--mm-text); border-radius:3px; text-transform:uppercase; }
+#mmroot .mm_btn:hover { border-color:var(--mm-accent); }
+#mmroot .mm_btn:disabled { opacity:.4; cursor:default; }
+#mmroot .mm_warn { color:#e0605a; border-color:#a04040; }
+#mmroot.mm_lm .mm_warn { color:#b02020; border-color:#c06060; }
+#mmroot .mm_sub2 { border-top:1px dashed var(--mm-border); padding-top:6px; margin-top:4px; display:flex; flex-direction:column; gap:5px; }
+#mmroot .mm_maghead { display:flex; align-items:center; gap:6px; font-family:monospace; font-size:.72rem; font-weight:bold; color:var(--mm-text); }
+#mmroot .mm_magdot { width:11px; height:11px; border-radius:2px; display:inline-block; border:1px solid var(--mm-border-hi); }
+#mmroot .mm_derived { font-family:monospace; font-size:.68rem; color:var(--mm-dim); }
+#mmroot .mm_derived b { color:var(--mm-val); font-weight:bold; }
+/* question section below the simulator */
+.mm_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.mm_qwrap ol { padding-left:24px; }
+.mm_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+#mmroot #mmSplitBadge { text-transform:none; letter-spacing:0; }
+/* ════════ Mobile-friendly layout (same template as the Hall effect sim) ════════ */
+#mmroot .mm_instrument { grid-template-columns:minmax(0,1fr) 250px; }
+#mmroot .mm_diagpanel { min-width:0; }
+#mmroot canvas#mmCanvas { display:block; width:100%; max-width:560px; height:auto; margin:0 auto; flex:none; }
+#mmroot .mm_formulatxt { line-height:1.6; }
+#mmroot .mm_hoverbar { line-height:1.4; }
+#mmroot select:focus-visible { outline:2px solid var(--mm-focus); outline-offset:2px; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#mmroot .mm_instrument { grid-template-columns:minmax(0,1fr); }
+#mmroot .mm_instrument > * { grid-column:auto; grid-row:auto; }
+#mmroot .mm_rightcol { width:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#mmroot input[type=range] { height:8px; }
+#mmroot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#mmroot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#mmroot button, #mmroot input[type=button] { min-height:40px; }
+#mmroot select { min-height:36px; font-size:.9rem; }
+#mmroot input[type=checkbox] { width:22px; height:22px; }
+#mmroot .mm_panelbody { gap:10px; }
+}
+@media (max-width:560px) {
+#mmroot { padding:10px 6px 14px; }
+#mmroot .mm_rrow { flex-wrap:wrap; }
+#mmroot .mm_rkey { white-space:normal; }
+#mmroot .mm_hoverbar { font-size:.68rem; }
+}
+</style>
+<script>
+var multiMagnetSim = function() {
+var ROOT   = document.getElementById('mmroot');
+var canvas = document.getElementById('mmCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var DPR = window.devicePixelRatio || 1;   /* sharp on phones: draw at device resolution, CSS scales the canvas to the panel */
+canvas.width = CW*DPR; canvas.height = CH*DPR; ctx.scale(DPR, DPR);
+function set(id, txt) { var e = document.getElementById(id); if (e) e.textContent = txt; }
+function el(id) { return document.getElementById(id); }
+/* ── Physics constants ── */
+var MU0 = 4e-7*Math.PI;
+var N_RINGS = 12, N_PHI = 36;
+var DEF_HALF = 0.32, DEF_W = 0.13, DEF_STR = 3.0;
+/* Speed-ups checked numerically against the full surface sum (3000 random points, several setups):
+field within 0.2 % and compass direction within 0.6 degrees, except right at points where the
+fields of several magnets cancel to nearly zero.
+- beyond FAR_FACTOR face radii the uniformly "charged" pole face acts like a single point pole;
+- between MID_FACTOR and FAR_FACTOR face radii a coarser 6 x 18 sampling of the face is enough;
+- closer than that, the full 12 x 36 sampling is used.                                          */
+var FAR_FACTOR = 20, MID_FACTOR = 5, N_RINGS_MID = 6, N_PHI_MID = 18;
+var COSP = [], SINP = [], COSM = [], SINM = [];
+for (var kk = 0; kk < N_PHI; kk++) { COSP.push(Math.cos(2*Math.PI*kk/N_PHI)); SINP.push(Math.sin(2*Math.PI*kk/N_PHI)); }
+for (var km = 0; km < N_PHI_MID; km++) { COSM.push(Math.cos(2*Math.PI*km/N_PHI_MID)); SINM.push(Math.sin(2*Math.PI*km/N_PHI_MID)); }
+/* ── Extent: same metres-per-pixel on both axes ── */
+var YEXT = 1.85, XEXT = YEXT*CW/CH;
+/* ── State ── */
+var hcMode = false, lightMode = false, cbMode = false, showFL = true, showNarr = true;
+var globalBmax = 1e-9, isSplit = false, dragging = null;
+var compass = { x: 0.8, y: 0.8 };
+function toCanvas(px, py) { return [(px+XEXT)/(2*XEXT)*CW, CH-(py+YEXT)/(2*YEXT)*CH]; }
+function fromCanvas(cx, cy) { return [XEXT*(2*cx/CW-1), YEXT*(2*(CH-cy)/CH-1)]; }
+function makeMagnet(x, y, ang, polarity, strength, halfLen, halfW) {
+return { x:x, y:y, ang:ang, polarity:polarity||1, strength:strength||DEF_STR, halfLen:halfLen||DEF_HALF, halfW:halfW||DEF_W, active:true };
+}
+/* slots: 0 = A (or A1 when split), 1 = A2, 2 = B, 3 = C */
+var magnets = [
+makeMagnet(0, 0, 0, 1, DEF_STR, DEF_HALF, DEF_W),
+makeMagnet(0, 0, 0, 1, DEF_STR/2, DEF_HALF/2, DEF_W),
+makeMagnet( 0.7, 0, 0, 1, DEF_STR, DEF_HALF, DEF_W),
+makeMagnet(-0.7, 0, 0, 1, DEF_STR, DEF_HALF, DEF_W)
+];
+magnets[1].active = false; magnets[2].active = false; magnets[3].active = false;
+/* ── Physics: Gilbert pole model ── */
+function poleContrib(px, py, mag, yFaceLocal, sign) {
+var angRad = mag.ang*Math.PI/180;
+var lyHx = Math.sin(angRad), lyHy = Math.cos(angRad), lxHx = Math.cos(angRad), lxHy = -Math.sin(angRad);
+var faceX = mag.x + lyHx*yFaceLocal, faceY = mag.y + lyHy*yFaceLocal, a = mag.halfW;
+var dxc = px - faceX, dyc = py - faceY, d2 = dxc*dxc + dyc*dyc;
+if (d2 > FAR_FACTOR*FAR_FACTOR*a*a) { var Q = Math.PI*a*a, d3 = d2*Math.sqrt(d2); return { Bx: sign*Q*dxc/d3, By: sign*Q*dyc/d3 }; }
+var mid = d2 > MID_FACTOR*MID_FACTOR*a*a;
+var nR = mid ? N_RINGS_MID : N_RINGS, nP = mid ? N_PHI_MID : N_PHI, CS = mid ? COSM : COSP, SN = mid ? SINM : SINP;
+var dPhi = 2*Math.PI/nP, dRho = a/nR, Bx = 0, By = 0;
+for (var ri = 0; ri < nR; ri++) {
+var rho = (ri+0.5)*dRho, dA = rho*dRho*dPhi;
+for (var pi2 = 0; pi2 < nP; pi2++) {
+var rc = rho*CS[pi2], rx = px - (faceX + lxHx*rc), ry = py - (faceY + lxHy*rc), rz = -(rho*SN[pi2]);
+var r2 = rx*rx + ry*ry + rz*rz; if (r2 < 1e-8) continue;
+var r3 = r2*Math.sqrt(r2);
+Bx += sign*(rx/r3)*dA; By += sign*(ry/r3)*dA;
+}
+}
+return { Bx:Bx, By:By };
+}
+function magnetField(px, py, mag) {
+var angRad = mag.ang*Math.PI/180, dx = px - mag.x, dy = py - mag.y;
+var locXp = dx*Math.cos(angRad) + dy*Math.sin(angRad), locYp = -dx*Math.sin(angRad) + dy*Math.cos(angRad);
+if (Math.abs(locXp) < mag.halfW && Math.abs(locYp) < mag.halfLen) return { Bx:0, By:0 };
+var pref = MU0*mag.strength/(4*Math.PI);
+var N = poleContrib(px, py, mag, mag.halfLen, mag.polarity), S = poleContrib(px, py, mag, -mag.halfLen, -mag.polarity);
+return { Bx: pref*(N.Bx+S.Bx), By: pref*(N.By+S.By) };
+}
+function fieldAt(px, py) {
+var Bx = 0, By = 0;
+for (var i = 0; i < magnets.length; i++) { if (!magnets[i].active) continue; var f = magnetField(px, py, magnets[i]); Bx += f.Bx; By += f.By; }
+return { Bx:Bx, By:By, B:Math.sqrt(Bx*Bx + By*By) };
+}
+/* ── Canvas palette ── */
+var BORDER_DEF = ['#ff6655', '#bbaa33', '#5577ff', '#ffaa33'];
+var BORDER_LM  = ['#c0392b', '#8a7a10', '#1f5fc0', '#b36b00'];
+var BORDER_CB  = ['#E69F00', '#CC79A7', '#009E73', '#56B4E9'];
+var POLES_DEF = [{n:'#cc3333',s:'#22aa44'}, {n:'#886622',s:'#558855'}, {n:'#3355cc',s:'#2299bb'}, {n:'#cc8800',s:'#cc5500'}];
+function pal() {
+var p;
+if (hcMode) p = { bg:'#000000', grid:'#262626', axis:'#888888', text:'#ffffff', face:'rgba(0,0,0,0.85)', rim:'#ffffff', needleN:'#ff5555', needleS:'#bbbbbb', line:'rgba(255,255,255,0.6)', midline:'#ffffff', lw:1.6 };
+else if (lightMode) p = { bg:'#ffffff', grid:'#eef1f4', axis:'#9aa3ae', text:'#1d232a', face:'rgba(255,255,255,0.92)', rim:'#1d232a', needleN:'#c0262a', needleS:'#556070', line:'rgba(30,70,160,0.55)', midline:'rgba(255,255,255,0.8)', lw:1.1 };
+else p = { bg:'#0d0f12', grid:'#1b2027', axis:'#3a4048', text:'#c8d0d8', face:'rgba(34,38,43,0.9)', rim:'#c8d0d8', needleN:'#ff4a4a', needleS:'#8a94a3', line:'rgba(100,160,255,0.5)', midline:'rgba(255,255,255,0.6)', lw:1.1 };
+if (cbMode && !hcMode) { p.needleN = '#D55E00'; }
+return p;
+}
+function magColors(idx) {
+if (hcMode) return { n:'#ff3b3b', s:'#00c853', border:'#ffffff' };
+if (cbMode) return { n:'#D55E00', s:'#0072B2', border:BORDER_CB[idx] };
+return { n:POLES_DEF[idx].n, s:POLES_DEF[idx].s, border:(lightMode ? BORDER_LM : BORDER_DEF)[idx] };
+}
+function colorFn(t) {
+t = Math.min(Math.max(t,0),1);
+if (hcMode) { var v = Math.round(90+165*t); return 'rgb('+v+','+v+','+v+')'; }
+if (cbMode) {
+var s = lightMode ? t*0.82 : t, rr, gg, bb;
+if (s < .5) { var u=s*2; rr=Math.round(68+u*(33-68)); gg=Math.round(1+u*(145-1)); bb=Math.round(84+u*(140-84)); }
+else { var u2=(s-.5)*2; rr=Math.round(33+u2*(253-33)); gg=Math.round(145+u2*(231-145)); bb=Math.round(140+u2*(37-140)); }
+if (!lightMode && s < 0.25) { rr += 60; gg += 60; bb += 60; }
+return 'rgb('+rr+','+gg+','+bb+')';
+}
+return 'hsl(' + ((1-t)*240|0) + ',100%,' + (lightMode ? '40%' : '58%') + ')';
+}
+/* ── Arrow grid (cached) ── */
+var COLS = 32, ROWS = 28, gridCache = null, linesCache = null;
+function logNorm(B, Bmax) { if (B < 1e-15) return 0; var hi = Math.log10(Math.max(Bmax, 1e-12)); return Math.max(0, Math.min(1, (Math.log10(B)-(hi-5))/5)); }
+function insideMagnet(px, py, mag) {
+var dx = px - mag.x, dy = py - mag.y, ar = mag.ang*Math.PI/180;
+var locX = dx*Math.cos(ar) + dy*Math.sin(ar), locY = -dx*Math.sin(ar) + dy*Math.cos(ar);
+return Math.abs(locX) < mag.halfW + 0.06 && Math.abs(locY) < mag.halfLen + 0.06;
+}
+function nearAnyMagnet(px, py) { for (var i = 0; i < magnets.length; i++) if (magnets[i].active && insideMagnet(px, py, magnets[i])) return true; return false; }
+function computeGrid() {
+var stepX = (2*XEXT)/COLS, stepY = (2*YEXT)/ROWS, pts = [], Bmax = 0;
+for (var r = 0; r <= ROWS; r++) { var py = -YEXT + r*stepY;
+for (var c = 0; c <= COLS; c++) { var px = -XEXT + c*stepX; if (nearAnyMagnet(px, py)) continue;
+var f = fieldAt(px, py); pts.push({ px:px, py:py, Bx:f.Bx, By:f.By, B:f.B }); if (f.B > Bmax) Bmax = f.B; } }
+gridCache = pts; globalBmax = Math.max(Bmax, 1e-12);
+}
+function drawArrowGrid(p) {
+if (!gridCache) computeGrid();
+var maxLen = Math.min(CW/COLS, CH/ROWS)*0.40;
+for (var i = 0; i < gridCache.length; i++) {
+var f = gridCache[i]; if (f.B < 1e-15) continue;
+var pos = toCanvas(f.px, f.py), cvx = pos[0], cvy = pos[1], t = logNorm(f.B, globalBmax), col = colorFn(t), len = t*maxLen;
+if (len < 1.2) continue;
+var ex = cvx + f.Bx/f.B*len, ey = cvy - f.By/f.B*len;
+ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = p.lw; ctx.globalAlpha = lightMode ? 1 : 0.9;
+ctx.beginPath(); ctx.moveTo(cvx, cvy); ctx.lineTo(ex, ey); ctx.stroke();
+var hl = Math.min(len*0.38, 5.5), ang = Math.atan2(ey - cvy, ex - cvx);
+ctx.beginPath(); ctx.moveTo(ex, ey);
+ctx.lineTo(ex - hl*Math.cos(ang-0.42), ey - hl*Math.sin(ang-0.42));
+ctx.lineTo(ex - hl*Math.cos(ang+0.42), ey - hl*Math.sin(ang+0.42));
+ctx.closePath(); ctx.fill();
+}
+ctx.globalAlpha = 1;
+}
+/* ── Field lines (RK4 streamlines), traced once per configuration and cached ── */
+function fieldDir(px, py) { var f = fieldAt(px, py); if (f.B < 1e-15) return { ux:0, uy:0 }; return { ux:f.Bx/f.B, uy:f.By/f.B }; }
+function traceFieldLine(x0, y0, forward, steps, ds) {
+var pts = [[x0, y0]], x = x0, y = y0, sign = forward ? 1 : -1;
+for (var i = 0; i < steps; i++) {
+if (x < -XEXT-0.1 || x > XEXT+0.1 || y < -YEXT-0.1 || y > YEXT+0.1) break;
+var k1 = fieldDir(x, y), k2 = fieldDir(x+0.5*ds*sign*k1.ux, y+0.5*ds*sign*k1.uy);
+var k3 = fieldDir(x+0.5*ds*sign*k2.ux, y+0.5*ds*sign*k2.uy), k4 = fieldDir(x+ds*sign*k3.ux, y+ds*sign*k3.uy);
+x += sign*ds*(k1.ux+2*k2.ux+2*k3.ux+k4.ux)/6; y += sign*ds*(k1.uy+2*k2.uy+2*k3.uy+k4.uy)/6;
+pts.push([x, y]);
+var inside = false;
+for (var j = 0; j < magnets.length; j++) {
+if (!magnets[j].active) continue;
+var m = magnets[j], mx = x - m.x, my = y - m.y, ar = m.ang*Math.PI/180;
+var lx = mx*Math.cos(ar) + my*Math.sin(ar), ly = -mx*Math.sin(ar) + my*Math.cos(ar);
+if (Math.abs(lx) < m.halfW*0.9 && Math.abs(ly) < m.halfLen*0.9) { inside = true; break; }
+}
+if (inside) break;
+}
+return pts;
+}
+function getSeedPoints() {
+var seeds = [];
+for (var i = 0; i < magnets.length; i++) {
+var m = magnets[i]; if (!m.active) continue;
+var ar = m.ang*Math.PI/180, lyHx = Math.sin(ar), lyHy = Math.cos(ar), lxHx = Math.cos(ar), lxHy = -Math.sin(ar);
+/* Lines start 2 cm OUTSIDE the pole face: right on the face (a sheet of sampled "charge") the computed
+field is erratic and the old seeds got stuck there, so no lines were drawn for a single magnet.
+The 9 starting points are spread evenly across the face (the old cos-spacing doubled most of them). */
+var off = m.halfLen + 0.02, nFaceX = m.x + lyHx*off, nFaceY = m.y + lyHy*off;
+for (var k = 0; k < 9; k++) { var frac = -0.9 + 0.225*k; seeds.push({ x:nFaceX + lxHx*m.halfW*frac, y:nFaceY + lxHy*m.halfW*frac, forward:m.polarity > 0 }); }
+}
+return seeds;
+}
+function computeLines() {
+var seeds = getSeedPoints(), out = [];
+for (var si = 0; si < seeds.length; si++) { var pts = traceFieldLine(seeds[si].x, seeds[si].y, seeds[si].forward, 400, 0.012); if (pts.length >= 3) out.push(pts); }
+linesCache = out;
+}
+function drawFieldLines(p) {
+if (!showFL) return;
+if (!linesCache) { if (interactive) return; computeLines(); }
+ctx.strokeStyle = p.line; ctx.lineWidth = hcMode ? 1.5 : 1.1;
+for (var li = 0; li < linesCache.length; li++) {
+var pts = linesCache[li]; ctx.beginPath();
+for (var k = 0; k < pts.length; k++) { var q = toCanvas(pts[k][0], pts[k][1]); if (k === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
+ctx.stroke();
+}
+}
+function drawBackground(p) {
+ctx.fillStyle = p.bg; ctx.fillRect(0, 0, CW, CH);
+ctx.strokeStyle = p.grid; ctx.lineWidth = 1;
+for (var gx = -2; gx <= 2.0001; gx += 0.5) { var a = toCanvas(gx, -YEXT), b = toCanvas(gx, YEXT); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+for (var gy = -1.5; gy <= 1.5001; gy += 0.5) { var c = toCanvas(-XEXT, gy), d = toCanvas(XEXT, gy); ctx.beginPath(); ctx.moveTo(c[0],c[1]); ctx.lineTo(d[0],d[1]); ctx.stroke(); }
+ctx.strokeStyle = p.axis; ctx.lineWidth = 1.2;
+var e = toCanvas(-XEXT, 0), f = toCanvas(XEXT, 0); ctx.beginPath(); ctx.moveTo(e[0],e[1]); ctx.lineTo(f[0],f[1]); ctx.stroke();
+var g = toCanvas(0, -YEXT), h = toCanvas(0, YEXT); ctx.beginPath(); ctx.moveTo(g[0],g[1]); ctx.lineTo(h[0],h[1]); ctx.stroke();
+ctx.fillStyle = p.axis; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+ctx.fillText('x (m)', CW - 38, e[1] - 5); ctx.fillText('y (m)', h[0] + 5, 12);
+}
+function drawMagnet(p, mag, idx) {
+if (!mag.active) return;
+var ar = mag.ang*Math.PI/180, lyHx = Math.sin(ar), lyHy = Math.cos(ar), lxHx = Math.cos(ar), lxHy = -Math.sin(ar);
+var cols = magColors(idx), nCol = mag.polarity >= 0 ? cols.n : cols.s, sCol = mag.polarity >= 0 ? cols.s : cols.n;
+var nLabel = mag.polarity >= 0 ? 'N' : 'S', sLabel = mag.polarity >= 0 ? 'S' : 'N';
+function corner(halfY, halfX) { return toCanvas(mag.x + lxHx*halfX + lyHx*halfY, mag.y + lxHy*halfX + lyHy*halfY); }
+function quad(a, b, c, d, fill) { ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.lineTo(c[0],c[1]); ctx.lineTo(d[0],d[1]); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); }
+var nn1 = corner(mag.halfLen, -mag.halfW), nn2 = corner(mag.halfLen, mag.halfW), nn3 = corner(0, mag.halfW), nn4 = corner(0, -mag.halfW);
+var ss3 = corner(-mag.halfLen, mag.halfW), ss4 = corner(-mag.halfLen, -mag.halfW);
+quad(nn1, nn2, nn3, nn4, nCol); quad(nn4, nn3, ss3, ss4, sCol);
+ctx.beginPath(); ctx.moveTo(nn1[0],nn1[1]); ctx.lineTo(nn2[0],nn2[1]); ctx.lineTo(ss3[0],ss3[1]); ctx.lineTo(ss4[0],ss4[1]); ctx.closePath();
+ctx.strokeStyle = cols.border; ctx.lineWidth = hcMode ? 2.5 : 2; ctx.stroke();
+ctx.beginPath(); ctx.moveTo(nn4[0],nn4[1]); ctx.lineTo(nn3[0],nn3[1]); ctx.strokeStyle = p.midline; ctx.lineWidth = hcMode ? 2 : 1.2; ctx.stroke();
+ctx.fillStyle = '#ffffff'; ctx.font = 'bold ' + (hcMode ? 13 : 12) + 'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+var nC = corner(mag.halfLen*0.5, 0), sC = corner(-mag.halfLen*0.5, 0);
+ctx.fillText(nLabel, nC[0], nC[1]); ctx.fillText(sLabel, sC[0], sC[1]);
+ctx.textBaseline = 'alphabetic';
+}
+function drawCompass(p) {
+var pos = toCanvas(compass.x, compass.y), cx = pos[0], cy = pos[1], f = fieldAt(compass.x, compass.y), R = 16;
+ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fillStyle = p.face; ctx.fill();
+ctx.strokeStyle = p.rim; ctx.lineWidth = hcMode ? 3 : 2; ctx.stroke();
+if (f.B > 1e-15) {
+var nx = f.Bx/f.B*(R-3), ny = -f.By/f.B*(R-3);
+ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+nx, cy+ny); ctx.strokeStyle = p.needleN; ctx.lineWidth = hcMode ? 3.5 : 2.8; ctx.stroke();
+ctx.beginPath(); ctx.arc(cx+nx, cy+ny, hcMode ? 4 : 3.2, 0, Math.PI*2); ctx.fillStyle = p.needleN; ctx.fill();
+ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx-nx, cy-ny); ctx.strokeStyle = p.needleS; ctx.lineWidth = hcMode ? 3.5 : 2.8; ctx.stroke();
+}
+ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI*2); ctx.fillStyle = p.rim; ctx.fill();
+}
+function drawLegend(p) {
+var x0 = CW-150, y0 = CH-22, w = 110, h = 8;
+ctx.fillStyle = p.face; ctx.fillRect(x0-8, y0-16, w+46, 30);
+for (var i = 0; i < w; i++) { ctx.fillStyle = colorFn(i/(w-1)); ctx.fillRect(x0+i, y0, 1, h); }
+ctx.strokeStyle = p.axis; ctx.lineWidth = 1; ctx.strokeRect(x0, y0, w, h);
+ctx.fillStyle = p.text; ctx.font = '9px monospace'; ctx.textAlign = 'left';
+ctx.fillText('weak', x0, y0-4); ctx.textAlign = 'right'; ctx.fillText('strong |B|', x0+w+34, y0-4);
+}
+function updateDots() { for (var i = 0; i < 4; i++) { var d = el('mmDot' + i + ''); if (d) d.style.background = magColors(i).border; } }
+function redraw() {
+var p = pal();
+ctx.clearRect(0, 0, CW, CH);
+drawBackground(p); drawFieldLines(p); drawArrowGrid(p);
+for (var i = 0; i < magnets.length; i++) drawMagnet(p, magnets[i], i);
+drawCompass(p); drawLegend(p); updateDots(); updateCanvasDesc();
+}
+/* ── Readouts & narration ── */
+function formatB(B) {
+if (B < 1e-9) return '< 1 nT';
+if (B < 1e-6) return (B*1e9).toFixed(1) + ' nT';
+if (B < 1e-3) return (B*1e6).toFixed(2) + ' \u00b5T';
+if (B < 1)    return (B*1e3).toFixed(3) + ' mT';
+return B.toFixed(3) + ' T';
+}
+function compassDir(Bx, By) {
+if (Math.sqrt(Bx*Bx + By*By) < 1e-15) return '\u2014';
+var deg = Math.atan2(By, Bx)*180/Math.PI, n = (((Math.round(deg/22.5) % 16) + 16) % 16);
+var dirs = ['E','ENE','NE','NNE','N','NNW','NW','WNW','W','WSW','SW','SSW','S','SSE','SE','ESE'];
+return dirs[n] + ' (' + deg.toFixed(1) + '\u00b0)';
+}
+function activeCount() { var n = 0; for (var i = 0; i < magnets.length; i++) if (magnets[i].active) n++; return n; }
+function updateReadouts() {
+var f = fieldAt(compass.x, compass.y);
+set('mmR_Bc', formatB(f.B));
+set('mmR_dir', compassDir(f.Bx, f.By));
+set('mmR_cpos', '(' + compass.x.toFixed(2) + ', ' + compass.y.toFixed(2) + ')');
+set('mmR_Bmax', formatB(globalBmax));
+set('mmR_count', String(activeCount()));
+var names = ['A','A2','B','C'], list = [];
+for (var i = 0; i < 4; i++) if (magnets[i].active) list.push(i === 0 && isSplit ? 'A1' : names[i]);
+set('mmDiagLabel', 'FIELD MAP -- ' + list.join(', '));
+}
+function updateNarration() {
+if (!showNarr) return;
+var n = activeCount(), f = fieldAt(compass.x, compass.y);
+var txt = n + ' magnet' + (n > 1 ? 's' : '') + ' active. ';
+if (isSplit) txt += 'Magnet A is split into two equal halves (A1 + A2); each half has its own N and S pole. ';
+txt += 'Field lines leave N poles and re-enter S poles. Compass at (' + compass.x.toFixed(2) + ', ' + compass.y.toFixed(2) + '): |B| = ' + formatB(f.B) + ', pointing ' + compassDir(f.Bx, f.By) + '.';
+set('mmNarration', txt);
+}
+function updateCanvasDesc() {
+var d = 'Magnetic field from ' + activeCount() + ' bar magnet(s). Peak |B| = ' + formatB(globalBmax) + '.';
+set('mmCanvasDesc', d); canvas.setAttribute('aria-label', d);
+}
+/* ── Update scheduling: 'view' (redraw only), 'interactive' (new grid, lines wait), 'full' (grid + lines) ── */
+var interactive = false, pending = null, queued = false, LEVEL = { view:0, interactive:1, full:2 };
+function scheduleUpdate(level) {
+if (pending === null || LEVEL[level] > LEVEL[pending]) pending = level;
+if (queued) return; queued = true;
+var run = function() {
+queued = false; var lv = pending; pending = null;
+if (lv === 'interactive') { gridCache = null; linesCache = null; interactive = true; }
+else if (lv === 'full') { gridCache = null; linesCache = null; interactive = false; }
+redraw(); updateReadouts(); updateNarration();
+};
+if (window.requestAnimationFrame) window.requestAnimationFrame(run); else setTimeout(run, 16);
+}
+function doUpdate() { scheduleUpdate('full'); }
+/* ── Slider sync ── */
+var SLIDER_MAP = [
+{x:'mmSlAx',  y:'mmSlAy',  ang:'mmSlAang',  vx:'mmVAx',  vy:'mmVAy',  vang:'mmVAang'},
+{x:'mmSlA2x', y:'mmSlA2y', ang:'mmSlA2ang', vx:'mmVA2x', vy:'mmVA2y', vang:'mmVA2ang'},
+{x:'mmSlBx',  y:'mmSlBy',  ang:'mmSlBang',  vx:'mmVBx',  vy:'mmVBy',  vang:'mmVBang'},
+{x:'mmSlCx',  y:'mmSlCy',  ang:'mmSlCang',  vx:'mmVCx',  vy:'mmVCy',  vang:'mmVCang'}
+];
+function sgn(v) { return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(2) + ' m'; }
+function syncMagSliders(idx) {
+var m = magnets[idx], s = SLIDER_MAP[idx];
+if (el(s.x)) el(s.x).value = m.x.toFixed(2); if (el(s.y)) el(s.y).value = m.y.toFixed(2); if (el(s.ang)) el(s.ang).value = m.ang.toFixed(0);
+set(s.vx, sgn(m.x)); set(s.vy, sgn(m.y)); set(s.vang, m.ang.toFixed(0) + '\u00b0');
+}
+function resolveIdx(key) { if (key === 'B') return 2; if (key === 'C') return 3; return parseInt(key, 10); }
+function onMagSlider(key, prop, val, live) {
+var idx = resolveIdx(key), m = magnets[idx]; if (!m) return;
+var v = parseFloat(val);
+if (prop === 'x') m.x = v; else if (prop === 'y') m.y = v; else if (prop === 'ang') m.ang = v;
+syncMagSliders(idx);
+scheduleUpdate(live ? 'interactive' : 'full');
+}
+function normAng(a) { a = ((a % 360) + 360) % 360; return a > 180 ? a - 360 : a; }
+/* ── Scene actions ── */
+function addMagnetB() {
+if (isSplit) { srAnnounce('Unsplit magnet A first.'); return; }
+magnets[2].active = true; magnets[2].x = 0.75; magnets[2].y = 0; magnets[2].ang = magnets[0].ang; magnets[2].polarity = magnets[0].polarity;
+syncMagSliders(2); el('mmBoxB').style.display = ''; el('mmBtnAddC').disabled = false;
+doUpdate(); srAnnounce('Magnet B added.');
+}
+function addMagnetC() {
+magnets[3].active = true; magnets[3].x = -0.75; magnets[3].y = 0; magnets[3].ang = magnets[0].ang; magnets[3].polarity = magnets[0].polarity;
+syncMagSliders(3); el('mmBoxC').style.display = '';
+doUpdate(); srAnnounce('Magnet C added.');
+}
+function clearExtra() {
+magnets[2].active = false; magnets[3].active = false;
+el('mmBoxB').style.display = 'none'; el('mmBoxC').style.display = 'none'; el('mmBtnAddC').disabled = true;
+doUpdate(); srAnnounce('Extra magnets removed.');
+}
+function flipMagnet(key) {
+var idx = resolveIdx(key);
+if (idx === 0 && isSplit) { magnets[0].polarity *= -1; magnets[1].polarity *= -1; } else magnets[idx].polarity *= -1;
+doUpdate(); srAnnounce('Magnet polarity flipped.');
+}
+function rotateMagnet(key, deg) {
+var idx = resolveIdx(key);
+if (idx === 0 && isSplit) { magnets[0].ang = normAng(magnets[0].ang + deg); magnets[1].ang = normAng(magnets[1].ang + deg); syncMagSliders(0); syncMagSliders(1); }
+else { magnets[idx].ang = normAng(magnets[idx].ang + deg); syncMagSliders(idx); }
+doUpdate(); srAnnounce('Rotated ' + deg + ' degrees.');
+}
+function splitMagnetA() {
+if (magnets[2].active || magnets[3].active) { srAnnounce('Remove extra magnets before splitting.'); return; }
+isSplit = true;
+var a = magnets[0];
+a.halfLen = DEF_HALF/2; a.halfW = DEF_W; a.strength = DEF_STR/2;
+var ar = a.ang*Math.PI/180;
+a.x += Math.sin(ar)*DEF_HALF/2; a.y += Math.cos(ar)*DEF_HALF/2;
+magnets[1].active = true; magnets[1].ang = a.ang; magnets[1].polarity = a.polarity;
+magnets[1].halfLen = DEF_HALF/2; magnets[1].halfW = DEF_W; magnets[1].strength = DEF_STR/2;
+magnets[1].x = a.x - Math.sin(ar)*DEF_HALF; magnets[1].y = a.y - Math.cos(ar)*DEF_HALF;
+syncMagSliders(0); syncMagSliders(1);
+el('mmSecA2').style.display = ''; el('mmSplitBadge').style.display = ''; set('mmLblA1', 'Half A1');
+el('mmBtnSplit').style.display = 'none'; el('mmBtnUnsplit').style.display = ''; el('mmBtnAddB').disabled = true;
+doUpdate(); srAnnounce('Magnet A split into two halves.');
+}
+function unsplitMagnetA() {
+isSplit = false;
+magnets[0].halfLen = DEF_HALF; magnets[0].halfW = DEF_W; magnets[0].strength = DEF_STR; magnets[0].x = 0; magnets[0].y = 0; magnets[0].ang = 0;
+magnets[1].active = false; syncMagSliders(0);
+el('mmSecA2').style.display = 'none'; el('mmSplitBadge').style.display = 'none'; set('mmLblA1', 'Magnet A');
+el('mmBtnSplit').style.display = ''; el('mmBtnUnsplit').style.display = 'none'; el('mmBtnAddB').disabled = false;
+doUpdate(); srAnnounce('Magnet A unsplit and reset.');
+}
+/* ── Dragging magnets and the compass ── */
+function hitTestMagnets(cx2, cy2) {
+var q = fromCanvas(cx2, cy2);
+for (var i = magnets.length-1; i >= 0; i--) {
+var m = magnets[i]; if (!m.active) continue;
+var dx = q[0] - m.x, dy = q[1] - m.y, ar = m.ang*Math.PI/180;
+var lx = dx*Math.cos(ar) + dy*Math.sin(ar), ly = -dx*Math.sin(ar) + dy*Math.cos(ar);
+if (Math.abs(lx) < m.halfW + 0.12 && Math.abs(ly) < m.halfLen + 0.12) return i;
+}
+return -1;
+}
+function hitCompass(cx2, cy2) { var pos = toCanvas(compass.x, compass.y); return (cx2-pos[0])*(cx2-pos[0]) + (cy2-pos[1])*(cy2-pos[1]) < 20*20; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function canvasXY(clientX, clientY) { var r = canvas.getBoundingClientRect(); return [(clientX - r.left)*(CW/r.width), (clientY - r.top)*(CH/r.height)]; }
+function dragTo(px, py) {
+if (dragging.type === 'compass') { compass.x = clamp(px, -XEXT, XEXT); compass.y = clamp(py, -YEXT, YEXT); scheduleUpdate('view'); }
+else { var m = magnets[dragging.idx]; m.x = clamp(px, -1.5, 1.5); m.y = clamp(py, -1.5, 1.5); syncMagSliders(dragging.idx); scheduleUpdate('interactive'); }
+}
+function endDrag() { if (dragging && dragging.type === 'magnet') scheduleUpdate('full'); dragging = null; }
+function startDrag(c, e) {
+if (hitCompass(c[0], c[1])) { dragging = { type:'compass' }; e.preventDefault(); return true; }
+var idx = hitTestMagnets(c[0], c[1]);
+if (idx >= 0) { dragging = { type:'magnet', idx:idx }; e.preventDefault(); return true; }
+return false;
+}
+canvas.addEventListener('mousedown', function(e) { if (startDrag(canvasXY(e.clientX, e.clientY), e)) canvas.style.cursor = 'grabbing'; });
+canvas.addEventListener('mousemove', function(e) {
+var c = canvasXY(e.clientX, e.clientY), q = fromCanvas(c[0], c[1]);
+if (dragging) dragTo(q[0], q[1]);
+var f = fieldAt(q[0], q[1]);
+set('mmHoverReadout', 'x = ' + q[0].toFixed(3) + ' m  |  y = ' + q[1].toFixed(3) + ' m  |  |B| = ' + formatB(f.B) + '  |  ' + compassDir(f.Bx, f.By));
+});
+document.addEventListener('mouseup', function() { endDrag(); canvas.style.cursor = 'crosshair'; });
+canvas.addEventListener('mouseleave', function() { set('mmHoverReadout', 'Hover over or tap the field to read B at that point'); });
+canvas.addEventListener('touchstart', function(e) { var t = e.touches[0]; startDrag(canvasXY(t.clientX, t.clientY), e); }, { passive:false });
+canvas.addEventListener('touchmove', function(e) { if (!dragging) return; e.preventDefault(); var t = e.touches[0], c = canvasXY(t.clientX, t.clientY), q = fromCanvas(c[0], c[1]); dragTo(q[0], q[1]); }, { passive:false });
+document.addEventListener('touchend', function() { endDrag(); });
+/* ── Display options (redraw only, no recalculation) ── */
+function setBtnOn(id, on) { var b = el(id); if (!b) return; b.classList.toggle('mm_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function applyDisplay() {
+ROOT.classList.toggle('mm_hc', hcMode); ROOT.classList.toggle('mm_lm', lightMode); ROOT.classList.toggle('mm_cb', cbMode);
+setBtnOn('mmBtnHC', hcMode); setBtnOn('mmBtnLM', lightMode); setBtnOn('mmBtnCB', cbMode); setBtnOn('mmBtnNarr', showNarr);
+var nb = el('mmBtnNarr'); if (nb) nb.textContent = 'NARRATION: ' + (showNarr ? 'ON' : 'OFF');
+var box = el('mmNarrBox'); if (box) box.style.display = showNarr ? '' : 'none';
+var fl = el('mmShowFL'); if (fl) fl.checked = showFL;
+}
+function toggleHC() { hcMode = !hcMode; if (hcMode) lightMode = false; applyDisplay(); scheduleUpdate('view'); srAnnounce('High contrast ' + (hcMode ? 'on.' : 'off.')); }
+function toggleLight() { lightMode = !lightMode; if (lightMode) hcMode = false; applyDisplay(); scheduleUpdate('view'); srAnnounce('Light mode ' + (lightMode ? 'on.' : 'off.')); }
+function toggleCB() { cbMode = !cbMode; applyDisplay(); scheduleUpdate('view'); srAnnounce('Color-blind safe colors ' + (cbMode ? 'on.' : 'off.')); }
+function toggleFL() { var fl = el('mmShowFL'); showFL = fl ? fl.checked : !showFL; scheduleUpdate('view'); srAnnounce('Field lines ' + (showFL ? 'on.' : 'off.')); }
+function toggleNarr() { showNarr = !showNarr; applyDisplay(); if (showNarr) updateNarration(); srAnnounce('Narration ' + (showNarr ? 'on.' : 'off.')); }
+var srTimer = null;
+function srAnnounce(msg) { var e2 = el('mmSrAnnounce'); if (!e2) return; e2.textContent = ''; clearTimeout(srTimer); srTimer = setTimeout(function() { e2.textContent = msg; }, 60); }
+/* ── Keyboard shortcuts ── */
+ROOT.setAttribute('tabindex', '0');
+ROOT.addEventListener('keydown', function(e) {
+var tag = document.activeElement.tagName;
+if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+switch (e.key) {
+case 'h': case 'H': toggleHC(); e.preventDefault(); break;
+case 'l': case 'L': toggleLight(); e.preventDefault(); break;
+case 'c': case 'C': toggleCB(); e.preventDefault(); break;
+case 'f': case 'F': var fl = el('mmShowFL'); if (fl) fl.checked = !fl.checked; toggleFL(); e.preventDefault(); break;
+case 'n': case 'N': toggleNarr(); e.preventDefault(); break;
+}
+});
+if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { var mn = el('mmMotionNotice'); if (mn) mn.style.display = 'block'; }
+/* ── Boot ── */
+applyDisplay();
+doUpdate();
+return {
+onMagSlider:onMagSlider, addMagnetB:addMagnetB, addMagnetC:addMagnetC, clearExtra:clearExtra, flipMagnet:flipMagnet, rotateMagnet:rotateMagnet,
+splitMagnetA:splitMagnetA, unsplitMagnetA:unsplitMagnetA, toggleHC:toggleHC, toggleLight:toggleLight, toggleCB:toggleCB, toggleFL:toggleFL, toggleNarr:toggleNarr
+};
+};
+</script>
+<script>
+var multiMagnetSim = new multiMagnetSim();
+</script>
+<script>
+/* phones and tablets have no hover: a tap (or a finger moving over the field) updates the B readout */
+(function(){
+var cv = document.getElementById('mmCanvas');
+if (!cv || typeof MouseEvent !== 'function') return;
+var lastTouch = 0;
+function relay(e){ if (!e.touches || !e.touches.length) return; var t = e.touches[0]; lastTouch = Date.now();
+cv.dispatchEvent(new MouseEvent('mousemove', { clientX:t.clientX, clientY:t.clientY, bubbles:true })); }
+cv.addEventListener('touchstart', relay, { passive:true });
+cv.addEventListener('touchmove', relay, { passive:true });
+cv.addEventListener('touchend', function(){ lastTouch = Date.now(); }, { passive:true });
+/* after a tap the browser sends a mouseleave; keep the reading on screen instead of resetting it */
+cv.addEventListener('mouseleave', function(e){ if (Date.now() - lastTouch < 1000) e.stopImmediatePropagation(); }, true);
+})();
+</script>
+</main>
+</body>
+</html>

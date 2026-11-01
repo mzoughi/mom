@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Convergent Lens -- Following the Light</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, geometrical optics, lenses, convergent lens, ray tracing, image formation, inverted image, thin lens equation, lesson, scientific">
+<meta name="description" content="This simulation shows a convergent lens and three sets of rays (pink, blue and green) that leave different heights of the object. Each set of rays converges to its own point of the image, showing how every point of the object is imaged to one point of the image. The light-source slider shifts which ">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="snellRoot" class="sn_root" role="region" aria-label="Convergent Lens -- Following the Light simulator">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y" id="snellA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn" id="snBtnHC" onclick="snellA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn" id="snBtnLM" onclick="snellA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn" id="snBtnCB" onclick="snellA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="sn_a11ybtn sn_a11yon" id="snBtnNR" onclick="snellA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="sn_header">
+<div id="canvasesdiv" class="tbar"><H3>Convergent Lenses</H3></div>
+<p class="sn_sub">Rays from different points of the object meet at different points of the image</p>
+</div>
+<!-- Ray diagram -->
+<div class="sn_diagpanel">
+<div class="sn_diaglabel"><b>RAY DIAGRAM</b><span class="sn_diagnote">use the sliders below to move the object, the screen and the eye, and to change the lens</span></div>
+<div class="mcontent">
+<canvas id="cv" width="820" height="380"><span style="color:red;">This browser doesn't support HTML 5 canvas!</span></canvas>
+</div>
+</div>
+<div class="sn_grid">
+<div class="sn_leftcol">
+<!-- Narration bar -->
+<div id="snNarBar" class="sn_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+</div>
+<div class="sn_rightcol">
+<div class="sn_panel" role="group" aria-label="Controls">
+<div class="sn_paneltitle">Controls</div>
+<div class="sn_panelbody">
+<div class="bbar">
+<div class="left">Object</div>
+<div class="centerL sn_cell">
+`p_o = `<input class="slider" type="range" id="dObjectValue" min="-200" max="-20" value="-80" step="1"
+ oninput="CLens.showdObject(this.value)" onchange="CLens.showdObject(this.value)">
+<span class="txtDPL"><span id="initialdObjectValue">-80</span> cm</span>
+<span class="sn_br"></span>`h_o = `<input class="slider" type="range" id="hObjectValue" min="10" max="60" value="20" step="2"
+ oninput="CLens.showhObject(this.value)" onchange="CLens.showhObject(this.value)">
+<span class="txtDPL"><span id="initialhObjectValue">20</span> mm</span>
+</div>
+<div class="centerR">Lens</div>
+<div class="right sn_cell">
+`d_f = `<input class="slider" type="range" id="fValue" min="20" max="100" value="50" step="1"
+ oninput="CLens.showf(this.value)" onchange="CLens.showf(this.value)">
+<span class="txtDPL"><span id="initialfValue">50</span> cm</span>
+</div>
+</div>
+<div class="footer footer-pink">
+<div class="left">Move Light Source</div>
+<div class="center sn_cell">
+<input class="slider" type="range" id="opValue" min="0" max="0.3" value="0" step="0.05"
+ oninput="CLens.moveSpot(this.value)" onchange="CLens.moveSpot(this.value)">
+</div>
+<div class="right"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="sn_descwrap">
+<button type="button" class="sn_descbtn" id="snDescBtn" aria-expanded="false" aria-controls="snDesc" onclick="snDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="sn_desc" id="snDesc" role="region" aria-labelledby="snDescBtn" style="display:none">
+<p>This simulation shows a convergent lens and three sets of rays (pink, blue and green) that leave different heights of the object. Each set of rays converges to its own point of the image, showing how every point of the object is imaged to one point of the image. The light-source slider shifts which points of the object are lit.</p><p>For a thin lens of focal length `f`, an object at the distance `p_o` in front of the lens forms an image at the distance `p_i` given by the thin-lens equation</p>
+<p class="sn_eq">`1/p_o + 1/p_i = 1/f`,</p>
+<p>with the magnification</p>
+<p class="sn_eq">`m = h_i/h_o = -p_i/p_o`.</p>
+<p>A positive `p_i` is a real image behind the lens, which can be caught on a screen; a negative `p_i` is a virtual image on the same side as the object, which can only be seen by looking back through the lens. A negative `m` means the image is inverted.</p><p>Following the rays shows why a real image is inverted: the rays from the top of the object arrive at the bottom of the image.</p><p>This simulation is useful for understanding how a lens maps the points of an object onto the points of an image.</p>
+</div>
+</div>
+<script>
+function snDesc(){
+var b = document.getElementById('snDescBtn'), d = document.getElementById('snDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+</div><!-- #snellRoot -->
+<div class="sn_qwrap">
+<hr><h2>Convergent Lenses</h2><hr>
+<p>The simulation below shows a convergent double-convex lens at the middle of the screen. Two filled circles on the optical axis indicate the focal points; two open circles indicate twice the focal length. The object is a vertical arrow to the left of the lens. Three sets of rays (pink, blue, green) originate from different heights on the object, showing how rays from each point converge to form the image. Use the Light Source slider to shift which points are lit.</p>
+<hr><p>&nbsp;</p>
+<ol type="a">
+<p>Change the object position and object height until you get both object and image clearly visible on the screen. Wiggle the light sources to see their effect on the image.</p>
+<li>If a screen was used like for the previous simulation, when the object is upright arrow, from top (tip) of the arrow image to its bottom, the image would look</li>
+</ol>
+</div>
+
+<style>
+/* ════════ Hall effect template, scoped to #snellRoot (mobile friendly) ════════ */
+#snellRoot {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--tp-text);
+display:flex; flex-direction:column; gap:12px; padding:16px 10px 20px; box-sizing:border-box;
+width:100%; max-width:880px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#snellRoot.sn_lm {
+--tp-chassis:#e9edf1; --tp-panel:#ffffff; --tp-panel-hi:#f1f4f7; --tp-panel-lo:#f4f6f9;
+--tp-border:#c3cad3; --tp-border-hi:#9aa3ae; --tp-text:#1d232a; --tp-dim:#556070;
+--tp-accent:#a8620a; --tp-green:#12805a; --tp-val:#8a4a00;
+--tp-focus:#a8620a; --tp-nar-bg:#ffefc0; --tp-nar-border:#e0b040; --tp-nar-text:#333333; background-image:none;
+}
+#snellRoot.sn_hc {
+--tp-chassis:#000000; --tp-panel:#000000; --tp-panel-hi:#111111; --tp-panel-lo:#000000;
+--tp-border:#ffffff; --tp-border-hi:#ffffff; --tp-text:#ffffff; --tp-dim:#e0e0e0;
+--tp-accent:#ffd700; --tp-green:#00ff88; --tp-val:#ffff00;
+--tp-focus:#ffff00; --tp-nar-bg:#000000; --tp-nar-border:#ffd700; --tp-nar-text:#ffffff; background-image:none;
+}
+#snellRoot.sn_hc .sn_panel, #snellRoot.sn_hc .sn_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#snellRoot :not(mjx-container):not(mjx-container *), #snellRoot :not(mjx-container):not(mjx-container *)::before, #snellRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; }
+#snellRoot input:focus-visible, #snellRoot button:focus-visible, #snellRoot select:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+/* display options */
+#snellRoot .sn_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; padding:0; background:none; }
+#snellRoot .sn_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-dim); }
+#snellRoot .sn_a11ybtn:hover { border-color:var(--tp-accent); color:var(--tp-accent); }
+#snellRoot .sn_a11ybtn[aria-pressed="true"] { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* header */
+#snellRoot .tbar { height:auto; padding:0 4px; background:none; text-align:center; }
+#snellRoot .tbar h3 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent); }
+#snellRoot .sn_sub { font-size:.7rem; color:var(--tp-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; margin-top:3px; }
+/* the ray diagram */
+#snellRoot .sn_diagpanel { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#snellRoot .sn_diaglabel, #snellRoot .sn_paneltitle { background:var(--tp-panel-lo); border-bottom:1px solid var(--tp-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--tp-dim); }
+#snellRoot .sn_diaglabel { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#snellRoot .sn_diaglabel b { color:var(--tp-accent); }
+#snellRoot .sn_diagnote { text-transform:none; letter-spacing:.02em; }
+#snellRoot .mcontent { height:auto; }
+#snellRoot canvas { display:block; height:auto; margin:0 auto; }
+#snellRoot .mcontent canvas { width:100%; max-width:820px; }
+/* below the diagram: views and narration on the left, controls on the right */
+#snellRoot .sn_grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:12px; }
+#snellRoot .sn_leftcol, #snellRoot .sn_rightcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#snellRoot .sn_panel { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#snellRoot .sn_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#snellRoot .sn_views { display:flex; gap:8px; padding:9px; justify-content:center; }
+#snellRoot .sn_view { flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
+#snellRoot .sn_view canvas { width:100%; max-width:192px; border:2px solid var(--tp-border-hi); border-radius:3px; background:#fff; }
+#snellRoot .sn_view figcaption { font-family:monospace; font-size:.6rem; letter-spacing:.06em; text-transform:uppercase; color:var(--tp-dim); text-align:center; }
+/* narration */
+#snellRoot .sn_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--tp-nar-bg); border:none; border-left:4px solid var(--tp-nar-border); font-size:.82rem; color:var(--tp-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* slider rows */
+#snellRoot .bbbar, #snellRoot .bbbar2, #snellRoot .sbbar, #snellRoot .bbar, #snellRoot .footer { height:auto !important; width:auto; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:8px 10px; background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border); border-left:3px solid var(--tp-accent); border-radius:4px; text-align:left; font-size:.8rem; color:var(--tp-text); }
+#snellRoot .bbbar > div, #snellRoot .bbbar2 > div, #snellRoot .sbbar > div, #snellRoot .bbar > div, #snellRoot .footer > div { width:auto !important; padding:0 !important; background:none !important; flex:1 1 auto; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; }
+#snellRoot .left, #snellRoot .centerR { font-weight:bold; color:var(--tp-dim); font-size:.74rem; flex:0 0 auto !important; }
+#snellRoot .sn_cell { flex:1 1 100% !important; font-weight:normal; color:var(--tp-text); font-size:.8rem; }
+#snellRoot .sn_br { flex-basis:100%; height:0; }
+#snellRoot .bbar > .left, #snellRoot .bbar > .centerR, #snellRoot .sbbar > .left, #snellRoot .sbbar > .centerR { flex-basis:100% !important; }
+#snellRoot .slider, #snellRoot .zslider, #snellRoot .Bslider { flex:1 1 120px; width:auto !important; min-width:0; height:auto; accent-color:var(--tp-accent); }
+#snellRoot .txtDPL { background:var(--tp-panel-hi); color:var(--tp-val); border:1px solid var(--tp-border); border-radius:3px; font-family:monospace; font-size:.76rem; width:auto; min-width:58px; height:auto; padding:2px 6px; margin-left:0; text-align:right; }
+#snellRoot input[type=checkbox] { accent-color:var(--tp-accent); width:16px; height:16px; }
+#snellRoot select { width:100%; background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.78rem; }
+#snellRoot .sn_objrow { display:flex; flex-direction:column; gap:4px; padding:8px 10px; background:var(--tp-panel-lo); border:1px solid var(--tp-border); border-left:3px solid #e31836; border-radius:4px; }
+#snellRoot .sn_objrow label { font-size:.74rem; font-weight:bold; color:var(--tp-dim); }
+/* SIM description (toggle) */
+#snellRoot .sn_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#snellRoot .sn_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-accent); color:var(--tp-accent); border-radius:3px; font-weight:bold; }
+#snellRoot .sn_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#snellRoot .sn_desc { width:100%; background:var(--tp-panel); border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:4px; padding:12px 16px; color:var(--tp-text); font-size:.86rem; line-height:1.55; }
+#snellRoot .sn_desc p { margin:0 0 9px 0; }
+#snellRoot .sn_desc p:last-child { margin-bottom:0; }
+#snellRoot .sn_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.sn_qwrap { width:100%; max-width:880px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.sn_qwrap li { margin:0 0 10px 0; line-height:1.5; }
+/* narrow screens */
+@media (max-width:760px) {
+#snellRoot .sn_grid { grid-template-columns:minmax(0,1fr); }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#snellRoot input[type=range] { height:28px; }
+#snellRoot .sn_a11ybtn, #snellRoot .sn_descbtn { min-height:40px; }
+#snellRoot select { min-height:36px; font-size:16px; }
+#snellRoot input[type=checkbox] { width:22px; height:22px; }
+}
+@media (max-width:560px) {
+#snellRoot { padding:10px 6px 14px; }
+#snellRoot .sn_views { gap:5px; padding:6px; }
+}
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var snellA11y = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+var CSETS = {
+def: {
+bg: '#ffd', axis: '#000', focal: 'purple',
+obj: '#933', img: '#339', text: 'black',
+fanA: 'lightpink', fanB: 'lightblue', fanC: 'lightgreen'
+},
+hc: {
+bg: '#111', axis: '#fff', focal: '#ff88ff',
+obj: '#ff6600', img: '#44aaff', text: '#fff',
+fanA: '#ff8888', fanB: '#88ccff', fanC: '#88ffcc'
+},
+cb: { /* Okabe-Ito pastels -- all distinguishable */
+bg: '#ffd', axis: '#000', focal: '#cc79a7',
+obj: '#d55e00', img: '#0072b2', text: 'black',
+fanA: '#f0a896',   /* warm salmon -- vermilion family */
+fanB: '#99c4e0',   /* sky blue */
+fanC: '#99d9c3'    /* teal */
+}
+};
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('cv');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('snNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR', states.nr); }
+}
+function applyToolbar() {
+if (ROOT) ROOT.style.setProperty('--sn-toolbar-bg', (states.hc || states.lm) ? '#111' : '#222');
+}
+function apply() {
+if (!ROOT) return;
+ROOT.classList.toggle('sn_hc', states.hc); ROOT.classList.toggle('sn_lm', states.lm); ROOT.classList.toggle('sn_cb', states.cb);
+applyCanvas(); applyNarBar(); applyToolbar();
+styleBtn('snBtnHC', states.hc);
+styleBtn('snBtnLM', states.lm);
+styleBtn('snBtnCB', states.cb);
+}
+return {
+init: function() { ROOT = document.getElementById('snellRoot'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+if (typeof CLens !== 'undefined') CLens.rst();
+},
+isNarOn: function() { return states.nr; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('snNarBar');
+if (!nb) return;
+nb.innerHTML = msg;
+if (window.MathJax) {
+if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+}
+},
+getColors: function() {
+if (states.cb) return CSETS.cb;
+if (states.hc) return CSETS.hc;
+return CSETS.def;
+}
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var CLens = function() {
+var xBase=310, yBase=110, xInit=20;
+var slope=0.4, x1Init=0, x1=xBase+x1Init;
+var dObject=-80, hObject=20, objectColor='#933';
+var f=50, dImage, hImage, imageColor='#339';
+var lensKind=1, y1=yBase+80, time=0.0;
+var deltat=1/20.0, timer, runFlag=1, spot=0;
+var oT=0, oB=0;
+var lensRadius=160, radius=150;
+var dash=false, px, py;
+function _narrate(msg) { snellA11y.narrate(msg); }
+function _imageMsg() {
+var pi = -dObject*f/(-dObject-f);
+var msg = 'p<sub>o</sub>=' + Math.abs(dObject).toFixed(0) + ' cm, f=' + f.toFixed(0) + ' cm. ';
+if (!isFinite(pi) || Math.abs(pi) > 1e6) {
+msg += 'Image at &infin; (object at focal point).';
+} else if (pi > 0) {
+var m = pi/dObject;
+msg += 'Real image at p<sub>i</sub>=' + pi.toFixed(1) + ' cm. ';
+msg += 'm=' + m.toFixed(2) + '. ' + (m < 0 ? 'Inverted.' : 'Upright.');
+} else {
+msg += 'Virtual image at p<sub>i</sub>=' + pi.toFixed(1) + ' cm.';
+}
+return msg;
+}
+function showdObject(v) {
+document.getElementById("initialdObjectValue").innerHTML = v;
+dObject = Number(v); rst();
+_narrate(_imageMsg());
+}
+function showhObject(v) {
+document.getElementById("initialhObjectValue").innerHTML = v;
+hObject = Number(v); rst();
+_narrate('Object height h<sub>o</sub>=' + hObject + ' mm.');
+}
+function showf(v) {
+document.getElementById("initialfValue").innerHTML = v;
+f = Number(v);
+var newpoMax = -f;
+var sliderPo = document.getElementById("dObjectValue");
+sliderPo.max = newpoMax;
+if (Math.abs(sliderPo.value) <= Math.abs(newpoMax)) {
+document.getElementById("initialdObjectValue").innerHTML = newpoMax;
+sliderPo.value = newpoMax;
+dObject = newpoMax;
+}
+rst();
+_narrate('f=' + f.toFixed(0) + ' cm. ' + _imageMsg());
+}
+function moveSpot(v) {
+spot = Number(v); rst();
+_narrate('Light source offset=' + Number(v).toFixed(2) + '. Three source heights: ' +
+(0.30*(1-spot)*hObject).toFixed(1) + ', ' +
+(0.65*(1-spot)*hObject).toFixed(1) + ', ' +
+(1.00*(1-spot)*hObject).toFixed(1) + ' mm.');
+}
+function obsT(v) { oT = Number(v); rst(); }
+function obsB(v) { oB = Number(v); rst(); }
+function lensType(lens) {
+lensKind = Number(lens);
+f = lensKind===2 ? -Math.abs(f) : Math.abs(f);
+rst();
+}
+function drawClippedRay(x1,y1,x2,y2,x3,y3,color) {
+ctx.strokeStyle=color; ctx.lineWidth=2;
+ctx.beginPath(); ctx.moveTo(x1,y1);
+var hit=clipRayAtObstacle(x1,y1,x2,y2);
+ctx.lineTo(hit.x,hit.y); ctx.stroke();
+if (hit.x!==x2||hit.y!==y2) return;
+ctx.beginPath(); ctx.moveTo(x2,y2);
+hit=clipRayAtObstacle(x2,y2,x3,y3);
+ctx.lineTo(hit.x,hit.y); ctx.stroke();
+}
+function clipRayAtObstacle(x1,y1,x2,y2) {
+var xo=px, yTop=py-oT, yBot=py+oB;
+if ((x1<xo&&x2>xo)||(x1>xo&&x2<xo)) {
+var yHit=y1+(y2-y1)*(xo-x1)/(x2-x1);
+if (yHit>=yTop&&yHit<=yBot) return {x:xo,y:yHit};
+}
+return {x:x2,y:y2};
+}
+function rst() {
+window.clearTimeout(timer);
+index=-1; time=0.0;
+x1=xBase+x1Init; runFlag=1;
+drawMotion();
+}
+var canvas,ctx,mx,my;
+canvas = document.getElementById("cv");
+ctx    = canvas.getContext("2d");
+var index=-1;
+/* initial draw deferred to after snellA11y.init() */
+function drawMotion() {
+if (index>=400) runFlag=0;
+if (runFlag==1) {
+ctx.clearRect(0,0,canvas.width,canvas.height);
+index+=1;
+var C = snellA11y.getColors();
+objectColor = C.obj;
+imageColor  = C.img;
+ctx.fillStyle=C.bg;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+/* Lens */
+ctx.strokeStyle=C.axis; ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(x1+0.71*radius,y1+lensRadius);
+ctx.quadraticCurveTo(x1+0.71*radius-(110-f),y1,x1+0.71*radius,y1-lensRadius);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(x1+0.71*radius,y1+lensRadius);
+ctx.quadraticCurveTo(x1+0.71*radius+(110-f),y1,x1+0.71*radius,y1-lensRadius);
+ctx.stroke();
+/* Principal axis */
+ctx.beginPath(); ctx.moveTo(0,y1); ctx.lineTo(canvas.width,y1); ctx.stroke();
+/* Focal points */
+ctx.strokeStyle=C.focal; ctx.lineWidth=2;
+[x1+radius-0.29*radius-2*f, x1+radius-0.29*radius-4*f,
+ x1+radius-0.29*radius+2*f, x1+radius-0.29*radius+4*f].forEach(function(fx){
+ctx.beginPath(); ctx.arc(fx,y1,4,0,2*Math.PI,false);
+ctx.fillStyle=C.focal; ctx.fill(); ctx.stroke();
+});
+dImage = -dObject*f/(-dObject-f);
+hImage = dImage*hObject/dObject;
+const nrays=10;
+/* Obstacle reference point (no obstacle in this sim, but clipRay needs px/py) */
+px = x1+radius+0.02*radius; py = y1;
+/* Three ray fans from different object heights */
+var fans = [
+{ srcB: 0.30*(1-spot), color: C.fanA },
+{ srcB: 0.65*(1-spot), color: C.fanB },
+{ srcB: 1.00*(1-spot), color: C.fanC }
+];
+fans.forEach(function(fan) {
+for (var i=-nrays; i<=nrays; i++) {
+ctx.strokeStyle=fan.color; ctx.lineWidth=2;
+ctx.beginPath();
+var xRStart=x1+radius-0.29*radius+2*dObject, yRStart=y1-2*fan.srcB*hObject;
+ctx.moveTo(xRStart,yRStart);
+var xMid=x1+radius-0.29*radius, yMid=y1-16*i;
+var hit=clipRayAtObstacle(xRStart,yRStart,xMid,yMid);
+ctx.lineTo(hit.x,hit.y);
+if (hit.x!==xMid) { ctx.stroke(); continue; }
+var sl = Math.abs(hImage)<1e10 ? -(2*fan.srcB*hImage-16*i)/(2*dImage) : hObject/f;
+var xEnd=x1+radius-0.29*radius+2*dImage, yEnd=y1-16*i+sl*2*dImage;
+hit=clipRayAtObstacle(xMid,yMid,xEnd,yEnd);
+ctx.lineTo(hit.x,hit.y); ctx.stroke();
+}
+});
+/* Object arrow */
+if (hObject>0) { px=x1+radius-0.29*radius+2*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(2*hObject,Math.PI/2); }
+if (hObject<0) { px=x1+radius-0.29*radius+2*dObject; py=y1; ctx.strokeStyle=objectColor; arrowDraw(-2*hObject,Math.PI*1.5); }
+/* Image arrow */
+if (hImage>0) { if(dImage<0)dash=true; px=x1+radius-0.29*radius+2*dImage; py=y1; ctx.strokeStyle=imageColor; arrowDraw(2*hImage,Math.PI*0.5);  if(dash)dash=false; }
+if (hImage<0) { if(dImage<0)dash=true; px=x1+radius-0.29*radius+2*dImage; py=y1; ctx.strokeStyle=imageColor; arrowDraw(-2*hImage,Math.PI*1.5); if(dash)dash=false; }
+/* Canvas text labels */
+ctx.font='16pt Calibri'; ctx.fillStyle=C.text; ctx.textAlign='left';
+ctx.fillText('d\u2092 = ' + (-dObject).toFixed(2) + ' cm',  20, 330);
+ctx.fillText('h\u2092 = ' + hObject.toFixed(2) + ' mm',     20, 360);
+ctx.fillText('d\u1D62 = ' + dImage.toFixed(2) + ' cm',     250, 330);
+ctx.fillText('h\u1D62 = ' + hImage.toFixed(2) + ' mm',     250, 360);
+}
+}
+function arrowDraw(r,phi) {
+var xf=px+r*Math.cos(phi), yf=py-r*Math.sin(phi);
+arrow(px,py,xf,yf,3);
+}
+function arrow(x1,y1,x2,y2,w,col,txt,spc) {
+if(!w)w=1; if(!txt)txt=""; if(!spc)spc=5;
+if(!col)col=ctx.strokeStyle;
+if(dash){ctx.setLineDash([5,3]);}
+ctx.fillStyle=col; ctx.strokeStyle=col;
+var dx=x2-x1,dy=y2-y1,length=Math.sqrt(dx*dx+dy*dy);
+if(length===0)return;
+dx/=length; dy/=length;
+var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;
+var h=0.5*w+3.5;
+var xSp1=xSp-h*dy,ySp1=ySp+h*dx,xSp2=xSp+h*dy,ySp2=ySp-h*dx;
+xSp=x2-0.6*s*dx; ySp=y2-0.6*s*dy;
+ctx.beginPath(); ctx.lineWidth=w;
+ctx.moveTo(x1,y1);
+if(length<5)ctx.lineTo(x2,y2); else ctx.lineTo(xSp,ySp);
+ctx.stroke();
+if(length<5)return;
+ctx.beginPath(); ctx.fillStyle=ctx.strokeStyle;
+ctx.moveTo(xSp,ySp); ctx.lineTo(xSp1,ySp1); ctx.lineTo(x2,y2); ctx.lineTo(xSp2,ySp2);
+ctx.closePath(); ctx.fill();
+var tspc=x2<=x1?-(3*spc):2*spc;
+ctx.fillText(txt,x2+tspc,y2+spc);
+if(dash){ctx.setLineDash([5,0]);}
+}
+function runMotion() { drawMotion(); }
+return {
+rst, showdObject, moveSpot, showhObject, showf,
+redraw: function(){ rst(); }
+};
+};
+</script>
+<script>
+var CLens = new CLens();
+snellA11y.init();
+window.setTimeout(function(){
+CLens.rst();
+snellA11y.narrate('Convergent Lenses ready. p<sub>o</sub>=-80 cm, h<sub>o</sub>=20 mm, f=50 cm. Three ray fans show light from different object heights.');
+}, 0);
+</script>
+</main>
+</body>
+</html>
