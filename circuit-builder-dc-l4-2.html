@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-DC Circuit Builder</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,Circuit, DC, Electric, Electricity, Builder, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="csroot0915" role="main" aria-label="Circuit simulator">
+<!-- Screen-reader live region: announces selected component readings -->
+<div id="cs_live0915" class="cs_sronly0915" aria-live="polite" aria-atomic="true"></div>
+<!-- ── Toolbar ── -->
+<div class="cs_toolbar0915" id="cs_toolbar0915" role="toolbar" aria-label="Component tools">
+<div class="cs_tbbtn0915 cs_active0915" id="cs_tb-select0915" onclick="circuitSim0915.setTool('select')" title="Select / Move" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><path d="M6 4l16 10-7 2-3 7L6 4z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+<span class="cs_tblabel0915">SELECT</span>
+</div>
+<div class="cs_tbbtn0915" id="cs_tb-wire0915" onclick="circuitSim0915.setTool('wire')" title="Wire" tabindex="0">
+<svg viewBox="0 0 28 28"><line x1="4" y1="14" x2="24" y2="14" stroke="currentColor" stroke-width="2"/><circle cx="4" cy="14" r="2" fill="currentColor"/><circle cx="24" cy="14" r="2" fill="currentColor"/></svg>
+<span class="cs_tblabel0915">WIRE</span>
+</div>
+<div class="cs_tbsep0915"></div>
+<div class="cs_tbbtn0915" id="cs_tb-resistor0915" onclick="circuitSim0915.setTool('resistor')" title="Resistor" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><line x1="2" y1="14" x2="7" y2="14" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="10" width="14" height="8" stroke="currentColor" stroke-width="1.5" rx="1"/><line x1="21" y1="14" x2="26" y2="14" stroke="currentColor" stroke-width="1.5"/></svg>
+<span class="cs_tblabel0915">RES</span>
+</div>
+<div class="cs_tbbtn0915" id="cs_tb-capacitor0915" onclick="circuitSim0915.setTool('capacitor')" title="Capacitor" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><line x1="2" y1="14" x2="12" y2="14" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="8" x2="12" y2="20" stroke="currentColor" stroke-width="2"/><line x1="16" y1="8" x2="16" y2="20" stroke="currentColor" stroke-width="2"/><line x1="16" y1="14" x2="26" y2="14" stroke="currentColor" stroke-width="1.5"/></svg>
+<span class="cs_tblabel0915">CAP</span>
+</div>
+<div class="cs_tbbtn0915" id="cs_tb-inductor0915" onclick="circuitSim0915.setTool('inductor')" title="Inductor" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><line x1="2" y1="14" x2="5" y2="14" stroke="currentColor" stroke-width="1.5"/><path d="M5 14 Q7 9 9 14 Q11 19 13 14 Q15 9 17 14 Q19 19 21 14 Q23 9 23 14" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="23" y1="14" x2="26" y2="14" stroke="currentColor" stroke-width="1.5"/></svg>
+<span class="cs_tblabel0915">IND</span>
+</div>
+<div class="cs_tbsep0915"></div>
+<div class="cs_tbbtn0915" id="cs_tb-battery0915" onclick="circuitSim0915.setTool('battery')" title="Battery / Voltage Source" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><line x1="2" y1="14" x2="10" y2="14" stroke="currentColor" stroke-width="1.5"/><line x1="10" y1="9" x2="10" y2="19" stroke="currentColor" stroke-width="2.5"/><line x1="18" y1="9" x2="18" y2="19" stroke="currentColor" stroke-width="2.5"/><line x1="18" y1="14" x2="26" y2="14" stroke="currentColor" stroke-width="1.5"/><text x="11" y="8" fill="currentColor" font-size="6" font-family="monospace">+</text></svg>
+<span class="cs_tblabel0915">BATT</span>
+</div>
+<div class="cs_tbbtn0915" id="cs_tb-switch0915" onclick="circuitSim0915.setTool('switch')" title="Switch" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><circle cx="6" cy="14" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="22" cy="14" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="14" x2="6" y2="14" stroke="currentColor" stroke-width="1.5"/><line x1="22" y1="14" x2="26" y2="14" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="14" x2="20" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+<span class="cs_tblabel0915">SW</span>
+</div>
+<div class="cs_tbsep0915"></div>
+<div class="cs_tbbtn0915" id="cs_tb-voltmeter0915" onclick="circuitSim0915.setTool('voltmeter')" title="Voltmeter" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="9" stroke="currentColor" stroke-width="1.5"/><text x="14" y="18" fill="currentColor" font-size="9" text-anchor="middle" font-family="monospace">V</text></svg>
+<span class="cs_tblabel0915">VOLT</span>
+</div>
+<div class="cs_tbbtn0915" id="cs_tb-ammeter0915" onclick="circuitSim0915.setTool('ammeter')" title="Ammeter" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="9" stroke="currentColor" stroke-width="1.5"/><text x="14" y="18" fill="currentColor" font-size="9" text-anchor="middle" font-family="monospace">A</text></svg>
+<span class="cs_tblabel0915">AMP</span>
+</div>
+<div class="cs_tbbtn0915" id="cs_tb-marker0915" onclick="circuitSim0915.setTool('marker')" title="Node Marker" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="6" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="2" fill="currentColor"/></svg>
+<span class="cs_tblabel0915">NODE</span>
+</div>
+<div class="cs_tbbtn0915" id="cs_tb-ground0915" onclick="circuitSim0915.setTool('ground')" title="Ground" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><line x1="14" y1="4" x2="14" y2="14" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="14" x2="22" y2="14" stroke="currentColor" stroke-width="2"/><line x1="9" y1="18" x2="19" y2="18" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="22" x2="16" y2="22" stroke="currentColor" stroke-width="1"/></svg>
+<span class="cs_tblabel0915">GND</span>
+</div>
+<div class="cs_tbsep0915"></div>
+<div class="cs_tbbtn0915" id="cs_tb-delete0915" onclick="circuitSim0915.setTool('delete')" title="Delete" tabindex="0">
+<svg viewBox="0 0 28 28" fill="none"><line x1="6" y1="6" x2="22" y2="22" stroke="currentColor" stroke-width="2"/><line x1="22" y1="6" x2="6" y2="22" stroke="currentColor" stroke-width="2"/></svg>
+<span class="cs_tblabel0915">DEL</span>
+</div>
+</div><!-- cs_toolbar -->
+<!-- ── Canvas area ── -->
+<div class="cs_canvaswrap0915" id="cs_canvaswrap0915">
+<canvas id="cs_canvas0915" role="img" aria-label="Circuit canvas"></canvas>
+<div class="cs_hint0915" id="cs_hint0915">SELECT: click component | WIRE: click start, click end | R=rotate</div>
+</div>
+<!-- ── Right panel ── -->
+<div class="cs_rpanel0915" id="cs_rpanel0915">
+<div class="cs_rptitle0915">PROPERTIES</div>
+<div id="cs_proparea0915">
+<div class="cs_rpdimtext0915">Select a component<br>to edit its properties.</div>
+</div>
+<div class="cs_rpsep0915"></div>
+<div class="cs_rptitle0915">SIMULATION</div>
+<input type="button" class="cs_rpbtn0915" value="&#9654; RUN / UPDATE"   onclick="circuitSim0915.runSim()">
+<input type="button" class="cs_rpbtn0915" value="&#9632; STOP ANIMATION" onclick="circuitSim0915.stopSim()">
+<div class="cs_togglerow0915">
+<input type="checkbox" id="cs_chkflow0915" checked onchange="circuitSim0915.redraw()">
+<label for="cs_chkflow0915">Show current flow</label>
+</div>
+<div class="cs_togglerow0915" style="padding-left:14px;opacity:0.85">
+<input type="radio" id="cs_flowconv0915" name="cs_flowdir0915" value="conventional" checked onchange="circuitSim0915.redraw()">
+<label for="cs_flowconv0915">Conventional (+→−)</label>
+</div>
+<div class="cs_togglerow0915" style="padding-left:14px;opacity:0.85">
+<input type="radio" id="cs_flowelec0915" name="cs_flowdir0915" value="electron" onchange="circuitSim0915.redraw()">
+<label for="cs_flowelec0915">Electron (−→+)</label>
+</div>
+<div class="cs_togglerow0915">
+<input type="checkbox" id="cs_chkvolt0915" onchange="circuitSim0915.redraw()">
+<label for="cs_chkvolt0915">Voltage shading</label>
+</div>
+<div class="cs_rpsep0915"></div>
+<div class="cs_rptitle0915">READINGS</div>
+<div class="cs_rpreadout0915" id="cs_readout0915"><span style="color:var(--cs-text2)">Click a component,<br>or use &#8592;/&#8594; keys,<br>to see its readings.</span></div>
+<div class="cs_rpsep0915"></div>
+<input type="button" class="cs_rpbtn0915 cs_danger0915" value="&#10005; CLEAR ALL" onclick="circuitSim0915.clearAll()">
+<div class="cs_rpsep0915"></div>
+<div class="cs_rptitle0915">SAVE / LOAD</div>
+<input type="button" class="cs_rpbtn0915" value="&#11015; SAVE TO TEXT"   onclick="circuitSim0915.saveCircuit()">
+<input type="button" class="cs_rpbtn0915" value="&#11014; LOAD FROM TEXT" onclick="circuitSim0915.loadCircuit()">
+<textarea id="cs_circuitdata0915" class="cs_textarea0915"
+placeholder="Circuit JSON appears here after Save. Paste to Load.">{"v":2,"idCounter":112,"components":[{"id":81,"type":"resistor","gx":7,"gy":11,"rot":0,"props":{"R":270}},
+{"id":82,"type":"resistor","gx":7,"gy":15,"rot":0,"props":{"R":160}},
+{"id":83,"type":"battery","gx":3,"gy":19,"rot":3,"props":{"V":1.5}},
+{"id":84,"type":"battery","gx":16,"gy":22,"rot":1,"props":{"V":3}},
+{"id":85,"type":"battery","gx":18,"gy":15,"rot":0,"props":{"V":1.5}},
+{"id":86,"type":"resistor","gx":16,"gy":18,"rot":1,"props":{"R":390}},
+{"id":87,"type":"resistor","gx":14,"gy":15,"rot":2,"props":{"R":200}},
+{"id":88,"type":"resistor","gx":19,"gy":24,"rot":0,"props":{"R":330}},
+{"id":89,"type":"resistor","gx":22,"gy":19,"rot":1,"props":{"R":300}},
+{"id":90,"type":"wire","gx":3,"gy":16,"rot":1,"props":{},"_t0":{"gx":3,"gy":17},"_t1":{"gx":3,"gy":15}},
+{"id":91,"type":"wire","gx":4,"gy":15,"rot":0,"props":{},"_t0":{"gx":5,"gy":15},"_t1":{"gx":3,"gy":15}},
+{"id":92,"type":"wire","gx":4,"gy":11,"rot":0,"props":{},"_t0":{"gx":5,"gy":11},"_t1":{"gx":3,"gy":11}},
+{"id":93,"type":"wire","gx":3,"gy":13,"rot":1,"props":{},"_t0":{"gx":3,"gy":15},"_t1":{"gx":3,"gy":11}},
+{"id":94,"type":"wire","gx":13,"gy":11,"rot":0,"props":{},"_t0":{"gx":9,"gy":11},"_t1":{"gx":16,"gy":11}},
+{"id":95,"type":"wire","gx":16,"gy":13,"rot":1,"props":{},"_t0":{"gx":16,"gy":11},"_t1":{"gx":16,"gy":15}},
+{"id":96,"type":"wire","gx":11,"gy":15,"rot":0,"props":{},"_t0":{"gx":12,"gy":15},"_t1":{"gx":9,"gy":15}},
+{"id":97,"type":"wire","gx":16,"gy":16,"rot":1,"props":{},"_t0":{"gx":16,"gy":15},"_t1":{"gx":16,"gy":16}},
+{"id":98,"type":"wire","gx":21,"gy":15,"rot":0,"props":{},"_t0":{"gx":20,"gy":15},"_t1":{"gx":22,"gy":15}},
+{"id":99,"type":"wire","gx":22,"gy":16,"rot":1,"props":{},"_t0":{"gx":22,"gy":17},"_t1":{"gx":22,"gy":15}},
+{"id":100,"type":"wire","gx":22,"gy":23,"rot":1,"props":{},"_t0":{"gx":22,"gy":21},"_t1":{"gx":22,"gy":24}},
+{"id":101,"type":"wire","gx":22,"gy":24,"rot":0,"props":{},"_t0":{"gx":21,"gy":24},"_t1":{"gx":22,"gy":24}},
+{"id":102,"type":"wire","gx":17,"gy":24,"rot":0,"props":{},"_t0":{"gx":17,"gy":24},"_t1":{"gx":16,"gy":24}},
+{"id":103,"type":"wire","gx":14,"gy":24,"rot":0,"props":{},"_t0":{"gx":16,"gy":24},"_t1":{"gx":12,"gy":24}},
+{"id":104,"type":"wire","gx":12,"gy":20,"rot":1,"props":{},"_t0":{"gx":12,"gy":24},"_t1":{"gx":12,"gy":15}},
+{"id":106,"type":"wire","gx":3,"gy":23,"rot":1,"props":{},"_t0":{"gx":3,"gy":21},"_t1":{"gx":3,"gy":24}},
+{"id":107,"type":"resistor","gx":9,"gy":19,"rot":1,"props":{"R":820}},
+{"id":108,"type":"wire","gx":9,"gy":16,"rot":1,"props":{},"_t0":{"gx":9,"gy":15},"_t1":{"gx":9,"gy":17}},
+{"id":109,"type":"wire","gx":11,"gy":24,"rot":0,"props":{},"_t0":{"gx":12,"gy":24},"_t1":{"gx":9,"gy":24}},
+{"id":110,"type":"wire","gx":9,"gy":23,"rot":1,"props":{},"_t0":{"gx":9,"gy":21},"_t1":{"gx":9,"gy":24}},
+{"id":111,"type":"wire","gx":6,"gy":24,"rot":0,"props":{},"_t0":{"gx":9,"gy":24},"_t1":{"gx":3,"gy":24}}]}
+</textarea>
+<div class="cs_rpdimtext0915" style="margin-top:auto;line-height:1.5">
+KEYS: R=rotate · Del=delete<br>Esc=cancel
+</div>
+</div><!-- cs_rpanel -->
+</div><!-- #csroot0915 -->
+<style>
+/* ════════════════════════════════════════════════
+All rules scoped to #csroot0915
+════════════════════════════════════════════════ */
+#csroot0915 {
+--cs-bg:     #0a0c0f;
+--cs-grid:   #1a1f26;
+--cs-panel:  #111418;
+--cs-border: #2a3040;
+--cs-accent: #00d4ff;
+--cs-accent2:#ff6b35;
+--cs-green:  #39ff14;
+--cs-yellow: #ffd700;
+--cs-text:   #c8d4e0;
+--cs-text2:  #5a6878;
+--cs-mono:   'Share Tech Mono', monospace;
+display: flex;
+flex-direction: row;
+align-items: stretch;
+width: 100%;
+max-width: 1000px;
+min-height: 860px;
+height: 860px;
+background: var(--cs-bg);
+color: var(--cs-text);
+font-family: 'Rajdhani', Arial, sans-serif;
+box-sizing: border-box;
+margin: 0 auto;
+border-radius: 4px;
+overflow: hidden;
+border: 1px solid var(--cs-border);
+position: relative;
+user-select: none;
+}
+#csroot0915 *, #csroot0915 *::before, #csroot0915 *::after {
+box-sizing: border-box; margin: 0; padding: 0;
+}
+/* Visually hidden, but still read by screen readers */
+#csroot0915 .cs_sronly0915 {
+position: absolute; width: 1px; height: 1px;
+padding: 0; margin: -1px; overflow: hidden;
+clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+/* ── Toolbar ── */
+#csroot0915 .cs_toolbar0915 {
+width: 68px; flex-shrink: 0;
+background: var(--cs-panel);
+border-right: 1px solid var(--cs-border);
+display: flex; flex-direction: column; align-items: center;
+padding: 7px 4px; gap: 3px; overflow-y: auto; z-index: 10;
+}
+#csroot0915 .cs_tbsep0915 {
+width: 44px; height: 1px; background: var(--cs-border); margin: 3px 0;
+}
+#csroot0915 .cs_tbbtn0915 {
+width: 52px; height: 52px;
+border: 1px solid var(--cs-border); border-radius: 5px;
+background: transparent; cursor: pointer;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+gap: 2px; color: var(--cs-text2);
+font-family: var(--cs-mono); font-size: 9px;
+}
+#csroot0915 .cs_tbbtn0915:hover {
+border-color: var(--cs-accent); color: var(--cs-accent); background: #0d1520;
+}
+#csroot0915 .cs_active0915 {
+border-color: var(--cs-accent); color: var(--cs-accent);
+background: #0d2030; box-shadow: 0 0 8px rgba(0,212,255,0.3);
+}
+#csroot0915 .cs_tbbtn0915 svg { width: 26px; height: 26px; }
+#csroot0915 .cs_tblabel0915 { font-size: 7px; text-align: center; line-height: 1.1; }
+/* ── Canvas wrap ── */
+#csroot0915 .cs_canvaswrap0915 {
+flex: 1; position: relative; overflow: hidden; min-width: 0;
+}
+#csroot0915 #cs_canvas0915 { display: block; cursor: crosshair; }
+#csroot0915 .cs_hint0915 {
+position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
+font-family: var(--cs-mono); font-size: 9px; color: var(--cs-text2);
+background: rgba(10,12,15,0.88); padding: 3px 9px; border-radius: 3px;
+border: 1px solid var(--cs-border); pointer-events: none; white-space: nowrap;
+}
+/* ── Right panel ── */
+#csroot0915 .cs_rpanel0915 {
+width: 192px; flex-shrink: 0;
+background: var(--cs-panel);
+border-left: 1px solid var(--cs-border);
+display: flex; flex-direction: column;
+padding: 9px 7px; gap: 7px; font-size: 11px;
+overflow-y: auto;
+}
+#csroot0915 .cs_rptitle0915 {
+font-family: var(--cs-mono); font-size: 9px; color: var(--cs-accent);
+border-bottom: 1px solid var(--cs-border); padding-bottom: 5px;
+letter-spacing: 1px; flex-shrink: 0;
+}
+#csroot0915 .cs_rpsep0915 { height: 1px; background: var(--cs-border); flex-shrink: 0; }
+#csroot0915 .cs_rpdimtext0915 {
+font-family: var(--cs-mono); font-size: 9px; color: var(--cs-text2); line-height: 1.6;
+}
+/* Properties rows (injected via innerHTML) */
+#csroot0915 .cs_rprow0915 { display: flex; flex-direction: column; gap: 3px; }
+#csroot0915 .cs_rprow0915 label { font-size: 9px; color: var(--cs-text2); font-family: var(--cs-mono); }
+#csroot0915 .cs_rprow0915 input[type=text],
+#csroot0915 .cs_rprow0915 select {
+background: #0d1520; border: 1px solid var(--cs-border);
+border-radius: 3px; color: var(--cs-text);
+font-family: var(--cs-mono); font-size: 10px; padding: 3px 5px; width: 100%;
+}
+#csroot0915 .cs_rprow0915 input[type=text]:focus,
+#csroot0915 .cs_rprow0915 select:focus { outline: none; border-color: var(--cs-accent); }
+/* Buttons */
+#csroot0915 .cs_rpbtn0915 {
+width: 100%; padding: 5px; border: 1px solid var(--cs-border);
+border-radius: 4px; background: transparent; color: var(--cs-text2);
+font-family: var(--cs-mono); font-size: 9px; cursor: pointer; flex-shrink: 0;
+}
+#csroot0915 .cs_rpbtn0915:hover { border-color: var(--cs-accent); color: var(--cs-accent); }
+#csroot0915 .cs_danger0915:hover { border-color: #ff4040; color: #ff4040; }
+/* Toggle rows */
+#csroot0915 .cs_togglerow0915 {
+display: flex; align-items: center; gap: 5px;
+font-size: 9px; font-family: var(--cs-mono); color: var(--cs-text2);
+flex-shrink: 0;
+}
+#csroot0915 .cs_togglerow0915 input[type=checkbox],
+#csroot0915 .cs_togglerow0915 input[type=radio] {
+accent-color: var(--cs-accent); cursor: pointer;
+}
+/* Readout */
+#csroot0915 .cs_rpreadout0915 {
+background: #060a0d; border: 1px solid var(--cs-border);
+border-radius: 4px; padding: 7px;
+font-family: var(--cs-mono); font-size: 9px; line-height: 1.8;
+color: var(--cs-text2); flex-shrink: 0;
+}
+#csroot0915 .cs_rpreadout0915 span { color: var(--cs-green); }
+/* Textarea */
+#csroot0915 .cs_textarea0915 {
+width: 100%; height: 58px; resize: vertical;
+background: #060a0d; border: 1px solid var(--cs-border);
+border-radius: 3px; color: var(--cs-text2);
+font-family: var(--cs-mono); font-size: 8px; padding: 4px;
+flex-shrink: 0;
+}
+</style>
+<script>
+var circuitSim = function() {
+/* ── DOM refs ── */
+var ROOT   = document.getElementById('csroot0915');
+var canvas = document.getElementById('cs_canvas0915');
+var ctx    = canvas.getContext('2d');
+var wrap   = document.getElementById('cs_canvaswrap0915');
+var GRID   = 24;
+var W, H;
+/* ── Helpers ── */
+function el(id)       { return document.getElementById(id); }
+function set(id, txt) { var e = el(id); if (e) e.textContent = txt; }
+function setHTML(id, html) { var e = el(id); if (e) e.innerHTML = html; }
+/* ── Resize canvas to fill wrap ── */
+function resize() {
+W = wrap.clientWidth; H = wrap.clientHeight;
+canvas.width = W; canvas.height = H;
+redraw();
+}
+/* ── State ── */
+var tool       = 'select';
+var components = [];
+var selected   = null;
+var wireStart  = null;
+var ghostPos   = null;
+var rotation   = 0;
+var simResults = null;
+var animFrame  = null;
+var flowPhase  = 0;
+var idCounter  = 1;
+var simRunning = false;
+function nextId()    { return idCounter++; }
+function toGrid(px)  { return Math.round(px / GRID); }
+function fromGrid(g) { return g * GRID; }
+/* ── Component definitions ── */
+var COMP_DEFS = {
+wire:      { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Wire' },
+resistor:  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Resistor',  defaults:{R:1000} },
+capacitor: { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Capacitor', defaults:{C:1e-6} },
+inductor:  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Inductor',  defaults:{L:1e-3} },
+battery:   { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Battery',   defaults:{V:9} },
+'switch':  { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Switch',    defaults:{closed:true} },
+voltmeter: { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Voltmeter', defaults:{} },
+ammeter:   { terminals: [{dx:-2,dy:0},{dx:2,dy:0}], label:'Ammeter',   defaults:{} },
+ground:    { terminals: [{dx:0,dy:-1}],              label:'Ground',    defaults:{} },
+marker:    { terminals: [{dx:0,dy:0}],               label:'Node',      defaults:{label:'N1'} },
+};
+function makeComp(type, gx, gy, rot) {
+var def = COMP_DEFS[type];
+var props = {};
+if (def.defaults) { for (var k in def.defaults) props[k] = def.defaults[k]; }
+return { id: nextId(), type: type, gx: gx, gy: gy, rot: rot || 0, props: props };
+}
+function rotateOffset(dx, dy, rot, cx, cy) {
+var rx = dx, ry = dy;
+for (var i = 0; i < rot; i++) { var tmp = rx; rx = -ry; ry = tmp; }
+return { gx: cx + rx, gy: cy + ry };
+}
+function getTerminals(comp) {
+var def = COMP_DEFS[comp.type];
+return def.terminals.map(function(t) { return rotateOffset(t.dx, t.dy, comp.rot, comp.gx, comp.gy); });
+}
+function getActualTerminals(comp) {
+if (comp._t0) return [comp._t0, comp._t1];
+return getTerminals(comp);
+}
+function fromGridPx(comp, idx) {
+var t = getTerminals(comp)[idx];
+return { x: fromGrid(t.gx), y: fromGrid(t.gy) };
+}
+/* ── Tool management ── */
+var HINTS = {
+select:    'Click or use \u2190\u2191\u2192\u2193 to step between components | R=rotate | Del=delete',
+wire:      'Click first node, then second node to draw wire',
+resistor:  'Click grid to place resistor | R=rotate',
+capacitor: 'Click grid to place capacitor | R=rotate',
+inductor:  'Click grid to place inductor | R=rotate',
+battery:   'Click grid to place battery (+terminal right/top) | R=rotate',
+'switch':  'Click grid to place switch | R=rotate',
+voltmeter: 'Click grid to place voltmeter | R=rotate',
+ammeter:   'Click grid to place ammeter | R=rotate',
+marker:    'Click node to mark it',
+ground:    'Click node to place ground',
+'delete':  'Click component or wire to delete it',
+};
+function setTool(t) {
+tool = t; wireStart = null;
+var btns = ROOT.getElementsByClassName('cs_tbbtn0915');
+for (var _bi = 0; _bi < btns.length; _bi++) btns[_bi].classList.remove('cs_active0915');
+var btn = el('cs_tb-' + t + '0915');
+if (btn) btn.classList.add('cs_active0915');
+set('cs_hint0915', HINTS[t] || '');
+redraw();
+}
+/* ── Canvas events ── */
+canvas.addEventListener('mousemove', function(e) {
+var r = canvas.getBoundingClientRect();
+ghostPos = { gx: toGrid(e.clientX - r.left), gy: toGrid(e.clientY - r.top) };
+redraw();
+});
+canvas.addEventListener('mouseleave', function() { ghostPos = null; redraw(); });
+canvas.addEventListener('click', function(e) {
+var r = canvas.getBoundingClientRect();
+handleClick(toGrid(e.clientX - r.left), toGrid(e.clientY - r.top));
+});
+canvas.addEventListener('dblclick', function(e) {
+var r = canvas.getBoundingClientRect();
+var gx = toGrid(e.clientX - r.left), gy = toGrid(e.clientY - r.top);
+var comp = findCompAt(gx, gy);
+if (comp && comp.type === 'switch') {
+comp.props.closed = !comp.props.closed;
+simResults = null; redraw();
+}
+});
+/* Keyboard events scoped to ROOT */
+ROOT.setAttribute('tabindex', '0');
+function selectByIndex(idx) {
+if (components.length === 0) {
+selected = null; showProps(null); updateReadout(); redraw(); return;
+}
+var n = components.length;
+idx = ((idx % n) + n) % n;  // wrap (handles negative)
+selected = components[idx].id;
+showProps(components[idx]);
+updateReadout();
+redraw();
+}
+function navigateSelection(direction) {
+// direction: +1 = next, -1 = previous
+if (components.length === 0) return;
+var curIdx = -1;
+if (selected !== null) {
+for (var i = 0; i < components.length; i++) {
+if (components[i].id === selected) { curIdx = i; break; }
+}
+}
+var nextIdx = (curIdx < 0)
+? (direction > 0 ? 0 : components.length - 1)  // start at edge if nothing selected
+: curIdx + direction;
+selectByIndex(nextIdx);
+}
+ROOT.addEventListener('keydown', function(e) {
+var tag = document.activeElement ? document.activeElement.tagName : '';
+if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+e.preventDefault();
+navigateSelection(+1);
+return;
+}
+if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+e.preventDefault();
+navigateSelection(-1);
+return;
+}
+if (e.key === 'r' || e.key === 'R') { rotation = (rotation + 1) % 4; redraw(); }
+if (e.key === 'Escape') { wireStart = null; setTool('select'); redraw(); }
+if ((e.key === 'Delete' || e.key === 'Backspace') && selected !== null) {
+components = components.filter(function(c) { return c.id !== selected; });
+selected = null; simResults = null; showProps(null); updateReadout(); redraw();
+}
+});
+/* Make sure arrow keys work as soon as the user clicks the canvas */
+canvas.addEventListener('mousedown', function() { ROOT.focus(); });
+/* ── Click handler ── */
+function handleClick(gx, gy) {
+if (tool === 'select') {
+var comp = findCompAt(gx, gy);
+selected = comp ? comp.id : null;
+showProps(comp); updateReadout(); redraw(); return;
+}
+if (tool === 'delete') {
+var comp2 = findCompAt(gx, gy);
+if (comp2) {
+var wasSel = (selected === comp2.id);
+components = components.filter(function(c) { return c.id !== comp2.id; });
+simResults = null;
+if (wasSel) { selected = null; showProps(null); }
+updateReadout();
+redraw();
+}
+return;
+}
+if (tool === 'wire') {
+if (!wireStart) {
+wireStart = { gx: gx, gy: gy };
+} else {
+if (wireStart.gx !== gx || wireStart.gy !== gy) {
+var segs = wireSegments(wireStart.gx, wireStart.gy, gx, gy);
+segs.forEach(function(s) {
+var cgx = Math.round((s.x1 + s.x2) / 2);
+var cgy = Math.round((s.y1 + s.y2) / 2);
+var rot2 = (s.y1 === s.y2) ? 0 : 1;
+var w = makeComp('wire', cgx, cgy, rot2);
+w._t0 = { gx: s.x1, gy: s.y1 };
+w._t1 = { gx: s.x2, gy: s.y2 };
+components.push(w);
+});
+}
+wireStart = null; simResults = null; updateReadout(); redraw();
+}
+return;
+}
+var placeable = ['resistor','capacitor','inductor','battery','switch','voltmeter','ammeter','marker','ground'];
+if (placeable.indexOf(tool) >= 0) {
+components.push(makeComp(tool, gx, gy, rotation));
+simResults = null; updateReadout(); redraw();
+}
+}
+function wireSegments(x1, y1, x2, y2) {
+var segs = [];
+if (x1 !== x2) segs.push({ x1: x1, y1: y1, x2: x2, y2: y1 });
+if (y1 !== y2) segs.push({ x1: x2, y1: y1, x2: x2, y2: y2 });
+if (segs.length === 0) segs.push({ x1: x1, y1: y1, x2: x2, y2: y2 });
+return segs;
+}
+function findCompAt(gx, gy) {
+for (var i = components.length - 1; i >= 0; i--) {
+var c = components[i];
+var terms = getActualTerminals(c);
+for (var j = 0; j < terms.length; j++) {
+if (Math.abs(terms[j].gx - gx) <= 1 && Math.abs(terms[j].gy - gy) <= 1) return c;
+}
+if (Math.abs(c.gx - gx) <= 1 && Math.abs(c.gy - gy) <= 1) return c;
+}
+return null;
+}
+/* ── Properties panel ── */
+function showProps(comp) {
+var area = el('cs_proparea0915'); if (!area) return;
+if (!comp) {
+area.innerHTML = '<div class="cs_rpdimtext0915">Select a component<br>to edit its properties.</div>';
+return;
+}
+var html = '<div class="cs_rprow0915"><label>TYPE</label>'
++ '<div style="font-family:var(--cs-mono);font-size:10px;color:var(--cs-accent)">'
++ comp.type.toUpperCase() + ' #' + comp.id + '</div></div>';
+if (comp.type === 'resistor')  html += propInput('R (\u03a9)', 'R', comp.props.R, comp.id);
+if (comp.type === 'capacitor') html += propInput('C (F)', 'C', comp.props.C, comp.id);
+if (comp.type === 'inductor')  html += propInput('L (H)', 'L', comp.props.L, comp.id);
+if (comp.type === 'battery')   html += propInput('Voltage (V)', 'V', comp.props.V, comp.id);
+if (comp.type === 'switch') {
+html += '<div class="cs_rprow0915"><label>STATE</label>'
++ '<select onchange="circuitSim0915.setProp(' + comp.id + ',\'closed\',this.value===\'true\')">'
++ '<option value="true"'  + (comp.props.closed  ? ' selected' : '') + '>CLOSED</option>'
++ '<option value="false"' + (!comp.props.closed ? ' selected' : '') + '>OPEN</option>'
++ '</select></div>';
+}
+if (comp.type === 'marker') html += propInput('Label', 'label', comp.props.label, comp.id);
+html += '<input type="button" class="cs_rpbtn0915" value="\u27f3 ROTATE" onclick="circuitSim0915.rotateComp(' + comp.id + ')">';
+html += '<input type="button" class="cs_rpbtn0915 cs_danger0915" value="\u2715 DELETE" onclick="circuitSim0915.deleteComp(' + comp.id + ')">';
+area.innerHTML = html;
+}
+function propInput(label, key, val, id) {
+return '<div class="cs_rprow0915"><label>' + label + '</label>'
++ '<input type="text" value="' + val + '" onchange="circuitSim0915.setProp(' + id + ',\'' + key + '\',this.value)"></div>';
+}
+function setProp(id, key, val) {
+var comp = components.find(function(c) { return c.id === id; });
+if (!comp) return;
+if (key === 'closed') comp.props[key] = val;
+else if (key === 'label') comp.props[key] = val;
+else comp.props[key] = parseFloat(val) || val;
+simResults = null; updateReadout(); redraw();
+}
+function rotateComp(id) {
+var comp = components.find(function(c) { return c.id === id; });
+if (!comp || comp._t0) return;
+comp.rot = (comp.rot + 1) % 4;
+simResults = null; updateReadout(); redraw();
+}
+function deleteComp(id) {
+components = components.filter(function(c) { return c.id !== id; });
+selected = null; simResults = null; showProps(null); updateReadout(); redraw();
+}
+function clearAll() {
+stopSim();
+components = []; selected = null; simResults = null; simRunning = false; wireStart = null;
+showProps(null);
+updateReadout();
+redraw();
+}
+/* ── MNA Simulation ── */
+function runSim() {
+stopSim();
+simResults = solveMNA();
+updateReadout();
+startAnim();
+redraw();
+}
+function solveMNA() {
+var nodeMap = {}, nodeCount = 0;
+function nodeId(gx, gy) {
+var key = gx + ',' + gy;
+if (!(key in nodeMap)) nodeMap[key] = nodeCount++;
+return nodeMap[key];
+}
+// Reserve 0 for ground
+for (var gi = 0; gi < components.length; gi++) {
+var gc = components[gi];
+if (gc.type === 'ground') {
+var gt = getActualTerminals(gc)[0];
+var gkey = gt.gx + ',' + gt.gy;
+if (!(gkey in nodeMap)) { nodeMap[gkey] = 0; if (nodeCount === 0) nodeCount = 1; }
+}
+}
+var OPEN_CIRCUIT = { voltmeter: true, capacitor: true };
+for (var oi = 0; oi < components.length; oi++) {
+var oc = components[oi];
+if (OPEN_CIRCUIT[oc.type]) continue;
+var ot2 = getActualTerminals(oc);
+for (var oj = 0; oj < ot2.length; oj++) nodeId(ot2[oj].gx, ot2[oj].gy);
+}
+// Union-find
+var parent = [];
+for (var pi = 0; pi < nodeCount; pi++) parent[pi] = pi;
+function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+function union(a, b) {
+a = find(a); b = find(b); if (a === b) return;
+if (b === 0) parent[a] = b; else parent[b] = a;
+}
+for (var ui = 0; ui < components.length; ui++) {
+var uc = components[ui];
+if (uc.type === 'wire' || (uc.type === 'switch' && uc.props.closed)) {
+var ut = getActualTerminals(uc);
+union(nodeId(ut[0].gx, ut[0].gy), nodeId(ut[1].gx, ut[1].gy));
+}
+}
+var remap = {};
+for (var rk in nodeMap) remap[rk] = find(nodeMap[rk]);
+var roots = [], rootSet = {};
+for (var rvk in remap) { if (!rootSet[remap[rvk]]) { rootSet[remap[rvk]] = true; roots.push(remap[rvk]); } }
+roots.sort(function(a,b) { return a-b; });
+var compact = {};
+roots.forEach(function(r, i) { compact[r] = i; });
+var N = roots.length;
+function getNode(gx, gy) {
+var key = gx + ',' + gy;
+if (!(key in remap)) return -1;
+return compact[remap[key]] !== undefined ? compact[remap[key]] : -1;
+}
+var gnd = compact[find(0)] !== undefined ? compact[find(0)] : 0;
+// Build MNA
+var G = [], Ivec = [], vsrcs = [];
+for (var i = 0; i < N; i++) { G[i] = new Float64Array(N); }
+Ivec = new Float64Array(N);
+for (var ci = 0; ci < components.length; ci++) {
+var c = components[ci];
+var terms2 = getActualTerminals(c);
+if (c.type === 'resistor') {
+var g = 1.0 / Math.max(c.props.R || 1000, 1e-9);
+var n0 = getNode(terms2[0].gx, terms2[0].gy);
+var n1 = getNode(terms2[1].gx, terms2[1].gy);
+if (n0 >= 0 && n1 >= 0 && n0 !== n1) {
+G[n0][n0] += g; G[n1][n1] += g; G[n0][n1] -= g; G[n1][n0] -= g;
+}
+}
+if (c.type === 'inductor') {
+var in0 = getNode(terms2[0].gx, terms2[0].gy);
+var in1 = getNode(terms2[1].gx, terms2[1].gy);
+if (in0 >= 0 && in1 >= 0 && in0 !== in1)
+vsrcs.push({ nPlus: in0, nMinus: in1, V: 0, compId: c.id });
+}
+if (c.type === 'battery') {
+var bn0 = getNode(terms2[0].gx, terms2[0].gy);
+var bn1 = getNode(terms2[1].gx, terms2[1].gy);
+if (bn0 >= 0 && bn1 >= 0)
+vsrcs.push({ nPlus: bn1, nMinus: bn0, V: c.props.V || 9, compId: c.id });
+}
+if (c.type === 'ammeter') {
+var an0 = getNode(terms2[0].gx, terms2[0].gy);
+var an1 = getNode(terms2[1].gx, terms2[1].gy);
+if (an0 >= 0 && an1 >= 0 && an0 !== an1)
+vsrcs.push({ nPlus: an0, nMinus: an1, V: 0, compId: c.id });
+}
+}
+var M = N + vsrcs.length;
+var A = [];
+for (var ai = 0; ai < M; ai++) A[ai] = new Float64Array(M);
+var b = new Float64Array(M);
+for (var ii = 0; ii < N; ii++) for (var jj = 0; jj < N; jj++) A[ii][jj] = G[ii][jj];
+vsrcs.forEach(function(vs, k) {
+var row = N + k;
+if (vs.nPlus  >= 0) { A[row][vs.nPlus]  =  1; A[vs.nPlus][row]  =  1; }
+if (vs.nMinus >= 0) { A[row][vs.nMinus] = -1; A[vs.nMinus][row] = -1; }
+b[row] = vs.V;
+});
+for (var gj = 0; gj < M; gj++) A[gnd][gj] = 0;
+A[gnd][gnd] = 1; b[gnd] = 0;
+var x = gaussElim(A, b, M);
+if (!x) return null;
+var voltages = {};
+for (var vk in remap) {
+var ni2 = compact[remap[vk]];
+if (ni2 !== undefined && ni2 < N) voltages[vk] = x[ni2];
+}
+// Resolve open-circuit terminals
+function resolveTerminal(gx, gy) {
+var key = gx + ',' + gy;
+if (voltages[key] !== undefined) return;
+var candidates = [];
+for (var wi = 0; wi < components.length; wi++) {
+var w = components[wi]; if (w.type !== 'wire') continue;
+var wt = getActualTerminals(w);
+var wx1=wt[0].gx, wy1=wt[0].gy, wx2=wt[1].gx, wy2=wt[1].gy;
+var onH = (wy1===wy2)&&(wy1===gy)&&(Math.min(wx1,wx2)<=gx)&&(gx<=Math.max(wx1,wx2));
+var onV = (wx1===wx2)&&(wx1===gx)&&(Math.min(wy1,wy2)<=gy)&&(gy<=Math.max(wy1,wy2));
+if (onH||onV) {
+var k0=wx1+','+wy1, k1=wx2+','+wy2;
+var v = voltages[k0]!==undefined ? voltages[k0] : voltages[k1];
+if (v !== undefined) candidates.push(v);
+}
+}
+if (candidates.length === 1) { voltages[key] = candidates[0]; return; }
+if (candidates.length > 1) {
+candidates.sort(function(a,b) { return Math.abs(b)-Math.abs(a); });
+voltages[key] = candidates[0]; return;
+}
+var best = null, bestDist = Infinity;
+for (var nk in voltages) {
+var parts = nk.split(','), nx = +parts[0], ny = +parts[1];
+var d = Math.abs(nx-gx)+Math.abs(ny-gy);
+if (d < bestDist) { bestDist = d; best = nk; }
+}
+if (best && bestDist <= 1) voltages[key] = voltages[best];
+}
+for (var rci = 0; rci < components.length; rci++) {
+var rc = components[rci];
+if (!OPEN_CIRCUIT[rc.type]) continue;
+var rct = getActualTerminals(rc);
+for (var rj = 0; rj < rct.length; rj++) resolveTerminal(rct[rj].gx, rct[rj].gy);
+}
+// Branch currents
+var currents = {};
+vsrcs.forEach(function(vs, k) { currents[vs.compId] = x[N + k]; });
+for (var bci = 0; bci < components.length; bci++) {
+var bc = components[bci];
+if (bc.type === 'resistor') {
+var bt = getActualTerminals(bc);
+var bv0 = voltages[bt[0].gx+','+bt[0].gy] || 0;
+var bv1 = voltages[bt[1].gx+','+bt[1].gy] || 0;
+currents[bc.id] = (bv0-bv1) / Math.max(bc.props.R||1000, 1e-9);
+}
+}
+// Build incidence: for each grid key, list of {compId, terminalIdx, isWire, isOpen}
+var incidence = {};
+function addInc(key, rec) {
+if (!incidence[key]) incidence[key] = [];
+incidence[key].push(rec);
+}
+for (var pci = 0; pci < components.length; pci++) {
+var pc = components[pci];
+if (pc.type === 'ground' || pc.type === 'marker') continue;
+var pt = getActualTerminals(pc);
+var isOpen = !!OPEN_CIRCUIT[pc.type];
+var isSwOpen = (pc.type === 'switch' && !pc.props.closed);
+for (var pj = 0; pj < pt.length; pj++) {
+addInc(pt[pj].gx + ',' + pt[pj].gy, {
+compId: pc.id,
+type: pc.type,
+terminalIdx: pj,
+isWire: pc.type === 'wire',
+isOpen: isOpen || isSwOpen
+});
+}
+}
+var signedCurrent = {};
+for (var scci = 0; scci < components.length; scci++) {
+var scc = components[scci];
+if (scc.type === 'wire') continue;
+if (OPEN_CIRCUIT[scc.type]) continue;
+if (scc.type === 'ground' || scc.type === 'marker') continue;
+if (scc.type === 'switch' && !scc.props.closed) continue;
+if (currents[scc.id] !== undefined && isFinite(currents[scc.id])) {
+if (scc.type === 'battery') {
+signedCurrent[scc.id] = -currents[scc.id];
+} else {
+signedCurrent[scc.id] = currents[scc.id];
+}
+}
+}
+var MAX_ITER = components.length * 4 + 10;
+for (var iter = 0; iter < MAX_ITER; iter++) {
+var progress = false;
+for (var pk in incidence) {
+var incs = incidence[pk];
+var unknowns = [];
+var knownSum = 0;
+for (var iI = 0; iI < incs.length; iI++) {
+var rec = incs[iI];
+if (rec.isOpen) continue; // ideal voltmeter/capacitor/open switch carry no current
+var isWireOrSwClosed = rec.isWire || (rec.type === 'switch');
+var curr = signedCurrent[rec.compId];
+if (curr === undefined || !isFinite(curr)) {
+if (isWireOrSwClosed) {
+unknowns.push(rec);
+} else {
+unknowns.push(rec);
+}
+} else {
+// Current flowing INTO this point from this component:
+var into = (rec.terminalIdx === 0) ? -curr : curr;
+knownSum += into;
+}
+}
+// If exactly one unknown, KCL: sum into point = 0 → unknownInto = -knownSum
+if (unknowns.length === 1 && unknowns[0].isWire) {
+var u = unknowns[0];
+var unknownInto = -knownSum;
+var sc = (u.terminalIdx === 0) ? -unknownInto : unknownInto;
+signedCurrent[u.compId] = sc;
+progress = true;
+}
+}
+if (!progress) break;
+}
+for (var wwi2 = 0; wwi2 < components.length; wwi2++) {
+var ww2 = components[wwi2];
+if (ww2.type !== 'wire' && ww2.type !== 'switch') continue;
+if (ww2.type === 'switch' && !ww2.props.closed) { currents[ww2.id] = 0; continue; }
+if (signedCurrent[ww2.id] !== undefined) {
+currents[ww2.id] = signedCurrent[ww2.id];
+} else if (currents[ww2.id] === undefined) {
+currents[ww2.id] = 0;
+}
+}
+var vProgress = true, vIter = 0;
+while (vProgress && vIter < 20) {
+vProgress = false; vIter++;
+for (var vpi = 0; vpi < components.length; vpi++) {
+var vpc = components[vpi];
+if (vpc.type !== 'wire') continue;
+var vpt = getActualTerminals(vpc);
+var vk0 = vpt[0].gx + ',' + vpt[0].gy;
+var vk1 = vpt[1].gx + ',' + vpt[1].gy;
+var vv0 = voltages[vk0], vv1 = voltages[vk1];
+if (vv0 !== undefined && vv1 === undefined) { voltages[vk1] = vv0; vProgress = true; }
+else if (vv1 !== undefined && vv0 === undefined) { voltages[vk0] = vv1; vProgress = true; }
+}
+}
+return { voltages: voltages, currents: currents };
+}
+function getVoltageAt(gx, gy, simRes) {
+if (!simRes) return undefined;
+return simRes.voltages[gx + ',' + gy];
+}
+function gaussElim(A, b, n) {
+var a = A.map(function(r) { var c = new Float64Array(n); for (var _i=0;_i<n;_i++) c[_i]=r[_i]; return c; });
+var x = new Float64Array(n); for (var _i=0;_i<n;_i++) x[_i]=b[_i];
+for (var col = 0; col < n; col++) {
+var maxRow = col;
+for (var row = col+1; row < n; row++) if (Math.abs(a[row][col]) > Math.abs(a[maxRow][col])) maxRow = row;
+var tmp = a[col]; a[col] = a[maxRow]; a[maxRow] = tmp;
+var tx = x[col]; x[col] = x[maxRow]; x[maxRow] = tx;
+if (Math.abs(a[col][col]) < 1e-12) continue;
+for (var row2 = col+1; row2 < n; row2++) {
+var f = a[row2][col] / a[col][col];
+for (var k = col; k < n; k++) a[row2][k] -= f * a[col][k];
+x[row2] -= f * x[col];
+}
+}
+var result = new Float64Array(n);
+for (var bi = n-1; bi >= 0; bi--) {
+var s = x[bi];
+for (var bj = bi+1; bj < n; bj++) s -= a[bi][bj] * result[bj];
+result[bi] = Math.abs(a[bi][bi]) > 1e-12 ? s / a[bi][bi] : 0;
+}
+return result;
+}
+function fmtR(r) { if (r>=1e6) return (r/1e6).toFixed(1)+'M\u03a9'; if (r>=1e3) return (r/1e3).toFixed(1)+'k\u03a9'; return r+'\u03a9'; }
+function fmtI(i) { if (i===undefined) return '?'; var a=Math.abs(i); if(a<1e-6) return (i*1e9).toFixed(2)+'nA'; if(a<1e-3) return (i*1e6).toFixed(2)+'\u03bcA'; if(a<1) return (i*1e3).toFixed(2)+'mA'; return i.toFixed(4)+'A'; }
+function fmtV(v) { if(v===undefined||!isFinite(v)) return '?'; var a=Math.abs(v); if(a<0.001) return (v*1000).toFixed(1)+'mV'; if(a<1) return (v*1000).toFixed(2)+'mV'; return v.toFixed(3)+'V'; }
+function getAmmeterCurrent(c) {
+if (!simResults) return undefined;
+var i = simResults.currents[c.id];
+return (i !== undefined && isFinite(i)) ? i : undefined;
+}
+var TYPE_LABEL = {
+wire: 'Wire', resistor: 'Resistor', capacitor: 'Capacitor',
+inductor: 'Inductor', battery: 'Battery', 'switch': 'Switch',
+voltmeter: 'Voltmeter', ammeter: 'Ammeter', ground: 'Ground',
+marker: 'Node marker'
+};
+function terminalVoltages(c) {
+var t = getActualTerminals(c);
+if (t.length < 2) {
+var vs = simResults ? getVoltageAt(t[0].gx, t[0].gy, simResults) : undefined;
+return { v0: vs, v1: undefined, val: undefined };
+}
+var v0 = simResults ? getVoltageAt(t[0].gx, t[0].gy, simResults) : undefined;
+var v1 = simResults ? getVoltageAt(t[1].gx, t[1].gy, simResults) : undefined;
+var val = (v0 !== undefined && v1 !== undefined) ? Math.abs(v1 - v0) : undefined;
+return { v0: v0, v1: v1, val: val };
+}
+function readingsFor(comp) {
+if (!comp) {
+return {
+html: '<span style="color:var(--cs-text2)">Click a component,<br>or use \u2190/\u2192 keys,<br>to see its readings.</span>',
+prose: 'No component selected. Use left and right arrow keys to step through components.'
+};
+}
+var label = TYPE_LABEL[comp.type] || comp.type;
+var simMsg = simResults
+? ''
+: '<div style="color:var(--cs-text2);margin-top:4px">Press RUN to see live values.</div>';
+var simMsgProse = simResults ? '' : ' Simulation not run yet.';
+var html = '<div style="font-family:var(--cs-mono);color:var(--cs-accent);font-size:11px;margin-bottom:5px">'
++ label + '</div>';
+var prose = label + '. ';
+function row(k, v) {
+html += '<div>' + k + ' = <span>' + v + '</span></div>';
+prose += k + ' equals ' + v + '. ';
+}
+switch (comp.type) {
+case 'wire': {
+if (simResults) {
+var wi = simResults.currents[comp.id];
+if (wi !== undefined && isFinite(wi)) row('I', fmtI(Math.abs(wi)));
+else row('I', '?');
+} else row('I', '(run sim)');
+break;
+}
+case 'resistor': {
+row('R', fmtR(comp.props.R));
+var rtv = terminalVoltages(comp);
+if (rtv.val !== undefined) row('V', fmtV(rtv.val));
+var ri = simResults ? simResults.currents[comp.id] : undefined;
+if (ri !== undefined && isFinite(ri)) row('I', fmtI(Math.abs(ri)));
+break;
+}
+case 'capacitor': {
+var cv = comp.props.C;
+row('C', cv < 1e-3 ? (cv * 1e6).toFixed(2) + ' \u03bcF' : cv + ' F');
+var ctv = terminalVoltages(comp);
+if (ctv.val !== undefined) row('V', fmtV(ctv.val));
+break;
+}
+case 'inductor': {
+var lv = comp.props.L;
+row('L', lv < 1 ? (lv * 1e3).toFixed(2) + ' mH' : lv + ' H');
+var li = simResults ? simResults.currents[comp.id] : undefined;
+if (li !== undefined && isFinite(li)) row('I', fmtI(Math.abs(li)));
+break;
+}
+case 'battery': {
+row('V', comp.props.V + ' V (set)');
+var bi = simResults ? simResults.currents[comp.id] : undefined;
+if (bi !== undefined && isFinite(bi)) row('I', fmtI(Math.abs(bi)));
+break;
+}
+case 'switch': {
+row('State', comp.props.closed ? 'CLOSED' : 'OPEN');
+if (comp.props.closed && simResults) {
+var si = simResults.currents[comp.id];
+if (si !== undefined && isFinite(si)) row('I', fmtI(Math.abs(si)));
+}
+break;
+}
+case 'voltmeter': {
+var vtv = terminalVoltages(comp);
+row('V', vtv.val !== undefined ? fmtV(vtv.val) : (simResults ? '?' : '(run sim)'));
+break;
+}
+case 'ammeter': {
+var ai = getAmmeterCurrent(comp);
+row('I', ai !== undefined ? fmtI(Math.abs(ai)) : (simResults ? '?' : '(run sim)'));
+break;
+}
+case 'marker': {
+if (comp.props.label) {
+html += '<div style="color:var(--cs-text2);font-size:10px;margin-bottom:3px">Label: ' + comp.props.label + '</div>';
+prose += 'Label ' + comp.props.label + '. ';
+}
+var mtv = terminalVoltages(comp);
+row('V', mtv.v0 !== undefined ? fmtV(mtv.v0) : (simResults ? '?' : '(run sim)'));
+break;
+}
+case 'ground': {
+row('V', '0 V (reference)');
+break;
+}
+}
+html += simMsg;
+prose += simMsgProse;
+return { html: html, prose: prose };
+}
+function updateReadout() {
+var e = el('cs_readout0915');
+var live = el('cs_live0915');
+var comp = selected !== null
+? components.find(function(c) { return c.id === selected; })
+: null;
+var r = readingsFor(comp);
+if (e) e.innerHTML = r.html;
+if (live) live.textContent = r.prose;
+}
+/* ── Animation ── */
+function startAnim() {
+simRunning = true;
+function loop() {
+if (!simRunning) return;
+flowPhase = (flowPhase + 0.025) % 1;
+redraw();
+animFrame = requestAnimationFrame(loop);
+}
+if (animFrame) cancelAnimationFrame(animFrame);
+animFrame = requestAnimationFrame(loop);
+}
+function stopSim() {
+simRunning = false;
+if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+redraw();
+}
+/* ── Rendering ── */
+function redraw() {
+if (!W || !H) return;
+ctx.clearRect(0, 0, W, H);
+drawGrid();
+var showFlow = el('cs_chkflow0915') && el('cs_chkflow0915').checked;
+var showVolt = el('cs_chkvolt0915') && el('cs_chkvolt0915').checked;
+if (showVolt && simResults) drawVoltageShading();
+for (var i = 0; i < components.length; i++) drawComp(components[i], showFlow);
+drawConnectionPoints();
+drawGhost();
+if (wireStart) drawWireGhost();
+}
+function drawGrid() {
+ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 0.5;
+for (var x = 0; x < W; x += GRID) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+for (var y = 0; y < H; y += GRID) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+ctx.fillStyle = 'rgba(255,255,255,0.07)';
+for (var gx = 0; gx < W; gx += GRID) for (var gy = 0; gy < H; gy += GRID) {
+ctx.beginPath(); ctx.arc(gx, gy, 1, 0, Math.PI*2); ctx.fill();
+}
+}
+function drawVoltageShading() {
+var voltages = simResults.voltages; if (!voltages) return;
+var vals = [], vk2;
+for (vk2 in voltages) { if (isFinite(voltages[vk2])) vals.push(voltages[vk2]); }
+if (!vals.length) return;
+var vmin = Math.min.apply(null,vals), vmax = Math.max.apply(null,vals);
+var range = vmax - vmin || 1;
+for (var vi = 0; vi < components.length; vi++) {
+var vc = components[vi]; if (vc.type !== 'wire') continue;
+var vt2 = getActualTerminals(vc);
+var k0 = vt2[0].gx+','+vt2[0].gy, k1 = vt2[1].gx+','+vt2[1].gy;
+var vv0 = voltages[k0], vv1 = voltages[k1];
+if (vv0===undefined && vv1===undefined) continue;
+var v = vv0!==undefined ? vv0 : vv1;
+var t = (v-vmin)/range;
+ctx.strokeStyle = 'hsla(' + ((1-t)*240) + ',100%,55%,0.55)';
+ctx.lineWidth = 6;
+ctx.beginPath();
+ctx.moveTo(fromGrid(vt2[0].gx), fromGrid(vt2[0].gy));
+ctx.lineTo(fromGrid(vt2[1].gx), fromGrid(vt2[1].gy));
+ctx.stroke();
+}
+}
+var R_HALF = GRID;
+function drawComp(c, showFlow) {
+var sel = (c.id === selected);
+ctx.save();
+ctx.translate(fromGrid(c.gx), fromGrid(c.gy));
+ctx.rotate(c.rot * Math.PI / 2);
+switch (c.type) {
+case 'wire':      drawWireComp(c, sel, showFlow); break;
+case 'resistor':  drawResistor(c, sel); break;
+case 'capacitor': drawCapacitor(c, sel); break;
+case 'inductor':  drawInductor(c, sel); break;
+case 'battery':   drawBatteryComp(c, sel); break;
+case 'switch':    drawSwitch(c, sel); break;
+case 'voltmeter': drawMeter(c, sel, 'V'); break;
+case 'ammeter':   drawMeter(c, sel, 'A'); break;
+case 'ground':    drawGroundComp(c, sel); break;
+case 'marker':    drawMarkerComp(c, sel); break;
+}
+ctx.restore();
+if (sel) {
+ctx.strokeStyle = 'rgba(0,212,255,0.6)'; ctx.lineWidth = 1;
+ctx.setLineDash([4,3]);
+ctx.strokeRect(fromGrid(c.gx)-GRID*2.5, fromGrid(c.gy)-GRID, GRID*5, GRID*2);
+ctx.setLineDash([]);
+}
+}
+function drawWireComp(c, sel, showFlow) {
+ctx.restore(); ctx.save();
+var terms = getActualTerminals(c);
+var x1=fromGrid(terms[0].gx), y1=fromGrid(terms[0].gy);
+var x2=fromGrid(terms[1].gx), y2=fromGrid(terms[1].gy);
+ctx.strokeStyle = sel ? '#00d4ff' : '#c8d8e8';
+ctx.lineWidth = sel ? 2.5 : 2;
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+// Animated flow dots -- now powered by propagated wire currents
+if (showFlow && simResults && simRunning) {
+var cur = simResults.currents[c.id];
+if (cur !== undefined && Math.abs(cur) > 1e-9) {
+var dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+if (len < 2) return;
+var isElec = el('cs_flowelec0915') && el('cs_flowelec0915').checked;
+// cur sign: positive means current flows from t0 → t1 (in conventional direction).
+var sign = (cur>0?1:-1) * (isElec?-1:1);
+var speed = Math.min(0.8, Math.max(0.15, Math.log(Math.abs(cur)*1e4+1)/Math.LN10*0.3));
+var dotCount = Math.max(1, Math.floor(len/24));
+ctx.fillStyle = isElec ? '#40e0ff' : '#ffd700';
+for (var k = 0; k < dotCount; k++) {
+var tp = ((k/dotCount) + flowPhase*sign*speed) % 1;
+if (tp < 0) tp += 1;
+ctx.beginPath(); ctx.arc(x1+dx*tp, y1+dy*tp, 3, 0, Math.PI*2); ctx.fill();
+}
+}
+}
+}
+function drawResistor(c, sel) {
+var col = sel ? '#00d4ff' : '#f0c840';
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.strokeRect(-R_HALF, -R_HALF*0.45, 2*R_HALF, R_HALF*0.9);
+ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+var steps=6, sw=(2*R_HALF)/steps;
+ctx.beginPath(); ctx.moveTo(-R_HALF, 0);
+for (var i=0;i<steps;i++) {
+ctx.lineTo(-R_HALF+sw*(i+0.5), i%2===0?-R_HALF*0.38:R_HALF*0.38);
+ctx.lineTo(-R_HALF+sw*(i+1), 0);
+}
+ctx.stroke();
+labelComp(c, fmtR(c.props.R));
+}
+function drawCapacitor(c, sel) {
+var col = sel ? '#00d4ff' : '#40c8ff';
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+// leads extend closer to the plates (tighter gap)
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF*0.35,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*0.35,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+// plates
+ctx.lineWidth = 2.5;
+ctx.beginPath(); ctx.moveTo(-R_HALF*0.35,-R_HALF*0.8); ctx.lineTo(-R_HALF*0.35,R_HALF*0.8); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*0.35,-R_HALF*0.8); ctx.lineTo(R_HALF*0.35,R_HALF*0.8); ctx.stroke();
+var cv = c.props.C;
+labelComp(c, cv < 1e-3 ? (cv*1e6).toFixed(1)+'\u03bcF' : cv+'F');
+}
+function drawInductor(c, sel) {
+var col = sel ? '#00d4ff' : '#c040ff';
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF*1.2,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*1.2,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+var bumps=4, bw=(2*R_HALF*1.2/2)/bumps*2;
+var sx=-R_HALF*1.2;
+ctx.beginPath();
+for (var ib=0;ib<bumps;ib++) ctx.arc(sx+bw*(ib+0.5), 0, bw/2, Math.PI, 0, false);
+ctx.stroke();
+var lv = c.props.L;
+labelComp(c, lv<1 ? (lv*1e3).toFixed(1)+'mH' : lv+'H');
+}
+function drawBatteryComp(c, sel) {
+var col = sel ? '#00d4ff' : '#ff6b35';
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+// tighter plate gap
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF*0.25,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF*0.25,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+// long (negative) plate on the left -- our convention: terminal 0 is at −2R, negative side
+ctx.lineWidth = 3.5;
+ctx.beginPath(); ctx.moveTo(-R_HALF*0.25,-R_HALF*0.45); ctx.lineTo(-R_HALF*0.25,R_HALF*0.45); ctx.stroke();
+// short (positive) plate on the right
+ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(R_HALF*0.25,-R_HALF*0.7); ctx.lineTo(R_HALF*0.25,R_HALF*0.7); ctx.stroke();
+ctx.fillStyle = col; ctx.font = 'bold ' + (R_HALF*0.5) + 'px monospace';
+ctx.textAlign = 'center';
+ctx.fillText('+', R_HALF*0.55, -R_HALF*0.6);
+ctx.fillText('\u2212', -R_HALF*0.55, -R_HALF*0.6);
+labelComp(c, (c.props.V||9)+'V');
+}
+function drawSwitch(c, sel) {
+var col = sel ? '#00d4ff' : '#39ff14';
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.arc(-R_HALF,0,4,0,Math.PI*2); ctx.fillStyle=col; ctx.fill();
+ctx.beginPath(); ctx.arc(R_HALF,0,4,0,Math.PI*2); ctx.fill();
+ctx.beginPath(); ctx.moveTo(-R_HALF+4, 0);
+if (c.props.closed) ctx.lineTo(R_HALF-4, 0);
+else ctx.lineTo(R_HALF*0.6, -R_HALF*0.5);
+ctx.strokeStyle=col; ctx.lineWidth=1.8; ctx.stroke();
+labelComp(c, c.props.closed ? 'CLOSED' : 'OPEN');
+}
+function drawMeter(c, sel, letter) {
+var isV = letter === 'V';
+var col = sel ? '#00d4ff' : (isV ? '#ff80c0' : '#80ff80');
+ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+ctx.beginPath(); ctx.moveTo(-2*R_HALF,0); ctx.lineTo(-R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(R_HALF,0); ctx.lineTo(2*R_HALF,0); ctx.stroke();
+ctx.beginPath(); ctx.arc(0,0,R_HALF,0,Math.PI*2);
+ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+if (!isV) {
+ctx.fillStyle=col;
+ctx.beginPath(); ctx.arc(-R_HALF*0.65,-R_HALF*0.55,3.5,0,Math.PI*2); ctx.fill();
+}
+var reading = null;
+if (simResults) {
+var mt2 = getActualTerminals(c);
+if (isV) {
+var mv0=getVoltageAt(mt2[0].gx,mt2[0].gy,simResults);
+var mv1=getVoltageAt(mt2[1].gx,mt2[1].gy,simResults);
+if (mv0!==undefined && mv1!==undefined) reading = fmtV(Math.abs(mv1-mv0));
+} else {
+var mi = getAmmeterCurrent(c);
+if (mi !== undefined) reading = fmtI(Math.abs(mi));
+}
+}
+ctx.save(); ctx.rotate(-c.rot * Math.PI / 2);
+if (reading) {
+ctx.fillStyle=col; ctx.font='bold 8px monospace';
+ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText(letter, -R_HALF*0.55, -R_HALF*0.52);
+ctx.font='bold 9px monospace';
+ctx.fillText(reading, 0, R_HALF*0.15);
+} else {
+ctx.fillStyle=col; ctx.font='bold '+(R_HALF*0.7)+'px monospace';
+ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText(letter, 0, 0);
+}
+ctx.textBaseline='alphabetic'; ctx.restore();
+}
+function drawGroundComp(c, sel) {
+ctx.restore(); ctx.save();
+ctx.translate(fromGrid(c.gx), fromGrid(c.gy));
+var col = sel ? '#00d4ff' : '#aab0c0';
+ctx.strokeStyle=col; ctx.lineWidth=1.8;
+ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,R_HALF); ctx.stroke();
+ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(-R_HALF*0.9,R_HALF); ctx.lineTo(R_HALF*0.9,R_HALF); ctx.stroke();
+ctx.lineWidth=1.8; ctx.beginPath(); ctx.moveTo(-R_HALF*0.55,R_HALF*1.5); ctx.lineTo(R_HALF*0.55,R_HALF*1.5); ctx.stroke();
+ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(-R_HALF*0.2,R_HALF*2); ctx.lineTo(R_HALF*0.2,R_HALF*2); ctx.stroke();
+}
+function drawMarkerComp(c, sel) {
+ctx.restore(); ctx.save();
+ctx.translate(fromGrid(c.gx), fromGrid(c.gy));
+var col = sel ? '#00d4ff' : '#a0c0ff';
+ctx.fillStyle=col; ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fill();
+ctx.fillStyle='#0a0c0f'; ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fill();
+ctx.fillStyle=col; ctx.font='bold 10px monospace';
+ctx.textAlign='left'; ctx.fillText(c.props.label||'N', 10, -8);
+}
+function labelComp(c, text) {
+if (!text) return;
+ctx.save(); ctx.rotate(-c.rot * Math.PI/2);
+ctx.fillStyle='rgba(180,200,220,0.75)'; ctx.font="10px 'Share Tech Mono',monospace";
+ctx.textAlign='center'; ctx.fillText(text, 0, -R_HALF*0.75); ctx.restore();
+}
+function drawConnectionPoints() {
+var tally = {};
+for (var i = 0; i < components.length; i++) {
+var c = components[i];
+var terms = getActualTerminals(c);
+for (var j = 0; j < terms.length; j++) {
+var k = terms[j].gx + ',' + terms[j].gy;
+tally[k] = (tally[k] || 0) + 1;
+}
+}
+for (var key in tally) {
+var parts = key.split(',');
+var px = fromGrid(+parts[0]);
+var py = fromGrid(+parts[1]);
+var count = tally[key];
+if (count >= 3) {
+ctx.fillStyle = '#c8d8e8';
+ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill();
+} else {
+ctx.strokeStyle = 'rgba(0,212,255,0.75)';
+ctx.fillStyle   = 'rgba(0,212,255,0.20)';
+ctx.lineWidth   = 1.2;
+ctx.beginPath(); ctx.arc(px, py, 3.2, 0, Math.PI*2);
+ctx.fill(); ctx.stroke();
+}
+}
+}
+function drawGhost() {
+if (!ghostPos || tool==='select' || tool==='wire' || tool==='delete') return;
+var placeable = ['resistor','capacitor','inductor','battery','switch','voltmeter','ammeter','marker','ground'];
+if (placeable.indexOf(tool) < 0) return;
+ctx.globalAlpha = 0.45;
+var def2 = COMP_DEFS[tool]; var gp = {};
+if (def2.defaults) { for (var dk in def2.defaults) gp[dk] = def2.defaults[dk]; }
+var ghost = { id:-1, type:tool, gx:ghostPos.gx, gy:ghostPos.gy, rot:rotation, props:gp };
+drawComp(ghost, false);
+ctx.globalAlpha = 1;
+}
+function drawWireGhost() {
+if (!wireStart || !ghostPos) return;
+var x1=fromGrid(wireStart.gx), y1=fromGrid(wireStart.gy);
+var x2=fromGrid(ghostPos.gx), y2=fromGrid(ghostPos.gy);
+ctx.strokeStyle='rgba(0,212,255,0.5)'; ctx.lineWidth=1.5;
+ctx.setLineDash([6,4]);
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y1); ctx.lineTo(x2,y2); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle='#00d4ff'; ctx.beginPath(); ctx.arc(x1,y1,5,0,Math.PI*2); ctx.fill();
+}
+/* ── Save / Load ── */
+function saveCircuit() {
+var data = {
+v: 2, idCounter: idCounter,
+components: components.map(function(c) {
+var obj = { id:c.id, type:c.type, gx:c.gx, gy:c.gy, rot:c.rot, props:c.props };
+if (c._t0) { obj._t0=c._t0; obj._t1=c._t1; }
+return obj;
+})
+};
+var json = JSON.stringify(data);
+var ta = el('cs_circuitdata0915'); if (!ta) return;
+ta.value = json; ta.select();
+try { navigator.clipboard.writeText(json); } catch(ex) {}
+ta.style.borderColor = 'var(--cs-accent)';
+setTimeout(function() { ta.style.borderColor = 'var(--cs-border)'; }, 1500);
+}
+function loadCircuit() {
+var ta = el('cs_circuitdata0915'); if (!ta) return;
+var json = ta.value.trim();
+if (!json) { ta.style.borderColor='#ff4040'; setTimeout(function(){ta.style.borderColor='var(--cs-border)';},1500); return; }
+return loadCircuitFromJSON(json, ta);
+}
+function loadCircuitFromJSON(json, ta) {
+try {
+var data = JSON.parse(json);
+stopSim();
+components = data.components.map(function(obj) {
+var c = { id:obj.id, type:obj.type, gx:obj.gx, gy:obj.gy, rot:obj.rot||0, props:obj.props||{} };
+if (obj._t0) { c._t0=obj._t0; c._t1=obj._t1; }
+return c;
+});
+idCounter = data.idCounter || (Math.max.apply(null, [0].concat(components.map(function(c){return c.id;}))) + 1);
+selected=null; simResults=null;
+showProps(null);
+updateReadout();
+if (ta) {
+ta.style.borderColor='#39ff14';
+setTimeout(function(){ta.style.borderColor='var(--cs-border)';},1500);
+}
+redraw();
+return true;
+} catch(ex) {
+if (ta) {
+ta.style.borderColor='#ff4040';
+setTimeout(function(){ta.style.borderColor='var(--cs-border)';},1500);
+}
+return false;
+}
+}
+function loadSample() {
+var ta = el('cs_circuitdata0915');
+if (ta && ta.value && ta.value.trim()) {
+if (loadCircuitFromJSON(ta.value.trim(), ta)) return;
+}
+// Default starter circuit
+var cx = Math.round(W / 2 / GRID), cy = Math.round(H / 2 / GRID);
+var bat = makeComp('battery', cx-3, cy, 45); bat.props.V=9; components.push(bat);
+var r1 = makeComp('resistor', cx, cy-3, 0); r1.props.R=1000; components.push(r1);
+var r2 = makeComp('resistor', cx, cy+3, 0); r2.props.R=2200; components.push(r2);
+function addWire(x1,y1,x2,y2) {
+var segs = wireSegments(x1,y1,x2,y2);
+segs.forEach(function(s) {
+var w = makeComp('wire', Math.round((s.x1+s.x2)/2), Math.round((s.y1+s.y2)/2), s.y1===s.y2?0:1);
+w._t0={gx:s.x1,gy:s.y1}; w._t1={gx:s.x2,gy:s.y2}; components.push(w);
+});
+}
+addWire(cx-3,cy-3,   cx-3,cy-2); addWire(cx-3,cy-3,cx-2,cy-3);
+addWire(cx-3,cy-6,   cx-3,cy-3); addWire(cx-3,cy-6,cx-2,cy-6);
+addWire(cx+2,cy-3, cx+3,cy-3); addWire(cx+3,cy-3,cx+3,cy+3);
+addWire(cx+2,cy+3, cx+3,cy+3); addWire(cx-3,cy+3,cx-2,cy+3);
+addWire(cx-3,cy+2,   cx-3,cy+3);
+addWire(cx+2,cy-6, cx+3,cy-6); addWire(cx+3,cy-3,cx+3,cy-6);
+var vm  = makeComp('voltmeter', cx, cy-6, 90); components.push(vm);
+redraw();
+}
+/* ── Window resize ── */
+window.addEventListener('resize', resize);
+/* ── Visibility pause/resume ── */
+document.addEventListener('visibilitychange', function() {
+if (document.hidden && animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
+else if (!document.hidden && simRunning && !animFrame) { startAnim(); }
+});
+/* ── Boot ── */
+resize();
+setTool('select');
+loadSample();
+updateReadout();
+/* ── Public API ── */
+return {
+setTool:      setTool,
+runSim:       runSim,
+stopSim:      stopSim,
+redraw:       redraw,
+clearAll:     clearAll,
+setProp:      setProp,
+rotateComp:   rotateComp,
+deleteComp:   deleteComp,
+saveCircuit:  saveCircuit,
+loadCircuit:  loadCircuit
+};
+};
+</script>
+<script>
+var circuitSim0915 = new circuitSim();
+</script>
+
+</body></html>

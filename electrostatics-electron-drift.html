@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electricity: Electron Drift in a Conductor</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, drift velocity, electric current, electrons, conductor, lesson, scientific">
+<meta name="description" content="Electron Drift in a Conductor -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobdrift" class="mob_wrap">
+<div id="edriftRoot">
+  <!-- ── Accessibility toolbar ── -->
+  <div class="ed_a11y" id="edA11yBar" role="toolbar" aria-label="Display options">
+    <button type="button" class="ed_a11ybtn" id="edBtnHC" onclick="edA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+    <button type="button" class="ed_a11ybtn" id="edBtnLM" onclick="edA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+    <button type="button" class="ed_a11ybtn" id="edBtnCB" onclick="edA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+    <button type="button" class="ed_a11ybtn ed_a11yon" id="edBtnNR" onclick="edA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+  </div>
+  <!-- Title bar -->
+  <div class="tbar"><h3>Electron Drift in a Conductor</h3></div>
+  <!-- Canvas -->
+  <div class="mcontent">
+    <canvas id="myCanvas" width="503" height="340"
+      style="margin:auto;border:1px solid"
+      role="img"
+      aria-label="Simulation of electrons drifting through a rectangular conductor under an applied electric field"></canvas>
+  </div>
+  <!-- Narration bar -->
+  <div id="edNarBar" class="ed_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+  <!-- Controls bar -->
+  <div class="bbar">
+    <button type="button" class="ed_ctrlbtn" id="edPlayBtn" onclick="edriftSim.togglePlay()">&#9654; PLAY</button>
+    <button type="button" class="ed_ctrlbtn" id="edResetBtn" onclick="edriftSim.reset()">&#8635; RESET</button>
+  </div>
+  <!-- Slider -->
+  <div class="footer">
+    <div class="left">Field / Current:</div>
+    <div class="center">
+      <input class="islide" type="range" id="fieldSlider"
+        min="0" max="100" value="0" step="1"
+        aria-label="Electric field strength"
+        oninput="edriftSim.setField(this.value)"
+        onchange="edriftSim.setField(this.value)">
+      <span id="fieldValue">0%</span>
+    </div>
+  </div>
+  <hr>
+  <ol type="a">
+    <li>With zero field applied, how would you describe the spatial distribution and direction of electron motion inside the conductor?  _____ </li>
+    <li>When you increase the field strength, in which direction do the electrons drift compared to the field arrows? Explain why.  _____ </li>
+    <li>Even with a strong applied field, the electrons still show some random motion. What physical phenomenon does this represent?  _____ </li>
+    <li>The arrows on the left and right edges show electrons exiting and entering. What does this continuous flow represent macroscopically?  _____ </li>
+    <li>How does the drift speed of electrons compare to their thermal speed? What does this imply about the relationship between field strength and current?  _____ </li>
+  </ol>
+</div><!-- #edriftRoot -->
+
+<style>:where(#mobdrift) * { margin: 0; box-sizing: border-box; }
+:where(#mobdrift) div { width: 503px; margin: 0; }
+#edriftRoot {
+    --ed-toolbar-bg:  #222;
+    --ed-cond-fill:   #c9f2f4;
+    --ed-cond-stroke: #224466;
+    --ed-electron:    #d50000;
+    --ed-eminus:      #ffffff;
+    --ed-field:       #1565c0;
+    --ed-label:       #111111;
+    --ed-bg:          #f3f3f3;
+    --ed-flow-arrow:  #333333;
+  }
+/* ── Accessibility toolbar ── */
+#edriftRoot .ed_a11y {
+    display: flex; gap: 6px; padding: 6px 8px;
+    background: var(--ed-toolbar-bg); flex-wrap: wrap; width: 503px;
+  }
+#edriftRoot .ed_a11ybtn {
+    padding: 4px 10px; font-size: .72rem; font-family: monospace;
+    letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+    background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+    transition: border-color .15s, color .15s;
+  }
+#edriftRoot .ed_a11ybtn:hover { border-color: #00e8d0; color: #00e8d0; }
+#edriftRoot .ed_a11yon { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#edriftRoot .ed_narbar {
+    width: 503px; min-height: 28px; padding: 5px 10px;
+    background: #ffefc0; border-left: 4px solid #e0b040;
+    font-size: .88rem; color: #333; font-style: italic;
+  }
+#edriftRoot .ed_ctrlbtn {
+    padding: 5px 16px; font-size: .78rem; font-family: monospace;
+    letter-spacing: .05em; border-radius: 3px; cursor: pointer;
+    background: #1a2a3a; border: 1px solid #2a5080; color: #7ab0d0;
+    transition: border-color .15s, color .15s;
+  }
+#edriftRoot .ed_ctrlbtn:hover { border-color: #00e8d0; color: #00e8d0; }
+/* ── Layout ── */
+.tbar { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+.mcontent { height: 342px; }
+.islide { width: 220px; }
+.bbar { height: 50px; background-color: #df9; padding: 10px;
+                    display: flex; gap: 12px; justify-content: center; align-items: center; }
+.footer { height: 60px; text-align: center; font-size: normal;
+                    display: flex; background-color: #fce4ec; }
+.footer .left { width: 136px; padding: 2px; }
+.footer .center { width: 367px; padding: 4px; }</style>
+
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var edA11y = (function(){
+  var ROOT   = null;
+  var states = { hc: false, lm: false, cb: false, nr: true };
+
+  var THEMES = {
+    hc: { '--ed-toolbar-bg':'#000000','--ed-cond-fill':'#001a33',
+          '--ed-cond-stroke':'#ffff00','--ed-electron':'#ffdd00',
+          '--ed-eminus':'#000000','--ed-field':'#00ffff',
+          '--ed-label':'#ffffff','--ed-bg':'#111111','--ed-flow-arrow':'#ffff00' },
+    lm: { '--ed-toolbar-bg':'#333333','--ed-cond-fill':'#aaddee',
+          '--ed-cond-stroke':'#003366','--ed-electron':'#cc0000',
+          '--ed-eminus':'#ffffff','--ed-field':'#003399',
+          '--ed-label':'#000000','--ed-bg':'#f8f8f8','--ed-flow-arrow':'#222222' },
+    cb: { '--ed-cond-fill':'#88ccee','--ed-cond-stroke':'#004488',
+          '--ed-electron':'#d55e00','--ed-eminus':'#ffffff',
+          '--ed-field':'#0072b2','--ed-label':'#111111',
+          '--ed-bg':'#f5f5f5','--ed-flow-arrow':'#333333' }
+  };
+  var DEFAULTS = {
+    '--ed-toolbar-bg':'#222','--ed-cond-fill':'#c9f2f4',
+    '--ed-cond-stroke':'#224466','--ed-electron':'#d50000',
+    '--ed-eminus':'#ffffff','--ed-field':'#1565c0',
+    '--ed-label':'#111111','--ed-bg':'#f3f3f3','--ed-flow-arrow':'#333333'
+  };
+
+  function applyVars(theme, on) {
+    if (!ROOT) return;
+    var vars = THEMES[theme];
+    for (var p in vars) ROOT.style.setProperty(p, on ? vars[p] : DEFAULTS[p]);
+  }
+  function styleBtn(id, active) {
+    var b = document.getElementById(id); if (!b) return;
+    if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+    else        { b.style.background='#2a2e3a'; b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+    b.setAttribute('aria-pressed', active ? 'true' : 'false');
+  }
+  function applyCanvas() {
+    var cv = document.getElementById('myCanvas');
+    if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.92)' : '';
+  }
+  function applyNarBar() {
+    var nb = document.getElementById('edNarBar');
+    if (nb) nb.style.display = states.nr ? 'block' : 'none';
+    var btn = document.getElementById('edBtnNR');
+    if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('edBtnNR', states.nr); }
+  }
+  function apply() {
+    if (!ROOT) return;
+    applyVars('hc', states.hc); applyVars('lm', states.lm); applyVars('cb', states.cb);
+    applyCanvas(); applyNarBar();
+    styleBtn('edBtnHC', states.hc);
+    styleBtn('edBtnLM', states.lm);
+    styleBtn('edBtnCB', states.cb);
+  }
+  function getVar(prop) {
+    if (!ROOT) return DEFAULTS[prop];
+    return getComputedStyle(ROOT).getPropertyValue(prop).trim() || DEFAULTS[prop];
+  }
+
+  return {
+    init:    function() { ROOT = document.getElementById('edriftRoot'); apply(); },
+    toggle:  function(k) {
+      states[k] = !states[k];
+      if (k === 'hc' && states.hc) states.lm = false;
+      if (k === 'lm' && states.lm) states.hc = false;
+      apply();
+    },
+    narrate: function(msg) {
+      if (!states.nr) return;
+      var nb = document.getElementById('edNarBar');
+      if (nb) nb.textContent = msg;
+    },
+    col: function(role) { return getVar('--ed-' + role); }
+  };
+})();
+</script>
+
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var edriftSim = (function(){
+
+  var canvas = document.getElementById('myCanvas');
+  var ctx    = canvas.getContext('2d');
+  var CW = canvas.width, CH = canvas.height;
+
+  /* ── Conductor geometry (fits 503×340 canvas) ── */
+  var cTop    = 110;
+  var cBot    = 240;
+  var cLeft   = 48;
+  var cRight  = 458;
+  var cW      = cRight - cLeft;
+  var cH      = cBot  - cTop;
+
+  /* ── Simulation state ── */
+  var fieldStrength = 0;   /* 0..1 */
+  var playing       = false;
+  var autoTimer     = null;
+  var animTimer     = null;
+
+  /* ── Electron constants ── */
+  var NUM_ELECTRONS  = 38;
+  var THERMAL_KICK   = 0.20;   /* random speed added per frame  */
+  var MAX_THERMAL    = 2.2;    /* max thermal speed (px/frame)  */
+  var MAX_DRIFT      = 1.4;    /* max additional drift speed    */
+  var MARGIN         = 8;      /* keep electrons this far from walls */
+
+  var electrons = [];
+
+  /* ── Physics fix: uniform initial placement with symmetric velocities ──
+     Key changes vs original:
+     1. Positions drawn from a truly uniform grid + jitter (not pure random,
+        which clusters) so the initial state looks visually even.
+     2. Velocities assigned as random ANGLE + fixed thermal magnitude,
+        guaranteeing isotropy — no directional bias at t=0.
+     3. Boundary handling is SYMMETRIC: electrons wrapping off the LEFT
+        reappear on the RIGHT, and vice-versa, when field > 0.
+        At field = 0 both sides wrap symmetrically so there is zero net drift.
+     4. Thermal speed is maintained by re-normalising each frame rather than
+        multiplying by a damping constant (which would let speeds decay to 0).
+  ── */
+  function makeElectron(x, y) {
+    /* Random direction, fixed thermal magnitude → perfectly isotropic */
+    var angle = Math.random() * 2 * Math.PI;
+    var spd   = MAX_THERMAL * (0.4 + 0.6 * Math.random());
+    return {
+      x:  x,
+      y:  y,
+      vx: spd * Math.cos(angle),
+      vy: spd * Math.sin(angle)
+    };
+  }
+
+  function initElectrons() {
+    electrons = [];
+    /* Place electrons on a uniform grid with small jitter so they are
+       visually spread across the whole conductor at startup             */
+    var cols = Math.ceil(Math.sqrt(NUM_ELECTRONS * (cW / cH)));
+    var rows = Math.ceil(NUM_ELECTRONS / cols);
+    var cellW = cW / cols;
+    var cellH = cH / rows;
+    var count = 0;
+    for (var r = 0; r < rows && count < NUM_ELECTRONS; r++) {
+      for (var c = 0; c < cols && count < NUM_ELECTRONS; c++) {
+        var jx = (Math.random() - 0.5) * cellW * 0.7;
+        var jy = (Math.random() - 0.5) * cellH * 0.7;
+        var ex = cLeft + (c + 0.5) * cellW + jx;
+        var ey = cTop  + (r + 0.5) * cellH + jy;
+        /* Clamp inside conductor with margin */
+        ex = Math.max(cLeft + MARGIN, Math.min(cRight - MARGIN, ex));
+        ey = Math.max(cTop  + MARGIN, Math.min(cBot   - MARGIN, ey));
+        electrons.push(makeElectron(ex, ey));
+        count++;
+      }
+    }
+  }
+
+  /* ── Drawing ── */
+  function drawBackground() {
+    ctx.fillStyle = edA11y.col('bg');
+    ctx.fillRect(0, 0, CW, CH);
+  }
+
+  function drawConductor() {
+    ctx.fillStyle   = edA11y.col('cond-fill');
+    ctx.fillRect(cLeft, cTop, cW, cH);
+    ctx.strokeStyle = edA11y.col('cond-stroke');
+    ctx.lineWidth   = 2.5;
+    ctx.strokeRect(cLeft, cTop, cW, cH);
+  }
+
+  function drawFieldArrows() {
+    if (fieldStrength < 0.03) return;
+    var col   = edA11y.col('field');
+    var alpha = Math.min(1, fieldStrength * 1.8);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = col;
+    ctx.fillStyle   = col;
+    ctx.lineWidth   = 2;
+    /* Draw field lines above and below the conductor */
+    var ys = [cTop - 30, cTop - 60, cBot + 30, cBot + 60];
+    ys.forEach(function(y) {
+      if (y < 10 || y > CH - 10) return;
+      ctx.beginPath();
+      ctx.moveTo(cLeft + 10, y);
+      ctx.lineTo(cRight - 18, y);
+      ctx.stroke();
+      /* Arrowhead */
+      ctx.beginPath();
+      ctx.moveTo(cRight - 10, y);
+      ctx.lineTo(cRight - 22, y - 6);
+      ctx.lineTo(cRight - 22, y + 6);
+      ctx.closePath();
+      ctx.fill();
+    });
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u2192  Electric Field  \u2192', CW / 2, 14);
+    ctx.restore();
+  }
+
+  /* Flow indicators: left = electrons exit (current enters); right = electrons enter */
+  function drawFlowIndicators() {
+    var col   = edA11y.col('flow-arrow');
+    var alpha = Math.min(1, fieldStrength * 3);
+    if (alpha < 0.05) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle   = col;
+    ctx.strokeStyle = col;
+    ctx.lineWidth   = 2;
+    ctx.font        = '9px monospace';
+    ctx.textAlign   = 'center';
+
+    /* Left exit arrow */
+    var ay = cTop - 16;
+    ctx.beginPath(); ctx.moveTo(cLeft + 14, ay); ctx.lineTo(cLeft - 2, ay); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cLeft - 8, ay);
+    ctx.lineTo(cLeft + 2, ay - 5);
+    ctx.lineTo(cLeft + 2, ay + 5);
+    ctx.closePath(); ctx.fill();
+    ctx.fillText('e\u207B exit', cLeft + 28, ay + 3);
+
+    /* Right entry arrow */
+    ctx.beginPath(); ctx.moveTo(cRight - 14, ay); ctx.lineTo(cRight + 2, ay); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cRight + 8, ay);
+    ctx.lineTo(cRight - 2, ay - 5);
+    ctx.lineTo(cRight - 2, ay + 5);
+    ctx.closePath(); ctx.fill();
+    ctx.fillText('e\u207B enter', cRight - 28, ay + 3);
+
+    ctx.restore();
+  }
+
+  function drawElectron(e) {
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, 7, 0, 2 * Math.PI);
+    ctx.fillStyle   = edA11y.col('electron');
+    ctx.strokeStyle = edA11y.col('cond-stroke');
+    ctx.lineWidth   = 1.2;
+    ctx.fill();
+    ctx.stroke();
+    /* Minus sign */
+    ctx.beginPath();
+    ctx.moveTo(e.x - 3.5, e.y);
+    ctx.lineTo(e.x + 3.5, e.y);
+    ctx.strokeStyle = edA11y.col('eminus');
+    ctx.lineWidth   = 1.8;
+    ctx.stroke();
+  }
+
+  function drawStatusLabel() {
+    ctx.fillStyle = edA11y.col('label');
+    ctx.font      = '11px monospace';
+    ctx.textAlign = 'left';
+    var msg;
+    if (fieldStrength < 0.04) {
+      msg = 'Zero field \u2014 uniform distribution, random thermal motion';
+    } else if (fieldStrength < 0.35) {
+      msg = 'Weak field \u2014 slight leftward drift superimposed on thermal motion';
+    } else if (fieldStrength < 0.70) {
+      msg = 'Moderate field \u2014 drift current clearly visible';
+    } else {
+      msg = 'Strong field \u2014 rapid electron drift, steady current flow';
+    }
+    ctx.fillText(msg, cLeft, CH - 8);
+  }
+
+  /* ── Physics update ──
+     Each frame:
+       1. Add a small random thermal kick in a random direction.
+       2. Clamp total thermal component to MAX_THERMAL (preserves energy).
+       3. Add drift component separately (so thermal randomness isn't eroded).
+       4. Bounce off top/bottom walls elastically.
+       5. Wrap left↔right symmetrically based on field direction so that
+          at field = 0 there is NO preferred direction.                        */
+  function updateElectrons() {
+    var drift = fieldStrength * MAX_DRIFT;   /* px/frame leftward */
+
+    electrons.forEach(function(e) {
+      /* ── Thermal kick: random direction, small magnitude ── */
+      var kickAngle = Math.random() * 2 * Math.PI;
+      e.vx += THERMAL_KICK * Math.cos(kickAngle);
+      e.vy += THERMAL_KICK * Math.sin(kickAngle);
+
+      /* ── Clamp thermal component to MAX_THERMAL ──
+         We separate thermal from drift to avoid thermal erosion.
+         Compute thermal speed (no drift) and normalise if needed. */
+      var thermalSpd = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
+      if (thermalSpd > MAX_THERMAL) {
+        e.vx = e.vx / thermalSpd * MAX_THERMAL;
+        e.vy = e.vy / thermalSpd * MAX_THERMAL;
+      }
+
+      /* ── Move: thermal velocity + drift ── */
+      var moveX = e.vx - drift;   /* drift is leftward, so subtract */
+      var moveY = e.vy;
+
+      e.x += moveX;
+      e.y += moveY;
+
+      /* ── Vertical elastic bounce ── */
+      if (e.y < cTop + MARGIN) {
+        e.y  = cTop + MARGIN;
+        e.vy = Math.abs(e.vy);    /* always bounce downward */
+      }
+      if (e.y > cBot - MARGIN) {
+        e.y  = cBot - MARGIN;
+        e.vy = -Math.abs(e.vy);   /* always bounce upward */
+      }
+
+      /* ── Horizontal wrap (symmetric) ──
+         When field > 0: electrons drifting left exit at cLeft and
+         re-enter at cRight (simulating continuous current in a circuit).
+         When field = 0: wrap both directions uniformly so no net drift. */
+      if (e.x < cLeft - 2) {
+        /* Exiting left — re-enter on right (continuous current) */
+        e.x = cRight - 2;
+        e.y = cTop + MARGIN + Math.random() * (cH - 2 * MARGIN);
+        /* Preserve thermal velocity direction, reset so no accumulated drift */
+        var angle2 = Math.random() * 2 * Math.PI;
+        var spd2   = MAX_THERMAL * (0.4 + 0.6 * Math.random());
+        e.vx = spd2 * Math.cos(angle2);
+        e.vy = spd2 * Math.sin(angle2);
+      }
+      if (e.x > cRight + 2) {
+        /* Exiting right — re-enter on left */
+        e.x = cLeft + 2;
+        e.y = cTop + MARGIN + Math.random() * (cH - 2 * MARGIN);
+        var angle3 = Math.random() * 2 * Math.PI;
+        var spd3   = MAX_THERMAL * (0.4 + 0.6 * Math.random());
+        e.vx = spd3 * Math.cos(angle3);
+        e.vy = spd3 * Math.sin(angle3);
+      }
+
+      drawElectron(e);
+    });
+  }
+
+  /* ── Main draw loop ── */
+  function draw() {
+    ctx.clearRect(0, 0, CW, CH);
+    drawBackground();
+    drawFieldArrows();
+    drawConductor();
+    drawFlowIndicators();
+    updateElectrons();
+    drawStatusLabel();
+    animTimer = window.setTimeout(draw, 40);   /* ~25 fps */
+  }
+
+  /* ── Narration ── */
+  function narrate() {
+    var pct = Math.round(fieldStrength * 100);
+    var msg = 'Field strength: ' + pct + '%. ';
+    if (fieldStrength < 0.04) {
+      msg += 'No applied field. Electrons uniformly distributed, moving in random directions with equal probability.';
+    } else if (fieldStrength < 0.35) {
+      msg += 'Weak field. A small leftward drift is superimposed on random thermal motion. Distribution remains nearly uniform.';
+    } else if (fieldStrength < 0.70) {
+      msg += 'Moderate field. Clear leftward drift current. Electrons completing a circuit by re-entering on the right.';
+    } else {
+      msg += 'Strong field. Rapid drift dominates. Electrons flowing left as conventional current flows right.';
+    }
+    edA11y.narrate(msg);
+  }
+
+  /* ── Public API ── */
+  function setField(v) {
+    fieldStrength = parseFloat(v) / 100;
+    document.getElementById('fieldValue').textContent = Math.round(fieldStrength * 100) + '%';
+    narrate();
+  }
+
+  function togglePlay() {
+    playing = !playing;
+    var btn = document.getElementById('edPlayBtn');
+    if (btn) btn.textContent = playing ? '\u23F8 PAUSE' : '\u25B6 PLAY';
+    if (playing) autoAdvance();
+    edA11y.narrate(playing ? 'Simulation playing.' : 'Paused at ' + Math.round(fieldStrength * 100) + '% field.');
+  }
+
+  function autoAdvance() {
+    if (!playing) return;
+    var sl = document.getElementById('fieldSlider');
+    var v  = parseFloat(sl.value) + 0.4;
+    if (v >= 100) {
+      v = 100; playing = false;
+      var btn = document.getElementById('edPlayBtn');
+      if (btn) btn.textContent = '\u25B6 PLAY';
+      edA11y.narrate('Maximum field strength reached.');
+    }
+    sl.value = v;
+    setField(v);
+    if (playing) autoTimer = window.setTimeout(autoAdvance, 30);
+  }
+
+  function reset() {
+    playing = false;
+    if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+    var btn = document.getElementById('edPlayBtn');
+    if (btn) btn.textContent = '\u25B6 PLAY';
+    var sl = document.getElementById('fieldSlider');
+    sl.value = 0;
+    fieldStrength = 0;
+    document.getElementById('fieldValue').textContent = '0%';
+    initElectrons();
+    edA11y.narrate('Reset. Zero field. Electrons uniformly distributed with random thermal velocities.');
+  }
+
+  /* Boot */
+  window.setTimeout(function() {
+    initElectrons();
+    draw();
+    narrate();
+  }, 0);
+
+  return { setField: setField, togglePlay: togglePlay, reset: reset };
+})();
+</script>
+
+<script>
+  edA11y.init();
+  edA11y.narrate('Simulation ready. Red circles are electrons. At zero field they are uniformly distributed with purely random motion. Use the slider or Play to apply an electric field and observe drift current.');
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows the free electrons inside a conductor. Without an electric field, the electrons move fast but in random directions, colliding with the ions of the metal, so on average they go nowhere and there is no current.</p>
+<p>When a field `vec E` is applied, each electron (charge `-e`) is pushed opposite to the field between collisions. On top of the random thermal motion, the electrons then drift slowly against the field with the drift velocity</p>
+<p class="mob_eq">`v_d = (e E tau)/m`,</p>
+<p>where `tau` is the average time between collisions. The current that results through a wire of cross-section `A`, with `n` free electrons per unit volume, is</p>
+<p class="mob_eq">`I = n e A v_d`.</p>
+<p>The drift velocity is tiny -- typically a fraction of a millimetre per second -- even though the random speeds are enormous. Electrons leave one end of the conductor and enter at the other, so the conductor stays neutral while the current flows.</p>
+<p>This simulation is useful for studying the microscopic picture of electric current, drift velocity, and the difference between random motion and a net flow.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobdrift { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (503 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:543px) {
+#mobdrift div, #mobdrift p, #mobdrift fieldset, #mobdrift form, #mobdrift section, #mobdrift ol, #mobdrift ul, #mobdrift table { max-width:100%; box-sizing:border-box; }
+#mobdrift canvas, #mobdrift img, #mobdrift svg { max-width:100%; height:auto !important; }
+#mobdrift input[type=range], #mobdrift select { max-width:100%; min-width:0; }
+#mobdrift #edriftRoot .ed_a11y, #mobdrift .bbar, #mobdrift .footer { flex-wrap:wrap; }
+#mobdrift #edriftRoot .ed_a11y > div, #mobdrift .bbar > div, #mobdrift .footer > div { min-width:min(100%, 260px); }
+#mobdrift div[style*="height"] { height:auto !important; }
+#mobdrift .tbar, #mobdrift .mcontent, #mobdrift .bbar, #mobdrift .footer { height:auto; min-height:0; }
+#mobdrift table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:563px) {
+#mobdrift div, #mobdrift p, #mobdrift fieldset, #mobdrift form, #mobdrift section, #mobdrift ol, #mobdrift ul, #mobdrift table { max-width:100%; box-sizing:border-box; }
+#mobdrift canvas, #mobdrift img, #mobdrift svg { max-width:100%; height:auto !important; }
+#mobdrift input[type=range], #mobdrift select { max-width:100%; min-width:0; }
+#mobdrift #edriftRoot .ed_a11y, #mobdrift .bbar, #mobdrift .footer { flex-wrap:wrap; }
+#mobdrift #edriftRoot .ed_a11y > div, #mobdrift .bbar > div, #mobdrift .footer > div { min-width:min(100%, 260px); }
+#mobdrift div[style*="height"] { height:auto !important; }
+#mobdrift .tbar, #mobdrift .mcontent, #mobdrift .bbar, #mobdrift .footer { height:auto; min-height:0; }
+#mobdrift table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobdrift button, #mobdrift input[type=button], #mobdrift input[type=submit], #mobdrift input[type=reset] { min-height:40px; }
+#mobdrift input[type=range] { height:28px; }
+#mobdrift input[type=checkbox], #mobdrift input[type=radio] { width:22px; height:22px; }
+#mobdrift select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobdrift .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobdrift .mob_a11ytop input[type=button], #mobdrift .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobdrift .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobdrift .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobdrift .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobdrift .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobdrift .mob_desc p { margin:0 0 9px 0; }
+#mobdrift .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobdrift -->
+</main>
+</body>
+</html>

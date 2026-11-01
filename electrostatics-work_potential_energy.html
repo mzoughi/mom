@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electrostatics: Work and Electrical Potential Energy</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, electric potential energy, work, Coulomb, point charges, lesson, scientific">
+<meta name="description" content="Work and Electrical Potential Energy -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobwec" class="mob_wrap">
+<div id="wecRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="wec_a11y" id="wecA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="wec_a11ybtn" id="wecBtnHC" onclick="wecA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="wec_a11ybtn" id="wecBtnLM" onclick="wecA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="wec_a11ybtn" id="wecBtnCB" onclick="wecA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="wec_a11ybtn wec_a11yon" id="wecBtnNR" onclick="wecA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar"><h3>Work &amp; Electrical Potential Energy</h3></div>
+<div class="mcontent">
+<canvas id="wecCanvas" style="margin:auto;display:block;border:1px solid #ccc" width="500" height="440"></canvas>
+</div>
+<div id="wecNarBar" class="wec_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar">
+<input type="button" id="wecPlay" value="Release" disabled
+onclick="wecSim.release();">
+<input type="button" value="Restart" onclick="document.getElementById('wecPlay').value='Release';wecSim.rst();">
+</div>
+<div class="footer">
+<div class="row">
+<label><input type="checkbox" id="wecQ1Sign" onchange="wecSim.rst()"> Large charge Q is positive (+)</label>
+&nbsp;&nbsp;
+<label><input type="checkbox" id="wecQ2Sign" onchange="wecSim.rst()"> Small charge q is positive (+)</label>
+</div>
+<div class="row">Final distance r<sub>f</sub> (5-15 cm):
+<input type="range" id="wecRf" min="5" max="15" value="10" step="1"
+ oninput="document.getElementById('wecRfVal').textContent=this.value;wecSim.setRf(parseInt(this.value,10));">
+<span id="wecRfVal">10</span> cm
+</div>
+<div class="row">Position of q (from ∞ down to r<sub>f</sub>):
+<input type="range" id="wecPos" min="0" max="1000" value="0" step="1"
+ oninput="wecSim.setPos(parseInt(this.value,10));">
+<span id="wecPosVal">∞</span>
+</div>
+</div>
+</div>
+<style>:where(#mobwec) * { margin: 0; box-sizing: border-box; }
+:where(#mobwec) div { width: 503px; margin: 0; }
+#wecRoot {
+--wec-bg:      #ffffff;
+--wec-pos:     #cc2200;
+--wec-neg:     #0033cc;
+--wec-text:    #111111;
+--wec-struct:  #111111;
+--wec-axis:    #333333;
+--wec-bar-w:   #2a7a2a;
+--wec-bar-we:  #1e6fa8;
+--wec-bar-u:   #b06800;
+--wec-arrow:   #555555;
+--wec-track:   #888888;
+--wec-toolbar-bg: #222;
+}
+#wecRoot .wec_a11y {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--wec-toolbar-bg); flex-wrap:wrap; width:503px;
+}
+#wecRoot .wec_a11ybtn {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#wecRoot .wec_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#wecRoot .wec_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#wecRoot .wec_narbar {
+width:503px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar { padding:4px; height:50px; background-color:#f90; text-align:center; line-height:42px; }
+.tbar h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent { height:442px; }
+.bbar { height:50px; background-color:#df9; padding:10px; text-align:center; }
+.bbar input[type=button] { margin:0 4px; padding:4px 14px; cursor:pointer; }
+.footer { background-color:#fce4ec; padding:6px 8px; font-size:.88rem; }
+.footer .row { width:auto; padding:3px 0; }
+.footer label { cursor:pointer; }</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var wecA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--wec-bg':'#000','--wec-pos':'#ffff00','--wec-neg':'#00ffff','--wec-text':'#fff','--wec-struct':'#fff','--wec-axis':'#fff','--wec-bar-w':'#00ff00','--wec-bar-we':'#00aaff','--wec-bar-u':'#ff8800','--wec-arrow':'#fff','--wec-track':'#fff','--wec-toolbar-bg':'#000'},
+lm:{'--wec-bg':'#f0f0f0','--wec-pos':'#aa1100','--wec-neg':'#002288','--wec-text':'#000','--wec-struct':'#000','--wec-axis':'#000','--wec-bar-w':'#1a5a1a','--wec-bar-we':'#154a78','--wec-bar-u':'#804800','--wec-arrow':'#333','--wec-track':'#555','--wec-toolbar-bg':'#444'},
+cb:{'--wec-bg':'#fff','--wec-pos':'#d55e00','--wec-neg':'#0072b2','--wec-text':'#000','--wec-struct':'#333','--wec-axis':'#333','--wec-bar-w':'#009e73','--wec-bar-we':'#56b4e9','--wec-bar-u':'#cc79a7','--wec-arrow':'#333','--wec-track':'#666','--wec-toolbar-bg':'#222'}
+};
+var DEFS = {'--wec-bg':'#fff','--wec-pos':'#cc2200','--wec-neg':'#0033cc','--wec-text':'#111','--wec-struct':'#111','--wec-axis':'#333','--wec-bar-w':'#2a7a2a','--wec-bar-we':'#1e6fa8','--wec-bar-u':'#b06800','--wec-arrow':'#555','--wec-track':'#888','--wec-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('wecNarBar');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('wecBtnNR');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('wecBtnNR',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('wecBtnHC',states.hc);
+styleBtn('wecBtnLM',states.lm);
+styleBtn('wecBtnCB',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('wecRoot'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('wecNarBar');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════ -->
+<script>
+var wecGen = function() {
+var canvas  = document.getElementById('wecCanvas');
+var ctx     = canvas.getContext('2d');
+var W       = canvas.width;   /* 500 */
+var H       = canvas.height;  /* 440 */
+var timer;
+var runFlag = 0;
+/* ── physics constants (display units) ── */
+/* k = 9e9 N·m²/C².  We treat q1,q2 in microCoulombs and r in cm.
+Then U = k * q1[µC]*q2[µC] / r[cm] in display-energy-units.
+Numerically: k*1e-6*1e-6/0.01 = 9e9*1e-10 = 0.9 J  per (µC·µC/cm).
+So with q1=1µC, q2=1µC, r=20cm => U = 0.9/20 = 0.045 J = 45 mJ.
+We work in milliJoules for nicer numbers. U[mJ] = 900 * q1*q2 / r. */
+var q1mag = 5;     /* large charge magnitude in µC                  */
+var q2mag = 1;     /* small charge magnitude in µC                  */
+var kFac  = 900;   /* mJ·cm per (µC·µC)  -> U[mJ] = kFac*q1*q2/r    */
+/* Max |U| reference for bar scaling:
+smallest r = 5 cm => |U_max| = 900*5*1/5 = 900 mJ -- use 1000 mJ */
+var Umax  = 1000;
+/* ── state ── */
+var q1pos;        /* +1 or -1: sign of large charge Q     */
+var q2pos;        /* +1 or -1: sign of small charge q     */
+var rfCm;         /* target final distance (slider, cm)    */
+var rCurCm;       /* current distance of q from Q (cm)     */
+var posFrac;      /* 0..1 = where slider is between ∞ and r_f */
+var qx;           /* small-charge x coordinate (canvas px) */
+var qVisible;     /* whether to draw q (only when r < SHOW_R_CM) */
+var phase;        /* 'place' | 'moving' | 'done'           */
+var lastNarrPhase;
+/* ── layout ── */
+var FH        = 14;
+var sceneTop  = 30;
+var sceneBot  = 230;
+var sceneMidY = (sceneTop + sceneBot) / 2;     /* y of horizontal track */
+var Qx        = W - 60;                         /* large charge x        */
+var QR        = 24;                             /* large charge radius   */
+var qR        = 10;                             /* small charge radius   */
+var trackL    = 30;                             /* left end of track     */
+var trackR    = Qx - QR - 4;                    /* right end (Q surface) */
+/* On-screen mapping: track goes from "r = SHOW_R_CM" at trackL to "r = 0" at trackR.
+SHOW_R_CM is the visible distance window in cm.  We pick 150 cm so the user
+sees the charge appear at 1.5 m from Q and slide all the way to r_f.       */
+var SHOW_R_CM = 150;
+var INF_CM    = 5000;     /* "infinity" slider value (cm), not displayed numerically */
+var pxPerCm_show = (trackR - qR - trackL) / SHOW_R_CM;
+/* bar-chart area */
+var bcTop  = 260;
+var bcBot  = 400;
+var bcMidY = (bcTop + bcBot)/2;                 /* zero line             */
+var bcH    = (bcBot - bcTop)/2 - 8;             /* half-height for +/-   */
+var barW   = 60;
+var bar1X  = 90;
+var bar2X  = 235;
+var bar3X  = 380;
+function c(prop, def) { return wecA11y.col(prop, def); }
+/* ── compute r in cm from qx (only valid when on-screen) ── */
+function rFromQx(x) {
+var dxPx = Qx - QR - x;
+return Math.max(0.5, dxPx / pxPerCm_show);
+}
+/* ── compute qx from r in cm (for on-screen positions) ── */
+function qxFromR(rcm) {
+return Qx - QR - rcm * pxPerCm_show;
+}
+/* ── compute current r in cm from slider posFrac ── */
+/* posFrac = 0 → r = INF_CM (infinity);  posFrac = 1 → r = rfCm
+Use a log-ish interpolation so the slider doesn't feel "stuck at infinity":
+ r(f) = rfCm * (INF_CM / rfCm)^(1 - f)
+At f=0: r = INF_CM.  At f=1: r = rfCm.                                     */
+function rFromFrac(f) {
+if (f >= 1) return rfCm;
+if (f <= 0) return INF_CM;
+return rfCm * Math.pow(INF_CM / rfCm, 1 - f);
+}
+/* ── draw a circle charge with sign symbol ── */
+function drawCharge(x, y, r, sign, isLarge) {
+var col = sign > 0 ? c('--wec-pos','#cc2200') : c('--wec-neg','#0033cc');
+ctx.fillStyle = col;
+ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI); ctx.fill();
+if (isLarge) {
+ctx.strokeStyle = c('--wec-struct','#111');
+ctx.lineWidth = 2;
+ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI); ctx.stroke();
+}
+/* sign symbol */
+ctx.fillStyle = '#fff';
+ctx.font = 'bold '+Math.round(r*1.3)+'px sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText(sign > 0 ? '+' : '−', x, y+1);
+}
+/* ── draw an arrow ── */
+function drawArrow(x1, y1, x2, y2, col) {
+ctx.strokeStyle = col;
+ctx.fillStyle = col;
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+ctx.stroke();
+var ang = Math.atan2(y2-y1, x2-x1);
+var hl = 8;
+ctx.beginPath();
+ctx.moveTo(x2, y2);
+ctx.lineTo(x2 - hl*Math.cos(ang - Math.PI/6), y2 - hl*Math.sin(ang - Math.PI/6));
+ctx.lineTo(x2 - hl*Math.cos(ang + Math.PI/6), y2 - hl*Math.sin(ang + Math.PI/6));
+ctx.closePath();
+ctx.fill();
+}
+/* ── draw bar chart entry ── */
+function drawBar(cx, label, value, valTxt, col, showTicks) {
+/* axis */
+ctx.strokeStyle = c('--wec-axis','#333');
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(cx - barW/2 - 6, bcMidY);
+ctx.lineTo(cx + barW/2 + 6, bcMidY);
+ctx.stroke();
+/* tick labels only on first bar */
+if (showTicks) {
+ctx.fillStyle = c('--wec-text','#111');
+ctx.font = '9px monospace';
+ctx.textAlign = 'right';
+ctx.textBaseline = 'middle';
+ctx.fillText('0',       cx - barW/2 - 8, bcMidY);
+ctx.fillText('+'+Umax,  cx - barW/2 - 8, bcMidY - bcH);
+ctx.fillText('−'+Umax,  cx - barW/2 - 8, bcMidY + bcH);
+}
+/* bar */
+var frac = Math.max(-1, Math.min(1, value / Umax));
+var barH = frac * bcH;
+ctx.fillStyle = col;
+if (barH >= 0) {
+ctx.fillRect(cx - barW/2, bcMidY - barH, barW, barH);
+} else {
+ctx.fillRect(cx - barW/2, bcMidY, barW, -barH);
+}
+/* border */
+ctx.strokeStyle = c('--wec-struct','#111');
+ctx.lineWidth = 1;
+ctx.strokeRect(cx - barW/2, bcTop, barW, bcBot - bcTop);
+/* label below */
+ctx.fillStyle = c('--wec-text','#111');
+ctx.font = 'bold 12px sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'top';
+ctx.fillText(label, cx, bcBot + 4);
+ctx.font = '10px monospace';
+ctx.fillText(valTxt, cx, bcBot + 20);
+}
+/* ── compute current physics values ── */
+function currentPhysics() {
+var r = rCurCm;
+/* U = k * q1 * q2 / r  with signs */
+var U = kFac * (q1pos*q1mag) * (q2pos*q2mag) / r;
+/* W_app = U(r) - U(∞) = U  (since U(∞)=0)
+ W_E  = -ΔU = -U  (work done by the electric field on q)            */
+var Wapp = U;
+var WE   = -U;
+return { r:r, U:U, Wapp:Wapp, WE:WE };
+}
+/* ── full redraw ── */
+function drawFrame() {
+ctx.clearRect(0, 0, W, H);
+ctx.fillStyle = c('--wec-bg','#fff');
+ctx.fillRect(0, 0, W, H);
+/* === SCENE === */
+/* "infinity" label on far left + small arrows showing the axis continues */
+ctx.fillStyle = c('--wec-text','#111');
+ctx.font = 'italic 22px serif';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'middle';
+ctx.fillText('∞', 8, sceneMidY);
+/* dashed track from "∞" toward Q */
+ctx.strokeStyle = c('--wec-track','#888');
+ctx.lineWidth = 1;
+ctx.setLineDash([4,4]);
+ctx.beginPath();
+ctx.moveTo(trackL, sceneMidY);
+ctx.lineTo(trackR, sceneMidY);
+ctx.stroke();
+ctx.setLineDash([]);
+/* r_f target marker -- always shown while placing */
+var rfX = qxFromR(rfCm);
+if (phase === 'place' || phase === 'moving') {
+/* vertical tick at r_f */
+ctx.strokeStyle = c('--wec-struct','#111');
+ctx.lineWidth = 1.2;
+ctx.beginPath();
+ctx.moveTo(rfX, sceneMidY - 14);
+ctx.lineTo(rfX, sceneMidY + 14);
+ctx.stroke();
+/* r_f bracket from target to Q surface */
+var by  = sceneTop + 14;
+drawArrow(Qx - QR, by, rfX, by, c('--wec-struct','#111'));
+drawArrow(rfX, by, Qx - QR, by, c('--wec-struct','#111'));
+ctx.beginPath();
+ctx.moveTo(rfX, by-4); ctx.lineTo(rfX, by+4);
+ctx.moveTo(Qx - QR, by-4); ctx.lineTo(Qx - QR, by+4);
+ctx.stroke();
+ctx.fillStyle = c('--wec-text','#111');
+ctx.font = 'italic 14px serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'bottom';
+ctx.fillText('r', (rfX + Qx - QR)/2 - 4, by - 6);
+ctx.font = 'italic 10px serif';
+ctx.fillText('f', (rfX + Qx - QR)/2 + 4, by - 2);
+ctx.font = '11px monospace';
+ctx.textBaseline = 'top';
+ctx.fillText(rfCm+' cm', (rfX + Qx - QR)/2, by + 6);
+}
+/* Q (large) -- always */
+drawCharge(Qx, sceneMidY, QR, q1pos, true);
+ctx.fillStyle = c('--wec-text','#111');
+ctx.font = 'italic bold 14px serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'top';
+ctx.fillText('Q', Qx, sceneMidY + QR + 4);
+ctx.font = '10px monospace';
+ctx.fillText('('+(q1pos>0?'+':'−')+q1mag+' µC)', Qx, sceneMidY + QR + 20);
+/* q (small) -- only when within visible range */
+if (qVisible) {
+drawCharge(qx, sceneMidY, qR, q2pos, false);
+ctx.fillStyle = c('--wec-text','#111');
+ctx.font = 'italic bold 14px serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'top';
+ctx.fillText('q', qx, sceneMidY + qR + 4);
+ctx.font = '10px monospace';
+ctx.fillText('('+(q2pos>0?'+':'−')+q2mag+' µC)', qx, sceneMidY + qR + 18);
+/* current r reading next to q (only during placement) */
+if (phase === 'place') {
+ctx.font = '10px monospace';
+ctx.textBaseline = 'bottom';
+ctx.fillText('r = '+rCurCm.toFixed(1)+' cm', qx, sceneMidY - qR - 4);
+}
+} else if (phase === 'place') {
+/* q is "off-stage" near infinity -- show a hint */
+ctx.fillStyle = c('--wec-text','#111');
+ctx.font = 'italic 11px sans-serif';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'middle';
+ctx.fillText('q is far away (r ≈ '+rCurCm.toFixed(0)+' cm) — slide right to bring it in', 30, sceneMidY - 24);
+}
+/* phase banner */
+ctx.font = 'bold 12px sans-serif';
+ctx.textAlign = 'left';
+ctx.fillStyle = c('--wec-text','#111');
+var banner = '';
+if (phase === 'place') {
+if (rCurCm <= rfCm + 0.1) banner = 'q has arrived at r_f. Press Release.';
+else banner = 'Drag q from ∞ toward r_f using the position slider.';
+}
+if (phase === 'moving') {
+var same = (q1pos === q2pos);
+banner = same ? 'Released → q is REPELLED (like charges repel)'
+: 'Released → q is ATTRACTED (unlike charges attract)';
+}
+if (phase === 'done') {
+var same2 = (q1pos === q2pos);
+banner = same2 ? 'q escaped back to infinity. Final U = 0.'
+: 'q collided with Q. (At contact, U → very large negative.)';
+}
+ctx.fillText(banner, 10, sceneBot - 4);
+/* === BAR CHARTS === */
+var p = currentPhysics();
+var Wtxt, Utxt, WEtxt;
+var WappVal, UVal, WEVal;
+if (phase === 'moving' || phase === 'done') {
+/* W_app frozen at release; ΔU and W_E continue to evolve */
+WappVal = Wrelease;
+UVal    = p.U;
+WEVal   = p.WE;
+} else {
+WappVal = p.Wapp;
+UVal    = p.U;
+WEVal   = p.WE;
+}
+Wtxt  = (WappVal >= 0 ? '+' : '') + WappVal.toFixed(1) + ' mJ';
+Utxt  = (UVal    >= 0 ? '+' : '') + UVal.toFixed(1)    + ' mJ';
+WEtxt = (WEVal   >= 0 ? '+' : '') + WEVal.toFixed(1)   + ' mJ';
+drawBar(bar1X, 'W_app',  WappVal, Wtxt,  c('--wec-bar-w', '#2a7a2a'), true);
+drawBar(bar2X, 'W_E',    WEVal,   WEtxt, c('--wec-bar-we','#1e6fa8'), false);
+drawBar(bar3X, 'ΔU',     UVal,    Utxt,  c('--wec-bar-u', '#b06800'), false);
+}
+/* ── moving-charge physics (visual; not strict integrator) ── */
+/* When user presses Release we let q evolve.  Force from Q is along x:
+ F_x = k·q1·q2 / r²   with sign convention: like signs => repel.
+like signs: F pushes q to the LEFT (away from Q) when q is on left of Q.
+ Wait: q is on the LEFT of Q, so r-hat from Q to q points -x.
+ F on q = k·q1·q2/r² in direction r-hat.  If q1q2>0 => F in -x (away) ✓
+ If q1q2<0 => F in +x (toward Q) ✓
+So sign of acceleration on q (in x):
+ ax = -sign(q1*q2) * |k q1 q2| / (r² · m)  ... using r in cm, this is just visual
+We use a simplified scheme: speed grows over time, direction by signs. */
+var Wrelease = 0;   /* W done by user, frozen at release  */
+var vx = 0;         /* visual velocity in px/frame        */
+var moveSign = 0;   /* +1: q moves right (attracted)  -1: q moves left (repelled) */
+function physicsStep() {
+if (phase !== 'moving') return;
+var r = rCurCm;
+if (r < 0.2) r = 0.2;
+/* base accel in px/frame^2 -- tuned for nice visuals */
+var aMag = 0.05 * (q1mag * q2mag) / (r*r) * pxPerCm_show * 0.8 + 0.02;
+if (aMag > 1.2) aMag = 1.2;
+vx += moveSign * aMag;
+qx += vx;
+/* update r from the new qx */
+rCurCm = rFromQx(qx);
+qVisible = (rCurCm <= SHOW_R_CM);
+/* check end conditions */
+if (moveSign > 0) {
+/* attracted: stops when q surface touches Q surface */
+if (qx >= Qx - QR - qR) {
+qx = Qx - QR - qR;
+rCurCm = rFromQx(qx);
+phase = 'done';
+runFlag = 0;
+var btn=document.getElementById('wecPlay');
+if(btn){btn.disabled=false;btn.value='Release';}
+}
+} else {
+/* repelled: stops when off the left edge of the visible window */
+if (qx < trackL - qR) {
+qx = trackL - qR;
+qVisible = false;
+rCurCm = SHOW_R_CM + 1;
+phase = 'done';
+runFlag = 0;
+var btn2=document.getElementById('wecPlay');
+if(btn2){btn2.disabled=false;btn2.value='Release';}
+}
+}
+narrateMotion();
+}
+/* ── narration ── */
+var frameCount = 0;
+function narratePlacement() {
+var p = currentPhysics();
+var q1Sym = q1pos>0 ? '+' : '−';
+var q2Sym = q2pos>0 ? '+' : '−';
+var same = (q1pos === q2pos);
+var msg = 'Large charge Q is '+q1Sym+q1mag+' microcoulombs on the right. ';
+msg += 'Small charge q is '+q2Sym+q2mag+' microcoulombs. ';
+if (rCurCm > SHOW_R_CM * 4) {
+msg += 'q is essentially at infinity. U ≈ 0, W_app ≈ 0, W_E ≈ 0. ';
+msg += 'Target distance r_f = '+rfCm+' cm. Slide right to bring q in.';
+} else if (rCurCm > rfCm + 0.5) {
+msg += 'q is at r = '+rCurCm.toFixed(1)+' cm, on its way to r_f = '+rfCm+' cm. ';
+msg += 'U = '+p.U.toFixed(1)+' mJ. Keep sliding right.';
+} else {
+msg += 'q has arrived at r_f = '+rfCm+' cm. ';
+if (same) msg += 'Like charges -- you did POSITIVE work pushing in against repulsion. ';
+else      msg += 'Unlike charges -- you did NEGATIVE work holding q back from being pulled in. ';
+msg += 'W_app = '+p.Wapp.toFixed(1)+' mJ, W_E = '+p.WE.toFixed(1)+' mJ, ΔU = '+p.U.toFixed(1)+' mJ. ';
+msg += 'Press Release.';
+}
+wecA11y.narrate(msg);
+}
+function narrateRelease() {
+var same = (q1pos === q2pos);
+if (same) {
+wecA11y.narrate(
+'Released! q is pushed away from Q -- like charges repel. '+
+'As r grows, U decreases toward zero. The bar for ΔU shrinks.'
+);
+} else {
+wecA11y.narrate(
+'Released! q is pulled toward Q -- unlike charges attract. '+
+'As r shrinks, U becomes more negative. The ΔU bar grows downward.'
+);
+}
+}
+function narrateMotion() {
+frameCount++;
+if (frameCount % 30 !== 0) return;
+var p = currentPhysics();
+var Utxt = (p.U>=0?'+':'')+p.U.toFixed(1);
+wecA11y.narrate('q at r = '+p.r.toFixed(1)+' cm, ΔU = '+Utxt+' mJ.');
+}
+function narrateDone() {
+var same = (q1pos === q2pos);
+if (same) {
+wecA11y.narrate(
+'q has escaped toward infinity. The electric PE is now ≈ 0. '+
+'All the energy you stored as positive U was converted into kinetic energy of q.'
+);
+} else {
+wecA11y.narrate(
+'q has reached Q. As r → 0, U → −∞ and kinetic energy grows. '+
+'The negative work you did was reclaimed as KE by the field.'
+);
+}
+}
+/* ── animation loop ── */
+function runMotion() {
+physicsStep();
+drawFrame();
+if (runFlag === 1) {
+timer = window.setTimeout(runMotion, 40);
+} else if (phase === 'done') {
+narrateDone();
+}
+}
+/* ── public API ── */
+function release() {
+if (phase !== 'place') return;
+/* button is disabled until q reaches r_f, so this guard is just safety */
+if (rCurCm > rfCm + 0.5) return;
+/* snap to exact r_f for clean numbers */
+rCurCm = rfCm;
+qx     = qxFromR(rfCm);
+qVisible = true;
+var p = currentPhysics();
+Wrelease = p.Wapp;
+phase = 'moving';
+vx = 0;
+moveSign = (q1pos === q2pos) ? -1 : +1;   /* like => repelled (left), unlike => attracted (right) */
+runFlag = 1;
+var btnR = document.getElementById('wecPlay');
+if (btnR) btnR.disabled = true;
+narrateRelease();
+window.clearTimeout(timer);
+runMotion();
+}
+/* enable/disable the Release button based on whether q has arrived at r_f */
+function updateReleaseBtn() {
+var btn = document.getElementById('wecPlay');
+if (!btn) return;
+if (phase === 'place' && rCurCm <= rfCm + 0.5) btn.disabled = false;
+else                                            btn.disabled = true;
+}
+function setRf(v) {
+if (phase !== 'place') return;
+rfCm = v;
+/* re-snap current position from existing slider posFrac */
+rCurCm = rFromFrac(posFrac);
+/* don't let current r be smaller than r_f (would be past the target) */
+if (rCurCm < rfCm) rCurCm = rfCm;
+qx = qxFromR(Math.min(rCurCm, SHOW_R_CM));
+qVisible = (rCurCm <= SHOW_R_CM);
+updateReleaseBtn();
+drawFrame();
+narratePlacement();
+}
+function setPos(v) {
+if (phase !== 'place') return;
+/* slider value 0..1000 → posFrac 0..1 */
+posFrac = v / 1000;
+rCurCm  = rFromFrac(posFrac);
+/* clamp: never closer than r_f */
+if (rCurCm < rfCm) rCurCm = rfCm;
+qVisible = (rCurCm <= SHOW_R_CM);
+qx = qxFromR(Math.min(rCurCm, SHOW_R_CM));
+/* update slider readout text */
+var ro = document.getElementById('wecPosVal');
+if (ro) {
+if (rCurCm > SHOW_R_CM * 4)     ro.textContent = '∞';
+else                             ro.textContent = 'r = '+rCurCm.toFixed(0)+' cm';
+}
+updateReleaseBtn();
+drawFrame();
+narratePlacement();
+}
+function rst() {
+window.clearTimeout(timer);
+runFlag = 0;
+/* read checkboxes */
+var cb1 = document.getElementById('wecQ1Sign');
+var cb2 = document.getElementById('wecQ2Sign');
+q1pos = (cb1 && cb1.checked) ? +1 : -1;
+q2pos = (cb2 && cb2.checked) ? +1 : -1;
+/* read rf slider */
+var sl = document.getElementById('wecRf');
+rfCm = sl ? parseInt(sl.value, 10) : 10;
+if (rfCm < 5)  rfCm = 5;
+if (rfCm > 15) rfCm = 15;
+/* reset position slider to 0 (infinity) */
+var ps = document.getElementById('wecPos');
+if (ps) ps.value = 0;
+var ro = document.getElementById('wecPosVal');
+if (ro) ro.textContent = '∞';
+posFrac = 0;
+rCurCm  = rFromFrac(0);    /* = INF_CM */
+qVisible = false;
+qx = qxFromR(SHOW_R_CM);   /* off-stage default */
+phase = 'place';
+vx = 0;
+moveSign = 0;
+Wrelease = 0;
+frameCount = 0;
+updateReleaseBtn();
+drawFrame();
+narratePlacement();
+}
+/* boot */
+rst();
+return { release:release, setRf:setRf, setPos:setPos, rst:rst, pl:release, ps:function(){}, step:function(){} };
+};
+var wecSim = new wecGen();
+</script>
+<script>
+wecA11y.init();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows the work needed to bring a small charge `q` from very far away (infinity) to a final distance `r_f` from a large fixed charge `Q`. The signs of both charges and the final distance can be chosen; the position slider moves `q` in from infinity.</p>
+<p>The electric potential energy of the pair at a distance `r` is</p>
+<p class="mob_eq">`U = k (Q q)/r`,&nbsp;&nbsp; with `U = 0` at infinity.</p>
+<p>Bringing `q` in slowly, the applied force does work `W_"app"` while the electric force does work `W_E`. The kinetic energy does not change, so</p>
+<p class="mob_eq">`W_"app" = Delta U = k (Q q)/r_f`,&nbsp;&nbsp; `W_E = -Delta U`.</p>
+<p>For like charges, positive work must be done to push them together and the potential energy rises; for opposite charges, the electric force does the work and the potential energy falls. The bar chart shows `W_"app"`, `W_E` and `Delta U` as `q` moves in.</p>
+<p>This simulation is useful for studying electric potential energy, the work done by and against the electric force, and the choice of zero at infinity.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobwec { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (503 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:543px) {
+#mobwec div, #mobwec p, #mobwec fieldset, #mobwec form, #mobwec section, #mobwec ol, #mobwec ul, #mobwec table { max-width:100%; box-sizing:border-box; }
+#mobwec canvas, #mobwec img, #mobwec svg { max-width:100%; height:auto !important; }
+#mobwec input[type=range], #mobwec select { max-width:100%; min-width:0; }
+#mobwec #wecRoot .wec_a11y { flex-wrap:wrap; }
+#mobwec #wecRoot .wec_a11y > div { min-width:min(100%, 260px); }
+#mobwec div[style*="height"] { height:auto !important; }
+#mobwec .tbar, #mobwec .mcontent, #mobwec .bbar { height:auto; min-height:0; }
+#mobwec .tbar { line-height:1.3; padding-top:6px; padding-bottom:6px; }
+#mobwec table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:563px) {
+#mobwec div, #mobwec p, #mobwec fieldset, #mobwec form, #mobwec section, #mobwec ol, #mobwec ul, #mobwec table { max-width:100%; box-sizing:border-box; }
+#mobwec canvas, #mobwec img, #mobwec svg { max-width:100%; height:auto !important; }
+#mobwec input[type=range], #mobwec select { max-width:100%; min-width:0; }
+#mobwec #wecRoot .wec_a11y { flex-wrap:wrap; }
+#mobwec #wecRoot .wec_a11y > div { min-width:min(100%, 260px); }
+#mobwec div[style*="height"] { height:auto !important; }
+#mobwec .tbar, #mobwec .mcontent, #mobwec .bbar { height:auto; min-height:0; }
+#mobwec .tbar { line-height:1.3; padding-top:6px; padding-bottom:6px; }
+#mobwec table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobwec button, #mobwec input[type=button], #mobwec input[type=submit], #mobwec input[type=reset] { min-height:40px; }
+#mobwec input[type=range] { height:28px; }
+#mobwec input[type=checkbox], #mobwec input[type=radio] { width:22px; height:22px; }
+#mobwec select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobwec .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobwec .mob_a11ytop input[type=button], #mobwec .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobwec .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobwec .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobwec .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobwec .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobwec .mob_desc p { margin:0 0 9px 0; }
+#mobwec .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobwec -->
+</main>
+</body>
+</html>

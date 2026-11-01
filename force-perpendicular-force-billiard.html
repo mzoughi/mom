@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Forces: Kicks and Sideways Forces: From a Billiard Ball to a Charge in a Magnetic Field</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, force, motion, impulse, kick, constant velocity, Newton first law, centripetal force, uniform circular motion, perpendicular force, magnetic force, cyclotron, Lorentz force, helix, lesson, scientific">
+<meta name="description" content="Interactive simulation: kicking a billiard ball, a force always perpendicular to the velocity giving circular motion, and a charged particle in a magnetic field.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="bfRoot" class="bf_root" role="region" aria-label="Kicks and perpendicular forces simulator">
+<div class="bf_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="bf_a11ybtn" id="bfBtnHC" onclick="bfSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="bf_a11ybtn" id="bfBtnLM" onclick="bfSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="bf_a11ybtn" id="bfBtnCB" onclick="bfSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="bf_a11ybtn bf_a11yon" id="bfBtnNR" onclick="bfSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="bf_tbar"><h3>Kicks and Sideways Forces: From a Billiard Ball to a Charge in a Magnetic Field</h3></div>
+<div class="bf_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="bf_tab" id="bfT0" aria-selected="true" onclick="bfSim.tab(0)">1. Kick the ball</button>
+<button type="button" role="tab" class="bf_tab" id="bfT1" aria-selected="false" onclick="bfSim.tab(1)">2. A force always sideways</button>
+<button type="button" role="tab" class="bf_tab" id="bfT2" aria-selected="false" onclick="bfSim.tab(2)">3. A charge in a magnetic field</button>
+</div>
+<div class="bf_mcontent">
+<div class="bf_view">
+<div class="bf_vlabel" id="bfLab"></div>
+<canvas id="bfCv" width="780" height="420" role="img" aria-label="A billiard table seen from above with the ball, its velocity and the forces on it; or a charged particle moving in a magnetic field."></canvas>
+</div>
+<div class="bf_readout" id="bfRead" aria-label="Readout"></div>
+</div>
+<div class="bf_bbar" id="bfBtns"></div>
+<div class="bf_controls" id="bfCtl"></div>
+<div id="bfNarBar" class="bf_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bf_descwrap">
+<button type="button" class="bf_descbtn" id="bfDescBtn" aria-expanded="false" aria-controls="bfDesc" onclick="bfSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="bf_desc" id="bfDesc" role="region" aria-labelledby="bfDescBtn" style="display:none">
+<p>This simulation shows what a force does to a moving object depending on its direction, using a billiard ball on a frictionless table and, at the end, a charged particle in a magnetic field.</p>
+<p><b>1. A kick.</b> With no force on it, the ball moves in a straight line at constant velocity (Newton's first law); the ghost images, taken at equal time intervals, are equally spaced along a line. A kick from the cue is a large force acting for a very short time. It gives the ball an impulse `vec J`, changing its velocity by</p>
+<p class="bf_eq">`Delta vec v = vec J / m`.</p>
+<p>A kick along the motion speeds the ball up; against it, slows it down; sideways, it turns the ball. A kick at exactly 90 degrees also makes the ball a little faster, since the new velocity is the vector sum: `|vec v'| = sqrt(v^2 + (Delta v)^2)`. To turn the velocity by an angle `delta` without changing its length, the kick must point slightly backward, toward the centre of the turn, at `90^@ + delta/2` from the velocity, with `Delta v = 2 v sin(delta/2)`. Many such kicks in a row bend the path into a polygon around a circle at constant speed. The smaller and more frequent the kicks, the closer the two directions become -- in the limit of a continuous force, perpendicular and toward the centre are the same.</p>
+<p><b>2. A force always sideways.</b> A force that is always perpendicular to the velocity never speeds the ball up or slows it down -- it does no work -- it only turns it. The ball moves in a circle at constant speed. The force supplies the centripetal acceleration,</p>
+<p class="bf_eq">`F = m v^2 / r`,&nbsp;&nbsp; so &nbsp;&nbsp;`r = m v^2 / F`,&nbsp;&nbsp; `T = (2 pi r)/v = (2 pi m v)/F`.</p>
+<p>A force of the same size pointing in a fixed direction is different: it changes the speed as well as the direction, and the path becomes a parabola.</p>
+<p><b>3. A charge in a magnetic field.</b> A magnetic field gives a moving charge exactly this kind of force. The magnetic force</p>
+<p class="bf_eq">`vec F = q vec v xx vec B`</p>
+<p>is always perpendicular to the velocity, so the charge moves in a circle at constant speed, with `q v B = m v^2/r`:</p>
+<p class="bf_eq">`r = (m v)/(|q| B)`,&nbsp;&nbsp; `T = (2 pi m)/(|q| B)`.</p>
+<p>The period does not depend on the speed: faster particles move on larger circles and take the same time to go around. This is the principle of the cyclotron. Positive and negative charges turn in opposite directions. If the velocity has a component along the field, that component is not affected, and the circle stretches into a helix. Tracks like these, curling in a magnetic field, are how physicists identify particles in bubble chambers and detectors.</p>
+</div>
+</div>
+</div><!-- #bfRoot -->
+<style>
+#bfRoot, #bfRoot * { box-sizing:border-box; }
+#bfRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --bf-bg:#0a0e12; --bf-panel:#0d1318; --bf-border:#1c262e; --bf-text:#c9d6de; --bf-muted:#5f7180; --bf-val:#8fe3b0; }
+#bfRoot .bf_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#bfRoot .bf_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#bfRoot .bf_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#bfRoot .bf_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#bfRoot .bf_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#bfRoot .bf_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#bfRoot .bf_tabs { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; background:#2c3138; }
+#bfRoot .bf_tab { flex:1 1 170px; padding:8px 10px; border:1px solid #525c66; background:#22262b; color:#c8d0d8; border-radius:4px; cursor:pointer; font-family:system-ui, sans-serif; font-size:.86rem; min-height:38px; }
+#bfRoot .bf_tab[aria-selected="true"] { background:#e8a020; color:#1a1f24; border-color:#e8a020; font-weight:bold; }
+#bfRoot .bf_mcontent { background:var(--bf-bg); color:var(--bf-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#bfRoot .bf_view { border:1px solid var(--bf-border); border-radius:6px; overflow:hidden; background:var(--bf-panel); }
+#bfRoot .bf_vlabel { font-size:10px; color:var(--bf-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#bfRoot canvas { display:block; width:100%; height:auto; touch-action:pan-y; }
+#bfRoot .bf_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:6px 10px; background:var(--bf-panel); border:1px solid var(--bf-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#bfRoot .bf_flabel { font-size:10px; color:var(--bf-muted); letter-spacing:1px; }
+#bfRoot .bf_fvalue { font-size:14px; color:var(--bf-val); font-variant-numeric:tabular-nums; }
+#bfRoot .bf_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#bfRoot .bf_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#bfRoot .bf_bbar label { display:flex; align-items:center; gap:6px; }
+#bfRoot .bf_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#bfRoot .bf_go { font-weight:bold; border-color:#0a7a5a; background:#e2fff3; }
+#bfRoot .bf_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#bfRoot .bf_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#bfRoot .bf_cname { font-size:.86rem; display:flex; gap:8px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+#bfRoot .bf_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#bfRoot input[type=range] { width:100%; min-width:0; accent-color:#e8a020; }
+#bfRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+#bfRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#bfRoot .bf_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#bfRoot .bf_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#bfRoot .bf_descbtn[aria-expanded="true"] { background:#3a3220; }
+#bfRoot .bf_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#bfRoot .bf_desc p { margin:0 0 9px; }
+#bfRoot .bf_eq { text-align:center; font-size:1rem; }
+@media (pointer:coarse) { #bfRoot input[type=range] { height:28px; } #bfRoot .bf_a11ybtn { min-height:40px; } #bfRoot input[type=checkbox] { width:22px; height:22px; } #bfRoot select { min-height:36px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Table 2.54 m x 1.27 m (a 9-foot table's playing area), ball mass 0.17 kg, radius 2.86 cm, no friction, elastic cushions.
+Kick: impulse J at an angle to the velocity, dv = J/m. Sideways force: the velocity turns at the rate w = F/(m v), and
+each step uses the exact arc: x += v sin(w dt)/w + v_perp (1 - cos(w dt))/w, so the circle closes exactly; r = m v^2/F.
+Fixed-direction force: a = F/m (a parabola). Charge: w = q B/m about B (along z), v_z constant: r = m v_perp/(|q| B),
+T = 2 pi m/(|q| B). No dollar signs or backticks in the code.
+-->
+<script>
+var bfSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('bfRoot'), cv = el('bfCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var TW = 2.54, TH = 1.27, BR = 0.0286, MB = 0.17, DEG = Math.PI/180;
+var QE = 1.602e-19, ME = 9.109e-31, MP = 1.673e-27;
+var PARTS = { electron:{ q:-1, m:ME, name:'electron' }, proton:{ q:1, m:MP, name:'proton' }, alpha:{ q:2, m:4*1.6605e-27*1.0016, name:'alpha particle' }, positron:{ q:1, m:ME, name:'positron' } };
+var S = { tab:0, run:true, ghosts:true, trail:true, slow:1,
+  k:{ v:0.3, dir:0, J:0.03, ang:90, auto:false, every:0.3, how:'centre', n:0, v0:0.3 },
+  f:{ v:0.6, F:0.12, m:0.17, mode:'perp', turn:1 },
+  b:{ part:'proton', v:2e6, B:0.2, Bdir:1, tilt:90 } };
+var th = { hc:false, lm:false, cb:false, nr:true };
+var TABS = ['a frictionless table from above \u00B7 tap the table to aim the cue, then Kick', 'a frictionless table from above: a force that always points sideways', 'a charged particle in a uniform magnetic field'];
+/* ══════════ motion ══════════ */
+var M = null, ghosts = [], trail = [], tGhost = 0, kickFlash = 0, lastKick = null, tAuto = 0, simT = 0, laps = { t0:null, ang:0, last:null, T:null };
+function reset(){
+simT = 0; ghosts = []; trail = []; tGhost = 0; kickFlash = 0; lastKick = null; tAuto = 0; laps = { t0:null, ang:0, last:null, T:null, rmin:1e9, rmax:0, c:null };
+if (S.tab === 0){ var a = S.k.dir*DEG; M = { x:TW*0.2, y:TH*0.35, vx:S.k.v*Math.cos(a), vy:S.k.v*Math.sin(a), vz:0, z:0 }; S.k.n = 0; S.k.v0 = S.k.v; }   /* a fresh run: no kicks yet */
+else if (S.tab === 1){ M = { x:TW/2, y:TH/2 - rCirc(), vx:S.f.v, vy:0, vz:0, z:0 }; if (S.f.mode === 'fixed'){ M.x = TW*0.12; M.y = TH*0.5; M.vx = S.f.v*0.75; M.vy = S.f.v*0.66; } }
+else { var P = PARTS[S.b.part], tl = S.b.tilt*DEG; M = { x:0, y:0, vx:S.b.v*Math.sin(tl), vy:0, vz:S.b.v*Math.cos(tl), z:0 }; }
+}
+function rCirc(){ return S.f.m*S.f.v*S.f.v/S.f.F; }
+function omegaB(){ var P = PARTS[S.b.part]; return -P.q*QE*S.b.B*S.b.Bdir/P.m; }      /* turning rate about z (B along +z when Bdir = 1) */
+function radiusB(){ var P = PARTS[S.b.part]; return P.m*S.b.v*Math.sin(S.b.tilt*DEG)/(Math.abs(P.q)*QE*S.b.B); }
+function periodB(){ var P = PARTS[S.b.part]; return 2*Math.PI*P.m/(Math.abs(P.q)*QE*S.b.B); }
+function arc(w, dt){
+/* exact motion along a circular arc: the velocity turns by w dt; the position follows the arc */
+var c = Math.cos(w*dt), s = Math.sin(w*dt), vx = M.vx, vy = M.vy;
+if (Math.abs(w) < 1e-12){ M.x += vx*dt; M.y += vy*dt; return; }
+M.x += (vx*s - vy*(1 - c))/w; M.y += (vy*s + vx*(1 - c))/w;
+M.vx = vx*c - vy*s; M.vy = vx*s + vy*c;
+}
+function cushions(){
+if (M.x < BR){ M.x = 2*BR - M.x; M.vx = Math.abs(M.vx); } if (M.x > TW - BR){ M.x = 2*(TW - BR) - M.x; M.vx = -Math.abs(M.vx); }
+if (M.y < BR){ M.y = 2*BR - M.y; M.vy = Math.abs(M.vy); } if (M.y > TH - BR){ M.y = 2*(TH - BR) - M.y; M.vy = -Math.abs(M.vy); }
+}
+function kick(angRel, J){
+var v = Math.hypot(M.vx, M.vy), base = v > 1e-6 ? Math.atan2(M.vy, M.vx) : 0, a = base + angRel*DEG, dv = J/MB;
+var before = { vx:M.vx, vy:M.vy };
+M.vx += dv*Math.cos(a); M.vy += dv*Math.sin(a);
+lastKick = { a:a, dv:dv, before:before, after:{ vx:M.vx, vy:M.vy }, x:M.x, y:M.y, rel:angRel }; kickFlash = 0.6;
+}
+function centreStart(){
+/* the polygon's radius for this speed, kick interval and turning angle: R = v dt / delta (rough for the 90-degree kicks) */
+var v = Math.max(0.05, S.k.v), dv = S.k.J/MB, delta = 2*Math.asin(Math.min(1, dv/(2*v))), Rr = v*S.k.every/Math.max(delta, 1e-3);
+M = { x:TW/2, y:Math.max(BR*2, TH/2 - Rr), vx:v, vy:0, vz:0, z:0 }; ghosts = []; trail = []; lastKick = null; tAuto = S.k.every/2; S.k.n = 0; S.k.v0 = v;
+}
+function turnKick(J){
+/* the same size of kick, aimed toward the centre of the turn: the velocity turns by delta without changing its length */
+var v = Math.hypot(M.vx, M.vy), dv = J/MB; if (v < 1e-6) return;
+var delta = 2*Math.asin(Math.min(1, dv/(2*v))), before = { vx:M.vx, vy:M.vy }, c = Math.cos(delta), s = Math.sin(delta);
+M.vx = before.vx*c - before.vy*s; M.vy = before.vx*s + before.vy*c;
+lastKick = { a:Math.atan2(M.vy - before.vy, M.vx - before.vx), dv:dv, before:before, after:{ vx:M.vx, vy:M.vy }, x:M.x, y:M.y, rel:Math.round(90 + delta/2/DEG), centre:true }; kickFlash = 0.6;
+}
+function step(dt){
+simT += dt;
+if (S.tab === 0){
+M.x += M.vx*dt; M.y += M.vy*dt; cushions();
+if (S.k.auto){ tAuto += dt; if (tAuto >= S.k.every){ tAuto -= S.k.every; turnKick(S.k.J); S.k.n++; } }
+} else if (S.tab === 1){
+var v = Math.hypot(M.vx, M.vy);
+if (S.f.mode === 'perp') arc(S.f.turn*S.f.F/(S.f.m*Math.max(v, 1e-6)), dt);
+else if (S.f.mode === 'fixed'){ var ax = 0, ay = -S.f.F/S.f.m; M.x += M.vx*dt + 0.5*ax*dt*dt; M.y += M.vy*dt + 0.5*ay*dt*dt; M.vx += ax*dt; M.vy += ay*dt; }
+else { M.x += M.vx*dt; M.y += M.vy*dt; }
+cushions();
+} else {
+arc(omegaB(), dt); M.z += M.vz*dt;
+}
+/* the measured period: count the angle the velocity has turned */
+var ang = Math.atan2(M.vy, M.vx);
+if (laps.last !== null){ var d = ang - laps.last; if (d > Math.PI) d -= 2*Math.PI; if (d < -Math.PI) d += 2*Math.PI; laps.ang += d; if (Math.abs(laps.ang) >= 2*Math.PI && laps.T === null) laps.T = simT; }
+laps.last = ang;
+}
+/* ══════════ drawing ══════════ */
+function pal(){
+if (th.hc) return { bg:'#000', felt:'#003300', cush:'#666', wood:'#444', ball:'#fff', v:'#00ffff', F:'#ff4040', dv:'#ffff00', txt:'#fff', muted:'#ddd', ghost:'rgba(255,255,255,0.35)', trail:'rgba(255,255,255,0.5)' };
+var p = th.lm ? { bg:'#eef2f6', txt:'#1d232a', muted:'#556070' } : { bg:'#0d1318', txt:'#dbe5ec', muted:'#7a8a98' };
+p.felt = '#1f7a45'; p.cush = '#145a32'; p.wood = '#6b3f1f'; p.ball = '#fbfbf4';
+p.v = th.cb ? '#56b4e9' : '#4fc3ff'; p.F = th.cb ? '#d55e00' : '#ff5a4a'; p.dv = th.cb ? '#f0e442' : '#ffd23f'; p.ghost = 'rgba(255,255,255,0.28)'; p.trail = 'rgba(255,255,255,0.45)';
+return p;
+}
+var TX0 = 60, TY0 = 50, TSC = (780 - 120)/TW;             /* table: 660 px for 2.54 m */
+function X(x){ return TX0 + x*TSC; } function Y(y){ return TY0 + (TH - y)*TSC; }
+function arrow(x1, y1, x2, y2, col, lw, label){
+var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); if (L < 2) return;
+g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw || 2.5; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+var a = Math.atan2(dy, dx), h = Math.min(12, 4 + L*0.25); g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - h*Math.cos(a - 0.4), y2 - h*Math.sin(a - 0.4)); g.lineTo(x2 - h*Math.cos(a + 0.4), y2 - h*Math.sin(a + 0.4)); g.closePath(); g.fill();
+if (label){ g.font = 'bold 13px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(label, x2 + 14*Math.cos(a), y2 + 14*Math.sin(a) + 4); }
+}
+function ballAt(x, y, alpha, col){
+var r = Math.max(7, BR*TSC); g.save(); g.globalAlpha = alpha;
+var gr = g.createRadialGradient(x - r*0.35, y - r*0.35, r*0.1, x, y, r); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, col || '#c9c4b0');
+g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 2*Math.PI); g.fill(); g.restore();
+}
+function drawTable(){
+var p = pal(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+g.fillStyle = p.wood; g.fillRect(TX0 - 34, TY0 - 34, TW*TSC + 68, TH*TSC + 68);
+g.fillStyle = p.cush; g.fillRect(TX0 - 14, TY0 - 14, TW*TSC + 28, TH*TSC + 28);
+g.fillStyle = p.felt; g.fillRect(TX0, TY0, TW*TSC, TH*TSC);
+g.fillStyle = '#0a0a0a'; [[0, 0], [TW/2, 0], [TW, 0], [0, TH], [TW/2, TH], [TW, TH]].forEach(function(q){ g.beginPath(); g.arc(X(q[0]), Y(q[1]), 15, 0, 2*Math.PI); g.fill(); });
+/* a scale bar */
+g.strokeStyle = 'rgba(255,255,255,0.5)'; g.lineWidth = 2; g.beginPath(); g.moveTo(X(0.1), Y(0.06)); g.lineTo(X(0.6), Y(0.06)); g.stroke(); g.fillStyle = 'rgba(255,255,255,0.7)'; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('0.5 m', X(0.35), Y(0.06) - 5);
+}
+function drawBall(p){
+if (S.trail && trail.length > 1){ g.strokeStyle = p.trail; g.lineWidth = 1.5; g.beginPath(); trail.forEach(function(q, i){ if (i) g.lineTo(X(q[0]), Y(q[1])); else g.moveTo(X(q[0]), Y(q[1])); }); g.stroke(); }
+if (S.ghosts) ghosts.forEach(function(q, i){ ballAt(X(q[0]), Y(q[1]), 0.18 + 0.3*i/Math.max(1, ghosts.length)); });
+ballAt(X(M.x), Y(M.y), 1);
+var vs = 90;                                                       /* px per m/s */
+arrow(X(M.x), Y(M.y), X(M.x) + M.vx*vs, Y(M.y) - M.vy*vs, p.v, 3, 'v');
+}
+function drawKick(){
+var p = pal(); drawTable();
+/* the cue, behind the ball, aimed along the kick direction */
+var v = Math.hypot(M.vx, M.vy), base = v > 1e-6 ? Math.atan2(M.vy, M.vx) : 0, a = base + S.k.ang*DEG, back = 22 + 40*Math.max(0, kickFlash > 0 ? 0 : 1);
+if (!S.k.auto){ var bx = X(M.x) - Math.cos(a)*back, by = Y(M.y) + Math.sin(a)*back, ex = bx - Math.cos(a)*190, ey = by + Math.sin(a)*190;
+g.strokeStyle = '#d9b07a'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.moveTo(ex, ey); g.lineTo(bx, by); g.stroke(); g.strokeStyle = '#3a6fd8'; g.lineWidth = 7; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx - Math.cos(a)*6, by + Math.sin(a)*6); g.stroke(); g.lineCap = 'butt'; }
+drawBall(p);
+/* the last kick: the velocities before and after, and the change dv (head to tail) */
+if (lastKick && kickFlash > -2){
+var k = lastKick, vs = 90, x0 = X(k.x), y0 = Y(k.y);
+g.globalAlpha = 0.85; arrow(x0, y0, x0 + k.before.vx*vs, y0 - k.before.vy*vs, p.v, 2, 'v\u2081');
+arrow(x0 + k.before.vx*vs, y0 - k.before.vy*vs, x0 + k.after.vx*vs, y0 - k.after.vy*vs, p.dv, 2.5, '\u0394v');
+arrow(x0, y0, x0 + k.after.vx*vs, y0 - k.after.vy*vs, p.v, 2, 'v\u2082'); g.globalAlpha = 1;
+}
+}
+function drawForce(){
+var p = pal(); drawTable(); drawBall(p);
+var v = Math.hypot(M.vx, M.vy), fs = 200;                      /* px per N */
+if (S.f.mode === 'perp' && v > 1e-6){ var nx = -M.vy/v*S.f.turn, ny = M.vx/v*S.f.turn; arrow(X(M.x), Y(M.y), X(M.x) + nx*S.f.F*fs, Y(M.y) - ny*S.f.F*fs, p.F, 3, 'F');
+if (S.trail){ var r = S.f.m*v*v/S.f.F, cx = M.x + nx*r, cy = M.y + ny*r; g.setLineDash([4, 4]); g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1; g.beginPath(); g.moveTo(X(M.x), Y(M.y)); g.lineTo(X(cx), Y(cy)); g.stroke(); g.setLineDash([]); g.fillStyle = 'rgba(255,255,255,0.6)'; g.beginPath(); g.arc(X(cx), Y(cy), 3, 0, 2*Math.PI); g.fill(); } }
+else if (S.f.mode === 'fixed') arrow(X(M.x), Y(M.y), X(M.x), Y(M.y) + S.f.F*fs, p.F, 3, 'F');
+}
+/* ══════════ the charge in the magnetic field ══════════ */
+function drawField(){
+var p = pal(), P = PARTS[S.b.part], r = radiusB(), tilted = S.b.tilt < 89.5;
+g.fillStyle = th.lm ? '#f2f4f8' : '#05070b'; g.fillRect(0, 0, W, H);
+/* scale: the circle's diameter fills about 60 % of the height */
+var sc = 0.3*H/Math.max(r, 1e-12), cx0 = W/2, cy0 = H/2, tiltV = tilted ? 0.45 : 0;
+var zsc = sc, pitch = Math.max(Math.abs(M.vz)*periodB(), 1e-12);
+if (tilted) zsc = Math.min(sc, 0.5*W/Math.max(pitch*3, 1e-12));
+function PX(x, y, z){ return [cx0 + (x - laps.cx)*sc + (tilted ? (z - (M.z - pitch*1.5))*zsc*0.9 - W*0.35 : 0), cy0 - (y - laps.cy)*sc*(tilted ? 0.55 : 1) - (tilted ? 0 : 0)]; }
+if (laps.cx === undefined){ var w0 = omegaB(); laps.cx = M.x - M.vy/w0; laps.cy = M.y + M.vx/w0; }   /* the centre of the circle: to the left of v for w > 0 */
+/* the field: symbols for B into (x) or out of (dot) the page, or arrows along it in the tilted view */
+g.strokeStyle = th.lm ? 'rgba(40,60,120,0.35)' : 'rgba(140,170,255,0.35)'; g.fillStyle = g.strokeStyle; g.lineWidth = 1.3;
+if (!tilted){ for (var gx = 30; gx < W; gx += 50) for (var gy = 30; gy < H; gy += 50){ if (S.b.Bdir < 0){ g.beginPath(); g.moveTo(gx - 5, gy - 5); g.lineTo(gx + 5, gy + 5); g.moveTo(gx + 5, gy - 5); g.lineTo(gx - 5, gy + 5); g.stroke(); } else { g.beginPath(); g.arc(gx, gy, 2.5, 0, 2*Math.PI); g.fill(); g.beginPath(); g.arc(gx, gy, 7, 0, 2*Math.PI); g.stroke(); } } }
+else { for (var gy2 = 40; gy2 < H; gy2 += 60){ var x1 = 30, x2 = W - 30; if (S.b.Bdir < 0){ var t = x1; x1 = x2; x2 = t; } arrow(x1, gy2, x2, gy2, g.strokeStyle, 1.2); } }
+g.fillStyle = th.lm ? '#334' : '#9fb0ff'; g.font = '12px system-ui, sans-serif'; g.textAlign = 'left';
+g.fillText(tilted ? 'B along the arrows (seen from the side, tilted)' : (S.b.Bdir > 0 ? 'B out of the page' : 'B into the page'), 10, 18);
+/* the track */
+var col = P.q > 0 ? '#ff6a5a' : '#5ab4ff';
+if (trail.length > 1){ g.strokeStyle = col; g.lineWidth = 2; g.globalAlpha = 0.8; g.beginPath(); trail.forEach(function(q, i){ var s2 = PX(q[0], q[1], q[2]); if (i) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); g.stroke(); g.globalAlpha = 1; }
+var s = PX(M.x, M.y, M.z), glow = g.createRadialGradient(s[0], s[1], 1, s[0], s[1], 16); glow.addColorStop(0, col); glow.addColorStop(1, 'rgba(0,0,0,0)');
+g.fillStyle = glow; g.beginPath(); g.arc(s[0], s[1], 16, 0, 2*Math.PI); g.fill(); g.fillStyle = '#fff'; g.font = 'bold 13px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(P.q > 0 ? '+' : '\u2212', s[0], s[1] + 4);
+/* v and F = q v x B (in the plane perpendicular to B) */
+var v = Math.hypot(M.vx, M.vy), u = 70;
+if (v > 0){ arrow(s[0], s[1], s[0] + M.vx/v*u, s[1] - M.vy/v*u*(tilted ? 0.55 : 1), pal().v, 2.5, 'v');
+var fx = P.q*S.b.Bdir*M.vy, fy = -P.q*S.b.Bdir*M.vx, fm = Math.hypot(fx, fy); arrow(s[0], s[1], s[0] + fx/fm*u*0.8, s[1] - fy/fm*u*0.8*(tilted ? 0.55 : 1), pal().F, 2.5, 'F'); }
+/* a scale bar */
+var bar = niceLen(0.25*W/sc); g.strokeStyle = th.lm ? '#334' : '#ccc'; g.lineWidth = 2; g.beginPath(); g.moveTo(20, H - 18); g.lineTo(20 + bar*sc, H - 18); g.stroke(); g.fillStyle = g.strokeStyle; g.textAlign = 'left'; g.font = '11px system-ui, sans-serif'; g.fillText(fmtL(bar), 24 + bar*sc, H - 14);
+}
+function niceLen(x){ var e = Math.pow(10, Math.floor(Math.log10(x))), m = x/e; return (m < 2 ? 1 : (m < 5 ? 2 : 5))*e; }
+function fmtL(m){ return m >= 1 ? m.toPrecision(3) + ' m' : (m >= 0.01 ? (m*100).toPrecision(3) + ' cm' : (m >= 1e-3 ? (m*1000).toPrecision(3) + ' mm' : (m*1e6).toPrecision(3) + ' \u00B5m')); }
+function fmtT(t){ return t >= 1 ? t.toPrecision(3) + ' s' : (t >= 1e-3 ? (t*1000).toPrecision(3) + ' ms' : (t >= 1e-6 ? (t*1e6).toPrecision(3) + ' \u00B5s' : (t*1e9).toPrecision(3) + ' ns')); }
+function sci(x, u){ if (x === 0) return '0 ' + u; var e = Math.floor(Math.log10(Math.abs(x))); return Math.abs(e) < 3 ? x.toPrecision(3) + ' ' + u : (x/Math.pow(10, e)).toFixed(2) + ' \u00D7 10^' + e + ' ' + u; }
+/* ══════════ readout, narration ══════════ */
+function readout(){
+var v = Math.hypot(M.vx, M.vy), cells;
+if (S.tab === 0){ var k = lastKick;
+cells = [['SPEED', v.toFixed(3) + ' m/s'], ['DIRECTION', (Math.atan2(M.vy, M.vx)/DEG).toFixed(1) + '\u00B0'], ['KINETIC ENERGY', (0.5*MB*v*v*1000).toFixed(1) + ' mJ']];
+if (k){ var v1 = Math.hypot(k.before.vx, k.before.vy), v2 = Math.hypot(k.after.vx, k.after.vy), turn = (Math.atan2(k.after.vy, k.after.vx) - Math.atan2(k.before.vy, k.before.vx))/DEG; turn = ((turn + 540) % 360) - 180;
+cells.push(['LAST KICK', 'J = ' + S.k.J.toFixed(3) + ' N\u00B7s at ' + k.rel + '\u00B0 to v']); cells.push(['\u0394v = J/m', k.dv.toFixed(3) + ' m/s']); cells.push(['SPEED BEFORE \u2192 AFTER', v1.toFixed(3) + ' \u2192 ' + v2.toFixed(3) + ' m/s']); cells.push(['TURNED BY', turn.toFixed(1) + '\u00B0']);
+if (k.centre) cells[3][1] = 'J = ' + S.k.J.toFixed(3) + ' N\u00B7s toward the centre (' + k.rel + '\u00B0 to v)'; }
+if (S.k.auto && S.k.n) cells.push(['AFTER ' + S.k.n + ' KICKS', 'speed ' + S.k.v0.toFixed(3) + ' \u2192 ' + v.toFixed(3) + ' m/s']); }
+else if (S.tab === 1){
+if (S.f.mode === 'perp'){ var r = S.f.m*S.f.v*S.f.v/S.f.F, T = 2*Math.PI*S.f.m*S.f.v/S.f.F;
+cells = [['SPEED (CONSTANT)', v.toFixed(4) + ' m/s'], ['FORCE', S.f.F.toFixed(2) + ' N, always \u22A5 v'], ['r = mv\u00B2/F', r.toFixed(3) + ' m'], ['T = 2\u03C0mv/F', T.toFixed(3) + ' s'], ['MEASURED T', laps.T ? laps.T.toFixed(3) + ' s' : 'going around...'], ['a = v\u00B2/r = F/m', (S.f.F/S.f.m).toFixed(3) + ' m/s\u00B2'], ['WORK DONE', '0 (F \u22A5 v)']]; }
+else cells = [['SPEED', v.toFixed(3) + ' m/s (changing)'], ['FORCE', S.f.mode === 'fixed' ? S.f.F.toFixed(2) + ' N, fixed direction' : 'none'], ['PATH', S.f.mode === 'fixed' ? 'a parabola' : 'a straight line']]; }
+else { var P = PARTS[S.b.part];
+cells = [['PARTICLE', P.name + ' (q = ' + (P.q > 0 ? '+' : '\u2212') + (Math.abs(P.q) === 1 ? '' : Math.abs(P.q)) + 'e)'], ['SPEED (CONSTANT)', sci(Math.hypot(M.vx, M.vy, M.vz), 'm/s')], ['B', S.b.B.toFixed(3) + ' T ' + (S.b.Bdir > 0 ? 'out of' : 'into') + ' the page'],
+['F = |q| v\u22A5 B', sci(Math.abs(P.q)*QE*S.b.v*Math.sin(S.b.tilt*DEG)*S.b.B, 'N')], ['r = mv\u22A5/(|q|B)', fmtL(radiusB())], ['T = 2\u03C0m/(|q|B)', fmtT(periodB())], ['MEASURED T', laps.T ? fmtT(laps.T) : 'going around...'], ['TURNS', P.q*S.b.Bdir > 0 ? 'clockwise' : 'counterclockwise']];
+if (S.b.tilt < 89.5) cells.push(['HELIX PITCH', fmtL(Math.abs(S.b.v*Math.cos(S.b.tilt*DEG))*periodB())]); }
+el('bfRead').innerHTML = cells.map(function(c){ return '<div><div class="bf_flabel">' + c[0] + '</div><div class="bf_fvalue">' + c[1] + '</div></div>'; }).join('');
+}
+function summary(){
+var v = Math.hypot(M.vx, M.vy);
+if (S.tab === 0) return lastKick ? 'Kicked at ' + lastKick.rel + ' degrees to its motion with an impulse of ' + S.k.J.toFixed(3) + ' newton seconds, the ball\u2019s velocity changed by ' + lastKick.dv.toFixed(2) + ' metres per second; it now moves at ' + v.toFixed(2) + ' metres per second in a new straight line.' :
+ 'With no force on it, the ball rolls at a constant ' + v.toFixed(2) + ' metres per second in a straight line: the ghost images are equally spaced. Tap the table to aim the cue, then press Kick.';
+if (S.tab === 1) return S.f.mode === 'perp' ? 'A force of ' + S.f.F.toFixed(2) + ' newtons, always at right angles to the velocity, turns the ball without changing its speed: it moves in a circle of radius ' + rCirc().toFixed(2) + ' metres, going around every ' + (2*Math.PI*S.f.m*S.f.v/S.f.F).toFixed(2) + ' seconds.' :
+ (S.f.mode === 'fixed' ? 'A force in a fixed direction changes the speed as well as the direction: the path is a parabola.' : 'No force: a straight line at constant speed.');
+var P = PARTS[S.b.part];
+return 'A ' + P.name + ' at ' + sci(S.b.v, 'm/s') + ' in a ' + S.b.B + ' tesla field. The magnetic force is always perpendicular to its velocity, so it moves ' + (S.b.tilt < 89.5 ? 'along a helix' : 'in a circle') + ' of radius ' + fmtL(radiusB()) + ' at constant speed, going around every ' + fmtT(periodB()) + ', ' + (P.q*S.b.Bdir > 0 ? 'clockwise' : 'counterclockwise') + '.';
+}
+function narrate(m){ if (!th.nr) return; el('bfNarBar').textContent = m; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 500); }
+/* ══════════ the loop ══════════ */
+var raf = null, last = 0, rt = 0;
+function frame(t){
+var dt = last ? Math.min(0.05, (t - last)/1000) : 0; last = t;
+if (S.run && M){
+var simDt = S.tab === 2 ? dt*periodB()/4 : dt*S.slow, n = 12, h = simDt/n;      /* tab 3: one turn takes about 4 s on screen */
+for (var i=0; i<n; i++) step(h);
+tGhost += dt; if (tGhost >= 0.25){ tGhost = 0; ghosts.push([M.x, M.y]); if (ghosts.length > 40) ghosts.shift(); }
+trail.push([M.x, M.y, M.z]); if (trail.length > (S.tab === 2 ? 900 : 600)) trail.shift();
+if (kickFlash > -2) kickFlash -= dt;
+}
+draw(); if (t - rt > 200){ rt = t; readout(); }
+raf = requestAnimationFrame(frame);
+}
+function draw(){ [drawKick, drawForce, drawField][S.tab](); el('bfLab').textContent = TABS[S.tab]; }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="bf_crow"><div class="bf_cname"><b>' + label + '</b><span class="bf_cval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function buildCtl(){
+var b = '<button type="button" class="bf_btn" id="bfRun">' + (S.run ? '&#10074;&#10074; Pause' : '&#9654; Run') + '</button><button type="button" class="bf_btn" id="bfRst">Start over</button>' +
+'<label><input type="checkbox" id="bfGh"' + (S.ghosts ? ' checked' : '') + '> ghost images</label><label><input type="checkbox" id="bfTr"' + (S.trail ? ' checked' : '') + '> path</label>';
+var c = '';
+if (S.tab === 0){ b = '<button type="button" class="bf_btn bf_go" id="bfKick">Kick!</button>' + b + '<label><input type="checkbox" id="bfAuto"' + (S.k.auto ? ' checked' : '') + '> repeated kicks</label><label>(toward the centre of the turn) every</label><select id="bfEv"><option value="1">1 s</option><option value="0.5">0.5 s</option><option value="0.3">0.3 s</option><option value="0.15">0.15 s</option></select>';
+c = row('bfKv', 'starting speed', 0, 0.6, 0.02, S.k.v, S.k.v.toFixed(2) + ' m/s') + row('bfKa', 'kick direction, from the velocity (Kick! button)', -180, 180, 5, S.k.ang, S.k.ang + '\u00B0') + row('bfKJ', 'kick impulse J', 0.005, 0.25, 0.005, S.k.J, S.k.J.toFixed(3) + ' N\u00B7s'); }
+if (S.tab === 1){ b += '<label>Force <select id="bfFm"><option value="perp">always perpendicular to v</option><option value="fixed">in a fixed direction</option><option value="off">none</option></select></label><label>turning <select id="bfFt"><option value="1">left</option><option value="-1">right</option></select></label>';
+c = row('bfFv', 'speed v', 0.2, 0.6, 0.02, S.f.v, S.f.v.toFixed(2) + ' m/s') + row('bfFF', 'force F', 0.03, 0.6, 0.01, S.f.F, S.f.F.toFixed(2) + ' N') + row('bfFM', 'mass m', 0.05, 0.5, 0.01, S.f.m, S.f.m.toFixed(2) + ' kg'); }
+if (S.tab === 2){ b += '<label>Particle <select id="bfBp"><option value="electron">electron</option><option value="positron">positron</option><option value="proton">proton</option><option value="alpha">alpha particle</option></select></label><label>B <select id="bfBd"><option value="1">out of the page</option><option value="-1">into the page</option></select></label>';
+c = row('bfBv', 'speed v (log)', 0, 100, 1, spLog(S.b.v), sci(S.b.v, 'm/s')) + row('bfBB', 'field B', 0.001, 1, 0.001, S.b.B, S.b.B.toFixed(3) + ' T') + row('bfBt', 'angle between v and B', 10, 90, 1, S.b.tilt, S.b.tilt + '\u00B0'); }
+b += '<button type="button" class="bf_btn" id="bfDsc">Describe</button>';
+el('bfBtns').innerHTML = b; el('bfCtl').innerHTML = c; setTimeout(dirState, 0);
+function on(id, ev, fn){ var e = el(id + ''); if (e) e.addEventListener(ev, fn); }
+on('bfRun', 'click', function(){ S.run = !S.run; buildCtl(); }); on('bfRst', 'click', function(){ reset(); narrate(summary()); });
+on('bfGh', 'change', function(){ S.ghosts = this.checked; }); on('bfTr', 'change', function(){ S.trail = this.checked; }); on('bfDsc', 'click', describe);
+on('bfKick', 'click', function(){ kick(S.k.ang, S.k.J); readout();
+var k = lastKick, v1 = Math.hypot(k.before.vx, k.before.vy), v2 = Math.hypot(k.after.vx, k.after.vy);
+narrate(summary() + (Math.abs(Math.abs(S.k.ang) - 90) < 1 ? ' The kick was at 90 degrees, yet the speed went from ' + v1.toFixed(3) + ' to ' + v2.toFixed(3) + ' metres per second: velocities add as vectors, so the new speed is the square root of ' + v1.toFixed(2) + ' squared plus ' + k.dv.toFixed(2) + ' squared. To turn without speeding up, a kick must point slightly backward, toward the centre of the turn.' : '')); });
+on('bfAuto', 'change', function(){ S.k.auto = this.checked; dirState(); tAuto = 0; S.k.n = 0; S.k.v0 = Math.hypot(M.vx, M.vy); if (S.k.auto) centreStart(); if (S.k.auto) narrate('Repeated kicks aimed toward the centre of the turn, slightly back from 90 degrees: each one turns the velocity without changing its length, so the speed stays the same and the path becomes a polygon around a circle. Make the kicks smaller and more frequent, and the polygon approaches the circle.'); });
+on('bfEv', 'change', function(){ S.k.every = +this.value; if (S.k.auto) centreStart(); }); if (el('bfEv')) el('bfEv').value = String(S.k.every);
+on('bfKv', 'input', function(){ S.k.v = +this.value; upd('bfKv', S.k.v.toFixed(2) + ' m/s'); reset(); if (S.k.auto) centreStart(); later(); });
+on('bfKa', 'input', function(){ S.k.ang = +this.value; upd('bfKa', S.k.ang + '\u00B0'); });
+on('bfKJ', 'input', function(){ S.k.J = +this.value; upd('bfKJ', S.k.J.toFixed(3) + ' N\u00B7s'); if (S.k.auto) centreStart(); });
+on('bfFm', 'change', function(){ S.f.mode = this.value; reset(); later(); }); on('bfFt', 'change', function(){ S.f.turn = +this.value; reset(); later(); });
+if (el('bfFm')){ el('bfFm').value = S.f.mode; el('bfFt').value = String(S.f.turn); }
+on('bfFv', 'input', function(){ S.f.v = +this.value; upd('bfFv', S.f.v.toFixed(2) + ' m/s'); reset(); later(); });
+on('bfFF', 'input', function(){ S.f.F = +this.value; upd('bfFF', S.f.F.toFixed(2) + ' N'); reset(); later(); });
+on('bfFM', 'input', function(){ S.f.m = +this.value; upd('bfFM', S.f.m.toFixed(2) + ' kg'); reset(); later(); });
+on('bfBp', 'change', function(){ S.b.part = this.value; S.b.v = S.b.part === 'electron' || S.b.part === 'positron' ? 1e7 : 2e6; S.b.B = S.b.part === 'electron' || S.b.part === 'positron' ? 0.002 : 0.2; buildCtl(); reset(); later(); });
+on('bfBd', 'change', function(){ S.b.Bdir = +this.value; reset(); later(); });
+if (el('bfBp')){ el('bfBp').value = S.b.part; el('bfBd').value = String(S.b.Bdir); }
+on('bfBv', 'input', function(){ S.b.v = spExp(+this.value); upd('bfBv', sci(S.b.v, 'm/s')); reset(); later(); });
+on('bfBB', 'input', function(){ S.b.B = +this.value; upd('bfBB', S.b.B.toFixed(3) + ' T'); reset(); later(); });
+on('bfBt', 'input', function(){ S.b.tilt = +this.value; upd('bfBt', S.b.tilt + '\u00B0'); reset(); later(); });
+}
+function spLog(v){ return 100*Math.log(v/1e4)/Math.log(1e4); } function spExp(s){ return 1e4*Math.pow(1e4, s/100); }     /* 10 km/s to 100 000 km/s */
+function dirState(){
+var r = el('bfKa'); if (!r) return; r.disabled = S.k.auto; r.parentNode.style.opacity = S.k.auto ? 0.5 : 1;
+var t = el('bfKav'); if (t) t.textContent = S.k.auto ? 'not used: repeated kicks aim at the centre' : S.k.ang + '\u00B0';
+}
+function upd(id, t){ var e = el(id + 'v'); if (e) e.textContent = t; }
+function tab(i){ S.tab = i; for (var k=0; k<3; k++) el('bfT' + k + '').setAttribute('aria-selected', k === i ? 'true' : 'false'); buildCtl(); reset(); narrate(summary()); }
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','bfBtnHC'],['lm','bfBtnLM'],['cb','bfBtnCB'],['nr','bfBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('bf_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('bfBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('bfNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--bf-bg','--bf-panel','--bf-border','--bf-text','--bf-muted','--bf-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+}
+function describe(){ narrate(['A billiard table seen from above, the ball with its velocity arrow, and the cue behind it. ', 'A billiard table seen from above; the blue arrow is the velocity, the red one the force, and the dashed line points to the centre of the circle. ', 'A charged particle in a uniform magnetic field, leaving a track. The blue arrow is its velocity, the red one the magnetic force q v cross B. '][S.tab] + summary()); }
+function toggleDesc(){
+var b = el('bfDescBtn'), d = el('bfDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* tap the table to aim the cue (tab 1): the kick pushes the ball toward the tapped point */
+cv.addEventListener('click', function(e){
+if (S.tab !== 0 || !M) return; var r = cv.getBoundingClientRect(), px = (e.clientX - r.left)*W/r.width, py = (e.clientY - r.top)*H/r.height;
+var tx = (px - TX0)/TSC, ty = TH - (py - TY0)/TSC, a = Math.atan2(ty - M.y, tx - M.x), base = Math.atan2(M.vy, M.vx), rel = Math.round(((a - base)/DEG + 540) % 360 - 180);
+S.k.ang = Math.round(rel/5)*5; var s = el('bfKa'); if (s){ s.value = S.k.ang; upd('bfKa', S.k.ang + '\u00B0'); }
+narrate('The cue is aimed ' + S.k.ang + ' degrees from the ball\u2019s direction of motion. Press Kick.');
+});
+/* boot */
+buildCtl(); reset(); narrate('Ready. ' + summary()); raf = requestAnimationFrame(frame);
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc, kick:function(a, J){ kick(a === undefined ? S.k.ang : a, J === undefined ? S.k.J : J); readout(); },
+set:function(t, k, v){ S[t][k] = v; buildCtl(); reset(); if (S.tab === 0 && S.k.auto) centreStart(); },
+_state:function(){ return { S:JSON.parse(JSON.stringify(S)), M:JSON.parse(JSON.stringify(M)), simT:simT, lapT:laps.T, rB:radiusB(), TB:periodB() }; },
+_step:function(sec, n){ var h = sec/n; for (var i=0; i<n; i++) step(h); return JSON.parse(JSON.stringify(M)); }, _pause:function(){ S.run = false; } };
+})();
+</script>
+</main>
+</body>
+</html>

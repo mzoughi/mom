@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Circuits-Using A Multimeter in an RC Circuit</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,circuits, using, multimeter,RCCircuit, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:20px>
+<hr>
+<!--
+============================================================
+MULTIMETER + CIRCUIT LAB WIDGET (MOM-compatible)
+============================================================
+A combined widget showing a digital multimeter on the left and a
+teaching circuit on the right. Students use the multimeter to take
+measurements of circuit components and learn proper measurement
+technique.
+Template variables:
+0914 : MOM instance id
+$R1    : R1 resistance in ohms (e.g., 1000)
+$R2    : R2 resistance in ohms (e.g., 2000)
+$C     : C capacitance in farads (e.g., 1e-6)
+$color : LCD on-segment colour ('#222' for LCD, '#c33' for red LED)
+$bg    : LCD background ('#a8b89a' classic, '#1a1a1a' LED black)
+----- Circuit topology -----
+Two loops sharing the C branch. Three branches between rails A and B:
+Branch 1 (source): A -- seg1 wire -- R1 -- Vs -- B
+Branch 2:           A -- seg2 wire -- R2 -- B
+Branch 3:           A -- seg3 wire -- C  -- B
+----- Component values -----
+R1, R2, C values are passed in via template vars. They are NOT
+displayed in the UI. Students must measure to discover them.
+----- User-controllable circuit elements -----
+* Source type: AC or DC (radio)
+* Source voltage and (for AC) frequency (number inputs)
+* Each branch wire seg1/seg2/seg3: present or removed (checkbox).
+Remove to insert the ammeter for current measurements.
+* Each component lead: connected or disconnected (8 checkboxes).
+Disconnect a lead to isolate the component for resistance or
+capacitance measurement.
+----- Probes -----
+Two ways to connect probes:
+1. Click a "test point" (small grey dot on the schematic)
+2. Use the dropdowns next to the probe labels (accessibility)
+The "arm" button selects which probe (red or black) responds to
+schematic clicks.
+----- Measurement physics -----
+* Voltage modes: read V across the two probe nodes.
+DC mode + AC source = 0 (AC-coupled). AC mode + DC source = 0.
+* Current modes: meter must be inserted in series. Remove a wire
+segment and place both probes on the gap.
+* Resistance / Capacitance: component must be ISOLATED (at least
+one of its leads disconnected from the rest of the circuit).
+If not isolated, the meter shows the parallel combination of the
+component with the rest of the circuit AND a warning hint.
+* Active jacks (COM + V/Ω/F or mA or 10A) are highlighted on the
+meter based on the dial position to teach proper jack selection.
+----- Accessibility -----
+* Same a11y pattern as the standalone multimeter and digital scale:
+light mode, narration bar, high contrast, font size cycling.
+* Probe positions and meter readings narrated on every change.
+* Pronounceable dial descriptions ("DC voltage, 20 volts range").
+* Both click-to-set probe and dropdown probe selectors.
+* Focus preserved across re-renders so keyboard users can interact
+smoothly with the slider, checkboxes, and dropdowns.
+============================================================
+$value=199.9;
+$dial="F/20u";
+$color="yellow"; 
+$bg='#a8b89a';
+$R1=200;
+$R2=100;
+$C=66E-6;
+$V=150;
+-->
+<div id="mmc_root0914" style="display:inline-block"></div>
+<script>
+(function(){
+var thisq  = '0914';
+var R1val  = (200);
+var R2val  = (100);
+var Cval   = (66E-6);
+var Vval   = (150);
+var color  = 'yellow';
+var bg     = '#a8b89a';
+var rootId = 'mmc_root0914';
+/* ============================================================
+ STATE
+============================================================ */
+var stateKey = 'mmcState_' + thisq;
+if (!window[stateKey]) {
+window[stateKey] = {
+dial: 'off',
+circuit: {
+source: { type:'DC', V:Vval, freq:1000 },
+R1: R1val, R2: R2val, C: Cval,
+wires: { seg1:true, seg2:true, seg3:true },
+leads: { R1:{l:true,r:true}, R2:{l:true,r:true}, C:{l:true,r:true}, Vs:{l:true,r:true} }
+},
+probes: { red:null, black:null },
+activeProbe: 'red',
+/* Fuse state:
+mA jack is fused at 200 mA.
+10A jack is NOT fused but its internal shunt can be damaged
+if you exceed 10A. We treat damage the same as a blown fuse:
+the input is "open" until the user resets.
+ A short-lived `fuseJustBlew` timestamp triggers a one-shot flash
+ animation in the SVG. */
+fuseBlown: { mA:false, '10A':false },
+fuseJustBlew: null,
+a11y: { lightMode:false, narration:true, highContrast:false, fontSize:'normal' },
+lastNarration: '',
+hasShownIntro: false
+};
+}
+var state = window[stateKey];
+/* ============================================================
+ COMPLEX MATH
+============================================================ */
+var cx = function(re,im){return{re:re,im:im||0}};
+var cAdd = function(a,b){return cx(a.re+b.re,a.im+b.im)};
+var cSub = function(a,b){return cx(a.re-b.re,a.im-b.im)};
+var cMul = function(a,b){return cx(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re)};
+var cDiv = function(a,b){var d=b.re*b.re+b.im*b.im;return cx((a.re*b.re+a.im*b.im)/d,(a.im*b.re-a.re*b.im)/d)};
+var cAbs = function(a){return Math.sqrt(a.re*a.re+a.im*a.im)};
+var cPar = function(a,b){var s=cAdd(a,b);if(cAbs(s)<1e-30)return cx(Infinity,0);return cDiv(cMul(a,b),s)};
+var zResistor = function(R){return cx(R,0)};
+var zCapacitor = function(C,om){if(om<1e-12||C<1e-30)return cx(1e15,0);return cx(0,-1/(om*C))};
+/* ============================================================
+ SOLVE & MEASURE (from tested module)
+============================================================ */
+var solveCircuit = function(st){
+var omega=(st.source.type==='AC')?2*Math.PI*st.source.freq:0;
+var Vs=cx(st.source.V,0);
+var b1=st.leads.Vs.l&&st.leads.Vs.r&&st.leads.R1.l&&st.leads.R1.r&&st.wires.seg1;
+var b2=st.leads.R2.l&&st.leads.R2.r&&st.wires.seg2;
+var b3=st.leads.C.l&&st.leads.C.r&&st.wires.seg3;
+var z_R1=zResistor(st.R1),z_R2=zResistor(st.R2),z_C=zCapacitor(st.C,omega);
+if(!b1)return{Vs:Vs,omega:omega,z_R1:z_R1,z_R2:z_R2,z_C:z_C,I_source:cx(0,0),I_R2:cx(0,0),I_C:cx(0,0),V_AB:cx(0,0),b1live:false,b2live:b2,b3live:b3};
+var z_inner=(b2&&b3)?cPar(z_R2,z_C):(b2?z_R2:(b3?z_C:cx(1e15,0)));
+var I_s=cDiv(Vs,cAdd(z_R1,z_inner));
+var V_AB=cMul(I_s,z_inner);
+var I_R2=b2?cDiv(V_AB,z_R2):cx(0,0);
+var I_C=b3?cDiv(V_AB,z_C):cx(0,0);
+return{Vs:Vs,omega:omega,z_R1:z_R1,z_R2:z_R2,z_C:z_C,I_source:I_s,I_R2:I_R2,I_C:I_C,V_AB:V_AB,b1live:b1,b2live:b2,b3live:b3};
+};
+var allNodes=['node_A','node_B','R1_left','R1_right','R2_left','R2_right','C_left','C_right','Vs_pos','Vs_neg','seg1_top','seg1_bot','seg2_top','seg2_bot','seg3_top','seg3_bot'];
+var buildNodeMap=function(wires,leads){
+var parent={};
+for(var i=0;i<allNodes.length;i++)parent[allNodes[i]]=allNodes[i];
+var find=function(x){while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x]}return x};
+var union=function(a,b){var ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb};
+union('seg1_top','node_A');
+if(leads.R1.l)union('seg1_bot','R1_left');
+if(wires.seg1)union('seg1_top','seg1_bot');
+union('seg2_top','node_A');
+if(leads.R2.l)union('seg2_bot','R2_left');
+if(wires.seg2)union('seg2_top','seg2_bot');
+union('seg3_top','node_A');
+if(leads.C.l)union('seg3_bot','C_left');
+if(wires.seg3)union('seg3_top','seg3_bot');
+if(leads.R1.r&&leads.Vs.l)union('R1_right','Vs_pos');
+if(leads.R2.r)union('R2_right','node_B');
+if(leads.C.r)union('C_right','node_B');
+if(leads.Vs.r)union('Vs_neg','node_B');
+return{find:find,sameNode:function(a,b){return find(a)===find(b)},findRoot:function(a){return find(a)}};
+};
+var computeNodeVoltages=function(st){
+var sol=solveCircuit(st);
+var nm=buildNodeMap(st.wires,st.leads);
+var V_A=sol.V_AB,V_B=cx(0,0);
+var Vs=cx(st.source.V,0);
+var out={};
+var nA=nm.findRoot('node_A'),nB=nm.findRoot('node_B');
+for(var i=0;i<allNodes.length;i++){
+var n=allNodes[i],r=nm.findRoot(n);
+if(r===nA)out[n]=V_A;else if(r===nB)out[n]=V_B;else out[n]=null;
+}
+/* Source branch fill-in */
+if(out['Vs_pos']===null && out['Vs_neg']!==null)out['Vs_pos']=cAdd(out['Vs_neg'],Vs);
+if(out['R1_right']===null){
+if(st.leads.R1.r&&st.leads.Vs.l&&out['Vs_pos']!==null)out['R1_right']=out['Vs_pos'];
+}
+if(out['R1_left']===null && out['R1_right']!==null){
+if(sol.b1live)out['R1_left']=cAdd(out['R1_right'],cMul(sol.I_source,zResistor(st.R1)));
+else out['R1_left']=out['R1_right'];
+}
+if(out['seg1_bot']===null && out['R1_left']!==null && st.leads.R1.l)out['seg1_bot']=out['R1_left'];
+if(out['R2_right']===null && st.leads.R2.r)out['R2_right']=V_B;
+if(out['R2_left']===null && out['R2_right']!==null)out['R2_left']=out['R2_right'];
+if(out['seg2_bot']===null && out['R2_left']!==null && st.leads.R2.l)out['seg2_bot']=out['R2_left'];
+if(out['C_right']===null && st.leads.C.r)out['C_right']=V_B;
+if(out['C_left']===null && out['C_right']!==null)out['C_left']=out['C_right'];
+if(out['seg3_bot']===null && out['C_left']!==null && st.leads.C.l)out['seg3_bot']=out['C_left'];
+return out;
+};
+var isComponentIsolated=function(st,name){
+var nm=buildNodeMap(st.wires,st.leads);
+var nA=nm.findRoot('node_A'),nB=nm.findRoot('node_B');
+if(name==='R2'){
+var lLive=(nm.findRoot('R2_left')===nA),rLive=(nm.findRoot('R2_right')===nB);
+return !(lLive&&rLive);
+}
+if(name==='C'){
+var lLive=(nm.findRoot('C_left')===nA),rLive=(nm.findRoot('C_right')===nB);
+return !(lLive&&rLive);
+}
+if(name==='R1'){
+if(nm.findRoot('R1_left')!==nA)return true;
+if(!st.leads.R1.r||!st.leads.Vs.l||!st.leads.Vs.r)return true;
+var b2=st.leads.R2.l&&st.leads.R2.r&&st.wires.seg2;
+var b3=st.leads.C.l&&st.leads.C.r&&st.wires.seg3;
+if(!b2&&!b3)return true;
+return false;
+}
+return true;
+};
+var measureCircuit=function(st,dial,redP,blkP){
+var nm=buildNodeMap(st.wires,st.leads);
+var V=computeNodeVoltages(st);
+var result={value:0,warning:null,valid:true};
+var mode='off';
+if(dial.indexOf('V=/')===0)mode='V_DC';
+else if(dial.indexOf('V~/')===0)mode='V_AC';
+else if(dial.indexOf('Ohm/')===0)mode='OHM';
+else if(dial.indexOf('F/')===0)mode='F';
+else if(dial.indexOf('A=/')===0)mode='A_DC';
+else if(dial.indexOf('A~/')===0)mode='A_AC';
+else if(dial==='diode')mode='DIODE';
+if(mode==='off'){result.valid=false;return result}
+var isAmmeter=(mode==='A_DC'||mode==='A_AC');
+if(!isAmmeter && (!redP||!blkP)){result.warning='Connect both probes.';return result}
+if(mode==='V_DC'||mode==='V_AC'){
+var vR=V[redP],vB=V[blkP];
+if(vR===null||vB===null){result.warning='One or both probes not connected to the circuit.';return result}
+var v=cSub(vR,vB);
+if(mode==='V_DC')result.value=(st.source.type==='AC')?0:v.re;
+else result.value=(st.source.type==='DC')?0:cAbs(v);
+return result;
+}
+if(isAmmeter){
+/* Determine which jack the red probe plugs into (mA or 10A) */
+var jacksForDial = getActiveJacks(dial);
+var jackUsed = null;
+for (var jj = 0; jj < jacksForDial.length; jj++) {
+if (jacksForDial[jj] !== 'COM') { jackUsed = jacksForDial[jj]; break; }
+}
+/* If the relevant input is already blown/damaged, OL with persistent warning. */
+if (jackUsed && state.fuseBlown[jackUsed]) {
+result.value = 1e9;   /* forces OL display */
+result.warning = (jackUsed === 'mA')
+? 'mA fuse is BLOWN. Press "Replace fuse" to repair, then re-measure.'
+: '10A input damaged. Press "Replace fuse" to repair, then re-measure.';
+result.fuseBlown = true;
+return result;
+}
+var br=-1;
+for(var b=1;b<=3;b++){
+if(!st.wires['seg'+b]){
+var t='seg'+b+'_top',bt='seg'+b+'_bot';
+if(redP&&blkP){
+var rt=nm.sameNode(redP,t),rb=nm.sameNode(redP,bt);
+var blt=nm.sameNode(blkP,t),blb=nm.sameNode(blkP,bt);
+if((rt&&blb)||(rb&&blt)){br=b;break}
+}
+}
+}
+if(br===-1){result.warning='To measure current, remove a branch wire and bridge the gap with the meter probes.';return result}
+var st2=JSON.parse(JSON.stringify(st));
+st2.wires['seg'+br]=true;
+var s2=solveCircuit(st2);
+var I=(br===1)?s2.I_source:(br===2?s2.I_R2:s2.I_C);
+var Imag = cAbs(I);   /* magnitude in amps, regardless of AC/DC */
+/* Fuse / damage check.
+mA jack rated 200 mA = 0.2 A (fused).
+10A jack rated 10 A (unfused but internal damage threshold). */
+var rating = (jackUsed === 'mA') ? 0.2 : (jackUsed === '10A' ? 10.0 : null);
+if (rating !== null && Imag > rating) {
+state.fuseBlown[jackUsed] = true;
+state.fuseJustBlew = jackUsed;   /* triggers one-shot flash animation */
+result.value = 1e9;   /* OL */
+result.warning = (jackUsed === 'mA')
+? '⚡ FUSE BLOWN! Current of ' + (Imag*1000).toFixed(0) + ' mA exceeded the 200 mA fuse rating. The mA input is now open. Press "Replace fuse" and choose a higher-current jack (10 A).'
+: '⚡ INPUT DAMAGED! Current of ' + Imag.toFixed(2) + ' A exceeded the 10 A maximum. Press "Replace fuse" to repair.';
+result.fuseBlown = true;
+return result;
+}
+if(mode==='A_DC')result.value=(st.source.type==='AC')?0:I.re;
+else result.value=(st.source.type==='DC')?0:Imag;
+return result;
+}
+if(mode==='OHM'||mode==='F'){
+var omega2=(mode==='F')?2*Math.PI*1000:0;   /* OHM uses DC test signal so C is open; F uses 1kHz */
+var components=[
+{name:'R1',l:'R1_left',r:'R1_right',val:st.R1,kind:'R'},
+{name:'R2',l:'R2_left',r:'R2_right',val:st.R2,kind:'R'},
+{name:'C', l:'C_left', r:'C_right', val:st.C, kind:'C'}
+];
+var compFound=null;
+for(var ci=0;ci<components.length;ci++){
+var c=components[ci];
+var rL=nm.sameNode(redP,c.l),rR=nm.sameNode(redP,c.r);
+var blL=nm.sameNode(blkP,c.l),blR=nm.sameNode(blkP,c.r);
+if((rL&&blR)||(rR&&blL)){compFound=c;break}
+}
+if(!compFound){result.warning='Probes do not span a single component.';return result}
+var isolated=isComponentIsolated(st,compFound.name);
+if(mode==='OHM'){
+if(isolated){result.value=compFound.val;return result}
+var paths=[];
+if(compFound.name==='R2'){
+if(st.leads.R1.l&&st.leads.R1.r&&st.wires.seg1&&st.leads.Vs.l&&st.leads.Vs.r)paths.push(zResistor(st.R1));
+if(st.leads.C.l&&st.leads.C.r&&st.wires.seg3)paths.push(zCapacitor(st.C,omega2));
+}else if(compFound.name==='R1'){
+var p2=[];
+if(st.leads.R2.l&&st.leads.R2.r&&st.wires.seg2)p2.push(zResistor(st.R2));
+if(st.leads.C.l&&st.leads.C.r&&st.wires.seg3)p2.push(zCapacitor(st.C,omega2));
+if(p2.length&&st.leads.Vs.l&&st.leads.Vs.r){
+var pp=p2[0];for(var i=1;i<p2.length;i++)pp=cPar(pp,p2[i]);
+paths.push(pp);
+}
+}else if(compFound.name==='C'){
+if(st.leads.R1.l&&st.leads.R1.r&&st.wires.seg1&&st.leads.Vs.l&&st.leads.Vs.r)paths.push(zResistor(st.R1));
+if(st.leads.R2.l&&st.leads.R2.r&&st.wires.seg2)paths.push(zResistor(st.R2));
+}
+var altPath=cx(1e15,0);
+if(paths.length){altPath=paths[0];for(var i=1;i<paths.length;i++)altPath=cPar(altPath,paths[i])}
+var totalZ=cPar(zResistor(compFound.val),altPath);
+result.value=totalZ.re;
+result.warning='Component not isolated. Disconnect at least one of its leads for an accurate reading.';
+return result;
+}else{
+if(isolated){result.value=(compFound.kind==='C')?compFound.val:0}
+else{result.value=0;result.warning='Component not isolated for capacitance reading.'}
+return result;
+}
+}
+if(mode==='DIODE'){result.value=0;result.warning='No diode in this circuit.';return result}
+return result;
+};
+/* ============================================================
+ DIAL POSITIONS (from multimeter v6)
+============================================================ */
+var positions = [
+{ k:'Ohm/2M',a:5,label:'2M',group:'Ohm' },{ k:'Ohm/20M',a:15,label:'20M',group:'Ohm' },
+{ k:'Ohm/200M',a:25,label:'200M',group:'Ohm' },
+{ k:'V=/200m',a:40,label:'200m',group:'V=',groupStart:true },{ k:'V=/2',a:50,label:'2',group:'V=' },
+{ k:'V=/20',a:60,label:'20',group:'V=' },{ k:'V=/200',a:70,label:'200',group:'V=' },
+{ k:'V=/1000',a:80,label:'1000',group:'V=' },
+{ k:'V~/700',a:90,label:'700',group:'V~',groupStart:true },{ k:'V~/200',a:105,label:'200',group:'V~' },
+{ k:'V~/20',a:115,label:'20',group:'V~' },{ k:'V~/2',a:125,label:'2',group:'V~' },
+{ k:'F/2p',a:140,label:'2p',group:'F',groupStart:true },{ k:'F/2n',a:150,label:'2n',group:'F' },
+{ k:'F/20n',a:160,label:'20n',group:'F' },{ k:'F/200n',a:170,label:'200n',group:'F' },
+{ k:'F/2u',a:-180,label:'2\u00B5',group:'F' },{ k:'F/20u',a:-170,label:'20\u00B5',group:'F' },
+{ k:'F/200u',a:-160,label:'200\u00B5',group:'F' },
+{ k:'A~/2m',a:-150,label:'2m',group:'A~',groupStart:true },{ k:'A~/20m',a:-140,label:'20m',group:'A~' },
+{ k:'A~/200mA',a:-125,label:'200m',group:'A~' },{ k:'A~/10',a:-115,label:'10',group:'A~' },
+{ k:'A=/10',a:-100,label:'10',group:'A=',groupStart:true },{ k:'A=/200m',a:-85,label:'200m',group:'A=' },
+{ k:'A=/20m',a:-70,label:'20m',group:'A=' },{ k:'A=/2m',a:-55,label:'2m',group:'A=' },
+{ k:'diode',a:-45,label:'\u25B6|',group:'diode',groupStart:true },
+{ k:'Ohm/200',a:-35,label:'200',group:'Ohm',groupStart:true },{ k:'Ohm/2k',a:-25,label:'2k',group:'Ohm' },
+{ k:'Ohm/20k',a:-15,label:'20k',group:'Ohm' },{ k:'Ohm/200k',a:-5,label:'200k',group:'Ohm' }
+];
+var dialMap={'off':0};
+for(var ipi=0;ipi<positions.length;ipi++)dialMap[positions[ipi].k]=positions[ipi].a;
+var getActiveJacks=function(d){
+if(d==='off'||!d)return[];
+if(d.indexOf('Ohm/')===0)return['COM','VOF'];
+if(d.indexOf('V=/')===0)return['COM','VOF'];
+if(d.indexOf('V~/')===0)return['COM','VOF'];
+if(d.indexOf('F/')===0)return['COM','VOF'];
+if(d==='diode')return['COM','VOF'];
+if(d==='A=/10'||d==='A~/10')return['COM','10A'];
+if(d.indexOf('A=/')===0)return['COM','mA'];
+if(d.indexOf('A~/')===0)return['COM','mA'];
+return[];
+};
+var dialToSpoken=function(d){
+if(d==='off')return'Off';
+if(d==='diode')return'Diode test';
+var slash=d.indexOf('/');
+if(slash===-1)return d;
+var grp=d.substring(0,slash),rng=d.substring(slash+1);
+var grpName={'Ohm':'Resistance','V=':'DC voltage','V~':'AC voltage','F':'Capacitance','A=':'DC current','A~':'AC current'}[grp]||grp;
+var unit={'Ohm':'ohm','V=':'volt','V~':'volt','F':'farad','A=':'amp','A~':'amp'}[grp]||'';
+var num=rng,prefix='',lc=rng.charAt(rng.length-1);
+if(rng.length>=2&&rng.substring(rng.length-2)==='mA'){prefix='milli';unit='amp';num=rng.substring(0,rng.length-2)}
+else if(lc==='M'){prefix='mega';num=rng.substring(0,rng.length-1)}
+else if(lc==='k'){prefix='kilo';num=rng.substring(0,rng.length-1)}
+else if(lc==='m'){prefix='milli';num=rng.substring(0,rng.length-1)}
+else if(lc==='u'||lc==='\u00B5'){prefix='micro';num=rng.substring(0,rng.length-1)}
+else if(lc==='n'){prefix='nano';num=rng.substring(0,rng.length-1)}
+else if(lc==='p'){prefix='pico';num=rng.substring(0,rng.length-1)}
+var unitOut=(num==='1')?unit:unit+'s';
+return grpName+', '+num+' '+prefix+unitOut+' range';
+};
+/* ============================================================
+ DISPLAY VALUE: based on dial range, format to 4 digits with decimals
+ positioned correctly. The raw value from measureCircuit is in SI base units.
+ Convert based on the range suffix.
+============================================================ */
+var rangeMultiplier=function(d){
+if(d==='off')return 1;
+if(d==='diode')return 1;
+var rng=d.substring(d.indexOf('/')+1);
+var lc=rng.charAt(rng.length-1);
+if(rng.length>=2&&rng.substring(rng.length-2)==='mA')return 1000;   /* read in mA */
+if(lc==='M')return 1e-6;
+if(lc==='k')return 1e-3;
+if(lc==='m')return 1000;
+if(lc==='u'||lc==='\u00B5')return 1e6;
+if(lc==='n')return 1e9;
+if(lc==='p')return 1e12;
+return 1;
+};
+var rangeMaxValue=function(d){
+if(d==='off'||d==='diode')return 9999;
+var rng=d.substring(d.indexOf('/')+1);
+var lc=rng.charAt(rng.length-1);
+var numStr=rng;
+if(rng.length>=2&&rng.substring(rng.length-2)==='mA')numStr=rng.substring(0,rng.length-2);
+else if('Mkmunp\u00B5'.indexOf(lc)>=0)numStr=rng.substring(0,rng.length-1);
+return parseFloat(numStr);
+};
+/* ============================================================
+ SEG7 GEOMETRY (same as multimeter v6)
+============================================================ */
+var segMap={'0':{a:1,b:1,c:1,d:1,e:1,f:1,g:0},'1':{a:0,b:1,c:1,d:0,e:0,f:0,g:0},
+'2':{a:1,b:1,c:0,d:1,e:1,f:0,g:1},'3':{a:1,b:1,c:1,d:1,e:0,f:0,g:1},
+'4':{a:0,b:1,c:1,d:0,e:0,f:1,g:1},'5':{a:1,b:0,c:1,d:1,e:0,f:1,g:1},
+'6':{a:1,b:0,c:1,d:1,e:1,f:1,g:1},'7':{a:1,b:1,c:1,d:0,e:0,f:0,g:0},
+'8':{a:1,b:1,c:1,d:1,e:1,f:1,g:1},'9':{a:1,b:1,c:1,d:1,e:0,f:1,g:1},
+' ':{a:0,b:0,c:0,d:0,e:0,f:0,g:0},
+'O':{a:1,b:1,c:1,d:1,e:1,f:1,g:0},'L':{a:0,b:0,c:0,d:1,e:1,f:1,g:0}};
+var hSegPts=function(cx,cy,SL,ST){var hl=SL/2,ht=ST/2;return(cx-hl+ht)+','+cy+' '+(cx-hl)+','+(cy-ht)+' '+(cx+hl-ht)+','+(cy-ht)+' '+(cx+hl)+','+cy+' '+(cx+hl-ht)+','+(cy+ht)+' '+(cx-hl)+','+(cy+ht)};
+var vSegPts=function(cx,cy,SL,ST){var hl=SL/2,ht=ST/2;return cx+','+(cy-hl+ht)+' '+(cx-ht)+','+(cy-hl)+' '+(cx-ht)+','+(cy+hl-ht)+' '+cx+','+(cy+hl)+' '+(cx+ht)+','+(cy+hl-ht)+' '+(cx+ht)+','+(cy-hl+ht)};
+var captureFocusId=function(){var ae=document.activeElement;if(!ae||!ae.id)return null;if(ae.id.indexOf('_'+thisq)===-1)return null;return ae.id};
+var restoreFocus=function(id){if(!id)return;var el=document.getElementById(id);if(el&&typeof el.focus==='function'){try{el.focus({preventScroll:true})}catch(e){el.focus()}}};
+var a11yBtnStyle=function(active){var bgC=active?'rgba(0,232,208,.12)':'#2a2e3a';var brdr=active?'#00e8d0':'#404a60';var col=active?'#00e8d0':'#7a8aaa';return'padding:4px 10px;font-size:10px;font-family:monospace;letter-spacing:.06em;border-radius:3px;cursor:pointer;background:'+bgC+';border:1px solid '+brdr+';color:'+col+';'};
+var narrate=function(msg){state.lastNarration=msg};
+/* ============================================================
+ SCHEMATIC RENDERER
+============================================================ */
+var probeXYMap = null;   /* set by buildSchematic, used for click handling */
+var buildSchematic = function(svgWidth, hc){
+var st = state.circuit;
+var W = svgWidth;
+var H = 320;
+var s = '<svg id="mmc_schem_'+thisq+'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" style="background:'+(hc?'#000':'#fff')+';display:block">';
+var stk = hc?'#fff':'#000';
+var lblCol = hc?'#fff':'#000';
+var nodeCol = hc?'#6cf':'#06a';
+var gapCol = hc?'#f88':'#a00';
+var railA_y = 40, railB_y = 270;
+var bx = { 1: 90, 2: 220, 3: 340 };
+/* Rails */
+s += '<line x1="'+bx[1]+'" y1="'+railA_y+'" x2="'+bx[3]+'" y2="'+railA_y+'" stroke="'+stk+'" stroke-width="2"/>';
+s += '<line x1="'+bx[1]+'" y1="'+railB_y+'" x2="'+bx[3]+'" y2="'+railB_y+'" stroke="'+stk+'" stroke-width="2"/>';
+var b1x = bx[1], b2x = bx[2], b3x = bx[3];
+/* Source branch: seg1 wire (40..70) -- short wire stub (70..90) -- R1 (90..140) -- short stub (140..160) -- Vs (160..220) -- short stub (220..270 railB) */
+var seg1Top_y=railA_y, seg1Bot_y=railA_y+30;
+var R1Top_y=seg1Bot_y+20, R1Bot_y=R1Top_y+50;
+var VsTop_y=R1Bot_y+20, VsBot_y=VsTop_y+60;
+var b1Bot_y=railB_y;
+var drawWireOrGap = function(x, y1, y2, present, label){
+if (present) return '<line x1="'+x+'" y1="'+y1+'" x2="'+x+'" y2="'+y2+'" stroke="'+stk+'" stroke-width="2"/>';
+var out = '<line x1="'+x+'" y1="'+y1+'" x2="'+x+'" y2="'+(y1+6)+'" stroke="'+stk+'" stroke-width="2"/>';
+out += '<line x1="'+x+'" y1="'+(y2-6)+'" x2="'+x+'" y2="'+y2+'" stroke="'+stk+'" stroke-width="2"/>';
+out += '<circle cx="'+x+'" cy="'+(y1+8)+'" r="3" fill="'+(hc?'#000':'#fff')+'" stroke="'+stk+'" stroke-width="1.5"/>';
+out += '<circle cx="'+x+'" cy="'+(y2-8)+'" r="3" fill="'+(hc?'#000':'#fff')+'" stroke="'+stk+'" stroke-width="1.5"/>';
+if (label) out += '<text x="'+(x+8)+'" y="'+(y1+14)+'" font-size="8" fill="'+gapCol+'" font-style="italic">'+label+'</text>';
+return out;
+};
+var drawResistor = function(x, y1, y2, label){
+var n = 4, amp = 6;
+var step = (y2-y1)/(n*2);
+var pts = [x+','+y1];
+for(var i = 0; i < n*2; i++){
+var sgn = (i%2 === 0) ? 1 : -1;
+pts.push((x + sgn*amp)+','+(y1 + (i+0.5)*step));
+}
+pts.push(x+','+y2);
+var poly = '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+stk+'" stroke-width="1.5"/>';
+poly += '<text x="'+(x+amp+6)+'" y="'+((y1+y2)/2+3)+'" font-size="11" font-weight="bold" fill="'+lblCol+'">'+label+'</text>';
+return poly;
+};
+/* Source branch */
+s += drawWireOrGap(b1x, seg1Top_y, seg1Bot_y, st.wires.seg1, 'gap');
+s += drawWireOrGap(b1x, seg1Bot_y, R1Top_y, st.leads.R1.l, '');
+s += drawResistor(b1x, R1Top_y, R1Bot_y, 'R1');
+/* R1.r AND Vs.l together control the R1-to-Vs wire */
+s += drawWireOrGap(b1x, R1Bot_y, VsTop_y, st.leads.R1.r && st.leads.Vs.l, '');
+/* Source symbol */
+var midY = (VsTop_y+VsBot_y)/2;
+if (st.source.type === 'DC') {
+s += '<line x1="'+(b1x-14)+'" y1="'+(midY-3)+'" x2="'+(b1x+14)+'" y2="'+(midY-3)+'" stroke="'+stk+'" stroke-width="2.5"/>';
+s += '<line x1="'+(b1x-7)+'" y1="'+(midY+3)+'" x2="'+(b1x+7)+'" y2="'+(midY+3)+'" stroke="'+stk+'" stroke-width="2.5"/>';
+s += '<text x="'+(b1x+18)+'" y="'+(midY-1)+'" font-size="10" fill="'+lblCol+'">+</text>';
+s += '<text x="'+(b1x+12)+'" y="'+(midY+10)+'" font-size="10" fill="'+lblCol+'">−</text>';
+s += '<line x1="'+b1x+'" y1="'+VsTop_y+'" x2="'+b1x+'" y2="'+(midY-3)+'" stroke="'+stk+'" stroke-width="2"/>';
+s += '<line x1="'+b1x+'" y1="'+(midY+3)+'" x2="'+b1x+'" y2="'+VsBot_y+'" stroke="'+stk+'" stroke-width="2"/>';
+} else {
+s += '<circle cx="'+b1x+'" cy="'+midY+'" r="14" fill="'+(hc?'#000':'#fff')+'" stroke="'+stk+'" stroke-width="2"/>';
+var wpts=[];
+for(var i=0;i<=20;i++){var t=i/20;var px=b1x-10+20*t;var py=midY-5*Math.sin(2*Math.PI*t);wpts.push(px.toFixed(1)+','+py.toFixed(1))}
+s += '<polyline points="'+wpts.join(' ')+'" fill="none" stroke="'+stk+'" stroke-width="1.5"/>';
+s += '<line x1="'+b1x+'" y1="'+VsTop_y+'" x2="'+b1x+'" y2="'+(midY-14)+'" stroke="'+stk+'" stroke-width="2"/>';
+s += '<line x1="'+b1x+'" y1="'+(midY+14)+'" x2="'+b1x+'" y2="'+VsBot_y+'" stroke="'+stk+'" stroke-width="2"/>';
+}
+s += '<text x="'+(b1x-32)+'" y="'+(midY+3)+'" font-size="11" font-weight="bold" fill="'+lblCol+'">Vs</text>';
+s += drawWireOrGap(b1x, VsBot_y, b1Bot_y, st.leads.Vs.r, '');
+/* R2 branch -- with clear wire stretches for probe dots */
+var seg2Bot_y = railA_y+30, R2Top_y = seg2Bot_y+20, R2Bot_y = R2Top_y+90;
+s += drawWireOrGap(b2x, railA_y, seg2Bot_y, st.wires.seg2, 'gap');
+s += drawWireOrGap(b2x, seg2Bot_y, R2Top_y, st.leads.R2.l, '');
+s += drawResistor(b2x, R2Top_y, R2Bot_y, 'R2');
+s += drawWireOrGap(b2x, R2Bot_y, railB_y, st.leads.R2.r, '');
+/* C branch -- with clear wire stretches */
+var seg3Bot_y = railA_y+30, CTop_y = seg3Bot_y+60, CBot_y = CTop_y+10;
+s += drawWireOrGap(b3x, railA_y, seg3Bot_y, st.wires.seg3, 'gap');
+s += drawWireOrGap(b3x, seg3Bot_y, CTop_y, st.leads.C.l, '');
+s += '<line x1="'+(b3x-12)+'" y1="'+CTop_y+'" x2="'+(b3x+12)+'" y2="'+CTop_y+'" stroke="'+stk+'" stroke-width="2.5"/>';
+s += '<line x1="'+(b3x-12)+'" y1="'+(CTop_y+5)+'" x2="'+(b3x+12)+'" y2="'+(CTop_y+5)+'" stroke="'+stk+'" stroke-width="2.5"/>';
+s += '<text x="'+(b3x+15)+'" y="'+(CTop_y+5)+'" font-size="11" font-weight="bold" fill="'+lblCol+'">C</text>';
+s += '<line x1="'+b3x+'" y1="'+(CTop_y+5)+'" x2="'+b3x+'" y2="'+CBot_y+'" stroke="'+stk+'" stroke-width="2"/>';
+s += drawWireOrGap(b3x, CBot_y, railB_y, st.leads.C.r, '');
+/* === Probe-able test points: positioned ON the circuit traces ===
+node_A and node_B are placed at the leftmost corner of each rail so
+the rail itself is the visible probe location. The component-adjacent
+points sit on the wire stretches just above/below each component.
+The seg{N}_top/seg{N}_bot points sit near the stub ends so they
+remain visible whether the seg wire is in place or removed. */
+probeXYMap = {
+'node_A':    { x: b1x,    y: railA_y },                   /* top rail at branch 1 */
+'node_B':    { x: b1x,    y: railB_y },                   /* bottom rail at branch 1 */
+'seg1_top':  { x: b1x,    y: seg1Top_y+3 },               /* on seg1, rail-A side stub */
+'seg1_bot':  { x: b1x,    y: seg1Bot_y-3 },               /* on seg1, component-side stub */
+'R1_left':   { x: b1x,    y: R1Top_y-10 },                /* on wire above R1's top */
+'R1_right':  { x: b1x,    y: R1Bot_y+10 },                /* on wire below R1's bottom */
+'Vs_pos':    { x: b1x,    y: VsTop_y-10 },                /* on wire above Vs */
+'Vs_neg':    { x: b1x,    y: VsBot_y+10 },                /* on wire below Vs */
+'seg2_top':  { x: b2x,    y: railA_y+3 },                 /* on seg2, rail-A side stub */
+'seg2_bot':  { x: b2x,    y: seg2Bot_y-3 },               /* on seg2, component-side stub */
+'R2_left':   { x: b2x,    y: R2Top_y-10 },                /* on wire above R2 */
+'R2_right':  { x: b2x,    y: R2Bot_y+10 },                /* on wire below R2 */
+'seg3_top':  { x: b3x,    y: railA_y+3 },                 /* on seg3, rail-A side stub */
+'seg3_bot':  { x: b3x,    y: seg3Bot_y-3 },               /* on seg3, component-side stub */
+'C_left':    { x: b3x,    y: CTop_y-12 },                 /* on wire above C plates */
+'C_right':   { x: b3x,    y: CBot_y+10 }                  /* on wire below C */
+};
+/* Render small dots showing all clickable points (ghost), and an outline ring on hover */
+for (var ptName in probeXYMap) {
+var p = probeXYMap[ptName];
+/* visible little marker */
+s += '<circle cx="'+p.x+'" cy="'+p.y+'" r="3" fill="'+(hc?'#444':'#bcd')+'" stroke="'+(hc?'#888':'#789')+'" stroke-width="0.5" opacity="0.6" pointer-events="none"/>';
+/* invisible larger click target */
+s += '<circle cx="'+p.x+'" cy="'+p.y+'" r="12" fill="rgba(0,0,0,0.001)" '+
+'style="cursor:pointer" onclick="mmcClickProbe_'+thisq+'(\''+ptName+'\')" '+
+'><title>'+ptName.replace(/_/g,' ')+'</title></circle>';
+}
+/* Render the actual probe markers on top */
+var drawProbe = function(name, color){
+if (!name || !probeXYMap[name]) return '';
+var p = probeXYMap[name];
+return '<circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="'+color+'" stroke="'+stk+'" stroke-width="1.5" pointer-events="none"/>'+
+'<circle cx="'+p.x+'" cy="'+p.y+'" r="2" fill="'+stk+'" pointer-events="none"/>';
+};
+s += drawProbe(state.probes.red, '#e22');
+s += drawProbe(state.probes.black, '#222');
+s += '</svg>';
+return s;
+};
+/* ============================================================
+ RENDER
+============================================================ */
+var render = function(){
+var focusId = captureFocusId();
+var st = state.circuit;
+var dial = state.dial;
+/* Compute the meter reading */
+var meas = measureCircuit(st, dial, state.probes.red, state.probes.black);
+var rawValue = meas.value;
+var warning = meas.warning;
+/* If a fuse just blew on this measurement, narrate it loudly so screen
+readers and the visible bar both call it out. */
+if (state.fuseJustBlew) {
+var jw = state.fuseJustBlew;
+narrate(
+(jw === 'mA')
+? 'Fuse blown! The current exceeded the 200 milliamp rating of the milliamp input. The meter input is now open. Press Replace fuse to repair, then choose the 10 amp jack for high-current measurements.'
+: 'Input damaged! The current exceeded the 10 amp maximum of the 10 amp input. Press Replace fuse to repair.'
+);
+}
+/* Convert raw SI value to display units based on dial range */
+var mult = rangeMultiplier(dial);
+var displayValue = rawValue * mult;
+var maxRange = rangeMaxValue(dial);
+/* Overflow if > range max */
+var overflow = (Math.abs(displayValue) > maxRange * 1.05);
+var meterOn = (dial !== 'off');
+var hc = state.a11y.highContrast;
+var caseColor = hc?'#000':'#e8c41a';
+var caseStroke = hc?'#fff':'#222';
+var lcdBg = hc?'#000':bg;
+var lcdSegColor = hc?'#fff':color;
+var panelBg = hc?'#000':'#b5b5b5';
+var panelStroke = hc?'#fff':'#555';
+var jackPanelBg = hc?'#000':'#8a0f0f';
+var dialFace = hc?'#222':'#cdcdcd';
+var dialStroke = hc?'#fff':'#444';
+var dialText = hc?'#fff':'#111';
+var dialSEPStroke  = hc?'#fff':'#c00';
+var dialTextM      = hc?'#fff':'#c00';
+var stripeColor = hc?'#666':'#888';
+/* Parse value for LCD */
+var parsed = (function(v){
+if (overflow) return { overflow:true, sign:(v<0)?'-':'' };
+var sign=(v<0)?'-':'';var mag=Math.abs(v);
+var dp;
+if(mag>=1000)dp=0;else if(mag>=100)dp=1;else if(mag>=10)dp=2;else dp=3;
+var scaled=Math.round(mag*Math.pow(10,dp));
+var digits=String(scaled);
+while(digits.length<4)digits='0'+digits;
+if(digits.length>4)return{overflow:true,sign:sign};
+return{overflow:false,sign:sign,digits:digits,dp:dp};
+})(displayValue);
+var seg7=(function(){
+var DW=30,DH=54,SL=18,ST=5;
+var onCol=lcdSegColor;
+var offOp=(onCol==='#fff')?0.18:0.08;
+var signW=16,padX=8,padY=6;
+var totW=padX*2+signW+4*DW;
+var totH=padY*2+DH;
+var ccx=DW/2;
+var yTop=7,yMid=DH/2,yBot=DH-7;
+var xL=6,xR=DW-6;
+var yVT=(yTop+yMid)/2,yVB=(yMid+yBot)/2;
+var signCX=padX+signW/2,signCY=padY+DH/2;
+var signOn=(parsed.sign==='-')&&meterOn;
+var signHL=7,signHT=2;
+var out='';
+var signPts=(signCX-signHL+signHT)+','+signCY+' '+(signCX-signHL)+','+(signCY-signHT)+' '+(signCX+signHL-signHT)+','+(signCY-signHT)+' '+(signCX+signHL)+','+signCY+' '+(signCX+signHL-signHT)+','+(signCY+signHT)+' '+(signCX-signHL)+','+(signCY+signHT);
+out+='<polygon points="'+signPts+'" fill="'+onCol+'" opacity="'+(signOn?1:offOp)+'"/>';
+var emit=function(xOff,segs,dot){
+var frag='<g transform="translate('+xOff+','+padY+') skewX(-4)">';
+var poly=function(pts,on){return'<polygon points="'+pts+'" fill="'+onCol+'" opacity="'+(on?1:offOp)+'"/>'};
+frag+=poly(hSegPts(ccx,yTop,SL,ST),segs.a);
+frag+=poly(vSegPts(xR,yVT,SL,ST),segs.b);
+frag+=poly(vSegPts(xR,yVB,SL,ST),segs.c);
+frag+=poly(hSegPts(ccx,yBot,SL,ST),segs.d);
+frag+=poly(vSegPts(xL,yVB,SL,ST),segs.e);
+frag+=poly(vSegPts(xL,yVT,SL,ST),segs.f);
+frag+=poly(hSegPts(ccx,yMid,SL,ST),segs.g);
+frag+='<circle cx="'+(DW-3)+'" cy="'+(yBot+3)+'" r="2" fill="'+onCol+'" opacity="'+(dot?1:offOp)+'"/>';
+frag+='</g>';
+return frag;
+};
+if(!meterOn)for(var i=0;i<4;i++)out+=emit(padX+signW+i*DW,segMap[' '],false);
+else if(parsed.overflow){var ch=[' ',' ','O','L'];for(var i=0;i<4;i++)out+=emit(padX+signW+i*DW,segMap[ch[i]],false)}
+else for(var i=0;i<4;i++){var c=parsed.digits.charAt(i);var sg=segMap[c]||segMap[' '];var dot=(parsed.dp>0)&&(i===(3-parsed.dp));out+=emit(padX+signW+i*DW,sg,dot)}
+return{svg:out,w:totW,h:totH};
+})();
+/* Dial SVG */
+var buildDialSvg=(function(){
+var CX=175,CY=320,R_DIAL=78,R_TICK_IN=86,R_TICK_OUT=94,R_DOT=100,R_LABEL=114,R_SEP_IN=86,R_SEP_OUT=104,R_GLABEL=132;
+var out='';
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R_DIAL+'" fill="'+dialFace+'" stroke="'+dialStroke+'" stroke-width="1.5"/>';
+for(var s=-3;s<=3;s++){var sy=CY+s*7;var dx=Math.sqrt(Math.max(0,(R_DIAL-4)*(R_DIAL-4)-(s*7)*(s*7)));out+='<line x1="'+(CX-dx)+'" y1="'+sy+'" x2="'+(CX+dx)+'" y2="'+sy+'" stroke="'+stripeColor+'" stroke-width="1.3" opacity="0.55"/>'}
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R_TICK_OUT+'" fill="none" stroke="'+dialStroke+'" stroke-width="1.5"/>';
+var groupAngles={};
+for(var i=0;i<positions.length;i++){var p=positions[i];if(p.group==='diode')continue;if(!groupAngles[p.group])groupAngles[p.group]=[];groupAngles[p.group].push(p.a)}
+var gMidAngle={};
+for(var gk in groupAngles){var xs=0,ys=0,n=groupAngles[gk].length;for(var j=0;j<n;j++){var rr=groupAngles[gk][j]*Math.PI/180;xs+=Math.sin(rr);ys+=Math.cos(rr)}gMidAngle[gk]=Math.atan2(xs/n,ys/n)*180/Math.PI}
+for(var i=0;i<positions.length;i++){var p=positions[i];var rad=p.a*Math.PI/180;var sn=Math.sin(rad),cs=Math.cos(rad);var tx1=CX+R_TICK_IN*sn,ty1=CY-R_TICK_IN*cs;var tx2=CX+R_TICK_OUT*sn,ty2=CY-R_TICK_OUT*cs;var dx=CX+R_DOT*sn,dy=CY-R_DOT*cs;var lx=CX+R_LABEL*sn,ly=CY-R_LABEL*cs;out+='<line x1="'+tx1.toFixed(1)+'" y1="'+ty1.toFixed(1)+'" x2="'+tx2.toFixed(1)+'" y2="'+ty2.toFixed(1)+'" stroke="'+dialStroke+'" stroke-width="1"/>';out+='<circle cx="'+dx.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="2" fill="'+dialStroke+'"/>';out+='<text x="'+lx.toFixed(1)+'" y="'+(ly+3).toFixed(1)+'" text-anchor="middle" font-size="8" font-family="Arial,sans-serif" fill="'+dialText+'">'+p.label+'</text>'}
+for(var i=0;i<positions.length;i++){if(!positions[i].groupStart)continue;var prevIdx=(i===0)?positions.length-1:i-1;var a1=positions[prevIdx].a,a2=positions[i].a;var diff=a2-a1;while(diff>180)diff-=360;while(diff<-180)diff+=360;var midA=a1+diff/2;var radM=midA*Math.PI/180;var snM=Math.sin(radM),csM=Math.cos(radM);var sx1=CX+R_SEP_IN*snM,sy1=CY-R_SEP_IN*csM;var sx2=CX+R_SEP_OUT*snM,sy2=CY-R_SEP_OUT*csM;out+='<line x1="'+sx1.toFixed(1)+'" y1="'+sy1.toFixed(1)+'" x2="'+sx2.toFixed(1)+'" y2="'+sy2.toFixed(1)+'" stroke="'+dialSEPStroke+'" stroke-width="2"/>'}
+var groupText={'Ohm':'\u03A9','V=':'V\u2550','V~':'V\u223C','F':'F','A~':'A\u223C','A=':'A\u2550'};var glKeys=['Ohm','V=','V~','F','A~','A='];
+for(var gi=0;gi<glKeys.length;gi++){var gk=glKeys[gi];if(typeof gMidAngle[gk]==='undefined')continue;var ga=gMidAngle[gk];var rr=ga*Math.PI/180;var gx=CX+R_GLABEL*Math.sin(rr);var gy=CY-R_GLABEL*Math.cos(rr);out+='<text x="'+gx.toFixed(1)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="middle" font-size="13" font-weight="bold" font-family="Arial,sans-serif" fill="'+dialTextM+'">'+groupText[gk]+'</text>'}
+var angle=(typeof dialMap[dial]!=='undefined')?dialMap[dial]:0;
+out+='<g transform="rotate('+angle+' '+CX+' '+CY+')">';
+var shaftW=11,shaftTop=CY-R_DIAL+6,shaftH=R_DIAL-8;
+var shaftFill=hc?'#fff':'#d8d8d8',shaftStroke=hc?'#fff':'#333';
+out+='<rect x="'+(CX-shaftW/2)+'" y="'+shaftTop+'" width="'+shaftW+'" height="'+shaftH+'" fill="'+shaftFill+'" stroke="'+shaftStroke+'" stroke-width="0.8" rx="2"/>';
+if(!hc){out+='<rect x="'+(CX-shaftW/2+1.5)+'" y="'+(shaftTop+2)+'" width="2" height="'+(shaftH-4)+'" fill="#fff" opacity="0.75"/>';out+='<rect x="'+(CX+shaftW/2-3)+'" y="'+(shaftTop+2)+'" width="1.5" height="'+(shaftH-4)+'" fill="#777" opacity="0.5"/>'}
+out+='<rect x="'+(CX-shaftW/2-0.5)+'" y="'+shaftTop+'" width="'+(shaftW+1)+'" height="5" fill="#fff" stroke="'+shaftStroke+'" stroke-width="0.6"/>';
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="11" fill="'+(hc?'#fff':'#8a8a8a')+'" stroke="'+shaftStroke+'" stroke-width="1"/>';
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="4" fill="'+(hc?'#000':'#2a2a2a')+'"/>';
+out+='</g>';
+return out;
+})();
+/* Active jacks */
+var activeJacks = getActiveJacks(dial);
+var hasJack = function(id){for(var i=0;i<activeJacks.length;i++)if(activeJacks[i]===id)return true;return false};
+/* === Build HTML === */
+var html = '';
+html += '<div role="region" aria-label="Multimeter and circuit lab" style="display:inline-block;font-family:Arial,sans-serif">';
+/* === A11y toolbar === */
+html += '<div role="toolbar" aria-label="Display options" style="display:flex;gap:6px;padding:6px 8px;background:#222;flex-wrap:wrap;width:760px;box-sizing:border-box;border-radius:6px 6px 0 0">';
+html += '<button type="button" id="mmc_btn_lm_'+thisq+'" onclick="mmcToggleA11y_'+thisq+'(\'lightMode\')" aria-pressed="'+state.a11y.lightMode+'" style="'+a11yBtnStyle(state.a11y.lightMode)+'">LIGHT MODE'+(state.a11y.lightMode?': ON':'')+'</button>';
+html += '<button type="button" id="mmc_btn_nr_'+thisq+'" onclick="mmcToggleA11y_'+thisq+'(\'narration\')" aria-pressed="'+state.a11y.narration+'" style="'+a11yBtnStyle(state.a11y.narration)+'">NARRATION: '+(state.a11y.narration?'ON':'OFF')+'</button>';
+html += '<button type="button" id="mmc_btn_hc_'+thisq+'" onclick="mmcToggleA11y_'+thisq+'(\'highContrast\')" aria-pressed="'+state.a11y.highContrast+'" style="'+a11yBtnStyle(state.a11y.highContrast)+'">HIGH CONTRAST'+(state.a11y.highContrast?': ON':'')+'</button>';
+var fsLabels={'normal':'NORMAL','large':'LARGE','xl':'XL'};
+html += '<button type="button" id="mmc_btn_fs_'+thisq+'" onclick="mmcCycleFont_'+thisq+'()" aria-label="Font size: '+fsLabels[state.a11y.fontSize]+'. Click to cycle." style="'+a11yBtnStyle(state.a11y.fontSize!=='normal')+'">FONT: '+fsLabels[state.a11y.fontSize]+'</button>';
+html += '</div>';
+/* === Narration bar === */
+var narStyle = state.a11y.narration ? 'display:block;width:760px;padding:6px 10px;background:#ffefc0;border-left:4px solid #e0b040;font-size:13px;color:#333;font-style:italic;box-sizing:border-box;min-height:20px' : 'display:none';
+html += '<div role="status" aria-live="polite" aria-atomic="true" style="'+narStyle+'">';
+html += state.lastNarration || '&nbsp;';
+html += '</div>';
+/* === Two-column layout: meter on left, circuit + controls on right === */
+html += '<div style="display:flex;background:#222;width:760px;box-sizing:border-box">';
+/* === LEFT: Multimeter === */
+var svgW=350,svgH=620;
+html += '<div style="flex:0 0 350px;padding:8px 4px 8px 8px">';
+var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+svgW+' '+svgH+'" width="'+svgW+'" height="'+svgH+'" role="img" aria-label="Digital multimeter">';
+s += '<defs><filter id="glow_'+thisq+'" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+s += '<rect x="4" y="4" width="'+(svgW-8)+'" height="'+(svgH-8)+'" rx="16" fill="'+caseColor+'" stroke="'+caseStroke+'" stroke-width="3"/>';
+s += '<rect x="14" y="14" width="'+(svgW-28)+'" height="'+(svgH-28)+'" rx="10" fill="none" stroke="'+caseStroke+'" stroke-width="1"/>';
+var lcdX=28,lcdY=28,lcdW=svgW-56,lcdH=105;
+s += '<rect x="'+lcdX+'" y="'+lcdY+'" width="'+lcdW+'" height="'+lcdH+'" rx="8" fill="#fff" stroke="'+caseStroke+'" stroke-width="2.5"/>';
+s += '<rect x="'+(lcdX+10)+'" y="'+(lcdY+10)+'" width="'+(lcdW-20)+'" height="'+(lcdH-20)+'" rx="4" fill="'+lcdBg+'" stroke="#666" stroke-width="0.5"/>';
+var segX=lcdX+(lcdW-seg7.w)/2,segY=lcdY+(lcdH-seg7.h)/2;
+s += '<g transform="translate('+segX+','+segY+')" aria-hidden="true">'+seg7.svg+'</g>';
+s += '<rect x="18" y="150" width="'+(svgW-36)+'" height="355" rx="6" fill="'+panelBg+'" stroke="'+panelStroke+'" stroke-width="1"/>';
+if(meterOn){s += '<rect x="29" y="159" width="36" height="18" rx="4" fill="#3eff70" opacity="0.55" filter="url(#glow_'+thisq+')"/><rect x="32" y="162" width="30" height="12" rx="3" fill="#0a4" stroke="#0f6" stroke-width="0.8"/>'}
+else{s += '<rect x="32" y="162" width="30" height="12" rx="3" fill="'+(hc?'#333':'#111')+'" stroke="'+(hc?'#fff':'none')+'" stroke-width="'+(hc?'1':'0')+'"/>'}
+s += '<text x="32" y="188" font-size="11" font-weight="bold" fill="'+(hc?'#ff6666':'#c00')+'" font-family="Arial,sans-serif">ON/OFF</text>';
+s += buildDialSvg;
+var jackY=520;
+s += '<rect x="18" y="'+jackY+'" width="'+(svgW-36)+'" height="88" rx="4" fill="'+jackPanelBg+'" stroke="'+(hc?'#fff':'none')+'" stroke-width="'+(hc?'1':'0')+'"/>';
+var jacks=[{id:'10A',x:55,label:'10 A',sub:['10A MAX','UNFUSED']},{id:'mA',x:130,label:'mA',sub:['200mA MAX','FUSED']},{id:'COM',x:205,label:'COM',sub:[]},{id:'VOF',x:285,label:'V/\u03A9/F',sub:['1000V DC','750V AC','MAX']}];
+/* When a probe is armed, identify which jack it should plug into:
+- black probe -> COM
+- red probe   -> the non-COM active jack (10A or mA or VOF based on dial) */
+var armedJack = null;
+if (state.activeProbe === 'black') armedJack = 'COM';
+else if (state.activeProbe === 'red') {
+for (var aj = 0; aj < activeJacks.length; aj++) {
+if (activeJacks[aj] !== 'COM') { armedJack = activeJacks[aj]; break; }
+}
+}
+for(var i=0;i<jacks.length;i++){
+var j=jacks[i];
+var hi=hasJack(j.id);
+var blown = (j.id === 'mA' || j.id === '10A') && state.fuseBlown[j.id];
+var justBlew = (state.fuseJustBlew === j.id);
+if(hi && !blown){
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="14" fill="#3eff70" opacity="0.55" filter="url(#glow_'+thisq+')"/>';
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="11" fill="none" stroke="#0f6" stroke-width="2"/>';
+}
+/* Armed-probe ring -- pulses pink for red probe, white for black probe */
+if (armedJack === j.id && !blown) {
+var ringCol = (state.activeProbe === 'red') ? '#f33' : '#fff';
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="17" fill="none" stroke="'+ringCol+'" stroke-width="2.5" stroke-dasharray="3,2">';
+s+='<animate attributeName="r" values="15;19;15" dur="1.2s" repeatCount="indefinite"/>';
+s+='<animate attributeName="opacity" values="1;0.4;1" dur="1.2s" repeatCount="indefinite"/>';
+s+='</circle>';
+}
+s+='<text x="'+j.x+'" y="'+(jackY+14)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="'+(hi?'#bfffd0':'#fff')+'" font-family="Arial,sans-serif">'+j.label+'</text>';
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="9" fill="#e0e0e0" stroke="#000" stroke-width="1"/>';
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="4.5" fill="#5a0606" stroke="#000" stroke-width="0.5"/>';
+s+='<polygon points="'+(j.x+14)+','+(jackY+40)+' '+(j.x+22)+','+(jackY+40)+' '+(j.x+18)+','+(jackY+32)+'" fill="#ffd800" stroke="#000" stroke-width="0.5"/>';
+s+='<text x="'+(j.x+18)+'" y="'+(jackY+39)+'" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#000" font-family="Arial,sans-serif">!</text>';
+for(var k=0;k<j.sub.length;k++){s+='<text x="'+j.x+'" y="'+(jackY+58+k*8)+'" text-anchor="middle" font-size="6.5" fill="#fff" font-family="Arial,sans-serif">'+j.sub[k]+'</text>'}
+/* Persistent BLOWN marker: red X over the jack hole + "BLOWN" / "DAMAGED" label */
+if (blown) {
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="13" fill="rgba(0,0,0,0.4)"/>';
+s+='<line x1="'+(j.x-9)+'" y1="'+(jackY+34-9)+'" x2="'+(j.x+9)+'" y2="'+(jackY+34+9)+'" stroke="#ff3030" stroke-width="3.5" stroke-linecap="round"/>';
+s+='<line x1="'+(j.x+9)+'" y1="'+(jackY+34-9)+'" x2="'+(j.x-9)+'" y2="'+(jackY+34+9)+'" stroke="#ff3030" stroke-width="3.5" stroke-linecap="round"/>';
+s+='<text x="'+j.x+'" y="'+(jackY+82)+'" text-anchor="middle" font-size="7" font-weight="bold" fill="#ffaa55" font-family="Arial,sans-serif">'+(j.id==='mA'?'BLOWN':'DAMAGED')+'</text>';
+}
+/* One-shot flash animation when fuse just blew on this jack */
+if (justBlew) {
+/* Bright yellow expanding shockwave */
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="5" fill="none" stroke="#ffff00" stroke-width="4">';
+s+='<animate attributeName="r" values="5;40" dur="0.5s" begin="0s" fill="freeze"/>';
+s+='<animate attributeName="opacity" values="1;0" dur="0.5s" begin="0s" fill="freeze"/>';
+s+='<animate attributeName="stroke-width" values="4;0.5" dur="0.5s" begin="0s" fill="freeze"/>';
+s+='</circle>';
+/* Red flash overlay */
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="20" fill="#ff3030">';
+s+='<animate attributeName="opacity" values="0.9;0" dur="0.4s" begin="0s" fill="freeze"/>';
+s+='</circle>';
+/* "POP!" text */
+s+='<text x="'+j.x+'" y="'+(jackY-2)+'" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff3030" font-family="Arial,sans-serif" stroke="#fff" stroke-width="0.5">';
+s+='POP!';
+s+='<animate attributeName="font-size" values="8;22;18" dur="0.5s" begin="0s" fill="freeze"/>';
+s+='<animate attributeName="opacity" values="1;1;0" dur="1.4s" begin="0s" fill="freeze"/>';
+s+='</text>';
+/* Spark lines radiating out */
+for (var sp = 0; sp < 8; sp++) {
+var ang = (sp / 8) * Math.PI * 2;
+var sx1 = j.x + 8 * Math.cos(ang);
+var sy1 = (jackY+34) + 8 * Math.sin(ang);
+var sx2 = j.x + 28 * Math.cos(ang);
+var sy2 = (jackY+34) + 28 * Math.sin(ang);
+s+='<line x1="'+sx1.toFixed(1)+'" y1="'+sy1.toFixed(1)+'" x2="'+sx2.toFixed(1)+'" y2="'+sy2.toFixed(1)+'" stroke="#ffaa00" stroke-width="2" stroke-linecap="round">';
+s+='<animate attributeName="opacity" values="1;0" dur="0.5s" begin="0s" fill="freeze"/>';
+s+='</line>';
+}
+}
+}
+s += '</svg>';
+html += s;
+/* Slider for the dial */
+var curIdx = 0;
+if (dial !== 'off') for(var i=0;i<positions.length;i++)if(positions[i].k===dial){curIdx=i+1;break}
+var spokenDial = dialToSpoken(dial);
+html += '<div style="background:#222;color:#eee;padding:6px 8px;font-size:11px;display:flex;align-items:center;gap:6px">';
+html += '<label for="mmc_slider_'+thisq+'" style="font-weight:bold">Dial:</label>';
+html += '<input type="range" min="0" max="'+positions.length+'" step="1" value="'+curIdx+'" id="mmc_slider_'+thisq+'" style="flex:1;cursor:pointer" aria-valuetext="'+spokenDial.replace(/"/g,'&quot;')+'" oninput="mmcSliderUpdate_'+thisq+'(this.value)">';
+html += '<span aria-hidden="true" style="background:#000;color:#0f6;padding:2px 6px;border-radius:3px;font-family:monospace;min-width:80px;text-align:center;display:inline-block">'+(curIdx===0?'OFF':positions[curIdx-1].k)+'</span>';
+html += '</div>';
+html += '</div>';   /* end of left column */
+/* === RIGHT: Schematic + controls === */
+html += '<div style="flex:1;padding:8px;color:#eee;font-size:11px">';
+/* Schematic */
+html += '<div style="background:#fff;border-radius:4px;border:1px solid #555;margin-bottom:6px">';
+html += buildSchematic(390, hc);
+html += '</div>';
+/* Probe selector row */
+var probeOpts = '<option value="">-- none --</option>';
+var probePoints = ['node_A','node_B','seg1_top','seg1_bot','R1_left','R1_right','Vs_pos','Vs_neg','seg2_top','seg2_bot','R2_left','R2_right','seg3_top','seg3_bot','C_left','C_right'];
+for(var i=0;i<probePoints.length;i++){
+probeOpts += '<option value="'+probePoints[i]+'">'+probePoints[i].replace(/_/g,' ')+'</option>';
+}
+html += '<div style="background:#1c1c20;padding:6px;border-radius:4px;margin-bottom:6px">';
+html += '<div style="font-weight:bold;margin-bottom:4px;color:#fff">Probes</div>';
+html += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:3px">';
+html += '<span style="color:#e22;font-weight:bold">●</span>';
+html += '<label for="mmc_red_'+thisq+'" style="min-width:42px">Red:</label>';
+html += '<select id="mmc_red_'+thisq+'" onchange="mmcSetProbe_'+thisq+'(\'red\',this.value)">';
+for(var i=0;i<probePoints.length;i++){html += '<option value="'+probePoints[i]+'"'+(state.probes.red===probePoints[i]?' selected':'')+'>'+probePoints[i].replace(/_/g,' ')+'</option>'}
+html += '<option value=""'+(state.probes.red===null?' selected':'')+'>-- none --</option>';
+html += '</select>';
+html += '<button type="button" onclick="mmcArmProbe_'+thisq+'(\'red\')" '+
+'aria-label="Arm red probe for click-to-set on schematic" '+
+'style="padding:2px 6px;background:'+(state.activeProbe==='red'?'#e22':'#444')+';color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:10px">'+
+(state.activeProbe==='red'?'armed':'arm to click')+'</button>';
+html += '</div>';
+html += '<div style="display:flex;gap:6px;align-items:center">';
+html += '<span style="font-weight:bold">●</span>';
+html += '<label for="mmc_blk_'+thisq+'" style="min-width:42px">Black:</label>';
+html += '<select id="mmc_blk_'+thisq+'" onchange="mmcSetProbe_'+thisq+'(\'black\',this.value)">';
+for(var i=0;i<probePoints.length;i++){html += '<option value="'+probePoints[i]+'"'+(state.probes.black===probePoints[i]?' selected':'')+'>'+probePoints[i].replace(/_/g,' ')+'</option>'}
+html += '<option value=""'+(state.probes.black===null?' selected':'')+'>-- none --</option>';
+html += '</select>';
+html += '<button type="button" onclick="mmcArmProbe_'+thisq+'(\'black\')" '+
+'aria-label="Arm black probe for click-to-set on schematic" '+
+'style="padding:2px 6px;background:'+(state.activeProbe==='black'?'#222':'#444')+';color:#fff;border:'+(state.activeProbe==='black'?'1px solid #fff':'none')+';border-radius:3px;cursor:pointer;font-size:10px">'+
+(state.activeProbe==='black'?'armed':'arm to click')+'</button>';
+html += '</div></div>';
+/* Source controls */
+html += '<div style="background:#1c1c20;padding:6px;border-radius:4px;margin-bottom:6px">';
+html += '<div style="font-weight:bold;margin-bottom:4px;color:#fff">Source (Vs)</div>';
+html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
+html += '<label><input type="radio" name="mmc_src_'+thisq+'" value="DC"'+(st.source.type==='DC'?' checked':'')+' onclick="mmcSetSourceType_'+thisq+'(\'DC\')"> DC</label>';
+html += '<label><input type="radio" name="mmc_src_'+thisq+'" value="AC"'+(st.source.type==='AC'?' checked':'')+' onclick="mmcSetSourceType_'+thisq+'(\'AC\')"> AC</label>';
+html += '<span>V:</span><input type="number" step="1" value="'+st.source.V+'" id="mmc_srcV_'+thisq+'" oninput="mmcSetSourceV_'+thisq+'(this.value)" style="width:60px">';
+if (st.source.type === 'AC') {
+html += '<span>Hz:</span><input type="number" step="25" value="'+st.source.freq+'" id="mmc_srcF_'+thisq+'" oninput="mmcSetSourceF_'+thisq+'(this.value)" style="width:65px">';
+}
+html += '</div></div>';
+/* Wire segments */
+html += '<div style="background:#1c1c20;padding:6px;border-radius:4px;margin-bottom:6px">';
+html += '<div style="font-weight:bold;margin-bottom:4px;color:#fff">Branch wires (remove to insert ammeter)</div>';
+html += '<div style="display:flex;gap:10px">';
+html += '<label><input type="checkbox"'+(st.wires.seg1?' checked':'')+' onclick="mmcToggleWire_'+thisq+'(\'seg1\')"> seg1 (source)</label>';
+html += '<label><input type="checkbox"'+(st.wires.seg2?' checked':'')+' onclick="mmcToggleWire_'+thisq+'(\'seg2\')"> seg2 (R2)</label>';
+html += '<label><input type="checkbox"'+(st.wires.seg3?' checked':'')+' onclick="mmcToggleWire_'+thisq+'(\'seg3\')"> seg3 (C)</label>';
+html += '</div></div>';
+/* Component leads */
+html += '<div style="background:#1c1c20;padding:6px;border-radius:4px;margin-bottom:6px">';
+html += '<div style="font-weight:bold;margin-bottom:4px;color:#fff">Component leads (uncheck to disconnect)</div>';
+html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;font-size:10px">';
+var compLeads = [['R1','R1.l','l'],['R1','R1.r','r'],['R2','R2.l','l'],['R2','R2.r','r'],['C','C.l','l'],['C','C.r','r'],['Vs','Vs.l','l'],['Vs','Vs.r','r']];
+for(var i=0;i<compLeads.length;i++){
+var cl = compLeads[i];
+html += '<label><input type="checkbox"'+(st.leads[cl[0]][cl[2]]?' checked':'')+' onclick="mmcToggleLead_'+thisq+'(\''+cl[0]+'\',\''+cl[2]+'\')"> '+cl[1]+'</label>';
+}
+html += '</div></div>';
+/* Warning hint area */
+var anyFuseBlown = state.fuseBlown.mA || state.fuseBlown['10A'];
+if (warning || anyFuseBlown) {
+/* If a fuse is blown and there's no per-measurement warning, show a brief
+ reminder so the Replace fuse button has context. */
+var fuseReminder = null;
+if (anyFuseBlown && !warning) {
+var bj = state.fuseBlown.mA ? 'mA' : '10A';
+fuseReminder = (bj === 'mA')
+? 'mA input is open (blown fuse).'
+: '10A input is damaged.';
+}
+var isFuseWarning = !!(meas.fuseBlown) || fuseReminder;
+var bgC = isFuseWarning ? '#5a1010' : '#5a3a10';
+var brdC = isFuseWarning ? '#f33' : '#fa4';
+var txtC = isFuseWarning ? '#fdc' : '#fda';
+var icon = isFuseWarning ? '⚡' : '⚠';
+html += '<div style="background:'+bgC+';color:'+txtC+';padding:8px 10px;border-radius:4px;margin-bottom:6px;border-left:4px solid '+brdC+';font-style:italic">';
+if (warning) html += icon + ' ' + warning;
+else if (fuseReminder) html += icon + ' ' + fuseReminder;
+if (anyFuseBlown) {
+if (warning || fuseReminder) html += '<br>';
+html += '<button type="button" onclick="mmcReplaceFuse_'+thisq+'()" '+
+'aria-label="Replace blown fuse and reset the meter input" '+
+'style="margin-top:6px;padding:5px 12px;background:#444;color:#fff;border:1px solid #888;border-radius:3px;cursor:pointer;font-size:11px;font-weight:bold;font-style:normal">'+
+'🔧 Replace fuse</button>';
+}
+html += '</div>';
+}
+html += '</div>';   /* end right col */
+html += '</div>';   /* end main flex */
+html += '</div>';   /* end region */
+document.getElementById(rootId).innerHTML = html;
+restoreFocus(focusId);
+/* The one-shot flash animation lives in the SVG above; once that SVG
+is in the DOM the animation plays autonomously. We clear the flag now
+so a subsequent re-render (e.g., on a button click) doesn't replay it. */
+if (state.fuseJustBlew) state.fuseJustBlew = null;
+};
+/* ============================================================
+ HANDLERS
+============================================================ */
+window['mmcSliderUpdate_'+thisq] = function(v){
+var idx = parseInt(v,10);
+var newDial = (idx === 0) ? 'off' : positions[idx-1].k;
+state.dial = newDial;
+var sd = dialToSpoken(newDial);
+var jacks = getActiveJacks(newDial);
+var jacksTxt = jacks.length ? 'Connect leads to '+jacks.join(' and ')+' jacks. ' : '';
+narrate('Dial: '+sd+'. '+jacksTxt);
+render();
+};
+window['mmcSetProbe_'+thisq] = function(which, val){
+state.probes[which] = val || null;
+narrate(which+' probe set to '+(val ? val.replace(/_/g,' ') : 'none'));
+render();
+};
+window['mmcArmProbe_'+thisq] = function(which){
+state.activeProbe = which;
+narrate(which+' probe armed. Click a test point on the schematic.');
+render();
+};
+window['mmcClickProbe_'+thisq] = function(pointName){
+state.probes[state.activeProbe] = pointName;
+narrate(state.activeProbe+' probe placed on '+pointName.replace(/_/g,' '));
+render();
+};
+window['mmcSetSourceType_'+thisq] = function(t){
+state.circuit.source.type = t;
+narrate('Source set to '+t);
+render();
+};
+window['mmcSetSourceV_'+thisq] = function(v){
+var n = parseFloat(v);
+if (!isNaN(n)) { state.circuit.source.V = n; render(); }
+};
+window['mmcSetSourceF_'+thisq] = function(f){
+var n = parseFloat(f);
+if (!isNaN(n) && n > 0) { state.circuit.source.freq = n; render(); }
+};
+window['mmcToggleWire_'+thisq] = function(seg){
+state.circuit.wires[seg] = !state.circuit.wires[seg];
+narrate('Wire '+seg+' '+(state.circuit.wires[seg]?'connected':'removed'));
+render();
+};
+window['mmcToggleLead_'+thisq] = function(comp, side){
+state.circuit.leads[comp][side] = !state.circuit.leads[comp][side];
+narrate(comp+' '+side+' lead '+(state.circuit.leads[comp][side]?'connected':'disconnected'));
+render();
+};
+window['mmcToggleA11y_'+thisq] = function(key){
+state.a11y[key] = !state.a11y[key];
+if (key === 'narration' && state.a11y.narration) narrate('Narration on');
+render();
+};
+window['mmcCycleFont_'+thisq] = function(){
+var order = ['normal','large','xl'];
+var idx = order.indexOf(state.a11y.fontSize);
+state.a11y.fontSize = order[(idx+1)%order.length];
+render();
+};
+window['mmcReplaceFuse_'+thisq] = function(){
+state.fuseBlown.mA = false;
+state.fuseBlown['10A'] = false;
+state.fuseJustBlew = null;
+narrate('Fuse replaced. The meter inputs are restored.');
+render();
+};
+/* Initial intro */
+if (!state.hasShownIntro) {
+state.hasShownIntro = true;
+state.lastNarration = 'Multimeter and circuit lab ready. The circuit has a source Vs, resistors R1 and R2, and capacitor C. Set the dial, choose probe positions, and observe what the meter reads.';
+}
+render();
+})();</script></body></html>

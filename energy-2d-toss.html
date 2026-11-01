@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Energy: 2D Motion: Free Fall</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, projectile motion, two-dimensional motion, free fall, energy, momentum, lesson, scientific">
+<meta name="description" content="2D Motion: Free Fall -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobtoss" class="mob_wrap">
+<hr><h2>2D-Motion: Free Fall</h2><hr>
+<!--p&gt;In the simulation right below, your aim is to match the motion of the Cyan spacecraft. The only forces present are the forces you can set by using the controls at the bottom. In this case, you can control the force only on the second time span. But you can control the time spans.&lt;/p-->
+<div class="th_a11y" role="toolbar" aria-label="Display options"><button type="button" id="thBtnHC" aria-pressed="false">HIGH CONTRAST</button><button type="button" id="thBtnLM" aria-pressed="false">LIGHT MODE</button><button type="button" id="thBtnCB" aria-pressed="false" onclick="twoDmotionV.toggleCB(this)">COLOR-BLIND SAFE</button><button type="button" id="thBtnNR" aria-pressed="true" class="th_on" onclick="twoDmotionV.toggleNR(this)">NARRATION: ON</button></div>
+<div id="canvasesdiv" class="tbar th_title"><H3>Two Dimensional Motion</H3></div>
+<div class="mcontent th_diag"><canvas id="myCanvas" style="margin:auto;border:1px solid" width="620" height="620"></canvas>
+</div>
+<div class="bbar th_bar">
+<input type="button" id="play" data-th="p" value="Play" onclick="if(this.value=='Play'){twoDmotionV.pl();this.value='Pause';}else{this.value='Play';twoDmotionV.ps();}">
+<input type="button" id="stepforward" value="Step &#9654;&#9654;" onclick="twoDmotionV.stepForward()">
+<input type="button" id="stepback" value="Step &#9664;&#9664;" onclick="twoDmotionV.stepBack()">
+<input type="button" id="restart" data-th="w" value="Reset" onclick="twoDmotionV.restart()">
+</div>
+<div id="thNar" class="th_nar th_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- Repeated 80px sections -->
+<div class="footer th_panel th_row">
+<div class="left th_lbl">`vecv_i`<br>`(v_x,v_y)`</div>
+<div class="center"><input style="width: 170px;" type="range" id="vix" min="0" max="30" value="10" step="1" onChange="document.getElementById('vxValue').innerHTML=this.value;twoDmotionV.setvx(this.value);"> <span id="vxValue" class="th_val">10</span></div>
+<div class="right"><input style="width: 310px;" type="range" id="viy" min="-20" max="45" value="20" step="1" onChange="document.getElementById('vyValue').innerHTML=this.value;twoDmotionV.setvy(this.value);"> <span id="vyValue" class="th_val">20</span></div>
+</div>
+<div class="footer th_panel th_row">
+<div class="left th_lbl">`vecv_i`<br>`(|vecv|,theta)`</div>
+<div class="center"><input style="width: 170px;" type="range" id="viM" min="0" max="54" value="22" step="1" onChange="document.getElementById('vMValue').innerHTML=this.value;twoDmotionV.setvM(this.value);"> <span id="vMValue" class="th_val">22</span></div>
+<div class="right"><input style="width: 310px;" type="range" id="viaD" min="-90" max="90" value="63" step="1" onChange="document.getElementById('vaDValue').innerHTML=this.value;twoDmotionV.setvd(this.value);"> <span id="vaDValue" class="th_val">63</span></div>
+</div>
+<div class="footer th_panel th_row">
+<div class="left th_lbl">`vecP_i`<br>`(P_{ix},P_{iy})`</div>
+<div class="center"><input style="width: 170px;" type="range" id="piX" min="0" max="0" value="0" step="0"> <span id="pXValue" class="th_val">0</span></div>
+<div class="right"><input style="width: 310px;" type="range" id="piY" min="-120" max="60" value="0" step="10" onChange="document.getElementById('piYValue').innerHTML=this.value;twoDmotionV.setpi(this.value);"> <span id="piYValue" class="th_val">0</span></div>
+</div>
+<style>:where(#mobtoss) * {
+margin: 0;
+box-sizing: border-box;
+}
+:where(#mobtoss) div {
+width: 623px;
+margin: 0;
+}
+/* Top bar */
+.tbar {
+padding: 4px;
+height: 50px;
+background-color: #f90;
+text-align:center;
+}
+/* Main content */
+.mcontent {
+height: 622px;
+}
+/* Bottom bar */
+.bbar {
+height: 50px;
+background-color: #df9;
+padding: 10px;
+text-align:center;
+}
+/* Footer sections */
+.footer {
+height: 60px;
+text-align:center;
+display: flex;
+/*     background-color: #1abc9c; */
+}
+.footer .left {
+width: 66px;
+padding: 2px;
+}
+.footer .center {
+width: 207px;
+padding: 4px;
+}
+.footer .right {
+width: 356px;
+padding: 4px;
+}
+/* First footer block */
+.footer:nth-child(8) {
+background-color: #fce4ec; /* light pink */
+}
+/* Second footer block */
+.footer:nth-child(9) {
+background-color: #e8f5e9; /* light green */
+}
+/* Third footer block */
+.footer:nth-child(10) {
+background-color: #e3f2fd; /* light blue */
+}
+/* Fourth footer block */
+.footer:nth-child(11) {
+background-color: #aff; /* light blue */
+}
+/* Flexible section */
+.flex {
+min-height: 100px;
+background-color: #fec;
+padding: 4px;
+}
+/* Reusable .sr-only class */
+:where(#mobtoss) .sr-only {
+position: absolute;
+width: 1px;
+height: 1px;
+padding: 0;
+margin: -1px;
+overflow: hidden;
+clip: rect(0,0,0,0);
+white-space: nowrap;
+border: 0;
+}</style>
+<script>
+/*  (function () {
+const checkbox = document.getElementById('myCheck');
+const truckDesc = document.getElementById('truck-desc');
+const updateAria = () => {
+checkbox.setAttribute('aria-expanded', checkbox.checked ? 'true' : 'false');
+truckDesc.setAttribute('aria-hidden', checkbox.checked ? 'false' : 'true');
+};
+updateAria();
+checkbox.addEventListener('change', updateAria);
+})();
+*/  
+/* kept private (no page-wide names) and silent when its elements are not on the page */
+(function(){
+var checkbox = document.getElementById("myCheck");
+var defaultDesc = document.getElementById("desc-default");
+var truckDesc = document.getElementById("desc-truck");
+if (!checkbox || !defaultDesc || !truckDesc) return;
+checkbox.addEventListener("change", function(){
+if (checkbox.checked) {
+defaultDesc.hidden = true;
+truckDesc.hidden = false;
+} else {
+truckDesc.hidden = true;
+defaultDesc.hidden = false;
+}
+});
+})();
+</script>
+
+<script>
+var twoDmotionV = function() {
+// ****************************************************************************
+// twoDmotionV 
+// 01.29.2015
+// Autor: Taha Mzoughi
+// Borrowed from the work of Andrew Duffy on the Momentum & Impulse Simulation in developing this.
+// Feel free to use this code freely while giving fair credit.  
+// ****************************************************************************   
+var canvas, ctx;  // Workspace graphics ctx
+var px, py, mx, my; // for drawing arrows
+var xGhost, yGhost;
+var index = -1;
+var xBase = 0;var maxX=420,maxY=420, maxXG=390,maxYG=60, Daxis=20, DaxisY=20, xScale=2;
+var timeScale=20.0, xDspMltp=20; yScale=2, xShift=160, yShift=80;
+var axisLabel = '', axisValue = 0, xInit = 37;
+var varFont='11pt Calibri';lblFont='14pt Calibri';
+var yBase = 240;
+var yStart = yBase+160, yStartG = yBase+yShift, yStartMD=yStart+60;
+//var yStart = yBase+0, yStartG = yBase+yShift, yStartMD=yStart+60;
+var yIncrement = 40, yNumDecimals = 0, gphT = 'pos';//gphT values are pos acc and vel
+var plotColor = '#ff0000'; //#ff00ff
+var radius = 8;
+var duration = 2.0;
+var vInit = 10, v2Init = 2.0, v3Init = 0.0;
+var vInitY = -20, v2InitY = 2.0, v3InitY = 0.0;
+var ai = 0, a2i = 0.0, a3i = 0.0;//This is to calculate the initial acceleration
+var aiY = 9.8, a2iY = 0.0, a3iY = 0.0;//This is to calculate the initial acceleration
+var a = 0.0, a2 = 0.0, a3 = 0.0;//This is to calculate the initial acceleration
+var aY = 0.0, a2Y = 0.0, a3Y = 0.0;//This is to calculate the initial acceleration
+var da = 0.0, da2 = 0.0, da3 = 15.0;//This is to calculate the initial acceleration
+var daY = 0.0, da2Y = 0.0, da3Y = 15.0;//This is to calculate the initial acceleration
+var v = vInit, v2 = v2Init, v3 = v3Init;
+var vY = vInitY, v2Y = v2InitY, v3Y = v3InitY;
+var vM=Math.sqrt(30*30+16*16), vaD=Math.atan(Math.abs(30)/Math.abs(16))*(180/Math.PI);
+var xPos = xBase,xPos2 = xBase,xPos3 = xBase;
+var yPos = yBase,yPos2 = yBase,yPos3 = yBase;
+var xPos0 = 0, x2Pos0 = -40, x3Pos0 = 0;
+var yPos0 = 0, y2Pos0 = -40, y3Pos0 = 0;
+var m=1, Ug = m*9.81*yPos0, K = 0.5*m*(v^2+vY^2), E = Ug+K;
+var timer, time, maxtime=10;
+var Sspdup=1, Ssldwn=0, Ssldwn2=0, Sbth=0;
+var minL=xBase/2, maxL=(xBase+maxX+xShift);
+var ballR, ball;
+var runFlag = 1;
+var time0=0,force0=30;
+function drawMotion() {
+canvas = document.getElementById("myCanvas");
+ctx = canvas.getContext("2d");
+ballR= {x:xPos,v:vInit,a:ai,x0:xPos0,iv:vInit,ia:ai, ida:da,y:yPos,vY:vInitY,aY:aiY,y0:yPos0,ivY:vInitY,iaY:aiY, idaY:daY, col: PAL("red"),colG: PAL("#F8E0E6"),dspV: "XVA",MDPos: 0,lbl: 1 };
+console.log(vM+"-"+vaD);
+//    console.log("In the drawMotion function, with runFlag = " + runFlag );
+if (xPos >= (maxL) || xPos2 >= maxL || xPos3 >= maxL || xPos < minL || xPos2 < minL || xPos3 < minL || time >= maxtime) {
+runFlag = 0;document.getElementById('play').value='Play';
+}
+if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+// clear
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+index += 1;
+// set background color for the entire thing
+mx=canvas.width/2; my=canvas.height/2;
+addGrid();
+drawAxisWLabels();
+// draw graph
+time = index/timeScale;
+if(Sspdup){
+PXi=xPos0;VXi=vInit;TT=time;AXi=ai;DAX=da;Scale=xScale;PYi=yPos0;VYi=vInitY;AYi=aiY;DAY=daY;YScale=yScale;xPos = xBase+xShift+Scale*PXi+Scale*VXi*TT+Scale*0.5*AXi*TT*TT+Scale*DAX*TT*TT*TT/6;
+v = VXi+AXi*TT+DAX*TT*TT/2;//vInit + ai*time+0.5*da*time*time;
+a = (AXi+DAX*TT);//ai + da*time;
+ballR.x=xPos;ballR.v=v;ballR.a=a;
+if(time<=time0){
+yPos = yBase+yShift+(YScale*PYi+YScale*VYi*TT);
+vY = VYi;//vInit + ai*time+0.5*da*time*time;
+aY = 0;//ai + da*time;
+//arrowDraw(20,Math.PI/2);
+if(time>0){arrowF(ballR,4);}  
+if(time>0){arrowFB(ballR,4,-force0,"red","F",10);
+arrowFB(ballR,4,force0,PAL("blue"),"Fg",5);
+arrowVy(ballR,4,vY,PAL("green"),"vy",5);arrowA(ballR,4,aY,"purple","ay",5);}
+//if(time>0){}arrowA(ballR,4,ballR.aY,"purple","ay",5);
+}
+else{
+TT=time-time0;
+yPos = yBase+yShift+YScale*VYi*time0+YScale*PYi+YScale*VYi*TT+YScale*0.5*AYi*TT*TT+YScale*DAY*TT*TT*TT/6;
+vY = VYi+AYi*TT+DAY*TT*TT/2;//vInit + ai*time+0.5*da*time*time;
+aY = AYi+DAY*TT;//ai + da*time;
+}
+ballR.y=yPos;ballR.vY=vY;ballR.aY=aY;
+}
+//x2Pos0=x01; v2Init=v01; a2=a01;v2=v01;
+if(Sspdup){MD(ballR,yStartMD,0);}
+if(time>0){arrowVB(ballR,4,2*v,-2*vY,"grey","v",10);arrowVBx(ballR,4,v,PAL("blue"),"vx",10);arrowVBy(ballR,4,vY,PAL("purple"),"vy",5);arrowA(ballR,4,aY,PAL("green"),"ay",5);}
+displayValues();
+}
+} //end of drawMotion
+function displayTime (x,y,w,h,fCol,sCol,tCol) {
+if (!x) x = 0;if (!y) y = 0;if (!w) w = 70;if (!h) h = 20;if (!fCol) fCol = "yellow";if (!sCol) sCol = "red";if (!tCol) tCol = "black";
+ctx.textBaseline = 'middle';
+ctx.fillStyle = fCol;
+ctx.strokeStyle = sCol;
+ctx.lineWidth = 0;
+ctx.beginPath();
+ctx.rect(x, y,w,h); 
+ctx.fill();
+ctx.stroke(); 
+ctx.font = varFont;
+var timeLabel = 't = ';
+timeLabel = timeLabel + time.toFixed(2) + ' s';
+ctx.fillStyle = tCol;
+ctx.textAlign = 'left';
+ctx.fillText(timeLabel, x+6, y+10);
+}
+function displayXVA (ball,wtX,wtY,wtH,wtW) {
+if (!ball) ball = ballR;if (!wtX) wtX = txBase+10;if (!wtY) wtY = yStartMD+ball.MDPos-400;if (!wtW) wtW = 150;if (!wtH) wtH = 16;
+//if (!fCol) fCol = "yellow";if (!sCol) sCol = "red";if (!tCol) tCol = "black";
+displayXVACount=ball.lbl;
+var xPosLabel = 'x'+displayXVACount+' = ';
+var xPosition = (ball.x - xBase-xShift)/xScale;
+xPosLabel = xPosLabel + xPosition.toFixed(2) + ' m\n';
+var vLabel = 'v'+displayXVACount+'x = ';
+vLabel = vLabel + ball.v.toFixed(2) + ' m/s\n';
+var aLabel = 'a'+displayXVACount+'x = ';
+aLabel = aLabel + ball.a.toFixed(2) + ' m/s'+String.fromCharCode(parseInt('00B2', 16));
+ctx.textAlign = 'left';
+ctx.fillStyle = ball.col;
+if(ball.dspV.indexOf("X")==-1){xPosLabel="";};
+if(ball.dspV.indexOf("V")==-1){vLabel="";}
+if(ball.dspV.indexOf("A")==-1){aLabel="";}
+var obj1Label=xPosLabel+vLabel+aLabel;
+ctx.fillText(xPosLabel, wtX, wtY);
+ctx.fillText(vLabel, wtX, wtY+20);
+ctx.fillText(aLabel, wtX, wtY+40);
+}
+function displayYVA (ball,wtX,wtY,wtH,wtW) {
+if (!ball) ball = ballR;if (!wtX) wtX = txBase+10;if (!wtY) wtY = yStartMD+ball.MDPos-320;if (!wtW) wtW = 150;if (!wtH) wtH = 16;
+//if (!fCol) fCol = "yellow";if (!sCol) sCol = "red";if (!tCol) tCol = "black";
+displayXVACount=ball.lbl;
+var xPosLabel = 'y'+displayXVACount+' = ';
+var xPosition = -(ball.y - yBase-yShift)/yScale;
+xPosLabel = xPosLabel + xPosition.toFixed(2) + ' m';
+var vLabel = 'v'+displayXVACount+'y = ';
+vLabel = vLabel + (-ball.vY.toFixed(2)) + ' m/s\n';
+var aLabel = 'a'+displayXVACount+'y = ';
+aLabel = aLabel + (-ball.aY.toFixed(2)) + ' m/s'+String.fromCharCode(parseInt('00B2', 16));
+ctx.textAlign = 'left';
+ctx.fillStyle = ball.col;
+if(ball.dspV.indexOf("X")==-1){xPosLabel="";};if(ball.dspV.indexOf("V")==-1){vLabel="";}if(ball.dspV.indexOf("A")==-1){aLabel="";}
+var obj1Label=xPosLabel+vLabel+aLabel;
+ctx.fillText(xPosLabel, wtX, wtY);
+ctx.fillText(vLabel, wtX, wtY+20);
+ctx.fillText(aLabel, wtX, wtY+40);
+var mLabel = 'M'+displayXVACount+' = ';
+mLabel = mLabel + m.toFixed(2) + ' kg';
+ctx.fillText(mLabel, wtX, wtY+80);
+var gLabel = 'g = ';
+gLabel = gLabel + '9.81 m/s'+String.fromCharCode(parseInt('00B2', 16));
+ctx.fillText(gLabel, wtX, wtY+100);
+var UgLabel = 'Ug'+displayXVACount+' = ';
+UgLabel = UgLabel + ((xPosition*m*9.81).toFixed(0)) + ' J\n';
+ctx.fillText(UgLabel, wtX, wtY+120);
+var KLabel = 'K'+displayXVACount+' = ';
+KLabel = KLabel + ((m*0.5*(ball.v*ball.v+ball.vY*ball.vY)).toFixed(0)) + ' J\n';
+ctx.fillText(KLabel, wtX, wtY+140);
+var ELabel = 'E'+displayXVACount+' = ';
+ELabel = ELabel + (((xPosition*m*9.81)+(m*0.5*(ball.v*ball.v+ball.vY*ball.vY))).toFixed(0)) + ' J\n';
+ctx.fillText(ELabel, wtX, wtY+160);
+//used to verify data
+var maxXX =(maxL - xBase-xShift)/xScale;
+//ctx.fillText(maxL, wtX, wtY+260);     
+//ctx.fillText(minL, wtX, wtY+280);     
+//ctx.fillText(maxtime, wtX, wtY+300);     
+//ctx.fillText(maxXX, wtX, wtY+320);     
+}
+function displayValues () {
+txBase=xBase;
+displayTime(0,0);
+ctx.font = varFont;
+if(Sspdup){displayXVA(ballR);displayYVA(ballR);}
+ctx.fillStyle = 'black';
+}
+function GD(ball){
+if (!ball) ball = ballR;
+xPs = ball.x; xPs0 = ball.x0;vi0 = ball.iv;a0 = ball.ia;colP = ball.col;colG = ball.colG;
+//graph data
+ctx.strokeStyle = colP;
+ctx.lineWidth = 4;
+ctx.beginPath();
+//ctx.fillText(a0, 5, 70)
+if(gphT=="acc"){ctx.moveTo(xBase, yStart-yShift-yScale*a0);}
+else if(gphT=="vel"){ctx.moveTo(xBase, yStart-yShift-yScale*vi0);}
+else{ctx.moveTo(xBase, yStart-yShift-(yScale*xPs0));}
+for (var ival = 1; ival <=index; ival++) {
+//PXi=xPos0;VXi=vInit;TT=time;AXi=ai;DAX=da;Scale=xScale;PYi=yPos0;VYi=vInitY;AYi=aiY;DAX=daY;YScale=yxScale;
+PXi=xPs0;VXi=vi0;TT=(ival/timeScale);AXi=a0;DAX=da0;Scale=yScale;
+if (ival <= 200){
+if(gphT=="acc"){ctx.lineTo(xBase+2*(ival), yStart-yShift-yScale*(AXi+DAX*TT));}
+else if(gphT=="vel"){ctx.lineTo(xBase+2*(ival), yStart-yShift-yScale*(VXi+AXi*TT+DAX*TT*TT/2));}
+else{ctx.lineTo(xBase+2*(ival), yStart-yShift-(Scale*PXi+Scale*VXi*TT+Scale*0.5*AXi*TT*TT+Scale*DAX*TT*TT*TT/6));}
+v = (VXi+AXi*TT+DAX*TT*TT/2);//
+a = (AXi+DAX*TT);
+}
+}
+ctx.stroke();
+// end of graph data	
+}
+function MD(ball,ySMD,noGost){
+if (!ball) ball = ballR;if (!ySMD) ySMD = yStartMD;;if (!noGost) noGost = 0;
+xPs = ball.x; xPs0 = ball.x0;vi0 = ball.iv;a0 = ball.ia;da0 = ball.ida;yPs = ball.y; yPs0 = ball.y0;viy0 = ball.ivY;ay0 = ball.iaY;day0 = ball.idaY;colM = ball.col;colG = ball.colG;
+xGhost=0;yGhost=0;
+if (!noGost)  {
+ctx.beginPath();
+ctx.arc(xBase+xShift+xScale*xPs0, yBase+yShift+yScale*yPs0, radius, 0, 2 * Math.PI, false);
+ctx.fillStyle = colG;
+ctx.fill();
+ctx.lineWidth = 4;
+ctx.strokeStyle = colG;
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(xBase+xShift+xScale*xPs0, yBase+yShift+yScale*yPs0, 3, 0, 2 * Math.PI, false);
+ctx.fillStyle = colM;
+ctx.fill();
+ctx.stroke();
+}
+//ctx.fillText(xBase+xShift, 10, 40);
+var ghostCount = 0;
+//graph data
+ctx.strokeStyle = colM;
+ctx.lineWidth = 4;
+ctx.beginPath();
+// draw ghost images for a motion diagram
+for (ival = 1; ival <=index; ival++) {
+ghostCount = ghostCount + 1;
+PXi=xPs0;VXi=vi0;TT=(ival/timeScale);AXi=a0;DAX=da0;PYi=yPs0;VYi=viy0;AYi=ay0;DAY=day0;
+xGhost = xBase+xShift+Scale*PXi+Scale*VXi*TT+Scale*0.5*AXi*TT*TT+Scale*DAX*TT*TT*TT/6;
+if((ival/timeScale)<=time0){
+yGhost = yBase+yShift+(YScale*PYi+YScale*VYi*TT);
+}
+else{
+TT=(ival/timeScale)-time0;
+yGhost = yBase+yShift+YScale*VYi*time0+YScale*PYi+YScale*VYi*TT+YScale*0.5*AYi*TT*TT+YScale*DAY*TT*TT*TT/6;
+}
+if (ghostCount == 5 && !noGost)  {
+ctx.beginPath();
+ctx.arc(xGhost, yGhost, radius, 0, 2 * Math.PI, false);
+ctx.fillStyle = colG;
+ctx.fill();
+ctx.lineWidth = 4;
+ctx.strokeStyle = colG;
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(xGhost, yGhost, 3, 0, 2 * Math.PI, false);
+ctx.fillStyle = colM;
+ctx.fill();
+ctx.stroke();
+ghostCount = 0;
+}
+}
+ctx.beginPath();
+ctx.arc(xPs, yPs, radius, 0, 2 * Math.PI, false);
+ctx.fillStyle = colM;
+ctx.fill();
+ctx.lineWidth = 2;
+ctx.strokeStyle = colM;
+ctx.stroke();	
+}
+function showValue(newValue)
+{
+//get the element
+var display = document.getElementById("currentForce");
+//show the amount
+display.innerHTML=newValue;
+index = -1;
+xPos = xBase;
+runFlag = 1;
+force = 10*newValue/10.0;
+a = force/mass;
+drawMotion();
+}
+function showDuration(newDuration)
+{
+//get the element
+var display = document.getElementById("currentDuration");
+//show the amount
+display.innerHTML=newDuration;
+index = -1;
+xPos = xBase;
+runFlag = 1;
+duration = Number(newDuration);
+drawMotion();
+}
+function pl() {
+window.clearTimeout(timer);
+runFlag = 1;
+if (xPos > maxL || xPos2 > maxL || xPos3 > maxL || xPos < minL || xPos2 < minL || xPos3 < minL || time >= maxtime) {restart();runMotion();}
+//if (xPos > (xBase+maxX) || xPos2 > (xBase+maxX) || time >= maxtime){restart();runMotion();}
+else{runMotion();}
+}
+function ps() {
+window.clearTimeout(timer);
+runFlag = 0;
+}
+function stepForward() {
+window.clearTimeout(timer);
+runFlag = 1;
+drawMotion();
+}
+function stepBack() {
+window.clearTimeout(timer);
+index = index-2;
+if (index < -1) index = -1;
+xPos = xBase;xPos2 = xBase;
+runFlag = 1;
+drawMotion();
+}
+function restart() {
+window.clearTimeout(timer);
+index = -1;
+xPos = xBase;xPos2 = xBase;xPos3 = xBase;
+runFlag = 1;
+time=0;
+drawMotion();
+}
+function runMotion() {
+drawMotion();
+if (runFlag == 1) {
+timer = window.setTimeout(runMotion, 1000/30);
+}
+}
+function drawHAxisWLabels(x0,y0,Mx,Dx,aT,colT,colA) {
+if (!x0) x0 = xBase;if (!y0) y0 = yBase;if (!Mx) Mx = maxX;if (!Dx) Dx = Daxis;if (!aT) aT = 'x (m)';if (!colT) colT = 'black';if (!colA) colA = PAL('green');
+ctx.fillStyle = colT;
+ctx.strokeStyle = colT;
+ctx.textBaseline = 'middle';
+ctx.lineWidth = 2;
+for (var i = 0; i <= 10; i++) {
+ctx.beginPath();
+ctx.moveTo(x0+2*Dx*i, y0+0);
+ctx.lineTo(x0+2*Dx*i, y0+15);
+ctx.stroke();
+ctx.font = '14pt Calibri';
+ctx.fillStyle = colT;
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+axisValue = 10*i-2*Dx;
+axisLabel = axisValue.toFixed(0);
+ctx.fillText(axisLabel, x0+2*Dx*i, y0+30);
+}
+//  x-axis
+ctx.strokeStyle = colA;
+px=x0-1; py=y0+0;
+arrowDraw((Mx+Dx),0);  
+ctx.font = '14pt Calibri';
+ctx.fillStyle = colT;
+ctx.textAlign = 'left';
+ctx.fillText(aT, x0+(Mx+3*Dx/2), y0+0);
+}
+function drawAxisWLabels(x0,y0,Mx,Dx,My,Dy,aT,colT,colA) {
+if (!x0) x0 = xBase+160;if (!y0) y0 = yStartG;if (!Mx) Mx = maxXG;if (!Dx) Dx = Daxis;if (!My) My = maxYG;if (!Dy) Dy = DaxisY;if (!aT) aT = 'x (m)';if (!colT) colT = 'black';if (!colA) colA = PAL('green');
+// x-axis
+ctx.strokeStyle = colA;
+px=x0-1; py=2*my-3*Dy;
+arrowDraw((Mx+Dx),0);  
+ctx.font = '16pt Calibri';
+ctx.textBaseline = 'middle';
+ctx.fillStyle = colT;
+ctx.textAlign = 'left';
+ctx.fillText('x (m)', Mx+Dx+x0, 2*my-2*Dy-10);
+// y-axis  //Math.PI
+px=x0-1; py=2*my-3*Dy;
+arrowDraw(2*(my-2*Dy),Math.PI/2);  
+// y-axis title
+ctx.save();
+ctx.strokeStyle = '#000';
+ctx.fillStyle = 'black';
+//ctx.textAlign = 'center';
+ctx.rotate(3*Math.PI/2);
+//  ctx.fillText(vRule.txt,0.05*h,-(vRule.x-15));
+yAxisTitle="y (m)";//m/s'+String.fromCharCode(parseInt('00B2', 16))
+if(gphT=="vel"){yAxisTitle="v (m/s)";}
+if(gphT=="acc"){yAxisTitle="a (m/s"+String.fromCharCode(parseInt('00B2', 16))+")";}
+ctx.fillText(yAxisTitle, -My, 6*Dx);
+ctx.restore();
+addMarks();
+}
+function drawGrid() {
+// set background color for the graph
+ctx.fillStyle = "#eff";
+ctx.fillRect(xBase, yBase-40, maxX, maxY);
+// set line color
+ctx.strokeStyle = '#999';
+ctx.lineWidth = 2;
+// vertical grid lines
+for (var i = 0; i <= 10; i++) {
+ctx.beginPath();
+ctx.moveTo(xBase+40*i, yBase-40);
+ctx.lineTo(xBase+40*i, yBase+170);
+ctx.stroke();
+ctx.font = '14pt Calibri';
+ctx.fillStyle = 'black';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+axisValue = i;
+axisLabel = axisValue.toFixed(0);
+ctx.fillText(axisLabel, xBase+40*i, yBase+180);
+}
+// horizontal grid lines
+for (i = 0; i <=5; i++) {
+ctx.beginPath();
+ctx.moveTo(xBase-10, yBase+40*(i-1));
+ctx.lineTo(xBase+400, yBase+40*(i-1));
+ctx.stroke();
+ctx.font = '14pt Calibri';
+ctx.fillStyle = 'black';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+//          axisValue = 40*(4-i);
+axisValue = yIncrement*(3-i)/2;
+axisLabel = axisValue.toFixed(yNumDecimals);
+ctx.fillText(axisLabel, xBase-24, yBase-40+40*i);
+}
+}
+function addMarks(x0,y0,Mx,Dx,My,Dy,aT,colT,colA) {
+if (!x0) x0 = xBase+160;if (!y0) y0 = yStartG;if (!Mx) Mx = maxXG;if (!Dx) Dx = Daxis;if (!My) My = maxYG;if (!Dy) Dy = DaxisY;if (!aT) aT = 'x (m)';if (!colT) colT = 'black';if (!colA) colA = PAL('green');
+// set background color for the graph
+//ctx.fillStyle = "#eff";
+// set line color
+ctx.strokeStyle = '#999';
+ctx.lineWidth = 2;
+// vertical grid lines
+for (var i = 0; i <= 9; i++) {
+ctx.beginPath();
+ctx.moveTo(x0+40*i, 2*my-3*Dy+10);
+ctx.lineTo(x0+40*i, 2*my-3*Dy);
+ctx.stroke();
+ctx.font = '14pt Calibri';
+ctx.fillStyle = 'black';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+axisValue = 20*i;
+axisLabel = axisValue.toFixed(0);
+ctx.fillText(axisLabel, x0+40*i, 2*my-2*Dy);
+}
+// horizontal grid lines
+for (i = -3; i <=9; i++) {
+ctx.beginPath();
+ctx.moveTo(x0-10, yBase+40*(i-1));
+ctx.lineTo(x0, yBase+40*(i-1));
+ctx.stroke();
+ctx.font = '14pt Calibri';
+ctx.fillStyle = 'black';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+axisValue = yIncrement*(3-i)/2;
+axisLabel = axisValue.toFixed(yNumDecimals);
+ctx.fillText(axisLabel, x0-30, yBase-40+40*i);
+}
+}
+function addGrid(h,w,dh,dw,xGBase,yGBase,col){
+if (!xGBase) xGBase = 0;
+if (!yGBase) yGBase = 0;
+if (!col) col = "black";
+ctx.strokeStyle = col;  // assign color of the grid
+ctx.lineWidth = 0.3; //line width. Numbers below 1 redfuce the visibility
+var maxH=parseInt(w/dw); var maxV=parseInt(h/dh); 
+// horizontal grid lines
+for (var i = 1; i < maxH; i++) {
+ctx.beginPath();
+ctx.moveTo(xGBase, yGBase+dw*i);
+ctx.lineTo(xGBase+w, yGBase+dw*i);
+ctx.stroke();
+}
+// vertical grid lines
+for (var i = 1; i < maxV; i++) {
+ctx.beginPath();
+ctx.moveTo(xGBase+dw*i, yGBase);
+ctx.lineTo(xGBase+dw*i, yGBase+h);
+ctx.stroke();
+}
+}  
+function arrow (x1, y1, x2, y2, w, col, txt, spc) {
+if (!w) w = 1;                          
+if (!txt) txt = "";                           
+if (!spc) spc = 5;                           
+if (!col) col = ctx.strokeStyle;                          
+ctx.fillStyle = col;
+ctx.strokeStyle = col;
+var dx = x2-x1, dy = y2-y1;  
+var length = Math.sqrt(dx*dx+dy*dy);// 
+if (length == 0) return; 
+dx /= length; dy /= length;   // 
+var s = 2.5*w+7.5; //  
+var xSp = x2-s*dx, ySp = y2-s*dy;         
+var h = 0.5*w+3.5; 
+var xSp1 = xSp-h*dy, ySp1 = ySp+h*dx;   
+var xSp2 = xSp+h*dy, ySp2 = ySp-h*dx;   
+xSp = x2-0.6*s*dx; ySp = y2-0.6*s*dy;   
+ctx.beginPath();
+ctx.lineWidth = w; 
+ctx.moveTo(x1,y1); 
+if (length < 5) ctx.lineTo(x2,y2);  
+else ctx.lineTo(xSp,ySp); 
+ctx.stroke();   
+if (length < 5) return;
+ctx.beginPath();
+ctx.fillStyle = ctx.strokeStyle; 
+ctx.moveTo(xSp,ySp);   
+ctx.lineTo(xSp1,ySp1); 
+ctx.lineTo(x2,y2); 
+ctx.lineTo(xSp2,ySp2); 
+ctx.closePath();
+ctx.fill(); 
+if(x2<=mx){var tspc=-(3*spc);}
+else{tspc=spc/2;}
+ctx.fillText(txt, ((x2)-spc), ((y2))+spc);         
+}
+function arrowV (v, w){arrow(mx,my,v.x,v.y,w,v.col,v.txt,v.spc);}
+function arrowF (v, w){arrow(v.x,v.y+radius+force0,v.x,v.y+radius,w,v.col,v.txt,v.spc);}
+function arrowFB (v, w,f,col,txt,spc){arrow(v.x+50,v.y,v.x+50,v.y+f,w,col,txt,spc);}
+function arrowA (v, w,f,col,txt,spc){arrow(v.x+75,v.y,v.x+75,v.y+5*f,w,col,txt,spc);}
+function arrowVy (v, w,f,col,txt,spc){arrow(v.x+100,v.y,v.x+100,((v.y)+2*f),w,col,txt,spc);}
+function arrowVBy (v, w,f,col,txt,spc){arrow(v.x,v.y,v.x,((v.y)+2*f),w,col,txt,spc);}
+function arrowVBx (v, w,f,col,txt,spc){arrow(v.x,v.y,v.x+2*f,((v.y)),w,col,txt,spc);}
+function arrowVB (v, w,fx,fy,col,txt,spc){
+px = v.x; py=v.y; // Position of the projectile
+var tmpx=fx;
+var tmpy=fy;
+var tmpr=Math.sqrt(tmpx*tmpx+tmpy*tmpy);
+arrowDraw(tmpr,Math.atan(tmpy/tmpx),col,txt);  
+}
+function arrowDraw (r, phi,col,txt) {
+var xf = px + r * Math.cos (phi); // X coordinate of the arrowhead
+var yf = py-r * Math.sin (phi); // Y-coordinate of the arrowhead
+arrow (px, py, xf, yf, 4,col,txt); // Draw arrow
+}  
+function reactionChX() {
+Sspdup=1;Sbth=1; 
+//  x2Pos0 = chx.value;v2Init = chv.value;a2 = cha.value;
+x2Pos0 = parseInt(chx.value);v2Init = parseInt(chv.value);a2i = parseInt(cha.value);
+//x2Pos0=x01; v2Init=v01; a2=a01;
+document.getElementById('Nx01').innerHTML=x2Pos0;document.getElementById('Nv01').innerHTML=v2Init;document.getElementById('Na01').innerHTML=a2i;  
+//runMotion(); 
+}
+function setvx(newV){
+vInit = Number(newV);
+v = Number(newV);
+var vMag=Math.sqrt(vInit*vInit+vInitY*vInitY);
+var vAng=Math.atan(-vInitY/vInit)*180/Math.PI;
+document.getElementById('viM').value=Math.round(vMag,0);document.getElementById('vMValue').innerHTML=Math.round(vMag,0);
+document.getElementById('viaD').value=Math.round(vAng,0);document.getElementById('vaDValue').innerHTML=Math.round(vAng,0);
+restart();}
+function setvy(newV){
+vInitY = - Number(newV);vY = - Number(newV);
+var vMag=Math.sqrt(vInit*vInit+vInitY*vInitY);
+var vAng=Math.atan(-vInitY/vInit)*180/Math.PI;
+document.getElementById('viM').value=Math.round(vMag,0);document.getElementById('vMValue').innerHTML=Math.round(vMag,0);
+document.getElementById('viaD').value=Math.round(vAng,0);document.getElementById('vaDValue').innerHTML=Math.round(vAng,0);
+restart();}
+function setvM(newV){
+vM = Math.abs(Number(newV));
+vInit = vM*Math.cos(vaD*Math.PI/180);
+v=vInit;
+vInitY = -vM*Math.sin(vaD*Math.PI/180);
+document.getElementById('vix').value=Math.round(vInit,0);document.getElementById('vxValue').innerHTML=Math.round(vInit,0);
+document.getElementById('viy').value=Math.round(-vInitY,0);document.getElementById('vyValue').innerHTML=Math.round(-vInitY,0);
+restart();}
+function setvd(newV){
+vaD = Number(newV);vInit = vM*Math.cos(vaD*Math.PI/180);
+vInitY = -vM*Math.sin(vaD*Math.PI/180);
+v=vInit;
+document.getElementById('vix').value=Math.round(vInit,0);document.getElementById('vxValue').innerHTML=Math.round(vInit,0);
+document.getElementById('viy').value=Math.round(-vInitY,0);document.getElementById('vyValue').innerHTML=Math.round(-vInitY,0);
+restart();}
+function setpi(newV){yPos0 = -Number(newV);restart();}
+
+var CB = false, NR = true, playing = false;
+var PALCB = { 'red':'#D55E00', '#F8E0E6':'#F6D2BC', 'green':'#0072B2', 'blue':'#56B4E9', 'purple':'#CC79A7' };   /* Okabe-Ito */
+function PAL(c){ return CB ? (PALCB[c] || c) : c; }
+function narrate(m){ if (!NR) return; var b = document.getElementById('thNar'); if (b) b.textContent = m; }
+function launchMsg(){ var vx = vInit, vy = -vInitY, sp = Math.sqrt(vx*vx + vy*vy), th = Math.atan2(vy, vx)*180/Math.PI, y0 = -yPos0, Ki = 0.5*m*sp*sp, Ui = m*9.81*y0;
+return 'Launch: v = (' + vx.toFixed(0) + ', ' + vy.toFixed(0) + ') m/s, a speed of ' + sp.toFixed(1) + ' m/s at ' + th.toFixed(0) + ' degrees, from y = ' + y0.toFixed(0) + ' m. At the start K = ' + Ki.toFixed(0) + ' J, U = ' + Ui.toFixed(0) + ' J, E = ' + (Ki + Ui).toFixed(0) + ' J.'; }
+function redraw(){ if (playing) return; index = Math.max(-1, index - 1); runFlag = 1; drawMotion(); }
+drawMotion();
+setTimeout(function(){ narrate('Ready. ' + launchMsg() + ' Press Play.'); }, 0);
+function W(f, msg){ return function(v){ var r = f(v); narrate(typeof msg === 'function' ? msg() : msg); return r; }; }
+return {
+restart:W(function(){ playing = false; restart(); }, function(){ return 'Reset. ' + launchMsg(); }),
+stepBack:W(function(){ playing = false; stepBack(); }, 'One step back.'), stepForward:W(function(){ playing = false; stepForward(); }, 'One step forward.'),
+ps:W(function(){ playing = false; ps(); }, 'Paused.'), pl:W(function(){ playing = true; pl(); }, function(){ return 'Playing. ' + launchMsg(); }),
+setvx:W(setvx, launchMsg), setvy:W(setvy, launchMsg), setvM:W(setvM, launchMsg), setvd:W(setvd, launchMsg), setpi:W(setpi, launchMsg),
+toggleCB:function(b){ CB = !CB; if (b){ b.setAttribute('aria-pressed', CB ? 'true' : 'false'); b.classList.toggle('th_on', CB); } redraw(); narrate(CB ? 'Colour-blind-safe colours on: a vermilion ball on blue axes.' : 'Colour-blind-safe colours off.'); },
+toggleNR:function(b){ if (NR) narrate('Narration off.'); NR = !NR; var bar = document.getElementById('thNar'); if (bar) bar.style.display = NR ? '' : 'none'; if (b){ b.textContent = 'NARRATION: ' + (NR ? 'ON' : 'OFF'); b.setAttribute('aria-pressed', NR ? 'true' : 'false'); b.classList.toggle('th_on', NR); } if (NR) narrate('Narration on. ' + launchMsg()); }
+};
+}
+</script>
+<script>
+var twoDmotionV = new twoDmotionV();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows an object tossed in two dimensions and moving in free fall, with no air resistance. The initial velocity can be set by its components `(v_x, v_y)` or by its magnitude and direction `(|vec v|, theta)`.</p>
+<p>Only gravity acts, so the horizontal velocity stays constant and the vertical velocity changes at the rate `g`:</p>
+<p class="mob_eq">`v_x = v_(ix)`,&nbsp;&nbsp; `v_y = v_(iy) - g t`,&nbsp;&nbsp; `x = v_(ix) t`,&nbsp;&nbsp; `y = y_0 + v_(iy) t - 1/2 g t^2`.</p>
+<p>The components and the polar form are related by `v_x = |vec v| cos theta` and `v_y = |vec v| sin theta`. The momentum is `vec p = m vec v`: its horizontal component stays constant, while its vertical component changes because of the force of gravity.</p>
+<p>The mechanical energy is conserved:</p>
+<p class="mob_eq">`K + U_g = 1/2 m v^2 + m g y = "constant"`.</p>
+<p>This simulation is useful for studying projectile motion, vector components, momentum and conservation of energy.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobtoss { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (623 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:663px) {
+#mobtoss div, #mobtoss p, #mobtoss fieldset, #mobtoss form, #mobtoss section, #mobtoss ol, #mobtoss ul, #mobtoss table { max-width:100%; box-sizing:border-box; }
+#mobtoss canvas, #mobtoss img, #mobtoss svg { max-width:100%; height:auto !important; }
+#mobtoss input[type=range], #mobtoss select { max-width:100%; min-width:0; }
+#mobtoss .footer { flex-wrap:wrap; }
+#mobtoss .footer > div { min-width:min(100%, 260px); }
+#mobtoss div[style*="height"] { height:auto !important; }
+#mobtoss .tbar, #mobtoss .mcontent, #mobtoss .bbar, #mobtoss .footer { height:auto; min-height:0; }
+#mobtoss table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:683px) {
+#mobtoss div, #mobtoss p, #mobtoss fieldset, #mobtoss form, #mobtoss section, #mobtoss ol, #mobtoss ul, #mobtoss table { max-width:100%; box-sizing:border-box; }
+#mobtoss canvas, #mobtoss img, #mobtoss svg { max-width:100%; height:auto !important; }
+#mobtoss input[type=range], #mobtoss select { max-width:100%; min-width:0; }
+#mobtoss .footer { flex-wrap:wrap; }
+#mobtoss .footer > div { min-width:min(100%, 260px); }
+#mobtoss div[style*="height"] { height:auto !important; }
+#mobtoss .tbar, #mobtoss .mcontent, #mobtoss .bbar, #mobtoss .footer { height:auto; min-height:0; }
+#mobtoss table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobtoss button, #mobtoss input[type=button], #mobtoss input[type=submit], #mobtoss input[type=reset] { min-height:40px; }
+#mobtoss input[type=range] { height:28px; }
+#mobtoss input[type=checkbox], #mobtoss input[type=radio] { width:22px; height:22px; }
+#mobtoss select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobtoss .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobtoss .mob_a11ytop input[type=button], #mobtoss .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobtoss .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobtoss .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobtoss .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobtoss .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobtoss .mob_desc p { margin:0 0 9px 0; }
+#mobtoss .mob_eq { text-align:center; font-size:1rem; }
+</style>
+<style>
+/* ════════ theme: the instrument look of the balance beam (dark; light and high-contrast variants) ════════ */
+#mobtoss { --t-chassis:#1a1c1f; --t-panel:#22262b; --t-panel-hi:#2c3138; --t-panel-lo:#14161a; --t-border:#3a4048; --t-border-hi:#525c66; --t-text:#c8d0d8; --t-dim:#8a94a3; --t-accent:#e8a020; --t-green:#3ad08f; --t-val:#ffdd66; --t-nar-bg:#2a2410; --t-nar-bd:#e0b040; --t-nar-tx:#f0e2b8; --t-grid:rgba(255,255,255,0.015); --t-warn:#e0605a; --t-warnbd:#a04040; background:var(--t-chassis) !important; background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, var(--t-grid) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, var(--t-grid) 40px) !important;
+  color:var(--t-text); font-family:Arial, sans-serif; padding:14px 10px 18px !important; border-radius:6px; box-sizing:border-box; max-width:860px; margin:0 auto 10px !important; }
+#mobtoss.th_lm { --t-chassis:#e9edf1; --t-panel:#ffffff; --t-panel-hi:#f1f4f7; --t-panel-lo:#f4f6f9; --t-border:#c3cad3; --t-border-hi:#9aa3ae; --t-text:#1d232a; --t-dim:#556070; --t-accent:#a8620a; --t-green:#12805a; --t-val:#8a4a00; --t-nar-bg:#ffefc0; --t-nar-bd:#e0b040; --t-nar-tx:#333333; --t-grid:transparent; --t-warn:#b02020; --t-warnbd:#c06060; }
+#mobtoss.th_hc { --t-chassis:#000000; --t-panel:#000000; --t-panel-hi:#111111; --t-panel-lo:#000000; --t-border:#ffffff; --t-border-hi:#ffffff; --t-text:#ffffff; --t-dim:#e0e0e0; --t-accent:#ffd700; --t-green:#00ff88; --t-val:#ffff00; --t-nar-bg:#000000; --t-nar-bd:#ffd700; --t-nar-tx:#ffffff; --t-grid:transparent; --t-warn:#ff6a5a; --t-warnbd:#ff6a5a; }
+#mobtoss .th_btn, #mobtoss .th_a11y input[type=button], #mobtoss .th_a11y button { padding:4px 10px !important; font-size:.68rem !important; font-family:monospace !important; letter-spacing:.06em; border-radius:3px !important; cursor:pointer; background:var(--t-panel-hi) !important; border:1px solid var(--t-border-hi) !important; color:var(--t-dim) !important; text-transform:uppercase; min-height:30px; box-shadow:none !important; }
+#mobtoss .th_a11y { display:flex !important; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; background:transparent !important; border:none !important; padding:0 0 10px !important; margin:0 !important; }
+#mobtoss .th_a11y .th_on, #mobtoss .th_a11y [aria-pressed="true"] { background:rgba(58,208,143,.14) !important; border-color:var(--t-green) !important; color:var(--t-green) !important; font-weight:bold; }
+#mobtoss .th_title, #mobtoss .th_title h3, #mobtoss .th_title H3 { background:transparent !important; border:none !important; color:var(--t-accent) !important; font-size:.95rem !important; font-weight:700 !important; letter-spacing:.2em; text-transform:uppercase; text-align:center; font-family:Arial, sans-serif !important; margin:0 !important; padding:2px 0 !important; min-height:0 !important; }
+#mobtoss .th_sub { color:var(--t-dim) !important; font-size:.7rem !important; letter-spacing:.08em; text-transform:uppercase; text-align:center; font-family:Arial, sans-serif !important; margin:0 0 8px !important; }
+#mobtoss .th_diag { background:var(--t-panel) !important; border:1px solid var(--t-border) !important; border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); margin:8px 0 0 !important; padding:0 !important; }
+#mobtoss .th_diag::before { content:'APPARATUS'; display:block; flex:1 1 100%; background:var(--t-panel-lo); border-bottom:1px solid var(--t-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; color:var(--t-accent); font-weight:bold; text-align:left; }
+#mobtoss .th_diag canvas { background:#ffffff; display:block; max-width:100%; height:auto; margin:0 auto; border:none !important; }
+#mobtoss .th_bar { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-top:none !important; border-radius:0 0 6px 6px; display:flex !important; flex-wrap:wrap; gap:6px; justify-content:center; align-items:center; padding:8px 10px !important; margin:0 0 10px !important; color:var(--t-text) !important; }
+#mobtoss .th_bar input[type=button], #mobtoss .th_bar button, #mobtoss .th_bbtn { padding:8px 12px !important; font-family:monospace !important; font-size:.72rem !important; letter-spacing:.04em; cursor:pointer; background:var(--t-panel-hi) !important; border:1px solid var(--t-border-hi) !important; color:var(--t-text) !important; border-radius:3px !important; text-transform:uppercase; min-height:34px; box-shadow:none !important; }
+#mobtoss .th_bar input[type=button]:hover, #mobtoss .th_bar button:hover { border-color:var(--t-accent) !important; }
+#mobtoss .th_bar .th_primary { font-weight:bold; border-color:var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobtoss .th_bar .th_warn { color:var(--t-warn) !important; border-color:var(--t-warnbd) !important; }
+#mobtoss .th_panel { background:var(--t-panel) !important; border:1px solid var(--t-border) !important; border-radius:6px !important; box-shadow:0 4px 20px rgba(0,0,0,.3); color:var(--t-text) !important; font-family:Arial, sans-serif !important; }
+#mobtoss .th_ptitle { background:var(--t-panel-lo) !important; color:var(--t-dim) !important; font-family:monospace !important; font-size:.66rem !important; letter-spacing:.15em; text-transform:uppercase; font-weight:normal !important; border:none !important; border-bottom:1px solid var(--t-border) !important; border-left:4px solid var(--t-accent) !important; padding:6px 10px !important; margin:0 0 6px !important; text-align:left; }
+#mobtoss .th_lbl { color:var(--t-dim) !important; font-size:.72rem !important; font-weight:600 !important; letter-spacing:.04em; text-transform:uppercase; font-family:Arial, sans-serif !important; }
+#mobtoss .th_val { color:var(--t-val) !important; font-family:monospace !important; font-weight:bold; font-size:.78rem !important; background:transparent !important; }
+#mobtoss .th_chip { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-radius:3px; padding:3px 7px !important; margin:2px 0 !important; color:var(--t-dim) !important; font-family:monospace !important; font-size:.72rem !important; }
+#mobtoss .th_note { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-radius:4px; color:var(--t-dim) !important; font-family:monospace !important; font-size:.7rem !important; line-height:1.55; padding:7px 12px !important; }
+#mobtoss .th_note * { color:inherit !important; }
+#mobtoss .th_nar { background:var(--t-nar-bg) !important; border:none !important; border-left:4px solid var(--t-nar-bd) !important; color:var(--t-nar-tx) !important; font-style:italic; border-radius:3px !important; box-shadow:none !important; }
+#mobtoss .th_nar * { color:var(--t-nar-tx) !important; }
+#mobtoss .th_nar .th_ptitle, #mobtoss .th_nar h2 { font-style:normal; color:var(--t-dim) !important; }
+#mobtoss input[type=range] { -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--t-panel-lo) !important; border:1px solid var(--t-border); accent-color:var(--t-accent); }
+#mobtoss input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--t-accent); border:2px solid var(--t-panel); cursor:pointer; }
+#mobtoss input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--t-accent); border:2px solid var(--t-panel); cursor:pointer; }
+#mobtoss select, #mobtoss input[type=number] { background:var(--t-panel-hi) !important; color:var(--t-text) !important; border:1px solid var(--t-border-hi) !important; border-radius:3px; padding:3px 5px; font-size:.78rem; }
+#mobtoss input:focus-visible, #mobtoss button:focus-visible, #mobtoss select:focus-visible { outline:2px solid var(--t-accent); outline-offset:2px; }
+#mobtoss table th { background:var(--t-panel-lo) !important; color:var(--t-dim) !important; font-family:monospace; border-color:var(--t-border) !important; }
+#mobtoss table td { background:var(--t-panel) !important; color:var(--t-text) !important; border-color:var(--t-border) !important; }
+#mobtoss .mob_descbtn { background:var(--t-panel-hi) !important; border:1px solid var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobtoss > h2, #mobtoss > hr + h2 { color:var(--t-accent) !important; font-size:1rem !important; font-family:Arial, sans-serif; margin:4px 0 !important; }
+#mobtoss > hr { border:none !important; border-top:1px solid var(--t-border) !important; margin:6px 0 !important; }
+#mobtoss .th_q { background:#fbfbf7; color:#1d232a; border:1px solid #c9ccd2; border-left:4px solid var(--t-accent); border-radius:6px; padding:12px 16px; margin:12px 0 8px; font-family:Arial, sans-serif; font-size:.92rem; line-height:1.5; }
+#mobtoss .th_q h2, #mobtoss .th_q h3 { color:#1d232a !important; font-size:1.05rem !important; margin:4px 0 8px !important; }
+#mobtoss .th_q hr { border:none; border-top:1px solid #c9ccd2; margin:8px 0; }
+#mobtoss .th_q li { margin:0 0 8px; }
+@media (pointer:coarse) { #mobtoss input[type=range] { height:8px; } #mobtoss input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #mobtoss input[type=range]::-moz-range-thumb { width:24px; height:24px; } #mobtoss .th_bar input[type=button], #mobtoss .th_bar button { min-height:40px; } }
+#mobtoss [data-th="p"] { font-weight:bold; border-color:var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobtoss [data-th="w"] { color:var(--t-warn) !important; border-color:var(--t-warnbd) !important; }
+#mobtoss .th_row { display:grid !important; grid-template-columns:minmax(80px, auto) minmax(0,1fr) minmax(0,1fr); gap:6px 16px; align-items:center; padding:8px 12px !important; margin:0 0 8px !important; width:auto !important; height:auto !important; }
+#mobtoss .th_row > div { background:transparent !important; color:var(--t-text) !important; width:auto !important; float:none !important; margin:0 !important; padding:0 !important; display:flex; align-items:center; gap:8px; min-width:0; text-align:left !important; }
+#mobtoss .th_row > div:first-child { display:block; text-align:center !important; }
+#mobtoss .th_row input[type=range] { width:auto !important; flex:1 1 auto; min-width:0; }
+#mobtoss .th_row span { min-width:2.2em; }
+#mobtoss .th_narbar { width:100%; min-height:28px; padding:6px 12px !important; margin:0 0 10px !important; font-size:.84rem; line-height:1.45; }
+@media (max-width:560px) { #mobtoss .th_row { grid-template-columns:minmax(0,1fr); } }
+</style>
+</div><!-- #mobtoss -->
+<script>
+(function(){ var W = document.getElementById("mobtoss"); [["thBtnHC", "th_hc", "th_lm", "thBtnLM"], ["thBtnLM", "th_lm", "th_hc", "thBtnHC"]].forEach(function(q){ var b = document.getElementById(q[0]); if (!b || !W) return;
+b.addEventListener("click", function(){ var on = !W.classList.contains(q[1]); W.classList.toggle(q[1], on); if (on){ W.classList.remove(q[2]); var o = document.getElementById(q[3]); o.setAttribute("aria-pressed", "false"); o.classList.remove("th_on"); } b.setAttribute("aria-pressed", on ? "true" : "false"); b.classList.toggle("th_on", on); }); });
+})();
+</script>
+</main>
+</body>
+</html>

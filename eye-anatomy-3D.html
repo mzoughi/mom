@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: The Eye in 3D: Its Parts, Its Optics, and Its Defects</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, eye, eye, anatomy, cornea, lens, retina, myopia, hyperopia, astigmatism, keratoconus, presbyopia, cataract, optics, 3D, lesson, scientific">
+<meta name="description" content="Interactive 3D cutaway of the human eye with labelled parts, exact ray tracing through the Le Grand schematic eye, and the major optical defects.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="eyRoot" class="ey_root" role="region" aria-label="The eye in 3D simulator">
+<div class="ey_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="ey_a11ybtn" id="eyBtnHC" onclick="eySim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ey_a11ybtn" id="eyBtnLM" onclick="eySim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ey_a11ybtn" id="eyBtnCB" onclick="eySim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ey_a11ybtn ey_a11yon" id="eyBtnNR" onclick="eySim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="ey_tbar"><h3>The Eye in 3D: Its Parts, Its Optics, and Its Defects</h3></div>
+<div class="ey_mcontent">
+<div class="ey_stage">
+<div class="ey_vlabel">cutaway of a right eye, side view &middot; drag to turn it &middot; light comes from the left</div>
+<canvas id="eyCv" width="760" height="500" role="img" aria-label="A three-dimensional cutaway model of the eye with labelled parts, and light rays traced through the cornea and lens to the retina."></canvas>
+</div>
+<div class="ey_parts" id="eyParts" role="group" aria-label="Parts of the eye"></div>
+<div class="ey_info" id="eyInfo" aria-live="polite"></div>
+<div class="ey_readout" id="eyRead" aria-label="Readout"></div>
+</div>
+<div id="eyNarBar" class="ey_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="ey_bbar">
+<label>Eye <select id="eyCond" onchange="eySim.set('cond',this.value)">
+<option value="normal">Normal (emmetropic)</option>
+<option value="myopia">Myopia (nearsighted)</option>
+<option value="hyperopia">Hyperopia (farsighted)</option>
+<option value="astig">Astigmatism</option>
+<option value="kerato">Keratoconus</option>
+<option value="presby">Presbyopia</option>
+<option value="cataract">Cataract</option>
+</select></label>
+<label>Looking at <select id="eyObj" onchange="eySim.set('obj',this.value)">
+<option value="far">a distant object</option>
+<option value="near">a book at 25 cm</option>
+</select></label>
+<button type="button" class="ey_btn ey_go" onclick="eySim.autofocus()">Focus (accommodate)</button>
+</div>
+<div class="ey_bbar ey_opts">
+<label><input type="checkbox" id="eyRays" checked onchange="eySim.set('rays',this.checked)"> Light rays</label>
+<label><input type="checkbox" id="eyLabels" checked onchange="eySim.set('labels',this.checked)"> Labels</label>
+<label>Cut <select id="eyCut" onchange="eySim.set('cut',this.value)">
+<option value="quarter">a quarter removed</option>
+<option value="half">the top half removed</option>
+<option value="none">none (whole eye)</option>
+</select></label>
+<button type="button" class="ey_btn" onclick="eySim.view('side')">Side</button>
+<button type="button" class="ey_btn" onclick="eySim.view('front')">Front: iris &amp; pupil</button>
+<button type="button" class="ey_btn" onclick="eySim.view('back')">Back: optic nerve</button>
+<button type="button" class="ey_btn" onclick="eySim.describe()">Describe</button>
+</div>
+<div class="ey_controls">
+<div class="ey_crow"><div class="ey_cname"><b>Pupil</b> <span class="ey_cval"><span id="eyPv">4.0</span> mm</span></div>
+<label>diameter <input type="range" id="eyP" min="2" max="8" step="0.5" value="4" oninput="eySim.set('pupil',this.value)"></label></div>
+<div class="ey_crow"><div class="ey_cname"><b>Lens</b> <span class="ey_cval">accommodation <span id="eyAv">0.0</span> D</span></div>
+<label>relaxed <input type="range" id="eyA" min="0" max="1" step="0.01" value="0" oninput="eySim.set('acc',this.value)"> focused near</label></div>
+<div class="ey_crow"><div class="ey_cname"><b>View</b></div>
+<label>turn <input type="range" id="eyYaw" min="-180" max="180" step="1" value="-22" oninput="eySim.set('yaw',this.value)"></label>
+<label>tilt <input type="range" id="eyTilt" min="-80" max="80" step="1" value="24" oninput="eySim.set('tilt',this.value)"></label></div>
+</div>
+<div class="ey_descwrap">
+<button type="button" class="ey_descbtn" id="eyDescBtn" aria-expanded="false" aria-controls="eyDesc" onclick="eySim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="ey_desc" id="eyDesc" role="region" aria-labelledby="eyDescBtn" style="display:none">
+<p>This simulation is a three-dimensional model of the human eye, cut open so that its inside can be seen. Click a part to highlight it and read what it does. Turn the model by dragging it, look at it from the front to see the iris and the pupil, or from the back to see where the optic nerve leaves the eye.</p>
+<p>The eye is a camera. Light enters through the clear cornea, passes the pupil -- the opening in the colored iris -- and goes through the crystalline lens. Together, the cornea and the lens form a real, inverted image on the retina, the light-sensitive layer at the back of the eye, where the image is turned into nerve signals.</p>
+<p>The model follows the Le Grand schematic eye. Its rays are traced exactly: at every surface between two transparent media they obey Snell's law,</p>
+<p class="ey_eq">`n_1 sin theta_1 = n_2 sin theta_2`.</p>
+<p>The power of a curved surface of radius `R` between media of indices `n_1` and `n_2` is `P = (n_2 - n_1)/R`, in diopters when `R` is in metres. The front of the cornea, where light goes from air (`n = 1.000`) into the cornea (`n = 1.377`), provides about two thirds of the eye's power, some 48 D; the whole eye has about 60 D. The lens supplies the rest and, unlike the cornea, its power can change: the ciliary muscle lets the lens bulge to focus on near objects. This is accommodation.</p>
+<p>In a normal (emmetropic) eye, light from a distant object focuses on the retina with the lens relaxed. The common defects show what happens when the shape of the eye does not match its power:</p>
+<p><b>Myopia</b> (nearsightedness): the eyeball is too long (or the eye too strong), so distant objects focus in front of the retina. <b>Hyperopia</b> (farsightedness): the eyeball is too short, so the focus falls behind the retina unless the lens works harder. <b>Astigmatism</b>: the cornea is curved more steeply in one direction than in the other, like the back of a spoon, so the two directions focus at different depths. <b>Keratoconus</b>: the cornea thins and bulges into a cone, which makes the eye strongly and irregularly myopic. <b>Presbyopia</b>: with age the lens stiffens and can no longer accommodate, so near objects stay blurred. <b>Cataract</b>: the lens becomes cloudy and scatters light.</p>
+<p>As a rule of thumb, every millimetre the focus misses the retina corresponds to about 2.7 D of refractive error. Later simulations deal with the eye as a camera, with color vision, and with correcting the defects with glasses, contact lenses and laser surgery.</p>
+</div>
+</div>
+</div><!-- #eyRoot -->
+<style>
+#eyRoot, #eyRoot * { box-sizing:border-box; }
+#eyRoot { container-type:inline-size; width:100%; max-width:920px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --ey-bg:#0a0e12; --ey-panel:#0d1318; --ey-border:#1c262e; --ey-text:#c9d6de; --ey-muted:#5f7180; --ey-val:#8fe3b0; }
+#eyRoot .ey_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#eyRoot .ey_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#eyRoot .ey_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#eyRoot .ey_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#eyRoot .ey_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#eyRoot .ey_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#eyRoot .ey_mcontent { background:var(--ey-bg); color:var(--ey-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#eyRoot .ey_stage { border:1px solid var(--ey-border); border-radius:6px; overflow:hidden; background:var(--ey-panel); }
+#eyRoot .ey_vlabel { font-size:10px; color:var(--ey-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#eyRoot canvas { display:block; width:100%; height:auto; touch-action:none; cursor:grab; }
+#eyRoot .ey_parts { display:flex; flex-wrap:wrap; gap:5px; }
+#eyRoot .ey_part { padding:4px 9px; border-radius:12px; border:1px solid var(--ey-border); background:var(--ey-panel); color:var(--ey-text); font-size:.74rem; cursor:pointer; font-family:system-ui, sans-serif; display:flex; align-items:center; gap:5px; }
+#eyRoot .ey_part i { width:10px; height:10px; border-radius:50%; display:inline-block; border:1px solid rgba(255,255,255,.4); }
+#eyRoot .ey_part[aria-pressed="true"] { border-color:#00e8d0; color:#00e8d0; background:rgba(0,232,208,.1); }
+#eyRoot .ey_info { min-height:20px; font-family:system-ui, sans-serif; font-size:.86rem; line-height:1.45; color:var(--ey-text); padding:0 2px; }
+#eyRoot .ey_info b { color:#ffcf6e; }
+#eyRoot .ey_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--ey-panel); border:1px solid var(--ey-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#eyRoot .ey_flabel { font-size:10px; color:var(--ey-muted); letter-spacing:1px; }
+#eyRoot .ey_fvalue { font-size:14px; color:var(--ey-val); font-variant-numeric:tabular-nums; }
+#eyRoot .ey_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#eyRoot .ey_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#eyRoot .ey_opts { border-top:1px solid #c5dc9a; }
+#eyRoot .ey_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#eyRoot .ey_go { font-weight:bold; border-color:#0a7a5a; background:#e2fff3; }
+#eyRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+#eyRoot .ey_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#eyRoot .ey_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#eyRoot .ey_cname { font-size:.88rem; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+#eyRoot .ey_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#eyRoot .ey_crow label { display:flex; align-items:center; gap:6px; font-size:.78rem; color:#445; }
+#eyRoot input[type=range] { flex:1; min-width:0; accent-color:#e8a020; }
+#eyRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#eyRoot .ey_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#eyRoot .ey_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#eyRoot .ey_descbtn[aria-expanded="true"] { background:#3a3220; }
+#eyRoot .ey_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#eyRoot .ey_desc p { margin:0 0 9px; }
+#eyRoot .ey_eq { text-align:center; font-size:1rem; }
+@media (pointer:coarse) { #eyRoot input[type=range] { height:28px; } #eyRoot .ey_a11ybtn { min-height:40px; } #eyRoot input[type=checkbox] { width:22px; height:22px; } #eyRoot .ey_part { padding:7px 11px; } #eyRoot select { min-height:36px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Geometry and optics follow the Le Grand full theoretical eye (mm; z along the optical axis from the corneal apex):
+cornea front R 7.8, back R 6.5, thickness 0.55, n 1.3771 | aqueous n 1.3374 | lens front at 3.6, R 10.2, back R -6.0,
+thickness 4.0, n 1.42 (relaxed; when accommodating it moves to R 6.0 / -5.5, thickness 4.5, n 1.427, front at 3.2)
+| vitreous n 1.336 | axial length 24.2. Surfaces are conics, z = c r^2 / (1 + sqrt(1 - (1+Q) c^2 r^2)); rays are traced
+exactly in the vertical and horizontal meridians with the vector form of Snell's law. The wall is a pair of half
+ellipsoids (front, back) whose back half lengthens or shortens with the axial length.
+No dollar signs or backticks in the code (MyOpenMath treats them specially).
+-->
+<script>
+var eySim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('eyRoot'), cv = el('eyCv'), g = cv.getContext('2d');
+var CW = cv.width, CH = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = CW*DPR; cv.height = CH*DPR; g.scale(DPR, DPR);
+var DEG = Math.PI/180;
+/* ══════════ the eye ══════════ */
+var CONDS = {
+normal:   { AL:24.2, name:'a normal (emmetropic) eye' },
+myopia:   { AL:25.7, name:'a myopic (nearsighted) eye: the eyeball is 1.5 mm too long' },
+hyperopia:{ AL:22.7, name:'a hyperopic (farsighted) eye: the eyeball is 1.5 mm too short' },
+astig:    { AL:24.2, Rv:7.4, name:'an astigmatic eye: the cornea is steeper vertically than horizontally' },
+kerato:   { AL:24.2, Rk:6.4, Qk:-1.4, name:'keratoconus: the cornea bulges into a cone' },
+presby:   { AL:24.2, amax:0.08, name:'presbyopia: the stiff lens can hardly accommodate' },
+cataract: { AL:24.2, cloudy:true, name:'a cataract: the lens is cloudy' }
+};
+var S = { cond:'normal', obj:'far', acc:0, pupil:4, rays:true, labels:true, cut:'quarter', yaw:-22, tilt:24, sel:null };
+var th = { hc:false, lm:false, cb:false, nr:true };
+var ZC = 13;                                         /* center of the globe, mm behind the corneal apex */
+function C(){ return CONDS[S.cond]; }
+function lensP(){                                    /* the crystalline lens, relaxed (a = 0) to accommodated (a = 1) */
+var a = Math.min(S.acc, C().amax !== undefined ? C().amax : 1);
+return { z0:3.6 - 0.4*a, Ra:10.2 - 4.2*a, Rp:-6.0 + 0.5*a, T:4.0 + 0.5*a, n:1.42 + 0.007*a, a:a };
+}
+/* the whole eye's power (diopters), paraxially: a ray parallel to the axis, height h, through the four surfaces */
+function eyePower(acc, phi){
+var keep = S.acc; S.acc = acc; var srf = surfaces(phi === undefined ? 90*DEG : phi); S.acc = keep;
+var h = 1e-3, y = h, nu = 0, z = 0, n = 1;
+for (var i=0; i<srf.length; i++){ var s1 = srf[i]; y += (s1.z0 - z)*nu/n; z = s1.z0; nu = nu - y*(s1.n2 - s1.n1)/s1.R; n = s1.n2; }
+return -nu/h*1000;                                   /* P = -n'u'/h, with lengths in mm */
+}
+/* the corneal front surface in the meridian at angle phi (0 = horizontal, 90 = vertical) */
+function corneaFront(phi){
+var c = C();
+if (c.Rk) return { R:c.Rk, Q:c.Qk };
+if (c.Rv){ var s2 = Math.pow(Math.sin(phi), 2); return { R:7.8 + (c.Rv - 7.8)*s2, Q:0 }; }
+return { R:7.8, Q:0 };
+}
+function sag(R, Q, r){ var cc = 1/R, d = 1 - (1 + Q)*cc*cc*r*r; return d <= 0 ? null : cc*r*r/(1 + Math.sqrt(d)); }
+function surfaces(phi){
+var L = lensP(), cf = corneaFront(phi);
+return [ { z0:0, R:cf.R, Q:cf.Q, n1:1.0, n2:1.3771, ap:6.0 },
+         { z0:0.55, R:6.5, Q:0, n1:1.3771, n2:1.3374, ap:6.0 },
+         { z0:L.z0, R:L.Ra, Q:0, n1:1.3374, n2:L.n, ap:4.9, iris:true },
+         { z0:L.z0 + L.T, R:L.Rp, Q:0, n1:L.n, n2:1.336, ap:4.9 } ];
+}
+/* wall: inner retina surface, a front and a back half ellipse in the meridian */
+function wallPt(alpha, d){                           /* alpha from the back pole (0) to the front; d = depth into the wall (mm) */
+var AL = C().AL, Rr = 11 + d, Rzb = (AL - ZC) + d, Rzf = 11 + d, ca = Math.cos(alpha);
+return [ZC + (ca >= 0 ? Rzb : Rzf)*ca, Rr*Math.sin(alpha)];
+}
+/* ══════════ exact ray tracing in one meridian ══════════ */
+function hitSurface(o, d, s){
+/* intersect the ray o + t d (z, y) with the conic surface z = z0 + sag(r): bisection on the sign change */
+function f(t){ var z = o[0] + t*d[0], y = o[1] + t*d[1], h = sag(s.R, s.Q, Math.abs(y)); return h === null ? null : z - (s.z0 + h); }
+var t0 = 0, f0 = f(0); if (f0 === null) return null;
+var step = 0.25, t1 = step, f1v;
+for (var k=0; k<400; k++){ f1v = f(t1); if (f1v === null) return null; if (f0*f1v <= 0) break; t0 = t1; f0 = f1v; t1 += step; }
+if (f0*f1v > 0) return null;
+for (var i=0; i<50; i++){ var tm = 0.5*(t0 + t1), fm = f(tm); if (fm === null) return null; if (f0*fm <= 0){ t1 = tm; f1v = fm; } else { t0 = tm; f0 = fm; } }
+var t = 0.5*(t0 + t1); return [o[0] + t*d[0], o[1] + t*d[1]];
+}
+function refract(d, p, s){
+var y = p[1], h = 1e-4, s1 = sag(s.R, s.Q, Math.abs(y) + h), s0 = sag(s.R, s.Q, Math.abs(y));
+var slope = (s1 - s0)/h*Math.sign(y || 1);           /* dz/dy of the surface */
+var n = [1, -slope], m = Math.hypot(n[0], n[1]); n = [n[0]/m, n[1]/m];   /* normal, along +z */
+var eta = s.n1/s.n2, ci = d[0]*n[0] + d[1]*n[1], k = 1 - eta*eta*(1 - ci*ci);
+if (k < 0) return null;
+var t = [eta*d[0] + (Math.sqrt(k) - eta*ci)*n[0], eta*d[1] + (Math.sqrt(k) - eta*ci)*n[1]]; m = Math.hypot(t[0], t[1]);
+return [t[0]/m, t[1]/m];
+}
+function retinaHit(o, d){
+/* where the ray meets the inner retina (back half ellipse), else null */
+var AL = C().AL, Rr = 11, Rz = AL - ZC;
+var A = (d[0]*d[0])/(Rz*Rz) + (d[1]*d[1])/(Rr*Rr), B = 2*((o[0] - ZC)*d[0]/(Rz*Rz) + o[1]*d[1]/(Rr*Rr)), Cc = Math.pow(o[0] - ZC, 2)/(Rz*Rz) + o[1]*o[1]/(Rr*Rr) - 1;
+var disc = B*B - 4*A*Cc; if (disc < 0) return null;
+var t = (-B + Math.sqrt(disc))/(2*A); return [o[0] + t*d[0], o[1] + t*d[1]];
+}
+function traceFan(phi){
+/* rays from the object through the pupil, in the meridian phi: returns the paths and the axial focus */
+var srf = surfaces(phi), L = lensP(), rp = S.pupil/2, rays = [];
+var objZ = S.obj === 'far' ? null : -250;
+var N = 6;
+for (var i=0; i<=N; i++){
+var hp = rp*(i === 0 ? 0.04 : i/N)*0.98;        /* height of the ray in the pupil (iris plane) */
+var o, d;
+if (objZ === null){ o = [-14, hp]; d = [1, 0]; }
+else { o = [objZ, 0]; var zi = L.z0 - 0.2; d = [zi - objZ, hp]; var m0 = Math.hypot(d[0], d[1]); d = [d[0]/m0, d[1]/m0]; o = [-14, (-14 - objZ)*d[1]/d[0]]; }
+var pts = [o.slice()], ok = true;
+for (var k=0; k<srf.length; k++){
+var p = hitSurface(o, d, srf[k]); if (!p){ ok = false; break; }
+pts.push(p); var nd = refract(d, p, srf[k]); if (!nd){ ok = false; break; }
+o = [p[0] + 1e-6*nd[0], p[1] + 1e-6*nd[1]]; d = nd;
+}
+if (!ok) continue;
+var rh = retinaHit(o, d); if (rh) pts.push(rh);
+/* where this ray crosses the axis (beyond the lens) */
+var zx = d[1] !== 0 ? o[0] - o[1]*d[0]/d[1] : null;
+rays.push({ pts:pts, end:[o, d], h:hp, zx:zx });
+}
+var par = rays.filter(function(r){ return r.h > 0.1; });
+var focus = par.length ? par[0].zx : null;           /* the ray closest to the axis: paraxial focus */
+return { rays:rays, focus:focus };
+}
+/* ══════════ 3D model: faces from surfaces of revolution ══════════ */
+var NPH = 40;
+function phiRange(){
+if (S.cut === 'none') return [0, 2*Math.PI];
+if (S.cut === 'half') return [Math.PI, 2*Math.PI];          /* keep the lower half (y < 0) */
+return [Math.PI, 2.5*Math.PI];                               /* remove the quadrant x < 0, y > 0, which faces the camera */
+}
+function P3(z, r, phi){ return [r*Math.cos(phi), r*Math.sin(phi), z]; }
+var cam = {};
+function setCam(){ var a = S.yaw*DEG, e = S.tilt*DEG; cam = { ca:Math.cos(a), sa:Math.sin(a), ce:Math.cos(e), se:Math.sin(e), D:70, s:Math.min(CW, CH)*2.05 }; }
+function V(p){
+/* view transform: the camera sits on the -X side looking at the center; screen right = optical axis (z) */
+var qx = p[0], qy = p[1], qz = p[2] - 12;
+var a1 = qz*cam.ca - qx*cam.sa, b1 = qz*cam.sa + qx*cam.ca;   /* turn about the vertical axis */
+var up = qy*cam.ce + b1*cam.se, dep = -qy*cam.se + b1*cam.ce;  /* tilt */
+var pf = cam.D/(cam.D + dep);
+return [CW/2 + a1*cam.s/cam.D*pf*0.92, CH*0.52 - up*cam.s/cam.D*pf*0.92, dep];
+}
+function pal(){
+if (th.hc) return { bg:'#000', sclera:[235,235,235], choroid:[120,60,40], retina:[255,140,90], cornea:'rgba(120,220,255,0.30)', corneaE:'#9fe8ff', iris:[60,140,255], lens:'rgba(255,240,170,0.55)', lensE:'#fff2aa', cil:[200,90,70], nerve:[255,230,150], disc:'#ffe000', fovea:'#ff2020', ray:'#ffff00', ray2:'#00ffff', txt:'#fff', hl:[0,255,200], cut:1.15 };
+var p = th.lm ? { bg:'#eef2f6', txt:'#1d232a' } : { bg:'#0a0e12', txt:'#dbe5ec' };
+p.sclera = [238,234,222]; p.choroid = [92,44,30]; p.retina = [226,128,96]; p.cornea = 'rgba(150,215,240,0.22)'; p.corneaE = '#8fd3ef';
+p.iris = [96,64,34]; p.lens = 'rgba(245,232,180,0.50)'; p.lensE = '#e8d48a'; p.cil = [150,70,58]; p.nerve = [232,214,160]; p.disc = '#ffe38a'; p.fovea = '#7a1d10';
+p.ray = th.cb ? '#e69f00' : '#ffd23f'; p.ray2 = th.cb ? '#56b4e9' : '#3fe0ff'; p.hl = [0,232,208]; p.cut = 1.0;
+return p;
+}
+var LIGHT = [-0.5, 0.55, -0.67];
+function shade(col, n, hl){
+var l = Math.abs(n[0]*LIGHT[0] + n[1]*LIGHT[1] + n[2]*LIGHT[2]), k = 0.42 + 0.58*l;
+var c = hl ? [col[0]*0.4 + 0*0.6 + hl[0]*0.6, col[1]*0.4 + hl[1]*0.6, col[2]*0.4 + hl[2]*0.6] : col;
+return 'rgb(' + Math.round(c[0]*k) + ',' + Math.round(c[1]*k) + ',' + Math.round(c[2]*k) + ')';
+}
+function nrm(a, b, c){ var u = [b[0]-a[0], b[1]-a[1], b[2]-a[2]], v = [c[0]-a[0], c[1]-a[1], c[2]-a[2]]; var n = [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]], m = Math.hypot(n[0], n[1], n[2]) || 1; return [n[0]/m, n[1]/m, n[2]/m]; }
+var faces = [];
+function quad(part, pts, col, alpha, edge){
+var pr = pts.map(V), d = 0; pr.forEach(function(q){ d += q[2]; });
+faces.push({ part:part, pr:pr, d:d/pr.length, col:col, n:nrm(pts[0], pts[1], pts[2]), alpha:alpha || 1, edge:edge });
+}
+/* revolve a profile (list of [z, r]) over the kept azimuths; profFn(phi) may depend on the meridian */
+function revolve(part, profFn, col, alpha, edge){
+var pr = phiRange(), n = Math.max(4, Math.round(NPH*(pr[1] - pr[0])/(2*Math.PI)));
+for (var j=0; j<n; j++){
+var p0 = pr[0] + (pr[1] - pr[0])*j/n, p1 = pr[0] + (pr[1] - pr[0])*(j + 1)/n;
+var A = profFn(p0), B = profFn(p1);
+for (var i=0; i<A.length - 1; i++) quad(part, [P3(A[i][0], A[i][1], p0), P3(A[i+1][0], A[i+1][1], p0), P3(B[i+1][0], B[i+1][1], p1), P3(B[i][0], B[i][1], p1)], col, alpha, edge);
+}
+}
+/* the cut face between two profiles (outer, inner, sampled alike), at the cut azimuths */
+function cutFace(part, outerFn, innerFn, col){
+if (S.cut === 'none') return;
+var pr = phiRange();
+[pr[0], pr[1]].forEach(function(phi){
+var A = outerFn(phi), B = innerFn(phi);
+for (var i=0; i<A.length - 1; i++) quad(part, [P3(A[i][0], A[i][1], phi), P3(A[i+1][0], A[i+1][1], phi), P3(B[i+1][0], B[i+1][1], phi), P3(B[i][0], B[i][1], phi)], col, 1, false);
+});
+}
+function wallProf(d, a0, a1, n){ var out = []; for (var i=0; i<=n; i++) out.push(wallPt(a0 + (a1 - a0)*i/n, d)); return out; }
+var AO = 120*DEG, AL_ = 150*DEG;                       /* the ora serrata, the limbus (angles from the back pole) */
+function build(p){
+faces = [];
+var hl = function(part){ return S.sel === part ? p.hl : null; };
+/* the wall: sclera outside, retina inside; the layers show on the cut */
+revolve('sclera', function(){ return wallProf(1.0, 0, AL_, 26); }, shade.bind(null, p.sclera), 1, false);
+revolve('retina', function(){ return wallProf(0, 0, AO, 22); }, shade.bind(null, p.retina), 1, false);
+revolve('sclera', function(){ return wallProf(0.45, AO, AL_, 6); }, shade.bind(null, p.sclera), 1, false);
+cutFace('retina', function(){ return wallProf(0.25, 0, AO, 22); }, function(){ return wallProf(0, 0, AO, 22); }, p.retina);
+cutFace('choroid', function(){ return wallProf(0.45, 0, AO, 22); }, function(){ return wallProf(0.25, 0, AO, 22); }, p.choroid);
+cutFace('sclera', function(){ return wallProf(1.0, 0, AL_, 26); }, function(){ return wallProf(0.45, 0, AL_, 26); }, p.sclera);
+/* ciliary body: a ring behind the iris root, joined to the lens by zonules */
+var L = lensP();
+var cil = function(){ return [[3.9, 6.05], [4.3, 5.25], [6.6, 5.6], [8.2, 6.6], [6.0, 6.45], [3.9, 6.05]]; };
+revolve('ciliary', cil, shade.bind(null, p.cil), 1, false);
+cutFace('ciliary', function(){ return [[3.9, 6.05], [4.3, 5.25], [6.6, 5.6]]; }, function(){ return [[3.9, 6.05], [6.0, 6.45], [8.2, 6.6]]; }, p.cil);
+/* iris: an annulus in front of the lens, with the pupil in the middle */
+var rp = S.pupil/2, zi = L.z0 - 0.15;
+var iris = function(){ return [[zi - 0.35, 5.9], [zi - 0.25, rp + 0.4], [zi - 0.05, rp], [zi + 0.1, rp + 0.3], [zi + 0.05, 5.8]]; };
+revolve('iris', iris, shade.bind(null, p.iris), 1, false);
+cutFace('iris', function(){ return [[zi - 0.35, 5.9], [zi - 0.25, rp + 0.4], [zi - 0.05, rp]]; }, function(){ return [[zi + 0.05, 5.8], [zi + 0.1, rp + 0.3], [zi - 0.05, rp]]; }, p.iris);
+/* lens: a solid of revolution between its two surfaces, meeting at the equator */
+var lp = function(){
+var pts = [], n = 14, ze = lensEquator(L);
+for (var i=0; i<=n; i++){ var r = ze.r*i/n; pts.push([L.z0 + sag(L.Ra, 0, r), r]); }
+for (var k=n - 1; k>=0; k--){ var r2 = ze.r*k/n; pts.push([L.z0 + L.T + sag(L.Rp, 0, r2), r2]); }
+return pts;
+};
+var cloudy = C().cloudy;
+revolve('lens', lp, function(n){ return cloudy ? 'rgba(235,235,225,0.92)' : p.lens; }, cloudy ? 0.92 : 0.5, false);
+cutFace('lens', function(){ var a = lp(); return a.slice(0, 15); }, function(){ var a = lp(); return a.slice(14).reverse(); }, cloudy ? [225,225,215] : [236,220,160]);
+/* cornea: a clear shell */
+var cp = function(phi){ var cf = corneaFront(phi), out = []; for (var i=0; i<=14; i++){ var r = 5.95*i/14; out.push([sag(cf.R, cf.Q, r) || 0, r]); } return out; };
+var cb = function(){ var out = []; for (var i=0; i<=14; i++){ var r = 5.95*i/14; var s = sag(6.5, 0, Math.min(r, 6.4)); out.push([0.55 + s, r]); } return out; };
+revolve('cornea', cp, function(){ return p.cornea; }, 0.3, true);
+cutFace('cornea', cp, cb, [140,200,225]);
+/* optic nerve: a short cylinder leaving the back of the eye, 15 degrees toward the nose (-x) */
+var nerveA = 15*DEG, base = wallPt(nerveA, 1.0), dir = [-Math.sin(nerveA), 0, Math.cos(nerveA)];
+var cen = [-base[1], 0, base[0]];
+for (var j=0; j<16; j++){
+var t0 = j/16*2*Math.PI, t1 = (j + 1)/16*2*Math.PI, R = 1.6, Lg = 7;
+var u0 = [Math.cos(nerveA)*Math.cos(t0)*R, Math.sin(t0)*R, Math.sin(nerveA)*Math.cos(t0)*R], u1 = [Math.cos(nerveA)*Math.cos(t1)*R, Math.sin(t1)*R, Math.sin(nerveA)*Math.cos(t1)*R];
+var a0 = [cen[0] + u0[0], cen[1] + u0[1], cen[2] + u0[2]], a1 = [cen[0] + u1[0], cen[1] + u1[1], cen[2] + u1[2]];
+var b0 = [a0[0] + dir[0]*Lg, a0[1], a0[2] + dir[2]*Lg], b1 = [a1[0] + dir[0]*Lg, a1[1], a1[2] + dir[2]*Lg];
+quad('nerve', [a0, b0, b1, a1], shade.bind(null, p.nerve), 1, false);
+}
+return { nerveBase:cen, nerveDir:dir };
+}
+function lensEquator(L){
+/* the radius where the two lens surfaces meet */
+var lo = 0, hi = 6;
+for (var i=0; i<40; i++){ var r = 0.5*(lo + hi), f = L.z0 + sag(L.Ra, 0, r) - (L.z0 + L.T + sag(L.Rp, 0, r)); if (f < 0) lo = r; else hi = r; }
+return { r:lo };
+}
+/* ══════════ drawing ══════════ */
+var PARTS = [
+['cornea', 'Cornea', '#8fd3ef', 'The clear front window of the eye. Its curved front surface does most of the focusing: about 48 D of the eye\u2019s 60 D, because light goes from air into tissue there.'],
+['aqueous', 'Aqueous humor', '#6fa8c8', 'The watery fluid (n = 1.337) filling the space between the cornea and the lens. It nourishes the cornea and keeps the eye\u2019s shape.'],
+['iris', 'Iris', '#a0703c', 'The colored ring of muscle in front of the lens. It widens or narrows the pupil, like the aperture of a camera.'],
+['pupil', 'Pupil', '#222', 'The opening in the iris that lets light in: about 2 mm in bright light and up to 8 mm in the dark. A smaller pupil gives a sharper but dimmer image.'],
+['lens', 'Lens', '#e8d48a', 'The crystalline lens adds about 20 D of focusing power. The ciliary muscle lets it bulge to focus on near objects (accommodation).'],
+['ciliary', 'Ciliary body', '#9a4a3a', 'A ring of muscle around the lens, holding it by thin fibres (the zonules). When it contracts, the zonules slacken and the lens rounds up for near vision.'],
+['vitreous', 'Vitreous humor', '#4a6a7a', 'The clear jelly (n = 1.336) filling the large chamber behind the lens. Light crosses it to reach the retina.'],
+['retina', 'Retina', '#e28060', 'The light-sensitive layer lining the back of the eye, with about 120 million rods and 6 million cones. The image formed on it is real and upside down.'],
+['fovea', 'Fovea', '#7a1d10', 'A small pit in the middle of the retina, packed with cones: the place of sharpest vision. We turn our eyes so the image falls here.'],
+['disc', 'Optic disc (blind spot)', '#ffe38a', 'Where the nerve fibres leave the eye. There are no rods or cones here, so it is a blind spot.'],
+['nerve', 'Optic nerve', '#e8d6a0', 'The bundle of about a million nerve fibres that carries the signals from the retina to the brain.'],
+['choroid', 'Choroid', '#5c2c1e', 'A dark layer full of blood vessels behind the retina. It feeds the retina and absorbs stray light, like the black inside of a camera.'],
+['sclera', 'Sclera', '#eeeade', 'The tough white outer coat of the eye, continuous with the cornea at the front.']
+];
+var ANCH = {
+cornea:function(){ return P3(0.3, 3.6, 200*DEG); }, aqueous:function(){ return P3(2.0, 2.6, 135*DEG); }, iris:function(){ var L = lensP(); return P3(L.z0 - 0.3, 5.0, 270*DEG); },
+pupil:function(){ var L = lensP(); return P3(L.z0 - 0.3, 0, 0); }, lens:function(){ var L = lensP(); return P3(L.z0 + L.T*0.45, 2.6, 135*DEG); },
+ciliary:function(){ return P3(5.8, 6.0, 92*DEG); }, vitreous:function(){ return P3(14, 5.0, 135*DEG); }, retina:function(){ var w = wallPt(55*DEG, 0); return P3(w[0], w[1], 92*DEG); },
+fovea:function(){ return P3(C().AL - 0.05, 0, 0); }, disc:function(){ var w = wallPt(15*DEG, 0); return [-w[1], 0, w[0]]; }, nerve:function(){ var w = wallPt(15*DEG, 1.0); return [-w[1] - 3, 0, w[0] + 6]; },
+choroid:function(){ var w = wallPt(80*DEG, 0.35); return P3(w[0], w[1], 180*DEG); }, sclera:function(){ var w = wallPt(100*DEG, 1.0); return P3(w[0], w[1], 250*DEG); }
+};
+var last = {};
+function draw(){
+var p = pal(); setCam();
+g.fillStyle = p.bg; g.fillRect(0, 0, CW, CH);
+var info = build(p);
+/* rays: in the vertical (90 deg) and horizontal (0 deg) meridians, the halves exposed by the quarter cut */
+var segs = [];
+var fanV = traceFan(90*DEG), fanH = traceFan(Math.PI);
+last = { fanV:fanV, fanH:fanH };
+if (S.rays){
+[[fanV, 90*DEG, p.ray], [fanH, Math.PI, p.ray2]].forEach(function(F){
+F[0].rays.forEach(function(r){
+for (var i=0; i<r.pts.length - 1; i++){
+var a = P3(r.pts[i][0], r.pts[i][1], F[1]), b = P3(r.pts[i+1][0], r.pts[i+1][1], F[1]);
+var va = V(a), vb = V(b); faces.push({ ray:true, a:va, b:vb, d:(va[2] + vb[2])/2 - 0.6, col:F[2], dash:false, fade:C().cloudy && i >= 4 });
+}
+/* beyond the retina, where the rays would meet (focus behind the retina) */
+var e = r.end, rh = r.pts[r.pts.length - 1];
+if (F[0].focus && F[0].focus > C().AL + 0.05){
+var t = (F[0].focus - rh[0])/e[1][0], q = [rh[0] + t*e[1][0], rh[1] + t*e[1][1]];
+var va2 = V(P3(rh[0], rh[1], F[1])), vb2 = V(P3(q[0], q[1], F[1])); faces.push({ ray:true, a:va2, b:vb2, d:-999, col:F[2], dash:true });
+}
+});
+});
+}
+faces.sort(function(A, B){ return B.d - A.d; });
+for (var k=0; k<faces.length; k++){
+var f = faces[k];
+if (f.ray){
+g.save(); g.strokeStyle = f.col; g.lineWidth = f.dash ? 1.2 : 1.6; g.globalAlpha = f.fade ? 0.35 : 0.95; if (f.dash) g.setLineDash([4, 3]);
+g.beginPath(); g.moveTo(f.a[0], f.a[1]); g.lineTo(f.b[0], f.b[1]); g.stroke(); g.restore(); continue;
+}
+var hlc = S.sel === f.part;
+var col = typeof f.col === 'function' ? f.col(f.n, hlc ? p.hl : null) : ('rgb(' + f.col.map(function(c){ return Math.round(c*p.cut); }).join(',') + ')');
+if (hlc && typeof f.col !== 'function') col = 'rgb(' + f.col.map(function(c, i){ return Math.round(c*0.4 + p.hl[i]*0.6); }).join(',') + ')';
+g.globalAlpha = f.alpha < 1 ? (hlc ? Math.min(1, f.alpha + 0.35) : f.alpha) : 1;
+g.fillStyle = hlc && f.alpha < 1 ? 'rgba(0,232,208,0.45)' : col;
+g.beginPath(); g.moveTo(f.pr[0][0], f.pr[0][1]); for (var q=1; q<f.pr.length; q++) g.lineTo(f.pr[q][0], f.pr[q][1]); g.closePath(); g.fill();
+if (f.alpha >= 1){ g.strokeStyle = g.fillStyle; g.lineWidth = 0.6; g.stroke(); }
+else if (f.edge){ g.strokeStyle = 'rgba(160,220,245,0.25)'; g.lineWidth = 0.5; g.stroke(); }
+g.globalAlpha = 1;
+}
+/* marks: the fovea, the optic disc, the focus */
+var fv = V(P3(C().AL - 0.02, 0, 0)), dw = wallPt(15*DEG, 0), dv = V([-dw[1] + 0.02, 0, dw[0] - 0.02]);
+mark(fv, p.fovea, 4, S.sel === 'fovea'); mark(dv, p.disc, 6, S.sel === 'disc');
+if (S.rays){ [[fanV.focus, p.ray], [fanH.focus, p.ray2]].forEach(function(F){ if (F[0] === null) return; var fz = Math.min(F[0], C().AL + 6), vf = V(P3(fz, 0, 0)); g.strokeStyle = F[1]; g.lineWidth = 2; g.beginPath(); g.moveTo(vf[0] - 5, vf[1] - 5); g.lineTo(vf[0] + 5, vf[1] + 5); g.moveTo(vf[0] - 5, vf[1] + 5); g.lineTo(vf[0] + 5, vf[1] - 5); g.stroke(); }); }
+/* zonules: thin fibres from the ciliary body to the lens equator */
+var L = lensP(), eq = lensEquator(L), zq = L.z0 + sag(L.Ra, 0, eq.r);
+g.strokeStyle = 'rgba(230,220,200,0.55)'; g.lineWidth = 0.7;
+[100, 120, 140, 200, 230, 260, 290, 320].forEach(function(dg){ if (S.cut !== 'none' && dg < phiRange()[0]/DEG) return; var a = V(P3(zq, eq.r, dg*DEG)), b = V(P3(5.0, 5.55, dg*DEG)); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); });
+if (S.labels) drawLabels(p);
+readout();
+}
+function mark(v, col, r, hl){ g.fillStyle = col; g.strokeStyle = hl ? '#00e8d0' : 'rgba(0,0,0,0.5)'; g.lineWidth = hl ? 2.5 : 1; g.beginPath(); g.arc(v[0], v[1], r, 0, 2*Math.PI); g.fill(); g.stroke(); }
+function drawLabels(p){
+/* two columns, left and right of the eye, each sorted by height and spread so that no two labels touch */
+var cdep = V([0, 0, 12])[2];
+var items = PARTS.map(function(pt){ var a = V(ANCH[pt[0]]()); return { pt:pt, a:a }; })
+  .filter(function(it){ return S.cut !== 'none' || it.a[2] < cdep + 2 || S.sel === it.pt[0]; });   /* whole eye: only the parts on the visible side */
+var cx = items.reduce(function(m, it){ return m + it.a[0]; }, 0)/items.length;
+var cols = [items.filter(function(it){ return it.a[0] < cx; }), items.filter(function(it){ return it.a[0] >= cx; })];
+g.font = '12px system-ui, sans-serif'; g.textBaseline = 'middle';
+cols.forEach(function(col, side){
+col.sort(function(A, B){ return A.a[1] - B.a[1]; });
+var ys = col.map(function(it){ return it.a[1]; }), gap = 17;
+for (var i=1; i<ys.length; i++) if (ys[i] < ys[i-1] + gap) ys[i] = ys[i-1] + gap;
+var over = ys.length ? ys[ys.length - 1] - (CH - 12) : 0; if (over > 0) ys = ys.map(function(y){ return y - over; });
+for (var k=ys.length - 2; k>=0; k--) if (ys[k] > ys[k+1] - gap) ys[k] = ys[k+1] - gap;
+var lx = side === 0 ? 132 : CW - 132;
+col.forEach(function(it, i){
+var sel = S.sel === it.pt[0], y = Math.max(10, ys[i]);
+g.strokeStyle = sel ? '#00e8d0' : (th.lm ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.38)'); g.lineWidth = sel ? 1.6 : 0.8;
+g.beginPath(); g.moveTo(it.a[0], it.a[1]); g.lineTo(lx + (side === 0 ? 6 : -6), y); g.stroke();
+g.fillStyle = sel ? '#00e8d0' : p.txt; g.font = (sel ? 'bold ' : '') + '12px system-ui, sans-serif'; g.textAlign = side === 0 ? 'right' : 'left';
+g.fillText(it.pt[1], lx, y);
+g.fillStyle = it.pt[2]; g.beginPath(); g.arc(it.a[0], it.a[1], 2.2, 0, 2*Math.PI); g.fill();
+});
+});
+}
+/* ══════════ readout, narration ══════════ */
+function where(f){
+var AL = C().AL; if (f === null) return { txt:'--', d:null };
+var dz = f - AL;
+if (Math.abs(dz) < 0.08) return { txt:'on the retina', d:dz };
+return { txt:Math.abs(dz).toFixed(2) + ' mm ' + (dz < 0 ? 'in front of' : 'behind') + ' the retina', d:dz };
+}
+function readout(){
+var L = lensP(), cf = corneaFront(90*DEG), ch = corneaFront(0);
+var Pc = (1.3771 - 1)/(cf.R/1000), Pch = (1.3771 - 1)/(ch.R/1000);
+var wv = where(last.fanV.focus), wh = where(last.fanH.focus);
+var err = wv.d === null ? null : 2.7*wv.d;     /* about 2.7 D per mm: in front of the retina (d < 0) is myopic, minus */
+var cells = [['EYE', S.cond === 'normal' ? 'normal' : document.getElementById('eyCond').selectedOptions[0].text.split(' (')[0]],
+['AXIAL LENGTH', C().AL.toFixed(1) + ' mm'],
+['CORNEA FRONT', C().Rv ? Pc.toFixed(1) + ' D vertical, ' + Pch.toFixed(1) + ' D horizontal' : Pc.toFixed(1) + ' D (R ' + cf.R.toFixed(1) + ' mm)'],
+['ACCOMMODATION', (eyePower(S.acc) - eyePower(0)).toFixed(1) + ' D' + (C().amax !== undefined ? ' (max ' + (eyePower(C().amax) - eyePower(0)).toFixed(1) + ' D)' : ''), ],
+['EYE POWER', eyePower(S.acc).toFixed(1) + ' D'],
+['FOCUS', C().Rv ? 'vertical: ' + wv.txt + '; horizontal: ' + wh.txt : wv.txt],
+['ERROR (ABOUT)', err === null ? '--' : (Math.abs(err) < 0.25 ? 'none' : (err > 0 ? '+' : '') + err.toFixed(1) + ' D')]];
+el('eyRead').innerHTML = cells.map(function(c){ return '<div><div class="ey_flabel">' + c[0] + '</div><div class="ey_fvalue">' + c[1] + '</div></div>'; }).join('');
+el('eyAv').textContent = (eyePower(S.acc) - eyePower(0)).toFixed(1);
+}
+function summary(){
+var wv = where(last.fanV.focus), wh = where(last.fanH.focus), s = 'This is ' + C().name + '. ';
+s += 'Looking at ' + (S.obj === 'far' ? 'a distant object' : 'a book 25 centimetres away') + ', the light comes to a focus ';
+s += C().Rv ? 'in two places: vertically ' + wv.txt + ', horizontally ' + wh.txt + '. ' : wv.txt + '. ';
+if (C().cloudy) s += 'The cloudy lens scatters much of the light, so the image is dim and hazy. ';
+if (wv.d !== null && Math.abs(wv.d) > 0.08) s += wv.d < 0 ? 'The rays cross before the retina and spread out again, so the image is blurred. ' : 'The rays reach the retina before they meet, so the image is blurred. ';
+return s;
+}
+function narrate(m){ if (!th.nr) return; el('eyNarBar').textContent = m; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 500); }
+/* ══════════ controls ══════════ */
+function buildParts(){
+el('eyParts').innerHTML = PARTS.map(function(pt){ return '<button type="button" class="ey_part" aria-pressed="false" data-p="' + pt[0] + '"><i style="background:' + pt[2] + '"></i>' + pt[1] + '</button>'; }).join('');
+[].forEach.call(el('eyParts').querySelectorAll('button'), function(b){ b.addEventListener('click', function(){ select(b.getAttribute('data-p')); }); });
+}
+function select(part){
+S.sel = (S.sel === part) ? null : part;
+[].forEach.call(el('eyParts').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-p') === S.sel ? 'true' : 'false'); });
+var pt = PARTS.filter(function(q){ return q[0] === S.sel; })[0];
+el('eyInfo').innerHTML = pt ? '<b>' + pt[1] + '.</b> ' + pt[3] : '';
+if (pt) narrate(pt[1] + '. ' + pt[3]);
+draw();
+}
+function sync(){
+el('eyP').value = S.pupil; el('eyPv').textContent = (+S.pupil).toFixed(1);
+el('eyA').value = S.acc; el('eyYaw').value = S.yaw; el('eyTilt').value = S.tilt;
+el('eyCond').value = S.cond; el('eyObj').value = S.obj; el('eyCut').value = S.cut;
+el('eyRays').checked = S.rays; el('eyLabels').checked = S.labels;
+}
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+function set(k, v){
+if (k === 'rays' || k === 'labels') S[k] = !!v; else if (k === 'cond' || k === 'obj' || k === 'cut') S[k] = v; else S[k] = parseFloat(v);
+if (k === 'cond'){ S.acc = 0; }
+sync(); schedule(); if (k !== 'yaw' && k !== 'tilt') later();
+}
+function autofocus(){
+/* the eye adjusts its lens to bring the focus onto the retina, as far as the lens allows */
+var lo = 0, hi = (C().amax !== undefined ? C().amax : 1), best = 0, bd = 1e9;
+for (var i=0; i<=60; i++){ S.acc = lo + (hi - lo)*i/60; var f = traceFan(90*DEG).focus; if (f === null) continue; var d = Math.abs(f - C().AL); if (d < bd){ bd = d; best = S.acc; } }
+S.acc = best; sync(); draw();
+var w = where(last.fanV.focus);
+narrate('The ciliary muscle adjusts the lens: ' + (eyePower(S.acc) - eyePower(0)).toFixed(1) + ' diopters of accommodation. The focus is now ' + w.txt + '.' +
+(w.d !== null && Math.abs(w.d) > 0.08 ? (w.d < 0 ? ' Relaxing the lens is not enough: this eye is too strong for this distance.' : ' Even working its hardest, the lens cannot bring the focus forward far enough.') : ''));
+}
+function view(w){
+if (w === 'side'){ S.yaw = -22; S.tilt = 24; }
+if (w === 'front'){ S.yaw = 90; S.tilt = 0; S.cut = 'none'; }
+if (w === 'back'){ S.yaw = -100; S.tilt = 12; S.cut = 'none'; }
+sync(); draw(); if (w !== 'side') S.labels = S.labels; narrate({ side:'Side view of the cutaway.', front:'Front view: the clear cornea, and behind it the colored iris with the dark pupil in its middle.', back:'From behind: the white sclera, and the optic nerve leaving the eye slightly toward the nose.' }[w]);
+}
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','eyBtnHC'],['lm','eyBtnLM'],['cb','eyBtnCB'],['nr','eyBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('ey_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('eyBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('eyNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--ey-bg','--ey-panel','--ey-border','--ey-text','--ey-muted','--ey-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+draw();
+}
+function describe(){ narrate('A cutaway model of the eye. Light enters from the left through the clear cornea, passes the pupil in the iris, and is focused by the lens onto the retina at the back. ' + summary()); }
+function toggleDesc(){
+var b = el('eyDescBtn'), d = el('eyDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* drag to turn */
+var rot = null;
+cv.addEventListener('pointerdown', function(e){ rot = { x:e.clientX, y:e.clientY, yaw:S.yaw, tilt:S.tilt }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!rot) return; S.yaw = Math.round(rot.yaw + (e.clientX - rot.x)*0.5); if (S.yaw > 180) S.yaw -= 360; if (S.yaw < -180) S.yaw += 360; S.tilt = Math.round(Math.max(-80, Math.min(80, rot.tilt + (e.clientY - rot.y)*0.4))); sync(); schedule(); });
+function endRot(){ rot = null; cv.style.cursor = 'grab'; }
+cv.addEventListener('pointerup', endRot); cv.addEventListener('pointercancel', endRot);
+/* boot */
+buildParts(); sync(); draw();
+narrate('Ready. ' + summary() + ' Click a part to learn what it does.');
+return { set:set, select:select, autofocus:autofocus, view:view, theme:theme, describe:describe, toggleDesc:toggleDesc,
+_state:function(){ return { S:JSON.parse(JSON.stringify(S)), focusV:last.fanV.focus, focusH:last.fanH.focus, AL:C().AL, raysV:last.fanV.rays.length, raysH:last.fanH.rays.length, lens:lensP(), faces:faces.length }; },
+_trace:function(phi){ return traceFan(phi*DEG); } };
+})();
+</script>
+</main>
+</body>
+</html>

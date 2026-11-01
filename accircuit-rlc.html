@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- AC Circuits: RLC Series Circuit</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,AC,circuit,RLC,series,resistor,inductor,capacitor,resonance,reactance,impedance,phase,phasor,oscilloscope,function generator,lesson,scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="rlcRoot1009">
+  <!-- ── Accessibility toolbar ── -->
+  <div class="rlc_a11y1009" id="rlcA11yBar1009" role="toolbar" aria-label="Display options">
+    <button type="button" class="rlc_a11ybtn1009" id="rlcBtnHC1009" onclick="rlcA11y1009.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+    <button type="button" class="rlc_a11ybtn1009" id="rlcBtnLM1009" onclick="rlcA11y1009.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+    <button type="button" class="rlc_a11ybtn1009" id="rlcBtnCB1009" onclick="rlcA11y1009.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+    <button type="button" class="rlc_a11ybtn1009 rlc_a11yon1009" id="rlcBtnNR1009" onclick="rlcA11y1009.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+  </div>
+  <div class="tbar1009"><h3>RLC Series Circuit &mdash; Function Generator &amp; Dual-Channel Scope</h3></div>
+  <!-- ── View tabs ── -->
+  <div class="tabs1009" id="rlcTabs1009">
+    <button type="button" class="rlc_tabbtn1009 rlc_tabon1009" id="rlcTabScope1009" onclick="rlcSim1009.setTab('scope')">CIRCUIT + SCOPE</button>
+    <button type="button" class="rlc_tabbtn1009" id="rlcTabPhasor1009" onclick="rlcSim1009.setTab('phasor')">PHASOR DIAGRAM</button>
+    <button type="button" class="rlc_tabbtn1009" id="rlcTabEq1009" onclick="rlcSim1009.setTab('equations')">EQUATIONS</button>
+  </div>
+  <!-- ── Phasor-tab sub-toggle: voltage phasors vs. impedance diagram ── -->
+  <div class="rlc_subbar1009" id="rlcPhasorModeBar1009" role="group" aria-label="Phasor diagram representation" style="display:none;">
+    <span class="rlc_sublabel1009">Show:</span>
+    <button type="button" class="rlc_subbtn1009 rlc_subon1009" id="rlcModeV1009" onclick="rlcSim1009.setPhasorMode('voltage')" aria-pressed="true">Voltage phasors</button>
+    <button type="button" class="rlc_subbtn1009" id="rlcModeZ1009" onclick="rlcSim1009.setPhasorMode('impedance')" aria-pressed="false">Impedance diagram</button>
+  </div>
+  <div class="mcontent1009">
+    <canvas id="rlcCanvas1009" style="margin:auto;display:block;border:1px solid #ccc" width="700" height="460"></canvas>
+    <div id="rlcEqPanel1009" class="rlc_eqpanel1009" style="display:none;"></div>
+  </div>
+  <div id="rlcNarBar1009" class="rlc_narbar1009" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div class="bbar1009">
+    <input type="button" id="rlcPlay1009" value="Play"
+           onclick="if(this.value=='Play'){rlcSim1009.pl();this.value='Pause';}else{this.value='Play';rlcSim1009.ps();}">
+    <input type="button" value="Step" onclick="document.getElementById('rlcPlay1009').value='Play';rlcSim1009.step();">
+    <input type="button" value="New Components" onclick="document.getElementById('rlcPlay1009').value='Play';rlcSim1009.rst();">
+    <input type="button" value="Clear Cursors" onclick="rlcSim1009.clearCursors();">
+  </div>
+  <div class="footer1009">
+    <div class="rowgrp1009">
+      <label>R (&Omega;):
+        <input type="range" id="rlcR1009" min="500" max="10000" step="50" value="3000"
+               oninput="document.getElementById('rlcRVal1009').textContent=this.value; rlcSim1009.redraw();">
+        <span id="rlcRVal1009">3000</span>
+      </label>
+      <label>L (mH):
+        <input type="range" id="rlcL1009" min="10" max="500" step="5" value="400"
+               oninput="document.getElementById('rlcLVal1009').textContent=this.value; rlcSim1009.redraw();">
+        <span id="rlcLVal1009">400</span>
+      </label>
+      <label>C (nF):
+        <input type="range" id="rlcC1009" min="10" max="300" step="5" value="75"
+               oninput="document.getElementById('rlcCVal1009').textContent=this.value; rlcSim1009.redraw();">
+        <span id="rlcCVal1009">75</span>
+      </label>
+      <label>f (Hz):
+        <input type="range" id="rlcF1009" min="50" max="5000" step="10" value="1200"
+               oninput="document.getElementById('rlcFVal1009').textContent=this.value; rlcSim1009.redraw();">
+        <span id="rlcFVal1009">1200</span>
+      </label>
+      <label>V<sub>m</sub> (V):
+        <input type="range" id="rlcVm1009" min="1" max="10" step="0.5" value="5"
+               oninput="document.getElementById('rlcVmVal1009').textContent=this.value; rlcSim1009.redraw();">
+        <span id="rlcVmVal1009">5</span>
+      </label>
+    </div>
+    <div class="rowgrp1009">
+      <label>CH1 shows:
+        <select id="rlcCh1Sel1009" onchange="rlcSim1009.redraw();">
+          <option value="src">Source v(t)</option>
+          <option value="vr" selected>V_R (resistor)</option>
+          <option value="vl">V_L (inductor)</option>
+          <option value="vc">V_C (capacitor)</option>
+          <option value="vlc">V_L + V_C (reactive)</option>
+        </select>
+      </label>
+      <label>CH2 shows:
+        <select id="rlcCh2Sel1009" onchange="rlcSim1009.redraw();">
+          <option value="src">Source v(t)</option>
+          <option value="vr">V_R (resistor)</option>
+          <option value="vl">V_L (inductor)</option>
+          <option value="vc" selected>V_C (capacitor)</option>
+          <option value="vlc">V_L + V_C (reactive)</option>
+        </select>
+      </label>
+      <label>CH1 V/div:
+        <select id="rlcV11009" onchange="rlcSim1009.redraw();">
+          <option>0.5</option><option selected>1</option><option>2</option><option>5</option>
+        </select>
+      </label>
+      <label>CH2 V/div:
+        <select id="rlcV21009" onchange="rlcSim1009.redraw();">
+          <option>0.5</option><option selected>1</option><option>2</option><option>5</option>
+        </select>
+      </label>
+      <label>Time/div (ms):
+        <select id="rlcT1009" onchange="rlcSim1009.redraw();">
+          <option>0.1</option><option>0.2</option><option selected>0.5</option><option>1</option><option>2</option>
+        </select>
+      </label>
+    </div>
+    <div class="rowgrp1009">
+      <label class="rlc_chk1009"><input type="checkbox" id="rlcTol1009" onchange="rlcSim1009.rst();"> Simulate component tolerance (experimental error)</label>
+    </div>
+  </div>
+</div>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  div { width: 703px; margin: 0; }
+  #rlcRoot1009 {
+    --rlc-bg:        #ffffff;
+    --rlc-scope-bg:  #0b1a0f;
+    --rlc-grid:      #2c4a34;
+    --rlc-vr:        #e0a800;
+    --rlc-vl:        #7a5cff;
+    --rlc-vc:        #00b7c2;
+    --rlc-src:       #888888;
+    --rlc-ch1:       #e0a800;
+    --rlc-ch2:       #00b7c2;
+    --rlc-text:      #111111;
+    --rlc-struct:    #111111;
+    --rlc-good:      #1a8a3a;
+    --rlc-toolbar-bg:#222;
+    --rlc-cursor:    #d33fd3;
+  }
+  #rlcRoot1009 .rlc_a11y1009 {
+    display:flex; gap:6px; padding:6px 8px;
+    background:var(--rlc-toolbar-bg); flex-wrap:wrap; width:703px;
+  }
+  #rlcRoot1009 .rlc_a11ybtn1009 {
+    padding:4px 10px; font-size:.72rem; font-family:monospace;
+    letter-spacing:.06em; border-radius:3px; cursor:pointer;
+    background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+    transition:border-color .15s,color .15s;
+  }
+  #rlcRoot1009 .rlc_a11ybtn1009:hover { border-color:#00e8d0; color:#00e8d0; }
+  #rlcRoot1009 .rlc_a11yon1009 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+  #rlcRoot1009 .rlc_narbar1009 {
+    width:703px; min-height:28px; padding:5px 10px;
+    background:#ffefc0; border-left:4px solid #e0b040;
+    font-size:.86rem; color:#333; font-style:italic;
+  }
+  .tbar1009    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; width:703px;}
+  .tbar1009 h3 { font-size:1.05rem; font-weight:bold; }
+  .tabs1009    { width:703px; display:flex; background:#333; }
+  .rlc_tabbtn1009 {
+    flex:1; padding:8px 4px; font-size:.78rem; font-family:sans-serif; letter-spacing:.03em;
+    background:#333; color:#aaa; border:none; border-right:1px solid #222; cursor:pointer;
+  }
+  .rlc_tabbtn1009:hover { background:#444; color:#fff; }
+  .rlc_tabon1009 { background:#f90 !important; color:#111 !important; font-weight:bold; }
+  .rlc_subbar1009 { width:703px; display:flex; align-items:center; justify-content:center; gap:6px; padding:4px; background:#fff3e0; border-bottom:1px solid #e0c090; font-family:sans-serif; font-size:.8rem; }
+  .rlc_sublabel1009 { font-weight:bold; color:#333; margin-right:4px; }
+  .rlc_subbtn1009 { padding:3px 12px; border:1px solid #c08030; border-radius:12px; background:#fff; color:#7a4a10; cursor:pointer; font-size:.78rem; }
+  .rlc_subbtn1009:hover { background:#ffe8c8; }
+  .rlc_subon1009 { background:#f90 !important; color:#111 !important; border-color:#d07000 !important; font-weight:bold; }
+  .mcontent1009 { height:462px; width:703px; position:relative; }
+  .rlc_eqpanel1009 {
+    width:680px; height:440px; margin:10px auto; padding:14px 20px; overflow-y:auto;
+    background:var(--rlc-bg); color:var(--rlc-text); font-family:'Cambria','Georgia',serif; font-size:1rem; line-height:1.85;
+  }
+  .rlc_eqpanel1009 h4 { margin-top:14px; font-family:sans-serif; color:#c05a00; }
+  .rlc_eqpanel1009 .rlc_eqline1009 { margin:6px 0 6px 10px; font-size:1.02rem; }
+  .bbar1009    { height:50px; background-color:#df9; padding:10px; text-align:center; width:703px;}
+  .bbar1009 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+  .footer1009  { width:703px; background-color:#fce4ec; padding:8px; font-size:.85rem; }
+  .rowgrp1009  { display:flex; flex-wrap:wrap; gap:14px; align-items:center; padding:4px 2px; width:100%; justify-content:center;}
+  .rowgrp1009 label { display:flex; align-items:center; gap:4px; }
+  .rlc_chk1009 { font-weight:bold; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+  var rlcA11y1009 = (function(){
+    var ROOT = null;
+    var states = { hc:false, lm:false, cb:false, nr:true };
+    var THEMES = {
+      hc:{'--rlc-bg':'#000','--rlc-scope-bg':'#000','--rlc-grid':'#444','--rlc-vr':'#ffff00','--rlc-vl':'#c299ff','--rlc-vc':'#00e8ff','--rlc-src':'#fff','--rlc-ch1':'#ffff00','--rlc-ch2':'#00e8ff','--rlc-text':'#fff','--rlc-struct':'#fff','--rlc-good':'#30ff70','--rlc-toolbar-bg':'#000','--rlc-cursor':'#ff66ff'},
+      lm:{'--rlc-bg':'#f0f0f0','--rlc-scope-bg':'#12261a','--rlc-grid':'#33553f','--rlc-vr':'#c98a00','--rlc-vl':'#5c3fd6','--rlc-vc':'#0090a0','--rlc-src':'#555','--rlc-ch1':'#c98a00','--rlc-ch2':'#0090a0','--rlc-text':'#000','--rlc-struct':'#000','--rlc-good':'#157a30','--rlc-toolbar-bg':'#444','--rlc-cursor':'#b030b0'},
+      cb:{'--rlc-bg':'#fff','--rlc-scope-bg':'#0b1a0f','--rlc-grid':'#2c4a34','--rlc-vr':'#d55e00','--rlc-vl':'#0072b2','--rlc-vc':'#009e73','--rlc-src':'#666','--rlc-ch1':'#d55e00','--rlc-ch2':'#0072b2','--rlc-text':'#000','--rlc-struct':'#333','--rlc-good':'#009e73','--rlc-toolbar-bg':'#222','--rlc-cursor':'#cc79a7'}
+    };
+    var DEFS = {'--rlc-bg':'#fff','--rlc-scope-bg':'#0b1a0f','--rlc-grid':'#2c4a34','--rlc-vr':'#e0a800','--rlc-vl':'#7a5cff','--rlc-vc':'#00b7c2','--rlc-src':'#888','--rlc-ch1':'#e0a800','--rlc-ch2':'#00b7c2','--rlc-text':'#111','--rlc-struct':'#111','--rlc-good':'#1a8a3a','--rlc-toolbar-bg':'#222','--rlc-cursor':'#d33fd3'};
+    function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+    function styleBtn(id,on){
+      var b=document.getElementById(id); if(!b)return;
+      b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+      b.style.borderColor=on?'#00e8d0':'#404a60';
+      b.style.color=on?'#00e8d0':'#7a8aaa';
+      b.setAttribute('aria-pressed',on?'true':'false');
+    }
+    function applyNarBar(){
+      var nb=document.getElementById('rlcNarBar1009');
+      if(nb) nb.style.display=states.nr?'block':'none';
+      var btn=document.getElementById('rlcBtnNR1009');
+      if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('rlcBtnNR1009',states.nr); }
+    }
+    function apply(){
+      if(!ROOT)return;
+      applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+      applyNarBar();
+      styleBtn('rlcBtnHC1009',states.hc);
+      styleBtn('rlcBtnLM1009',states.lm);
+      styleBtn('rlcBtnCB1009',states.cb);
+    }
+    return {
+      init:function(){ ROOT=document.getElementById('rlcRoot1009'); apply(); },
+      toggle:function(k){
+        states[k]=!states[k];
+        if(k==='hc'&&states.hc) states.lm=false;
+        if(k==='lm'&&states.lm) states.hc=false;
+        apply();
+        if(window.rlcSim1009) window.rlcSim1009.redraw();
+      },
+      narrate:function(msg){
+        if(!states.nr)return;
+        var nb=document.getElementById('rlcNarBar1009');
+        if(nb) nb.textContent=msg;
+      },
+      col:function(prop,def){
+        if(!ROOT) return def;
+        var v=ROOT.style.getPropertyValue(prop);
+        return (v&&v.trim())?v.trim():def;
+      }
+    };
+  })();
+</script>
+<!-- ════════ SIMULATION ════════
+Third of the RC / RL / RLC family -- same conventions throughout.
+- var simObj = function() { ... rst(); return {rst,pl,ps,step,...}; }
+- var simObj1009 = new simObj();
+- Animation: recursive window.setTimeout(runMotion, 40) guarded by runFlag
+- rst() is called immediately inside the constructor (no deferred boot)
+- NEW: CH1/CH2 each read a <select> so the user can probe any node pair
+(source, VR, VL, VC, or VL+VC) instead of a fixed assignment.
+-->
+<script>
+  var rlcGen = function() {
+    var canvas  = document.getElementById('rlcCanvas1009');
+    var ctx     = canvas.getContext('2d');
+    var eqPanel = document.getElementById('rlcEqPanel1009');
+    var W = canvas.width, H = canvas.height;
+    var timer, runFlag = 0;
+    var tab = 'scope';
+    var phasorMode = 'voltage';        /* phasor tab: 'voltage' | 'impedance' */
+    var sweepPhase = 0;
+    var phasorAngle = 0;
+    /* ── experimental-error (component tolerance) state ── */
+    var errR = 0, errL = 0, errC = 0, errF = 0, errScope = 0;
+    function rollTolerances() {
+      errR = (Math.random()*2-1) * 0.05;    /* resistor  +/-5%  */
+      errL = (Math.random()*2-1) * 0.10;    /* inductor  +/-10% */
+      errC = (Math.random()*2-1) * 0.10;    /* capacitor +/-10% */
+      errF = (Math.random()*2-1) * 0.01;    /* function-gen freq accuracy +/-1% */
+      errScope = (Math.random()*2-1) * 0.02;/* scope vertical reading noise +/-2% */
+    }
+    rollTolerances();
+    var cur1X = null, cur2X = null, dragCur = null;
+    function c(prop, def) { return rlcA11y1009.col(prop, def); }
+    function tolOn() { var el=document.getElementById('rlcTol1009'); return el && el.checked; }
+    function controls() {
+      return {
+        Rset:  parseFloat(document.getElementById('rlcR1009').value),
+        Lset:  parseFloat(document.getElementById('rlcL1009').value),  /* mH */
+        Cset:  parseFloat(document.getElementById('rlcC1009').value),  /* nF */
+        Fset:  parseFloat(document.getElementById('rlcF1009').value),
+        Vm:    parseFloat(document.getElementById('rlcVm1009').value),
+        ch1:   document.getElementById('rlcCh1Sel1009').value,
+        ch2:   document.getElementById('rlcCh2Sel1009').value,
+        v1div: parseFloat(document.getElementById('rlcV11009').value),
+        v2div: parseFloat(document.getElementById('rlcV21009').value),
+        tdiv:  parseFloat(document.getElementById('rlcT1009').value)
+      };
+    }
+    /* ── physics ──
+v(t) = Vm sin(wt).  Z = R + j(XL-XC).  phi = atan((XL-XC)/R) is the
+angle by which current LAGS the source (positive = inductive circuit).
+I(t)      = Im sin(wt - phi)
+vR(t)     = Im R  sin(wt - phi)                (in phase with I)
+vL(t)     = Im XL sin(wt - phi + 90deg)         (leads I by 90)
+vC(t)     = Im XC sin(wt - phi - 90deg)         (lags  I by 90)
+vLC(t)    = Im (XL-XC) sin(wt - phi + 90deg)    (VL and VC are anti-phase;
+this signed form handles both cases)  */
+    function physics() {
+      var k = controls();
+      var tol = tolOn();
+      var R = k.Rset * (1 + (tol ? errR : 0));
+      var L = k.Lset * 1e-3 * (1 + (tol ? errL : 0));
+      var C = k.Cset * 1e-9 * (1 + (tol ? errC : 0));
+      var f = k.Fset * (1 + (tol ? errF : 0));
+      var w = 2 * Math.PI * f;
+      var XL = w * L;
+      var XC = 1 / (w * C);
+      var X  = XL - XC;
+      var Z  = Math.sqrt(R*R + X*X);
+      var phi = Math.atan(X / R);
+      var Im  = k.Vm / Z;
+      var VRm = Im * R;
+      var VLm = Im * XL;
+      var VCm = Im * XC;
+      var f0  = 1 / (2*Math.PI*Math.sqrt(L*C));
+      var Q   = (1/R) * Math.sqrt(L/C);
+      return { k:k, R:R, L:L, C:C, f:f, w:w, XL:XL, XC:XC, X:X, Z:Z, phi:phi,
+              Im:Im, VRm:VRm, VLm:VLm, VCm:VCm, f0:f0, Q:Q };
+    }
+    /* ── generic channel-quantity model: amp*sin(w t + phase) ── */
+    function chanInfo(sel, p) {
+      switch (sel) {
+        case 'src': return { amp:p.k.Vm, phase:0,              label:'v(t) [source]',  short:'v' };
+        case 'vr':  return { amp:p.VRm,  phase:-p.phi,          label:'V_R [resistor]', short:'V\u1D63' };
+        case 'vl':  return { amp:p.VLm,  phase:-p.phi+Math.PI/2,label:'V_L [inductor]', short:'V\u2097' };
+        case 'vc':  return { amp:p.VCm,  phase:-p.phi-Math.PI/2,label:'V_C [capacitor]',short:'V\u1D04' };
+        case 'vlc': return { amp:Math.abs(p.X)*p.Im, phase:(p.X>=0?-p.phi+Math.PI/2:-p.phi-Math.PI/2), label:'V_L+V_C [reactive]', short:'V\u2097\u1D04' };
+      }
+      return { amp:0, phase:0, label:'?', short:'?' };
+    }
+    function chanColorVar(which) { return which===1 ? '--rlc-ch1' : '--rlc-ch2'; }
+    /* ── schematic (always drawn, left panel) -- source, R, L, C in series to ground ── */
+    var nodeTop, rY0, rY1, coilY0, coilY1, capY0, capY1;
+    function drawSchematic(p) {
+      var colX = 205;
+      ctx.strokeStyle = c('--rlc-struct','#111'); ctx.fillStyle = c('--rlc-struct','#111');
+      ctx.lineWidth = 2; ctx.font = '11px monospace'; ctx.textAlign = 'left';
+      /* function generator symbol */
+      var gy = 42;
+      ctx.beginPath(); ctx.arc(colX-95, gy, 22, 0, 2*Math.PI); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(colX-109, gy);
+      for (var i2=0;i2<=14;i2++){ ctx.lineTo(colX-109+i2*1.7, gy - 7*Math.sin(i2*Math.PI/3.5)); }
+      ctx.strokeStyle = c('--rlc-src','#888'); ctx.stroke();
+      ctx.fillStyle = c('--rlc-struct','#111');
+      ctx.font = '11px monospace';
+      ctx.fillText('FG', colX-100, gy+36);
+      ctx.fillText('v(t)=Vm sin(\u03C9t)', colX-138, gy+50);
+      /* top wire */
+      ctx.strokeStyle = c('--rlc-struct','#111');
+      ctx.beginPath(); ctx.moveTo(colX-73, gy); ctx.lineTo(colX, gy); ctx.stroke();
+      nodeTop = gy;
+      ctx.beginPath(); ctx.moveTo(colX, gy); ctx.lineTo(colX, 80); ctx.stroke();
+      /* resistor zigzag */
+      rY0 = 80; rY1 = 135;
+      ctx.beginPath(); ctx.moveTo(colX, rY0);
+      var seg = (rY1-rY0)/8, dir=1, s;
+      for (s=0;s<8;s++){ ctx.lineTo(colX + dir*9, rY0 + seg*(s+1)); dir*=-1; }
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX - dir*9, rY0 + seg*s); ctx.lineTo(colX, rY1); ctx.stroke();
+      ctx.fillText('R', colX+14, (rY0+rY1)/2+4);
+      /* inductor coil */
+      coilY0 = rY1 + 6;
+      var loops = 4, loopH = 13, coilR = loopH/2;
+      coilY1 = coilY0 + loops*loopH;
+      ctx.beginPath(); ctx.moveTo(colX, rY1); ctx.lineTo(colX, coilY0); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(colX, coilY0);
+      for (var li=0; li<loops; li++){
+        var cyy = coilY0 + li*loopH + coilR;
+        ctx.arc(colX, cyy, coilR, -Math.PI/2, Math.PI/2, false);
+      }
+      ctx.stroke();
+      ctx.fillText('L', colX+20, (coilY0+coilY1)/2+4);
+      /* capacitor plates */
+      capY0 = coilY1 + 10; capY1 = capY0 + 16;
+      ctx.beginPath(); ctx.moveTo(colX, coilY1); ctx.lineTo(colX, capY0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX-16, capY0); ctx.lineTo(colX+16, capY0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX-16, capY1); ctx.lineTo(colX+16, capY1); ctx.stroke();
+      ctx.fillText('C', colX+22, (capY0+capY1)/2+4);
+      var gndY = capY1 + 40;
+      ctx.beginPath(); ctx.moveTo(colX, capY1); ctx.lineTo(colX, gndY); ctx.stroke();
+      /* ground bar + return wire */
+      ctx.beginPath(); ctx.moveTo(colX-14, gndY); ctx.lineTo(colX+14, gndY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX-9, gndY+5); ctx.lineTo(colX+9, gndY+5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX-4, gndY+10); ctx.lineTo(colX+4, gndY+10); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(colX, gndY); ctx.lineTo(28, gndY);
+      ctx.lineTo(28, gy); ctx.lineTo(colX-117, gy);
+      ctx.stroke();
+      /* dynamic CH1 / CH2 probe leads, following the current dropdown selections */
+      var nodes = { src:[nodeTop,gndY], vr:[rY0,rY1], vl:[coilY0,coilY1], vc:[capY0,capY1], vlc:[coilY0,capY1] };
+      function drawProbe(sel, xOff, colorVar, chLabel) {
+        var pair = nodes[sel]; if (!pair) return;
+        var col = c(colorVar, chLabel==='CH1' ? '#e0a800' : '#00b7c2');
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(colX+xOff-10, pair[0]); ctx.lineTo(colX+xOff, pair[0]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(colX+xOff-10, pair[1]); ctx.lineTo(colX+xOff, pair[1]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(colX+xOff, pair[0]); ctx.lineTo(colX+xOff, pair[1]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(colX+xOff-10, pair[0], 3, 0, 2*Math.PI); ctx.fill();
+        ctx.beginPath(); ctx.arc(colX+xOff-10, pair[1], 3, 0, 2*Math.PI); ctx.fill();
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText(chLabel, colX+xOff+4, (pair[0]+pair[1])/2+4);
+      }
+      drawProbe(p.k.ch1, 48, '--rlc-ch1', 'CH1');
+      drawProbe(p.k.ch2, 78, '--rlc-ch2', 'CH2');
+      /* component values printed under schematic */
+      ctx.fillStyle = c('--rlc-text','#111'); ctx.font = '11px monospace';
+      var vy = gndY + 26;
+      ctx.fillText('R = '+p.R.toFixed(0)+' \u03A9', 20, vy);
+      ctx.fillText('L = '+(p.L*1e3).toFixed(1)+' mH', 20, vy+16);
+      ctx.fillText('C = '+(p.C*1e9).toFixed(1)+' nF', 20, vy+32);
+      ctx.fillText('f = '+p.f.toFixed(1)+' Hz', 20, vy+48);
+      if (tolOn()) {
+        ctx.fillStyle = '#a04a00'; ctx.font = 'italic 10px monospace';
+        ctx.fillText('(includes component tolerance)', 20, vy+66);
+      }
+    }
+    /* ── oscilloscope panel ── */
+    var scopeX = 350, scopeY = 8, scopeW = 340, scopeH = 300;
+    function xToTime(x, tdivMs) {
+      var halfSpanSec = (tdivMs/1000) * 5;
+      return ((x - (scopeX+scopeW/2)) / (scopeW/2)) * halfSpanSec;
+    }
+    function drawScopePanel(p) {
+      ctx.fillStyle = c('--rlc-scope-bg','#0b1a0f');
+      ctx.fillRect(scopeX, scopeY, scopeW, scopeH);
+      ctx.strokeStyle = c('--rlc-grid','#2c4a34'); ctx.lineWidth = 1;
+      var cols = 10, rows = 8;
+      for (var i3=0;i3<=cols;i3++){
+        var gx = scopeX + i3*scopeW/cols;
+        ctx.beginPath(); ctx.moveTo(gx, scopeY); ctx.lineTo(gx, scopeY+scopeH); ctx.stroke();
+      }
+      for (var j3=0;j3<=rows;j3++){
+        var gyy = scopeY + j3*scopeH/rows;
+        ctx.beginPath(); ctx.moveTo(scopeX, gyy); ctx.lineTo(scopeX+scopeW, gyy); ctx.stroke();
+      }
+      var midY = scopeY + scopeH/2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath(); ctx.moveTo(scopeX, midY); ctx.lineTo(scopeX+scopeW, midY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(scopeX+scopeW/2, scopeY); ctx.lineTo(scopeX+scopeW/2, scopeY+scopeH); ctx.stroke();
+      var pxPerDivY = scopeH/rows;
+      var noise = tolOn() ? errScope : 0;
+      function yFor(v, voltsDiv) { return midY - (v*(1+noise)/voltsDiv) * pxPerDivY; }
+      var ch1 = chanInfo(p.k.ch1, p), ch2 = chanInfo(p.k.ch2, p);
+      ctx.strokeStyle = c('--rlc-ch1','#e0a800'); ctx.lineWidth = 2; ctx.beginPath();
+      for (var xpix=scopeX; xpix<=scopeX+scopeW; xpix++) {
+        var tS = xToTime(xpix, p.k.tdiv);
+        var v = ch1.amp * Math.sin(p.w*tS + ch1.phase);
+        var yy2 = yFor(v, p.k.v1div);
+        if (xpix===scopeX) ctx.moveTo(xpix, yy2); else ctx.lineTo(xpix, yy2);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = c('--rlc-ch2','#00b7c2'); ctx.beginPath();
+      for (var xpix2=scopeX; xpix2<=scopeX+scopeW; xpix2++) {
+        var tS2 = xToTime(xpix2, p.k.tdiv);
+        var v2 = ch2.amp * Math.sin(p.w*tS2 + ch2.phase);
+        var yy3 = yFor(v2, p.k.v2div);
+        if (xpix2===scopeX) ctx.moveTo(xpix2, yy3); else ctx.lineTo(xpix2, yy3);
+      }
+      ctx.stroke();
+      var beamX = scopeX + sweepPhase*scopeW;
+      var tB = xToTime(beamX, p.k.tdiv);
+      var vB = ch1.amp * Math.sin(p.w*tB + ch1.phase);
+      ctx.fillStyle = c('--rlc-ch1','#e0a800');
+      ctx.beginPath(); ctx.arc(beamX, yFor(vB,p.k.v1div), 3, 0, 2*Math.PI); ctx.fill();
+      ctx.font='11px monospace';
+      if (cur1X!==null) drawCursor(cur1X, '1');
+      if (cur2X!==null) drawCursor(cur2X, '2');
+      ctx.textAlign='left'; ctx.font='11px monospace';
+      ctx.fillStyle = c('--rlc-ch1','#e0a800');
+      ctx.fillText('CH1: '+ch1.label+'  '+p.k.v1div+' V/div', scopeX+4, scopeY+scopeH+14);
+      ctx.fillStyle = c('--rlc-ch2','#00b7c2');
+      ctx.fillText('CH2: '+ch2.label+'  '+p.k.v2div+' V/div', scopeX+4, scopeY+scopeH+28);
+      ctx.fillStyle = c('--rlc-text','#111');
+      ctx.fillText('Time/div: '+p.k.tdiv+' ms', scopeX+4, scopeY+scopeH+42);
+      ctx.fillText('Drag on the screen to place phase-measurement cursors.', scopeX+4, scopeY+scopeH+56);
+    }
+    function drawCursor(x, label) {
+      ctx.strokeStyle = c('--rlc-cursor','#d33fd3'); ctx.lineWidth = 1;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(x, scopeY); ctx.lineTo(x, scopeY+scopeH); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = c('--rlc-cursor','#d33fd3');
+      ctx.fillText(label, x-3, scopeY-2);
+    }
+    /* ── phasor panel: always shows all 4 phasors; CH1/CH2 picks are outlined ── */
+    function drawPhasorPanel(p) {
+      if (phasorMode === 'impedance') { drawImpedancePanel(p); return; }
+      var cx = scopeX + scopeW/2, cy = scopeY + scopeH/2 + 10;
+      ctx.strokeStyle = c('--rlc-grid','#2c4a34'); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(scopeX, cy); ctx.lineTo(scopeX+scopeW, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, scopeY); ctx.lineTo(cx, scopeY+scopeH); ctx.stroke();
+      var maxV = Math.max(p.k.Vm, p.VRm, p.VLm, p.VCm, 0.01);
+      var scale = (scopeW/2 - 20) / maxV;
+      var rot = phasorAngle;
+      function arrow(angRad, mag, color, label, thick) {
+        if (mag < 1e-6) return;
+        var ex = cx + mag*scale*Math.cos(angRad + rot);
+        var ey = cy - mag*scale*Math.sin(angRad + rot);
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = thick?3.5:2.5;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex,ey); ctx.stroke();
+        var hAng = Math.atan2(cy-ey, ex-cx);
+        ctx.beginPath();
+        ctx.moveTo(ex,ey);
+        ctx.lineTo(ex-9*Math.cos(hAng-0.3), ey+9*Math.sin(hAng-0.3));
+        ctx.lineTo(ex-9*Math.cos(hAng+0.3), ey+9*Math.sin(hAng+0.3));
+        ctx.closePath(); ctx.fill();
+        ctx.font='bold 12px monospace';
+        ctx.fillText(label, ex+ (ex>=cx?6:-24), ey-(ey<cy? 4 : -14));
+      }
+      var picked = { src:p.k.ch1==='src'||p.k.ch2==='src', vr:p.k.ch1==='vr'||p.k.ch2==='vr',
+                    vl:p.k.ch1==='vl'||p.k.ch2==='vl', vc:p.k.ch1==='vc'||p.k.ch2==='vc' };
+      arrow(0, p.k.Vm, c('--rlc-src','#888'), 'v(t)', picked.src);
+      arrow(-p.phi, p.VRm, c('--rlc-vr','#e0a800'), 'V\u1D63', picked.vr);
+      arrow(-p.phi+Math.PI/2, p.VLm, c('--rlc-vl','#7a5cff'), 'V\u2097', picked.vl);
+      arrow(-p.phi-Math.PI/2, p.VCm, c('--rlc-vc','#00b7c2'), 'V\u1D04', picked.vc);
+      ctx.font='12px monospace'; ctx.fillStyle = c('--rlc-text','#111');
+      ctx.fillText('\u03C6 = '+(p.phi*180/Math.PI).toFixed(1)+'\u00B0  (current lags source if +, leads if \u2212)', scopeX+4, scopeY+scopeH+18);
+      ctx.fillText('\u2220(V\u1D63 \u2192 V\u2097) = +90\u00B0,  \u2220(V\u1D63 \u2192 V\u1D04) = \u221290\u00B0  (always, for series RLC)', scopeX+4, scopeY+scopeH+34);
+      var resOn = Math.abs(p.XL-p.XC)/p.R < 0.03;
+      ctx.fillStyle = resOn ? c('--rlc-good','#1a8a3a') : c('--rlc-text','#111');
+      ctx.font = resOn ? 'bold 12px monospace' : '12px monospace';
+      ctx.fillText(resOn ? '\u2713 At resonance: V\u2097 and V\u1D04 cancel, Z = R (minimum)' : 'V\u2097 and V\u1D04 point opposite; their difference sets \u03C6', scopeX+4, scopeY+scopeH+50);
+    }
+    /* ── impedance diagram (phasor tab, impedance mode) ──
+       Z = R + j(XL - XC). R lies along the +real axis. +jXL (up) and -jXC
+       (down) are drawn on the imaginary axis so students can see them pull
+       in opposite directions. Their difference, j(XL - XC), stands at the
+       tip of R, and Z is the resultant. Above the axis = inductive,
+       below = capacitive, on the axis = resonance. Impedance does not
+       depend on time, so this diagram does not rotate. Same scale on both
+       axes so the angle drawn is the true angle.                          */
+    function drawImpedancePanel(p) {
+      var ox = scopeX + 85, top = scopeY + 40;   /* margins leave room for labels */
+      var availX = scopeW - 85 - 135, availY = scopeH - 80;
+      var scale = Math.min(availX / p.R, availY / (p.XL + p.XC));
+      var oy = top + p.XL * scale;                        /* origin sits so both XL and XC fit */
+      var rx = ox + p.R * scale;                          /* tip of R */
+      var yL = oy - p.XL * scale;                         /* tip of +jXL */
+      var yC = oy + p.XC * scale;                         /* tip of -jXC */
+      var yX = oy - p.X * scale;                          /* tip of j(XL-XC) and of Z */
+      var textCol = c('--rlc-text','#111');
+      var resOn = Math.abs(p.XL-p.XC)/p.R < 0.03;
+      var lCol = c('--rlc-vl','#7a5cff'), cCol = c('--rlc-vc','#00b7c2');
+      var netCol = (p.X >= 0) ? lCol : cCol;
+      /* axes */
+      ctx.strokeStyle = c('--rlc-grid','#2c4a34'); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(scopeX+10, oy); ctx.lineTo(scopeX+scopeW-10, oy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox, scopeY+4); ctx.lineTo(ox, scopeY+scopeH-4); ctx.stroke();
+      ctx.fillStyle = textCol; ctx.font = '11px monospace'; ctx.textAlign = 'left';
+      ctx.fillText('Re', scopeX+scopeW-28, oy-6);
+      ctx.fillText('+Im', ox+6, scopeY+14);
+      ctx.fillText('\u2212Im', ox+6, scopeY+scopeH-6);
+      function vec(x0, y0, x1, y1, color, w) {
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w;
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+        var len = Math.sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0));
+        if (len < 4) return;
+        var a = Math.atan2(y1-y0, x1-x0);
+        ctx.beginPath(); ctx.moveTo(x1,y1);
+        ctx.lineTo(x1-9*Math.cos(a-0.3), y1-9*Math.sin(a-0.3));
+        ctx.lineTo(x1-9*Math.cos(a+0.3), y1-9*Math.sin(a+0.3));
+        ctx.closePath(); ctx.fill();
+      }
+      /* +jXL and -jXC on the imaginary axis */
+      vec(ox, oy, ox, yL, lCol, 3);
+      vec(ox, oy, ox, yC, cCol, 3);
+      /* faint projection of the net reactance onto the imaginary axis */
+      if (!resOn) {
+        ctx.setLineDash([4,4]);
+        ctx.strokeStyle = netCol; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(ox, yX); ctx.lineTo(rx, yX); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      /* R, then j(XL-XC) from the tip of R, then Z from the origin */
+      vec(ox, oy, rx, oy, c('--rlc-vr','#e0a800'), 3);
+      if (!resOn) vec(rx, oy, rx, yX, netCol, 3);
+      vec(ox, oy, rx, yX, c('--rlc-src','#888'), 3);
+      /* right-angle mark between R and the net reactance */
+      ctx.strokeStyle = textCol; ctx.lineWidth = 1;
+      var sgn = (p.X >= 0) ? -1 : 1;
+      var m = Math.min(10, (rx-ox)/3, Math.abs(oy-yX)/3);
+      if (!resOn && m > 3) { ctx.beginPath(); ctx.moveTo(rx-m, oy); ctx.lineTo(rx-m, oy+sgn*m); ctx.lineTo(rx, oy+sgn*m); ctx.stroke(); }
+      /* phi arc from R to Z: counterclockwise (up) if inductive, clockwise (down) if capacitive */
+      var arcR = Math.min(34, 0.5*Math.sqrt((rx-ox)*(rx-ox)+(oy-yX)*(oy-yX)));
+      if (!resOn) { ctx.beginPath(); ctx.arc(ox, oy, arcR, 0, -p.phi, p.phi > 0); ctx.stroke(); }
+      /* labels: XL and XC to the left of the imaginary axis */
+      ctx.font = 'bold 12px monospace'; ctx.textAlign = 'right';
+      ctx.fillStyle = lCol;
+      var ly = Math.min(yL + 10, oy - 22);
+      ctx.fillText('+jX\u2097 =', ox-6, ly); ctx.fillText('+j'+p.XL.toFixed(0)+' \u03A9', ox-6, ly+14);
+      ctx.fillStyle = cCol;
+      var cy2 = Math.max(yC - 20, oy + 14);
+      ctx.fillText('\u2212jX\u1D04 =', ox-6, cy2); ctx.fillText('\u2212j'+p.XC.toFixed(0)+' \u03A9', ox-6, cy2+14);
+      ctx.textAlign = 'left';
+      /* R label on the side away from Z */
+      ctx.fillStyle = c('--rlc-vr','#e0a800');
+      ctx.fillText('R = '+p.R.toFixed(0)+' \u03A9', ox + Math.max(4,(rx-ox)/2 - 40), (p.X >= 0) ? oy+16 : oy-8);
+      /* net reactance label to the right of its arrow */
+      ctx.fillStyle = netCol;
+      var netL1 = 'j(X\u2097\u2212X\u1D04) =', netL2 = (p.X >= 0 ? '+j' : '\u2212j')+Math.abs(p.X).toFixed(0)+' \u03A9';
+      var netY;
+      if (Math.abs(oy-yX) < 40) netY = (p.X >= 0) ? oy+16 : oy-22;   /* short arrow: put label on the far side of the axis */
+      else netY = (oy+yX)/2 - 4;
+      ctx.fillText(netL1, rx+8, netY); ctx.fillText(netL2, rx+8, netY+14);
+      /* Z label just beyond the tip of Z */
+      ctx.fillStyle = c('--rlc-src','#888');
+      ctx.fillText('Z = '+p.Z.toFixed(0)+' \u03A9', rx+8, (p.X >= 0) ? yX-6 : yX+16);
+      if (!resOn) {
+        ctx.fillStyle = textCol; ctx.font = '12px monospace';
+        if (Math.abs(p.phi) > 0.07) { var bA = Math.abs(p.phi)/2, bR = arcR + 10;
+        ctx.textAlign = 'center'; ctx.fillText('\u03C6', ox + bR*Math.cos(bA), oy + (p.X >= 0 ? -1 : 1) * bR*Math.sin(bA) + 4); ctx.textAlign = 'left'; }
+      }
+      /* notes under the panel */
+      ctx.font = '12px monospace'; ctx.fillStyle = textCol;
+      ctx.fillText('Z = R + j(X\u2097 \u2212 X\u1D04) = '+p.R.toFixed(0)+(p.X >= 0 ? ' + j' : ' \u2212 j')+Math.abs(p.X).toFixed(0)+' \u03A9', scopeX+4, scopeY+scopeH+18);
+      ctx.fillText('|Z| = '+p.Z.toFixed(0)+' \u03A9,   \u03C6 = arctan[(X\u2097\u2212X\u1D04)/R] = '+(p.phi*180/Math.PI).toFixed(1)+'\u00B0', scopeX+4, scopeY+scopeH+34);
+      ctx.fillStyle = resOn ? c('--rlc-good','#1a8a3a') : textCol;
+      ctx.font = resOn ? 'bold 12px monospace' : '12px monospace';
+      ctx.fillText(resOn ? '\u2713 At resonance: X\u2097 = X\u1D04, so Z = R (minimum)'
+                         : (p.X > 0 ? 'Inductive (X\u2097 > X\u1D04): Z is above the axis.' : 'Capacitive (X\u1D04 > X\u2097): Z is below the axis.'),
+                   scopeX+4, scopeY+scopeH+50);
+    }
+    /* ── shared readout strip ── */
+    function drawReadout(p) {
+      var y0 = 380;
+      ctx.fillStyle = c('--rlc-text','#111'); ctx.font='11px monospace'; ctx.textAlign='left';
+      ctx.fillText('XL='+p.XL.toFixed(1)+'\u03A9   XC='+p.XC.toFixed(1)+'\u03A9   Z='+p.Z.toFixed(1)+'\u03A9   \u03C6='+(p.phi*180/Math.PI).toFixed(1)+'\u00B0   f0='+p.f0.toFixed(1)+'Hz   Q='+p.Q.toFixed(2), 350, y0);
+      ctx.fillText('V\u1D63(pk)='+p.VRm.toFixed(2)+'V   V\u2097(pk)='+p.VLm.toFixed(2)+'V   V\u1D04(pk)='+p.VCm.toFixed(2)+'V', 350, y0+16);
+      var resOn = Math.abs(p.XL-p.XC)/p.R < 0.03;
+      if (resOn) {
+        ctx.fillStyle = c('--rlc-good','#1a8a3a'); ctx.font='bold 13px monospace';
+        ctx.fillText('\u2713 RESONANCE: XL \u2248 XC  \u2192  Z \u2248 R (minimum), current maximum, \u03C6 \u2248 0\u00B0', 350, y0+38);
+      } else {
+        ctx.fillStyle = c('--rlc-text','#111'); ctx.font='12px monospace';
+        var hint = p.XL > p.XC ? 'Inductive: XL > XC. Lower f (toward f0) to approach resonance.' : 'Capacitive: XC > XL. Raise f (toward f0) to approach resonance.';
+        ctx.fillText(hint, 350, y0+38);
+      }
+      if (cur1X!==null && cur2X!==null) {
+        var t1 = xToTime(cur1X, p.k.tdiv), t2 = xToTime(cur2X, p.k.tdiv);
+        var dt = Math.abs(t2-t1);
+        var dphiMeas = (dt * p.f * 360) % 360;
+        var ch1 = chanInfo(p.k.ch1,p), ch2 = chanInfo(p.k.ch2,p);
+        var dphiTheory = ((ch2.phase-ch1.phase)*180/Math.PI) % 360;
+        if (dphiTheory < 0) dphiTheory += 360;
+        if (dphiTheory > 180) dphiTheory -= 360;
+        ctx.fillStyle = c('--rlc-cursor','#d33fd3'); ctx.font='11px monospace';
+        ctx.fillText('Cursors: \u0394t='+(dt*1000).toFixed(3)+'ms \u21D2 \u0394\u03C6='+dphiMeas.toFixed(1)+'\u00B0   (theory: CH2\u2212CH1 = '+dphiTheory.toFixed(1)+'\u00B0)', 350, y0+56);
+      }
+    }
+    /* ── equations panel (DOM) ── */
+    function fmtNum(x, d) { return (Math.round(x*Math.pow(10,d))/Math.pow(10,d)).toString(); }
+    function renderEquations(p) {
+      var wRound = fmtNum(p.w,1);
+      var html = '';
+      html += '<h4>Circuit relations</h4>';
+      html += '<div class="rlc_eqline1009">X<sub>L</sub> = 2&pi;f L = '+p.XL.toFixed(1)+' &Omega;  &nbsp; X<sub>C</sub> = 1/(2&pi;f C) = '+p.XC.toFixed(1)+' &Omega;</div>';
+      html += '<div class="rlc_eqline1009">Z = &radic;(R&sup2; + (X<sub>L</sub>&minus;X<sub>C</sub>)&sup2;) = '+p.Z.toFixed(1)+' &Omega;</div>';
+      html += '<div class="rlc_eqline1009">&phi; = arctan[(X<sub>L</sub>&minus;X<sub>C</sub>)/R] = '+(p.phi*180/Math.PI).toFixed(2)+'&deg;  (current lags source if &phi;&gt;0, leads if &phi;&lt;0)</div>';
+      html += '<div class="rlc_eqline1009">I<sub>m</sub> = V<sub>m</sub> / Z = '+(p.Im*1000).toFixed(2)+' mA</div>';
+      html += '<div class="rlc_eqline1009">Resonance: f<sub>0</sub> = 1 / (2&pi;&radic;(LC)) = '+p.f0.toFixed(2)+' Hz &nbsp; (where X<sub>L</sub> = X<sub>C</sub>)</div>';
+      html += '<div class="rlc_eqline1009">Q = (1/R)&radic;(L/C) = '+p.Q.toFixed(2)+' &nbsp; (voltage magnification: V<sub>L</sub>, V<sub>C</sub> at resonance &asymp; Q&middot;V<sub>m</sub>)</div>';
+      html += '<h4>Time-domain waveforms</h4>';
+      html += '<div class="rlc_eqline1009">v(t) = '+p.k.Vm.toFixed(2)+' sin('+wRound+' t)  V</div>';
+      html += '<div class="rlc_eqline1009">v<sub>R</sub>(t) = I<sub>m</sub> R sin(&omega;t &minus; &phi;) = '+p.VRm.toFixed(2)+' sin('+wRound+' t \u2212 '+(p.phi).toFixed(3)+')  V</div>';
+      html += '<div class="rlc_eqline1009">v<sub>L</sub>(t) = I<sub>m</sub> X<sub>L</sub> sin(&omega;t &minus; &phi; + 90&deg;) = '+p.VLm.toFixed(2)+' sin('+wRound+' t \u2212 '+(p.phi).toFixed(3)+' + '+(Math.PI/2).toFixed(3)+')  V</div>';
+      html += '<div class="rlc_eqline1009">v<sub>C</sub>(t) = I<sub>m</sub> X<sub>C</sub> sin(&omega;t &minus; &phi; &minus; 90&deg;) = '+p.VCm.toFixed(2)+' sin('+wRound+' t \u2212 '+(p.phi).toFixed(3)+' \u2212 '+(Math.PI/2).toFixed(3)+')  V</div>';
+      html += '<h4>Key facts to verify experimentally</h4>';
+      html += '<div class="rlc_eqline1009">&bull; v<sub>L</sub> and v<sub>C</sub> are always exactly 180&deg; out of phase with each other (they subtract).</div>';
+      html += '<div class="rlc_eqline1009">&bull; v<sub>L</sub> leads v<sub>R</sub> by 90&deg; and v<sub>C</sub> lags v<sub>R</sub> by 90&deg;, for any R, L, C, f.</div>';
+      html += '<div class="rlc_eqline1009">&bull; At resonance (f = f<sub>0</sub>), X<sub>L</sub> = X<sub>C</sub>, so v<sub>L</sub> and v<sub>C</sub> cancel; Z = R is minimum, current is maximum, and &phi; = 0&deg; (v and v<sub>R</sub> are in phase).</div>';
+      html += '<div class="rlc_eqline1009">&bull; Below f<sub>0</sub> the circuit is capacitive (X<sub>C</sub> &gt; X<sub>L</sub>, current leads); above f<sub>0</sub> it is inductive (X<sub>L</sub> &gt; X<sub>C</sub>, current lags).</div>';
+      html += '<div class="rlc_eqline1009">&bull; If Q &gt; 1, the peak voltages across L and C individually can exceed the source amplitude V<sub>m</sub> at resonance &mdash; try lowering R to see this.</div>';
+      html += '<h4>Currently set values</h4>';
+      html += '<div class="rlc_eqline1009">R = '+p.R.toFixed(0)+' &Omega;,  L = '+(p.L*1e3).toFixed(2)+' mH,  C = '+(p.C*1e9).toFixed(2)+' nF,  f = '+p.f.toFixed(1)+' Hz,  V<sub>m</sub> = '+p.k.Vm.toFixed(2)+' V'+(tolOn()?'  <i>(includes simulated component tolerance)</i>':'')+'</div>';
+      eqPanel.innerHTML = html;
+    }
+    /* ── full redraw ── */
+    function drawFrame() {
+      var p = physics();
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = c('--rlc-bg','#fff'); ctx.fillRect(0,0,W,H);
+      if (tab === 'equations') {
+        canvas.style.display = 'none';
+        eqPanel.style.display = 'block';
+        renderEquations(p);
+        return;
+      }
+      canvas.style.display = 'block';
+      eqPanel.style.display = 'none';
+      drawSchematic(p);
+      if (tab === 'scope') drawScopePanel(p); else drawPhasorPanel(p);
+      drawReadout(p);
+    }
+    /* ── narration ── */
+    var frameCount = 0, narrationEvery = 60, lastNarratedTab = null, lastNarratedRes = null;
+    function sceneNarration(force) {
+      var p = physics();
+      var resOn = Math.abs(p.XL-p.XC)/p.R < 0.03;
+      if (!force && tab === lastNarratedTab && resOn === lastNarratedRes) return;
+      lastNarratedTab = tab; lastNarratedRes = resOn;
+      var msg = '';
+      if (tab === 'scope') {
+        var ch1 = chanInfo(p.k.ch1,p), ch2 = chanInfo(p.k.ch2,p);
+        msg = 'Oscilloscope showing CH1, '+ch1.label+', in the CH1 color, and CH2, '+ch2.label+', in the CH2 color. ';
+        msg += 'At '+p.f.toFixed(0)+' Hz, XL is '+p.XL.toFixed(0)+' ohms and XC is '+p.XC.toFixed(0)+' ohms. ';
+        msg += resOn ? 'These are nearly equal -- the circuit is at resonance, current is maximum.'
+        : 'These are unequal; adjust frequency toward '+p.f0.toFixed(0)+' Hz to reach resonance.';
+      } else if (tab === 'phasor' && phasorMode === 'impedance') {
+        msg = 'Impedance diagram. R of '+p.R.toFixed(0)+' ohms lies along the real axis. The inductive reactance of '+p.XL.toFixed(0)+' ohms points up and the capacitive reactance of '+p.XC.toFixed(0)+' ohms points down, so the net reactance is '+Math.abs(p.X).toFixed(0)+' ohms '+(p.X >= 0 ? 'up' : 'down')+'. ';
+        msg += resOn ? 'The two reactances cancel: the circuit is at resonance and Z equals R.'
+        : 'The total impedance Z of '+p.Z.toFixed(0)+' ohms sits '+Math.abs(p.phi*180/Math.PI).toFixed(0)+' degrees '+(p.X > 0 ? 'above' : 'below')+' the real axis, so the circuit is '+(p.X > 0 ? 'inductive' : 'capacitive')+'. This diagram does not rotate.';
+      } else if (tab === 'phasor') {
+        msg = 'Phasor diagram, rotating counterclockwise, showing the source, resistor, inductor, and capacitor voltages. The inductor and capacitor phasors point in opposite directions; their difference determines phi, currently '+(p.phi*180/Math.PI).toFixed(0)+' degrees.';
+      } else {
+        msg = 'Equations panel showing the live time-domain expressions for the source, resistor, inductor, and capacitor voltages, along with the resonance frequency.';
+      }
+      rlcA11y1009.narrate(msg);
+    }
+    /* ── animation loop ── */
+    function runMotion() {
+      sweepPhase += 0.02; if (sweepPhase > 1) sweepPhase = 0;
+      phasorAngle += 0.03;
+      frameCount++;
+      drawFrame();
+      if (frameCount % narrationEvery === 0) sceneNarration(false);
+      if (runFlag === 1) timer = window.setTimeout(runMotion, 40);
+    }
+    function pl() { window.clearTimeout(timer); runFlag = 1; runMotion(); }
+    function ps() { window.clearTimeout(timer); runFlag = 0; }
+    function step() {
+      window.clearTimeout(timer); runFlag = 0;
+      sweepPhase += 0.05; if (sweepPhase > 1) sweepPhase = 0;
+      phasorAngle += 0.08;
+      drawFrame(); sceneNarration(true);
+    }
+    function rst() {
+      window.clearTimeout(timer); runFlag = 0;
+      rollTolerances();
+      sweepPhase = 0; phasorAngle = 0; cur1X = null; cur2X = null;
+      drawFrame(); sceneNarration(true);
+    }
+    function redraw() { drawFrame(); }
+    function setTab(t) {
+      tab = t;
+      ['scope','phasor','equations'].forEach(function(nm){
+        var el = null;
+        if (nm==='scope') el = document.getElementById('rlcTabScope1009');
+        if (nm==='phasor') el = document.getElementById('rlcTabPhasor1009');
+        if (nm==='equations') el = document.getElementById('rlcTabEq1009');
+        if (el) el.classList.toggle('rlc_tabon1009', nm===t);
+      });
+      var modeBar = document.getElementById('rlcPhasorModeBar1009');
+      if (modeBar) modeBar.style.display = (t === 'phasor') ? 'flex' : 'none';
+      drawFrame(); sceneNarration(true);
+    }
+    function setPhasorMode(m) {
+      phasorMode = m;
+      var bv = document.getElementById('rlcModeV1009'), bz = document.getElementById('rlcModeZ1009');
+      if (bv) { bv.classList.toggle('rlc_subon1009', m === 'voltage');   bv.setAttribute('aria-pressed', m === 'voltage' ? 'true' : 'false'); }
+      if (bz) { bz.classList.toggle('rlc_subon1009', m === 'impedance'); bz.setAttribute('aria-pressed', m === 'impedance' ? 'true' : 'false'); }
+      drawFrame(); sceneNarration(true);
+    }
+    function clearCursors() { cur1X = null; cur2X = null; drawFrame(); }
+    function localX(evt) {
+      var rect = canvas.getBoundingClientRect();
+      var cx = (evt.touches ? evt.touches[0].clientX : evt.clientX) - rect.left;
+      return cx * (canvas.width / rect.width);
+    }
+    canvas.addEventListener('mousedown', function(evt){
+      if (tab !== 'scope') return;
+      var x = localX(evt);
+      if (x < scopeX || x > scopeX+scopeW) return;
+      if (cur1X === null) { cur1X = x; }
+      else if (cur2X === null) { cur2X = x; }
+      else { dragCur = Math.abs(x-cur1X) < Math.abs(x-cur2X) ? 1 : 2; }
+      drawFrame();
+    });
+    canvas.addEventListener('mousemove', function(evt){
+      if (tab !== 'scope' || dragCur === null) return;
+      var x = Math.max(scopeX, Math.min(scopeX+scopeW, localX(evt)));
+      if (dragCur===1) cur1X = x; else cur2X = x;
+      drawFrame();
+    });
+    window.addEventListener('mouseup', function(){ dragCur = null; });
+    rst();
+    return { pl:pl, ps:ps, step:step, rst:rst, redraw:redraw, setTab:setTab, setPhasorMode:setPhasorMode, clearCursors:clearCursors };
+  };
+  var rlcSim1009 = new rlcGen();
+</script>
+<script>
+  rlcA11y1009.init();
+</script>
+
+</body>
+</html>

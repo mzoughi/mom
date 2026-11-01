@@ -1,0 +1,704 @@
+<div id="lrcRoot1007">
+<!-- ── Accessibility toolbar ── -->
+<div class="lrc_a11y1007" id="lrcA11yBar1007" role="toolbar" aria-label="Display options">
+<button type="button" class="lrc_a11ybtn1007" id="lrcBtnHC1007" onclick="lrcA11y1007.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="lrc_a11ybtn1007" id="lrcBtnLM1007" onclick="lrcA11y1007.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="lrc_a11ybtn1007" id="lrcBtnCB1007" onclick="lrcA11y1007.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="lrc_a11ybtn1007 lrc_a11yon1007" id="lrcBtnNR1007" onclick="lrcA11y1007.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar1007"><h3 id="lrcTitle1007">Phasor Diagram: Series LRC Circuit</h3></div>
+<div class="mcontent1007">
+<canvas id="lrcCanvas1007" style="margin:auto;display:block;border:1px solid #ccc" width="640" height="460" role="img" aria-label="Series LRC circuit on a circuit board, a rotating phasor diagram, and a graph of the instantaneous voltages and current. Detailed descriptions appear in the narration bar below."></canvas>
+</div>
+<div id="lrcNarBar1007" class="lrc_narbar1007" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar1007">
+<input type="button" id="lrcPlay1007" value="Play"
+onclick="if(this.value=='Play'){lrcSim1007.pl();this.value='Pause';}else{this.value='Play';lrcSim1007.ps();}">
+<input type="button" value="Step Back" onclick="document.getElementById('lrcPlay1007').value='Play';lrcSim1007.stepBack();">
+<input type="button" value="Step" onclick="document.getElementById('lrcPlay1007').value='Play';lrcSim1007.step();">
+<input type="button" value="Restart" onclick="document.getElementById('lrcPlay1007').value='Play';lrcSim1007.rst();">
+<input type="button" id="lrcResBtn1007" value="Set f = f&#8320;" onclick="lrcSim1007.setRes();">
+<input type="button" id="lrcCurBtn1007" value="Current: ON" aria-pressed="true" onclick="lrcSim1007.toggleCurrent();">
+</div>
+<div class="footer1007">
+<div class="lrc_ctrlrow1007">
+<div class="lrc_ctrlcol1007">
+<div class="lrc_ctrltitle1007">Components (untick to replace with a wire)</div>
+<label class="lrc_inc1007"><input type="checkbox" id="lrcIncR1007" checked onclick="lrcSim1007.toggleComp('R')"> R</label> =
+<input type="range" style=width:200px id="lrcR1007" min="50" max="10000" value="50" step="50" aria-label="Resistance in ohms"
+oninput="document.getElementById('lrcRVal1007').textContent=this.value;lrcSim1007.upd(true)" onchange="lrcSim1007.upd(false)">
+<span id="lrcRVal1007">50</span> &Omega;<br>
+<label class="lrc_inc1007"><input type="checkbox" id="lrcIncL1007" checked onclick="lrcSim1007.toggleComp('L')"> L</label> =
+<input type="range" style=width:200px id="lrcL1007" min="10" max="500" value="200" step="10" aria-label="Inductance in millihenries"
+oninput="document.getElementById('lrcLVal1007').textContent=this.value;lrcSim1007.upd(true)" onchange="lrcSim1007.upd(false)">
+<span id="lrcLVal1007">200</span> mH<br>
+<label class="lrc_inc1007"><input type="checkbox" id="lrcIncC1007" checked onclick="lrcSim1007.toggleComp('C')"> C</label> =
+<input type="range" style=width:200px id="lrcC1007" min="0.5" max="100" value="20" step="0.5" aria-label="Capacitance in microfarads"
+oninput="document.getElementById('lrcCVal1007').textContent=this.value;lrcSim1007.upd(true)" onchange="lrcSim1007.upd(false)">
+<span id="lrcCVal1007">20</span> &micro;F
+</div>
+<div class="lrc_ctrlcol1007">
+<div class="lrc_ctrltitle1007">AC Source (V&#8320; = 10 V amplitude)</div>
+f = <input type="range" style=width:200px id="lrcF1007" min="10" max="500" value="60" step="1" aria-label="Source frequency in hertz"
+oninput="document.getElementById('lrcFVal1007').textContent=this.value;lrcSim1007.upd(true)" onchange="lrcSim1007.upd(false)">
+<span id="lrcFVal1007">60</span> Hz<br>
+<label><input type="checkbox" id="lrcTT1007" onclick="lrcSim1007.upd(false)"> Tip-to-tail (show V as the vector sum)</label>
+</div>
+</div>
+<div class="lrc_sndrow1007">
+Show:
+<label><input type="checkbox" id="lrcShowVR1007" checked onclick="lrcSim1007.redraw()"><span class="lrc_sw1007" style="background:var(--lrc-vr)"></span>V<sub>R</sub></label>
+<label><input type="checkbox" id="lrcShowVL1007" checked onclick="lrcSim1007.redraw()"><span class="lrc_sw1007" style="background:var(--lrc-vl)"></span>V<sub>L</sub></label>
+<label><input type="checkbox" id="lrcShowVC1007" checked onclick="lrcSim1007.redraw()"><span class="lrc_sw1007" style="background:var(--lrc-vc)"></span>V<sub>C</sub></label>
+<label><input type="checkbox" id="lrcShowV1007"  checked onclick="lrcSim1007.redraw()"><span class="lrc_sw1007" style="background:var(--lrc-v)"></span>V (source)</label>
+</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 646px; margin: 0; }
+#lrcRoot1007 {
+--lrc-bg:        #ffffff;
+--lrc-board:     #1e6b3c;
+--lrc-trace:     #d4a24c;
+--lrc-boardtext: #ffffff;
+--lrc-electron:  #ffeb3b;
+--lrc-text:      #111111;
+--lrc-grid:      #cfcfcf;
+--lrc-axis:      #555555;
+--lrc-vr:        #d32f2f;
+--lrc-vl:        #1565c0;
+--lrc-vc:        #2e7d32;
+--lrc-v:         #6a1b9a;
+--lrc-i:         #ef6c00;
+--lrc-databox-bg:     #ffff99;
+--lrc-databox-border: #cc0000;
+--lrc-toolbar-bg: #222;
+}
+#lrcRoot1007 .lrc_a11y1007 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--lrc-toolbar-bg); flex-wrap:wrap; width:646px;
+}
+#lrcRoot1007 .lrc_a11ybtn1007 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#lrcRoot1007 .lrc_a11ybtn1007:hover { border-color:#00e8d0; color:#00e8d0; }
+#lrcRoot1007 .lrc_a11yon1007 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#lrcRoot1007 .lrc_narbar1007 {
+width:646px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar1007    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; width:646px; }
+.tbar1007 h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent1007 { height:464px; width:646px; }
+.bbar1007    { height:50px; background-color:#df9; padding:10px; text-align:center; width:646px; }
+.bbar1007 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+.footer1007  { width:646px; background-color:#f0e4ec; font-size:.85rem; padding:8px 0; }
+.footer1007 .lrc_ctrlrow1007  { width:646px; display:flex; }
+.footer1007 .lrc_ctrlcol1007  { width:323px; padding:4px 10px; line-height:1.9; }
+.footer1007 .lrc_ctrltitle1007{ width:100%; font-weight:bold; margin-bottom:2px; line-height:1.3; }
+.footer1007 .lrc_sndrow1007   { width:626px; padding:8px 10px 2px 10px; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+.footer1007 .lrc_inc1007      { display:inline-block; min-width:34px; font-weight:bold; }
+.footer1007 input[type=range]:disabled { opacity:.35; }
+.footer1007 .lrc_sw1007       { display:inline-block; width:12px; height:12px; margin:0 3px 0 2px; border:1px solid #333; vertical-align:middle; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════
+Same API as the VDG example (init / toggle / narrate / col).
+One fix: themes are layered on top of the defaults (light/colour-blind, then high
+contrast on top) instead of each theme resetting all vars when it is off, which in
+the original made High Contrast get overwritten. The canvas is also redrawn on
+toggle so the new colours show while paused.
+-->
+<script>
+var lrcA11y1007 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--lrc-bg':'#000000','--lrc-board':'#000000','--lrc-trace':'#ffff00','--lrc-boardtext':'#ffffff','--lrc-electron':'#00ffff','--lrc-text':'#ffffff','--lrc-grid':'#555555','--lrc-axis':'#ffffff','--lrc-vr':'#ff5555','--lrc-vl':'#55aaff','--lrc-vc':'#55ff55','--lrc-v':'#ffffff','--lrc-i':'#ffaa00','--lrc-databox-bg':'#000000','--lrc-databox-border':'#ffffff','--lrc-toolbar-bg':'#000'},
+lm:{'--lrc-bg':'#f6f6f2','--lrc-board':'#3d8a5a','--lrc-trace':'#e0b25a','--lrc-boardtext':'#ffffff','--lrc-electron':'#fff59d','--lrc-text':'#000000','--lrc-grid':'#dddddd','--lrc-axis':'#444444','--lrc-vr':'#b71c1c','--lrc-vl':'#0d47a1','--lrc-vc':'#1b5e20','--lrc-v':'#4a148c','--lrc-i':'#e65100','--lrc-databox-bg':'#fff6d9','--lrc-databox-border':'#cc8800','--lrc-toolbar-bg':'#444'},
+cb:{'--lrc-bg':'#ffffff','--lrc-board':'#2d4d5e','--lrc-trace':'#e69f00','--lrc-boardtext':'#ffffff','--lrc-electron':'#f0e442','--lrc-text':'#000000','--lrc-grid':'#cccccc','--lrc-axis':'#333333','--lrc-vr':'#d55e00','--lrc-vl':'#0072b2','--lrc-vc':'#009e73','--lrc-v':'#000000','--lrc-i':'#cc79a7','--lrc-databox-bg':'#f0f0f0','--lrc-databox-border':'#0072b2','--lrc-toolbar-bg':'#222'}
+};
+var DEFS = {'--lrc-bg':'#ffffff','--lrc-board':'#1e6b3c','--lrc-trace':'#d4a24c','--lrc-boardtext':'#ffffff','--lrc-electron':'#ffeb3b','--lrc-text':'#111111','--lrc-grid':'#cfcfcf','--lrc-axis':'#555555','--lrc-vr':'#d32f2f','--lrc-vl':'#1565c0','--lrc-vc':'#2e7d32','--lrc-v':'#6a1b9a','--lrc-i':'#ef6c00','--lrc-databox-bg':'#ffff99','--lrc-databox-border':'#cc0000','--lrc-toolbar-bg':'#222'};
+function applyVars(){
+if(!ROOT) return;
+var merged = {}, p, order = ['lm','cb','hc'];
+for (p in DEFS) merged[p] = DEFS[p];
+for (var i=0; i<order.length; i++){
+if (states[order[i]]){ var v = THEMES[order[i]]; for (p in v) merged[p] = v[p]; }
+}
+for (p in merged) ROOT.style.setProperty(p, merged[p]);
+}
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('lrcNarBar1007');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('lrcBtnNR1007');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('lrcBtnNR1007',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars();
+applyNarBar();
+styleBtn('lrcBtnHC1007',states.hc);
+styleBtn('lrcBtnLM1007',states.lm);
+styleBtn('lrcBtnCB1007',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('lrcRoot1007'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+if (typeof lrcSim1007 !== 'undefined' && lrcSim1007.redraw) lrcSim1007.redraw();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('lrcNarBar1007');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ AUTHOR SETTINGS ════════
+Edit these to publish a ready-made variant without touching the simulation code.
+include        : which components are in the circuit when the page loads
+(e.g. {R:true, L:true, C:false} gives an RL circuit)
+lockComponents : true hides the include/remove checkboxes so students can't change the circuit type
+showCurrent    : whether the current (I phasor, i(t) curve, moving charges) is shown at start
+-->
+<script>
+var lrcConfig1007 = {
+include:        { R:true, L:true, C:true },
+lockComponents: false,
+showCurrent:    true
+};
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VGG (Van de Graaff) example.
+- var simObj = function() { ... rst(); return {...}; }
+- var simObj1007 = new simObj();
+- Animation: recursive window.setTimeout(runMotion, 40) guarded by runFlag
+Physics: series circuit driven by v(t) = V0 sin(wt + phi), current i(t) = I0 sin(wt).
+A removed component is replaced by a wire: R -> 0, XL -> 0, XC -> 0.
+XL = wL, XC = 1/(wC), Z = sqrt(R^2 + (XL-XC)^2), I0 = V0/Z, tan(phi) = (XL-XC)/R
+Phasors (CCW from +x): I and VR at wt, VL at wt+90deg, VC at wt-90deg, V at wt+phi.
+Instantaneous value of each quantity = vertical projection of its phasor.
+Animation time is in phase units (3 deg per frame); the real time t = wt/w is shown on screen.
+-->
+<script>
+var lrcGen = function() {
+var canvas = document.getElementById('lrcCanvas1007');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;   /* 640 x 460 */
+var timer, runFlag = 0;
+var CFG = (typeof lrcConfig1007 !== 'undefined') ? lrcConfig1007 : {};
+/* ── color helper ── */
+function c(prop, def) { return lrcA11y1007.col(prop, def); }
+/* ── physics state ── */
+var V0 = 10;                               /* source amplitude, volts */
+var has = { R:true, L:true, C:true };      /* components present */
+var showCur = true;                        /* current display toggle */
+var R, L, Cap, f, w, XL, XC, Z, I0, phi, VR, VL, VC, f0, Iref, singular;
+var vScale, iScale;
+var theta = 0;                             /* wt, radians */
+var DTH = 3*Math.PI/180, STEPANG = 15*Math.PI/180;
+var frameCount = 0, narrationEvery = 120;  /* one narration per full turn */
+var lastRegime = '';
+/* ── layout (fixed) ── */
+var BW = 330, BH = 118;
+var LX0 = 30, LX1 = 310, LY0 = 24, LY1 = 98;
+var OX = 160, OY = 295, RMAX = 116;
+var GX0 = 322, GX1 = 630, GW = GX1 - GX0, GT = 170, GB = 420;
+var CYC = 4*Math.PI;
+var SHOW_IDS = { VR:'lrcShowVR1007', VL:'lrcShowVL1007', VC:'lrcShowVC1007', V:'lrcShowV1007' };
+var INC_IDS  = { R:'lrcIncR1007', L:'lrcIncL1007', C:'lrcIncC1007' };
+var SLD_IDS  = { R:'lrcR1007', L:'lrcL1007', C:'lrcC1007' };
+var SHOWFOR  = { R:'VR', L:'VL', C:'VC' };
+var NAMES    = { R:'resistor', L:'inductor', C:'capacitor' };
+function deg(a){ return a*180/Math.PI; }
+function sgn(v,d){ return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(d); }
+/* current with an automatic unit (A, mA, uA) chosen from the amplitude ref,
+so the readout doesn't jump between units as i(t) passes through zero */
+function fmtI(x, ref, signed){
+var a=Math.abs(ref), m, u, d;
+if (a>=1){ m=1; u=' A'; d=3; } else if (a>=1e-3){ m=1e3; u=' mA'; d=2; } else { m=1e6; u=' \u00B5A'; d=1; }
+return (signed ? sgn(x*m,d) : (x*m).toFixed(d)) + u;
+}
+/* resistance / reactance with kilo-ohms above 1000 */
+function fmtOhm(x, d){ return x>=1000 ? (x/1000).toFixed(3)+' k\u03A9' : x.toFixed(d===undefined?2:d)+' \u03A9'; }
+function fmtCap(c){ var u=c*1e6; return (u%1===0 ? u.toFixed(0) : u.toFixed(1))+' \u00B5F'; }
+/* fewer decimals for big values so the board labels stay short */
+function sgnV(v){ var a=Math.abs(v); return sgn(v, a>=1000?0:(a>=100?1:2)); }
+function shown(k){ if (k==='I') return showCur; var e = document.getElementById(SHOW_IDS[k]); return e ? e.checked : true; }
+function tipToTail(){ var e = document.getElementById('lrcTT1007'); return e ? e.checked : false; }
+function nVolt(){ return (has.R?1:0)+(has.L?1:0)+(has.C?1:0); }
+function circuitName(){
+if (nVolt()===3) return 'Series LRC Circuit';
+if (nVolt()===1) return has.R ? 'Purely Resistive Circuit' : (has.L ? 'Purely Inductive Circuit' : 'Purely Capacitive Circuit');
+return 'Series ' + (has.R?'R':'') + (has.L?'L':'') + (has.C?'C':'') + ' Circuit';
+}
+function readInputs(){
+var e;
+for (var k in INC_IDS){ e = document.getElementById(INC_IDS[k]); if (e) has[k] = e.checked; }
+e = document.getElementById('lrcR1007'); R   = e ? parseFloat(e.value) : 50;
+e = document.getElementById('lrcL1007'); L   = (e ? parseFloat(e.value) : 200) / 1000;
+e = document.getElementById('lrcC1007'); Cap = (e ? parseFloat(e.value) : 20) * 1e-6;
+e = document.getElementById('lrcF1007'); f   = e ? parseFloat(e.value) : 60;
+}
+function compute(){
+w   = 2*Math.PI*f;
+var Rv = has.R ? R : 0;
+XL  = has.L ? w*L : 0;
+XC  = has.C ? 1/(w*Cap) : 0;
+Z   = Math.sqrt(Rv*Rv + (XL-XC)*(XL-XC));
+singular = Z < 0.05;                     /* ideal LC exactly at resonance */
+I0  = V0/Math.max(Z, 0.05);
+phi = singular ? 0 : Math.atan2(XL-XC, Rv);
+VR  = I0*Rv; VL = I0*XL; VC = I0*XC;
+f0  = (has.L && has.C) ? 1/(2*Math.PI*Math.sqrt(L*Cap)) : NaN;
+/* current reference: with R the max (resonant) current V0/R, otherwise the present current */
+Iref = has.R ? V0/R : I0;
+var m = Math.max(V0, VR, VL, VC, Math.sqrt(VR*VR + VL*VL));
+vScale = RMAX/m;
+iScale = 0.85*RMAX/Iref;
+}
+function regime(){
+var d = deg(phi);
+if (singular) return { k:'res', s:'Ideal LC at resonance: Z \u2192 0, current grows without limit' };
+if (!has.L && !has.C) return { k:'res', s:'Purely resistive: V and I are in phase' };
+if (has.L && has.C && Math.abs(d) < 0.5) return { k:'res', s:'At resonance (XL \u2248 XC): V and I are in phase' };
+var both = has.L && has.C, pure = Math.abs(Math.abs(d)-90) < 0.05;
+if (d > 0) return { k:'ind', s:(pure?'Purely inductive':(both?'Inductive (XL > XC)':'Inductive'))+': V leads I by '+d.toFixed(1)+'\u00B0' };
+return { k:'cap', s:(pure?'Purely capacitive':(both?'Capacitive (XC > XL)':'Capacitive'))+': V lags I by '+(-d).toFixed(1)+'\u00B0' };
+}
+function quantities(){
+var Q = [{ k:'V', m:V0*vScale, amp:V0, off:phi, col:c('--lrc-v','#6a1b9a'), lab:'V', sub:'', lw:4, dash:[] }];
+if (has.R) Q.push({ k:'VR', m:VR*vScale, amp:VR, off:0,          col:c('--lrc-vr','#d32f2f'), lab:'V', sub:'R', lw:2.5, dash:[] });
+if (has.L) Q.push({ k:'VL', m:VL*vScale, amp:VL, off:Math.PI/2,  col:c('--lrc-vl','#1565c0'), lab:'V', sub:'L', lw:2.5, dash:[] });
+if (has.C) Q.push({ k:'VC', m:VC*vScale, amp:VC, off:-Math.PI/2, col:c('--lrc-vc','#2e7d32'), lab:'V', sub:'C', lw:2.5, dash:[] });
+if (showCur) Q.push({ k:'I', m:Math.min(RMAX, I0*iScale), amp:I0, off:0, col:c('--lrc-i','#ef6c00'), lab:'I', sub:'', lw:2.5, dash:[7,4] });
+return Q;
+}
+/* ── keep the controls in step with the circuit ── */
+function syncControls(){
+for (var k in has){
+var sl = document.getElementById(SLD_IDS[k]); if (sl) sl.disabled = !has[k];
+var sh = document.getElementById(SHOW_IDS[SHOWFOR[k]]); if (sh) sh.disabled = !has[k];
+}
+var t = document.getElementById('lrcTitle1007'); if (t) t.textContent = 'Phasor Diagram: ' + circuitName();
+var rb = document.getElementById('lrcResBtn1007'); if (rb) rb.disabled = !(has.L && has.C);
+var cb = document.getElementById('lrcCurBtn1007');
+if (cb){ cb.value = 'Current: ' + (showCur ? 'ON' : 'OFF'); cb.setAttribute('aria-pressed', showCur ? 'true' : 'false'); }
+}
+/* ══════════ low-level canvas helpers ══════════ */
+function arrow(x0,y0,x1,y1,col,lw,dash){
+var dx=x1-x0, dy=y1-y0, len=Math.sqrt(dx*dx+dy*dy);
+ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw; ctx.lineCap='round';
+if (len < 1.5){ ctx.beginPath(); ctx.arc(x0,y0,2.5,0,2*Math.PI); ctx.fill(); ctx.restore(); return; }
+var ux=dx/len, uy=dy/len, hl=Math.min(12, len*0.45), hw=hl*0.5;
+var bx=x1-ux*hl, by=y1-uy*hl;
+ctx.setLineDash(dash||[]);
+ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(bx,by); ctx.stroke();
+ctx.setLineDash([]);
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(bx-uy*hw,by+ux*hw); ctx.lineTo(bx+uy*hw,by-ux*hw); ctx.closePath(); ctx.fill();
+ctx.restore();
+}
+function label(x,y,main,sub,col){
+ctx.save(); ctx.textBaseline='middle'; ctx.textAlign='left';
+ctx.font='bold 14px sans-serif'; var mw=ctx.measureText(main).width, sw=0;
+if (sub){ ctx.font='bold 10px sans-serif'; sw=ctx.measureText(sub).width; }
+var tx = x-(mw+sw)/2;
+ctx.lineWidth=3; ctx.strokeStyle=c('--lrc-bg','#ffffff'); ctx.fillStyle=col;
+ctx.font='bold 14px sans-serif'; ctx.strokeText(main,tx,y); ctx.fillText(main,tx,y);
+if (sub){ ctx.font='bold 10px sans-serif'; ctx.strokeText(sub,tx+mw,y+5); ctx.fillText(sub,tx+mw,y+5); }
+ctx.restore();
+}
+/* centred text with a subscript, e.g. v_R = +1.23 V (uses current fillStyle) */
+function subText(x,y,main,sub,rest){
+ctx.save(); ctx.textAlign='left'; ctx.textBaseline='middle';
+ctx.font='11px monospace'; var a=ctx.measureText(main).width, cc=ctx.measureText(rest).width;
+ctx.font='9px monospace';  var b=sub?ctx.measureText(sub).width:0;
+var x0=x-(a+b+cc)/2;
+ctx.font='11px monospace'; ctx.fillText(main,x0,y); ctx.fillText(rest,x0+a+b,y);
+if (sub){ ctx.font='9px monospace'; ctx.fillText(sub,x0+a,y+4); }
+ctx.restore();
+}
+function roundRect(x,y,w,h,r){
+ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r); ctx.lineTo(x+r,y+h);
+ctx.arcTo(x,y+h,x,y+h-r,r); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+}
+/* ══════════ artistic props: circuit board ══════════ */
+function perim(s){
+var a=LX1-LX0, b=LY1-LY0, P=2*(a+b);
+s=((s%P)+P)%P;
+if (s<a) return [LX0+s, LY0]; s-=a;
+if (s<b) return [LX1, LY0+s]; s-=b;
+if (s<a) return [LX1-s, LY1]; s-=a;
+return [LX0, LY1-s];
+}
+function resistorBands(){
+/* 5-band code: three digits, multiplier (gold = x0.1), brown 1% tolerance. Covers 50 ohm to 10 kohm */
+var CODE=['#000000','#8b4513','#e00000','#ff8c00','#ffd700','#008000','#0000ff','#8a2be2','#808080','#ffffff'];
+var m=Math.floor(Math.log10(R)+1e-9)-2, digits=Math.round(R/Math.pow(10,m));
+if (digits>=1000){ m++; digits=Math.round(digits/10); }
+var d=String(digits);
+return [CODE[+d[0]], CODE[+d[1]], CODE[+d[2]], m<0 ? '#c9a227' : CODE[m]];
+}
+function drawBoard(){
+var board=c('--lrc-board','#1e6b3c'), trace=c('--lrc-trace','#d4a24c'), bt=c('--lrc-boardtext','#ffffff');
+var i  = I0*Math.sin(theta);
+var v  = V0*Math.sin(theta+phi);
+var ir = Math.min(1, I0/Iref);
+ctx.fillStyle=board; ctx.fillRect(0,0,BW,BH);
+ctx.fillStyle='rgba(0,0,0,.35)';
+[[8,8],[BW-8,8],[8,BH-8],[BW-8,BH-8]].forEach(function(p){ ctx.beginPath(); ctx.arc(p[0],p[1],4,0,2*Math.PI); ctx.fill(); });
+ctx.strokeStyle=trace; ctx.lineWidth=3; ctx.lineJoin='round';
+ctx.strokeRect(LX0,LY0,LX1-LX0,LY1-LY0);
+ctx.fillStyle=trace;
+[[LX0,LY0],[LX1,LY0],[LX1,LY1],[LX0,LY1]].forEach(function(p){ ctx.beginPath(); ctx.arc(p[0],p[1],5,0,2*Math.PI); ctx.fill(); });
+/* charge carriers (part of the current display) */
+if (showCur){
+var a=LX1-LX0, b=LY1-LY0, P=2*(a+b), N=24, sp=P/N;
+var disp = -14*ir*Math.cos(theta);
+ctx.fillStyle=c('--lrc-electron','#ffeb3b'); ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=0.8;
+for (var n=0; n<N; n++){
+var p = perim(n*sp + sp/2 + disp);
+ctx.beginPath(); ctx.arc(p[0],p[1],3,0,2*Math.PI); ctx.fill(); ctx.stroke();
+}
+}
+/* AC source */
+var sy=(LY0+LY1)/2;
+ctx.fillStyle='#f5f5f5'; ctx.strokeStyle='#222'; ctx.lineWidth=2;
+ctx.beginPath(); ctx.arc(LX0,sy,15,0,2*Math.PI); ctx.fill(); ctx.stroke();
+ctx.beginPath();
+for (var k=0; k<=24; k++){ var sx=LX0-9+k*0.75, syy=sy-6*Math.sin(k/24*2*Math.PI); if(k===0) ctx.moveTo(sx,syy); else ctx.lineTo(sx,syy); }
+ctx.lineWidth=1.8; ctx.stroke();
+/* resistor */
+if (has.R){
+ctx.fillStyle='#e3c9a0'; ctx.strokeStyle='#5a4630'; ctx.lineWidth=1;
+roundRect(74,LY0-8,52,16,6); ctx.fill(); ctx.stroke();
+var bands=resistorBands(), bx=[81,89,97,105];
+for (var q=0; q<4; q++){ ctx.fillStyle=bands[q]; ctx.fillRect(bx[q],LY0-8,4,16); }
+ctx.fillStyle='#8b4513'; ctx.fillRect(117,LY0-8,4,16);
+}
+/* inductor */
+if (has.L){
+ctx.fillStyle=board; ctx.fillRect(147,LY0-12,82,15);
+ctx.strokeStyle=trace; ctx.lineWidth=3;
+for (var t2=0; t2<5; t2++){ ctx.beginPath(); ctx.arc(157.5+15*t2, LY0, 7.5, Math.PI, 0, false); ctx.stroke(); }
+}
+/* capacitor */
+if (has.C){
+var vc = VC*Math.sin(theta-Math.PI/2);
+ctx.fillStyle=board; ctx.fillRect(257,LY0-16,10,32);
+ctx.strokeStyle='#cfd8dc'; ctx.lineWidth=4;
+ctx.beginPath(); ctx.moveTo(256,LY0-14); ctx.lineTo(256,LY0+14); ctx.moveTo(268,LY0-14); ctx.lineTo(268,LY0+14); ctx.stroke();
+var qn = VC > 0 ? vc/VC : 0;
+ctx.save(); ctx.globalAlpha=Math.min(1,Math.abs(qn)); ctx.fillStyle=bt; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+for (var s=-1; s<=1; s++){
+ctx.fillText(qn>=0?'+':'\u2212', 248, LY0+s*9);
+ctx.fillText(qn>=0?'\u2212':'+', 276, LY0+s*9);
+}
+ctx.restore();
+}
+/* labels with live values (only for components that are present) */
+ctx.fillStyle=bt; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='bold 13px sans-serif';
+if (has.R){ ctx.fillText('R',100,46); subText(100,62,'v','R','='+sgnV(VR*Math.sin(theta))+' V'); }
+if (has.L){ ctx.fillStyle=bt; ctx.font='bold 13px sans-serif'; ctx.fillText('L',187,46); subText(187,62,'v','L','='+sgnV(VL*Math.sin(theta+Math.PI/2))+' V'); }
+if (has.C){ ctx.fillStyle=bt; ctx.font='bold 13px sans-serif'; ctx.fillText('C',262,46); subText(270,62,'v','C','='+sgnV(VC*Math.sin(theta-Math.PI/2))+' V'); }
+ctx.fillStyle=bt;
+subText(92,82,'v','',' = '+sgn(v,2)+' V');
+/* current arrow + readout (part of the current display) */
+if (showCur){
+var len = 46*Math.min(1, Math.abs(i)/Iref), cx=232;
+if (len > 2){
+var dir = i >= 0 ? -1 : 1;
+arrow(cx-dir*len/2, LY1-11, cx+dir*len/2, LY1-11, c('--lrc-i','#ef6c00'), 3);
+}
+ctx.fillStyle=bt; ctx.textAlign='center'; ctx.font='11px monospace';
+ctx.fillText('i = '+(singular?'\u2192 \u221E':fmtI(i,I0,true)), cx, LY1+12);
+}
+}
+/* ══════════ data box ══════════ */
+function drawDataBox(){
+var bx=338, by=4, bw=298, bh=110;
+ctx.fillStyle=c('--lrc-databox-bg','#ffff99'); ctx.strokeStyle=c('--lrc-databox-border','#cc0000'); ctx.lineWidth=1.5;
+ctx.fillRect(bx,by,bw,bh); ctx.strokeRect(bx,by,bw,bh);
+ctx.fillStyle=c('--lrc-text','#111111'); ctx.font='11px monospace'; ctx.textAlign='left'; ctx.textBaseline='middle';
+var lines = [
+'f = '+f.toFixed(1)+' Hz    \u03C9 = 2\u03C0f = '+w.toFixed(1)+' rad/s',
+has.R ? 'R  = '+fmtOhm(R,0) : 'R  : removed (wire)',
+has.L ? 'XL = \u03C9L      = '+fmtOhm(XL) : 'XL : no inductor (0 \u03A9)',
+has.C ? 'XC = 1/(\u03C9C)  = '+fmtOhm(XC) : 'XC : no capacitor (0 \u03A9)',
+singular ? 'Z  \u2248 0 \u03A9 (ideal LC at resonance)' : 'Z  = \u221A(R\u00B2+(XL\u2212XC)\u00B2) = '+fmtOhm(Z),
+singular ? 'I\u2080 \u2192 \u221E (no resistance to limit it)' : 'I\u2080 = V\u2080/Z   = '+fmtI(I0,I0,false),
+'\u03C6  = tan\u207B\u00B9((XL\u2212XC)/R) = '+deg(phi).toFixed(1)+'\u00B0',
+(has.L && has.C) ? 'f\u2080 = 1/(2\u03C0\u221A(LC)) = '+f0.toFixed(1)+' Hz' : 'f\u2080 : needs both L and C'
+];
+for (var k=0; k<lines.length; k++) ctx.fillText(lines[k], bx+8, by+11+k*13);
+}
+/* ══════════ phasor diagram ══════════ */
+function phasorGeometry(Q){
+var vec={}, starts={}, k;
+for (k=0; k<Q.length; k++){
+var q=Q[k]; vec[q.k]=[q.m*Math.cos(theta+q.off), q.m*Math.sin(theta+q.off)];
+starts[q.k]=[0,0];
+}
+if (tipToTail()){
+var acc=[0,0], order=['VR','VL','VC'];
+for (k=0; k<order.length; k++){
+var key=order[k]; if (!vec[key]) continue;
+starts[key]=[acc[0],acc[1]];
+acc=[acc[0]+vec[key][0], acc[1]+vec[key][1]];
+}
+}
+return { vec:vec, starts:starts };
+}
+function drawPhasorPanel(Q,G){
+var grid=c('--lrc-grid','#cfcfcf'), axis=c('--lrc-axis','#555555'), txt=c('--lrc-text','#111111');
+ctx.save();
+ctx.fillStyle=txt; ctx.font='bold 13px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+ctx.fillText('Phasors (rotating counterclockwise at \u03C9)', 8, 134);
+ctx.strokeStyle=grid; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+ctx.beginPath(); ctx.arc(OX,OY,V0*vScale,0,2*Math.PI); ctx.stroke();
+ctx.setLineDash([]); ctx.strokeStyle=axis;
+ctx.beginPath(); ctx.moveTo(OX-RMAX-14,OY); ctx.lineTo(OX+RMAX+14,OY); ctx.moveTo(OX,OY+RMAX+6); ctx.lineTo(OX,OY-RMAX-10); ctx.stroke();
+ctx.restore();
+if (shown('V') && shown('I') && Math.abs(deg(phi)) > 0.5){
+ctx.save(); ctx.strokeStyle=txt; ctx.lineWidth=1.2;
+ctx.beginPath(); ctx.arc(OX,OY,30,-theta,-(theta+phi),phi>0); ctx.stroke();
+var am=theta+phi/2;
+ctx.fillStyle=txt; ctx.font='italic bold 14px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText('\u03C6', OX+44*Math.cos(am), OY-44*Math.sin(am));
+ctx.restore();
+}
+for (var k=0; k<Q.length; k++){
+var q=Q[k]; if (!shown(q.k)) continue;
+var s=G.starts[q.k], v=G.vec[q.k];
+var x0=OX+s[0], y0=OY-s[1], x1=OX+s[0]+v[0], y1=OY-s[1]-v[1];
+arrow(x0,y0,x1,y1,q.col,q.lw,q.dash);
+var len=Math.sqrt(v[0]*v[0]+v[1]*v[1]);
+if (len > 4){
+var ux=v[0]/len, uy=v[1]/len, px=-uy, py=ux;
+var lx, ly, onOrigin=(s[0]===0 && s[1]===0);
+if (q.k==='VR'){ lx=0.55*v[0]+px*-14; ly=0.55*v[1]+py*-14; }
+else if (q.k==='I'){ lx=v[0]+ux*10+px*14; ly=v[1]+uy*10+py*14; }
+else if (onOrigin){ lx=v[0]+ux*14; ly=v[1]+uy*14; }
+else {
+var mx=s[0]+0.5*v[0], my=s[1]+0.5*v[1], sg=(mx*px+my*py)>=0?1:-1;
+if (q.k==='VC') sg=-sg;
+lx=mx+px*14*sg-s[0]; ly=my+py*14*sg-s[1];
+}
+label(OX+s[0]+lx, OY-s[1]-ly, q.lab, q.sub, q.col);
+}
+}
+ctx.fillStyle=c('--lrc-axis','#555555'); ctx.beginPath(); ctx.arc(OX,OY,3,0,2*Math.PI); ctx.fill();
+}
+/* ══════════ time graph (vertical projections) ══════════ */
+function curve(q,xEnd){
+ctx.beginPath();
+for (var x=GX0; x<xEnd; x+=2){
+var a=(x-GX0)/GW*CYC, y=OY-q.m*Math.sin(a+q.off);
+if (x===GX0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+}
+var a2=(xEnd-GX0)/GW*CYC; ctx.lineTo(xEnd, OY-q.m*Math.sin(a2+q.off));
+ctx.stroke();
+}
+function drawGraph(Q,G){
+var grid=c('--lrc-grid','#cfcfcf'), axis=c('--lrc-axis','#555555'), txt=c('--lrc-text','#111111');
+var tt=tipToTail();
+ctx.save();
+ctx.fillStyle=txt; ctx.font='bold 13px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+ctx.fillText('Instantaneous values = vertical projections', GX0, 134);
+ctx.strokeStyle=grid; ctx.lineWidth=1; ctx.strokeRect(GX0,GT,GW,GB-GT);
+ctx.setLineDash([3,4]);
+var tl=['T/2','T','3T/2','2T'];
+ctx.fillStyle=axis; ctx.font='11px sans-serif'; ctx.textAlign='center';
+for (var k=1; k<=4; k++){
+var gx=GX0+k*GW/4;
+if (k<4){ ctx.beginPath(); ctx.moveTo(gx,GT); ctx.lineTo(gx,GB); ctx.stroke(); }
+ctx.fillText(tl[k-1], k<4?gx:gx-10, GB+10);
+}
+ctx.setLineDash([]); ctx.strokeStyle=axis;
+ctx.beginPath(); ctx.moveTo(GX0,OY); ctx.lineTo(GX1,OY); ctx.stroke();
+ctx.textAlign='right'; ctx.fillText('t', GX1-4, OY-9);
+var ca=theta%CYC, cx=GX0+ca/CYC*GW;
+for (k=0; k<Q.length; k++){
+var q=Q[k]; if (!shown(q.k)) continue;
+ctx.strokeStyle=q.col; ctx.lineWidth=Math.max(1.5,q.lw-1); ctx.setLineDash(q.dash);
+ctx.globalAlpha=0.22; curve(q,GX1);
+ctx.globalAlpha=1;    if (cx>GX0+1) curve(q,cx);
+}
+ctx.setLineDash([]);
+ctx.strokeStyle=axis; ctx.setLineDash([2,3]);
+ctx.beginPath(); ctx.moveTo(cx,GT); ctx.lineTo(cx,GB); ctx.stroke();
+ctx.setLineDash([]);
+for (k=0; k<Q.length; k++){
+q=Q[k]; if (!shown(q.k)) continue;
+var s=G.starts[q.k], v=G.vec[q.k];
+if (tt && (s[0]!==0 || s[1]!==0)) continue;
+var tx=OX+v[0], ty=OY-v[1];
+ctx.strokeStyle=q.col; ctx.lineWidth=1; ctx.globalAlpha=0.55; ctx.setLineDash([4,4]);
+ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(cx,ty); ctx.stroke();
+ctx.globalAlpha=1; ctx.setLineDash([]);
+ctx.fillStyle=q.col; ctx.beginPath(); ctx.arc(cx,ty,4,0,2*Math.PI); ctx.fill();
+}
+ctx.restore();
+}
+function drawStatus(){
+var r=regime(), tms=(w>0? theta/w*1000 : 0);
+ctx.save(); ctx.textBaseline='middle';
+ctx.fillStyle=c('--lrc-text','#111111'); ctx.font='12px monospace'; ctx.textAlign='left';
+ctx.fillText('t = '+tms.toFixed(1)+' ms   \u03C9t = '+(deg(theta)%360).toFixed(0)+'\u00B0', 8, 446);
+ctx.font='bold 12px sans-serif'; ctx.textAlign='right';
+ctx.fillStyle = r.k==='res' ? c('--lrc-v','#6a1b9a') : (r.k==='ind' ? c('--lrc-vl','#1565c0') : c('--lrc-vc','#2e7d32'));
+ctx.fillText(r.s, W-8, 446);
+ctx.restore();
+}
+/* ── full redraw ── */
+function drawFrame(){
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle=c('--lrc-bg','#ffffff'); ctx.fillRect(0,0,W,H);
+var Q=quantities(), G=phasorGeometry(Q);
+drawBoard();
+drawDataBox();
+drawGraph(Q,G);
+drawPhasorPanel(Q,G);
+drawStatus();
+}
+/* ── narration ── */
+function sceneNarration(){
+var r=regime(), tt=tipToTail(), parts=[];
+var msg='The phasors rotate counterclockwise; \u03C9t is now '+(deg(theta)%360).toFixed(0)+' degrees. ';
+msg+=r.s+'. ';
+if (has.R) parts.push('VR = '+VR.toFixed(2)+' V, in phase with the current');
+if (has.L) parts.push('VL = '+VL.toFixed(2)+' V, 90 degrees ahead of the current');
+if (has.C) parts.push('VC = '+VC.toFixed(2)+' V, 90 degrees behind the current');
+msg+='Phasor lengths: '+parts.join('; ')+'. ';
+if (nVolt()>1){
+if (tt) msg+='In tip-to-tail mode the component phasors are placed head to tail, and the chain ends exactly at the tip of the source phasor V. ';
+if (has.L && has.C && !tt) msg+='VL and VC point in opposite directions, so they partly cancel. ';
+var sum=VR+VL+VC;
+if (sum > V0*1.01) msg+='Notice that the component amplitudes add to '+sum.toFixed(2)+' V, more than the source amplitude of '+V0+' V: they add as vectors, not as numbers. ';
+}
+msg+='Source voltage now: v = '+sgn(V0*Math.sin(theta+phi),2)+' V. ';
+if (showCur) msg+='Current now: i = '+(singular?'unbounded':fmtI(I0*Math.sin(theta),I0,true))+'.';
+else msg+='The current display is off.';
+lrcA11y1007.narrate(msg);
+}
+function settingsNarration(prefix){
+var r=regime(), comp=[];
+if (has.R) comp.push('R = '+fmtOhm(R,0));
+if (has.L) comp.push('L = '+Math.round(L*1000)+' mH');
+if (has.C) comp.push('C = '+fmtCap(Cap));
+var msg=prefix+circuitName()+': '+comp.join(', ')+', f = '+f+' Hz. ';
+if (has.L) msg+='XL = '+fmtOhm(XL,1)+'. ';
+if (has.C) msg+='XC = '+fmtOhm(XC,1)+'. ';
+msg+= singular ? 'Impedance is zero, so the current has no limit. ' : 'Impedance Z = '+fmtOhm(Z,1)+', current amplitude '+fmtI(I0,I0,false)+'. ';
+msg+=r.s+'.';
+if (has.L && has.C) msg+=' Resonant frequency f\u2080 = '+f0.toFixed(1)+' Hz.';
+lrcA11y1007.narrate(msg);
+lastRegime=r.k;
+}
+/* ── one physics step ── */
+function physicsStep(){
+theta += DTH;
+frameCount++;
+var r=regime();
+if (r.k!==lastRegime){ lastRegime=r.k; sceneNarration(); return; }
+if (frameCount % narrationEvery === 0) sceneNarration();
+}
+function runMotion(){
+physicsStep();
+drawFrame();
+if (runFlag === 1) timer = window.setTimeout(runMotion, 40);
+}
+/* ── public ── */
+function pl(){ window.clearTimeout(timer); runFlag=1; runMotion(); }
+function ps(){ window.clearTimeout(timer); runFlag=0; }
+function step(){ window.clearTimeout(timer); runFlag=0; theta+=STEPANG; drawFrame(); sceneNarration(); }
+function stepBack(){ window.clearTimeout(timer); runFlag=0; theta=Math.max(0,theta-STEPANG); drawFrame(); sceneNarration(); }
+function redraw(){ drawFrame(); }
+function upd(quiet){
+readInputs(); compute(); syncControls(); drawFrame();
+if (!quiet) settingsNarration('Settings changed. ');
+}
+/* add / remove a component (removed = replaced by a wire) */
+function toggleComp(k){
+var e=document.getElementById(INC_IDS[k]);
+readInputs();
+if (nVolt()===0){
+if (e) e.checked=true;
+lrcA11y1007.narrate('At least one component must stay in the circuit; with all three removed the source would be shorted.');
+return;
+}
+compute(); syncControls(); drawFrame();
+settingsNarration('The '+NAMES[k]+(has[k]?' is back in the circuit. ':' has been replaced by a wire. '));
+}
+/* show / hide everything that represents the current */
+function toggleCurrent(){
+showCur=!showCur; syncControls(); drawFrame();
+lrcA11y1007.narrate(showCur
+? 'Current display on: the dashed I phasor, the i(t) curve and the moving charges are shown.'
+: 'Current display off: only the voltage phasors and curves are shown.');
+}
+function setRes(){
+readInputs(); compute();
+if (!(has.L && has.C)){ lrcA11y1007.narrate('Resonance needs both an inductor and a capacitor in the circuit.'); return; }
+var el=document.getElementById('lrcF1007'), lo=10, hi=500;
+var target=Math.round(f0*2)/2, note='';
+if (target>hi){ target=hi; note='f\u2080 = '+f0.toFixed(0)+' Hz is above the slider range, so f is set to '+hi+' Hz. '; }
+if (target<lo){ target=lo; note='f\u2080 = '+f0.toFixed(0)+' Hz is below the slider range, so f is set to '+lo+' Hz. '; }
+if (el){ el.value=target; }
+var sp=document.getElementById('lrcFVal1007'); if (sp) sp.textContent=target;
+readInputs(); compute(); syncControls(); drawFrame();
+settingsNarration(note || (has.R ? 'Source set to the resonant frequency. Watch VL and VC cancel and V line up with I. '
+: 'Source set to the resonant frequency. With no resistor, only the small mismatch between f and f\u2080 limits the current, so VL and VC become very large. '));
+}
+function rst(){
+window.clearTimeout(timer); runFlag=0;
+readInputs(); compute(); syncControls();
+theta=0; frameCount=0;
+drawFrame();
+settingsNarration('Ready. ');
+var nb=document.getElementById('lrcNarBar1007');
+if (nb && nb.textContent) lrcA11y1007.narrate(nb.textContent+' Press Play.');
+}
+/* apply author settings once, then boot */
+(function applyConfig(){
+var inc = CFG.include || {};
+for (var k in INC_IDS){
+var e=document.getElementById(INC_IDS[k]);
+if (e && inc.hasOwnProperty(k)) e.checked = !!inc[k];
+if (e && CFG.lockComponents) e.style.display='none';
+}
+if (CFG.hasOwnProperty('showCurrent')) showCur = !!CFG.showCurrent;
+})();
+rst();
+return { pl:pl, ps:ps, step:step, stepBack:stepBack, rst:rst, upd:upd, setRes:setRes, redraw:redraw,
+ toggleComp:toggleComp, toggleCurrent:toggleCurrent };
+};
+var lrcSim1007 = new lrcGen();
+</script>
+<script>
+lrcA11y1007.init();
+lrcSim1007.redraw();
+lrcSim1007.rst();
+</script>

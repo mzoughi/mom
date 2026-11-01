@@ -1,0 +1,727 @@
+<div id="rc3root$thisq">
+<!-- ── Accessibility toolbar ── -->
+<div class="rc3_a11y$thisq" id="rc3A11yBar$thisq" role="toolbar" aria-label="Display options">
+<button type="button" class="rc3_a11ybtn$thisq" id="rc3BtnHC$thisq" onclick="rc3A11y$thisq.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rc3_a11ybtn$thisq" id="rc3BtnLM$thisq" onclick="rc3A11y$thisq.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rc3_a11ybtn$thisq" id="rc3BtnCB$thisq" onclick="rc3A11y$thisq.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rc3_a11ybtn$thisq rc3_a11yon$thisq" id="rc3BtnNR$thisq" onclick="rc3A11y$thisq.toggle('nr')" aria-pressed="true">NARRATION: ON</button></div>
+<!-- ── Title ── -->
+<div class="rc3_tbar$thisq"><h3>RC Circuit -- SP3T Switch (Charge / Open / Discharge)</h3></div>
+<!-- ── Canvas ── -->
+<div class="rc3_mcontent$thisq">
+<canvas id="rc3Canvas$thisq" width="900" height="460"></canvas></div>
+<!-- ── Narration bar ── -->
+<div id="rc3NarBar$thisq" class="rc3_narbar$thisq" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- ── Playback controls ── -->
+<div class="rc3_bbar$thisq">
+<input type="button" id="rc3Play$thisq" value="Play"
+onclick="if(this.value=='Play'){RC3$thisq.start();this.value='Pause';}else{this.value='Play';RC3$thisq.pause();}">
+<input type="button" value="Step &gt;&gt;" onclick="RC3$thisq.step()">
+<input type="button" value="Reset" onclick="RC3$thisq.reset(); document.getElementById('rc3Play$thisq').value='Play';">
+<input type="button" id="rc3SwBtn$thisq" value="Switch: CHARGE" onclick="RC3$thisq.cycleSwitch()"></div>
+<!-- ── Graph selector ── -->
+<div class="rc3_graphsel$thisq">
+<span>Graph:</span>
+<button type="button" class="rc3_gbtn$thisq rc3_gon$thisq" id="rc3GVC$thisq" onclick="RC3$thisq.setGraph('VC')">V<sub>C</sub></button>
+<button type="button" class="rc3_gbtn$thisq" id="rc3GVR1$thisq" onclick="RC3$thisq.setGraph('VR1')">V<sub>R1</sub></button>
+<button type="button" class="rc3_gbtn$thisq" id="rc3GVR2$thisq" onclick="RC3$thisq.setGraph('VR2')">V<sub>R2</sub></button>
+<button type="button" class="rc3_gbtn$thisq" id="rc3GVR3$thisq" onclick="RC3$thisq.setGraph('VR3')">V<sub>R3</sub></button></div>
+<!-- ── Sliders ── -->
+<div class="rc3_srow$thisq">
+<div class="rc3_slbl$thisq">R1 (Ω) -- 0 = short</div>
+<div class="rc3_smid$thisq"><input type="range" id="rc3SR1$thisq" min="0" max="$maxRC" step="$incRC" value="$R1"
+ oninput="document.getElementById('rc3VR1$thisq').textContent=this.value; RC3$thisq.reset();"></div>
+<div class="rc3_sval$thisq"><span id="rc3VR1$thisq">$R1</span> Ω</div></div>
+<div class="rc3_srow$thisq">
+<div class="rc3_slbl$thisq">R2 (Ω) -- 0 = short</div>
+<div class="rc3_smid$thisq"><input type="range" id="rc3SR2$thisq" min="0" max="$maxRC" step="$incRC" value="$R2"
+ oninput="document.getElementById('rc3VR2$thisq').textContent=this.value; RC3$thisq.reset();"></div>
+<div class="rc3_sval$thisq"><span id="rc3VR2$thisq">$R2</span> Ω</div></div>
+<div class="rc3_srow$thisq">
+<div class="rc3_slbl$thisq">R3 (Ω) -- 0 = remove</div>
+<div class="rc3_smid$thisq"><input type="range" id="rc3SR3$thisq" min="0" max="$maxRC" step="$incRC" value="$R3"
+ oninput="document.getElementById('rc3VR3$thisq').textContent=this.value; RC3$thisq.reset();"></div>
+<div class="rc3_sval$thisq"><span id="rc3VR3$thisq">$R3</span> Ω</div></div>
+<div class="rc3_srow$thisq">
+<div class="rc3_slbl$thisq">Capacitance C (F)</div>
+<div class="rc3_smid$thisq"><input type="range" id="rc3SC$thisq" min="$minRC" max="$maxRC" step="$incRC" value="$C"
+ oninput="document.getElementById('rc3VC_lbl$thisq').textContent=this.value; RC3$thisq.reset();"></div>
+<div class="rc3_sval$thisq"><span id="rc3VC_lbl$thisq">$C</span> F</div></div>
+<!-- ── Description ── -->
+<div class="rc3_flex$thisq">
+<p>The <strong>SP3T switch</strong> has three positions: <strong>CHARGE</strong> (connects battery through R1 and R2 to capacitor),
+<strong>OPEN</strong> (no connection -- capacitor holds its charge), and
+<strong>DISCHARGE</strong> (capacitor discharges through R2 and R3).
+Set R1 or R2 to <strong>0</strong> to short them. Set R3 to <strong>0</strong> to remove the discharge branch entirely.</p></div></div>
+<!-- #rc3root$thisq -->
+<!-- ════════════════ STYLES ════════════════ -->
+<style>
+#rc3root$thisq { font-family: Arial, sans-serif; }
+#rc3root$thisq {
+--rc3-bg: #fffde7; --rc3-graph-bg: #e0f7fa;
+--rc3-ui-bg: #f90; --rc3-ctrl-bg: #ddeebb;
+--rc3-slider-bg: #cce; --rc3-info-bg: #fffde7;
+--rc3-text: #000; --rc3-wire: #555;
+--rc3-charge: #0044cc;
+--rc3-vc: #0044cc; --rc3-vr1: #cc0000; --rc3-vr2: #007700; --rc3-vr3: #aa6600;
+--rc3-narbar: #ffefc0; --rc3-narborder: #e0b040;
+}
+#rc3root$thisq .rc3_a11y$thisq {width:896px; display:flex; gap:6px; padding:3px 2px; background:#222; flex-wrap:wrap; }
+#rc3root$thisq .rc3_a11ybtn$thisq {
+padding:2px 5px; font-size:.72rem; font-family:monospace; letter-spacing:.06em;
+border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#rc3root$thisq .rc3_a11ybtn$thisq:hover { border-color:#00e8d0; color:#00e8d0; }
+#rc3root$thisq .rc3_a11yon$thisq { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#rc3root$thisq .rc3_narbar$thisq {
+width:896px; min-height:28px; padding:2px 0px;
+background:var(--rc3-narbar); border-left:4px solid var(--rc3-narborder);
+font-size:.88rem; color:var(--rc3-text); font-style:italic;
+}
+#rc3root$thisq .rc3_tbar$thisq {width:896px; height:35px; padding:2px 2px; background:var(--rc3-ui-bg); text-align:center;}
+#rc3root$thisq .rc3_mcontent$thisq { width:900px; }
+#rc3root$thisq .rc3_bbar$thisq { width:892px; background:var(--rc3-ctrl-bg); padding:4px; text-align:center; }
+#rc3root$thisq .rc3_bbar$thisq input { margin:2px 4px; padding:2px 5px; cursor:pointer; }
+#rc3root$thisq .rc3_graphsel$thisq {
+width:900px; background:#e8e8f8; padding:2px 0px; display:flex; align-items:center; gap:5px;
+}
+#rc3root$thisq .rc3_gbtn$thisq {
+padding:3px 14px; border-radius:12px; border:2px solid #aaa;
+background:#fff; cursor:pointer; font-size:.9rem; font-weight:bold;
+}
+#rc3root$thisq .rc3_gon$thisq { border-color:#333; background:#333; color:#fff; }
+#rc3root$thisq .rc3_srow$thisq {
+width:900px; height:32px; display:flex; align-items:center;
+background:var(--rc3-slider-bg); border-bottom:1px solid #bbc;
+}
+#rc3root$thisq .rc3_slbl$thisq { width:200px; padding:0 8px; font-size:.85rem; }
+#rc3root$thisq .rc3_smid$thisq { flex:1; padding:0 8px; }
+#rc3root$thisq .rc3_smid$thisq input { width:100%; }
+#rc3root$thisq .rc3_sval$thisq { width:100px; padding:0 8px; font-size:.9rem; font-weight:bold; }
+#rc3root$thisq .rc3_flex$thisq { width:890px; min-height:60px; background:var(--rc3-info-bg); padding:4px 6px; font-size:.88rem; }</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var rc3A11y$thisq = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc: {
+'--rc3-bg':'#000','--rc3-graph-bg':'#001a1a','--rc3-ui-bg':'#1a1200','--rc3-ctrl-bg':'#001200',
+'--rc3-slider-bg':'#00001a','--rc3-info-bg':'#0a0a00','--rc3-text':'#fff','--rc3-wire':'#ccc',
+'--rc3-charge':'#00ffff','--rc3-vc':'#00ffee','--rc3-vr1':'#ffcc00','--rc3-vr2':'#00ff88','--rc3-vr3':'#ff8800',
+'--rc3-narbar':'#111','--rc3-narborder':'#ffcc00'
+},
+lm: {
+'--rc3-bg':'#fff','--rc3-graph-bg':'#e8f8ff','--rc3-ui-bg':'#f0a000','--rc3-ctrl-bg':'#c8e8a0',
+'--rc3-slider-bg':'#b8b8e8','--rc3-info-bg':'#fffff0','--rc3-text':'#000','--rc3-wire':'#333',
+'--rc3-charge':'#0033aa','--rc3-vc':'#0033aa','--rc3-vr1':'#aa0000','--rc3-vr2':'#005500','--rc3-vr3':'#885500',
+'--rc3-narbar':'#fff8dc','--rc3-narborder':'#c08000'
+},
+cb: {
+'--rc3-charge':'#0072b2','--rc3-vc':'#0072b2','--rc3-vr1':'#d55e00','--rc3-vr2':'#009e73','--rc3-vr3':'#e69f00'
+}
+};
+var DEFAULTS = {
+'--rc3-bg':'#fffde7','--rc3-graph-bg':'#e0f7fa','--rc3-ui-bg':'#f90','--rc3-ctrl-bg':'#ddeebb',
+'--rc3-slider-bg':'#cce','--rc3-info-bg':'#fffde7','--rc3-text':'#000','--rc3-wire':'#555',
+'--rc3-charge':'#0044cc','--rc3-vc':'#0044cc','--rc3-vr1':'#cc0000','--rc3-vr2':'#007700','--rc3-vr3':'#aa6600',
+'--rc3-narbar':'#ffefc0','--rc3-narborder':'#e0b040'
+};
+function applyVars(theme, on) {
+if (!ROOT) return;
+var vars = THEMES[theme];
+for (var p in vars) ROOT.style.setProperty(p, on ? vars[p] : DEFAULTS[p]);
+}
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else { b.style.background='#2a2e3a'; b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('rc3Canvas$thisq');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarration() {
+var nb = document.getElementById('rc3NarBar$thisq');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('rc3BtnNR$thisq');
+if (btn) { btn.textContent='NARRATION:'+(states.nr?'ON':'OFF'); styleBtn('rc3BtnNR$thisq', states.nr); }
+}
+function apply() {
+if (!ROOT) return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyCanvas();
+styleBtn('rc3BtnHC$thisq',states.hc); styleBtn('rc3BtnLM$thisq',states.lm); styleBtn('rc3BtnCB$thisq',states.cb);
+applyNarration();
+}
+return {
+init: function(){ ROOT=document.getElementById('rc3root$thisq'); apply(); },
+toggle: function(k){ states[k]=!states[k]; if(k==='hc'&&states.hc) states.lm=false; if(k==='lm'&&states.lm) states.hc=false; apply(); },
+isNarOn: function(){ return states.nr; },
+narrate: function(msg){ if(!states.nr) return; var nb=document.getElementById('rc3NarBar$thisq'); if(nb) nb.textContent=msg; },
+getColor:function(role){ var el=document.getElementById('rc3root$thisq'); return el?getComputedStyle(el).getPropertyValue('--rc3-'+role).trim():''; }
+};
+})();</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var RC3 = function(){
+var cv = document.getElementById('rc3Canvas$thisq');
+var ctx = cv.getContext('2d');
+var W=cv.width, H=cv.height;
+/* ══ Circuit geometry ══
+We lay out a clean rectangle:
+ Left rail (battery): x=xL, from yTop to yBot
+ Top rail: yTop, from xL to xR
+ Right rail (cap): x=xR, from yTop to yBot
+ Bottom rail: yBot, from xL to xR
+Key nodes on top rail:
+ xL -- left corner (battery+)
+ xL→xN1 -- wire from battery+ to R1 start
+ xN1→xN2 -- R1 (compact symbol, 60px wide, centered in this span)
+ xN2→xSW -- wire to SP3T pivot
+ xSW -- SP3T switch pivot (= nodeA)
+ xSW→xN3 -- wire from pivot to R2 start
+ xN3→xN4 -- R2 (compact symbol)
+ xN4→xR -- wire to cap top
+R3 hangs vertically from throw-3 contact of SP3T down to bottom rail.
+*/
+var xL = 55; // left rail x
+var xR = 410; // right rail x (cap)
+var yTop = 60; // top rail y
+var yBot = 380; // bottom rail y
+var yMid = (yTop+yBot)/2;
+/* Resistor symbol dimensions */
+var RES_W = 52; // fixed width of zigzag symbol
+var RES_H = 10; // amplitude of zigzag
+/* Top rail node x-positions */
+var xN1 = xL + 40; // R1 start (95)
+var xN2 = xN1 + RES_W; // R1 end = T1 contact (147)
+var xSW = xN2 + 55; // SP3T pivot -- gap right of T1, no wire between (202)
+var xN3 = xSW + 85; // R2 start -- room for switch label (287)
+var xN4 = xN3 + RES_W; // R2 end (339)
+// wire from xN4 to xR (71px)
+/* R3 / SP3T throw-3 branch */
+var xR3 = xSW + 28; // R3 column: slightly right of pivot (230)
+var yR3top = yTop + 48; // T3 contact y
+var yR3bot = yBot;
+/* Graph layout */
+var GX=460, GY=30, GW=420, GH=390;
+var GPadL=55, GPadB=40, GPadT=30, GPadR=15;
+var gInnerW=GW-GPadL-GPadR, gInnerH=GH-GPadT-GPadB;
+/* Simulation state */
+var Vmax=$v, R1=$R1,R2=$R2,R3=$R3,C=$C;
+var VC,Q,I,VR1,VR2,VR3;
+var time,index,deltat=0.01;
+/* switchPos: 1=charge, 2=open, 3=discharge */
+var switchPos;
+var timer, runFlag=0;
+var graphVar='VC';
+var xMajorTicks=1;
+var arraySize=8001, hist;
+/* Charge dot animation -- offset along each wire segment [0,1) */
+var dotOff = 0; // single phase offset, advances per step
+var DOT_STEP = 0.04; // fractional advance per physics step (scaled by |I|)
+var NDOTS = 6; // dots per segment
+var _narTau1=false,_narFull=false,_narDis1=false,_narDis2=false;
+function narrate(m){ rc3A11y$thisq.narrate(m); }
+function col(role){
+var v=rc3A11y$thisq.getColor(role);
+var def={bg:'#fffde7','graph-bg':'#e0f7fa',wire:'#555',charge:'#0044cc',
+vc:'#0044cc',vr1:'#cc0000',vr2:'#007700',vr3:'#aa6600'};
+return v||def[role]||'#000';
+}
+function readSliders(){
+R1=parseFloat(document.getElementById('rc3SR1$thisq').value);
+R2=parseFloat(document.getElementById('rc3SR2$thisq').value);
+R3=parseFloat(document.getElementById('rc3SR3$thisq').value);
+C =parseFloat(document.getElementById('rc3SC$thisq').value);
+}
+/* ══ Physics ══
+SP3T pos 1 (CHARGE): E → R1 → nodeA → R2 → C (series)
+SP3T pos 2 (OPEN): no path -- VC constant
+SP3T pos 3 (DISCHARGE): C → R2 → nodeA → R3 → bot (series)
+*/
+function computeDerivative(){
+var r1=R1>0?R1:0, r2=R2>0?R2:0, r3=R3>0?R3:0;
+if(switchPos===1){
+var Rt=r1+r2;
+return Rt>0?(Vmax-VC)/(Rt*C):0;
+} else if(switchPos===3){
+var Rt=r2+r3;
+return Rt>0?-VC/(Rt*C):0;
+}
+return 0; // open
+}
+function computeCurrents(dVC){
+var Icap=C*dVC;
+var r1=R1>0?R1:0, r2=R2>0?R2:0, r3=R3>0?R3:0;
+I=Icap;
+if(switchPos===1){
+VR1=r1*Icap; VR2=r2*Icap; VR3=0;
+} else if(switchPos===3){
+VR1=0; VR2=r2*Icap; VR3=r3*Icap;
+} else {
+VR1=0; VR2=0; VR3=0; I=0;
+}
+}
+function getTau(){
+if(switchPos===1) return ((R1>0?R1:0)+(R2>0?R2:0))*C;
+if(switchPos===3) return ((R2>0?R2:0)+(R3>0?R3:0))*C;
+return null;
+}
+/* ══ Init ══ */
+function init(){
+window.clearTimeout(timer);
+readSliders();
+index=0; time=0;
+VC=0; Q=0; I=0; VR1=0; VR2=0; VR3=0;
+switchPos=2; dotOff=0;
+xMajorTicks=1;
+_narTau1=false;_narFull=false;_narDis1=false;_narDis2=false;
+hist=new Array(arraySize);
+for(var i=0;i<arraySize;i++) hist[i]={VC:0,VR1:0,VR2:0,VR3:0};
+runFlag=0;
+updateSwBtn();
+draw();
+narrate('Ready. R1='+R1.toFixed(2)+'\u03A9, R2='+R2.toFixed(2)+'\u03A9, R3='+(R3>0?R3.toFixed(2)+'\u03A9':'removed')+
+', C='+C.toFixed(2)+'F, E='+Vmax.toFixed(2)+'V. Switch: OPEN. Press Play.');
+}
+function updateSwBtn(){
+var b=document.getElementById('rc3SwBtn$thisq');
+var labels=['CHARGE','OPEN','DISCHARGE'];
+if(b) b.value='Switch: '+labels[switchPos-1];
+}
+/* ══ Draw ══ */
+function draw(){
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle=col('bg');
+ctx.fillRect(0,0,W,H);
+if(time>10) xMajorTicks=2;
+if(time>20) xMajorTicks=4;
+if(time>40) xMajorTicks=8;
+drawCircuit();
+drawGraph();
+}
+/* ══ Circuit drawing ══ */
+function drawCircuit(){
+var wc=col('wire'), cc=col('charge');
+ctx.lineWidth=2.5; ctx.strokeStyle=wc;
+/* ── Wires ── */
+/* Left rail drawn by battery function */
+/* Top rail left: corner to R1 start */
+wire(xL,yTop,xN1,yTop);
+/* R1 or short */
+if(R1>0) drawResistorH(xN1,yTop,RES_W,'R1='+R1.toFixed(2)+'\u03A9',wc);
+else wireShort(xN1,yTop,xN2,yTop,wc);
+//xN2+26,
+wire(xN2,yTop,xN2+26,yTop);
+/* NO wire between R1-end (T1 contact) and pivot -- gap is intentional.
+ In CHARGE the switch arm bridges this gap electrically. */
+/* Pivot junction dot */
+dot(xSW+26,yTop,5,wc);
+/* Wire pivot → R2: always present (R2 is always to the right of pivot) */
+wire(xSW+26,yTop,xN3,yTop);
+/* R2 or short (always drawn -- it is in the physical circuit) */
+if(R2>0) drawResistorH(xN3,yTop,RES_W,'R2='+R2.toFixed(2)+'\u03A9',wc);
+else wireShort(xN3,yTop,xN4,yTop,wc);
+/* Wire R2-end → right corner (always present) */
+wire(xN4,yTop,xR,yTop);
+/* Right rail */
+wire(xR,yTop,xR,yTop+35);
+wire(xR,yBot-35,xR,yBot);
+/* Bottom rail */
+wire(xR,yBot,xL,yBot);
+/* ── R3 branch -- hangs from T3 contact at (xR3,yR3top) to bottom rail ── */
+/* Junction dot at bottom */
+dot(xR3,yBot,5,wc);
+/* R3 column wire: from T3 contact down through R3 to bottom rail.
+ drawResistorV draws its own internal stubs, so we only draw stubs
+ from T3 contact to symbol top, and symbol bottom to bottom rail. */
+if(R3>0){
+wire(xR3, yR3top, xR3, yR3top+12); // stub above R3 symbol
+drawResistorV(xR3, yR3top+12, yBot-10, 'R3='+R3.toFixed(2)+'\u03A9', wc);
+wire(xR3, yBot-10, xR3, yBot); // stub below R3 symbol
+} else {
+/* R3=0: plain wire from T3 contact to bottom */
+wire(xR3, yR3top, xR3, yBot);
+}
+/* Battery */
+drawBattery(xL,yMid,wc);
+/* SP3T switch -- pivot at xSW, throw-3 contact at (xR3,yR3top) */
+drawSP3T(xSW,yTop,switchPos,wc);
+/* Capacitor */
+drawCapacitor(xR,yTop+35,yBot-35,wc);
+/* Voltage readout labels */
+ctx.font='bold 12px Arial'; ctx.textAlign='left';
+var lx=GX-220, ly=H-55;
+ctx.fillStyle=col('vc'); ctx.fillText('VC = '+VC.toFixed(3)+' V', lx,ly);
+ctx.fillStyle=col('vr1'); ctx.fillText('VR1 = '+VR1.toFixed(3)+' V',lx,ly+16);
+ctx.fillStyle=col('vr2'); ctx.fillText('VR2 = '+VR2.toFixed(3)+' V',lx,ly+32);
+ctx.fillStyle=col('vr3'); ctx.fillText('VR3 = '+VR3.toFixed(3)+' V',lx+130,ly);
+ctx.fillStyle='#555';
+ctx.fillText('I = '+I.toFixed(4)+' A', lx+130,ly+16);
+ctx.fillText('t = '+time.toFixed(2)+' s',lx+130,ly+32);
+/* Charge dots */
+if(Math.abs(I)>1e-6) drawDots(cc);
+}
+/* ── Wire helpers ── */
+function wire(x1,y1,x2,y2){
+ctx.strokeStyle=col('wire'); ctx.lineWidth=2.5;
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+}
+function dot(x,y,r,c){
+ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI);
+ctx.fillStyle=c; ctx.fill();
+}
+/* Short-circuit wire -- just a plain wire, NO label */
+function wireShort(x1,y1,x2,y2,wc){
+ctx.strokeStyle=wc; ctx.lineWidth=2.5;
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+}
+/* ── Resistor (horizontal) -- compact fixed-width symbol centered ──
+The symbol occupies exactly [x0, x0+RES_W] on the rail.
+Plain wire already connects the node to x0 and x0+RES_W. */
+function drawResistorH(x0,y,w,label,wc){
+var n=8, seg=w/n;
+ctx.strokeStyle=wc; ctx.lineWidth=2.5;
+ctx.beginPath(); ctx.moveTo(x0,y);
+for(var i=0;i<n;i++) ctx.lineTo(x0+seg*(i+0.5), y+(i%2===0?-RES_H:RES_H));
+ctx.lineTo(x0+w,y); ctx.stroke();
+ctx.fillStyle='#333'; ctx.font='11px Arial'; ctx.textAlign='center';
+ctx.fillText(label, x0+w/2, y-RES_H-6);
+}
+/* ── Resistor (vertical) -- compact fixed-height symbol ── */
+function drawResistorV(x,yStart,yEnd,label,wc){
+/* Fixed-height zigzag (RES_W px tall) centered in the segment.
+ Plain wire fills the remaining space above and below. */
+var ymid=(yStart+yEnd)/2;
+var zTop=ymid-RES_W/2, zBot=ymid+RES_W/2;
+ctx.strokeStyle=wc; ctx.lineWidth=2.5;
+/* wire above symbol */
+ctx.beginPath(); ctx.moveTo(x,yStart); ctx.lineTo(x,zTop); ctx.stroke();
+/* zigzag */
+var n=8, seg=RES_W/n;
+ctx.beginPath(); ctx.moveTo(x,zTop);
+for(var i=0;i<n;i++) ctx.lineTo(x+(i%2===0?-RES_H:RES_H), zTop+seg*(i+0.5));
+ctx.lineTo(x,zBot); ctx.stroke();
+/* wire below symbol */
+ctx.beginPath(); ctx.moveTo(x,zBot); ctx.lineTo(x,yEnd); ctx.stroke();
+ctx.fillStyle='#333'; ctx.font='11px Arial'; ctx.textAlign='right';
+ctx.fillText(label, x-RES_H-8, ymid+4);
+}
+/* ── Battery: single cell -- long positive line well above short negative ── */
+function drawBattery(x,ymid,wc){
+ctx.strokeStyle=wc;
+var gapY = 6; // half-gap between the two terminal lines
+/* Lead wires: top terminal up to top rail, bottom terminal down to bottom rail */
+ctx.lineWidth=2.5;
+ctx.beginPath(); ctx.moveTo(x,ymid-gapY); ctx.lineTo(x,yTop); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x,ymid+gapY); ctx.lineTo(x,yBot); ctx.stroke();
+/* long line = positive terminal */
+ctx.lineWidth=3;
+ctx.beginPath(); ctx.moveTo(x-20,ymid-gapY); ctx.lineTo(x+20,ymid-gapY); ctx.stroke();
+/* short line = negative terminal */
+ctx.lineWidth=1.5;
+ctx.beginPath(); ctx.moveTo(x-11,ymid+gapY); ctx.lineTo(x+11,ymid+gapY); ctx.stroke();
+/* + and − labels beside terminals */
+ctx.fillStyle='red'; ctx.font='13px Arial'; ctx.textAlign='left';
+ctx.fillText('+', x+24, ymid-gapY+5);
+ctx.fillStyle='blue';
+ctx.fillText('−', x+24, ymid+gapY+5);
+/* E= label above the positive terminal, left-aligned */
+ctx.lineWidth=2.5;
+ctx.fillStyle='#333'; ctx.font='bold 12px Arial'; ctx.textAlign='left';
+ctx.fillText('E='+Vmax.toFixed(2)+'V', x+28, ymid-gapY-8);
+}
+/* ── SP3T switch ──
+Pivot at (px, py) on the top rail.
+Three throws:
+ 1 = left along top rail → toward R1/battery
+ 2 = open (no arm drawn)
+ 3 = downward → toward R3
+The arm rotates between the three positions.
+Contact points:
+ T1: (px-30, py) left contact
+ T2: (open -- no dot)
+ T3: (px, py+50) lower contact
+*/
+function drawSP3T(px,py,pos,wc){
+/* SP3T geometry
+ Common (pivot): (px, py) on top rail
+ T1 contact (CHARGE): (px-28, py) -- left along top rail
+ T2 (OPEN): arm raised up, no contact
+ T3 contact (DISCHARGE): (xR3, yR3top) -- diagonal down-right to R3 column */
+px=px+26;
+var T1x = xN2+26, T1y = py; // throw-1 = right end of R1 on top rail
+var T3x = xR3, T3y = yR3top; // throw-3 at top of R3 column
+/* Draw T1 contact dot (green filled circle) */
+dot(T1x, T1y, 4, '#080');
+/* Draw T3 contact dot */
+dot(T3x, T3y, 4, '#080');
+/* Pivot dot */
+dot(px, py, 5, wc);
+/* Arm */
+ctx.lineWidth=3;
+if(pos===1){
+/* CHARGE: arm goes left to T1 */
+ctx.strokeStyle='#c00';
+ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(T1x+4,T1y); ctx.stroke();
+} else if(pos===2){
+/* OPEN: arm raised straight up with open-circle tip */
+ctx.strokeStyle='#c00';
+ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,py-28); ctx.stroke();
+ctx.lineWidth=2;
+ctx.beginPath(); ctx.arc(px,py-28,4,0,2*Math.PI); ctx.stroke();
+} else {
+/* DISCHARGE: arm goes diagonally down-right to T3 */
+ctx.strokeStyle='#c00';
+ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(T3x,T3y); ctx.stroke();
+}
+/* Label: above and right of pivot */
+var modeLabel = pos===1?'CHARGE':pos===2?'OPEN':'DISCHARGE';
+ctx.fillStyle='#444'; ctx.font='bold 10px Arial'; ctx.textAlign='left';
+ctx.fillText('SW', px+10, py+20);
+ctx.fillStyle= pos===2?'#888':'#c00';
+ctx.fillText(modeLabel, px+10, py+30);
+}
+/* ── Capacitor ──
+Vertical, centered between yCapT and yCapB.
+Label to the LEFT of the cap.
+*/
+function drawCapacitor(x,yCapT,yCapB,wc){
+var gap=12, plateLen=32;
+var ymid=(yCapT+yCapB)/2;
+ctx.lineWidth=2.5; ctx.strokeStyle=wc;
+ctx.beginPath(); ctx.moveTo(x,yCapT); ctx.lineTo(x,ymid-gap); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x,yCapB); ctx.lineTo(x,ymid+gap); ctx.stroke();
+/* plates */
+var t=Math.min(1,Math.max(0,VC/Vmax));
+var rP=Math.floor(64+191*t), gbP=Math.floor(64*(1-t));
+var bN=Math.floor(64+191*t), grN=Math.floor(64*(1-t));
+ctx.lineWidth=10;
+ctx.strokeStyle='rgb('+rP+','+gbP+','+gbP+')';
+ctx.beginPath(); ctx.moveTo(x-plateLen,ymid-gap); ctx.lineTo(x+plateLen,ymid-gap); ctx.stroke();
+ctx.strokeStyle='rgb('+grN+','+grN+','+bN+')';
+ctx.beginPath(); ctx.moveTo(x-plateLen,ymid+gap); ctx.lineTo(x+plateLen,ymid+gap); ctx.stroke();
+/* label to LEFT */
+ctx.fillStyle='#333'; ctx.font='bold 12px Arial'; ctx.textAlign='right';
+ctx.fillText('C='+C.toFixed(2)+'F', x-plateLen-6, ymid);
+}
+/* ══ Charge dot animation ══
+We define the active wire segments as a list of polyline points.
+Dots are spaced evenly along the total path length and march forward.
+dotOff advances each step; wraps at 1.
+*/
+function getActivePath(){
+/* Returns array of {x,y} points forming the active current loop */
+if(switchPos===1){
+/* Charge: E+ → (up left rail) → top-left → R1 → nodeA(SW) → R2 → cap top
+then right rail down → bottom → left back to E− */
+return [
+{x:xL, y:yMid+8}, // battery positive terminal
+{x:xL, y:yTop},
+{x:xN1, y:yTop}, // start of R1
+{x:xN2, y:yTop}, // end of R1 = T1 contact
+{x:xSW, y:yTop}, // pivot (arm bridges gap in CHARGE)
+{x:xN3, y:yTop}, // start of R2
+{x:xN4, y:yTop}, // end of R2
+{x:xR, y:yTop},
+{x:xR, y:yTop+35}, // cap top lead
+/* (cap -- no dots inside) */
+{x:xR, y:yBot-35}, // cap bottom lead
+{x:xR, y:yBot},
+{x:xL, y:yBot},
+{x:xL, y:yMid+8} // back to battery negative
+];
+} else if(switchPos===3){
+/* Discharge: cap top → R2 → nodeA(SW) → R3 → bottom → right rail → cap bottom */
+return [
+{x:xR, y:yTop+35}, // cap top lead
+{x:xR, y:yTop},
+{x:xN4, y:yTop},
+{x:xN3, y:yTop}, // R2 end
+{x:xSW+26, y:yTop}, // nodeA = SW pivot = xR3
+{x:xR3, y:yR3top}, // throw-3 contact
+{x:xR3, y:yBot}, // bottom of R3
+{x:xR, y:yBot},
+{x:xR, y:yBot-35}, // cap bottom lead
+{x:xR, y:yTop+35} // back to cap top
+];
+}
+return [];
+}
+function pathLength(pts){
+var len=0;
+for(var i=1;i<pts.length;i++){
+var dx=pts[i].x-pts[i-1].x, dy=pts[i].y-pts[i-1].y;
+len+=Math.sqrt(dx*dx+dy*dy);
+}
+return len;
+}
+function pointAlongPath(pts,frac){
+var total=pathLength(pts);
+var target=((frac%1)+1)%1*total;
+var acc=0;
+for(var i=1;i<pts.length;i++){
+var dx=pts[i].x-pts[i-1].x, dy=pts[i].y-pts[i-1].y;
+var seg=Math.sqrt(dx*dx+dy*dy);
+if(acc+seg>=target){
+var f=(target-acc)/seg;
+return {x:pts[i-1].x+dx*f, y:pts[i-1].y+dy*f};
+}
+acc+=seg;
+}
+return pts[pts.length-1];
+}
+function drawDots(cc){
+var pts=getActivePath();
+if(pts.length<2) return;
+ctx.fillStyle=cc;
+for(var k=0;k<NDOTS;k++){
+var frac=dotOff+k/NDOTS;
+var p=pointAlongPath(pts,frac);
+ctx.beginPath(); ctx.arc(p.x,p.y,3,0,2*Math.PI); ctx.fill();
+}
+}
+/* ══ Graph drawing ══ */
+function drawGraph(){
+var gx0=GX+GPadL, gy0=GY+GPadT;
+var gw=gInnerW, gh=gInnerH;
+ctx.fillStyle=col('graph-bg');
+ctx.fillRect(gx0,gy0,gw,gh);
+/* Grid */
+ctx.strokeStyle='#aaa'; ctx.lineWidth=1;
+var nYdiv=6;
+for(var i=0;i<=nYdiv;i++){
+var yg=gy0+gh*i/nYdiv;
+ctx.beginPath(); ctx.moveTo(gx0,yg); ctx.lineTo(gx0+gw,yg); ctx.stroke();
+}
+var nXdiv=xMajorTicks*10;
+for(var i=0;i<=nXdiv;i++){
+var xg=gx0+gw*i/nXdiv;
+ctx.beginPath(); ctx.moveTo(xg,gy0); ctx.lineTo(xg,gy0+gh); ctx.stroke();
+}
+/* Axes */
+ctx.strokeStyle='#000'; ctx.lineWidth=2;
+ctx.beginPath(); ctx.moveTo(gx0,gy0); ctx.lineTo(gx0,gy0+gh); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(gx0,gy0+gh); ctx.lineTo(gx0+gw,gy0+gh); ctx.stroke();
+var yScale=gh/(2*Vmax), yZero=gy0+gh/2;
+var tMax=xMajorTicks*10, xScale=gw/tMax;
+/* Y labels */
+ctx.fillStyle='#000'; ctx.font='11px Arial'; ctx.textAlign='right';
+for(var i=0;i<=nYdiv;i++){
+var val=Vmax-2*Vmax*i/nYdiv;
+ctx.fillText(val.toFixed(1), gx0-4, gy0+gh*i/nYdiv+4);
+}
+/* X labels */
+ctx.textAlign='center';
+for(var i=0;i<=5;i++){
+ctx.fillText((tMax*i/5).toFixed(0), gx0+gw*i/5, gy0+gh+14);
+}
+/* Titles */
+ctx.font='bold 12px Arial'; ctx.fillStyle='#333'; ctx.textAlign='center';
+ctx.fillText('t (s)', gx0+gw/2, GY+GH+4);
+ctx.save(); ctx.translate(GX+10,gy0+gh/2); ctx.rotate(-Math.PI/2);
+ctx.fillText('Voltage (V)',0,0); ctx.restore();
+var titles={VC:'V\u2C7C',VR1:'V_R1',VR2:'V_R2',VR3:'V_R3'};
+ctx.font='bold 13px Arial'; ctx.fillStyle=col(graphVar.toLowerCase()); ctx.textAlign='center';
+ctx.fillText(titles[graphVar]+' vs. time', gx0+gw/2, gy0-10);
+/* Plot */
+if(index<1) return;
+ctx.strokeStyle=col(graphVar.toLowerCase()); ctx.lineWidth=2;
+ctx.beginPath();
+for(var i=0;i<=index&&i<arraySize;i++){
+var px=gx0+i*deltat*xScale;
+if(px>gx0+gw) break;
+var py=yZero-hist[i][graphVar]*yScale;
+if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+}
+ctx.stroke();
+/* Zero line */
+ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+ctx.beginPath(); ctx.moveTo(gx0,yZero); ctx.lineTo(gx0+gw,yZero); ctx.stroke();
+ctx.setLineDash([]);
+}
+/* ══ Physics step ══ */
+function stepPhysics(){
+var dVC=computeDerivative();
+VC+=dVC*deltat; Q=VC*C;
+computeCurrents(dVC);
+if(VC<-Vmax) VC=-Vmax;
+if(VC> Vmax) VC= Vmax;
+if(index<arraySize-1){
+hist[index]={VC:VC,VR1:VR1,VR2:VR2,VR3:VR3};
+index++;
+}
+time=index*deltat;
+/* Advance dot offset along path */
+var speed=Math.min(Math.abs(I)*DOT_STEP,0.06);
+dotOff=(dotOff+speed)%1;
+/* Narration */
+var tau=getTau();
+if(tau&&switchPos===1&&!_narTau1&&VC>=0.63*Vmax){
+_narTau1=true;
+narrate('\u03C4 = '+(tau.toFixed(2))+' s reached. VC \u2248 '+VC.toFixed(2)+' V.');
+}
+if(switchPos===1&&!_narFull&&VC>=0.99*Vmax){
+_narFull=true; narrate('Capacitor nearly fully charged: VC = '+VC.toFixed(2)+' V.');
+}
+if(switchPos===3&&!_narDis1&&VC<=0.37*Vmax&&VC>0){
+_narDis1=true; narrate('One \u03C4 into discharge. VC \u2248 '+VC.toFixed(2)+' V.');
+}
+if(switchPos===3&&!_narDis2&&VC<=0.01*Vmax){
+_narDis2=true; narrate('Capacitor nearly fully discharged.');
+}
+}
+function loop(){
+if(!runFlag) return;
+if(time>=80){runFlag=0; narrate('Simulation ended at t=80 s.'); draw(); return;}
+stepPhysics(); draw();
+timer=window.setTimeout(loop,10);
+}
+/* ══ Public API ══ */
+return {
+init: init,
+start: function(){ runFlag=1; loop();
+narrate('Playing. Switch pos '+(switchPos===1?'CHARGE':switchPos===2?'OPEN':'DISCHARGE')+'.'); },
+pause: function(){ runFlag=0;
+narrate('Paused at t='+time.toFixed(2)+' s. VC='+VC.toFixed(3)+' V.'); },
+step: function(){ stepPhysics(); draw(); },
+reset: function(){ init(); },
+cycleSwitch: function(){
+// cycle: 2(OPEN)→1(CHARGE)→3(DISCHARGE)→2(OPEN)
+if(switchPos===2) switchPos=1;
+else if(switchPos===1) switchPos=3;
+else switchPos=2;
+_narTau1=false;_narFull=false;_narDis1=false;_narDis2=false;
+updateSwBtn();
+var msg=['CHARGE -- E\u2192R1\u2192R2\u2192C','OPEN -- capacitor holds charge',
+ 'DISCHARGE -- C\u2192R2\u2192R3\u2192GND'];
+narrate('Switch: '+msg[switchPos-1]);
+if(!runFlag) draw();
+},
+setGraph: function(v){
+graphVar=v;
+['VC','VR1','VR2','VR3'].forEach(function(id){
+var b=document.getElementById('rc3G'+id+'$thisq');
+if(b) b.className='rc3_gbtn$thisq'+(id===v?' rc3_gon$thisq':'');
+});
+if(!runFlag) draw();
+},
+runFlag:0
+};
+};</script>
+<script>
+var RC3$thisq = new RC3();
+rc3A11y$thisq.init();
+RC3$thisq.init();</script>
+$rccharge3Rs<p>a) What is the charge time constant for the capacitor when using the circuit of Part 3?
+<br>[AB0]</p>
+<p>b) What is the discharge time constant for the capacitor when using the circuit of Part 3?
+<br>[AB1]</p>
+<p>c) Which resistor voltage can we measure to get both charge and discharge time constants.
+<br>[AB2]</p>
+<p>d) Which data fits can we use from the Pasco Capstone Data Collection tool can we use to get `tau`?
+<br>[AB3]</p>

@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electrostatics: The Parallel-Plate Capacitor</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="A parallel-plate capacitor lab: change the separation, the plate radius and the dielectric, read the capacitance meter, record data and graph C against 1/d; the results can be sent to answer boxes.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div style="max-width:780px;margin:0 0 10px;padding:8px 12px;background:#eef6ff;border:1px solid #bcdcff;border-radius:4px;font-family:Arial,sans-serif;font-size:13px">In the MOM version, the boxes in the question below are MOM&rsquo;s answer boxes; the &ldquo;Send&rdquo; buttons under the simulation fill them (the box numbers and the units are set at the top of that script). The recorded data are kept in the browser between page loads.</div><hr>
+<!--
+============================================================
+PARALLEL-PLATE CAPACITOR PRELAB WIDGET (MOM-compatible)
+============================================================
+A simulated capacitance meter and parallel-plate capacitor lab.
+Students vary plate separation, plate radius, and an optional
+dielectric slab, then read the capacitance from a digital meter.
+They can record measurements into a data table and plot C against
+any of the experimental variables (with a linear best-fit line for
+the variables where one is physically meaningful).
+Template variables:
+ : MOM instance id
+$color : LCD on-segment colour ('#222' for LCD, '#c33' for red LED)
+$bg    : LCD background ('#a8b89a' classic, '#1a1a1a' LED black)
+----- Pedagogical features -----
+* Adjustable plate separation d (0.2 to 5.0 cm)
+* Adjustable plate radius R (2 to 20 cm)
+* Optional dielectric slab with materials: paper (κ=3.7),
+glass (κ=5), mica (κ=7), water (κ=80), or custom-κ
+* Slab thickness (0 to d) and slab radius (0 to R) independently
+adjustable - supports partial-fill scenarios
+* Adjustable probe length (10 to 200 cm) which adds a stray
+capacitance of ~50 pF/m. The student is not told this directly;
+they should discover it as the y-intercept when plotting C vs 1/d.
+* 2% Gaussian measurement noise (with 0.5 pF noise floor) re-rolled
+on each parameter change so repeated measurements at the same
+configuration yield slightly different values (real lab data).
+* Data table with delete/clear support.
+* Scatter plot with best-fit line for variables expected to be
+linear (1/d, A, probe length).
+----- Physics implemented -----
+Inner cylinder (radius r, full height d): series combination of
+- dielectric layer (height t):  C_diel = κ ε₀ π r² / t
+- air layer (height d-t):       C_air  = ε₀ π r² / (d-t)
+Outer annulus (radii r..R, full height d): all air,
+C_outer = ε₀ π (R² - r²) / d
+Total = (C_inner) + (C_outer), then add probe stray, then add noise.
+----- Accessibility -----
+Same toolbar pattern as previous widgets (light mode, narration,
+high contrast, font size). Pronounceable dial range, ARIA-live
+region for the meter reading + experimental parameters, focus
+preservation across re-renders so keyboard users can scrub the
+sliders without losing position.
+============================================================
+-->
+<div id="cl_root" style="display:inline-block"></div>
+<script>
+(function(){
+var thisq  = '';
+var color  = '#ffffff';
+var bg     = '#222';
+var rootId = 'cl_root';
+/* ============================================================
+ STATE
+============================================================ */
+var stateKey = 'capLabState_' + thisq;
+if (!window[stateKey]) {
+window[stateKey] = {
+dial: 'F/2n',         /* default to a useful range for ~100 pF */
+d_cm: 1.0,
+R_cm: 20.0,
+dielectric: { name:'none', kappa:1.0, t_cm:0, r_cm:0 },
+probeLength_cm: 30,    /* default 30 cm probe leads */
+lastReading: null,     /* cached noisy reading (farads) for current config */
+lastReadingKey: null,  /* the parameter signature that the cached reading was computed for */
+liveReading: null,     /* the currently-displayed fluctuating value (farads) */
+data: [],              /* recorded measurements: [{d_cm, R_cm, dielectric, t_cm, r_cm, probeLength_cm, C_pF, t_stamp}, ...] */
+activeTab: 'data',     /* 'data' | 'graph' */
+graphX: 'd',           /* which variable to plot C against */
+a11y: { lightMode:false, narration:true, highContrast:false, fontSize:'normal', colorBlind:false },
+lastNarration: '',
+hasShownIntro: false
+};
+}
+var state = window[stateKey];
+/* ── saved between page loads (MOM submissions reload the page): the settings and the recorded data ── */
+var SAVE_KEY = 'capLabSaved_' + thisq, SAVE_FIELDS = ['dial', 'd_cm', 'R_cm', 'dielectric', 'probeLength_cm', 'data', 'activeTab', 'graphX', 'a11y', 'hasShownIntro'];
+if (!state._restored){ state._restored = true; try { var sv = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (sv) SAVE_FIELDS.forEach(function(k){ if (sv[k] !== undefined) state[k] = sv[k]; }); } catch(e){} }
+window['clSaveState_' + thisq] = function(){ try { var o = {}; SAVE_FIELDS.forEach(function(k){ o[k] = state[k]; }); var j = JSON.stringify(o); if (j !== state._lastSaved){ localStorage.setItem(SAVE_KEY, j); state._lastSaved = j; } } catch(e){} };
+/* ============================================================
+ PHYSICS
+============================================================ */
+var EPS0 = 8.8541878128e-12;
+var ALPHA_PROBE = 50e-12;     /* F per meter of probe lead */
+var capacitanceTrue = function(p){
+var R = p.R_m, d = p.d_m, kappa = p.kappa, t = p.t_m, r = p.r_m;
+if (d <= 0 || R <= 0) return 0;
+if (r === undefined) r = 0;
+if (t === undefined) t = 0;
+if (kappa === undefined) kappa = 1;
+r = Math.min(r, R);
+t = Math.min(t, d);
+var Ainner = Math.PI * r * r;
+var Aouter = Math.PI * (R*R - r*r);
+var C_inner;
+if (Ainner === 0) C_inner = 0;
+else if (t === 0 || kappa === 1) C_inner = EPS0 * Ainner / d;
+else if (t >= d) C_inner = kappa * EPS0 * Ainner / d;
+else {
+var C_diel = kappa * EPS0 * Ainner / t;
+var C_air = EPS0 * Ainner / (d - t);
+C_inner = (C_diel * C_air) / (C_diel + C_air);
+}
+var C_outer = (Aouter > 0) ? (EPS0 * Aouter / d) : 0;
+return C_inner + C_outer;
+};
+var capacitanceMeasured = function(p, probeLength_m, addNoise){
+var Ctrue = capacitanceTrue(p);
+var Cprobe = ALPHA_PROBE * (probeLength_m || 0);
+var C = Ctrue + Cprobe;
+if (addNoise) {
+var sigma = Math.max(0.5e-12, 0.02 * C);
+var u1 = Math.random(), u2 = Math.random();
+var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+C += z * sigma;
+}
+return Math.max(0, C);
+};
+/* ============================================================
+ DIAL (F-only) -- reduced from full multimeter
+============================================================ */
+/* We keep the same key names so the dial / range conversion code from
+ the multimeter widget can be reused unchanged. */
+var positions = [
+{ k:'F/2p',   a:-90, label:'2p',       group:'F' },
+{ k:'F/2n',   a:-60, label:'2n',       group:'F' },
+{ k:'F/20n',  a:-30, label:'20n',      group:'F' },
+{ k:'F/200n', a:0, label:'200n',     group:'F' },
+{ k:'F/2u',   a:30,label:'2\u00B5',  group:'F' },
+{ k:'F/20u',  a:60,label:'20\u00B5', group:'F' },
+{ k:'F/200u', a:90,label:'200\u00B5',group:'F' }
+];
+var dialMap = { 'off': 180 };   /* OFF at the bottom; the ranges spread across the top, 30 degrees apart */
+for (var ipi = 0; ipi < positions.length; ipi++) dialMap[positions[ipi].k] = positions[ipi].a;
+/* Range / display helpers */
+var rangeMultiplier = function(d){
+if (d === 'off') return 1;
+var rng = d.substring(d.indexOf('/')+1);
+var lc = rng.charAt(rng.length-1);
+if (lc === 'p') return 1e12;
+if (lc === 'n') return 1e9;
+if (lc === 'u' || lc === '\u00B5') return 1e6;
+return 1;
+};
+var rangeMaxValue = function(d){
+if (d === 'off') return 9999;
+var rng = d.substring(d.indexOf('/')+1);
+var lc = rng.charAt(rng.length-1);
+var s = ('pnu\u00B5'.indexOf(lc) >= 0) ? rng.substring(0, rng.length-1) : rng;
+return parseFloat(s);
+};
+var dialToSpoken = function(d){
+if (d === 'off') return 'Off';
+var rng = d.substring(d.indexOf('/')+1);
+var lc = rng.charAt(rng.length-1);
+var num = rng, prefix = '';
+if (lc === 'p') { prefix='pico'; num = rng.substring(0,rng.length-1); }
+else if (lc === 'n') { prefix='nano'; num = rng.substring(0,rng.length-1); }
+else if (lc === 'u' || lc === '\u00B5') { prefix='micro'; num = rng.substring(0,rng.length-1); }
+var unit = (num === '1') ? 'farad' : 'farads';
+return 'Capacitance, ' + num + ' ' + prefix + unit + ' range';
+};
+/* ============================================================
+ 7-SEGMENT (same as multimeter v6)
+============================================================ */
+var segMap={'0':{a:1,b:1,c:1,d:1,e:1,f:1,g:0},'1':{a:0,b:1,c:1,d:0,e:0,f:0,g:0},
+'2':{a:1,b:1,c:0,d:1,e:1,f:0,g:1},'3':{a:1,b:1,c:1,d:1,e:0,f:0,g:1},
+'4':{a:0,b:1,c:1,d:0,e:0,f:1,g:1},'5':{a:1,b:0,c:1,d:1,e:0,f:1,g:1},
+'6':{a:1,b:0,c:1,d:1,e:1,f:1,g:1},'7':{a:1,b:1,c:1,d:0,e:0,f:0,g:0},
+'8':{a:1,b:1,c:1,d:1,e:1,f:1,g:1},'9':{a:1,b:1,c:1,d:1,e:0,f:1,g:1},
+' ':{a:0,b:0,c:0,d:0,e:0,f:0,g:0},
+'O':{a:1,b:1,c:1,d:1,e:1,f:1,g:0},'L':{a:0,b:0,c:0,d:1,e:1,f:1,g:0}};
+var hSegPts=function(cx,cy,SL,ST){var hl=SL/2,ht=ST/2;return(cx-hl+ht)+','+cy+' '+(cx-hl)+','+(cy-ht)+' '+(cx+hl-ht)+','+(cy-ht)+' '+(cx+hl)+','+cy+' '+(cx+hl-ht)+','+(cy+ht)+' '+(cx-hl)+','+(cy+ht)};
+var vSegPts=function(cx,cy,SL,ST){var hl=SL/2,ht=ST/2;return cx+','+(cy-hl+ht)+' '+(cx-ht)+','+(cy-hl)+' '+(cx-ht)+','+(cy+hl-ht)+' '+cx+','+(cy+hl)+' '+(cx+ht)+','+(cy+hl-ht)+' '+(cx+ht)+','+(cy-hl+ht)};
+/* ============================================================
+ UTILITIES
+============================================================ */
+var captureFocusId=function(){var ae=document.activeElement;if(!ae||!ae.id)return null;if(ae.id.indexOf('_'+thisq)===-1)return null;return ae.id};
+var restoreFocus=function(id){if(!id)return;var el=document.getElementById(id);if(el&&typeof el.focus==='function'){try{el.focus({preventScroll:true})}catch(e){el.focus()}}};
+var a11yBtnStyle=function(active){var bgC=active?'rgba(0,232,208,.12)':'#2a2e3a';var brdr=active?'#00e8d0':'#404a60';var col=active?'#00e8d0':'#7a8aaa';return'padding:4px 10px;font-size:10px;font-family:monospace;letter-spacing:.06em;border-radius:3px;cursor:pointer;background:'+bgC+';border:1px solid '+brdr+';color:'+col+';'};
+var narrate=function(msg){state.lastNarration=msg};
+/* ============================================================
+ DIELECTRIC PRESETS
+============================================================ */
+var dielectricPresets = [
+{ name:'none',   kappa:1.0, label:'(no dielectric)' },
+{ name:'paper',  kappa:3.7, label:'paper' },
+{ name:'glass',  kappa:5.0, label:'glass' },
+{ name:'mica',   kappa:7.0, label:'mica' },
+{ name:'water',  kappa:80.0,label:'water' },
+{ name:'custom', kappa:2.0, label:'custom' }
+];
+/* ============================================================
+ SCATTER PLOT
+============================================================ */
+var renderScatterSVG = function(points, xLabel, yLabel, fit, width, height){
+var W = width || 380, H = height || 260;
+var marginL = 55, marginR = 18, marginT = 20, marginB = 40;
+var plotW = W - marginL - marginR;
+var plotH = H - marginT - marginB;
+var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" style="background:#fafafa;display:block">';
+if (points.length < 5) {
+s += '<rect x="'+marginL+'" y="'+marginT+'" width="'+plotW+'" height="'+plotH+'" fill="#fff" stroke="#ccc" stroke-width="1"/>';
+s += '<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="13" fill="#888" font-style="italic">Need at least 5 data points to graph</text>';
+s += '<text x="'+(W/2)+'" y="'+(H/2+18)+'" text-anchor="middle" font-size="11" fill="#aaa">Currently have '+points.length+'.</text>';
+s += '</svg>';
+return s;
+}
+var xs = points.map(function(p){return p.x});
+var ys = points.map(function(p){return p.y});
+var xMin = Math.min.apply(null, xs);
+var xMax = Math.max.apply(null, xs);
+var yMin = Math.min.apply(null, ys);
+var yMax = Math.max.apply(null, ys);
+var xPad = (xMax - xMin) * 0.08; if (xPad === 0) xPad = Math.abs(xMax) * 0.1 || 1;
+var yPad = (yMax - yMin) * 0.10; if (yPad === 0) yPad = Math.abs(yMax) * 0.1 || 1;
+var x0 = xMin - xPad, x1 = xMax + xPad;
+var y0 = Math.max(0, yMin - yPad);
+var y1 = yMax + yPad;
+var xToPx = function(x){ return marginL + ((x - x0) / (x1 - x0)) * plotW; };
+var yToPx = function(y){ return marginT + plotH - ((y - y0) / (y1 - y0)) * plotH; };
+s += '<rect x="'+marginL+'" y="'+marginT+'" width="'+plotW+'" height="'+plotH+'" fill="#fff" stroke="#666" stroke-width="1"/>';
+var niceStep = function(range){
+var raw = range / 5;
+var pow = Math.pow(10, Math.floor(Math.log(raw)/Math.log(10)));
+var frac = raw / pow;
+var nice = (frac < 1.5) ? 1 : (frac < 3) ? 2 : (frac < 7) ? 5 : 10;
+return nice * pow;
+};
+var xStep = niceStep(x1 - x0);
+var yStep = niceStep(y1 - y0);
+var xStart = Math.ceil(x0 / xStep) * xStep;
+var yStart = Math.ceil(y0 / yStep) * yStep;
+for (var xv = xStart; xv <= x1 + 1e-9; xv += xStep) {
+var xp = xToPx(xv);
+s += '<line x1="'+xp+'" y1="'+(marginT + plotH)+'" x2="'+xp+'" y2="'+(marginT + plotH + 4)+'" stroke="#666" stroke-width="0.8"/>';
+s += '<line x1="'+xp+'" y1="'+marginT+'" x2="'+xp+'" y2="'+(marginT + plotH)+'" stroke="#ddd" stroke-width="0.5"/>';
+s += '<text x="'+xp+'" y="'+(marginT + plotH + 16)+'" text-anchor="middle" font-size="9" fill="#333">'+xv.toPrecision(3)+'</text>';
+}
+for (var yv = yStart; yv <= y1 + 1e-9; yv += yStep) {
+var yp = yToPx(yv);
+s += '<line x1="'+(marginL - 4)+'" y1="'+yp+'" x2="'+marginL+'" y2="'+yp+'" stroke="#666" stroke-width="0.8"/>';
+s += '<line x1="'+marginL+'" y1="'+yp+'" x2="'+(marginL + plotW)+'" y2="'+yp+'" stroke="#ddd" stroke-width="0.5"/>';
+s += '<text x="'+(marginL - 6)+'" y="'+(yp + 3)+'" text-anchor="end" font-size="9" fill="#333">'+yv.toPrecision(3)+'</text>';
+}
+if (fit === 'linear' && points.length >= 3) {
+var n = points.length;
+var sx = 0, sy = 0, sxx = 0, sxy = 0;
+for (var i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; sxx += xs[i]*xs[i]; sxy += xs[i]*ys[i]; }
+var mDen = (n*sxx - sx*sx);
+if (Math.abs(mDen) > 1e-30) {
+var m = (n*sxy - sx*sy) / mDen;
+var b = (sy - m*sx) / n;
+/* Residual standard error (same as LINEST in Excel) */
+var ssRes = 0;
+for (var i = 0; i < n; i++) { var res = ys[i] - (m*xs[i]+b); ssRes += res*res; }
+var s2 = ssRes / (n - 2);           /* variance of residuals */
+var Sxx = sxx - sx*sx/n;            /* Σ(xi - x̄)² */
+var se_m = Math.sqrt(s2 / Sxx);
+var se_b = Math.sqrt(s2 * sxx / (n * Sxx));
+s += '<line x1="'+xToPx(x0)+'" y1="'+yToPx(m*x0+b)+'" x2="'+xToPx(x1)+'" y2="'+yToPx(m*x1+b)+'" stroke="#06a" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.8"/>';
+s += '<text x="'+(marginL + 5)+'" y="'+(marginT + 14)+'" text-anchor="start" font-size="10" fill="#06a" font-weight="bold">slope = '+m.toPrecision(3)+' \u00B1 '+se_m.toPrecision(2)+'</text>';
+s += '<text x="'+(marginL + 5)+'" y="'+(marginT + 26)+'" text-anchor="start" font-size="10" fill="#06a">intercept = '+b.toPrecision(3)+' \u00B1 '+se_b.toPrecision(2)+'</text>';
+}
+}
+for (var i = 0; i < points.length; i++) {
+var px = xToPx(points[i].x);
+var py = yToPx(points[i].y);
+s += '<circle cx="'+px+'" cy="'+py+'" r="3.5" fill="#c33" stroke="#700" stroke-width="0.8"/>';
+}
+s += '<text x="'+(marginL + plotW/2)+'" y="'+(H - 8)+'" text-anchor="middle" font-size="11" fill="#222" font-weight="bold">'+xLabel+'</text>';
+s += '<text x="14" y="'+(marginT + plotH/2)+'" text-anchor="middle" font-size="11" fill="#222" font-weight="bold" transform="rotate(-90 14 '+(marginT + plotH/2)+')">'+yLabel+'</text>';
+s += '</svg>';
+return s;
+};
+/* ============================================================
+ PLATE DIAGRAM
+============================================================ */
+var renderPlatesSVG = function(R_cm, d_cm, slab, hc){
+var W = 380, H = 280;
+var R_max = 22, d_max = 6;
+var marginX = 70, marginTopBot = 40;
+var avail_w = W - 2*marginX;
+var px_per_cm_h = avail_w / (2 * R_max);
+var plateThickness_cm = 0.3;
+var avail_h = H - 2*marginTopBot;
+var px_per_cm_v = avail_h / (d_max + 2*plateThickness_cm);
+var bg = hc ? '#000' : '#fafafa';
+var stk = hc ? '#fff' : '#664';
+var lblCol = hc ? '#fff' : '#444';
+var plateFill = hc ? '#888' : '#d0a040';
+var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" style="background:'+bg+';display:block" role="img" aria-label="Parallel plate capacitor diagram">';
+var plateW_px = 2 * R_cm * px_per_cm_h;
+var d_px = d_cm * px_per_cm_v;
+var plateThickness_px = plateThickness_cm * px_per_cm_v;
+var cx = W / 2;
+var midY = H / 2;
+var topPlateBottom_y = midY - d_px/2;
+var topPlateTop_y    = topPlateBottom_y - plateThickness_px;
+var botPlateTop_y    = midY + d_px/2;
+var botPlateBottom_y = botPlateTop_y + plateThickness_px;
+/* Top plate */
+s += '<rect x="'+(cx - plateW_px/2)+'" y="'+topPlateTop_y+'" width="'+plateW_px+'" height="'+plateThickness_px+'" fill="'+plateFill+'" stroke="'+stk+'" stroke-width="1.2"/>';
+s += '<line x1="'+(cx + plateW_px/2)+'" y1="'+topPlateTop_y+'" x2="'+(cx + plateW_px/2 + 6)+'" y2="'+(topPlateTop_y - 4)+'" stroke="'+stk+'" stroke-width="1"/>';
+s += '<line x1="'+(cx + plateW_px/2)+'" y1="'+topPlateBottom_y+'" x2="'+(cx + plateW_px/2 + 6)+'" y2="'+(topPlateBottom_y - 4)+'" stroke="'+stk+'" stroke-width="1"/>';
+/* Bottom plate */
+s += '<rect x="'+(cx - plateW_px/2)+'" y="'+botPlateTop_y+'" width="'+plateW_px+'" height="'+plateThickness_px+'" fill="'+plateFill+'" stroke="'+stk+'" stroke-width="1.2"/>';
+s += '<line x1="'+(cx + plateW_px/2)+'" y1="'+botPlateTop_y+'" x2="'+(cx + plateW_px/2 + 6)+'" y2="'+(botPlateTop_y - 4)+'" stroke="'+stk+'" stroke-width="1"/>';
+s += '<line x1="'+(cx + plateW_px/2)+'" y1="'+botPlateBottom_y+'" x2="'+(cx + plateW_px/2 + 6)+'" y2="'+(botPlateBottom_y - 4)+'" stroke="'+stk+'" stroke-width="1"/>';
+/* Probe leads going off-screen up */
+var leadX_top = cx - plateW_px/2 - 12;
+var leadX_bot = cx + plateW_px/2 + 12;
+s += '<line x1="'+leadX_top+'" y1="'+topPlateTop_y+'" x2="'+leadX_top+'" y2="6" stroke="#c33" stroke-width="2"/>';
+s += '<line x1="'+leadX_top+'" y1="'+topPlateTop_y+'" x2="'+(cx - plateW_px/2)+'" y2="'+topPlateTop_y+'" stroke="#c33" stroke-width="2"/>';
+s += '<line x1="'+leadX_bot+'" y1="'+botPlateBottom_y+'" x2="'+leadX_bot+'" y2="6" stroke="'+(hc?'#fff':'#222')+'" stroke-width="2"/>';
+s += '<line x1="'+leadX_bot+'" y1="'+botPlateBottom_y+'" x2="'+(cx + plateW_px/2)+'" y2="'+botPlateBottom_y+'" stroke="'+(hc?'#fff':'#222')+'" stroke-width="2"/>';
+/* Dielectric slab */
+if (slab && slab.t_cm > 0 && slab.r_cm > 0 && slab.kappa > 1) {
+var slab_w_px = 2 * slab.r_cm * px_per_cm_h;
+var slab_h_px = slab.t_cm * px_per_cm_v;
+var slabTop_y = midY - slab_h_px/2;
+var slabColors = {
+'paper':  { fill:'rgba(255,225,150,0.55)', stroke:'#a87833' },
+'glass':  { fill:'rgba(150,210,230,0.55)', stroke:'#3470a8' },
+'mica':   { fill:'rgba(255,180,200,0.55)', stroke:'#a04060' },
+'water':  { fill:'rgba(120,170,230,0.55)', stroke:'#2050a0' },
+'custom': { fill:'rgba(180,140,210,0.55)', stroke:'#603088' }
+};
+var c = slabColors[slab.name] || slabColors['custom'];
+s += '<rect x="'+(cx - slab_w_px/2)+'" y="'+slabTop_y+'" width="'+slab_w_px+'" height="'+slab_h_px+'" fill="'+c.fill+'" stroke="'+c.stroke+'" stroke-width="1.5" stroke-dasharray="3,2"/>';
+var labelText = slab.name + ' (κ='+slab.kappa.toFixed(1)+')';
+if (slab_h_px >= 14 && slab_w_px >= 80) {
+s += '<text x="'+cx+'" y="'+(slabTop_y + slab_h_px/2 + 4)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="'+c.stroke+'" font-family="Arial,sans-serif">'+labelText+'</text>';
+} else {
+var labelX = cx + Math.max(slab_w_px/2, 60) + 8;
+var labelY = slabTop_y + slab_h_px/2 + 3;
+if (labelX > W - 80) labelX = W - 80;
+s += '<text x="'+labelX+'" y="'+labelY+'" font-size="9" font-weight="bold" fill="'+c.stroke+'" font-family="Arial,sans-serif">'+labelText+'</text>';
+s += '<line x1="'+(cx + slab_w_px/2 + 2)+'" y1="'+labelY+'" x2="'+(labelX - 3)+'" y2="'+labelY+'" stroke="'+c.stroke+'" stroke-width="0.6"/>';
+}
+}
+/* Charge symbols on plate inner faces */
+var nCharges = Math.min(8, Math.max(3, Math.round(plateW_px / 30)));
+for (var i = 0; i < nCharges; i++) {
+var qx = cx - plateW_px/2 + (i + 0.5) * (plateW_px / nCharges);
+s += '<text x="'+qx+'" y="'+(topPlateBottom_y + 9)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#a04">+</text>';
+s += '<text x="'+qx+'" y="'+(botPlateTop_y - 2)+'" text-anchor="middle" font-size="14" font-weight="bold" fill="#048">−</text>';
+}
+/* d annotation */
+var dLabelX = cx + plateW_px/2 + 18;
+if (dLabelX > W - 65) dLabelX = W - 65;
+s += '<line x1="'+dLabelX+'" y1="'+topPlateBottom_y+'" x2="'+dLabelX+'" y2="'+botPlateTop_y+'" stroke="'+lblCol+'" stroke-width="1"/>';
+s += '<polygon points="'+(dLabelX-3)+','+(topPlateBottom_y+5)+' '+(dLabelX+3)+','+(topPlateBottom_y+5)+' '+dLabelX+','+topPlateBottom_y+'" fill="'+lblCol+'"/>';
+s += '<polygon points="'+(dLabelX-3)+','+(botPlateTop_y-5)+' '+(dLabelX+3)+','+(botPlateTop_y-5)+' '+dLabelX+','+botPlateTop_y+'" fill="'+lblCol+'"/>';
+s += '<text x="'+(dLabelX+5)+'" y="'+(midY + 4)+'" font-size="11" font-weight="bold" fill="'+lblCol+'">d = ('+d_cm.toFixed(2)+'&pm;0.09) cm</text>';
+/* R annotation */
+var rY = botPlateBottom_y + 18;
+s += '<line x1="'+cx+'" y1="'+rY+'" x2="'+(cx + plateW_px/2)+'" y2="'+rY+'" stroke="'+lblCol+'" stroke-width="1"/>';
+s += '<polygon points="'+(cx + plateW_px/2 - 5)+','+(rY-3)+' '+(cx + plateW_px/2 - 5)+','+(rY+3)+' '+(cx + plateW_px/2)+','+rY+'" fill="'+lblCol+'"/>';
+s += '<line x1="'+cx+'" y1="'+(rY-4)+'" x2="'+cx+'" y2="'+(rY+4)+'" stroke="'+lblCol+'" stroke-width="1"/>';
+s += '<text x="'+(cx + plateW_px/4)+'" y="'+(rY-4)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="'+lblCol+'">R = ('+R_cm.toFixed(1)+'&pm;0.5) cm</text>';
+s += '</svg>';
+return s;
+};
+/* ============================================================
+ COMPUTE READING -- live fluctuating display
+============================================================ */
+var paramKey = function(){
+var s = state.dial+'|'+state.d_cm.toFixed(3)+'|'+state.R_cm.toFixed(2)+'|'+
+state.dielectric.name+'|'+state.dielectric.kappa.toFixed(2)+'|'+
+state.dielectric.t_cm.toFixed(3)+'|'+state.dielectric.r_cm.toFixed(2)+'|'+
+state.probeLength_cm.toFixed(1);
+return s;
+};
+/* Roll a fresh noisy reading and store it as the live value. */
+var rollLiveReading = function(){
+if (state.dial === 'off') { state.liveReading = null; return; }
+var p = {
+R_m: state.R_cm/100, d_m: state.d_cm/100,
+kappa: state.dielectric.kappa,
+t_m: state.dielectric.t_cm/100,
+r_m: state.dielectric.r_cm/100
+};
+state.liveReading = capacitanceMeasured(p, state.probeLength_cm/100, true);
+};
+/* Return the current live reading (already rolled). */
+var getReading = function(){ return state.liveReading; };
+/* ---- Flicker interval: re-roll noise every ~800 ms ---- */
+var flickerKey = 'capLabFlicker_' + thisq;
+if (window[flickerKey]) { clearInterval(window[flickerKey]); }
+rollLiveReading();   /* initial roll */
+window[flickerKey] = setInterval(function(){
+rollLiveReading();
+/* Re-render only the LCD digits to avoid disturbing focus on sliders */
+renderLCD();
+}, 800);
+/* Lightweight LCD-only re-render (updates just the SVG inner content) */
+var renderLCD = function(){
+/* Skip re-render if user is actively interacting with a control */
+var ae = document.activeElement;
+if (ae && ae.id) {
+var aid = ae.id;
+if (aid.indexOf('_'+thisq) !== -1) {
+/* Don't interrupt slider drags or button focus */
+if ((ae.tagName === 'INPUT' && ae.type === 'range') ||
+ae.tagName === 'BUTTON' ||
+ae.tagName === 'SELECT') return;
+}
+}
+render();
+};
+/* ============================================================
+ RENDER
+============================================================ */
+var render = function(){
+var focusId = captureFocusId();
+var hc = state.a11y.highContrast;
+var caseColor = hc?'#000':'#e8c41a';
+var caseStroke = hc?'#fff':'#222';
+var lcdBg = hc?'#000':bg;
+var lcdSegColor = hc?'#fff':color;
+var panelBg = hc?'#000':'#b5b5b5';
+var panelStroke = hc?'#fff':'#555';
+var jackPanelBg = hc?'#000':'#8a0f0f';
+var dialFace = hc?'#222':'#cdcdcd';
+var dialStroke = hc?'#fff':'#444';
+var dialText = hc?'#fff':'#111';
+var dialSEPStroke = hc?'#fff':'#c00';
+var dialTextM = hc?'#fff':'#c00';
+var stripeColor = hc?'#666':'#888';
+/* Get reading */
+var rawReading = getReading();   /* in farads, or null if dial=off */
+var meterOn = (state.dial !== 'off');
+var displayValue = meterOn ? (rawReading * rangeMultiplier(state.dial)) : 0;
+var maxRange = rangeMaxValue(state.dial);
+var overflow = meterOn && (Math.abs(displayValue) >= maxRange * 0.99975);   /* 3 1/2 digits: at most 1999 counts */
+/* Parse for LCD */
+var parsed = (function(v){
+if (overflow) return { overflow:true, sign:'' };
+if (!meterOn) return { overflow:false, sign:'', digits:'    ', dp:0, blank:true };
+var sign='';   /* capacitance is non-negative */
+var mag = Math.abs(v);
+var dp = Math.max(0, 3 - Math.round(Math.log(maxRange)/Math.LN10));   /* the range sets the resolution: 2 -> 0.001, 20 -> 0.01, 200 -> 0.1 */
+var scaled=Math.round(mag*Math.pow(10,dp));
+var digits=String(scaled);
+while(digits.length<4)digits='0'+digits;
+if(digits.length>4)return{overflow:true,sign:sign};
+return{overflow:false,sign:sign,digits:digits,dp:dp};
+})(displayValue);
+/* 7-seg LCD */
+var seg7 = (function(){
+var DW=30,DH=54,SL=18,ST=5;
+var onCol=lcdSegColor;
+var offOp=(onCol==='#fff')?0.18:0.08;
+var signW=16,padX=8,padY=6;
+var totW=padX*2+signW+4*DW;
+var totH=padY*2+DH;
+var ccx=DW/2;
+var yTop=7,yMid=DH/2,yBot=DH-7;
+var xL=6,xR=DW-6;
+var yVT=(yTop+yMid)/2,yVB=(yMid+yBot)/2;
+var out='';
+var emit=function(xOff,segs,dot){
+var frag='<g transform="translate('+xOff+','+padY+') skewX(-4)">';
+var poly=function(pts,on){return'<polygon points="'+pts+'" fill="'+onCol+'" opacity="'+(on?1:offOp)+'"/>'};
+frag+=poly(hSegPts(ccx,yTop,SL,ST),segs.a);
+frag+=poly(vSegPts(xR,yVT,SL,ST),segs.b);
+frag+=poly(vSegPts(xR,yVB,SL,ST),segs.c);
+frag+=poly(hSegPts(ccx,yBot,SL,ST),segs.d);
+frag+=poly(vSegPts(xL,yVB,SL,ST),segs.e);
+frag+=poly(vSegPts(xL,yVT,SL,ST),segs.f);
+frag+=poly(hSegPts(ccx,yMid,SL,ST),segs.g);
+frag+='<circle cx="'+(DW-3)+'" cy="'+(yBot+3)+'" r="2" fill="'+onCol+'" opacity="'+(dot?1:offOp)+'"/>';
+frag+='</g>';
+return frag;
+};
+if(!meterOn||parsed.blank)for(var i=0;i<4;i++)out+=emit(padX+signW+i*DW,segMap[' '],false);
+else if(parsed.overflow){var ch=[' ',' ','O','L'];for(var i=0;i<4;i++)out+=emit(padX+signW+i*DW,segMap[ch[i]],false)}
+else for(var i=0;i<4;i++){var c=parsed.digits.charAt(i);var sg=segMap[c]||segMap[' '];var dot=(parsed.dp>0)&&(i===(3-parsed.dp));out+=emit(padX+signW+i*DW,sg,dot)}
+return{svg:out,w:totW,h:totH};
+})();
+/* Dial SVG */
+var buildDial = (function(){
+var CX=175,CY=320,R_DIAL=78,R_TICK_IN=86,R_TICK_OUT=94,R_DOT=100,R_LABEL=117,R_GLABEL=140;
+var out='';
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R_DIAL+'" fill="'+dialFace+'" stroke="'+dialStroke+'" stroke-width="1.5"/>';
+for(var s2=-3;s2<=3;s2++){var sy=CY+s2*7;var dx=Math.sqrt(Math.max(0,(R_DIAL-4)*(R_DIAL-4)-(s2*7)*(s2*7)));out+='<line x1="'+(CX-dx)+'" y1="'+sy+'" x2="'+(CX+dx)+'" y2="'+sy+'" stroke="'+stripeColor+'" stroke-width="1.3" opacity="0.55"/>'}
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R_TICK_OUT+'" fill="none" stroke="'+dialStroke+'" stroke-width="1.5"/>';
+/* Tick marks for each F position */
+var groupAngles = [];
+for(var i=0;i<positions.length;i++){
+var p=positions[i];
+var rad=p.a*Math.PI/180;
+var sn=Math.sin(rad),cs=Math.cos(rad);
+var tx1=CX+R_TICK_IN*sn,ty1=CY-R_TICK_IN*cs;
+var tx2=CX+R_TICK_OUT*sn,ty2=CY-R_TICK_OUT*cs;
+var dx=CX+R_DOT*sn,dy=CY-R_DOT*cs;
+var lx=CX+R_LABEL*sn,ly=CY-R_LABEL*cs;
+out+='<line x1="'+tx1.toFixed(1)+'" y1="'+ty1.toFixed(1)+'" x2="'+tx2.toFixed(1)+'" y2="'+ty2.toFixed(1)+'" stroke="'+dialStroke+'" stroke-width="1"/>';
+out+='<circle cx="'+dx.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="2" fill="'+dialStroke+'"/>';
+out+='<text x="'+lx.toFixed(1)+'" y="'+(ly+4).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif" fill="'+dialText+'">'+p.label+'</text>';
+out+='<circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="15" fill="transparent" style="cursor:pointer" onclick="clSliderUpdate_'+thisq+'('+(i+1)+')"><title>'+p.label+'F range</title></circle>';   /* tap a range to turn the dial there */
+groupAngles.push(p.a);
+}
+/* "F" label at the center of the F group */
+var sumX=0, sumY=0;
+for (var i=0; i<groupAngles.length; i++) {
+var rr = groupAngles[i]*Math.PI/180;
+sumX += Math.sin(rr); sumY += Math.cos(rr);
+}
+var midA = Math.atan2(sumX/groupAngles.length, sumY/groupAngles.length) * 180/Math.PI;
+var rrm = midA*Math.PI/180;
+var gx = CX+R_GLABEL*Math.sin(rrm), gy = CY-R_GLABEL*Math.cos(rrm);
+out+='<text x="'+CX+'" y="'+(CY+R_LABEL+4)+'" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif" fill="'+dialText+'">OFF</text><circle cx="'+CX+'" cy="'+(CY+R_LABEL)+'" r="15" fill="transparent" style="cursor:pointer" onclick="clSliderUpdate_'+thisq+'(0)"><title>off</title></circle>';
+out+='<text x="'+gx.toFixed(1)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="middle" font-size="14" font-weight="bold" font-family="Arial,sans-serif" fill="'+dialTextM+'">F</text>';
+/* Pointer */
+var angle=(typeof dialMap[state.dial]!=='undefined')?dialMap[state.dial]:0;
+out+='<g transform="rotate('+angle+' '+CX+' '+CY+')">';
+var shaftW=11,shaftTop=CY-R_DIAL+6,shaftH=R_DIAL-8;
+var shaftFill=hc?'#fff':'#d8d8d8',shaftStroke=hc?'#fff':'#333';
+out+='<rect x="'+(CX-shaftW/2)+'" y="'+shaftTop+'" width="'+shaftW+'" height="'+shaftH+'" fill="'+shaftFill+'" stroke="'+shaftStroke+'" stroke-width="0.8" rx="2"/>';
+if(!hc){out+='<rect x="'+(CX-shaftW/2+1.5)+'" y="'+(shaftTop+2)+'" width="2" height="'+(shaftH-4)+'" fill="#fff" opacity="0.75"/>';out+='<rect x="'+(CX+shaftW/2-3)+'" y="'+(shaftTop+2)+'" width="1.5" height="'+(shaftH-4)+'" fill="#777" opacity="0.5"/>'}
+out+='<rect x="'+(CX-shaftW/2-0.5)+'" y="'+shaftTop+'" width="'+(shaftW+1)+'" height="5" fill="#fff" stroke="'+shaftStroke+'" stroke-width="0.6"/>';
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="11" fill="'+(hc?'#fff':'#8a8a8a')+'" stroke="'+shaftStroke+'" stroke-width="1"/>';
+out+='<circle cx="'+CX+'" cy="'+CY+'" r="4" fill="'+(hc?'#000':'#2a2a2a')+'"/>';
+out+='</g>';
+return out;
+})();
+var spokenDial = dialToSpoken(state.dial);
+/* Build HTML */
+var html = '';
+html += '<div role="region" aria-label="Capacitor lab" style="display:inline-block;font-family:Arial,sans-serif">';
+/* A11Y TOOLBAR */
+html += '<div role="toolbar" aria-label="Display options" style="display:flex;gap:6px;padding:6px 8px;background:#222;flex-wrap:wrap;width:780px;box-sizing:border-box;border-radius:6px 6px 0 0">';
+html += '<button type="button" id="cl_btn_lm_'+thisq+'" onclick="clToggleA11y_'+thisq+'(\'lightMode\')" aria-pressed="'+state.a11y.lightMode+'" style="'+a11yBtnStyle(state.a11y.lightMode)+'">LIGHT MODE'+(state.a11y.lightMode?': ON':'')+'</button>';
+html += '<button type="button" id="cl_btn_nr_'+thisq+'" onclick="clToggleA11y_'+thisq+'(\'narration\')" aria-pressed="'+state.a11y.narration+'" style="'+a11yBtnStyle(state.a11y.narration)+'">NARRATION: '+(state.a11y.narration?'ON':'OFF')+'</button>';
+html += '<button type="button" id="cl_btn_hc_'+thisq+'" onclick="clToggleA11y_'+thisq+'(\'highContrast\')" aria-pressed="'+state.a11y.highContrast+'" style="'+a11yBtnStyle(state.a11y.highContrast)+'">HIGH CONTRAST'+(state.a11y.highContrast?': ON':'')+'</button>';
+html += '<button type="button" id="cl_btn_cb_'+thisq+'" onclick="clToggleA11y_'+thisq+'(\'colorBlind\')" aria-pressed="'+(!!state.a11y.colorBlind)+'" style="'+a11yBtnStyle(!!state.a11y.colorBlind)+'">COLOR-BLIND SAFE'+(state.a11y.colorBlind?': ON':'')+'</button>';
+var fsLabels={'normal':'NORMAL','large':'LARGE','xl':'XL'};
+html += '<button type="button" id="cl_btn_fs_'+thisq+'" onclick="clCycleFont_'+thisq+'()" aria-label="Font size: '+fsLabels[state.a11y.fontSize]+'. Click to cycle." style="'+a11yBtnStyle(state.a11y.fontSize!=='normal')+'">FONT: '+fsLabels[state.a11y.fontSize]+'</button>';
+html += '</div>';
+/* Narration bar */
+var narStyle = state.a11y.narration ? 'display:block;width:780px;padding:6px 10px;background:#ffefc0;border-left:4px solid #e0b040;font-size:13px;color:#333;font-style:italic;box-sizing:border-box;min-height:20px' : 'display:none';
+html += '<div role="status" aria-live="polite" aria-atomic="true" style="'+narStyle+'">';
+html += state.lastNarration || '&nbsp;';
+html += '</div>';
+/* Hidden ARIA-live for state */
+var spokenC = (rawReading!==null) ? ((rawReading*1e12).toFixed(2)+' picofarads') : 'display blank';
+html += '<div aria-live="polite" aria-atomic="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Reading '+spokenC+'. Plates: radius ('+state.R_cm.toFixed(1)+'&pm;0.5) centimeters, separation ('+state.d_cm.toFixed(2)+'&pm;0.09) centimeters.'+(state.dielectric.name!=='none'?' Dielectric: '+state.dielectric.name+', kappa '+state.dielectric.kappa.toFixed(1)+', thickness '+state.dielectric.t_cm.toFixed(2)+' centimeters, radius '+state.dielectric.r_cm.toFixed(1)+' centimeters.':'')+'</div>';
+/* Main two-column row */
+html += '<div style="display:flex;background:#222;width:780px;box-sizing:border-box">';
+/* === LEFT: METER === */
+var svgW=350,svgH=620;
+html += '<div style="flex:0 0 350px;padding:8px 4px 8px 8px">';
+var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+svgW+' '+svgH+'" width="'+svgW+'" height="'+svgH+'" role="img" aria-label="Capacitance meter">';
+s += '<rect x="4" y="4" width="'+(svgW-8)+'" height="'+(svgH-8)+'" rx="16" fill="'+caseColor+'" stroke="'+caseStroke+'" stroke-width="3"/>';
+s += '<rect x="14" y="14" width="'+(svgW-28)+'" height="'+(svgH-28)+'" rx="10" fill="none" stroke="'+caseStroke+'" stroke-width="1"/>';
+var lcdX=28,lcdY=28,lcdW=svgW-56,lcdH=105;
+s += '<rect x="'+lcdX+'" y="'+lcdY+'" width="'+lcdW+'" height="'+lcdH+'" rx="8" fill="#fff" stroke="'+caseStroke+'" stroke-width="2.5"/>';
+s += '<rect x="'+(lcdX+10)+'" y="'+(lcdY+10)+'" width="'+(lcdW-20)+'" height="'+(lcdH-20)+'" rx="4" fill="'+lcdBg+'" stroke="#666" stroke-width="0.5"/>';
+var segX=lcdX+(lcdW-seg7.w)/2,segY=lcdY+(lcdH-seg7.h)/2;
+s += '<g transform="translate('+segX+','+segY+')" aria-hidden="true">'+seg7.svg+'</g>';
+/* "F" indicator on the LCD when in F mode */
+if (meterOn) s += '<text x="'+(lcdX+lcdW-22)+'" y="'+(lcdY+lcdH/2+8)+'" text-anchor="middle" font-size="20" font-weight="bold" fill="'+lcdSegColor+'" opacity="0.85" font-family="Arial,sans-serif"></text>';
+s += '<rect x="18" y="150" width="'+(svgW-36)+'" height="355" rx="6" fill="'+panelBg+'" stroke="'+panelStroke+'" stroke-width="1"/>';
+if(meterOn){s += '<rect x="29" y="159" width="36" height="18" rx="4" fill="#3eff70" opacity="0.55"/><rect x="32" y="162" width="30" height="12" rx="3" fill="#0a4" stroke="#0f6" stroke-width="0.8"/>'}
+else{s += '<rect x="32" y="162" width="30" height="12" rx="3" fill="'+(hc?'#333':'#111')+'" stroke="'+(hc?'#fff':'none')+'" stroke-width="'+(hc?'1':'0')+'"/>'}
+s += '<text x="32" y="188" font-size="11" font-weight="bold" fill="'+(hc?'#ff6666':'#c00')+'" font-family="Arial,sans-serif">ON/OFF</text>';
+s += buildDial;
+/* Jacks row -- only COM + V/Ω/F shown (capacitance uses these) */
+var jackY=520;
+s += '<rect x="18" y="'+jackY+'" width="'+(svgW-36)+'" height="88" rx="4" fill="'+jackPanelBg+'" stroke="'+(hc?'#fff':'none')+'" stroke-width="'+(hc?'1':'0')+'"/>';
+//      var jacks=[{id:'COM',x:130,label:'COM',sub:[]},{id:'VOF',x:240,label:'V/\u03A9/F',sub:['CAP MAX 200μF']}];
+var jacks=[{id:'COM',x:130,label:'COM',sub:[]},{id:'VOF',x:240,label:'C',sub:['CAP MAX 200μF']}];
+for (var i = 0; i < jacks.length; i++) {
+var j = jacks[i];
+var hi = meterOn;   /* both jacks "active" whenever meter is on (for capacitance) */
+if(hi){
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="14" fill="#3eff70" opacity="0.55"/>';
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="11" fill="none" stroke="#0f6" stroke-width="2"/>';
+}
+s+='<text x="'+j.x+'" y="'+(jackY+14)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="'+(hi?'#bfffd0':'#fff')+'" font-family="Arial,sans-serif">'+j.label+'</text>';
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="9" fill="#e0e0e0" stroke="#000" stroke-width="1"/>';
+s+='<circle cx="'+j.x+'" cy="'+(jackY+34)+'" r="4.5" fill="#5a0606" stroke="#000" stroke-width="0.5"/>';
+for (var k = 0; k < j.sub.length; k++) {
+s+='<text x="'+j.x+'" y="'+(jackY+58+k*8)+'" text-anchor="middle" font-size="6.5" fill="#fff" font-family="Arial,sans-serif">'+j.sub[k]+'</text>';
+}
+}
+s += '</svg>';
+html += s;
+/* Slider for the F dial */
+var curIdx = (state.dial === 'off') ? 0 : (positions.findIndex(function(p){return p.k===state.dial;}) + 1);
+if (curIdx === 0 && state.dial !== 'off') {
+/* findIndex polyfill fallback */
+for (var i = 0; i < positions.length; i++) if (positions[i].k === state.dial) { curIdx = i+1; break; }
+}
+html += '<div style="background:#222;color:#eee;padding:6px 8px;font-size:11px;display:flex;align-items:center;gap:6px">';
+html += '<label for="cl_slider_'+thisq+'" style="font-weight:bold">Range:</label>';
+html += '<input type="range" min="0" max="'+positions.length+'" step="1" value="'+curIdx+'" id="cl_slider_'+thisq+'" style="flex:1;cursor:pointer" aria-valuetext="'+spokenDial.replace(/"/g,'&quot;')+'" oninput="clSliderUpdate_'+thisq+'(this.value)">';
+html += '<span aria-hidden="true" style="background:#000;color:#0f6;padding:2px 6px;border-radius:3px;font-family:monospace;min-width:80px;text-align:center;display:inline-block">'+(curIdx===0?'OFF':positions[curIdx-1].k)+'</span>';
+html += '</div>';
+html += '</div>';   /* end left col */
+/* === RIGHT: SETUP / DATA / GRAPH === */
+html += '<div style="flex:1;padding:8px;color:#eee;font-size:11px;overflow:hidden">';
+/* Plate diagram (always visible) */
+html += '<div style="background:#fff;border-radius:4px;border:1px solid #555;margin-bottom:6px">';
+var slabForRender = (state.dielectric.name !== 'none' && state.dielectric.kappa > 1) ? {
+name: state.dielectric.name,
+kappa: state.dielectric.kappa,
+t_cm: state.dielectric.t_cm,
+r_cm: state.dielectric.r_cm
+} : null;
+html += renderPlatesSVG(state.R_cm, state.d_cm, slabForRender, hc);
+html += '</div>';
+/* Parameter sliders */
+html += '<div style="background:#1c1c20;padding:6px 8px;border-radius:4px;margin-bottom:6px">';
+html += '<div style="font-weight:bold;margin-bottom:4px;color:#fff">Plate parameters</div>';
+/* d slider */
+html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+html += '<label for="cl_d_'+thisq+'" style="min-width:90px">Separation d:</label>';
+html += '<input type="range" min="0.2" max="5.0" step="0.1" value="'+state.d_cm+'" id="cl_d_'+thisq+'" style="flex:1" oninput="clSetD_'+thisq+'(this.value)" aria-valuetext="'+state.d_cm.toFixed(1)+' centimeters">';
+html += '<span aria-hidden="true" style="font-family:monospace;min-width:60px;text-align:right">('+state.d_cm.toFixed(2)+'&pm;0.09) cm</span>';
+html += '</div>';
+/* R slider */
+html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+html += '<label for="cl_R_'+thisq+'" style="min-width:90px">Plate radius R:</label>';
+html += '<input type="range" min="2" max="20" step="0.5" value="'+state.R_cm+'" id="cl_R_'+thisq+'" style="flex:1" oninput="clSetR_'+thisq+'(this.value)" aria-valuetext="'+state.R_cm.toFixed(1)+' centimeters">';
+html += '<span aria-hidden="true" style="font-family:monospace;min-width:60px;text-align:right">('+state.R_cm.toFixed(1)+'&pm;0.5) cm</span>';
+html += '</div>';
+/* Probe length */
+html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+html += '<label for="cl_probe_'+thisq+'" style="min-width:90px">Probe length:</label>';
+html += '<input type="range" min="10" max="200" step="5" value="'+state.probeLength_cm+'" id="cl_probe_'+thisq+'" style="flex:1" oninput="clSetProbe_'+thisq+'(this.value)" aria-valuetext="'+state.probeLength_cm.toFixed(0)+' centimeters">';
+html += '<span aria-hidden="true" style="font-family:monospace;min-width:60px;text-align:right">('+state.probeLength_cm.toFixed(0)+'&pm;2) cm</span>';
+html += '</div>';
+html += '</div>';
+/* Dielectric controls */
+html += '<div style="background:#1c1c20;padding:6px 8px;border-radius:4px;margin-bottom:6px">';
+html += '<div style="font-weight:bold;margin-bottom:4px;color:#fff">Dielectric slab (optional)</div>';
+html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+html += '<label for="cl_diel_'+thisq+'" style="min-width:90px">Material:</label>';
+html += '<select id="cl_diel_'+thisq+'" onchange="clSetDielectric_'+thisq+'(this.value)" style="flex:1">';
+for (var i = 0; i < dielectricPresets.length; i++) {
+var pp = dielectricPresets[i];
+html += '<option value="'+pp.name+'"'+(state.dielectric.name===pp.name?' selected':'')+'>'+pp.label+(pp.name!=='none'&&pp.name!=='custom'?' (κ='+pp.kappa.toFixed(1)+')':'')+'</option>';
+}
+html += '</select></div>';
+if (state.dielectric.name === 'custom') {
+html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+html += '<label for="cl_kappa_'+thisq+'" style="min-width:90px">κ (custom):</label>';
+html += '<input type="range" min="1.5" max="80" step="0.1" value="'+state.dielectric.kappa+'" id="cl_kappa_'+thisq+'" style="flex:1" oninput="clSetKappa_'+thisq+'(this.value)" aria-valuetext="kappa '+state.dielectric.kappa.toFixed(1)+'">';
+html += '<span aria-hidden="true" style="font-family:monospace;min-width:60px;text-align:right">κ='+state.dielectric.kappa.toFixed(1)+'</span>';
+html += '</div>';
+}
+if (state.dielectric.name !== 'none') {
+var tMax = state.d_cm;
+html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+html += '<label for="cl_t_'+thisq+'" style="min-width:90px">Thickness t:</label>';
+html += '<input type="range" min="0" max="'+tMax+'" step="0.05" value="'+Math.min(state.dielectric.t_cm,tMax)+'" id="cl_t_'+thisq+'" style="flex:1" oninput="clSetT_'+thisq+'(this.value)" aria-valuetext="'+state.dielectric.t_cm.toFixed(2)+' centimeters">';
+html += '<span aria-hidden="true" style="font-family:monospace;min-width:60px;text-align:right">'+state.dielectric.t_cm.toFixed(2)+' cm</span>';
+html += '</div>';
+var rMax = state.R_cm;
+html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+html += '<label for="cl_r_'+thisq+'" style="min-width:90px">Slab radius:</label>';
+html += '<input type="range" min="0" max="'+rMax+'" step="0.5" value="'+Math.min(state.dielectric.r_cm,rMax)+'" id="cl_r_'+thisq+'" style="flex:1" oninput="clSetSlabR_'+thisq+'(this.value)" aria-valuetext="'+state.dielectric.r_cm.toFixed(1)+' centimeters">';
+html += '<span aria-hidden="true" style="font-family:monospace;min-width:60px;text-align:right">'+state.dielectric.r_cm.toFixed(1)+' cm</span>';
+html += '</div>';
+}
+html += '</div>';
+/* Record button */
+html += '<div style="background:#1c1c20;padding:6px 8px;border-radius:4px;margin-bottom:6px;display:flex;gap:8px;align-items:center">';
+var canRecord = meterOn && rawReading !== null && !overflow;
+html += '<button type="button" id="cl_record_'+thisq+'" onclick="clRecord_'+thisq+'()" '+
+(canRecord?'':'disabled ')+
+'aria-label="Record current measurement to data table" '+
+'style="padding:6px 14px;background:'+(canRecord?'#0a6':'#444')+';color:#fff;border:none;border-radius:3px;font-weight:bold;cursor:'+(canRecord?'pointer':'not-allowed')+';font-size:12px">📋 Record measurement</button>';
+html += '<span style="color:#9c9;font-size:10px">'+state.data.length+' point'+(state.data.length===1?'':'s')+' recorded</span>';
+html += '</div>';
+/* Tabs: Data / Graph */
+html += '<div style="display:flex;gap:2px;margin-bottom:0">';
+var tabBtnStyle = function(active){return 'padding:6px 14px;background:'+(active?'#1c1c20':'#0d0d12')+';color:'+(active?'#fff':'#888')+';border:none;border-bottom:'+(active?'2px solid #0a6':'2px solid transparent')+';cursor:pointer;font-size:11px;font-weight:bold;border-radius:4px 4px 0 0'};
+html += '<button type="button" onclick="clSetTab_'+thisq+'(\'data\')" aria-pressed="'+(state.activeTab==='data')+'" style="'+tabBtnStyle(state.activeTab==='data')+'">📊 Data</button>';
+html += '<button type="button" onclick="clSetTab_'+thisq+'(\'graph\')" aria-pressed="'+(state.activeTab==='graph')+'" style="'+tabBtnStyle(state.activeTab==='graph')+'">📈 Graph</button>';
+html += '</div>';
+/* Tab content */
+html += '<div style="background:#1c1c20;padding:8px;border-radius:0 4px 4px 4px;min-height:140px">';
+if (state.activeTab === 'data') {
+if (state.data.length === 0) {
+html += '<div style="color:#888;font-style:italic;text-align:center;padding:18px 0">No measurements recorded yet. Set up the experiment, then click "Record measurement".</div>';
+} else {
+html += '<div style="max-height:230px;overflow-y:auto">';
+html += '<table style="width:100%;border-collapse:collapse;font-size:10px;font-family:monospace">';
+html += '<thead><tr style="background:#000;color:#0f6"><th style="padding:3px 4px;text-align:left">#</th><th style="padding:3px 4px;text-align:right">d (cm)</th><th style="padding:3px 4px;text-align:right">R (cm)</th><th style="padding:3px 4px;text-align:left">diel</th><th style="padding:3px 4px;text-align:right">κ</th><th style="padding:3px 4px;text-align:right">t (cm)</th><th style="padding:3px 4px;text-align:right">r (cm)</th><th style="padding:3px 4px;text-align:right">probe</th><th style="padding:3px 4px;text-align:right">C (pF)</th><th style="padding:2px"></th></tr></thead><tbody>';
+for (var i = 0; i < state.data.length; i++) {
+var dp = state.data[i];
+html += '<tr style="border-top:1px solid #333">';
+html += '<td style="padding:3px 4px;color:#888">'+(i+1)+'</td>';
+html += '<td style="padding:3px 4px;text-align:right">'+dp.d_cm.toFixed(2)+'</td>';
+html += '<td style="padding:3px 4px;text-align:right">'+dp.R_cm.toFixed(1)+'</td>';
+html += '<td style="padding:3px 4px">'+dp.dielectric_name+'</td>';
+html += '<td style="padding:3px 4px;text-align:right">'+dp.kappa.toFixed(1)+'</td>';
+html += '<td style="padding:3px 4px;text-align:right">'+dp.t_cm.toFixed(2)+'</td>';
+html += '<td style="padding:3px 4px;text-align:right">'+dp.r_cm.toFixed(1)+'</td>';
+html += '<td style="padding:3px 4px;text-align:right">'+dp.probeLength_cm.toFixed(0)+'</td>';
+html += '<td style="padding:3px 4px;text-align:right;color:#0f6;font-weight:bold">'+(dp.C_pF % 1 === 0 ? dp.C_pF.toFixed(0) : String(+dp.C_pF.toFixed(3)))+'</td>';
+html += '<td style="padding:2px"><button type="button" onclick="clDeleteRow_'+thisq+'('+i+')" aria-label="Delete row '+(i+1)+'" style="padding:1px 4px;background:#600;color:#faa;border:none;border-radius:2px;cursor:pointer;font-size:9px">×</button></td>';
+html += '</tr>';
+}
+html += '</tbody></table></div>';
+html += '<div style="margin-top:6px;display:flex;justify-content:flex-end">';
+html += '<button type="button" onclick="clClearData_'+thisq+'()" style="padding:4px 10px;background:#600;color:#faa;border:none;border-radius:3px;cursor:pointer;font-size:10px">Clear all data</button>';
+html += '</div>';
+}
+} else if (state.activeTab === 'graph') {
+/* Variable picker */
+var graphVars = [
+{ key:'d',     label:'d (cm)',          fit:'none',   xUnit:'cm' },
+{ key:'1/d',   label:'1/d (1/cm)',      fit:'linear', xUnit:'1/cm' },
+{ key:'R',     label:'R (cm)',          fit:'none',   xUnit:'cm' },
+{ key:'A',     label:'A = πR² (cm²)',   fit:'linear', xUnit:'cm²' },
+{ key:'kappa', label:'κ (dielectric)',  fit:'none',   xUnit:'' },
+{ key:'t',     label:'dielectric thickness t (cm)', fit:'none', xUnit:'cm' },
+{ key:'r',     label:'dielectric radius r (cm)',    fit:'none', xUnit:'cm' },
+{ key:'probe', label:'probe length (cm)', fit:'linear', xUnit:'cm' }
+];
+html += '<div style="margin-bottom:6px">';
+html += '<div style="font-weight:bold;margin-bottom:4px;color:#fff">Plot C against:</div>';
+html += '<div style="display:flex;flex-wrap:wrap;gap:4px 12px">';
+for (var i = 0; i < graphVars.length; i++) {
+var gv = graphVars[i];
+var isChecked = (state.graphX === gv.key);
+var rbId = 'cl_gx_'+gv.key+'_'+thisq;
+html += '<label for="'+rbId+'" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:'+(isChecked?'#0f6':'#bbb')+';font-weight:'+(isChecked?'bold':'normal')+'">';
+html += '<input type="radio" id="'+rbId+'" name="cl_graphX_'+thisq+'" value="'+gv.key+'"'+(isChecked?' checked':'')+' onclick="clSetGraphX_'+thisq+'(\''+gv.key+'\')" style="cursor:pointer;accent-color:#0f6">';
+html += gv.label;
+html += '</label>';
+}
+html += '</div>';
+html += '</div>';
+/* Build points */
+var sel = graphVars[0];
+for (var i = 0; i < graphVars.length; i++) if (graphVars[i].key === state.graphX) { sel = graphVars[i]; break; }
+var pts = [];
+for (var i = 0; i < state.data.length; i++) {
+var dp = state.data[i];
+var x;
+switch(state.graphX){
+case 'd': x = dp.d_cm; break;
+case '1/d': x = 1/dp.d_cm; break;
+case 'R': x = dp.R_cm; break;
+case 'A': x = Math.PI * dp.R_cm * dp.R_cm; break;
+case 'kappa': x = dp.kappa; break;
+case 't': x = dp.t_cm; break;
+case 'r': x = dp.r_cm; break;
+case 'probe': x = dp.probeLength_cm; break;
+default: x = 0;
+}
+pts.push({ x: x, y: dp.C_pF });
+}
+html += renderScatterSVG(pts, sel.label, 'C (pF)', sel.fit, 380, 230);
+if (pts.length >= 5) {
+html += '<div style="font-size:10px;color:#888;margin-top:4px;font-style:italic">Tip: choose a variable and vary only that parameter while keeping the others fixed for cleanest data.</div>';
+}
+}
+html += '</div>';   /* end tab content */
+html += '</div>';   /* end right col */
+html += '</div>';   /* end main flex */
+html += '</div>';   /* end region */
+if (state.a11y.colorBlind) { var CBMAP = { '#c33':'#d55e00', '#700':'#7a3000', '#06a':'#0072b2', '#0a6':'#009e73', '#0a4':'#009e73', '#0f6':'#56b4e9', '#3eff70':'#56b4e9', '#bfffd0':'#cde6f7', '#c00':'#d55e00', '#2050a0':'#0072b2', '#a04':'#cc79a7', '#9c9':'#9ecae1', '#ff6666':'#e69f00' };   /* colour-blind safe (Okabe-Ito) */
+  html = html.replace(/#(?:c33|700|06a|0a6|0a4|0f6|3eff70|bfffd0|c00|2050a0|a04|9c9|ff6666)(?![0-9a-fA-F])/g, function(c){ return CBMAP[c] || c; }); }
+document.getElementById(rootId).innerHTML = html;
+restoreFocus(focusId);
+};
+/* ============================================================
+ HANDLERS
+============================================================ */
+window['clSliderUpdate_'+thisq] = function(v){
+var idx = parseInt(v,10);
+state.dial = (idx === 0) ? 'off' : positions[idx-1].k;
+rollLiveReading();   /* immediate fresh roll for new range */
+if (idx === 0) narrate('Meter off');
+else narrate('Range: '+dialToSpoken(state.dial));
+render();
+};
+window['clSetD_'+thisq] = function(v){
+state.d_cm = parseFloat(v);
+/* Clamp t to <= d */
+if (state.dielectric.t_cm > state.d_cm) state.dielectric.t_cm = state.d_cm;
+rollLiveReading();
+render();
+};
+window['clSetR_'+thisq] = function(v){
+state.R_cm = parseFloat(v);
+if (state.dielectric.r_cm > state.R_cm) state.dielectric.r_cm = state.R_cm;
+rollLiveReading();
+render();
+};
+window['clSetProbe_'+thisq] = function(v){
+state.probeLength_cm = parseFloat(v);
+rollLiveReading();
+render();
+};
+window['clSetDielectric_'+thisq] = function(name){
+var preset = null;
+for (var i = 0; i < dielectricPresets.length; i++) if (dielectricPresets[i].name === name) preset = dielectricPresets[i];
+if (!preset) return;
+state.dielectric.name = preset.name;
+state.dielectric.kappa = preset.kappa;
+if (preset.name === 'none') {
+state.dielectric.t_cm = 0;
+state.dielectric.r_cm = 0;
+} else {
+/* Sensible defaults when adding a slab */
+if (state.dielectric.t_cm === 0) state.dielectric.t_cm = Math.min(0.3, state.d_cm);
+if (state.dielectric.r_cm === 0) state.dielectric.r_cm = Math.min(15, state.R_cm);
+}
+rollLiveReading();
+narrate('Dielectric: '+(preset.name==='none'?'none':preset.label+' (kappa '+preset.kappa.toFixed(1)+')'));
+render();
+};
+window['clSetKappa_'+thisq] = function(v){
+state.dielectric.kappa = parseFloat(v);
+rollLiveReading();
+render();
+};
+window['clSetT_'+thisq] = function(v){
+state.dielectric.t_cm = parseFloat(v);
+rollLiveReading();
+render();
+};
+window['clSetSlabR_'+thisq] = function(v){
+state.dielectric.r_cm = parseFloat(v);
+rollLiveReading();
+render();
+};
+window['clRecord_'+thisq] = function(){
+var C = state.liveReading;   /* snapshot whatever is currently displayed */
+if (C === null || state.dial === 'off') return;
+var mx_ = rangeMaxValue(state.dial), mul_ = rangeMultiplier(state.dial), dp_ = Math.max(0, 3 - Math.round(Math.log(mx_)/Math.LN10)), shown_ = Math.round(C*mul_*Math.pow(10, dp_))/Math.pow(10, dp_);
+if (shown_ >= mx_*0.99975) { narrate('The meter shows OL: choose a larger range before recording.'); return; }
+var Cp = +(shown_/mul_*1e12).toPrecision(6);   /* the reading as displayed, in pF */
+state.data.push({
+d_cm: state.d_cm,
+R_cm: state.R_cm,
+dielectric_name: state.dielectric.name,
+kappa: state.dielectric.kappa,
+t_cm: state.dielectric.t_cm,
+r_cm: state.dielectric.r_cm,
+probeLength_cm: state.probeLength_cm,
+C_pF: Cp,
+t_stamp: Date.now()
+});
+narrate('Recorded measurement #'+state.data.length+': '+(C*1e12).toFixed(0)+' picofarads');
+/* No cache reset -- the meter keeps fluctuating naturally */
+render();
+};
+window['clDeleteRow_'+thisq] = function(idx){
+state.data.splice(idx, 1);
+render();
+};
+window['clClearData_'+thisq] = function(){
+state.data = [];
+narrate('All data cleared');
+render();
+};
+window['clSetTab_'+thisq] = function(t){
+state.activeTab = t;
+render();
+};
+window['clSetGraphX_'+thisq] = function(v){
+state.graphX = v;
+render();
+};
+window['clToggleA11y_'+thisq] = function(key){
+state.a11y[key] = !state.a11y[key];
+if (key === 'narration' && state.a11y.narration) narrate('Narration on');
+render();
+};
+window['clCycleFont_'+thisq] = function(){
+var order = ['normal','large','xl'];
+var idx = order.indexOf(state.a11y.fontSize);
+state.a11y.fontSize = order[(idx+1)%order.length];
+render();
+};
+if (!state.hasShownIntro) {
+state.hasShownIntro = true;
+state.lastNarration = 'Capacitor lab ready. Adjust the plate separation and radius, optionally insert a dielectric slab, and read the capacitance from the meter. Click "Record measurement" to collect data points, then switch to the Graph tab to plot relationships.';
+}
+state.activeTab = state.activeTab || 'data';
+render();
+})();
+</script>
+<style>
+/* ── phones and narrow windows: the fixed 780 px layout becomes fluid; the two columns stack; the drawings scale ── */
+@media (max-width: 820px) {
+  #cl_root, #cl_root > div { display:block !important; width:100% !important; max-width:100% !important; }
+  #cl_root [style*="width:780px"] { width:100% !important; max-width:100% !important; }
+  #cl_root [style*="display:flex;background:#222;width:780px"] { flex-wrap:wrap !important; }
+  #cl_root [style*="flex:0 0 350px"] { flex:1 1 100% !important; max-width:100% !important; box-sizing:border-box; }
+  #cl_root [style*="flex:1;padding:8px;color:#eee"] { flex:1 1 100% !important; min-width:0 !important; box-sizing:border-box; }
+  #cl_root svg { width:100% !important; height:auto !important; max-width:100%; }
+  #cl_root [style*="flex:0 0 350px"] svg { max-width:420px; display:block; margin:0 auto; }
+  #cl_root table { display:block; overflow-x:auto; max-width:100%; }
+}
+@media (pointer: coarse) {
+  #cl_root button { min-height:36px; }
+  #cl_root input[type=range] { height:28px; }
+  #cl_root input[type=radio], #cl_root input[type=checkbox] { width:20px; height:20px; }
+}
+.cl_send { max-width:780px; box-sizing:border-box; margin:8px 0; padding:8px 10px; background:#222; color:#eee; border-radius:4px; font-family:Arial, sans-serif; font-size:13px; }
+.cl_send button { padding:7px 12px; margin:3px 4px 3px 0; border:1px solid #0a6; border-radius:3px; background:#063; color:#fff; cursor:pointer; font-size:13px; }
+.cl_send button:disabled { opacity:.45; cursor:not-allowed; }
+.cl_send .cl_sendmsg { margin-top:4px; color:#ffdd66; min-height:18px; }
+@media (max-width: 820px) { .cl_send { max-width:100%; } .cl_send button { width:100%; margin:4px 0; } }
+</style>
+<div class="cl_send" id="cl_send" role="region" aria-label="Send the results to the answer boxes">
+<b>Send to the answer boxes</b> <span id="cl_sendinfo" style="color:#9c9;font-size:12px"></span><br>
+<button type="button" id="cl_sendslope">Send the slope &plusmn; its uncertainty</button><button type="button" id="cl_sendint">Send the intercept &plusmn; its uncertainty</button><button type="button" id="cl_senddata">Send the data (d, C)</button>
+<div class="cl_sendmsg" id="cl_sendmsg" role="status" aria-live="polite"></div>
+</div>
+<script>
+(function(){
+/* ══════════ SETTINGS: what the buttons send, and where ══════════
+   The fit is the one on the graph of C against 1/d (all recorded points, at least 3): C (pF) = slope x (1/d) + intercept.
+   SEND_UNITS = 'graph':    as on the graph: the slope in pF.cm, the intercept in pF (the students convert the units).
+   SEND_UNITS = 'question': the slope in pF.m (= 10^-12 F.m), the intercept in pF, as asked in the question.
+   Answer boxes: '005' is <input id="qn005" size="8" aria-label="answer box 5">, and so on; an empty string hides the button. The data: d (cm),C (pF), one pair per line. */
+var SEND_UNITS = 'graph';
+var SLOPE_ANSWER_NUM = '005', SLOPE_UNC_ANSWER_NUM = '006';
+var INTERCEPT_ANSWER_NUM = '007', INTERCEPT_UNC_ANSWER_NUM = '008';
+var DATA_ANSWER_NUM = '';
+var thisq = '';
+function el(id){ return document.getElementById(id + thisq); }
+function getAnswerBox(num) {
+  // '' is kept as its own isolated string literal so MOM's substitution can't merge it with the digits.
+  var id = 'qn' + num;
+  return document.getElementById(id);
+}
+function st(){ return window['capLabState_' + thisq]; }
+function fit(){ var S = st(); if (!S || !S.data) return null; var P = S.data.filter(function(r){ return r.d_cm > 0; }), n = P.length; if (n < 3) return { n:n };
+  var sx = 0, sy = 0, sxx = 0, sxy = 0; P.forEach(function(r){ var x = 1/r.d_cm, y = r.C_pF; sx += x; sy += y; sxx += x*x; sxy += x*y; });
+  var den = n*sxx - sx*sx; if (Math.abs(den) < 1e-30) return { n:n }; var m = (n*sxy - sx*sy)/den, b = (sy - m*sx)/n, ss = 0;
+  P.forEach(function(r){ var e = r.C_pF - (m/r.d_cm + b); ss += e*e; }); var s2 = ss/(n - 2), Sxx = sxx - sx*sx/n;
+  return { n:n, m:m, b:b, sm:Math.sqrt(s2/Sxx), sb:Math.sqrt(s2*sxx/(n*Sxx)) }; }   /* the same fit as the graph's */
+function put(num, v){ var box = getAnswerBox(num); if (!box) return false; box.value = v; try { box.dispatchEvent(new Event('input', { bubbles:true })); box.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){} return true; }
+function p4(v){ return String(+(+v).toPrecision(4)); }
+function msg(t){ el('cl_sendmsg').textContent = t; }
+function scale(){ return SEND_UNITS === 'question' ? 0.01 : 1; }   /* pF.cm to pF.m */
+function unitM(){ return SEND_UNITS === 'question' ? 'pF\u00B7m' : 'pF\u00B7cm'; }
+el('cl_sendslope').addEventListener('click', function(){ var F = fit(); if (!F || F.m === undefined){ msg('Record at least 3 measurements first.'); return; }
+  var ok = put(SLOPE_ANSWER_NUM, p4(F.m*scale())) & put(SLOPE_UNC_ANSWER_NUM, p4(F.sm*scale())); msg(ok ? 'Sent the slope, ' + p4(F.m*scale()) + ' \u00B1 ' + p4(F.sm*scale()) + ' ' + unitM() + ', to answer boxes ' + SLOPE_ANSWER_NUM + ' and ' + SLOPE_UNC_ANSWER_NUM + '.' : 'Could not find answer boxes ' + SLOPE_ANSWER_NUM + ' and ' + SLOPE_UNC_ANSWER_NUM + ' on this page.'); });
+el('cl_sendint').addEventListener('click', function(){ var F = fit(); if (!F || F.b === undefined){ msg('Record at least 3 measurements first.'); return; }
+  var ok = put(INTERCEPT_ANSWER_NUM, p4(F.b)) & put(INTERCEPT_UNC_ANSWER_NUM, p4(F.sb)); msg(ok ? 'Sent the intercept, ' + p4(F.b) + ' \u00B1 ' + p4(F.sb) + ' pF, to answer boxes ' + INTERCEPT_ANSWER_NUM + ' and ' + INTERCEPT_UNC_ANSWER_NUM + '.' : 'Could not find answer boxes ' + INTERCEPT_ANSWER_NUM + ' and ' + INTERCEPT_UNC_ANSWER_NUM + ' on this page.'); });
+el('cl_senddata').addEventListener('click', function(){ var S = st(); if (!S || !S.data.length){ msg('No measurements recorded yet.'); return; }
+  var ok = put(DATA_ANSWER_NUM, S.data.map(function(r){ return r.d_cm + ',' + r.C_pF; }).join('\n')); msg(ok ? 'Sent ' + S.data.length + ' measurement(s), d (cm),C (pF), one per line, to answer box ' + DATA_ANSWER_NUM + '.' : 'Could not find answer box ' + DATA_ANSWER_NUM + ' on this page.'); });
+if (!SLOPE_ANSWER_NUM) el('cl_sendslope').style.display = 'none'; if (!INTERCEPT_ANSWER_NUM) el('cl_sendint').style.display = 'none'; if (!DATA_ANSWER_NUM) el('cl_senddata').style.display = 'none';
+/* keep the info line current, and save the state as it changes, and when the page is left */
+function tick(){ var F = fit(), S = st(); el('cl_sendinfo').textContent = !S ? '' : (S.data.length + ' measurement(s) recorded' + (F && F.m !== undefined ? '; fit of C against 1/d: slope ' + p4(F.m*scale()) + ' \u00B1 ' + p4(F.sm*scale()) + ' ' + unitM() + ', intercept ' + p4(F.b) + ' \u00B1 ' + p4(F.sb) + ' pF' : (S.data.length ? ' (the fit needs at least 3)' : '')));
+  el('cl_sendslope').disabled = el('cl_sendint').disabled = !(F && F.m !== undefined); var sv = window['clSaveState_' + thisq]; if (sv) sv(); }
+tick(); setInterval(tick, 1000);
+window.addEventListener('pagehide', function(){ var sv = window['clSaveState_' + thisq]; if (sv) sv(); }); window.addEventListener('beforeunload', function(){ var sv = window['clSaveState_' + thisq]; if (sv) sv(); });
+})();
+</script>
+
+<hr><hr>
+<p>This simulation allows you to investigate the behavior of a <strong>parallel-plate capacitor</strong>, one of the most important systems in electrostatics. A capacitor stores electrical energy by separating positive and negative charge on two conductive plates.</p>
+<p>The capacitance <em>C</em> of a parallel-plate capacitor depends on its geometry and the material between the plates, and is given by:</p>
+<p style="text-align:center;"><strong>`C = kappa * varepsilon_o * A/d`</strong></p>
+<ul>
+<li>`A` = plate area (related to radius `R`)</li>
+<li>`d` = distance between the plates</li>
+<li>`kappa` = dielectric constant</li>
+<li>`varepsilon_o` = permittivity of free space</li>
+</ul>
+<p>In this simulation, you will:</p>
+<ul>
+<li>Adjust the plate separation and plate size</li>
+<li>Optionally insert a dielectric material</li>
+<li>Measure capacitance using a virtual meter</li>
+<li>Record and analyze data</li>
+<li style=color:red>Graph relationships such as `C` vs `1//d`</li>
+</ul>
+<p>By systematically varying one parameter at a time, you will explore how capacitance depends on geometry and verify the expected proportional relationships.</p>
+<hr>
+<p>Your aim in this question is to replicate the part of the experiment where you investigate the effect of the plate separation on the capacitance.  <span style=color:red>Thus, the only parameter you should change is `d`, the separation  of the plates</span>.</p>
+<p>Start by entering the the radius of the plates <span style=color:red>in meters</span>: <br>`R\ =\ ( (),() :}` <input id="qn000" size="8" aria-label="answer box 0">`\ pm\ `<input id="qn001" size="8" aria-label="answer box 1"> ` {: (),() )\ "m"`</p> 
+<p>Calculate now the area of the plates: <br>`A\ =\ ( (),() :}` <input id="qn002" size="8" aria-label="answer box 2">`\ pm\ `<input id="qn003" size="8" aria-label="answer box 3"> ` {: (),() )\ "m"^2`</p>
+<hr>
+<p>Collect 6 data points <span style=color:red>by changing the separation of the plate `d` and recording the corresponding measurements</span> (by clicking on the button). <span style=color:blue>Note that the SIM tries to replicate real conditions by having the data reading of the meter fluctuates. You will be recording an approximate value when you press the button.</span> <span style=color:red>Obviously, those fluctuations should affect your estimates of the uncertainty when conducting the lab</span>.</p>
+<p>Once you have completed collecting the data, <span style=color:red>graph `C` versus `1//d`</span> and provide the following data as provided by the SIM <span style=color:red>after completing the unit conversions</span>.</p>
+<hr>
+<p>Provide provide a clear snapshot of the graph of <span style=color:red>graph `C` versus `1//d`</span> that you have obtained.
+<br><i>(in MOM: a snapshot of the graph)</i></p>
+<hr>
+<p>Provide the slope of the line for your data.
+<br>`"Slope"\ =\ ( (),() :}` <input id="qn005" size="8" aria-label="answer box 5">`\ pm\ `<input id="qn006" size="8" aria-label="answer box 6"> ` {: (),() )\ xx 10^-12 "F"*"m"`</p>
+<p>Provide the correction factor: 
+<br>`C_R\ =\ ( (),() :}` <input id="qn007" size="8" aria-label="answer box 7">`\ pm\ `<input id="qn008" size="8" aria-label="answer box 8"> ` {: (),() )\ xx 10^-12 "F"` </p>
+<p>Using the slope value to calculate `varepsilon_o`.
+<br>`varepsilon_o\ =\ ( (),() :}` <input id="qn010" size="8" aria-label="answer box 10">`\ pm\ `<input id="qn009" size="8" aria-label="answer box 9"> ` {: (),() )\ xx 10^-12 "F/m"` </p>
+</main>
+</body>
+</html>

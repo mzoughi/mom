@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Mechanics: Newton's Second Law Tutorial For One Mass Examples</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,Newton's Second Law, Tutorial,teach, learn,friction,static,kinetic,coefficient,incline,tilt test,critical angle,materials,contact area,mass,acceleration,lesson,scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<hr>
+<!-- Newton's second law tutorial: 4 stages x 5 situations.
+Stage 1 identify forces, Stage 2 N2L in vector form, Stage 3 free-body diagram
+(checked by the sim), Stage 4 component equations.
+Stages are chained via the ntStageComplete event. CSS/JS hosted on GitHub Pages. -->
+<div id="ntRoot1008"></div>
+<div id="nt2Root1008" style="display:none"></div>
+<div id="nt3Root1008" style="display:none"></div>
+<div id="nt4Root1008" style="display:none"></div>
+<script>window.ntThisq = '1008';</script>
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/newton-tut.css">
+<script src="https://mzoughi.github.io/mom/newton-tut-core.js"></script>
+<script src="https://mzoughi.github.io/mom/newton-tut-st1.js"></script>
+<script src="https://mzoughi.github.io/mom/newton-tut-st2.js"></script>
+<script src="https://mzoughi.github.io/mom/newton-tut-st3.js"></script>
+<script src="https://mzoughi.github.io/mom/newton-tut-st4.js"></script>
+<script>
+document.addEventListener('ntStageComplete', function(e){
+if (e.detail.thisq !== window.ntThisq) return;
+var nextId = ['nt2Root','nt3Root','nt4Root'][e.detail.stage-1];
+if (nextId) {
+var el = document.getElementById(nextId + window.ntThisq);
+if (el) {
+el.style.display = 'block';
+var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+el.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block:'start'});
+}
+}
+});
+</script>
+<hr> </body>
+</html>

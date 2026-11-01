@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Rotation: The Helicopter: Force, Torque and Angular Momentum</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, rotation, helicopter, thrust, weight, torque, angular momentum, Newton's third law, tail rotor, hover, 3D, lesson, scientific">
+<meta name="description" content="Interactive 3D helicopter: thrust versus weight to climb and hover, the tail rotor torque that balances the reaction torque, and tilting the rotor to fly forward.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="hlRoot" class="hl_root" role="region" aria-label="Helicopter simulator: forces, torque and angular momentum in climbing, hovering, turning and forward flight">
+<div class="hl_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="hl_a11ybtn" id="hlBtnHC" onclick="hlSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="hl_a11ybtn" id="hlBtnLM" onclick="hlSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="hl_a11ybtn" id="hlBtnCB" onclick="hlSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="hl_a11ybtn hl_a11yon" id="hlBtnNR" onclick="hlSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="hl_header"><p class="hl_h1">The Helicopter: Force, Torque and Angular Momentum</p><p class="hl_sub">thrust lifts it &middot; the tail rotor stops it from spinning &middot; tilting the rotor moves it forward</p></div>
+<div class="hl_diag"><div class="hl_dlabel"><b id="hlLab">THE HELICOPTER</b><span id="hlHint"></span></div>
+<canvas id="hlCv" width="780" height="470" tabindex="0" role="img" aria-label="A three-dimensional helicopter above the ground, with arrows for its forces and angular momenta. Drag, or use the arrow keys, to turn the view. Keys: plus and minus change the rotor speed, H hovers, F flies forward, Q and E turn, P pauses." aria-describedby="hlStatus"></canvas></div>
+<div class="hl_status" id="hlStatus"></div>
+<div class="hl_bbar">
+<button type="button" class="hl_btn" id="hlSpin">1. Spin up the rotor</button>
+<button type="button" class="hl_btn hl_main" id="hlClimb">2. Climb</button>
+<button type="button" class="hl_btn hl_main" id="hlHover">3. Hover</button>
+<button type="button" class="hl_btn hl_main" id="hlFwd">4. Fly forward</button>
+<button type="button" class="hl_btn" id="hlStopF">Stop moving forward</button>
+<button type="button" class="hl_btn" id="hlDesc">Descend and land</button>
+<button type="button" class="hl_btn" id="hlReset">Start again</button>
+</div>
+<div class="hl_bbar">
+<button type="button" class="hl_btn hl_btnon" id="hlPlay">&#10073;&#10073; Pause</button>
+<label>slow motion <input type="range" id="hlSpd" min="0.1" max="1" step="0.05" value="1" style="width:90px"> <span id="hlSpdV">1.00&times;</span></label>
+<label><input type="checkbox" id="hlFor" checked> force arrows</label>
+<label><input type="checkbox" id="hlAng" checked> angular momentum arrows</label>
+<button type="button" class="hl_btn" id="hlVStd">Standard view</button>
+<button type="button" class="hl_btn" id="hlVTop">From above</button>
+<button type="button" class="hl_btn" id="hlDsc">Describe</button>
+</div>
+<div class="hl_read" id="hlRead" aria-label="Readout"></div>
+<div class="hl_panels"><div class="hl_panel"><div class="hl_ptitle">Main rotor: lift and forward motion</div><div class="hl_pbody" id="hlCtlM"></div></div>
+<div class="hl_panel"><div class="hl_ptitle">Tail rotor: torque and turning</div><div class="hl_pbody" id="hlCtlT"></div></div></div>
+<div class="hl_eqs" id="hlEq"></div>
+<div id="hlNar" class="hl_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="hl_descwrap">
+<button type="button" class="hl_descbtn" id="hlDescBtn" aria-expanded="false" aria-controls="hlDesc" onclick="hlSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="hl_desc" id="hlDesc" role="region" aria-labelledby="hlDescBtn" style="display:none">
+<p>A small helicopter (mass 1200 kg) sits on a landing pad. Its main rotor turns counterclockwise when seen from above. A small tail rotor, at the end of the tail, pushes the tail sideways. The SIM shows only the main ideas: forces, torques and angular momentum.</p>
+<p><b>1. Lift: forces.</b> The spinning blades push air down, so the air pushes the rotor up. This thrust grows with the square of the rotor speed, `T = k omega^2`. Newton's second law for the helicopter is</p>
+<p class="hl_eq">`vec T + vec W + vec D = m vec a`,</p>
+<p>where `W = m g` is the weight and `vec D` is air resistance. When `T &gt; W` the helicopter speeds up upward and climbs; air resistance then limits its climbing speed. When `T = W` the net force is zero: it hovers (or keeps a steady vertical speed). Here hovering needs about 400 rpm.</p>
+<p><b>2. Torque and angular momentum.</b> The engine exerts a torque on the rotor to keep it turning against the drag of the air. By Newton's third law, the rotor exerts an equal and opposite torque on the body. Without anything else, the body would turn the opposite way to the rotor: the angular momentum given to the rotor, `L_r = I_r omega_r`, comes with an opposite angular momentum of the body. The tail rotor solves this. Its sideways force `F_t`, at a distance `d` behind the main rotor, gives a torque about the vertical axis,</p>
+<p class="hl_eq">`tau_t = F_t d`,</p>
+<p>which balances the reaction torque: `tau_t = tau_(engine)`. Then the net torque on the body is zero and it keeps its heading. Pushing a little more or a little less with the tail rotor (the pedals) leaves a net torque, and the helicopter turns one way or the other. Switch off the tail rotor to see the body spin, opposite to the rotor.</p>
+<p><b>3. Forward flight.</b> To move forward, the pilot tilts the main rotor (and with it the helicopter) forward by an angle `alpha`. The thrust then has a forward part and an upward part:</p>
+<p class="hl_eq">`T_(forward) = T sin alpha`,&nbsp;&nbsp; `T_(up) = T cos alpha`.</p>
+<p>The forward part speeds the helicopter up until air resistance balances it. The upward part is now smaller than `T`, so to stay level the rotor must turn a little faster, until `T cos alpha = W`. Tilting back slows the helicopter down.</p>
+<p>The numbers: `k` = 6.7 N&middot;s&sup2;, the rotor's moment of inertia 500 kg&middot;m&sup2;, the body's 2000 kg&middot;m&sup2;, `d` = 7.2 m. The drawn blades turn more slowly than the real ones, in the correct direction, so the rotation stays visible; a curved arrow over the rotor then marks the sense of rotation.</p>
+</div></div>
+</div><!-- #hlRoot -->
+<style>
+#hlRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#hlRoot * { box-sizing:border-box; }
+#hlRoot.hl_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#hlRoot.hl_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#hlRoot .hl_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#hlRoot .hl_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#hlRoot .hl_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#hlRoot .hl_header { text-align:center; }
+#hlRoot .hl_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--c-accent); }
+#hlRoot .hl_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.06em; text-transform:uppercase; }
+#hlRoot .hl_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#hlRoot .hl_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#hlRoot .hl_dlabel b { color:var(--c-accent); }
+#hlRoot canvas { display:block; width:100%; height:auto; touch-action:none; cursor:grab; }
+#hlRoot .hl_bbar { display:flex; flex-wrap:wrap; gap:6px 10px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#hlRoot .hl_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#hlRoot .hl_btn { padding:7px 11px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#hlRoot .hl_btn:hover { border-color:var(--c-accent); }
+#hlRoot .hl_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#hlRoot .hl_main { border-color:var(--c-accent); }
+#hlRoot .hl_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#hlRoot .hl_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#hlRoot .hl_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--c-dim); }
+#hlRoot .hl_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#hlRoot .hl_ctrl { display:flex; flex-direction:column; gap:3px; }
+#hlRoot .hl_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#hlRoot .hl_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#hlRoot .hl_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#hlRoot .hl_brow { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+#hlRoot .hl_brow label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; cursor:pointer; }
+#hlRoot .hl_note { margin:0; font-size:.74rem; color:var(--c-dim); line-height:1.4; }
+#hlRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#hlRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#hlRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#hlRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#hlRoot .hl_read { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; padding:8px 12px; }
+#hlRoot .hl_flabel { font-family:monospace; font-size:.62rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#hlRoot .hl_fvalue { font-family:monospace; font-size:.9rem; color:var(--c-val); font-variant-numeric:tabular-nums; }
+#hlRoot .hl_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#hlRoot .hl_eqs b { color:var(--c-val); }
+#hlRoot .hl_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#hlRoot .hl_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#hlRoot .hl_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#hlRoot .hl_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#hlRoot .hl_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#hlRoot .hl_desc p { margin:0 0 9px; }
+#hlRoot .hl_eq { text-align:center; font-size:1rem; }
+#hlRoot button:focus-visible, #hlRoot input:focus-visible, #hlRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #hlRoot .hl_panels { grid-template-columns:minmax(0,1fr); } }
+@media (pointer:coarse) { #hlRoot input[type=range] { height:8px; } #hlRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #hlRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #hlRoot .hl_a11ybtn { min-height:40px; } #hlRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Intro-physics model of a helicopter. Units SI; y is up.
+Main rotor: angular speed w (counterclockwise from above, angular momentum +y). Thrust T = KT w^2 along the rotor axis n.
+Rotor: IR dw/dt = tauE - B w^2 (engine torque minus air drag torque). A governor sets tauE to reach the chosen rotor speed.
+Body (yaw only): IB dOm/dt = -tauE + tauT - CY Om. The reaction of the engine torque turns the body the other way;
+the tail rotor torque tauT = Ft d balances it. Linear motion: M dv/dt = T n + W + D (quadratic air drag).
+Forward flight: the rotor axis (and body) tilt forward by alpha. On the ground the skids hold the body still.
+No dollar signs or backticks in the code.
+-->
+<script>
+var hlSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('hlRoot'), cv = el('hlCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var DEG = Math.PI/180, TAU = 2*Math.PI, RPM = 60/TAU;
+/* the model */
+var M = 1200, GA = 9.8, MG = M*GA, KT = 6.7, IR = 500, IB = 2000, B = 2.04, CY = 1500, DT = 7.2, KH = 1.3, KV = 37, KG = 400;
+var VMAX = 0.33;   /* largest drawn turn of a rotor per frame (radians) */
+var HUB = [0, 2.9, 0], TAILP = [-7.2, 1.9, 0.35];
+/* ══════════ vectors ══════════ */
+function add(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; } function sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function mul(a, k){ return [a[0]*k, a[1]*k, a[2]*k]; } function dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function cross(a, b){ return [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]; }
+function len(a){ return Math.sqrt(dot(a, a)); } function nrm(a){ var l = len(a) || 1; return [a[0]/l, a[1]/l, a[2]/l]; }
+function perp(a){ var t = Math.abs(a[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]; return nrm(cross(a, t)); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function mv(R, v){ return [R[0][0]*v[0] + R[0][1]*v[1] + R[0][2]*v[2], R[1][0]*v[0] + R[1][1]*v[1] + R[1][2]*v[2], R[2][0]*v[0] + R[2][1]*v[1] + R[2][2]*v[2]]; }
+function bodyR(psi, al){   /* yaw psi about up, then the rotor/body tilted nose-down by al */
+  var c = Math.cos(psi), s = Math.sin(psi), ca = Math.cos(al), sa = Math.sin(al);
+  /* Ry(psi) * Rz(-al) */
+  return [[c*ca, c*sa, s], [-sa, ca, 0], [-s*ca, -s*sa, c]]; }
+function wHover(al){ return Math.sqrt(MG/(KT*Math.cos(al))); }
+/* ══════════ state ══════════ */
+var S, U = { play:true, spd:1, yaw:-35, pitch:14, forces:true, angs:true, blurM:false, blurT:false, touched:{} };
+var th = { hc:false, lm:false, cb:false, nr:true };
+function fresh(){ return { p:[0, 0, 0], v:[0, 0, 0], psi:0, Om:0, w:0, wT:0, al:0, alT:0, mode:'manual', brake:false, tail:true, ped:0,
+  ang:0, vang:0, tang:0, vtang:0, t:0, tauE:0, tauT:0, T:0, ground:true }; }
+S = fresh();
+function step(dt){
+  var s = S;
+  if (s.brake){ var fs = dot(s.v, fwd(s)); if (fs > 0.5) s.alT = -8*DEG; else { s.alT = 0; s.brake = false; narrate('The helicopter has stopped moving forward and is level again. The thrust is vertical: it hovers.'); } }
+  s.al += clamp(s.alT - s.al, -0.17*dt, 0.17*dt);
+  if (s.mode === 'hold') s.wT = wHover(s.al)*Math.sqrt(clamp(1 - 0.12*s.v[1], 0.5, 1.5));
+  if (s.mode === 'land') s.wT = wHover(s.al)*Math.sqrt(clamp(1 - 0.12*(s.v[1] + 2), 0.5, 1.5));   /* settle at 2 m/s down */
+  s.tauE = Math.max(0, B*s.w*s.w + KG*(s.wT - s.w));
+  s.w = Math.max(0, s.w + (s.tauE - B*s.w*s.w)/IR*dt);
+  s.T = KT*s.w*s.w;
+  var R = bodyR(s.psi, s.al), n = [R[0][1], R[1][1], R[2][1]];
+  if (s.tail){ var OmT = s.ped*0.5; s.tauT = clamp(s.tauE + CY*OmT + IB*1.5*(OmT - s.Om), -9000, 9000); } else s.tauT = 0;
+  s.ground = s.p[1] <= 0.001 && s.T*n[1] < MG;
+  if (s.ground){ s.p[1] = 0; s.v = [0, 0, 0]; s.Om = 0; if (s.mode === 'land' && s.w > 0){ s.mode = 'manual'; s.wT = 0.6*wHover(0); s.alT = 0; landed(); } }
+  else {
+    s.Om += (-s.tauE + s.tauT - CY*s.Om)/IB*dt; s.psi += s.Om*dt;
+    var vh = Math.hypot(s.v[0], s.v[2]), F = add(mul(n, s.T), [-KH*vh*s.v[0], -MG - KV*Math.abs(s.v[1])*s.v[1], -KH*vh*s.v[2]]);
+    s.v = add(s.v, mul(F, dt/M)); s.p = add(s.p, mul(s.v, dt));
+    if (s.p[1] < 0){ s.p[1] = 0; s.v = [0, 0, 0]; }
+  }
+  s.ang += s.w*dt; s.tang += 5*s.w*dt; s.t += dt; }
+function landed(){ narrate('Landed. As the thrust drops below the weight, the pad pushes up and the skids hold the body still. The rotor slows down.'); }
+function fwd(s){ return [Math.cos(s.psi), 0, -Math.sin(s.psi)]; }
+/* ══════════ the 3D renderer (as in the gyroscope SIM) ══════════ */
+var polys = [], labels = [], cam = {}, PA = 1;
+function setCam(){ var a = U.yaw*DEG, e = U.pitch*DEG, T = add(S.p, [0, 2, 0]);
+  cam = { ca:Math.cos(a), sa:Math.sin(a), ce:Math.cos(e), se:Math.sin(e), s:26, D:60, T:T }; }
+function view(p){ var x0 = p[0] - cam.T[0], y0 = p[1] - cam.T[1], z0 = p[2] - cam.T[2], x1 = x0*cam.ca + z0*cam.sa, z1 = -x0*cam.sa + z0*cam.ca; return [x1, y0*cam.ce - z1*cam.se, y0*cam.se + z1*cam.ce]; }
+function proj(v){ var f = cam.D/Math.max(1, cam.D - v[2]); return [W/2 + v[0]*cam.s*f, H*0.55 - v[1]*cam.s*f]; }
+function scr(p){ return proj(view(p)); }
+function poly(pts, col){ polys.push({ p:pts, c:col, a:PA }); }
+var LIGHT = nrm([-0.35, 0.65, 0.68]), HALF = nrm(add(LIGHT, [0, 0, 1]));
+function flush(){
+  var list = polys.map(function(q){ var v = q.p.map(view), z = 0; v.forEach(function(t){ z += t[2]; }); return { v:v, z:z/v.length, c:q.c, a:q.a }; });
+  list.sort(function(A, B2){ return A.z - B2.z; });
+  list.forEach(function(q){
+    if (q.v.some(function(t){ return cam.D - t[2] < 1; })) return;
+    var n = q.v.length > 2 ? nrm(cross(sub(q.v[1], q.v[0]), sub(q.v[2], q.v[0]))) : [0, 0, 1]; if (n[2] < 0) n = mul(n, -1);
+    var k = 0.36 + 0.64*Math.max(0, dot(n, LIGHT)), spec = Math.pow(Math.max(0, dot(n, HALF)), 24)*0.25;
+    var r = Math.min(255, Math.round(q.c[0]*k + 255*spec)), gg = Math.min(255, Math.round(q.c[1]*k + 255*spec)), b = Math.min(255, Math.round(q.c[2]*k + 255*spec));
+    g.fillStyle = 'rgba(' + r + ',' + gg + ',' + b + ',' + q.a + ')'; g.strokeStyle = g.fillStyle; g.lineWidth = 0.6;
+    g.beginPath(); q.v.forEach(function(t, i){ var s2 = proj(t); if (i) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); g.closePath(); g.fill(); if (q.a >= 1) g.stroke(); });
+  polys = []; }
+var ID = function(p){ return p; };
+function ellipsoid(c, A, B2, C, col, nu, nv, X){
+  function P(u, v){ return X(add(add(add(c, mul(A, Math.sin(v)*Math.cos(u))), mul(B2, Math.sin(v)*Math.sin(u))), mul(C, Math.cos(v)))); }
+  for (var j=0; j<nv; j++) for (var i=0; i<nu; i++){ var u0 = TAU*i/nu, u1 = TAU*(i + 1)/nu, v0 = Math.PI*j/nv, v1 = Math.PI*(j + 1)/nv; poly([P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)], col); } }
+function tube(p0, p1, r0, r1, col, n, X){
+  var ax = nrm(sub(p1, p0)), u = perp(ax), v = cross(ax, u);
+  function Rp(p, r, a){ return X(add(p, add(mul(u, r*Math.cos(a)), mul(v, r*Math.sin(a))))); }
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n; poly([Rp(p0, r0, a0), Rp(p0, r0, a1), Rp(p1, r1, a1), Rp(p1, r1, a0)], col); } }
+function cone(b, tip, r, col, n, X){
+  var ax = nrm(sub(tip, b)), u = perp(ax), v = cross(ax, u);
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n, q0 = add(b, add(mul(u, r*Math.cos(a0)), mul(v, r*Math.sin(a0)))), q1 = add(b, add(mul(u, r*Math.cos(a1)), mul(v, r*Math.sin(a1))));
+    poly([X(q0), X(q1), X(tip)], col); poly([X(q0), X(q1), X(b)], col); } }
+function arrow(o, d, L, col, label, w){
+  if (L < 0.05) return; w = w || 1; var u = nrm(d), hl = Math.min(0.7*w, 0.5*L), tip = add(o, mul(u, L)), neck = add(o, mul(u, L - hl));
+  tube(o, neck, 0.09*w, 0.09*w, col, 8, ID); cone(neck, tip, 0.25*w, col, 10, ID);
+  if (label) labels.push({ p:add(o, mul(u, L + 0.7)), t:label, c:col }); }
+/* ══════════ colours ══════════ */
+function pal(){ var cb = th.cb, hc = th.hc, lm = th.lm;
+  return { sky:hc ? '#000' : (lm ? '#dfeaf5' : '#0d1420'), grid:hc ? 'rgba(255,255,255,0.5)' : (lm ? 'rgba(0,0,0,0.18)' : 'rgba(120,160,130,0.25)'), ground:hc ? '#000' : (lm ? '#cfe0c4' : '#13201a'),
+    body:cb ? [0, 114, 178] : [200, 60, 50], glass:[120, 170, 200], dark:[60, 64, 72], blade:[70, 74, 82], tipc:cb ? [230, 159, 0] : [255, 210, 40], tree:[50, 130, 70], trunk:[110, 80, 50], pad:[150, 150, 150],
+    T:cb ? [0, 158, 115] : [60, 215, 120], Wt:cb ? [213, 94, 0] : [255, 120, 70], Ft:cb ? [204, 121, 167] : [255, 110, 200], D:[170, 170, 190], Lr:cb ? [86, 180, 233] : [90, 165, 255], Lb:cb ? [240, 228, 66] : [255, 225, 90],
+    spin:hc ? '#ffff00' : '#ffd23f', shadow:hc ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.35)' }; }
+function rgb(c){ return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+/* ══════════ the scene ══════════ */
+function hash(i, j){ var x = Math.sin(i*127.1 + j*311.7)*43758.5453; return x - Math.floor(x); }
+function drawGround(p){
+  var T = cam.T, SP = 5, cx = Math.round(T[0]/SP)*SP, cz = Math.round(T[2]/SP)*SP, i, R = 50;
+  g.strokeStyle = p.grid; g.lineWidth = 1;
+  for (i=-10; i<=10; i++){ line3([cx + i*SP, 0, cz - R], [cx + i*SP, 0, cz + R]); line3([cx - R, 0, cz + i*SP], [cx + R, 0, cz + i*SP]); }
+  /* the landing pad: a circle and an H */
+  var pts = [], k; for (k=0; k<=28; k++) pts.push([4.5*Math.cos(TAU*k/28), 0, 4.5*Math.sin(TAU*k/28)]);
+  g.strokeStyle = th.hc ? '#fff' : '#c8c8c8'; g.lineWidth = 2; path3(pts);
+  path3([[-1.5, 0, -1.6], [-1.5, 0, 1.6]]); path3([[1.5, 0, -1.6], [1.5, 0, 1.6]]); path3([[-1.5, 0, 0], [1.5, 0, 0]]);
+  /* the shadow, straight below */
+  var s = S, sh = [], f = fwd(s), rt = [Math.sin(s.psi), 0, Math.cos(s.psi)];
+  for (k=0; k<20; k++){ var a = TAU*k/20; sh.push(add([s.p[0], 0.02, s.p[2]], add(mul(f, 3.2*Math.cos(a) - 1.5), mul(rt, 1.2*Math.sin(a))))); }
+  g.fillStyle = p.shadow; g.beginPath(); var ok = true; sh.forEach(function(q, i2){ var v = view(q); if (cam.D - v[2] < 1) ok = false; var s2 = proj(v); if (i2) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); if (ok) g.fill();
+  /* trees on a loose grid: they show the motion */
+  var TS = 24, tx = Math.round(T[0]/TS), tz = Math.round(T[2]/TS);
+  for (var a2=-2; a2<=2; a2++) for (var b2=-2; b2<=2; b2++){ var I = tx + a2, J = tz + b2; if (Math.abs(I) < 1 && Math.abs(J) < 1) continue;
+    var x = I*TS + (hash(I, J) - 0.5)*12, z = J*TS + (hash(J, I) - 0.5)*12, h = 4 + 3*hash(I + 7, J);
+    tube([x, 0, z], [x, h*0.35, z], 0.25, 0.2, p.trunk, 6, ID); cone([x, h*0.3, z], [x, h, z], 1.6, p.tree, 8, ID); } }
+function line3(a, b){ var va = view(a), vb = view(b); if (cam.D - va[2] < 1 || cam.D - vb[2] < 1) return; var A = proj(va), B2 = proj(vb); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B2[0], B2[1]); g.stroke(); }
+function path3(pts){ for (var i=1; i<pts.length; i++) line3(pts[i - 1], pts[i]); }
+function drawHeli(p){
+  var s = S, R = bodyR(s.psi, s.al), P0 = s.p;
+  function X(v){ return add(P0, mv(R, v)); }
+  ellipsoid([0.2, 1.4, 0], [2.3, 0, 0], [0, 1.15, 0], [0, 0, 1.1], p.body, 16, 8, X);
+  ellipsoid([1.6, 1.6, 0], [0.9, 0, 0], [0, 0.75, 0], [0, 0, 0.85], p.glass, 10, 6, X);
+  tube([-1.6, 1.6, 0], [-7.2, 1.95, 0], 0.38, 0.16, p.body, 8, X);
+  poly([X([-6.6, 1.9, 0]), X([-7.5, 1.9, 0]), X([-7.7, 3.0, 0]), X([-7.1, 3.0, 0])], p.body);
+  [-0.9, 0.9].forEach(function(z){ tube([-1.7, 0.05, z], [1.9, 0.05, z], 0.07, 0.07, p.dark, 5, X); tube([-0.8, 0.05, z], [-0.6, 0.6, z*0.7], 0.05, 0.05, p.dark, 4, X); tube([0.9, 0.05, z], [0.8, 0.6, z*0.7], 0.05, 0.05, p.dark, 4, X); });
+  tube([0, 2.4, 0], [0, 2.95, 0], 0.12, 0.12, p.dark, 6, X);
+  /* main rotor: two blades, one with a coloured tip so its turning shows */
+  var c = Math.cos(s.vang), sn = Math.sin(s.vang), j;
+  for (j=0; j<2; j++){ var sg = j ? -1 : 1, d = [c*sg, 0, -sn*sg], q = [sn*sg, 0, c*sg];
+    function BL(r, wdt){ return X(add(HUB, add(mul(d, r), mul(q, wdt)))); }
+    poly([BL(0.3, -0.18), BL(4.2, -0.15), BL(4.2, 0.15), BL(0.3, 0.18)], p.blade);
+    poly([BL(4.2, -0.15), BL(5.2, -0.13), BL(5.2, 0.13), BL(4.2, 0.15)], j ? p.blade : p.tipc); }
+  /* tail rotor, spinning about the sideways axis */
+  var ct = Math.cos(s.vtang), st2 = Math.sin(s.vtang);
+  for (j=0; j<2; j++){ var sg2 = j ? -1 : 1, dd = [ct*sg2, st2*sg2, 0], qq = [-st2*0.12, ct*0.12, 0];
+    poly([X(add(TAILP, mul(qq, -1))), X(add(TAILP, add(mul(dd, 0.85), mul(qq, -0.8)))), X(add(TAILP, add(mul(dd, 0.85), mul(qq, 0.8)))), X(add(TAILP, qq))], j ? p.blade : p.tipc); }
+  return R; }
+function drawArrows(p, R){
+  var s = S, n = [R[0][1], R[1][1], R[2][1]], hub = add(s.p, mv(R, HUB)), cm = add(s.p, mv(R, [0, 1.3, 0])), FS = 1/2600;
+  if (U.forces){
+    arrow(hub, n, s.T*FS, p.T, 'T', 1);
+    arrow(cm, [0, -1, 0], MG*FS, p.Wt, 'W', 1);
+    var vh = Math.hypot(s.v[0], s.v[2]), D = [-KH*vh*s.v[0], -KV*Math.abs(s.v[1])*s.v[1], -KH*vh*s.v[2]]; arrow(cm, D, len(D)*FS, p.D, 'D', 0.8);
+    if (s.tail && Math.abs(s.tauT) > 50){ var rt = [R[0][2], R[1][2], R[2][2]], Ft = s.tauT/DT; arrow(add(s.p, mv(R, TAILP)), mul(rt, Ft > 0 ? 1 : -1), Math.abs(Ft)*FS*6, p.Ft, 'Ft \u00D76', 0.7); } }
+  if (U.angs){ var LS = 1/6000, Lr = IR*s.w, Lb = IB*s.Om;
+    arrow(add(hub, mul(n, 0.3)), n, Lr*LS, p.Lr, 'L rotor', 0.8);
+    if (Math.abs(Lb) > 300) arrow(add(s.p, [0, 0.3, 0]), [0, Lb > 0 ? 1 : -1, 0], Math.abs(Lb)*LS, p.Lb, 'L body', 0.8); } }
+function drawSpin(p, R){
+  var s = S; if (!U.blurM) return;
+  var hub = add(s.p, mv(R, add(HUB, [0, 0.35, 0]))), pts = [], i;
+  for (i=0; i<=24; i++){ var t = (i/24)*1.4*Math.PI + 0.3, v = mv(R, [3.2*Math.cos(t), 0, -3.2*Math.sin(t)]); pts.push(scr(add(hub, v))); }
+  g.strokeStyle = p.spin; g.lineWidth = 2.5; g.beginPath(); pts.forEach(function(q, i2){ if (i2) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke();
+  var e = pts[24], f2 = pts[22], dx = e[0] - f2[0], dy = e[1] - f2[1], l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+  g.fillStyle = p.spin; g.beginPath(); g.moveTo(e[0] + dx*9, e[1] + dy*9); g.lineTo(e[0] - dy*6, e[1] + dx*6); g.lineTo(e[0] + dy*6, e[1] - dx*6); g.closePath(); g.fill(); }
+function drawLabels(){ labels.forEach(function(l){ var v = view(l.p); if (cam.D - v[2] < 1) return; var s2 = proj(v); g.font = 'bold 15px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,0.7)'; g.strokeText(l.t, s2[0], s2[1]); g.fillStyle = rgb(l.c); g.fillText(l.t, s2[0], s2[1]); }); labels = []; g.textBaseline = 'alphabetic'; }
+function draw(){
+  var p = pal(); setCam(); g.fillStyle = p.sky; g.fillRect(0, 0, W, H);
+  drawGround(p); flush();
+  var R = drawHeli(p); drawArrows(p, R); flush(); drawSpin(p, R); drawLabels();
+  el('hlHint').textContent = 't = ' + S.t.toFixed(1) + ' s' + (U.spd < 1 ? ' \u00B7 slow motion ' + U.spd.toFixed(2) + '\u00D7' : '') + (U.blurM ? ' \u00B7 rotors drawn slower than real' : '') + ' \u00B7 drag to turn the view'; }
+/* ══════════ readout, status, narration ══════════ */
+function f(v, k){ return (Math.abs(v) < 0.5*Math.pow(10, -k) ? 0 : v).toFixed(k); }
+function info(){
+  var s = S, R = bodyR(s.psi, s.al), n = [R[0][1], R[1][1], R[2][1]], fs = dot(s.v, fwd(s)), Tup = s.T*n[1], Lr = IR*s.w, Lb = IB*s.Om, st;
+  var cells = [['ROTOR SPEED', f(s.w*RPM, 0) + ' rpm (set ' + f(s.wT*RPM, 0) + ')'], ['THRUST T \u00B7 WEIGHT W', f(s.T/1000, 1) + ' kN \u00B7 ' + f(MG/1000, 1) + ' kN'],
+    ['ALTITUDE \u00B7 VERTICAL SPEED', f(s.p[1], 1) + ' m \u00B7 ' + f(s.v[1], 1) + ' m/s'], ['FORWARD SPEED \u00B7 TILT', f(fs, 1) + ' m/s \u00B7 ' + f(s.al/DEG, 1) + '\u00B0'],
+    ['TORQUE: ENGINE ON ROTOR', f(s.tauE, 0) + ' N\u00B7m'], ['TORQUE: TAIL ROTOR Ft d', s.tail ? f(s.tauT, 0) + ' N\u00B7m (Ft = ' + f(s.tauT/DT, 0) + ' N)' : 'off'],
+    ['BODY TURNING RATE', f(s.Om/DEG, 0) + ' \u00B0/s'], ['L ROTOR \u00B7 L BODY (up +)', f(Lr/1000, 1) + ' \u00B7 ' + f(Lb/1000, 1) + ' \u00D7 10\u00B3 kg\u00B7m\u00B2/s']];
+  if (s.w < 1 && s.ground) st = 'Parked on the pad, rotor stopped. Spin up the rotor.';
+  else if (s.ground) st = 'On the pad, rotor turning: the thrust (' + f(s.T/1000, 1) + ' kN) is less than the weight (' + f(MG/1000, 1) + ' kN), so the pad still holds it up. The skids keep the body from turning.';
+  else if (!s.tail && Math.abs(s.Om) > 0.1) st = 'Tail rotor off: the reaction to the engine torque turns the body clockwise, opposite to the rotor. Nothing balances it.';
+  else if (s.v[1] > 0.4) st = 'Climbing: the upward part of the thrust is larger than the weight' + (s.v[1] > 3 && Math.abs(Tup - MG) < 0.05*MG ? '; air resistance now balances the extra thrust, so it climbs at a steady speed.' : '.');
+  else if (s.v[1] < -0.4) st = 'Descending: the upward part of the thrust is smaller than the weight.';
+  else if (Math.abs(fs) > 1) st = 'Flying forward: the tilted thrust has a forward part, T sin\u03B1, balanced by air resistance at ' + f(fs, 0) + ' m/s; its upward part, T cos\u03B1, balances the weight.';
+  else if (Math.abs(s.Om) > 0.05) st = 'Hovering and turning: the tail rotor torque differs from the reaction torque, so there is a net torque on the body.';
+  else st = 'Hovering: the thrust balances the weight, and the tail rotor torque balances the reaction to the engine torque. Net force and net torque are zero.';
+  el('hlRead').innerHTML = cells.map(function(c){ return '<div><div class="hl_flabel">' + c[0] + '</div><div class="hl_fvalue">' + c[1] + '</div></div>'; }).join('');
+  el('hlStatus').textContent = st;
+  el('hlEq').innerHTML = 'Forces: <b>T + W + D = m a</b>, T = k\u03C9\u00B2 = ' + f(s.T/1000, 1) + ' kN, W = mg = ' + f(MG/1000, 1) + ' kN' + (s.al !== 0 ? ', T cos\u03B1 = ' + f(Tup/1000, 1) + ' kN up, T sin\u03B1 = ' + f(s.T*Math.sin(s.al)/1000, 2) + ' kN ' + (s.al > 0 ? 'forward' : 'backward') : '') + '.<br>Torques on the body (about the vertical): reaction <b>\u2212\u03C4engine</b> = ' + f(-s.tauE, 0) + ' N\u00B7m, tail rotor <b>Ft d</b> = ' + f(s.tauT, 0) + ' N\u00B7m, net ' + f(s.tauT - s.tauE, 0) + ' N\u00B7m.' + (!s.tail ? ' Without the tail rotor, the body gains angular momentum opposite to the rotor\u2019s.' : '');
+  return st; }
+function narrate(m){ if (!th.nr) return; el('hlNar').textContent = m; }
+function describe(){ var s = S;
+  narrate('A red helicopter ' + (s.ground ? 'sits on a landing pad marked H' : 'flies ' + f(s.p[1], 0) + ' m above the ground, over a grid with trees') + '. Its two-blade main rotor turns counterclockwise seen from above; one blade has a yellow tip. ' + (U.forces ? 'Arrows: green T, the thrust, along the rotor axis; orange W, the weight; grey D, air resistance; pink Ft, the tail rotor force, drawn six times longer. ' : '') + (U.angs ? 'The blue arrow is the angular momentum of the rotor, pointing up; a yellow arrow appears for the body\u2019s angular momentum when the body turns. ' : '') + info()); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="hl_ctrl"><div class="hl_ctrlhdr"><label class="hl_ctrlname" for="' + id + '">' + label + '</label><span class="hl_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function pedTxt(v){ return Math.abs(v) < 0.02 ? 'centred (no turn)' : (v > 0 ? 'turn left ' : 'turn right ') + Math.round(Math.abs(v)*100) + ' %'; }
+function build(){
+  el('hlCtlM').innerHTML = row('hlRpm', 'rotor speed (thrust T = k\u03C9\u00B2)', 0, 520, 5, 0, '0 rpm')
+    + row('hlTilt', 'tilt of the rotor (forward +)', -10, 15, 0.5, 0, '0\u00B0')
+    + '<p class="hl_note">Moving the rotor speed slider takes over from the buttons. About 400 rpm gives T = W. Tilting the rotor tilts the thrust: part of it pushes forward, so less of it holds the helicopter up.</p>';
+  el('hlCtlT').innerHTML = '<div class="hl_brow"><label><input type="checkbox" id="hlTail" checked> tail rotor working</label></div>'
+    + row('hlPed', 'pedals: tail rotor push', -1, 1, 0.05, 0, pedTxt(0))
+    + '<div class="hl_brow"><button type="button" class="hl_btn" id="hlPedC">Centre the pedals</button></div>'
+    + '<p class="hl_note">With the pedals centred, the tail rotor torque just balances the reaction to the engine torque: the heading stays fixed. Off centre, the net torque turns the helicopter. Switch the tail rotor off, in the air, to see the body spin opposite to the rotor.</p>';
+  on('hlRpm', 'input', function(){ touch('hlRpm'); S.mode = 'manual'; S.wT = +this.value/RPM; el('hlRpmv').textContent = this.value + ' rpm'; later(); });
+  on('hlTilt', 'input', function(){ touch('hlTilt'); S.alT = +this.value*DEG; S.brake = false; el('hlTiltv').textContent = (+this.value).toFixed(1) + '\u00B0'; later(); });
+  on('hlTail', 'change', function(){ S.tail = this.checked; narrate(S.tail ? 'Tail rotor on: its torque balances the reaction torque again, and the helicopter stops spinning.' : (S.ground ? 'Tail rotor off. On the pad the skids hold the body; lift off to see what happens.' : 'Tail rotor off! The reaction to the engine torque is no longer balanced: the body starts to turn clockwise, opposite to the rotor.')); });
+  on('hlPed', 'input', function(){ S.ped = +this.value; el('hlPedv').textContent = pedTxt(S.ped); later(); });
+  on('hlPedC', 'click', function(){ S.ped = 0; el('hlPed').value = 0; el('hlPedv').textContent = pedTxt(0); narrate('Pedals centred: the tail rotor torque balances the reaction torque again, so the turning stops.'); }); }
+function touch(id){ U.touched[id] = Date.now(); }
+function setSl(id, v, txt){ var e = el(id); if (!e) return; if (document.activeElement === e && Date.now() - (U.touched[id] || 0) < 1500) return; e.value = v; el(id + 'v').textContent = txt; }
+function sync(){ setSl('hlRpm', Math.round(S.wT*RPM/5)*5, f(S.wT*RPM, 0) + ' rpm'); setSl('hlTilt', Math.round(S.alT/DEG*2)/2, f(S.alT/DEG, 1) + '\u00B0'); el('hlTail').checked = S.tail; }
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ narrate(info()); }, 700); }
+function setPlay(v){ U.play = v; el('hlPlay').innerHTML = v ? '\u2759\u2759 Pause' : '\u25B6 Play'; el('hlPlay').classList.toggle('hl_btnon', v); }
+function spinUp(){ S.mode = 'manual'; S.wT = 0.9*wHover(0); S.alT = 0; sync(); if (!U.play) setPlay(true);
+  narrate('The engine spins up the rotor to ' + f(S.wT*RPM, 0) + ' rpm. The thrust grows as \u03C9\u00B2 but stays below the weight, so the helicopter stays on the pad. The engine torque on the rotor has an equal and opposite reaction on the body; on the pad, the skids hold it.'); }
+function climb(){ S.mode = 'manual'; S.wT = 1.08*wHover(S.alT); sync(); if (!U.play) setPlay(true);
+  narrate('Climb: the rotor speeds up to ' + f(S.wT*RPM, 0) + ' rpm, so the thrust (' + f(KT*S.wT*S.wT/1000, 1) + ' kN) is larger than the weight (' + f(MG/1000, 1) + ' kN). The net force is up: the helicopter accelerates upward until air resistance makes up the difference.'); }
+function hover(){ S.mode = 'hold'; S.brake = false; sync(); if (!U.play) setPlay(true);
+  narrate('Hover: the pilot adjusts the rotor speed until the upward part of the thrust equals the weight and the vertical speed is zero, near ' + f(wHover(S.alT)*RPM, 0) + ' rpm. Then the net force is zero.'); }
+function forward(){ S.mode = 'hold'; S.brake = false; S.alT = 10*DEG; sync(); if (!U.play) setPlay(true);
+  narrate(S.ground ? 'The rotor is tilted forward, but the helicopter is still on the pad: climb first.' : 'Fly forward: the rotor tilts forward 10\u00B0. The thrust now has a forward part, T sin\u03B1, which speeds the helicopter up until air resistance balances it. Its upward part, T cos\u03B1, is smaller, so the rotor turns a little faster (' + f(wHover(S.alT)*RPM, 0) + ' rpm) to stay level.'); }
+function stopF(){ S.brake = true; S.mode = 'hold'; if (!U.play) setPlay(true);
+  narrate('To stop, the pilot tilts the rotor back: the thrust now has a backward part that slows the helicopter, with help from air resistance. When it stops, the rotor is levelled again.'); }
+function land(){ S.mode = 'land'; S.brake = false; S.alT = 0; sync(); if (!U.play) setPlay(true);
+  narrate('Descend: the rotor slows a little so the thrust is slightly less than the weight. The helicopter comes down at about 2 m/s, where air resistance makes up the difference, and lands.'); }
+function reset(){ S = fresh(); el('hlPed').value = 0; el('hlPedv').textContent = pedTxt(0); sync(); U.yaw = -35; U.pitch = 14; if (!U.play) setPlay(true);
+  narrate('Started again: the helicopter is parked on the pad, rotor stopped. Spin up the rotor, then climb, hover and fly forward.'); }
+on('hlSpin', 'click', spinUp); on('hlClimb', 'click', climb); on('hlHover', 'click', hover); on('hlFwd', 'click', forward);
+on('hlStopF', 'click', stopF); on('hlDesc', 'click', land); on('hlReset', 'click', reset);
+on('hlPlay', 'click', function(){ setPlay(!U.play); });
+on('hlSpd', 'input', function(){ U.spd = +this.value; el('hlSpdV').textContent = U.spd.toFixed(2) + '\u00D7'; });
+on('hlFor', 'change', function(){ U.forces = this.checked; }); on('hlAng', 'change', function(){ U.angs = this.checked; });
+on('hlVStd', 'click', function(){ U.yaw = -35; U.pitch = 14; }); on('hlVTop', 'click', function(){ U.yaw = 0; U.pitch = 80; });
+on('hlDsc', 'click', describe);
+var drag = null;
+cv.addEventListener('pointerdown', function(e){ drag = { x:e.clientX, y:e.clientY, yaw:U.yaw, pitch:U.pitch }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!drag) return; var r = cv.getBoundingClientRect(), k = W/r.width; U.yaw = drag.yaw + (e.clientX - drag.x)*k*0.45; U.pitch = clamp(drag.pitch + (e.clientY - drag.y)*k*0.35, -10, 85); });
+function endDrag(){ drag = null; cv.style.cursor = 'grab'; } cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('keydown', function(e){ var k = e.key;
+  if (k === 'ArrowLeft') U.yaw -= 5; else if (k === 'ArrowRight') U.yaw += 5; else if (k === 'ArrowUp') U.pitch = clamp(U.pitch + 5, -10, 85); else if (k === 'ArrowDown') U.pitch = clamp(U.pitch - 5, -10, 85);
+  else if (k === '+' || k === '='){ S.mode = 'manual'; S.wT = Math.min(520/RPM, S.wT + 10/RPM); sync(); later(); }
+  else if (k === '-' || k === '_'){ S.mode = 'manual'; S.wT = Math.max(0, S.wT - 10/RPM); sync(); later(); }
+  else if (k === 'h' || k === 'H') hover(); else if (k === 'f' || k === 'F') forward();
+  else if (k === 'q' || k === 'Q' || k === 'e' || k === 'E'){ S.ped = clamp(S.ped + ((k === 'q' || k === 'Q') ? 0.25 : -0.25), -1, 1); el('hlPed').value = S.ped; el('hlPedv').textContent = pedTxt(S.ped); later(); }
+  else if (k === 'p' || k === 'P') setPlay(!U.play); else return; e.preventDefault(); });
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('hl_hc', th.hc); ROOT.classList.toggle('hl_lm', th.lm);
+  [['hc', 'hlBtnHC'], ['lm', 'hlBtnLM'], ['cb', 'hlBtnCB'], ['nr', 'hlBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('hl_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('hlBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('hlNar').style.display = th.nr ? '' : 'none'; }
+function toggleDesc(){ var b = el('hlDescBtn'), d = el('hlDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+/* ══════════ the loop ══════════ */
+var last = 0, tick = 0;
+function advance(T){ var n = Math.max(1, Math.ceil(T/0.005)), dt = T/n, a0 = S.ang, t0 = S.tang; for (var i=0; i<n; i++) step(dt); return [S.ang - a0, S.tang - t0]; }
+function loop(t){
+  var rdt = last ? Math.min(0.05, (t - last)/1000) : 0; last = t;
+  if (U.play && rdt > 0){ var tr = advance(rdt*U.spd);
+    U.blurM = Math.abs(tr[0]) > VMAX; S.vang = (S.vang + clamp(tr[0], -VMAX, VMAX)) % TAU; S.vtang = (S.vtang + clamp(tr[1], -VMAX, VMAX)) % TAU; }
+  draw(); if (++tick % 6 === 0) info(); if (tick % 15 === 0) sync();
+  requestAnimationFrame(loop); }
+build(); setPlay(true); sync(); info();
+narrate('Ready. The helicopter is parked on the pad, rotor stopped. Use the numbered buttons in order: spin up the rotor, climb, hover, fly forward.');
+requestAnimationFrame(loop);
+return { theme:theme, toggleDesc:toggleDesc, describe:describe, spinUp:spinUp, climb:climb, hover:hover, forward:forward, stopF:stopF, land:land, reset:reset,
+  _S:function(){ return S; }, _U:U, _adv:function(T){ return advance(T); }, _info:info, _wH:wHover };
+})();
+</script>
+
+</main>
+</body>
+</html>

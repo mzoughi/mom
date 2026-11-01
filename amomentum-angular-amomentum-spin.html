@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Rotation: Spinning Faster, Angular Momentum Is Conserved</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of the conservation of angular momentum: a person on a turning stool with dumbbells, a figure skater, and a diver who tucks and opens up.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="amRoot" class="am_root" role="region" aria-label="Conservation of angular momentum: changing the moment of inertia">
+<div class="am_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="am_a11ybtn" id="amBtnHC" onclick="amSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="am_a11ybtn" id="amBtnLM" onclick="amSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="am_a11ybtn" id="amBtnCB" onclick="amSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="am_a11ybtn am_a11yon" id="amBtnNR" onclick="amSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="am_header"><p class="am_h1">Spinning Faster: Angular Momentum Is Conserved</p><p class="am_sub">L = I&omega; stays the same: make I smaller, and &omega; grows</p></div>
+<div class="am_tabs" role="tablist" aria-label="Situations">
+<button type="button" role="tab" class="am_tab" id="amTab0" aria-selected="true" onclick="amSim.tab(0)">The stool and the dumbbells</button>
+<button type="button" role="tab" class="am_tab" id="amTab1" aria-selected="false" onclick="amSim.tab(1)">The skater</button>
+<button type="button" role="tab" class="am_tab" id="amTab2" aria-selected="false" onclick="amSim.tab(2)">The diver</button>
+</div>
+<div class="am_row2">
+<div class="am_diag"><div class="am_dlabel"><b id="amT1">FROM THE SIDE</b><span id="amHint"></span></div><canvas id="amSide" width="430" height="400" role="img" aria-label="The person, the skater or the diver, seen from the side." aria-describedby="amStatus"></canvas></div>
+<div class="am_diag"><div class="am_dlabel"><b id="amT2">FROM ABOVE</b></div><canvas id="amTop" width="330" height="400" role="img" aria-label="The same seen from above, or close up for the diver."></canvas></div>
+</div>
+<div class="am_bbar" id="amAct"></div>
+<div class="am_bbar"><button type="button" class="am_btn am_btnon" id="amPlay">&#10073;&#10073; Pause</button><button type="button" class="am_btn" id="amStep">Step &#9656;</button><button type="button" class="am_btn" id="amReset">Start again</button><label>slow motion <input type="range" id="amSpd" min="0.05" max="1" step="0.05" value="0.5" style="width:100px"> <span id="amSpdV">0.50&times;</span></label></div>
+<div class="am_status" id="amStatus" role="status" aria-live="polite"></div>
+<div class="am_diag"><div class="am_dlabel"><b>AGAINST TIME</b><span id="amGHint">the moment of inertia, the angular speed, the angular momentum, the kinetic energy</span></div><canvas id="amGraph" width="780" height="260" role="img" aria-label="Against time: the moment of inertia, the angular speed, the angular momentum (constant), and the kinetic energy."></canvas></div>
+<div class="am_panels"><div class="am_panel"><div class="am_ptitle">Settings</div><div class="am_pbody" id="amCtl"></div></div>
+<div class="am_panel"><div class="am_ptitle">Readout</div><div class="am_pbody" id="amRead"></div></div></div>
+<div class="am_eqs" id="amEq"></div>
+<div id="amNar" class="am_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="am_descwrap">
+<button type="button" class="am_descbtn" id="amDescBtn" aria-expanded="false" aria-controls="amDesc" onclick="amSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="am_desc" id="amDesc" role="region" aria-labelledby="amDescBtn" style="display:none">
+<p>A spinning body keeps its angular momentum `L = I omega` unless an outside torque acts on it. The moment of inertia `I = sum m r^2` depends on how far the mass is from the axis. So when a spinning person pulls the arms in, `I` gets smaller and the angular speed `omega` grows, in the same proportion: `I_1 omega_1 = I_2 omega_2`.</p>
+<p>The kinetic energy `K = 1/2 I omega^2 = L^2/(2I)` is not conserved: it increases when the arms are pulled in. The extra energy comes from the work the arms do, pulling the masses inward against their tendency to move in a straight line. Stretching the arms out again gives that energy back.</p>
+<p><b>Letting go.</b> If the person lets go of the dumbbells, they fly off along straight lines, tangent to their circles, carrying their own angular momentum with them. The person's angular speed does not change: nothing pushed or pulled them.</p>
+<p><b>The skater</b> starts a spin with the arms and the free leg out, then pulls them in (or raises the arms over the head), and spins several times faster. <b>The diver</b> leaves the board with a fixed angular momentum; in the air nothing can change it. Tucking (knees to chest) makes `I` about four times smaller than when straight, so the diver somersaults about four times faster, then opens up to slow down for a clean, head-first entry. The centre of mass follows the same parabola whatever the diver does.</p>
+</div></div>
+</div><!-- #amRoot -->
+<style>
+#amRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#amRoot * { box-sizing:border-box; }
+#amRoot.am_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#amRoot.am_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#amRoot .am_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#amRoot .am_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#amRoot .am_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#amRoot .am_header { text-align:center; }
+#amRoot .am_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#amRoot .am_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#amRoot .am_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#amRoot .am_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#amRoot .am_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#amRoot .am_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#amRoot .am_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#amRoot .am_dlabel b { color:var(--c-accent); }
+#amRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#amRoot .am_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#amRoot .am_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#amRoot .am_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#amRoot .am_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#amRoot .am_btn:hover { border-color:var(--c-accent); }
+#amRoot .am_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#amRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#amRoot .am_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#amRoot .am_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#amRoot .am_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#amRoot .am_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#amRoot .am_ctrl { display:flex; flex-direction:column; gap:3px; }
+#amRoot .am_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#amRoot .am_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#amRoot .am_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#amRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#amRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#amRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#amRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#amRoot .am_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#amRoot .am_rkey { color:var(--c-dim); }
+#amRoot .am_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#amRoot .am_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#amRoot .am_eqs b { color:var(--c-val); }
+#amRoot .am_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#amRoot .am_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#amRoot .am_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#amRoot .am_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#amRoot .am_desc p { margin:0 0 9px; }
+#amRoot .am_eq { text-align:center; font-size:1rem; }
+#amRoot button:focus-visible, #amRoot input:focus-visible, #amRoot select:focus-visible, #amRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #amRoot .am_row2, #amRoot .am_panels { grid-template-columns:minmax(0,1fr); } #amRoot .am_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #amRoot input[type=range] { height:8px; } #amRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #amRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #amRoot .am_a11ybtn { min-height:40px; } #amRoot input[type=checkbox] { width:22px; height:22px; } }
+#amRoot .am_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+</style>
+<!-- ════════ SIMULATION ════════
+SI units. Stool: I = I0 + 2 m_d r^2 + 2 m_a r^2/3 (arms as rods of mass m_a from the axis to the hands at radius r).
+Skater: I = I0 + arms + free leg, each a rod from shoulder or hip (at 0.2 or 0.1 m) to the hand or foot. Diver: I = 14, 7 or 4 kg m^2
+(straight, pike, tuck), changing smoothly. omega = L/I at every instant; a friction torque (optional) reduces L.
+No dollar signs or backticks in the code.
+-->
+<script>
+var amSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('amRoot'), DPR = window.devicePixelRatio || 1, G = 9.8;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CS = hi('amSide'), CT = hi('amTop'), CG = hi('amGraph');
+/* ══════════ a small 3D engine (as in the right-hand-rule simulation): shapes made of quads, sorted far to near, lit by one light ══════════
+   World: x to the right, y up, z toward the viewer (right-handed). The camera turns (yaw) and tilts (pitch); drag the view to turn it. */
+function v3add(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; } function v3sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function v3mul(a, k){ return [a[0]*k, a[1]*k, a[2]*k]; } function v3dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function v3cross(a, b){ return [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]; }
+function v3nrm(a){ var l = Math.sqrt(v3dot(a, a)) || 1; return [a[0]/l, a[1]/l, a[2]/l]; }
+function v3perp(a){ var t = Math.abs(a[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]; return v3nrm(v3cross(a, t)); }
+function rotY(p, a){ var c = Math.cos(a), s = Math.sin(a); return [p[0]*c + p[2]*s, p[1], -p[0]*s + p[2]*c]; }   /* positive: counterclockwise seen from above */
+function E3(cv){ var o = { cv:cv, g:cv.getContext('2d'), W:cv.width/DPR, H:cv.height/DPR, yaw:-25, pitch:22, s:210, cy:0.88, yc:0.7, D:7, polys:[] };
+  o.view = function(p){ var a = o.yaw*Math.PI/180, e = o.pitch*Math.PI/180, ca = Math.cos(a), sa = Math.sin(a), x1 = p[0]*ca + p[2]*sa, z1 = -p[0]*sa + p[2]*ca, y1 = p[1] - o.yc; return [x1, y1*Math.cos(e) - z1*Math.sin(e), y1*Math.sin(e) + z1*Math.cos(e)]; };
+  o.proj = function(v){ var f = o.D/(o.D - v[2]); return [o.W/2 + v[0]*o.s*f, o.H*o.cy - (v[1] + o.yc)*o.s*f]; };
+  o.scr = function(p){ return o.proj(o.view(p)); };
+  o.poly = function(pts, col){ o.polys.push({ p:pts, c:col }); };
+  var LIGHT = v3nrm([-0.35, 0.65, 0.68]);
+  o.flush = function(){ var g = o.g, list = o.polys.map(function(q){ var v = q.p.map(o.view), z = 0; v.forEach(function(t){ z += t[2]; }); return { v:v, z:z/v.length, c:q.c }; });
+    list.sort(function(A, B){ return A.z - B.z; });
+    list.forEach(function(q){ var n = q.v.length > 2 ? v3nrm(v3cross(v3sub(q.v[1], q.v[0]), v3sub(q.v[2], q.v[0]))) : [0, 0, 1]; if (n[2] < 0) n = v3mul(n, -1);
+      var k = 0.34 + 0.66*Math.max(0, v3dot(n, LIGHT)), sp = Math.pow(Math.max(0, v3dot(n, v3nrm(v3add(LIGHT, [0, 0, 1])))), 20)*0.3, col = q.c.map(function(c){ return Math.min(255, Math.round(c*k + 255*sp)); });
+      g.fillStyle = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')'; g.strokeStyle = g.fillStyle; g.lineWidth = 0.6; g.beginPath(); q.v.forEach(function(t, i){ var s = o.proj(t); if (i) g.lineTo(s[0], s[1]); else g.moveTo(s[0], s[1]); }); g.closePath(); g.fill(); g.stroke(); });
+    o.polys = []; };
+  o.ell = function(c, A, B, C, col, nu, nv, X){ nu = Math.min(nu || 10, 10); nv = Math.min(nv || 6, 6);   /* fewer facets: quicker */ X = X || function(p){ return p; };
+    function P(u, v){ return X(v3add(v3add(v3add(c, v3mul(A, Math.sin(v)*Math.cos(u))), v3mul(B, Math.sin(v)*Math.sin(u))), v3mul(C, Math.cos(v)))); }
+    for (var j=0; j<nv; j++) for (var i=0; i<nu; i++){ var u0 = 2*Math.PI*i/nu, u1 = 2*Math.PI*(i + 1)/nu, w0 = Math.PI*j/nv, w1 = Math.PI*(j + 1)/nv; o.poly([P(u0, w0), P(u1, w0), P(u1, w1), P(u0, w1)], col); } };
+  o.ball = function(c, r, col, X){ o.ell(c, [r, 0, 0], [0, 0, r], [0, r, 0], col, 10, 6, X); };
+  o.tube = function(p0, p1, r0, r1, col, n, X, caps){ n = n || 10; X = X || function(p){ return p; }; var ax = v3nrm(v3sub(p1, p0)), u = v3perp(ax), v = v3cross(ax, u);
+    function R(p, r, a){ return X(v3add(p, v3add(v3mul(u, r*Math.cos(a)), v3mul(v, r*Math.sin(a))))); }
+    for (var i=0; i<n; i++){ var a0 = 2*Math.PI*i/n, a1 = 2*Math.PI*(i + 1)/n; o.poly([R(p0, r0, a0), R(p0, r0, a1), R(p1, r1, a1), R(p1, r1, a0)], col); }
+    if (caps){ var c0 = [], c1 = []; for (var k=0; k<n; k++){ c0.push(R(p0, r0, 2*Math.PI*k/n)); c1.push(R(p1, r1, 2*Math.PI*k/n)); } o.poly(c0, col); o.poly(c1, col); } };
+  o.cone = function(b, tip, r, col, n){ n = n || 12; var ax = v3nrm(v3sub(tip, b)), u = v3perp(ax), v = v3cross(ax, u);
+    for (var i=0; i<n; i++){ var a0 = 2*Math.PI*i/n, a1 = 2*Math.PI*(i + 1)/n, q0 = v3add(b, v3add(v3mul(u, r*Math.cos(a0)), v3mul(v, r*Math.sin(a0)))), q1 = v3add(b, v3add(v3mul(u, r*Math.cos(a1)), v3mul(v, r*Math.sin(a1)))); o.poly([q0, q1, tip], col); o.poly([q0, q1, b], col); } };
+  /* a curved arrow around the vertical axis, along the near half: counterclockwise from above when dir > 0 */
+  o.spin = function(y, R, dir, col){ if (!dir) return; var n = 16, t0 = 1.15*Math.PI, t1 = 1.85*Math.PI, pts = []; for (var i=0; i<=n; i++){ var t = t0 + (t1 - t0)*i/n; pts.push([R*Math.cos(t), y, -R*Math.sin(t)]); } if (dir < 0) pts.reverse();
+    for (var k=0; k<n - 1; k++) o.tube(pts[k], pts[k + 1], 0.012, 0.012, col, 6); var a = pts[n - 1], b = pts[n], d = v3nrm(v3sub(b, a)); o.cone(a, v3add(a, v3mul(d, 0.09)), 0.035, col, 10); };
+  /* dragging turns the camera */
+  var drag = null; cv.style.touchAction = 'none'; cv.style.cursor = 'grab';
+  cv.addEventListener('pointerdown', function(e){ drag = { x:e.clientX, y:e.clientY, yaw:o.yaw, pitch:o.pitch }; try { cv.setPointerCapture(e.pointerId); } catch(err){} cv.style.cursor = 'grabbing'; });
+  cv.addEventListener('pointermove', function(e){ if (!drag) return; var r = cv.getBoundingClientRect(), k = o.W/r.width; o.yaw = drag.yaw + (e.clientX - drag.x)*k*0.45; o.pitch = Math.max(-10, Math.min(80, drag.pitch + (e.clientY - drag.y)*k*0.35)); });
+  cv.addEventListener('pointerup', function(){ drag = null; cv.style.cursor = 'grab'; }); cv.addEventListener('pointercancel', function(){ drag = null; });
+  return o; }
+var SKIN = [226, 190, 150], SHIRT = [70, 112, 186], PANTS = [52, 58, 74], STOOLC = [204, 58, 48], WEIGHT = [40, 70, 200], DARK = [30, 30, 30];
+function stool3(e, ang, X){ /* a turning stool: its marks turn with it */ e.tube([0, 0.0, 0], [0, 0.04, 0], 0.30, 0.30, STOOLC, 18, null, true); e.tube([0, 0.04, 0], [0, 0.45, 0], 0.05, 0.05, STOOLC, 10);
+  e.tube([0, 0.45, 0], [0, 0.52, 0], 0.26, 0.26, STOOLC, 22, null, true); for (var k=0; k<6; k++){ var a = ang + k*Math.PI/3; e.ball([0.262*Math.cos(a), 0.485, -0.262*Math.sin(a)], 0.022, [250, 250, 250]); } }
+function seated3(e, ang, r, held){ /* a seated person, facing +z when ang = 0; the hands at distance r from the axis, at the sides */
+  function X(p){ return rotY(p, ang); } var hz = Math.max(0, 0.24*(1 - (r - 0.15)/0.3)), hy = 0.97;
+  e.ell([0, 0.62, 0.02], [0.17, 0, 0], [0, 0, 0.12], [0, 0.09, 0], PANTS, 12, 6, X); e.ell([0, 0.90, 0], [0.165, 0, 0], [0, 0, 0.11], [0, 0.26, 0], SHIRT, 14, 8, X);
+  e.tube([0, 1.12, 0], [0, 1.19, 0], 0.045, 0.045, SKIN, 8, X); e.ell([0, 1.31, 0], [0.10, 0, 0], [0, 0, 0.105], [0, 0.125, 0], SKIN, 12, 8, X);
+  e.ball([0, 1.30, 0.105], 0.022, SKIN, X); e.ball([0.038, 1.345, 0.088], 0.014, DARK, X); e.ball([-0.038, 1.345, 0.088], 0.014, DARK, X);   /* nose and eyes: which way the face points */
+  [1, -1].forEach(function(s){ var hip = [s*0.09, 0.60, 0.04], knee = [s*0.11, 0.57, 0.42], ank = [s*0.11, 0.10, 0.44];
+    e.tube(hip, knee, 0.065, 0.055, PANTS, 10, X); e.ball(knee, 0.056, PANTS, X); e.tube(knee, ank, 0.05, 0.04, PANTS, 10, X); e.ell([s*0.11, 0.05, 0.50], [0.045, 0, 0], [0, 0, 0.10], [0, 0.04, 0], DARK, 10, 6, X);
+    var sh = [s*0.20, 1.06, 0], hand = [s*Math.max(r, 0.12), hy, hz], el_ = v3add(v3mul(v3add(sh, hand), 0.5), [s*0.05*(1 - Math.min(1, (r - 0.15)/0.5)), -0.09, 0.05]);
+    e.ball(sh, 0.06, SHIRT, X); e.tube(sh, el_, 0.045, 0.04, SKIN, 8, X); e.ball(el_, 0.04, SKIN, X); e.tube(el_, hand, 0.04, 0.035, SKIN, 8, X); e.ball(hand, 0.042, SKIN, X);
+    if (held){ e.tube(v3add(hand, [0, 0, -0.09]), v3add(hand, [0, 0, 0.09]), 0.014, 0.014, DARK, 6, X); e.ell(v3add(hand, [0, 0, -0.1]), [0.055, 0, 0], [0, 0.055, 0], [0, 0, 0.03], WEIGHT, 10, 5, X); e.ell(v3add(hand, [0, 0, 0.1]), [0.055, 0, 0], [0, 0.055, 0], [0, 0, 0.03], WEIGHT, 10, 5, X); } }); }
+
+var E1 = E3(CS.c), E2 = E3(CT.c); E2.s = 150; E2.yc = 0; E2.cy = 0.5; E2.yaw = -30; E2.pitch = 12;
+var DRESS = [142, 27, 78], SUIT = [192, 57, 43], CAP = [240, 240, 240], BLADE = [180, 190, 200];
+function skater3(e, ang, arms, leg){ /* standing on the left skate; arms out (0) -> in (0.75) -> over the head (1); free leg out (0) -> tucked (1) */
+  function X(p){ return rotY(p, ang); }
+  e.ell([0, 0.98, 0], [0.15, 0, 0], [0, 0, 0.11], [0, 0.09, 0], DRESS, 10, 6, X); e.ell([0, 1.24, 0], [0.15, 0, 0], [0, 0, 0.10], [0, 0.24, 0], DRESS, 10, 6, X);
+  e.cone([0, 0.80, 0], [0, 1.14, 0], 0.30, DRESS, 16);   /* the skirt: wide at the hem, narrow at the waist */ e.tube([0, 1.45, 0], [0, 1.52, 0], 0.04, 0.04, SKIN, 8, X);
+  e.ell([0, 1.63, 0], [0.09, 0, 0], [0, 0, 0.095], [0, 0.115, 0], SKIN, 10, 6, X); e.ball([0, 1.66, -0.08], 0.05, [120, 70, 30], X);
+  e.ball([0, 1.62, 0.095], 0.02, SKIN, X); e.ball([0.034, 1.655, 0.08], 0.013, DARK, X); e.ball([-0.034, 1.655, 0.08], 0.013, DARK, X);
+  var hipL = [-0.08, 0.96, 0], kneeL = [-0.08, 0.50, 0.02], ankL = [-0.07, 0.10, 0]; e.tube(hipL, kneeL, 0.065, 0.05, SKIN, 8, X); e.ball(kneeL, 0.05, SKIN, X); e.tube(kneeL, ankL, 0.048, 0.04, SKIN, 8, X);
+  e.ell([-0.07, 0.07, 0.04], [0.045, 0, 0], [0, 0, 0.11], [0, 0.06, 0], [250, 250, 250], 8, 5, X); e.tube([-0.07, 0.0, -0.08], [-0.07, 0.0, 0.16], 0.008, 0.008, BLADE, 5, X);
+  var lr = 0.62 - 0.5*leg, hipR = [0.08, 0.96, 0], footR = [0.08 + lr*0.85, 0.96 - 0.15 - 0.35*leg, -lr*0.5], kneeR = v3add(v3mul(v3add(hipR, footR), 0.5), [0.04*leg, -0.08 + 0.25*leg, 0.12*leg]);
+  e.tube(hipR, kneeR, 0.065, 0.05, SKIN, 8, X); e.ball(kneeR, 0.05, SKIN, X); e.tube(kneeR, footR, 0.048, 0.04, SKIN, 8, X); e.ell(footR, [0.045, 0, 0], [0, 0, 0.1], [0, 0.05, 0], [250, 250, 250], 8, 5, X);
+  [1, -1].forEach(function(sg){ var sh = [sg*0.18, 1.40, 0], over = arms > 0.85 ? (arms - 0.85)/0.15 : 0, ar = 0.72 - 0.6*Math.min(arms, 0.85)/0.85*0.9,
+      hand = over ? [sg*(0.12 - 0.08*over), 1.40 + 0.5*over, 0.05] : [sg*Math.max(ar, 0.14), 1.36 - 0.06*arms, 0.22*Math.min(1, arms/0.75)], el_ = v3add(v3mul(v3add(sh, hand), 0.5), [sg*0.04, -0.06*(1 - over), 0.04]);
+    e.ball(sh, 0.05, DRESS, X); e.tube(sh, el_, 0.04, 0.036, SKIN, 8, X); e.ball(el_, 0.036, SKIN, X); e.tube(el_, hand, 0.035, 0.03, SKIN, 8, X); e.ball(hand, 0.035, SKIN, X); }); }
+function diver3(e, theta, pos){ /* the diver about the hips, in the plane z = 0, from the same joints as the flight view */
+  var b = diverPts(theta, pos), u = v3nrm([b.sh[0] - b.hip[0], b.sh[1] - b.hip[1], 0]), f = [u[1], -u[0], 0];
+  function P(q, z){ return [q[0], q[1], z]; }
+  e.ell(P([(b.sh[0] + b.hip[0])/2, (b.sh[1] + b.hip[1])/2], 0), [0, 0, 0.15], v3mul(f, 0.1), v3mul(u, 0.30), SUIT, 10, 6);
+  e.ell(P(b.head, 0), [0, 0, 0.09], v3mul(f, 0.1), v3mul(u, 0.12), SKIN, 10, 6); e.ell(P([b.head[0] + 0.03*u[0], b.head[1] + 0.03*u[1]], 0), [0, 0, 0.095], v3mul(f, 0.1), v3mul(u, 0.1), CAP, 10, 6);
+  e.ball(P([b.head[0] + 0.1*f[0], b.head[1] + 0.1*f[1]], 0), 0.02, SKIN);
+  [0.085, -0.085].forEach(function(z){ e.tube(P(b.hip, z), P(b.knee, z), 0.07, 0.055, SKIN, 8); e.ball(P(b.knee, z), 0.055, SKIN); e.tube(P(b.knee, z), P(b.foot, z), 0.05, 0.035, SKIN, 8); e.ball(P(b.foot, z), 0.04, SKIN); });
+  [0.18, -0.18].forEach(function(z){ e.ball(P(b.sh, z), 0.05, SUIT); e.tube(P(b.sh, z), P(b.elbow, z*0.9), 0.04, 0.035, SKIN, 8); e.ball(P(b.elbow, z*0.9), 0.035, SKIN); e.tube(P(b.elbow, z*0.9), P(b.hand, z*0.6), 0.033, 0.03, SKIN, 8); e.ball(P(b.hand, z*0.6), 0.032, SKIN); }); }
+var th = { hc:false, lm:false, cb:false, nr:true }, TAB = 0, play = true, spd = 0.5;
+var HEAD = { img:null };
+/* ── the stool ── */
+var S = { I0:2.0, md:2.0, ma:3.0, r:0.7, rTarget:0.7, ang:0, L:0, w0:3.0, fric:0, held:true, flying:[], hist:[], t:0 };
+/* ── the skater ── */
+var K = { arms:0, armsT:0, leg:0, legT:0, ang:0, L:0, w0:12, hist:[], t:0 };
+/* ── the diver ── */
+var DIVES = { 10:{ L:52, plan:'tuck', openH:3.0, vy:4.5, name:'3\u00BD somersaults, tucked' }, 3:{ L:94, plan:'pike', openH:2.0, vy:4.5, name:'2\u00BD somersaults, piked' }, 1:{ L:87, plan:'tuck', openH:1.75, vy:4.0, name:'1\u00BD somersaults, tucked' } };   /* each enters straight and vertical */   /* each board's classic dive: a clean entry */
+var D = { H:10, vy:4.5, vx:1.2, L:52, pos:0, posT:0, plan:'tuck', openH:3.0, t:0, x:0, y:0, theta:0, running:false, done:false, hist:[], result:null, auto:true };
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.1)', skin:'#e2be96', body:'#e2be96', stool:'#d6332a', db:'#1f3fd6', I:'#7d3cc8', w:'#1f5fd6', L:'#12805a', K:'#c0392b', ice:'#dbeaf5', water:'#5fb3d9', ok:'#12805a', bad:'#c0392b', arrow:'#1f3fd6' };
+  if (th.cb){ p.w = '#0072b2'; p.L = '#009e73'; p.K = '#d55e00'; p.I = '#cc79a7'; p.ok = '#009e73'; p.bad = '#d55e00'; }
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.25)'; p.ice = '#223'; p.w = '#55aaff'; p.L = '#00ff88'; p.K = '#ff5555'; p.I = '#ff66ff'; p.db = '#55aaff'; p.arrow = '#55aaff'; }
+  return p; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('amNar').textContent = m; }
+function rrow(k, v){ return '<div class="am_rrow"><span class="am_rkey">' + k + '</span><span class="am_rval">' + v + '</span></div>'; }
+function head(g, cx, cy, h){ g.fillStyle = '#e2be96'; g.beginPath(); g.arc(cx, cy, h*0.32, 0, 2*Math.PI); g.fill(); g.fillStyle = '#f0f0f0'; g.beginPath(); g.arc(cx, cy - h*0.06, h*0.3, Math.PI, 2*Math.PI); g.fill(); }   /* a plain head with a cap */
+function limb(g, pts, col, w){ g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); pts.forEach(function(q, i){ if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke(); g.lineCap = 'butt'; }
+function spinArrow(g, cx, cy, rx, ry, col, dir){ /* the sense of rotation: an arc along the front (near) half, its head where that edge is going;
+     counterclockwise seen from above (dir > 0): the near edge moves to the right */
+  if (!dir) return; g.strokeStyle = col; g.lineWidth = 1.8; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0.15*Math.PI, 0.85*Math.PI); g.stroke();
+  var t = dir > 0 ? 0.15*Math.PI : 0.85*Math.PI, x = cx + rx*Math.cos(t), y = cy + ry*Math.sin(t), dx = dir > 0 ? rx*Math.sin(t) : -rx*Math.sin(t), dy = dir > 0 ? -ry*Math.cos(t) : ry*Math.cos(t), L = Math.hypot(dx, dy) || 1, ux = dx/L, uy = dy/L;
+  g.fillStyle = col; g.beginPath(); g.moveTo(x + 9*ux, y + 9*uy); g.lineTo(x - 5*ux - 5*uy, y - 5*uy + 5*ux); g.lineTo(x - 5*ux + 5*uy, y - 5*uy - 5*ux); g.closePath(); g.fill(); }
+/* ══════════ TAB 1: the stool ══════════ */
+function I1(){ return S.I0 + (S.held ? 2*S.md*S.r*S.r : 0) + 2*S.ma*S.r*S.r/3; }
+function start1(){ S.ang = 0; S.L = I1()*S.w0; S.flying = []; S.held = true; S.hist = []; S.t = 0; }
+function step1(dt){ var rate = 1.2; if (Math.abs(S.r - S.rTarget) > 1e-4) S.r += Math.sign(S.rTarget - S.r)*Math.min(Math.abs(S.rTarget - S.r), rate*dt);
+  if (S.fric > 0 && S.L > 0) S.L = Math.max(0, S.L - S.fric*dt); var w = S.L/I1(); S.ang += w*dt; S.t += dt;
+  S.flying.forEach(function(q){ q.x += q.vx*dt; q.y += q.vy*dt; }); S.flying = S.flying.filter(function(q){ return Math.hypot(q.x, q.y) < 4; });
+  var lh = S.hist[S.hist.length - 1]; if (!lh || S.t - lh[0] > 0.05){ S.hist.push([S.t, I1(), w, S.L, 0.5*I1()*w*w]); if (S.hist.length > 600) S.hist.shift(); } }
+function drawStoolSide(g, W, H, p, ang, r, held, flying){ /* in 3D: drag the view to turn it */
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H); var e = E1;
+  var f0 = e.scr([-0.9, 0, -0.9]), f1 = e.scr([0.9, 0, -0.9]), f2_ = e.scr([0.9, 0, 0.9]), f3 = e.scr([-0.9, 0, 0.9]); g.fillStyle = th.hc ? '#222' : '#d9dee4'; g.beginPath(); g.moveTo(f0[0], f0[1]); g.lineTo(f1[0], f1[1]); g.lineTo(f2_[0], f2_[1]); g.lineTo(f3[0], f3[1]); g.closePath(); g.fill();
+  var a = e.scr([0, 0, 0]), b = e.scr([0, 1.78, 0]); seg(g, a[0], a[1], b[0], b[1], p.text, 1, [4, 4]);
+  stool3(e, ang, null); seated3(e, ang, r, held);
+  if (flying) flying.forEach(function(q){ e.ell([q.x, 0.97, -q.y], [0.055, 0, 0], [0, 0.055, 0], [0, 0, 0.055], WEIGHT, 10, 5); });
+  e.spin(1.62, 0.26, 1, [31, 63, 214]); e.flush();
+  Tx(g, 'drag to turn the view', W - 8, H - 10, p.dim, 'right', '10px Arial'); }
+function drawStoolTop(g, W, H, p, ang, r, held, flying, trail){
+  var cx = W/2, cy = H/2, sc = 190; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = p.stool; g.globalAlpha = 0.35; g.beginPath(); g.arc(cx, cy, 100, 0, 2*Math.PI); g.fill(); g.globalAlpha = 1;
+  if (trail){ g.strokeStyle = p.db; g.globalAlpha = 0.25; g.setLineDash([4, 4]); g.beginPath(); g.arc(cx, cy, r*sc, 0, 2*Math.PI); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; }
+  [1, -1].forEach(function(s){ var x = cx + s*r*Math.cos(ang)*sc, y = cy - s*r*Math.sin(ang)*sc, shx = cx + s*0.17*Math.cos(ang)*sc, shy = cy - s*0.17*Math.sin(ang)*sc; limb(g, [[shx, shy], [x, y]], p.skin, 7); if (held){ g.fillStyle = p.db; g.fillRect(x - 9, y - 9, 18, 18); } });
+  g.fillStyle = p.body; g.beginPath(); g.ellipse(cx, cy, 36, 26, -ang, 0, 2*Math.PI); g.fill(); g.fillStyle = '#e06a1a'; g.beginPath(); g.arc(cx, cy, 18, 0, 2*Math.PI); g.fill();
+  var nx = cx + 30*Math.cos(ang - Math.PI/2), ny = cy - 30*Math.sin(ang - Math.PI/2);   /* facing the near side at the start, as in 3D */ g.fillStyle = p.text; g.beginPath(); g.arc(nx, ny, 3.5, 0, 2*Math.PI); g.fill(); Tx(g, 'nose', nx + 6, ny, p.dim, 'left', '9px Arial');
+  if (flying) flying.forEach(function(q){ g.fillStyle = p.db; g.fillRect(cx + q.x*sc - 9, cy - q.y*sc - 9, 18, 18); seg(g, cx + q.x0*sc, cy - q.y0*sc, cx + q.x*sc, cy - q.y*sc, p.db, 1, [3, 3]); });
+  spinArrow(g, cx, cy, 150, 150, p.arrow, 1); Tx(g, 'seen from above: counterclockwise', cx, H - 12, p.dim, 'center', '10px Arial'); }
+function draw1(){ var p = pal(); drawStoolSide(CS.g, CS.W, CS.H, p, S.ang, S.r, S.held, S.flying); drawStoolTop(CT.g, CT.W, CT.H, p, S.ang, S.r, S.held, S.flying, true);
+  var w = S.L/I1(); el('amHint').textContent = f2(w/(2*Math.PI), 2) + ' turns per second';
+  el('amRead').innerHTML = rrow('moment of inertia I', f2(I1(), 2) + ' kg\u00B7m\u00B2') + rrow('angular speed \u03C9', f2(w, 2) + ' rad/s = ' + f2(w/(2*Math.PI), 2) + ' turns/s') + rrow('angular momentum L = I\u03C9', f2(S.L, 2) + ' kg\u00B7m\u00B2/s' + (S.fric ? '' : ' (constant)')) + rrow('kinetic energy \u00BDI\u03C9\u00B2', f2(0.5*I1()*w*w, 1) + ' J')
+    + rrow('hands at r', f2(S.r, 2) + ' m from the axis') + rrow('dumbbells', S.held ? 'held, ' + f2(S.md, 1) + ' kg each' : 'let go: flying off in straight lines');
+  el('amEq').innerHTML = '<b>L = I\u03C9</b> stays constant: <b>I = I\u2080 + 2m r\u00B2 + (arms)</b> shrinks when the hands come in, so <b>\u03C9 = L/I</b> grows. The kinetic energy <b>L\u00B2/2I</b> grows too: the arms do work pulling the weights in.'; }
+/* ══════════ TAB 2: the skater ══════════ */
+function rodI(m, a, b){ return m*(a*a + a*b + b*b)/3; }   /* a rod of mass m from radius a to radius b */
+function armR(){ return 0.72 - 0.6*K.arms; } function legR(){ return 0.62 - 0.5*K.leg; }
+function I2(){ var ar = armR(), lr = legR(); return 0.9 + 2*rodI(3, 0.2, Math.max(0.2, ar)) + rodI(9, 0.1, Math.max(0.1, lr)); }
+function start2(){ K.ang = 0; K.L = I2()*K.w0; K.hist = []; K.t = 0; }
+function step2(dt){ ['arms', 'leg'].forEach(function(k){ var tg = K[k + 'T']; if (Math.abs(K[k] - tg) > 1e-4) K[k] += Math.sign(tg - K[k])*Math.min(Math.abs(tg - K[k]), 1.6*dt); });
+  var w = K.L/I2(); K.ang += w*dt; K.t += dt; var lh = K.hist[K.hist.length - 1]; if (!lh || K.t - lh[0] > 0.05){ K.hist.push([K.t, I2(), w, K.L, 0.5*I2()*w*w]); if (K.hist.length > 600) K.hist.shift(); } }
+function draw2(){ var p = pal(), g = CS.g, W = CS.W, H = CS.H, ang = K.ang, e = E1, ar = armR(), over = K.arms > 0.85, lr = legR();
+  e.s = 145; e.yc = 1.0; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  var f0 = e.scr([-1.2, 0, -1.2]), f1 = e.scr([1.2, 0, -1.2]), f2_ = e.scr([1.2, 0, 1.2]), f3 = e.scr([-1.2, 0, 1.2]); g.fillStyle = p.ice; g.beginPath(); g.moveTo(f0[0], f0[1]); g.lineTo(f1[0], f1[1]); g.lineTo(f2_[0], f2_[1]); g.lineTo(f3[0], f3[1]); g.closePath(); g.fill();
+  var a = e.scr([0, 0, 0]), b = e.scr([0, 2.2, 0]); seg(g, a[0], a[1], b[0], b[1], p.text, 1, [4, 4]);
+  skater3(e, ang, K.arms, K.leg); e.spin(2.05, 0.26, 1, [31, 63, 214]); e.flush(); Tx(g, 'drag to turn the view', W - 8, H - 10, p.dim, 'right', '10px Arial');
+  /* above */ var t = CT.g, tw = CT.W, tH = CT.H, tcx = tw/2, tcy = tH/2, ts = 190; t.fillStyle = p.bg; t.fillRect(0, 0, tw, tH); t.fillStyle = p.ice; t.beginPath(); t.arc(tcx, tcy, 150, 0, 2*Math.PI); t.fill();
+  [1, -1].forEach(function(s){ var r2 = over ? ar*(1 - 0.6*(K.arms - 0.85)/0.15) : ar; limb(t, [[tcx + s*0.18*Math.cos(ang)*ts, tcy - s*0.18*Math.sin(ang)*ts], [tcx + s*r2*Math.cos(ang)*ts, tcy - s*r2*Math.sin(ang)*ts]], p.skin, 7); });
+  limb(t, [[tcx, tcy], [tcx + lr*Math.cos(ang + 0.3)*ts, tcy - lr*Math.sin(ang + 0.3)*ts]], p.skin, 9); t.fillStyle = '#8e1b4e'; t.beginPath(); t.ellipse(tcx, tcy, 34, 24, -ang, 0, 2*Math.PI); t.fill(); t.fillStyle = '#e06a1a'; t.beginPath(); t.arc(tcx, tcy, 16, 0, 2*Math.PI); t.fill();
+  spinArrow(t, tcx, tcy, 150, 150, p.arrow, 1); Tx(t, 'seen from above', tcx, tH - 12, p.dim, 'center', '10px Arial');
+  var w = K.L/I2(); el('amHint').textContent = f2(w/(2*Math.PI), 2) + ' turns per second';
+  el('amRead').innerHTML = rrow('moment of inertia I', f2(I2(), 2) + ' kg\u00B7m\u00B2') + rrow('angular speed', f2(w, 2) + ' rad/s = ' + f2(w/(2*Math.PI), 2) + ' turns/s') + rrow('angular momentum L', f2(K.L, 2) + ' kg\u00B7m\u00B2/s (constant)') + rrow('kinetic energy', f2(0.5*I2()*w*w, 0) + ' J')
+    + rrow('arms', K.arms < 0.1 ? 'out' : K.arms > 0.9 ? 'over the head' : K.arms > 0.6 ? 'in' : 'coming in') + rrow('free leg', K.leg < 0.1 ? 'out' : K.leg > 0.9 ? 'tucked against the other' : 'coming in');
+  el('amEq').innerHTML = 'Arms and the free leg far out: <b>I</b> about ' + f2(0.9 + 2*rodI(3, 0.2, 0.72) + rodI(9, 0.1, 0.62), 1) + ' kg\u00B7m\u00B2. Pulled in tight: about ' + f2(0.9 + 2*rodI(3, 0.2, 0.2) + rodI(9, 0.1, 0.12), 1) + ' kg\u00B7m\u00B2. With L fixed, the spin rate goes up by the same factor.'; }
+/* ══════════ TAB 3: the diver ══════════ */
+var IPOS = [14, 7, 4], PNAME = ['straight', 'pike', 'tuck'];
+function Id(){ var a = Math.floor(D.pos), f = D.pos - a; return a >= 2 ? IPOS[2] : IPOS[a] + (IPOS[a + 1] - IPOS[a])*f; }
+function start3(){ D.t = 0; D.x = 0; D.y = D.H + 1.0; D.theta = 0; D.pos = 0; D.posT = 0; D.running = false; D.done = false; D.hist = []; D.result = null; }
+function step3(dt){ if (!D.running || D.done) return; var h = 0.002;
+  while (dt > 1e-12 && !D.done){ var d = Math.min(h, dt); dt -= d;
+    if (D.auto){ var plan = D.plan === 'pike' ? 1 : 2; D.posT = (D.y > D.openH + 1.0 && D.t > 0.12) ? plan : 0; }
+    if (Math.abs(D.pos - D.posT) > 1e-4) D.pos += Math.sign(D.posT - D.pos)*Math.min(Math.abs(D.posT - D.pos), 10*d);   /* about 0.2 s from tuck to straight */
+    var w = D.L/Id(); D.theta += w*d; D.t += d; D.x = D.vx*D.t; D.y = D.H + 1.0 + D.vy*D.t - 0.5*G*D.t*D.t;
+    var lh = D.hist[D.hist.length - 1]; if (!lh || D.t - lh[0] > 0.02) D.hist.push([D.t, Id(), w, D.L, 0.5*Id()*w*w]);
+    if (D.y <= 0.9){ D.done = true; D.running = false; var deg = D.theta*180/Math.PI, err = ((deg - 180) % 360 + 540) % 360 - 180, n = deg/360;
+      var bent = D.pos > 0.15; D.result = { n:n, err:err, bent:bent }; narrate('Into the water after ' + f2(D.t, 2) + ' s and ' + f2(n, 2) + ' somersaults. ' + (Math.abs(err) < 15 && !bent ? 'A clean entry: head first, vertical and straight, with hardly a splash!' : Math.abs(err) < 15 ? 'Head first and vertical, but still ' + PNAME[Math.round(D.pos)] + 'ed: a big splash. Straighten out earlier.' : err > 0 ? 'Over-rotated by ' + f2(err, 0) + ' degrees: open up earlier, or take off with less angular momentum.' : 'Under-rotated by ' + f2(-err, 0) + ' degrees: stay tucked longer, or take off with more angular momentum.')); } } }
+function rot(v, a){ return [v[0]*Math.cos(a) - v[1]*Math.sin(a), v[0]*Math.sin(a) + v[1]*Math.cos(a)]; }
+function diverPts(theta, pos){ /* the body in metres, about the hips: up the torso u, front f; somersault forward (clockwise on screen) */
+  var u = [Math.sin(theta), Math.cos(theta)], f = rot(u, -Math.PI/2), pk = Math.min(1, pos), tk = Math.max(0, pos - 1), Fh = (pk*150)*Math.PI/180, Fk = (tk*140)*Math.PI/180;
+  var hipP = [0, 0], shP = [0.5*u[0], 0.5*u[1]], headP = [0.72*u[0], 0.72*u[1]], th_ = rot([-u[0], -u[1]], -Fh), knee = [0.45*th_[0], 0.45*th_[1]], sh_ = rot(th_, Fk), foot = [knee[0] + 0.45*sh_[0], knee[1] + 0.45*sh_[1]];
+  var hS = [shP[0] + 0.62*u[0], shP[1] + 0.62*u[1]], toF = [foot[0] - shP[0], foot[1] - shP[1]], lf = Math.hypot(toF[0], toF[1]) || 1, hP = [shP[0] + 0.62*toF[0]/lf, shP[1] + 0.62*toF[1]/lf], hT = [(knee[0] + foot[0])/2, (knee[1] + foot[1])/2];
+  var hand = pos <= 1 ? [hS[0] + (hP[0] - hS[0])*pk, hS[1] + (hP[1] - hS[1])*pk] : [hP[0] + (hT[0] - hP[0])*tk, hP[1] + (hT[1] - hP[1])*tk];
+  return { hip:hipP, sh:shP, head:headP, knee:knee, foot:foot, hand:hand, elbow:[(shP[0] + hand[0])/2 + 0.08*f[0], (shP[1] + hand[1])/2 + 0.08*f[1]] }; }
+function drawDiver(g, ox, oy, sc, theta, pos, p, hs){ var b = diverPts(theta, pos); function S_(q){ return [ox + q[0]*sc, oy - q[1]*sc]; }
+  limb(g, [S_(b.hip), S_(b.knee), S_(b.foot)], p.skin, Math.max(3, sc*0.09)); g.strokeStyle = '#c0392b'; limb(g, [S_(b.sh), S_(b.hip)], '#c0392b', Math.max(5, sc*0.16)); limb(g, [S_(b.sh), S_(b.elbow), S_(b.hand)], p.skin, Math.max(2.5, sc*0.07));
+  var hp = S_(b.head); g.save(); g.translate(hp[0], hp[1]); g.rotate(theta); head(g, 0, -sc*0.05, sc*(hs || 0.42)); g.restore(); }
+function draw3(){ var p = pal(), g = CS.g, W = CS.W, H = CS.H, top = D.H + 1 + D.vy*D.vy/(2*G) + 1.2, sc = (H - 50)/top, ox = 70, wy = H - 26;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H); g.fillStyle = p.water; g.fillRect(0, wy, W, H - wy); Tx(g, 'water', W - 10, wy + 12, '#fff', 'right', 'bold 11px Arial');
+  g.fillStyle = '#5b6876'; g.fillRect(0, wy - D.H*sc - 6, ox + 6, 6); g.fillRect(0, wy - D.H*sc, 14, D.H*sc); Tx(g, D.H + ' m', 18, wy - D.H*sc/2, p.dim, 'left', 'bold 11px Arial');
+  /* the centre of mass's parabola, whatever the diver does */
+  var T = (D.vy + Math.sqrt(D.vy*D.vy + 2*G*(D.H + 0.1)))/G; g.strokeStyle = p.dim; g.setLineDash([4, 4]); g.lineWidth = 1; g.beginPath(); for (var i=0; i<=60; i++){ var tt = T*i/60, x = ox + D.vx*tt*sc*1.0 + 10, y = wy - (D.H + 1 + D.vy*tt - 0.5*G*tt*tt)*sc; if (i) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke(); g.setLineDash([]);
+  /* earlier positions, faint */ if (D.ghosts) D.ghosts.forEach(function(q){ g.globalAlpha = 0.25; drawDiver(g, ox + 10 + q[0]*sc, wy - q[1]*sc, sc, q[2], q[3], p, 0.5); g.globalAlpha = 1; });
+  drawDiver(g, ox + 10 + D.x*sc, wy - D.y*sc, sc, D.theta, D.pos, p, 0.5);
+  /* close up, in 3D */ var t = CT.g, tw = CT.W, tH = CT.H; t.fillStyle = p.bg; t.fillRect(0, 0, tw, tH); diver3(E2, D.theta, D.pos); E2.flush(); Tx(t, 'close up: ' + PNAME[Math.round(D.pos)] + ' (drag to turn)', tw/2, 16, p.text, 'center', 'bold 12px Arial');
+  var w = D.L/Id(); t.strokeStyle = p.arrow; t.lineWidth = 2; t.beginPath(); t.arc(tw/2, tH/2, 140, -2.6, -0.5); t.stroke(); Tx(t, f2(w/(2*Math.PI), 2) + ' somersaults per second', tw/2, tH - 14, p.arrow, 'center', 'bold 12px Arial');
+  el('amHint').textContent = 't = ' + f2(D.t, 2) + ' s \u00B7 ' + f2(D.theta/(2*Math.PI), 2) + ' somersaults';
+  el('amRead').innerHTML = rrow('body position', PNAME[Math.round(D.pos)]) + rrow('moment of inertia I', f2(Id(), 1) + ' kg\u00B7m\u00B2 (straight 14, pike 7, tuck 4)') + rrow('angular momentum L', f2(D.L, 1) + ' kg\u00B7m\u00B2/s (fixed at take-off)') + rrow('rotation rate L/I', f2(w, 2) + ' rad/s = ' + f2(w/(2*Math.PI), 2) + ' somersaults/s')
+    + rrow('somersaults so far', f2(D.theta/(2*Math.PI), 2)) + rrow('height of the centre of mass', f2(Math.max(0, D.y), 2) + ' m above the water') + (D.result ? rrow('entry', Math.abs(D.result.err) < 15 && !D.result.bent ? '\u2713 clean: head first, vertical, straight' : Math.abs(D.result.err) < 15 ? '\u2717 not straight: a splash' : (D.result.err > 0 ? 'over' : 'under') + '-rotated by ' + f2(Math.abs(D.result.err), 0) + '\u00B0') : '');
+  el('amEq').innerHTML = 'In the air nothing can exert a torque about the centre of mass (gravity acts at it), so <b>L is fixed at take-off</b>. Tucking makes <b>I</b> 3.5 times smaller than straight: the diver turns 3.5 times faster. Opening up slows the rotation for the entry. The centre of mass follows the dashed parabola, whatever the body does.'; }
+/* ══════════ the graph ══════════ */
+function drawGraph(){ var g = CG.g, W = CG.W, H = CG.H, p = pal(), h = TAB === 0 ? S.hist : TAB === 1 ? K.hist : D.hist, X0 = 60, X1 = W - 14, rows = [['I (kg\u00B7m\u00B2)', 1, p.I], ['\u03C9 (rad/s)', 2, p.w], ['L (kg\u00B7m\u00B2/s)', 3, p.L], ['K (J)', 4, p.K]], rh = (H - 24)/4;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); if (!h.length) return; var t0 = h[0][0], t1 = Math.max(h[h.length - 1][0], t0 + 1);
+  rows.forEach(function(r, k){ var y0 = 6 + k*rh, y1 = y0 + rh - 8, mx = Math.max.apply(null, h.map(function(q){ return q[r[1]]; }))*1.15 || 1;
+    seg(g, X0, y1, X1, y1, p.grid, 1); Tx(g, r[0], 6, (y0 + y1)/2, r[2], 'left', 'bold 11px Arial'); Tx(g, f2(mx/1.15, mx > 20 ? 0 : 1), X0 - 4, y0 + 6, p.dim, 'right', '9px Arial');
+    g.strokeStyle = r[2]; g.lineWidth = 2; g.beginPath(); h.forEach(function(q, i){ var x = X0 + (q[0] - t0)/(t1 - t0)*(X1 - X0), y = y1 - q[r[1]]/mx*(y1 - y0); if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke(); });
+  Tx(g, 'time \u2192 (last ' + f2(t1 - t0, 0) + ' s)', X1, H - 8, p.dim, 'right', '10px Arial'); }
+/* ══════════ controls ══════════ */
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function row(id, label, min, max, step, val, txt){ return '<div class="am_ctrl"><div class="am_ctrlhdr"><label class="am_ctrlname" for="' + id + '">' + label + '</label><span class="am_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function btn(id, t){ return '<button type="button" class="am_btn" id="' + id + '">' + t + '</button>'; }
+function build(){ var c = '', a = '';
+  if (TAB === 0){ a = btn('amIn', '\u2190\u2192 Pull the arms in') + btn('amOut', '\u2194 Stretch the arms out') + btn('amDrop', 'Let go of the dumbbells') + btn('amPush', 'A new push');
+    c = row('amR', 'hands from the axis', 0.15, 0.8, 0.01, S.r, f2(S.r, 2) + ' m') + row('amMd', 'mass of each dumbbell', 0, 6, 0.1, S.md, f2(S.md, 1) + ' kg') + row('amI0', 'body and stool, I\u2080', 0.5, 5, 0.1, S.I0, f2(S.I0, 1) + ' kg\u00B7m\u00B2') + row('amW0', 'push: angular speed to start with', 0.5, 8, 0.1, S.w0, f2(S.w0, 1) + ' rad/s') + row('amFr', 'friction in the stool', 0, 0.5, 0.01, S.fric, S.fric ? f2(S.fric, 2) + ' N\u00B7m' : 'none'); }
+  if (TAB === 1){ a = btn('amAIn', 'Arms in') + btn('amAUp', 'Arms over the head') + btn('amAOut', 'Arms out') + btn('amLIn', 'Free leg in') + btn('amLOut', 'Free leg out') + btn('amPush2', 'Start the spin again');
+    c = row('amArm', 'arms: out \u2192 in \u2192 over the head', 0, 1, 0.01, K.arms, f2(K.arms*100, 0) + ' %') + row('amLeg', 'free leg: out \u2192 in', 0, 1, 0.01, K.leg, f2(K.leg*100, 0) + ' %') + row('amW2', 'spin rate to start with', 2, 20, 0.5, K.w0, f2(K.w0, 1) + ' rad/s'); }
+  if (TAB === 2){ a = btn('amGo', '\u25B6 Dive') + btn('amSt', 'Straight') + btn('amPk', 'Pike') + btn('amTk', 'Tuck') + '<label><input type="checkbox" id="amAuto"' + (D.auto ? ' checked' : '') + '> follow the plan</label>';
+    c = '<div class="am_ctrl"><span class="am_ctrlname">board</span><div>' + [1, 3, 10].map(function(h){ return '<label><input type="radio" name="amBd" value="' + h + '"' + (D.H === h ? ' checked' : '') + '> ' + h + ' m</label>'; }).join(' ') + '</div></div>'
+      + row('amLd', 'angular momentum at take-off L', 10, 140, 1, D.L, f2(D.L, 0) + ' kg\u00B7m\u00B2/s') + row('amVy', 'upward speed at take-off', 1, 6, 0.1, D.vy, f2(D.vy, 1) + ' m/s')
+      + '<div class="am_ctrl"><span class="am_ctrlname">the plan: after take-off</span><div><label><input type="radio" name="amPl" value="tuck"' + (D.plan === 'tuck' ? ' checked' : '') + '> tuck</label> <label><input type="radio" name="amPl" value="pike"' + (D.plan === 'pike' ? ' checked' : '') + '> pike</label></div></div>' + row('amOp', '\u2026 then straighten at a height of', 0.5, 8, 0.1, D.openH, f2(D.openH, 1) + ' m'); }
+  el('amAct').innerHTML = a; el('amCtl').innerHTML = c;
+  if (TAB === 0){ var setR = function(v){ S.rTarget = v; }; on('amIn', 'click', function(){ setR(0.15); narrate('Pulling the arms in: I gets smaller, so the spin speeds up. L stays the same; the kinetic energy grows, from the work of the arms.'); }); on('amOut', 'click', function(){ setR(0.8); narrate('Stretching the arms out: I grows, the spin slows down.'); });
+    on('amDrop', 'click', function(){ if (!S.held) return; var w = S.L/I1(); [1, -1].forEach(function(s){ var x = s*S.r*Math.cos(S.ang), y = s*S.r*Math.sin(S.ang); S.flying.push({ x:x, y:y, x0:x, y0:y, vx:-w*y, vy:w*x }); }); var Lp = (I1() - 2*S.md*S.r*S.r)*w; S.held = false; S.L = Lp;
+      narrate('Let go: each dumbbell flies off in a straight line, tangent to its circle, carrying its angular momentum away. The person keeps turning at the same rate: ' + f2(w, 2) + ' rad/s. Nothing pushed or pulled them.'); });
+    on('amPush', 'click', function(){ start1(); narrate('A new push: ' + f2(S.w0, 1) + ' rad/s with the hands at ' + f2(S.r, 2) + ' m, so L = ' + f2(S.L, 2) + '.'); });
+    on('amR', 'input', function(){ S.rTarget = +this.value; S.r = +this.value; el('amRv').textContent = f2(S.r, 2) + ' m'; });
+    on('amMd', 'input', function(){ S.md = +this.value; el('amMdv').textContent = f2(S.md, 1) + ' kg'; start1(); }); on('amI0', 'input', function(){ S.I0 = +this.value; el('amI0v').textContent = f2(S.I0, 1) + ' kg\u00B7m\u00B2'; start1(); });
+    on('amW0', 'input', function(){ S.w0 = +this.value; el('amW0v').textContent = f2(S.w0, 1) + ' rad/s'; start1(); }); on('amFr', 'input', function(){ S.fric = +this.value; el('amFrv').textContent = S.fric ? f2(S.fric, 2) + ' N\u00B7m' : 'none'; }); }
+  if (TAB === 1){ on('amAIn', 'click', function(){ K.armsT = 0.75; narrate('Arms in: the spin speeds up.'); }); on('amAUp', 'click', function(){ K.armsT = 1; narrate('Arms over the head, close to the axis: faster still.'); }); on('amAOut', 'click', function(){ K.armsT = 0; narrate('Arms out: the spin slows down, as at the end of a real spin.'); });
+    on('amLIn', 'click', function(){ K.legT = 1; narrate('The free leg comes in: I drops a lot, the leg is heavy.'); }); on('amLOut', 'click', function(){ K.legT = 0; }); on('amPush2', 'click', function(){ start2(); });
+    on('amArm', 'input', function(){ K.arms = K.armsT = +this.value; el('amArmv').textContent = f2(K.arms*100, 0) + ' %'; }); on('amLeg', 'input', function(){ K.leg = K.legT = +this.value; el('amLegv').textContent = f2(K.leg*100, 0) + ' %'; });
+    on('amW2', 'input', function(){ K.w0 = +this.value; el('amW2v').textContent = f2(K.w0, 1) + ' rad/s'; start2(); }); }
+  if (TAB === 2){ on('amGo', 'click', function(){ start3(); D.ghosts = []; D.running = true; play = true; el('amPlay').innerHTML = '\u2759\u2759 Pause'; narrate('Take-off with L = ' + f2(D.L, 0) + '. ' + (D.auto ? 'The plan: ' + D.plan + ', then straighten at ' + f2(D.openH, 1) + ' m.' : 'Change position with the buttons during the flight.')); });
+    function setPos(k){ D.auto = false; el('amAuto').checked = false; D.posT = k; narrate(PNAME[k] + ': I = ' + IPOS[k] + ', so the rotation rate is ' + f2(D.L/IPOS[k]/(2*Math.PI), 2) + ' somersaults per second.'); }
+    on('amSt', 'click', function(){ setPos(0); }); on('amPk', 'click', function(){ setPos(1); }); on('amTk', 'click', function(){ setPos(2); }); on('amAuto', 'change', function(){ D.auto = this.checked; });
+    [].forEach.call(document.getElementsByName('amBd'), function(r){ r.addEventListener('change', function(){ D.H = +this.value; var dv = DIVES[D.H]; D.L = dv.L; D.plan = dv.plan; D.openH = dv.openH; D.vy = dv.vy; D.auto = true; start3(); D.ghosts = []; build(); narrate('The ' + D.H + ' m board: a classic dive, ' + dv.name + ', with L = ' + dv.L + '. Press Dive; then change the plan.'); }); }); [].forEach.call(document.getElementsByName('amPl'), function(r){ r.addEventListener('change', function(){ D.plan = this.value; }); });
+    on('amLd', 'input', function(){ D.L = +this.value; el('amLdv').textContent = f2(D.L, 0) + ' kg\u00B7m\u00B2/s'; start3(); }); on('amVy', 'input', function(){ D.vy = +this.value; el('amVyv').textContent = f2(D.vy, 1) + ' m/s'; start3(); }); on('amOp', 'input', function(){ D.openH = +this.value; el('amOpv').textContent = f2(D.openH, 1) + ' m'; }); }
+}
+function draw(){ if (TAB === 0){ el('amT1').textContent = 'FROM THE SIDE'; el('amT2').textContent = 'FROM ABOVE'; draw1(); } if (TAB === 1){ el('amT1').textContent = 'THE SKATER'; el('amT2').textContent = 'FROM ABOVE'; draw2(); } if (TAB === 2){ el('amT1').textContent = 'THE DIVE'; el('amT2').textContent = 'THE DIVER, CLOSE UP'; draw3(); } drawGraph();
+  var st = TAB === 0 ? (S.held ? 'Pull the arms in and watch \u03C9 grow while L stays the same; then try letting go of the dumbbells.' : 'The dumbbells are gone: the person kept the same angular speed.') : TAB === 1 ? 'Pull the arms and the free leg in, or raise the arms over the head: the spin speeds up.' : (D.result ? (Math.abs(D.result.err) < 15 && !D.result.bent ? '\u2713 Clean entry after ' + f2(D.result.n, 2) + ' somersaults: straight and vertical.' : Math.abs(D.result.err) < 15 ? '\u2717 Vertical, but not straight: a splash. Straighten out earlier.' : 'Entry ' + f2(Math.abs(D.result.err), 0) + '\u00B0 off: ' + (D.result.err > 0 ? 'over-rotated.' : 'under-rotated.')) : 'Press Dive. Plan when to tuck and when to open up, for a head-first entry.');
+  el('amStatus').innerHTML = st; }
+var lastG = 0; function advance(dt){ if (TAB === 0) step1(dt); if (TAB === 1) step2(dt); if (TAB === 2){ step3(dt); if (D.running && (!D.ghosts.length || D.t - lastG > 0.18)){ D.ghosts.push([D.x, D.y, D.theta, D.pos]); lastG = D.t; } } }
+var last = 0; function loop(t){ var dt = Math.min(0.05, (t - (last || t))/1000); last = t; if (play) advance(dt*spd); draw(); requestAnimationFrame(loop); }
+on('amPlay', 'click', function(){ play = !play; el('amPlay').innerHTML = play ? '\u2759\u2759 Pause' : '\u25B6 Play'; });
+on('amStep', 'click', function(){ play = false; el('amPlay').innerHTML = '\u25B6 Play'; advance(0.05); draw(); });
+on('amReset', 'click', function(){ if (TAB === 0) start1(); if (TAB === 1) start2(); if (TAB === 2){ start3(); D.ghosts = []; } draw(); });
+on('amSpd', 'input', function(){ spd = +this.value; el('amSpdV').textContent = f2(spd, 2) + '\u00D7'; });
+function tab(k){ TAB = k; for (var i=0; i<3; i++) el('amTab' + i).setAttribute('aria-selected', i === k ? 'true' : 'false'); if (k === 2){ start3(); D.ghosts = []; spd = 0.35; el('amSpd').value = spd; el('amSpdV').textContent = f2(spd, 2) + '\u00D7'; } build(); draw();
+  narrate(k === 0 ? 'A person on a turning stool, holding two dumbbells. Pull the arms in: what happens to the spin?' : k === 1 ? 'A skater spins on one foot, arms and free leg out. Pull them in.' : 'A diver leaves the board turning slowly. Tuck to turn faster; open up to slow down before the water.'); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('am_hc', th.hc); ROOT.classList.toggle('am_lm', th.lm);
+  [['hc', 'amBtnHC'], ['lm', 'amBtnLM'], ['cb', 'amBtnCB'], ['nr', 'amBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('am_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('amBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('amNar').style.display = th.nr ? '' : 'none'; draw(); }
+function toggleDesc(){ var b = el('amDescBtn'), d = el('amDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+start1(); start2(); start3(); D.ghosts = []; tab(0); requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, _S:S, _K:K, _D:D, _I1:I1, _I2:I2, _Id:Id, _adv:function(dt){ advance(dt); draw(); }, _start:function(){ if (TAB === 0) start1(); if (TAB === 1) start2(); if (TAB === 2){ start3(); D.ghosts = []; D.running = true; } } };
+})();
+</script>
+</main>
+</body>
+</html>

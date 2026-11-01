@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Momentum: Angular Momentum of Two Moving, Spinning Balls</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, momentum, rotation, angular momentum, orbital angular momentum, spin, lever arm, cross product, right-hand rule, momentum, moment of inertia, rotation, lesson, scientific">
+<meta name="description" content="Angular Momentum of Two Moving, Spinning Balls: momentum, orbital and spin angular momentum of two balls, about a chosen point.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="aaRoot" class="aa_root" role="region" aria-label="Angular Momentum of Two Moving, Spinning Balls simulator">
+<div class="aa_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="aa_a11ybtn" id="aaBtnHC" onclick="aaSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="aa_a11ybtn" id="aaBtnLM" onclick="aaSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="aa_a11ybtn" id="aaBtnCB" onclick="aaSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="aa_a11ybtn aa_a11yon" id="aaBtnNR" onclick="aaSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="aa_tbar"><h3>Angular Momentum of Two Moving, Spinning Balls</h3></div>
+<div class="aa_mcontent">
+<div class="aa_view">
+<div class="aa_vlabel" id="aaLab">a close-up of the table from above · drag O to move the reference point</div>
+<canvas id="aaCv" width="780" height="420" role="img" aria-label="Two balls moving in straight lines on a table, each spinning, with their position vectors from the reference point and their angular momenta."></canvas>
+</div>
+<div class="aa_tblwrap" id="aaRead" aria-label="Readout"></div>
+</div>
+<div class="aa_bbar" id="aaBtns"></div>
+<div class="aa_controls" id="aaCtl"></div>
+<div id="aaNarBar" class="aa_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="aa_descwrap">
+<button type="button" class="aa_descbtn" id="aaDescBtn" aria-expanded="false" aria-controls="aaDesc" onclick="aaSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="aa_desc" id="aaDesc" role="region" aria-labelledby="aaDescBtn" style="display:none">
+<p>This simulation shows the momentum and angular momentum of two balls moving on a frictionless table, each in its own half so that they never collide. Each ball moves in a straight line at constant velocity and can also spin about a vertical axis; the marker on each ball shows its rotation.</p>
+<p>The momentum of each ball is `vec p = m vec v`; the total, `vec P = vec p_1 + vec p_2`, does not depend on where the origin is.</p>
+<p>Angular momentum is measured about a chosen point O (drag it to move it). A ball moving in a straight line has an orbital angular momentum about O,</p>
+<p class="aa_eq">`L_"orb" = (vec r xx vec p)_z = m v r_(_|_)`,</p>
+<p>where `vec r` runs from O to the ball and the lever arm `r_(_|_)` is the perpendicular distance from O to the ball's line of motion. As the ball moves, `vec r` keeps changing, but `r_(_|_)` does not -- so with no force on the ball, its orbital angular momentum stays constant. It is positive when the ball goes counterclockwise around O and negative clockwise. It is zero for a ball heading straight toward or away from O, however fast.</p>
+<p>A spinning ball also has spin angular momentum about its own centre, `L_"spin" = I omega`, with `I = 2/5 m R^2` for a solid ball; it is the same about any point. The total angular momentum is the sum of all the parts:</p>
+<p class="aa_eq">`L = sum_i (m_i v_i r_(_|_ i) + I_i omega_i)`.</p>
+<p>Unlike momentum, angular momentum depends on the choice of O: moving O changes the lever arms. Two balls can have angular momenta that add up, or cancel, depending on which way they go around O and which way they spin.</p>
+</div>
+</div>
+</div><!-- #aaRoot -->
+<style>
+#aaRoot, #aaRoot * { box-sizing:border-box; }
+#aaRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --aa-bg:#0a0e12; --aa-panel:#0d1318; --aa-border:#1c262e; --aa-text:#c9d6de; --aa-muted:#5f7180; --aa-val:#8fe3b0; }
+#aaRoot .aa_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#aaRoot .aa_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#aaRoot .aa_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#aaRoot .aa_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#aaRoot .aa_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#aaRoot .aa_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#aaRoot .aa_tabs { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; background:#2c3138; }
+#aaRoot .aa_tab { flex:1 1 200px; padding:8px 10px; border:1px solid #525c66; background:#22262b; color:#c8d0d8; border-radius:4px; cursor:pointer; font-family:system-ui, sans-serif; font-size:.86rem; min-height:38px; }
+#aaRoot .aa_tab[aria-selected="true"] { background:#e8a020; color:#1a1f24; border-color:#e8a020; font-weight:bold; }
+#aaRoot .aa_mcontent { background:var(--aa-bg); color:var(--aa-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#aaRoot .aa_view { border:1px solid var(--aa-border); border-radius:6px; overflow:hidden; background:var(--aa-panel); }
+#aaRoot .aa_vlabel { font-size:10px; color:var(--aa-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#aaRoot canvas { display:block; width:100%; height:auto; }
+#aaRoot .aa_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--aa-panel); border:1px solid var(--aa-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#aaRoot .aa_flabel { font-size:10px; color:var(--aa-muted); letter-spacing:1px; }
+#aaRoot .aa_fvalue { font-size:14px; color:var(--aa-val); font-variant-numeric:tabular-nums; }
+#aaRoot .aa_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#aaRoot .aa_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#aaRoot .aa_bbar label { display:flex; align-items:center; gap:6px; }
+#aaRoot .aa_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#aaRoot .aa_go { font-weight:bold; border-color:#0a7a5a; background:#e2fff3; }
+#aaRoot .aa_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#aaRoot .aa_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#aaRoot .aa_cname { font-size:.86rem; display:flex; gap:8px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+#aaRoot .aa_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#aaRoot input[type=range] { width:100%; min-width:0; accent-color:#e8a020; }
+#aaRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#aaRoot .aa_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#aaRoot .aa_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#aaRoot .aa_descbtn[aria-expanded="true"] { background:#3a3220; }
+#aaRoot .aa_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#aaRoot .aa_desc p { margin:0 0 9px; }
+#aaRoot .aa_eq { text-align:center; font-size:1rem; }
+@media (pointer:coarse) { #aaRoot input[type=range] { height:28px; } #aaRoot .aa_a11ybtn { min-height:40px; } #aaRoot input[type=checkbox] { width:22px; height:22px; } }
+</style><style>
+#aaRoot .aa_tbl { width:100%; border-collapse:collapse; font-family:system-ui, sans-serif; font-size:.82rem; color:var(--aa-text); }
+#aaRoot .aa_tbl th, #aaRoot .aa_tbl td { padding:3px 6px; border-bottom:1px solid var(--aa-border); text-align:right; font-variant-numeric:tabular-nums; }
+#aaRoot .aa_tbl th { color:var(--aa-muted); font-weight:normal; font-size:.72rem; letter-spacing:.5px; }
+#aaRoot .aa_tbl td:first-child, #aaRoot .aa_tbl th:first-child { text-align:left; color:var(--aa-muted); }
+#aaRoot .aa_tbl td.aa_sum { color:var(--aa-val); font-weight:bold; }
+#aaRoot .aa_tblwrap { background:var(--aa-panel); border:1px solid var(--aa-border); border-radius:8px; padding:6px 8px; overflow-x:auto; }
+#aaRoot canvas { touch-action:pan-y; }
+</style>
+<!-- ════════ SIMULATION ════════
+Two balls (solid spheres, I = 2/5 m R^2) in straight lines at constant velocity, each confined to its own half of the
+table (ball 1 above the x-axis tilting up, ball 2 below it tilting down), so they never collide. About the point O:
+L_orb = m (x v_y - y v_x) = m v r_perp, L_spin = I omega. No dollar signs or backticks in the code.
+-->
+<script>
+var aaSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('aaRoot'), cv = el('aaCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var THREE_D = false, TW = 1.6, TH = 0.9, BR = 0.0286, DEG = Math.PI/180;
+var S = { run:true, ghosts:true, trail:true, showr:true, coords:!THREE_D, m1:0.17, m2:0.17, v1:0.25, v2:-0.2, t1:10, t2:15, l1:0.12, l2:0.18, w1:12, w2:-8,
+  ox:TW/2, oy:TH/2, yaw:-35, pitch:28, mag:false };
+var th = { hc:false, lm:false, cb:false, nr:true };
+var B = null, ghosts = [], trail = [[], []], tGhost = 0, simT = 0, wait = 0;
+function I(m){ return 0.4*m*BR*BR; }
+function setup(){
+/* ball 1 in the upper half, tilting up; ball 2 in the lower half, tilting down: their paths never meet */
+function make(v, tilt, lane, up, m, w){ var dir = v >= 0 ? 0 : 180, a = (dir + (up ? 1 : -1)*(v >= 0 ? tilt : -tilt))*DEG, sp = Math.abs(v);
+var x0 = TW/2 - (v >= 0 ? 1 : -1)*0.62; return { x:x0, y:TH/2 + (up ? lane : -lane), vx:sp*Math.cos(a), vy:sp*Math.sin(a), m:m, w:w, I:I(m), phi:0 }; }
+B = [make(S.v1, S.t1, S.l1, true, S.m1, S.w1), make(S.v2, S.t2, S.l2, false, S.m2, S.w2)];
+ghosts = []; trail = [[], []]; tGhost = 0; simT = 0; wait = 0;
+}
+function parts(b){ var rx = b.x - S.ox, ry = b.y - S.oy, v = Math.hypot(b.vx, b.vy), Lo = b.m*(rx*b.vy - ry*b.vx), rp = v > 1e-9 ? Math.abs(rx*b.vy - ry*b.vx)/v : 0;
+return { px:b.m*b.vx, py:b.m*b.vy, p:b.m*v, rx:rx, ry:ry, r:Math.hypot(rx, ry), rp:rp, Lo:Lo, Ls:b.I*b.w, L:Lo + b.I*b.w, Kt:0.5*b.m*v*v, Kr:0.5*b.I*b.w*b.w }; }
+function step(dt){
+simT += dt; B.forEach(function(b){ b.x += b.vx*dt; b.y += b.vy*dt; b.phi += b.w*dt; });
+var out = B.every(function(b){ return b.x < -0.05 || b.x > TW + 0.05 || b.y < -0.05 || b.y > TH + 0.05; }) || B.some(function(b){ return b.x < -0.4 || b.x > TW + 0.4; }) || simT > 14;
+if (out){ wait += dt; if (wait > 0.6) setup(); }
+}
+/* ══════════ colours ══════════ */
+function pal(){
+if (th.hc) return { bg:'#000', felt:'#003300', cush:'#666', wood:'#444', b1:'#ffffff', b2:'#ffdd00', r1:'#ff8800', r2:'#ff66ff', v:'#00ffff', L:'#ff66ff', txt:'#fff', muted:'#ddd' };
+var p = th.lm ? { bg:'#eef2f6', txt:'#1d232a', muted:'#556070' } : { bg:'#0d1318', txt:'#dbe5ec', muted:'#7a8a98' };
+p.felt = '#1f7a45'; p.cush = '#145a32'; p.wood = '#6b3f1f'; p.b1 = '#fbfbf4'; p.b2 = th.cb ? '#e69f00' : '#e8c020';
+p.v = th.cb ? '#56b4e9' : '#4fc3ff'; p.r1 = th.cb ? '#d55e00' : '#ff9a3c'; p.r2 = th.cb ? '#cc79a7' : '#b48cff'; p.L = th.cb ? '#009e73' : '#ff7ad9';
+return p;
+}
+function arrowXY(x1, y1, x2, y2, col, lw, label){
+var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); if (L < 2) return;
+g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw || 2.5; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+var a = Math.atan2(dy, dx), h = Math.min(11, 4 + L*0.25); g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - h*Math.cos(a - 0.4), y2 - h*Math.sin(a - 0.4)); g.lineTo(x2 - h*Math.cos(a + 0.4), y2 - h*Math.sin(a + 0.4)); g.closePath(); g.fill();
+if (label){ g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(label, x2 + 13*Math.cos(a), y2 + 13*Math.sin(a) + 4); }
+}
+/* ══════════ 2-D view (from above) ══════════ */
+var TX0 = 60, TY0 = 50, TSC = (780 - 120)/TW;
+function X(x){ return TX0 + x*TSC; } function Y(y){ return TY0 + (TH - y)*TSC; }
+function ball2(x, y, col, alpha, phi){
+var r = BR*TSC; g.save(); g.globalAlpha = alpha;
+var gr = g.createRadialGradient(x - r*0.35, y - r*0.35, r*0.1, x, y, r); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, col); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 2*Math.PI); g.fill();
+if (alpha > 0.9){ g.strokeStyle = 'rgba(30,30,30,0.75)'; g.lineWidth = Math.max(2, r*0.22); g.beginPath(); g.moveTo(x - r*0.85*Math.cos(phi), y + r*0.85*Math.sin(phi)); g.lineTo(x + r*0.85*Math.cos(phi), y - r*0.85*Math.sin(phi)); g.stroke();
+g.fillStyle = '#d02020'; g.beginPath(); g.arc(x + r*0.62*Math.cos(phi + Math.PI/2), y - r*0.62*Math.sin(phi + Math.PI/2), r*0.2, 0, 2*Math.PI); g.fill(); }
+g.restore();
+}
+function spinArc(x, y, w, col, label){
+if (Math.abs(w) < 0.2) return; var r = BR*TSC + 7, a0 = Math.PI*0.6, span = Math.min(2.6, Math.abs(w)/8), dir = w > 0 ? 1 : -1;
+g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r, -a0, -a0 - dir*span, dir > 0); g.stroke();
+var ea = -a0 - dir*span, ex = x + r*Math.cos(ea), ey = y + r*Math.sin(ea), ta = ea - dir*Math.PI/2; g.fillStyle = col; g.beginPath(); g.moveTo(ex + 6*Math.cos(ta), ey + 6*Math.sin(ta)); g.lineTo(ex - 4*Math.cos(ta) + 4*Math.cos(ta + Math.PI/2), ey - 4*Math.sin(ta) + 4*Math.sin(ta + Math.PI/2)); g.lineTo(ex - 4*Math.cos(ta) - 4*Math.cos(ta + Math.PI/2), ey - 4*Math.sin(ta) - 4*Math.sin(ta + Math.PI/2)); g.closePath(); g.fill();
+g.font = '10px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(label, x, y - r - 6);
+}
+function draw2(){
+var p = pal(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+g.fillStyle = p.wood; g.fillRect(TX0 - 34, TY0 - 34, TW*TSC + 68, TH*TSC + 68); g.fillStyle = p.cush; g.fillRect(TX0 - 14, TY0 - 14, TW*TSC + 28, TH*TSC + 28); g.fillStyle = p.felt; g.fillRect(TX0, TY0, TW*TSC, TH*TSC);
+g.save(); g.beginPath(); g.rect(TX0, TY0, TW*TSC, TH*TSC); g.clip();
+var ox = X(S.ox), oy = Y(S.oy);
+if (S.coords){ g.strokeStyle = 'rgba(255,255,255,0.5)'; g.fillStyle = 'rgba(255,255,255,0.75)'; g.lineWidth = 1.1; g.font = '10px system-ui, sans-serif';
+arrowXY(TX0 + 4, oy, TX0 + TW*TSC - 4, oy, 'rgba(255,255,255,0.5)', 1.1, ''); arrowXY(ox, TY0 + TH*TSC - 4, ox, TY0 + 4, 'rgba(255,255,255,0.5)', 1.1, '');
+for (var k=-16; k<=16; k++){ if (!k) continue; var x = S.ox + k*0.1; if (x > 0.02 && x < TW - 0.04){ g.beginPath(); g.moveTo(X(x), oy - 4); g.lineTo(X(x), oy + 4); g.stroke(); if (k % 2 === 0){ g.textAlign = 'center'; g.fillText(k*10 + '', X(x), oy + 15); } } }
+for (var j=-9; j<=9; j++){ if (!j) continue; var y = S.oy + j*0.1; if (y > 0.02 && y < TH - 0.04){ g.beginPath(); g.moveTo(ox - 4, Y(y)); g.lineTo(ox + 4, Y(y)); g.stroke(); g.textAlign = 'right'; g.fillText(j*10 + '', ox - 7, Y(y) + 3); } }
+g.textAlign = 'left'; g.fillText('x (cm)', TX0 + TW*TSC - 46, oy - 8); g.fillText('y', ox + 8, TY0 + 14); }
+/* the dividing line: ball 1 stays above it, ball 2 below */
+g.strokeStyle = 'rgba(255,255,255,0.18)'; g.setLineDash([10, 8]); g.beginPath(); g.moveTo(TX0, Y(TH/2)); g.lineTo(TX0 + TW*TSC, Y(TH/2)); g.stroke(); g.setLineDash([]);
+var cols = [p.b1, p.b2], rc = [p.r1, p.r2];
+if (S.trail) trail.forEach(function(tr, i){ if (tr.length < 2) return; g.strokeStyle = cols[i]; g.globalAlpha = 0.45; g.lineWidth = 1.5; g.beginPath(); tr.forEach(function(q, k){ if (k) g.lineTo(X(q[0]), Y(q[1])); else g.moveTo(X(q[0]), Y(q[1])); }); g.stroke(); g.globalAlpha = 1; });
+if (S.ghosts) ghosts.forEach(function(q, k){ var a = 0.15 + 0.3*k/Math.max(1, ghosts.length); ball2(X(q[0]), Y(q[1]), cols[0], a, 0); ball2(X(q[2]), Y(q[3]), cols[1], a, 0); });
+if (S.showr) B.forEach(function(b, i){
+var q = parts(b), bx = X(b.x), by = Y(b.y), v = Math.hypot(b.vx, b.vy);
+g.setLineDash([6, 4]); arrowXY(ox, oy, bx, by, rc[i], 1.6, ''); g.setLineDash([]);
+g.fillStyle = rc[i]; g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('r' + (i + 1), (ox + bx)/2 - 10, (oy + by)/2 - 6);
+if (v < 1e-6) return;
+var ux = b.vx/v, uy = b.vy/v, along = q.rx*ux + q.ry*uy, fx = b.x - along*ux, fy = b.y - along*uy, Fx = X(fx), Fy = Y(fy);
+g.strokeStyle = rc[i]; g.globalAlpha = 0.45; g.lineWidth = 1; g.setLineDash([2, 5]); g.beginPath(); g.moveTo(X(b.x - ux*3), Y(b.y - uy*3)); g.lineTo(X(b.x + ux*3), Y(b.y + uy*3)); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+if (q.rp > 1e-4){ g.strokeStyle = rc[i]; g.lineWidth = 2.2; g.beginPath(); g.moveTo(ox, oy); g.lineTo(Fx, Fy); g.stroke();
+var dx = ox - Fx, dy = oy - Fy, dl = Math.hypot(dx, dy), kk = 7; dx /= dl; dy /= dl; g.lineWidth = 1.2; g.beginPath(); g.moveTo(Fx + dx*kk, Fy + dy*kk); g.lineTo(Fx + dx*kk + ux*kk, Fy + dy*kk - uy*kk); g.lineTo(Fx + ux*kk, Fy - uy*kk); g.stroke();
+g.fillStyle = rc[i]; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('r\u22A5 = ' + (q.rp*100).toFixed(1) + ' cm', (ox + Fx)/2 + 6, (oy + Fy)/2 + (i ? 12 : -4)); }
+});
+B.forEach(function(b, i){ ball2(X(b.x), Y(b.y), cols[i], 1, b.phi); arrowXY(X(b.x), Y(b.y), X(b.x) + b.vx*260, Y(b.y) - b.vy*260, p.v, 2.5, 'v' + (i + 1)); spinArc(X(b.x), Y(b.y), b.w, p.L, '\u03C9' + (i + 1));
+if (S.coords){ g.fillStyle = cols[i]; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('(' + ((b.x - S.ox)*100).toFixed(1) + ', ' + ((b.y - S.oy)*100).toFixed(1) + ') cm', X(b.x) + 14, Y(b.y) + (i ? 24 : -16)); } });
+/* the reference point O */
+g.strokeStyle = p.txt; g.lineWidth = 2.5; g.beginPath(); g.moveTo(ox - 8, oy); g.lineTo(ox + 8, oy); g.moveTo(ox, oy - 8); g.lineTo(ox, oy + 8); g.stroke();
+g.fillStyle = p.txt; g.font = 'bold 13px system-ui, sans-serif'; g.textAlign = 'right'; g.fillText('O', ox - 9, oy - 6);
+g.restore();
+}
+/* ══════════ 3-D view ══════════ */
+var cam = {};
+function setCam(){ var a = S.yaw*DEG, e = S.pitch*DEG; cam = { ca:Math.cos(a), sa:Math.sin(a), ce:Math.cos(e), se:Math.sin(e) }; }
+function P3(x, y, z){
+/* x along the table, y across it, z up; centred on the table, then turned (yaw) and tilted (pitch) */
+var qx = x - TW/2, qy = y - TH/2, a1 = qx*cam.ca - qy*cam.sa, b1 = qx*cam.sa + qy*cam.ca;
+var up = z*cam.ce + b1*cam.se, dep = -z*cam.se + b1*cam.ce, f = 3.2/(3.2 + dep), s = 420;
+return [W/2 + a1*s*f, H*0.44 - up*s*f, dep];
+}
+function line3(a, b, col, lw, dash){ var p = P3(a[0], a[1], a[2]), q = P3(b[0], b[1], b[2]); g.strokeStyle = col; g.lineWidth = lw || 1; g.setLineDash(dash || []); g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke(); g.setLineDash([]); }
+function arrow3(a, b, col, lw, label){ var p = P3(a[0], a[1], a[2]), q = P3(b[0], b[1], b[2]); arrowXY(p[0], p[1], q[0], q[1], col, lw, label); }
+function draw3(){
+var p = pal(); setCam(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+/* the table */
+var c = [[0, 0], [TW, 0], [TW, TH], [0, TH]].map(function(q){ return P3(q[0], q[1], 0); });
+g.fillStyle = p.felt; g.beginPath(); c.forEach(function(q, k){ if (k) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath(); g.fill(); g.strokeStyle = p.wood; g.lineWidth = 4; g.stroke();
+g.strokeStyle = 'rgba(255,255,255,0.12)'; g.lineWidth = 1; for (var gx = 0.1; gx < TW; gx += 0.1) line3([gx, 0, 0], [gx, TH, 0], 'rgba(255,255,255,0.10)', 1); for (var gy = 0.1; gy < TH; gy += 0.1) line3([0, gy, 0], [TW, gy, 0], 'rgba(255,255,255,0.10)', 1);
+line3([0, TH/2, 0], [TW, TH/2, 0], 'rgba(255,255,255,0.25)', 1, [8, 6]);
+var O3 = [S.ox, S.oy, 0], cols = [p.b1, p.b2], rc = [p.r1, p.r2], q = B.map(parts);
+/* the scale for the angular-momentum arrows */
+var Lmax = Math.max(1e-6, Math.abs(q[0].Lo), Math.abs(q[1].Lo), Math.abs(q[0].Ls), Math.abs(q[1].Ls), Math.abs(q[0].L + q[1].L)), zs = 0.30/Lmax, zsp = zs*(S.mag ? 10 : 1);   /* one scale for all; the spin arrows can be magnified for visibility */
+if (S.trail) trail.forEach(function(tr, i){ if (tr.length < 2) return; g.strokeStyle = cols[i]; g.globalAlpha = 0.45; g.lineWidth = 1.5; g.beginPath(); tr.forEach(function(t, k){ var s2 = P3(t[0], t[1], 0); if (k) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); g.stroke(); g.globalAlpha = 1; });
+/* r, p and the balls with their spin L */
+B.forEach(function(b, i){
+if (S.showr) { arrow3(O3, [b.x, b.y, 0], rc[i], 1.6, 'r' + (i + 1)); }
+var s2 = P3(b.x, b.y, BR), rr = BR*420*3.2/(3.2 + s2[2]);
+var gr = g.createRadialGradient(s2[0] - rr*0.35, s2[1] - rr*0.35, rr*0.1, s2[0], s2[1], rr); gr.addColorStop(0, '#fff'); gr.addColorStop(1, cols[i]); g.fillStyle = gr; g.beginPath(); g.arc(s2[0], s2[1], rr, 0, 2*Math.PI); g.fill();
+/* the spin marker: a stripe in the plane of the table, turning with the ball */
+var e1 = P3(b.x + 0.85*BR*Math.cos(b.phi), b.y + 0.85*BR*Math.sin(b.phi), BR*1.05), e2 = P3(b.x - 0.85*BR*Math.cos(b.phi), b.y - 0.85*BR*Math.sin(b.phi), BR*1.05);
+g.strokeStyle = 'rgba(30,30,30,0.8)'; g.lineWidth = 3; g.beginPath(); g.moveTo(e1[0], e1[1]); g.lineTo(e2[0], e2[1]); g.stroke();
+arrow3([b.x, b.y, BR], [b.x + b.vx*0.9, b.y + b.vy*0.9, BR], p.v, 2.5, 'p' + (i + 1));
+if (Math.abs(q[i].Ls) > 1e-9) arrow3([b.x, b.y, BR*2], [b.x, b.y, BR*2 + q[i].Ls*zsp], cols[i], 3, 'I\u03C9' + (i + 1) + (S.mag ? ' (\u00D710)' : ''));
+});
+/* the orbital L of each ball, and the total, as vertical arrows at O (side by side so they can be told apart) */
+var off = 0.07;
+[[q[0].Lo, rc[0], 'r\u2081\u00D7p\u2081', -off], [q[1].Lo, rc[1], 'r\u2082\u00D7p\u2082', off]].forEach(function(t){ if (Math.abs(t[0]) > 1e-9) arrow3([S.ox + t[3], S.oy, 0], [S.ox + t[3], S.oy, t[0]*zs], t[1], 3, t[2]); });
+var Lt = q[0].L + q[1].L; if (Math.abs(Lt) > 1e-9) arrow3([S.ox, S.oy - off*1.6, 0], [S.ox, S.oy - off*1.6, Lt*zs], p.L, 5, 'L total');
+var o2 = P3(S.ox, S.oy, 0); g.fillStyle = p.txt; g.beginPath(); g.arc(o2[0], o2[1], 3.5, 0, 2*Math.PI); g.fill(); g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'right'; g.fillText('O', o2[0] - 8, o2[1] + 14);
+/* axes, and the right-hand rule */
+arrow3([0.02, 0.02, 0], [0.22, 0.02, 0], p.muted, 1.2, 'x'); arrow3([0.02, 0.02, 0], [0.02, 0.22, 0], p.muted, 1.2, 'y'); arrow3([0.02, 0.02, 0], [0.02, 0.02, 0.2], p.muted, 1.2, 'z');
+g.fillStyle = p.muted; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('right-hand rule: fingers from r toward p, thumb along L', 10, H - 10);
+}
+function draw(){ if (THREE_D) draw3(); else draw2(); }
+/* ══════════ readout, narration ══════════ */
+function fL(v){ return (Math.abs(v) < 5e-9 ? 0 : v*1e3).toFixed(3); }
+function readout(){
+var q = B.map(parts), sum = function(k){ return q[0][k] + q[1][k]; };
+var rows = [['p (kg\u00B7m/s)', '(' + q[0].px.toFixed(3) + ', ' + q[0].py.toFixed(3) + ')', '(' + q[1].px.toFixed(3) + ', ' + q[1].py.toFixed(3) + ')', '(' + sum('px').toFixed(3) + ', ' + sum('py').toFixed(3) + ')'],
+['r (cm)', '(' + (q[0].rx*100).toFixed(1) + ', ' + (q[0].ry*100).toFixed(1) + ')', '(' + (q[1].rx*100).toFixed(1) + ', ' + (q[1].ry*100).toFixed(1) + ')', ''],
+['lever arm r\u22A5 (cm)', (q[0].rp*100).toFixed(2), (q[1].rp*100).toFixed(2), ''],
+['L orbital = m v r\u22A5', fL(q[0].Lo), fL(q[1].Lo), fL(sum('Lo'))], ['L spin = I\u03C9', fL(q[0].Ls), fL(q[1].Ls), fL(sum('Ls'))], ['L = orbital + spin', fL(q[0].L), fL(q[1].L), fL(sum('L'))],
+['KE trans + rot (mJ)', (q[0].Kt*1e3).toFixed(2) + ' + ' + (q[0].Kr*1e3).toFixed(3), (q[1].Kt*1e3).toFixed(2) + ' + ' + (q[1].Kr*1e3).toFixed(3), (sum('Kt')*1e3).toFixed(2) + ' + ' + (sum('Kr')*1e3).toFixed(3)]];
+el('aaRead').innerHTML = '<table class="aa_tbl"><tr><th>about O; L in g\u00B7m\u00B2/s</th><th>ball 1</th><th>ball 2</th><th>combined</th></tr>' + rows.map(function(r){ return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td class="aa_sum">' + r[3] + '</td></tr>'; }).join('') + '</table>';
+}
+function summary(){
+var q = B.map(parts), L = q[0].L + q[1].L;
+function dir(v){ return Math.abs(v) < 5e-9 ? 'zero' : (v > 0 ? 'counterclockwise' + (THREE_D ? ', pointing up' : '') : 'clockwise' + (THREE_D ? ', pointing down' : '')); }
+return 'About O, ball 1 has orbital angular momentum ' + fL(q[0].Lo) + ' and spin ' + fL(q[0].Ls) + '; ball 2 has orbital ' + fL(q[1].Lo) + ' and spin ' + fL(q[1].Ls) + ' gram square metres per second. The total, ' + fL(L) + ', is ' + dir(L) + '. Each ball\u2019s lever arm stays the same as it moves in a straight line, so none of these change' + (THREE_D ? '.' : ' -- until you move O.');
+}
+function narrate(m){ if (!th.nr) return; el('aaNarBar').textContent = m; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 400); }
+/* ══════════ the loop ══════════ */
+var last = 0, rt = 0;
+function frame(t){
+var dt = last ? Math.min(0.05, (t - last)/1000) : 0; last = t;
+if (S.run && B){ step(dt); tGhost += dt; if (tGhost >= 0.25){ tGhost = 0; ghosts.push([B[0].x, B[0].y, B[1].x, B[1].y]); if (ghosts.length > 50) ghosts.shift(); }
+B.forEach(function(b, i){ trail[i].push([b.x, b.y]); if (trail[i].length > 700) trail[i].shift(); }); }
+draw(); if (t - rt > 200){ rt = t; readout(); }
+requestAnimationFrame(frame);
+}
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="aa_crow"><div class="aa_cname"><b>' + label + '</b><span class="aa_cval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+var PRESETS = {
+cancel:{ v1:0.25, v2:0.25, t1:0, t2:0, w1:0, w2:0, l1:0.15, l2:0.15, m1:0.17, m2:0.17, txt:'Same direction: orbital L cancels' },
+add:{ v1:0.25, v2:-0.25, t1:0, t2:0, w1:0, w2:0, l1:0.15, l2:0.15, m1:0.17, m2:0.17, txt:'Opposite directions: orbital L adds' },
+spins:{ v1:0, v2:0, t1:0, t2:0, w1:15, w2:-15, m1:0.17, m2:0.17, txt:'Spinning in place' },
+tilt:{ v1:0.25, v2:-0.2, t1:30, t2:25, w1:12, w2:-8, l1:0.12, l2:0.18, m1:0.17, m2:0.17, txt:'Tilted paths, spinning' } };
+function buildCtl(){
+var b = '<button type="button" class="aa_btn aa_go" id="aaRun">' + (S.run ? '&#10074;&#10074; Pause' : '&#9654; Run') + '</button><button type="button" class="aa_btn" id="aaRst">Start over</button>' +
+Object.keys(PRESETS).map(function(k){ return '<button type="button" class="aa_btn" data-p="' + k + '">' + PRESETS[k].txt + '</button>'; }).join('') +
+(THREE_D ? '<button type="button" class="aa_btn" id="aaTop">View from above</button><button type="button" class="aa_btn" id="aaSide">View from the side</button>' : '<button type="button" class="aa_btn" id="aaOc">O back to the centre</button>') +
+'<label><input type="checkbox" id="aaGh"' + (S.ghosts ? ' checked' : '') + '> ghost images</label><label><input type="checkbox" id="aaTr"' + (S.trail ? ' checked' : '') + '> paths</label><label><input type="checkbox" id="aaShowR"' + (S.showr ? ' checked' : '') + '> r' + (THREE_D ? '' : ' and lever arms') + '</label>' +
+(THREE_D ? '<label><input type="checkbox" id="aaMag"' + (S.mag ? ' checked' : '') + '> spin arrows \u00D710</label>' : '<label><input type="checkbox" id="aaCoord"' + (S.coords ? ' checked' : '') + '> coordinates</label>') + '<button type="button" class="aa_btn" id="aaDsc">Describe</button>';
+var c = row('aaM1', 'mass of ball 1', 0.05, 0.5, 0.01, S.m1, S.m1.toFixed(2) + ' kg') + row('aaM2', 'mass of ball 2', 0.05, 0.5, 0.01, S.m2, S.m2.toFixed(2) + ' kg') +
+row('aaV1', 'velocity of ball 1 (\u2212 = to the left)', -0.4, 0.4, 0.01, S.v1, S.v1.toFixed(2) + ' m/s') + row('aaV2', 'velocity of ball 2 (\u2212 = to the left)', -0.4, 0.4, 0.01, S.v2, S.v2.toFixed(2) + ' m/s') +
+row('aaT1', 'ball 1 path tilts up by', 0, 40, 1, S.t1, S.t1 + '\u00B0') + row('aaT2', 'ball 2 path tilts down by', 0, 40, 1, S.t2, S.t2 + '\u00B0') +
+row('aaL1', 'ball 1 starts above the centre line by', 0.05, 0.35, 0.01, S.l1, (S.l1*100).toFixed(0) + ' cm') + row('aaL2', 'ball 2 starts below the centre line by', 0.05, 0.35, 0.01, S.l2, (S.l2*100).toFixed(0) + ' cm') +
+row('aaW1', 'spin of ball 1, \u03C9\u2081 (+ = counterclockwise)', -20, 20, 0.5, S.w1, S.w1.toFixed(1) + ' rad/s') + row('aaW2', 'spin of ball 2, \u03C9\u2082', -20, 20, 0.5, S.w2, S.w2.toFixed(1) + ' rad/s');
+el('aaBtns').innerHTML = b; el('aaCtl').innerHTML = c;
+function on(id, ev, fn){ var e = el(id + ''); if (e) e.addEventListener(ev, fn); }
+on('aaRun', 'click', function(){ S.run = !S.run; buildCtl(); }); on('aaRst', 'click', function(){ setup(); later(); });
+[].forEach.call(el('aaBtns').querySelectorAll('button[data-p]'), function(x){ x.addEventListener('click', function(){ var P = PRESETS[x.getAttribute('data-p')]; for (var k in P) if (k !== 'txt') S[k] = P[k]; S.ox = TW/2; S.oy = TH/2; buildCtl(); setup(); later(); }); });
+on('aaOc', 'click', function(){ S.ox = TW/2; S.oy = TH/2; later(); }); on('aaTop', 'click', function(){ S.yaw = 0; S.pitch = 89; }); on('aaSide', 'click', function(){ S.yaw = -20; S.pitch = 10; });
+on('aaGh', 'change', function(){ S.ghosts = this.checked; }); on('aaTr', 'change', function(){ S.trail = this.checked; }); on('aaShowR', 'change', function(){ S.showr = this.checked; }); on('aaCoord', 'change', function(){ S.coords = this.checked; }); on('aaMag', 'change', function(){ S.mag = this.checked; narrate(S.mag ? 'The spin arrows are drawn ten times longer than their true size, so their direction can be seen. A billiard ball\u2019s spin angular momentum is small compared with its orbital angular momentum about a point tens of centimetres away.' : 'All the arrows are now on the same scale.'); }); on('aaDsc', 'click', describe);
+[['aaM1', 'm1', ' kg', 2, 1], ['aaM2', 'm2', ' kg', 2, 1], ['aaV1', 'v1', ' m/s', 2, 1], ['aaV2', 'v2', ' m/s', 2, 1], ['aaT1', 't1', '\u00B0', 0, 1], ['aaT2', 't2', '\u00B0', 0, 1], ['aaL1', 'l1', ' cm', 0, 100], ['aaL2', 'l2', ' cm', 0, 100], ['aaW1', 'w1', ' rad/s', 1, 1], ['aaW2', 'w2', ' rad/s', 1, 1]].forEach(function(q){
+on(q[0], 'input', function(){ S[q[1]] = +this.value; var t = el(q[0] + 'v'); if (t) t.textContent = (S[q[1]]*q[4]).toFixed(q[3]) + q[2]; setup(); later(); }); });
+}
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','aaBtnHC'],['lm','aaBtnLM'],['cb','aaBtnCB'],['nr','aaBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('aa_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('aaBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('aaNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--aa-bg','--aa-panel','--aa-border','--aa-text','--aa-muted','--aa-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+}
+function describe(){ narrate((THREE_D ? 'The table in three dimensions. Each ball carries its momentum arrow p and, if it spins, a vertical arrow for its spin angular momentum. At the origin O stand the vertical arrows r cross p for each ball\u2019s orbital angular momentum, and the thick total. ' : 'The table from above, with the reference point O. Each ball, white and yellow, has its velocity arrow, a marker showing its spin, its position vector r from O, and the lever arm from O to its line of motion. ') + summary()); }
+function toggleDesc(){
+var b = el('aaDescBtn'), d = el('aaDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* dragging: O (2-D view), or the view itself (3-D) */
+var drag = null;
+function pt(e){ var r = cv.getBoundingClientRect(); return { x:(e.clientX - r.left)*W/r.width, y:(e.clientY - r.top)*H/r.height, k:W/r.width }; }
+function onO(q, touch){ return !THREE_D && Math.hypot(q.x - X(S.ox), q.y - Y(S.oy)) < 14 + (touch ? 14*q.k : 0); }
+function down(q, touch){ if (THREE_D){ drag = { x:q.x, y:q.y, yaw:S.yaw, pitch:S.pitch }; return true; } if (onO(q, touch)){ drag = 'O'; return true; } return false; }
+function move(q){ if (!drag) return; if (THREE_D){ S.yaw = drag.yaw + (q.x - drag.x)*0.5; S.pitch = Math.max(5, Math.min(89, drag.pitch + (q.y - drag.y)*0.4)); }
+else { S.ox = Math.max(0.02, Math.min(TW - 0.02, (q.x - TX0)/TSC)); S.oy = Math.max(0.02, Math.min(TH - 0.02, TH - (q.y - TY0)/TSC)); later(); } }
+cv.addEventListener('mousedown', function(e){ down(pt(e), false); });
+window.addEventListener('mousemove', function(e){ if (drag) move(pt(e)); else if (!THREE_D) cv.style.cursor = onO(pt(e), false) ? 'move' : 'default'; else cv.style.cursor = 'grab'; });
+window.addEventListener('mouseup', function(){ drag = null; });
+cv.addEventListener('touchstart', function(e){ if (down(pt(e.touches[0]), true)) e.preventDefault(); }, { passive:false });
+cv.addEventListener('touchmove', function(e){ if (!drag) return; e.preventDefault(); move(pt(e.touches[0])); }, { passive:false });
+cv.addEventListener('touchend', function(){ drag = null; });
+/* boot */
+buildCtl(); setup(); readout(); narrate('Ready. ' + summary()); requestAnimationFrame(frame);
+return { theme:theme, describe:describe, toggleDesc:toggleDesc, set:function(k, v){ S[k] = v; buildCtl(); setup(); }, setO:function(x, y){ S.ox = x; S.oy = y; },
+_state:function(){ return { S:JSON.parse(JSON.stringify(S)), B:JSON.parse(JSON.stringify(B)), parts:B.map(parts) }; },
+_step:function(sec, n){ S.run = false; var h = sec/n; for (var i=0; i<n; i++) step(h); return B.map(parts); } };
+})();
+
+</script>
+</main>
+</body>
+</html>

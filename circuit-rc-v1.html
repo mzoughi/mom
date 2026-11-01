@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Series RC Circuit</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,Oscilloscope, teach, learn,Circuit, DC, RC,capacitance,capacitor,,Resistor,Reactance,Phasor,Diagram,Impedance,Electric, Electricity, Builder, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="rcroot1005">
+<div class="rc_a11y1005" id="rcA11yBar1005" role="toolbar" aria-label="Display options">
+<button type="button" class="rc_a11ybtn1005" id="rcBtnHC1005"  onclick="rcA11y1005.toggle('hc')"  aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rc_a11ybtn1005" id="rcBtnLM1005"  onclick="rcA11y1005.toggle('lm')"  aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rc_a11ybtn1005" id="rcBtnCB1005"  onclick="rcA11y1005.toggle('cb')"  aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rc_a11ybtn1005 rc_a11yon1005" id="rcBtnNR1005" onclick="rcA11y1005.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div id="canvasesdiv1005" class="tbar1005"><H3>Charge/Discharge of a Capacitor</H3></div>
+<div class="mcontent1005">
+<canvas id="myCanvas1005" style="margin:auto;border:1px solid" width="850" height="450"></canvas></div>
+<div id="rcNarBar1005" class="rc_narbar1005" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar1005">
+<input type="button" class="rc_a11ybtn1005" id="play1005"        value="Play"       onclick="if(this.value=='Play'){RCcircuit1005.start();this.value='Pause';}else{this.value='Play';RCcircuit1005.irtah();}">
+<input type="button" class="rc_a11ybtn1005" id="pause1005"       value="Pause"      onclick="RCcircuit1005.irtah()">
+<input type="button" class="rc_a11ybtn1005" id="stepforward1005" value="Step &gt;&gt;" onclick="RCcircuit1005.stepForward()">
+<input type="button" class="rc_a11ybtn1005" id="reStart1005"     value="reStart"    onclick="RCcircuit1005.redemarre()">
+<input type="button" class="rc_a11ybtn1005" id="s1005"           value="Flip Switch" onclick="RCcircuit1005.setMode(); if (RCcircuit1005.runFlag == 0) { RCcircuit1005.stepForward();}">
+</div>
+<div class="fbar1005">
+<div class="left1005">Resistance `R`</div>
+<div class="center1005">
+<input type="range" id="R1" style="width:390px;" value="1.75" min="1" max="3" step="0.1"
+ onChange="document.getElementById('R1Value').innerHTML=this.value;RCcircuit1005.redemarre();"></div>
+<div class="right1005"><span id="R1Value">1.75</span><span> `Omega`</span></div></div>
+<div class="footer1005">
+<div class="left1005">Capacitance `C`</div>
+<div class="center1005">
+<input type="range" id="C1" style="width:390px;" value="1.25" min="1" max="3" step="0.1" onchange="document.getElementById('C1Value').innerHTML=this.value;RCcircuit1005.redemarre();"></div>
+<div class="right1005"><span id="C1Value">1.25</span><span> `"F"`</span></div></div>
+<div class="flex1005">
+<p>In this simulation, you can investigate the behavior of an RC Series charge and discharge circuit. </p>
+<p>This simulation was developed by Taha Mzoughi during August-October 2025.</p></div></div><!-- #rcroot1005 -->
+<style>
+* { margin: 0; box-sizing: border-box; }
+/* ── CSS custom properties (theming) ── */
+#rcroot1005 {
+--rc-bg:       #fffde7;   /* canvas/page background  */
+--rc-graph-bg: #e0f7fa;   /* graph area              */
+--rc-ui-bg:    #f90;      /* title bar               */
+--rc-ctrl-bg:  #ddeebb;   /* button bar              */
+--rc-slider-bg:#cce;      /* R slider row            */
+--rc-info-bg:  #fffde7;   /* flex description        */
+--rc-text:     #000;
+--rc-wire:     #999;
+--rc-charge:   blue;      /* moving charge dots      */
+--rc-vr:       red;       /* VR graph line           */
+--rc-vc:       blue;      /* VC graph line           */
+--rc-narbar:   #ffefc0;   /* narration bar           */
+--rc-narborder:#e0b040;
+}
+/* Toolbar */
+#rcroot1005 .rc_a11y1005 {
+display: flex; gap: 6px; padding: 6px 8px;width: 853px;height: 43px;
+background: #222; flex-wrap: wrap;
+}
+#rcroot1005 .rc_a11ybtn1005 {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+}
+/*#rcroot1005 .rc_a11ybtn1005 {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+} */
+/* #rcroot1005 .rc_a11ybtn1005:hover { border-color: #00e8d0; color: #00e8d0; } */
+/* #rcroot1005 .rc_a11yon1005 {
+background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0;
+} */
+/* Narration bar */
+#rcroot1005 .rc_narbar1005 {
+width: 853px; min-height: 48px; padding: 5px 10px;
+background: var(--rc-narbar); border-left: 4px solid var(--rc-narborder);
+font-size: .88rem; color: var(--rc-text); font-style: italic;
+}
+/* Layout sections */
+#rcroot1005 .tbar1005 {
+padding: 4px; width: 853px; height: 30px;
+background-color: var(--rc-ui-bg); text-align: center;
+}
+#rcroot1005 .mcontent1005 { width: 853px; height: 452px; }
+#rcroot1005 .bbar1005 {
+width: 853px; height: 40px;
+background-color: var(--rc-ctrl-bg); padding: 10px; text-align: center;
+}
+#rcroot1005 .fbar1005 {
+width: 853px; height: 40px; text-align: center;
+background-color: var(--rc-slider-bg); display: flex;
+}
+#rcroot1005 .fbar1005 .left1005  { width:146px; padding:2px; }
+#rcroot1005 .fbar1005 .center1005{ width:546px; padding:4px; }
+#rcroot1005 .fbar1005 .right1005 { width:146px; padding:4px; }
+#rcroot1005 .footer1005 {
+width: 853px; height: 40px; text-align: center;
+display: flex;
+}
+#rcroot1005 .footer1005 .left1005  { width:146px; padding:2px; }
+#rcroot1005 .footer1005 .center1005{ width:546px; padding:4px; }
+#rcroot1005 .footer1005 .right1005 { width:146px; padding:4px; }
+#rcroot1005 .footer1005:nth-child(4) { background-color: #fce4ec; }
+#rcroot1005 .footer1005:nth-child(5) { background-color: #e8f5e9; }
+#rcroot1005 .footer1005:nth-child(6) { background-color: #e3f2fd; }
+#rcroot1005 .footer1005:nth-child(7) { background-color: #aff;}
+#rcroot1005 .flex1005 {
+width: 853px; min-height: 100px;
+background-color: var(--rc-info-bg); padding: 4px;
+}</style>
+<script>
+/* ── Accessibility controller ── */
+var rcA11y1005 = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+/* Theme variable sets */
+var THEMES = {
+hc: {
+'--rc-bg':'#000','--rc-graph-bg':'#001a1a',
+'--rc-ui-bg':'#1a1a00','--rc-ctrl-bg':'#001a00',
+'--rc-slider-bg':'#00001a','--rc-info-bg':'#0a0a00',
+'--rc-text':'#fff','--rc-wire':'#aaa',
+'--rc-charge':'#00ffff','--rc-vr':'#ffcc00','--rc-vc':'#00ffee',
+'--rc-narbar':'#111','--rc-narborder':'#ffcc00'
+},
+lm: {
+'--rc-bg':'#ffffff','--rc-graph-bg':'#e8f8ff',
+'--rc-ui-bg':'#f0a000','--rc-ctrl-bg':'#c8e8a0',
+'--rc-slider-bg':'#b0b8e8','--rc-info-bg':'#fffff0',
+'--rc-text':'#000','--rc-wire':'#555',
+'--rc-charge':'#0044cc','--rc-vr':'#cc0000','--rc-vc':'#0044cc',
+'--rc-narbar':'#fff8dc','--rc-narborder':'#c08000'
+},
+cb: {
+/* Okabe-Ito palette */
+'--rc-charge':'#0072b2',
+'--rc-vr':'#d55e00',
+'--rc-vc':'#0072b2'
+}
+};
+var DEFAULTS = {
+'--rc-bg':'#fffde7','--rc-graph-bg':'#e0f7fa',
+'--rc-ui-bg':'#f90','--rc-ctrl-bg':'#ddeebb',
+'--rc-slider-bg':'#cce','--rc-info-bg':'#fffde7',
+'--rc-text':'#000','--rc-wire':'#999',
+'--rc-charge':'blue','--rc-vr':'red','--rc-vc':'blue',
+'--rc-narbar':'#ffefc0','--rc-narborder':'#e0b040'
+};
+function applyVars(theme, on) {
+if (!ROOT) return;
+var vars = THEMES[theme];
+for (var prop in vars) ROOT.style.setProperty(prop, on ? vars[prop] : DEFAULTS[prop]);
+}
+function styleBtn(id, active) {
+var btn = document.getElementById(id);
+if (!btn) return;
+if (active) {
+//btn.style.background    = 'rgba(0,232,208,0.12)';
+//btn.style.borderColor   = '#00e8d0';
+//btn.style.color         = '#00e8d0';
+} else {
+//btn.style.background    = '#2a2e3a';
+//btn.style.borderColor   = '#404a60';
+//btn.style.color         = '#7a8aaa';
+}
+btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('myCanvas1005');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarration() {
+var nb  = document.getElementById('rcNarBar1005');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('rcBtnNR1005');
+if (btn) {
+btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('rcBtnNR1005', states.nr);
+}
+}
+function apply() {
+if (!ROOT) return;
+applyVars('hc', states.hc);
+applyVars('lm', states.lm);
+applyVars('cb', states.cb);
+applyCanvas();
+styleBtn('rcBtnHC1005', states.hc);
+styleBtn('rcBtnLM1005', states.lm);
+styleBtn('rcBtnCB1005', states.cb);
+applyNarration();
+}
+return {
+init: function() { ROOT = document.getElementById('rcroot1005'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+},
+isNarOn: function() { return states.nr; },
+/* Called by the sim to push a narration message */
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('rcNarBar1005');
+if (nb) nb.textContent = msg;
+},
+/* Read current colour values for canvas drawing */
+getColor: function(role) {
+var el = document.getElementById('rcroot1005');
+if (!el) return null;
+return getComputedStyle(el).getPropertyValue('--rc-' + role).trim();
+}
+};
+})();</script>
+<script>
+var RCcircuit = function() {
+var canvas = document.getElementById("myCanvas1005");
+var context = canvas.getContext("2d");
+var index = -1;
+var xBase = 50;
+var yBase = 100;
+var xSupport = canvas.width/2;
+var ySupport = yBase-50;
+var xInit = 37;
+var radius = 3;
+var time = 0.0;
+var deltat = 1/100.0;
+var xBase2 = xBase + 300;
+var graphType = 1;
+var graphLabel = 'Voltage vs. time';
+var xAxisLabel = 't (s)';
+var xAxisOffset = 0.0;
+var xMajorTicks = 1;
+var xDecimals = 0;
+var yAxisLabel = 'Voltage (V)';
+var yMajorTicks = 2.0;
+var plotColor = 'red';
+var graphX = 10, graphY = 9;
+var capL=xBase+136, capR=xBase+160;
+var yyBase=240,xvBase=72,yvBase=115;
+var yDecimals = 0;
+var R = 1.75;
+var C = 1.25;
+var Vmax = 9;
+var VC = 0;
+var Q = 0;
+var VR = Vmax;
+var I = VR/R;
+var switchPos = 1;
+var chargeColor = "blue";
+var offset = 0, offstep=12.0;
+var visualize = 1;
+var xPos = xBase;
+var yPos = yBase + 150;
+var vx = 100.0;
+var vy = 0.0;
+var timer;
+var runFlag = 1;
+/* ── Narration state tracking ── */
+var _narCharge1Done  = false;  // ~0.63 * Vmax reached
+var _narCharge2Done  = false;  // ~0.99 * Vmax reached
+var _narDischarge1Done = false;
+var _narDischarge2Done = false;
+if(document.getElementById("R1")){R1 = document.getElementById("R1");}
+R1.onchange = reactionR1;
+R=eval(R1.value);
+if(document.getElementById("C1")){C1 = document.getElementById("C1");}
+C1.onchange = reactionC1;
+C=eval(C1.value);
+var arraySize = 10001;
+var values = new Array(arraySize);
+for (var i = 0; i < arraySize; i++) {
+values[i] = {};
+values[i].VR = VR;
+values[i].VC = VC;
+values[i].I = I;
+}
+/* Narration helper -- delegates to rcA11y */
+function narrate(msg) {
+if (typeof rcA11y1005 !== 'undefined') rcA11y1005.narrate(msg);
+}
+/* Get a themed colour for canvas drawing */
+function col(role) {
+if (typeof rcA11y1005 !== 'undefined') {
+var v = rcA11y1005.getColor(role);
+if (v) return v;
+}
+var defaults = { bg:'#fffde7', 'graph-bg':'#e0f7fa', wire:'#999',
+charge:'blue', vr:'red', vc:'blue' };
+return defaults[role] || '#000';
+}
+runMotion();
+narrate('RC circuit ready. R = ' + R + ' \u03A9, C = ' + C + ' F, E = ' + Vmax + ' V. Press Play to start charging.');
+function setMode(){
+switchPos = switchPos === 1 ? 2 : 1;
+/* Reset narration flags for the new phase */
+if (switchPos === 2) {
+_narDischarge1Done = false;
+_narDischarge2Done = false;
+narrate('Switch flipped -- capacitor now discharging through R = ' + R + ' \u03A9.');
+} else {
+_narCharge1Done  = false;
+_narCharge2Done  = false;
+narrate('Switch flipped back -- capacitor charging again.');
+}
+}
+function reactionR1() {
+R=eval(R1.value);
+document.getElementById('R1Value').innerHTML=R1.value;
+redemarre();
+}
+function reactionC1() {
+C=eval(C1.value);
+document.getElementById('C1Value').innerHTML=C1.value;
+redemarre();
+}
+function start() {
+window.clearTimeout(timer);
+runFlag = 1;
+narrate('Simulation running. Capacitor charging. \u03C4 = RC = ' + (R*C).toFixed(2) + ' s.');
+drawMotion(); runMotion();
+}
+function irtah() {
+window.clearTimeout(timer);
+runFlag = 0;
+narrate('Paused at t = ' + time.toFixed(2) + ' s. V\u2C7C = ' + VC.toFixed(2) + ' V, I = ' + I.toFixed(4) + ' A.');
+}
+function stepForward() {
+window.clearTimeout(timer);
+runFlag = 1;
+drawMotion();
+}
+function stepBack() {
+window.clearTimeout(timer);
+index = index-1;
+if (index >= 0) {
+runFlag = 1;
+drawMotion();
+}
+if (index < -1) redemarre();
+}
+function redemarre() {
+window.clearTimeout(timer);
+index = -1;
+time = 0.0;
+xPos = xBase;
+yPos = yBase + 150;
+vx = 100.0;
+vy = 0.0;
+VC = 0;
+Q = 0;
+VR = Vmax;
+I = VR/R;
+switchPos = 1;
+offset = 0.0;
+xMajorTicks = 1;
+R=eval(R1.value);
+C=eval(C1.value);
+_narCharge1Done = false; _narCharge2Done = false;
+_narDischarge1Done = false; _narDischarge2Done = false;
+runFlag = 1;
+narrate('Reset. R = ' + R + ' \u03A9, C = ' + C + ' F. \u03C4 = ' + (R*C).toFixed(2) + ' s. Press Play.');
+runMotion();
+}
+function voltageGraph() {
+graphType = 1;
+graphLabel = '';
+xAxisLabel = 't (s)';
+xAxisOffset = 0.0;
+xMajorTicks = 1;
+xDecimals = 0;
+yAxisLabel = 'Voltage (V)';
+yMajorTicks = 2.0;
+plotColor = 'red';
+runFlag = 1;
+}
+function currentGraph() {
+graphType = 2;
+graphLabel = 'Current vs. time';
+xAxisLabel = 't (s)';
+xAxisOffset = 0.0;
+xMajorTicks = 1;
+xDecimals = 0;
+yAxisLabel = 'Current (A)';
+yMajorTicks = 2.0;
+plotColor = 'red';
+runFlag = 1;
+}
+function drawMotion() {
+if ((time >= 80.0)) runFlag = 0;
+if (time > 10.0) { xMajorTicks = 2.0; }
+if (time > 20.0) { xMajorTicks = 4.0; }
+if (time > 40.0) { xMajorTicks = 8.0; }
+if (runFlag == 1) {
+context.clearRect(0, 0, canvas.width, canvas.height);
+/* background -- use themed colour */
+context.fillStyle = col('bg');
+context.fillRect(0, 0, canvas.width, canvas.height);
+index = index + 1;
+time = index/100.0;
+/* Physics update */
+if (switchPos == 1) {
+I = VR/R;
+Q = Q + I*deltat;
+VC = Q/C;
+VR = Vmax - VC;
+I = VR/R;
+values[index].VC = VC;
+values[index].VR = VR;
+values[index].I = I;
+offset = offset + I/4.0;
+if (offset > offstep) offset = offset - offstep;
+/* Narration milestones -- charging */
+if (!_narCharge1Done && VC >= 0.63 * Vmax) {
+_narCharge1Done = true;
+narrate('One time constant reached (\u03C4 = ' + (R*C).toFixed(2) + ' s). V\u2C7C \u2248 0.63 \u00D7 ' + Vmax + ' V = ' + VC.toFixed(2) + ' V.');
+}
+if (!_narCharge2Done && VC >= 0.99 * Vmax) {
+_narCharge2Done = true;
+narrate('Capacitor nearly fully charged: V\u2C7C = ' + VC.toFixed(2) + ' V \u2248 ' + Vmax + ' V. Current \u2248 0.');
+}
+}
+if (switchPos == 2) {
+VR = -VC;
+I = VR/R;
+Q = Q + I*deltat;
+VC = Q/C;
+VR = -VC;
+I = VR/R;
+values[index].VC = VC;
+values[index].VR = VR;
+values[index].I = I;
+offset = offset + I/4.0;
+if (offset < 0.0) offset = offset + offstep;
+/* Narration milestones -- discharging */
+if (!_narDischarge1Done && VC <= 0.37 * Vmax) {
+_narDischarge1Done = true;
+narrate('One time constant into discharge. V\u2C7C \u2248 0.37 \u00D7 V\u2080 = ' + VC.toFixed(2) + ' V.');
+}
+if (!_narDischarge2Done && VC <= 0.01 * Vmax) {
+_narDischarge2Done = true;
+narrate('Capacitor nearly fully discharged: V\u2C7C \u2248 0 V.');
+}
+}
+const yInc = getyInc(graphY);
+/* Graph area background */
+context.fillStyle = col('graph-bg');
+context.fillRect(xBase2, ySupport, 40*graphX, yInc*graphY);
+if (graphType == 1) {
+drawAxesMidY(xBase2, ySupport, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+/* VR line */
+context.strokeStyle = col('vr');
+context.lineWidth = 2;
+context.beginPath();
+context.moveTo(xBase2, ySupport+yInc*graphY/2-(yInc/yMajorTicks)*values[0].VR);
+for (var ival = 1; ival <= index; ival++) {
+context.lineTo(xBase2+(40/xMajorTicks)*ival/100.0, ySupport+yInc*graphY/2-(yInc/yMajorTicks)*values[ival].VR);
+}
+context.stroke();
+/* VC line */
+context.strokeStyle = col('vc');
+context.lineWidth = 2;
+context.beginPath();
+context.moveTo(xBase2, ySupport+yInc*graphY/2-(yInc/yMajorTicks)*values[0].VC);
+for (var ival = 1; ival <= index; ival++) {
+context.lineTo(xBase2+(40/xMajorTicks)*ival/100.0, ySupport+yInc*graphY/2-(yInc/yMajorTicks)*values[ival].VC);
+}
+context.stroke();
+}
+if (graphType == 2) {
+drawAxesMidY(xBase+300, ySupport, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+context.strokeStyle = col('vr');
+context.lineWidth = 2;
+context.beginPath();
+context.moveTo(xBase2, ySupport+yInc*graphY/2-(yInc/yMajorTicks)*values[0].I);
+for (var ival = 1; ival <= index; ival++) {
+// current graph plotting placeholder
+}
+context.stroke();
+}
+/* ── Circuit drawing ── */
+var wireCol = col('wire');
+context.strokeStyle = wireCol;
+context.lineWidth = 3;
+/* battery */
+context.beginPath();
+context.moveTo(xBase-40, yBase+72+36);
+context.lineTo(xBase+40, yBase+72+36);
+context.moveTo(xBase-40, yBase+72+36+16);
+context.lineTo(xBase+40, yBase+72+36+16);
+context.stroke();
+/* top wire to capacitor */
+context.beginPath();
+context.moveTo(xBase, yBase+72+36);
+context.lineTo(xBase, yBase);
+context.lineTo(capL, yBase);
+context.stroke();
+context.beginPath();
+context.moveTo(capR, yBase);
+context.lineTo(xBase+216, yBase);
+context.lineTo(xBase+216, yBase+76);
+context.stroke();
+/* capacitor leads */
+context.beginPath();
+context.moveTo(capL, yBase-30);
+context.lineTo(capL, yBase+30);
+context.stroke();
+context.beginPath();
+context.moveTo(capR, yBase-30);
+context.lineTo(capR, yBase+30);
+context.stroke();
+/* bottom wire */
+context.beginPath();
+context.moveTo(xBase+216, yBase+240-76);
+context.lineTo(xBase+216, yBase+240);
+context.lineTo(xBase+72, yBase+240);
+context.stroke();
+context.beginPath();
+context.moveTo(xBase+24, yBase+240);
+context.lineTo(xBase, yBase+240);
+context.lineTo(xBase, yBase+240-72-36);
+context.stroke();
+/* battery negative */
+context.beginPath();
+context.moveTo(xBase-20, yBase+240-72-36);
+context.lineTo(xBase+20, yBase+240-72-36);
+context.moveTo(xBase-20, yBase+240-72-36-16);
+context.lineTo(xBase+20, yBase+240-72-36-16);
+context.stroke();
+/* resistor zigzag */
+context.beginPath();
+context.moveTo(xBase+216, yBase+76);
+context.lineTo(xBase+216-8, yBase+72+8);
+for (i=1; i<=9; i=i+2) {
+context.lineTo(xBase+216+8, yBase+72+8+8*i);
+context.lineTo(xBase+216-8, yBase+72+8+8*(i+1));
+}
+context.lineTo(xBase+216, yBase+240-76);
+context.stroke();
+/* path 2 */
+context.beginPath();
+context.moveTo(xBase+72, yBase);
+context.lineTo(xBase+72, yBase+192);
+context.stroke();
+/* switch */
+if (switchPos == 1) drawArrow(-48/5, 0, xBase+72, yBase+240, wireCol);
+if (switchPos == 2) drawArrow(0, 48/5, xBase+72, yBase+240, wireCol);
+context.beginPath();
+context.arc(xBase+72, yBase+240, 5, 0, 2*Math.PI, false);
+context.fillStyle = "black"; context.fill();
+context.beginPath();
+context.arc(xBase+72-48, yBase+240, 5, 0, 2*Math.PI, false);
+context.fillStyle = "magenta"; context.fill();
+context.beginPath();
+context.arc(xBase+72, yBase+240-48, 5, 0, 2*Math.PI, false);
+context.fillStyle = "orange"; context.fill();
+/* ── Moving charges ── */
+chargeColor = col('charge');
+if (visualize == 1) {
+var istart = 0;
+if (switchPos == 2) istart = 6;
+for (i=istart; i<=17; i++) {
+context.beginPath();
+if ((i < 11) || (i > 13)) context.arc(xBase+offstep+offstep*i-offset, yBase, radius, 0, 2*Math.PI, false);
+context.fillStyle = chargeColor; context.fill();
+}
+for (i=0; i<=(17-istart); i++) {
+context.beginPath();
+context.arc(xBase+216-offstep-offstep*i+offset, yBase+240, radius, 0, 2*Math.PI, false);
+context.fillStyle = chargeColor; context.fill();
+}
+for (i=0; i<=19; i++) {
+context.beginPath();
+context.arc(xBase+216, yBase+offstep+offstep*i-offset, radius, 0, 2*Math.PI, false);
+context.fillStyle = chargeColor; context.fill();
+}
+if (switchPos == 1) {
+for (i=0; i<=8; i++) {
+context.beginPath();
+context.arc(xBase, yBase+240-offstep-offstep*i+offset, radius, 0, 2*Math.PI, false);
+context.arc(xBase, yBase+240-offstep-offstep*(i+11)+offset, radius, 0, 2*Math.PI, false);
+context.fillStyle = chargeColor; context.fill();
+}
+for (i=9; i<=10; i++) {
+context.beginPath();
+context.arc(xBase, yBase+240+0-offstep*i-offset, radius, 0, 2*Math.PI, false);
+context.fillStyle = 'red'; context.fill();
+}
+}
+if (switchPos == 2) {
+for (i=0; i<=19; i++) {
+context.beginPath();
+context.arc(xBase+72, yBase+0+offstep*i+offset, radius, 0, 2*Math.PI, false);
+context.fillStyle = chargeColor; context.fill();
+}
+}
+}
+/* ── Re-draw capacitor plates with charge-indicating colour ── */
+var tc = Math.min(1, Math.max(0, VC / Vmax));
+var rPlus  = Math.floor(64 + 191 * tc);
+var gbPlus = Math.floor(64 * (1 - tc));
+var bNeg   = Math.floor(64 + 191 * tc);
+var grNeg  = Math.floor(64 * (1 - tc));
+context.strokeStyle = 'rgb(' + rPlus + ',' + gbPlus + ',' + gbPlus + ')';
+context.lineWidth = 10;
+context.beginPath();
+context.moveTo(capL, yBase-30);
+context.lineTo(capL, yBase+30);
+context.stroke();
+context.strokeStyle = 'rgb(' + grNeg + ',' + grNeg + ',' + bNeg + ')';
+context.beginPath();
+context.moveTo(capR, yBase-30);
+context.lineTo(capR, yBase+30);
+context.stroke();
+}
+}
+function runMotion() {
+drawMotion();
+if (runFlag == 1) { timer = window.setTimeout(runMotion, 300/30); }
+}
+function drawArrow(Fx,Fy,Px,Py,arrowColor) {
+var theta = Math.atan2(Fy,Fx);
+context.strokeStyle = arrowColor;
+context.lineWidth = 4;
+context.beginPath();
+context.moveTo(Px, Py);
+context.lineTo(Px+5*Fx, Py-5*Fy);
+context.stroke();
+context.lineWidth = 2;
+var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+if (Fmag > 5) Fmag = 5;
+context.fillStyle = arrowColor;
+context.beginPath();
+context.moveTo(Px+5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)), Py-5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+context.lineTo(Px+5*Fx, Py-5*Fy);
+context.lineTo(Px+5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)), Py-5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+context.stroke();
+context.fill();
+}
+function getyInc(input) {
+if (input === 3)   return 125;
+if (input === 4.5) return 85;
+if (input === 6)   return 65;
+if (input === 9)   return 43;
+if (input === 12)  return 32;
+if (input === 15)  return 25;
+}
+function drawAxesMidY(xAxisStart,yAxisStart,xNum,yNum,xOffset,xIncrement,yIncrement,xNumDecimals,yNumDecimals,xAxisTitle,yAxisTitle,graphTitle) {
+const xInc=40, yInc=getyInc(yNum);
+/* graph background */
+context.fillStyle = col('graph-bg');
+context.fillRect(xAxisStart, yAxisStart, xInc*xNum, yInc*yNum);
+var axisLabel='', axisValue=0;
+context.lineWidth = 2;
+context.strokeStyle = '#888';
+for (var i=0; i<=xNum; i++) {
+context.beginPath();
+context.moveTo(xAxisStart+xInc*i, yAxisStart);
+context.lineTo(xAxisStart+xInc*i, yAxisStart+yInc*yNum/2+10);
+context.stroke();
+context.moveTo(xAxisStart+xInc*i, yAxisStart+yInc*yNum/2+30);
+context.lineTo(xAxisStart+xInc*i, yAxisStart+yInc*yNum);
+context.stroke();
+context.font = '14pt Calibri';
+context.fillStyle = 'black';
+context.textAlign = 'center';
+context.textBaseline = 'middle';
+axisValue = xOffset + xIncrement*(i);
+axisLabel = axisValue.toFixed(xNumDecimals);
+if (i > 0) context.fillText(axisLabel, xAxisStart+xInc*i, yAxisStart+yInc*yNum/2+20);
+}
+for (i=0; i<=yNum; i++) {
+context.beginPath();
+context.moveTo(xAxisStart-10, yAxisStart+yInc*i);
+context.lineTo(xAxisStart+xInc*xNum, yAxisStart+yInc*i);
+context.stroke();
+context.font = '14pt Calibri';
+context.fillStyle = 'black';
+context.textAlign = 'center';
+context.textBaseline = 'middle';
+axisValue = yIncrement*(yNum/2-i);
+axisLabel = axisValue.toFixed(yNumDecimals);
+context.fillText(axisLabel, xAxisStart-30, yAxisStart+yInc*i);
+}
+/* x axis */
+context.strokeStyle = '#000'; context.lineWidth = 4;
+context.beginPath();
+context.moveTo(xAxisStart-1, yAxisStart+yInc*yNum/2);
+context.lineTo(xAxisStart+xInc*xNum+20, yAxisStart+yInc*yNum/2);
+context.stroke();
+context.moveTo(xAxisStart+xInc*xNum+10, yAxisStart+yInc*yNum/2-6);
+context.lineTo(xAxisStart+xInc*xNum+20, yAxisStart+yInc*yNum/2);
+context.lineTo(xAxisStart+xInc*xNum+10, yAxisStart+yInc*yNum/2+6);
+context.lineJoin = 'miter'; context.stroke();
+context.font = '16pt Calibri'; context.fillStyle = 'black';
+context.textAlign = 'left';
+context.fillText(xAxisTitle, xAxisStart+xInc*xNum+24, yAxisStart+yInc*yNum/2);
+/* y axis */
+context.strokeStyle = '#000';
+context.beginPath();
+context.moveTo(xAxisStart, yAxisStart-20);
+context.lineTo(xAxisStart, yAxisStart+yInc*yNum);
+context.stroke();
+context.moveTo(xAxisStart-6, yAxisStart-10);
+context.lineTo(xAxisStart, yAxisStart-20);
+context.lineTo(xAxisStart+6, yAxisStart-10);
+context.lineJoin = 'miter'; context.stroke();
+context.strokeStyle = '#000'; context.textAlign = 'center';
+context.font = '16pt Calibri'; context.fillStyle = 'black';
+context.fillText(yAxisTitle, xAxisStart-30, yAxisStart-35);
+context.font = 'bold 18pt Calibri'; context.fillStyle = 'purple';
+context.textAlign = 'center';
+}
+return {
+start, irtah, stepBack, stepForward, redemarre, setMode, runFlag
+};
+}</script>
+<script>
+var RCcircuit1005 = new RCcircuit();
+rcA11y1005.init();</script>
+
+
+</body>
+</html>

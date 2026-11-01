@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Statics: Tensegrity: Floating Structures</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, statics, equilibrium, tension, torque, tensegrity, floating table, forces, 3D, lesson, scientific">
+<meta name="description" content="Interactive 3D tensegrity structures: the floating table, a triangle table, linked loops, hanging hooks, a strut prism and a strut ball. Read the tension in every cable, change the masses and the load, and make the structure fail.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="tgRoot" class="tg_root" role="region" aria-label="Tensegrity simulator: pieces held apart by cables that can only pull. Read the tension in every cable; change the masses and the load until something fails.">
+<div class="tg_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="tg_a11ybtn" id="tgBtnHC" onclick="tgSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="tg_a11ybtn" id="tgBtnLM" onclick="tgSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="tg_a11ybtn" id="tgBtnCB" onclick="tgSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="tg_a11ybtn tg_a11yon" id="tgBtnNR" onclick="tgSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tg_header"><p class="tg_h1">Tensegrity: Floating Structures</p><p class="tg_sub">cables can only pull &middot; for the top piece: &Sigma;F = 0 and &Sigma;&tau; = 0</p></div>
+<div class="tg_tabs" role="tablist" aria-label="Structures">
+<button type="button" role="tab" class="tg_tab" id="tgT0" aria-selected="true" onclick="tgSim.design(0)">Floating table</button>
+<button type="button" role="tab" class="tg_tab" id="tgT1" aria-selected="false" onclick="tgSim.design(1)">Triangle table</button>
+<button type="button" role="tab" class="tg_tab" id="tgT2" aria-selected="false" onclick="tgSim.design(2)">Linked loops</button>
+<button type="button" role="tab" class="tg_tab" id="tgT3" aria-selected="false" onclick="tgSim.design(3)">Hanging hooks</button>
+<button type="button" role="tab" class="tg_tab" id="tgT4" aria-selected="false" onclick="tgSim.design(4)">3-strut prism</button>
+<button type="button" role="tab" class="tg_tab" id="tgT5" aria-selected="false" onclick="tgSim.design(5)">6-strut ball</button>
+</div>
+<div class="tg_diag"><div class="tg_dlabel"><b id="tgLab">THE STRUCTURE</b><span id="tgHint"></span></div>
+<canvas id="tgCv" width="780" height="470" tabindex="0" role="img" aria-label="A three-dimensional tensegrity structure: rigid pieces held apart by cables, with force arrows. Click a cable to read its tension. Drag, or use the arrow keys, to turn the view; press N to step through the cables." aria-describedby="tgStatus"></canvas></div>
+<div class="tg_status" id="tgStatus"></div>
+<div class="tg_bbar">
+<button type="button" class="tg_btn tg_kick" id="tgRebuild">&#8635; Rebuild it</button>
+<button type="button" class="tg_btn" id="tgCut" disabled>Cut the selected cable</button>
+<button type="button" class="tg_btn tg_btnon" id="tgPlay">&#10073;&#10073; Pause</button>
+</div>
+<div class="tg_bbar">
+<label><input type="checkbox" id="tgArr" checked> force arrows</label>
+<label><input type="checkbox" id="tgLbl" checked> tension labels</label>
+<label><input type="checkbox" id="tgRx" checked> ground forces</label>
+<button type="button" class="tg_btn" id="tgVStd">Standard view</button>
+<button type="button" class="tg_btn" id="tgVFr">From the front</button>
+<button type="button" class="tg_btn" id="tgVTop">From above</button>
+<button type="button" class="tg_btn" id="tgDsc">Describe</button>
+</div>
+<div class="tg_read" id="tgRead" aria-label="Readout"></div>
+<div class="tg_panels"><div class="tg_panel"><div class="tg_ptitle">Masses, load and cables</div><div class="tg_pbody" id="tgCtl"></div></div>
+<div class="tg_panel"><div class="tg_ptitle">Tension in every cable (click to select)</div><div class="tg_pbody"><div class="tg_list" id="tgList" role="list"></div></div></div></div>
+<div class="tg_eqs" id="tgEq"></div>
+<div id="tgNar" class="tg_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="tg_descwrap">
+<button type="button" class="tg_descbtn" id="tgDescBtn" aria-expanded="false" aria-controls="tgDesc" onclick="tgSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="tg_desc" id="tgDesc" role="region" aria-labelledby="tgDescBtn" style="display:none">
+<p>A tensegrity structure seems to float: its top piece does not rest on anything solid. It is held only by cables (or chains, or strings), and a cable can only <b>pull</b>, along its own length. It can never push. The pull of a cable is its <b>tension</b>, `T`.</p>
+<p><b>The trick.</b> In the first four structures there are two rigid pieces that never touch. The bottom piece has an arm that reaches up; the top piece has an arm that reaches down, below the end of the bottom arm. A <b>centre cable</b> joins the two ends, so the top piece hangs from the bottom piece. Hanging from one point, though, it would tip over. The <b>corner cables</b> (in the hanging hooks, the two <b>hold-down chains</b>) tie the top piece down to the bottom piece and keep it level.</p>
+<p><b>Equilibrium of the top piece.</b> The top piece does not move, so the forces on it balance and the torques on it balance:</p>
+<p class="tg_eq">`sum F_y = 0`:&nbsp;&nbsp; `T_(centre) = W_(top) + W_(load) + T_A + T_B + ...`</p>
+<p class="tg_eq">`sum tau = 0` (about the end of the centre cable).</p>
+<p>The centre cable pulls up. Everything else pulls down: the weight of the top piece, the weight of the load, and the corner cables. So the centre cable carries more than the weight it holds up. The corner cables provide the torques that keep the top piece from turning. Move the load off centre: it now exerts a torque, so the cables on its side pull harder and those on the other side pull less. Move it far enough and a cable goes <b>slack</b>, drawn sagging and grey, because it would have to push. Then the top piece tips.</p>
+<p><b>The whole structure.</b> The ground pushes up on the bottom piece. These normal forces add up to the total weight, `sum N = W_(top) + W_(bottom) + W_(load)`; the readout checks this. In the hanging hooks, the upper hook sticks out beyond the base: with a light base and a heavy block far to the left, the ground can no longer push up on the right side, and the whole structure tips over.</p>
+<p><b>Tightening.</b> The cables are made a little shorter than the gaps they span, so they are stretched and pull even before any load is added. Tightening them more raises every tension, but the balance of forces and torques stays the same.</p>
+<p><b>Failure.</b> A cable snaps when its tension is larger than its breaking strength. Its pull disappears, the forces no longer balance, and the structure moves: it may find a new balance or it may collapse.</p>
+<p><b>The two last tabs</b> are tensegrities made of struts (rods) that push and cables that pull, with no two struts touching. At every joint, the push of the strut and the pulls of the cables add up to zero. A strut fails by buckling (bending) when it is pushed too hard.</p>
+<p>The SIM finds the balanced shape step by step. The motion shown while it settles or collapses is slowed down and is not the real motion. Cables are coloured from blue (small tension) to red (near breaking). The arrows on the top piece show the forces acting on it, with lengths proportional to the forces.</p>
+</div></div>
+</div><!-- #tgRoot -->
+<style>
+#tgRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8; --c-sel:#3a3320; --c-bad:#ff6b6b;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#tgRoot * { box-sizing:border-box; }
+#tgRoot.tg_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; --c-sel:#ffe9b8; --c-bad:#b00020; background-image:none; }
+#tgRoot.tg_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; --c-sel:#333300; --c-bad:#ff5555; background-image:none; }
+#tgRoot .tg_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#tgRoot .tg_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#tgRoot .tg_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#tgRoot .tg_header { text-align:center; }
+#tgRoot .tg_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#tgRoot .tg_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#tgRoot .tg_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#tgRoot .tg_tab { flex:1 1 120px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#tgRoot .tg_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#tgRoot .tg_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#tgRoot .tg_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#tgRoot .tg_dlabel b { color:var(--c-accent); }
+#tgRoot canvas { display:block; width:100%; height:auto; touch-action:none; cursor:grab; }
+#tgRoot .tg_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#tgRoot .tg_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#tgRoot .tg_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#tgRoot .tg_btn:hover { border-color:var(--c-accent); }
+#tgRoot .tg_btn:disabled { opacity:.45; cursor:default; }
+#tgRoot .tg_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#tgRoot .tg_kick { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#tgRoot .tg_hide { display:none !important; }
+#tgRoot .tg_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#tgRoot .tg_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#tgRoot .tg_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#tgRoot .tg_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#tgRoot .tg_ctrl { display:flex; flex-direction:column; gap:3px; }
+#tgRoot .tg_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#tgRoot .tg_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#tgRoot .tg_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#tgRoot .tg_note { margin:0; font-size:.74rem; color:var(--c-dim); line-height:1.4; }
+#tgRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#tgRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#tgRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#tgRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#tgRoot .tg_list { max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
+#tgRoot .tg_row { display:grid; grid-template-columns:7.5em minmax(0,1fr) 6.4em; gap:6px; align-items:center; width:100%; padding:3px 6px; background:transparent; border:1px solid transparent; border-radius:3px; color:var(--c-text); font-family:monospace; font-size:.72rem; cursor:pointer; text-align:left; min-height:26px; }
+#tgRoot .tg_row:hover { border-color:var(--c-bd2); }
+#tgRoot .tg_row[aria-pressed="true"] { background:var(--c-sel); border-color:var(--c-accent); }
+#tgRoot .tg_bar { height:8px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:2px; overflow:hidden; }
+#tgRoot .tg_bar span { display:block; height:100%; }
+#tgRoot .tg_rv { text-align:right; color:var(--c-val); white-space:nowrap; }
+#tgRoot .tg_rbad { color:var(--c-bad); }
+#tgRoot .tg_read { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; padding:8px 12px; }
+#tgRoot .tg_flabel { font-family:monospace; font-size:.62rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#tgRoot .tg_fvalue { font-family:monospace; font-size:.9rem; color:var(--c-val); font-variant-numeric:tabular-nums; }
+#tgRoot .tg_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#tgRoot .tg_eqs b { color:var(--c-val); }
+#tgRoot .tg_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#tgRoot .tg_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#tgRoot .tg_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#tgRoot .tg_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#tgRoot .tg_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#tgRoot .tg_desc p { margin:0 0 9px; }
+#tgRoot .tg_eq { text-align:center; font-size:1rem; }
+#tgRoot button:focus-visible, #tgRoot input:focus-visible, #tgRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #tgRoot .tg_panels { grid-template-columns:minmax(0,1fr); } #tgRoot .tg_tab { font-size:.66rem; padding:8px 3px; } }
+@media (pointer:coarse) { #tgRoot input[type=range] { height:8px; } #tgRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #tgRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #tgRoot .tg_a11ybtn { min-height:40px; } #tgRoot input[type=checkbox] { width:22px; height:22px; } #tgRoot .tg_row { min-height:36px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Joints (nodes) joined by members. Cable: pulls only, T = k (L - L0) when stretched, 0 when slack. Strut: pushes or
+pulls. Brace: hidden stiff member that makes each rigid piece rigid (all node pairs of a piece are braced).
+Weights: each piece's mass is shared among its nodes (fractions chosen to place its centre of mass correctly); the load
+is shared among the load nodes so that both its total force and its torque are right. Ground: nodes cannot go below
+their floor; the ground can only push up. The balanced shape is found by strongly damped motion (dynamic relaxation);
+masses and tightening move gradually to new values. A cable snaps above its breaking strength; a strut buckles
+above its buckling limit. No dollar signs or backticks in the code.
+-->
+<script>
+var tgSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('tgRoot'), cv = el('tgCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var DEG = Math.PI/180, TAU = 2*Math.PI, GA = 9.8;
+var EAC = 3e3, EAB = 4e5, EAS = 2e6, GAM = 20, TFRAME = 0.05;
+var NAMES = ['FLOATING TABLE', 'TRIANGLE TABLE', 'LINKED LOOPS', 'HANGING HOOKS', '3-STRUT PRISM', '6-STRUT BALL'];
+/* ══════════ vectors ══════════ */
+function add(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; } function sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function mul(a, k){ return [a[0]*k, a[1]*k, a[2]*k]; } function dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function cross(a, b){ return [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]; }
+function len(a){ return Math.sqrt(dot(a, a)); } function nrm(a){ var l = len(a) || 1; return [a[0]/l, a[1]/l, a[2]/l]; }
+function perp(a){ var t = Math.abs(a[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]; return nrm(cross(a, t)); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function mv(R, v){ return [R[0][0]*v[0] + R[0][1]*v[1] + R[0][2]*v[2], R[1][0]*v[0] + R[1][1]*v[1] + R[1][2]*v[2], R[2][0]*v[0] + R[2][1]*v[1] + R[2][2]*v[2]]; }
+function rotTo(a, b){ var v = cross(a, b), c = dot(a, b), k = 1/(1 + c);
+  return [[v[0]*v[0]*k + c, v[0]*v[1]*k - v[2], v[0]*v[2]*k + v[1]], [v[1]*v[0]*k + v[2], v[1]*v[1]*k + c, v[1]*v[2]*k - v[0]], [v[2]*v[0]*k - v[1], v[2]*v[1]*k + v[0], v[2]*v[2]*k + c]]; }
+function polar(r, deg, y){ return [r*Math.cos(deg*DEG), y, -r*Math.sin(deg*DEG)]; }
+function circle(c, r, n){ var p = []; for (var i=0; i<n; i++) p.push([c[0] + r*Math.cos(TAU*i/n), c[1], c[2] + r*Math.sin(TAU*i/n)]); return p; }
+function rrect(pts, r, n){   /* a closed polygon with rounded corners */
+  var out = [], m = pts.length, i, k;
+  for (i=0; i<m; i++){ var P = pts[i], A = nrm(sub(pts[(i + m - 1) % m], P)), B = nrm(sub(pts[(i + 1) % m], P)), a0 = add(P, mul(A, r)), b0 = add(P, mul(B, r));
+    for (k=0; k<=n; k++){ var t = k/n, q = add(add(mul(a0, (1 - t)*(1 - t)), mul(P, 2*t*(1 - t))), mul(b0, t*t)); out.push(q); } }
+  return out; }
+/* ══════════ the structures ══════════
+   nodes: [position, piece]   pieces: { name, mkey, w:[[node, fraction]], frame:[i,j,k], draw:[...] }
+   cables: [a, b, name]   top: index of the top piece   hook: node where the centre cable holds the top piece */
+function D(){ return { nodes:[], pieces:[], cables:[], struts:[], loadNodes:[], loadDir:[1, 0, 0], loadRange:0.3, topFloor:0.03 }; }
+function node(d, p, pc){ d.nodes.push([p, pc]); return d.nodes.length - 1; }
+function tableD(){
+  var d = D(), a = 0.4, Hh = 0.9, i, b = [], t = [];
+  for (i=0; i<4; i++) b.push(node(d, [i < 2 ? a : -a, 0, (i === 0 || i === 3) ? a : -a], 0));
+  var hb = node(d, [0, 0.62, 0], 0), pb = node(d, [-a + 0.05, 0.62, 0], 0);
+  for (i=0; i<4; i++) t.push(node(d, [i < 2 ? a : -a, Hh, (i === 0 || i === 3) ? a : -a], 1));
+  var ht = node(d, [0, 0.28, 0], 1), pt = node(d, [a - 0.05, 0.28, 0], 1);
+  var wood = [176, 128, 76], wood2 = [150, 105, 60];
+  d.pieces.push({ name:'bottom piece', mkey:'mBot', w:[[b[0], 0.18], [b[1], 0.18], [b[2], 0.18], [b[3], 0.18], [pb, 0.18], [hb, 0.1]], frame:[b[0], b[1], hb],
+    draw:[{ t:'plate', pts:[[a + 0.05, 0, a + 0.05], [-a - 0.05, 0, a + 0.05], [-a - 0.05, 0, -a - 0.05], [a + 0.05, 0, -a - 0.05]], h:0.05, y0:0.025, col:wood },
+      { t:'tube', pts:[[-a + 0.05, 0.05, 0], [-a + 0.05, 0.62, 0], [0, 0.62, 0]], r:0.035, col:wood2 }] });
+  d.pieces.push({ name:'top piece', mkey:'mTop', w:[[t[0], 0.2], [t[1], 0.2], [t[2], 0.2], [t[3], 0.2], [pt, 0.12], [ht, 0.08]], frame:[t[0], t[1], ht],
+    draw:[{ t:'plate', pts:[[a + 0.05, Hh, a + 0.05], [-a - 0.05, Hh, a + 0.05], [-a - 0.05, Hh, -a - 0.05], [a + 0.05, Hh, -a - 0.05]], h:0.05, y0:0.025, col:wood },
+      { t:'tube', pts:[[a - 0.05, Hh - 0.025, 0], [a - 0.05, 0.28, 0], [0, 0.28, 0]], r:0.035, col:wood2 }] });
+  d.cables.push([hb, ht, 'Centre']); for (i=0; i<4; i++) d.cables.push([b[i], t[i], 'Corner ' + 'ABCD'[i]]);
+  d.top = 1; d.hook = ht; d.loadNodes = t; d.loadC = [0, Hh + 0.05, 0]; d.loadRange = 0.35; d.topFloor = 0.06;
+  d.cam = { T:[0, 0.45, 0], s:290 }; d.def = { mTop:2, mBot:3, load:5 }; d.tie = 'corner';
+  return d; }
+function triD(){
+  var d = D(), R = 0.42, i, b = [], t = [], ang = [90, 210, 330];
+  for (i=0; i<3; i++) b.push(node(d, polar(R, ang[i], 0), 0));
+  var hb = node(d, [0, 0.64, 0], 0);
+  for (i=0; i<3; i++) t.push(node(d, polar(R, ang[i], 0.95), 1));
+  var ht = node(d, [0, 0.3, 0], 1), blk = [40, 40, 46];
+  d.pieces.push({ name:'bottom triangle', mkey:'mBot', w:[[b[0], 0.22], [b[1], 0.39], [b[2], 0.22], [hb, 0.17]], frame:[b[0], b[1], hb],
+    draw:[{ t:'tube', pts:[d.nodes[b[0]][0], d.nodes[b[1]][0], d.nodes[b[2]][0]], closed:true, r:0.025, col:blk }, { t:'tube', pts:[d.nodes[b[1]][0], [0, 0.64, 0]], r:0.025, col:blk }] });
+  d.pieces.push({ name:'top triangle', mkey:'mTop', w:[[t[0], 0.22], [t[1], 0.22], [t[2], 0.39], [ht, 0.17]], frame:[t[0], t[1], ht],
+    draw:[{ t:'tube', pts:[d.nodes[t[0]][0], d.nodes[t[1]][0], d.nodes[t[2]][0]], closed:true, r:0.025, col:blk }, { t:'tube', pts:[d.nodes[t[2]][0], [0, 0.3, 0]], r:0.025, col:blk }] });
+  d.cables.push([hb, ht, 'Centre']); for (i=0; i<3; i++) d.cables.push([b[i], t[i], 'Corner ' + 'ABC'[i]]);
+  d.top = 1; d.hook = ht; d.loadNodes = t; d.loadC = [0, 0.95, 0]; d.loadRange = 0.25; d.topFloor = 0.03;
+  d.cam = { T:[0, 0.45, 0], s:300 }; d.def = { mTop:0.5, mBot:1, load:1 }; d.tie = 'corner'; d.tray = true;
+  return d; }
+function loopsD(){
+  var d = D(), R = 0.42, i, b = [], t = [];
+  for (i=0; i<4; i++) b.push(node(d, polar(R, 45 + 90*i, 0), 0));
+  var hb = node(d, [0, 0.65, 0], 0);
+  for (i=0; i<4; i++) t.push(node(d, polar(R, 45 + 90*i, 0.92), 1));
+  var ht = node(d, [0, 0.25, 0], 1);
+  d.pieces.push({ name:'bottom disk and gold loop', mkey:'mBot', w:[[b[0], 0.15], [b[1], 0.15], [b[2], 0.15], [b[3], 0.15], [hb, 0.4]], frame:[b[0], b[1], hb],
+    draw:[{ t:'disk', c:[0, 0, 0], R:0.52, h:0.05, y0:0.025, col:[90, 50, 150] }, { t:'tube', pts:rrect([[0, 0.05, -0.3], [0, 0.05, 0.3], [0, 0.65, 0.13], [0, 0.65, -0.13]], 0.07, 4), closed:true, r:0.035, col:[215, 180, 60] }] });
+  d.pieces.push({ name:'top disk and red loop', mkey:'mTop', w:[[t[0], 0.15], [t[1], 0.15], [t[2], 0.15], [t[3], 0.15], [ht, 0.4]], frame:[t[0], t[1], ht],
+    draw:[{ t:'disk', c:[0, 0.92, 0], R:0.52, h:0.05, y0:-0.025, col:[40, 140, 120] }, { t:'tube', pts:rrect([[-0.3, 0.9, 0], [0.3, 0.9, 0], [0.13, 0.25, 0], [-0.13, 0.25, 0]], 0.07, 4), closed:true, r:0.035, col:[150, 30, 30] }] });
+  d.cables.push([hb, ht, 'Centre link']); for (i=0; i<4; i++) d.cables.push([b[i], t[i], 'Outer ' + 'ABCD'[i]]);
+  d.top = 1; d.hook = ht; d.loadNodes = t; d.loadC = [0, 0.97, 0]; d.loadRange = 0.35; d.topFloor = 0.06;
+  d.cam = { T:[0, 0.45, 0], s:280 }; d.def = { mTop:2, mBot:3, load:5 }; d.tie = 'outer';
+  return d; }
+function hooksD(){
+  var d = D();
+  var G1 = node(d, [-0.17, 0, -0.17], 0), G2 = node(d, [-0.17, 0, 0.17], 0), G3 = node(d, [0.3, 0, 0], 0), HA = node(d, [0.22, 0, -0.09], 0), HB = node(d, [0.22, 0, 0.09], 0),
+      CT = node(d, [0.12, 0.55, 0], 0), AR = node(d, [-0.1, 0.55, 0], 0);
+  var TL = node(d, [-0.35, 0.85, 0], 1), TA = node(d, [0.22, 0.85, -0.09], 1), TB = node(d, [0.22, 0.85, 0.09], 1), BL = node(d, [-0.35, 0.3, 0], 1), FT = node(d, [-0.1, 0.3, 0], 1);
+  var grey = [170, 174, 182], grey2 = [150, 154, 162];
+  d.pieces.push({ name:'base and lower hook', mkey:'mBot', w:[[G1, 0.2], [G2, 0.2], [G3, 0.2], [CT, 0.3], [AR, 0.1]], frame:[G1, G3, CT],
+    draw:[{ t:'disk', c:[0.06, 0, 0], R:0.3, h:0.05, y0:0.025, col:grey2 }, { t:'tube', pts:[[0.12, 0.05, 0], [0.12, 0.55, 0], [-0.1, 0.55, 0]], r:0.04, col:grey }] });
+  d.pieces.push({ name:'upper hook', mkey:'mTop', w:[[TL, 0.41], [TA, 0.105], [TB, 0.105], [BL, 0.29], [FT, 0.09]], frame:[TL, TA, BL],
+    draw:[{ t:'tube', pts:[[0.22, 0.85, 0], [-0.35, 0.85, 0], [-0.35, 0.3, 0], [-0.1, 0.3, 0]], r:0.04, col:grey }, { t:'tube', pts:[[0.22, 0.85, -0.11], [0.22, 0.85, 0.11]], r:0.03, col:grey2 }] });
+  d.cables.push([AR, FT, 'Lift chain'], [HA, TA, 'Hold-down A'], [HB, TB, 'Hold-down B']);
+  d.top = 1; d.hook = FT; d.loadNodes = [TL, TA, TB]; d.loadC = [-0.06, 0.9, 0]; d.loadRange = 0.28; d.topFloor = 0.03; d.chain = true;
+  d.cam = { T:[0, 0.42, 0], s:330 }; d.def = { mTop:1, mBot:3, load:0.2 }; d.tie = 'hold';
+  return d; }
+function prismD(){
+  var d = D(), n = 3, R = 0.5, h = 0.82, th = Math.PI/2 - Math.PI/n, i, b = [], t = [];
+  for (i=0; i<n; i++) b.push(node(d, [R*Math.cos(TAU*i/n), 0, -R*Math.sin(TAU*i/n)], -1));
+  for (i=0; i<n; i++) t.push(node(d, [R*Math.cos(TAU*i/n + th), h, -R*Math.sin(TAU*i/n + th)], -1));
+  for (i=0; i<n; i++) d.struts.push([b[i], t[(i + 1) % n]]);
+  var k = 0;
+  for (i=0; i<n; i++) d.cables.push([b[i], b[(i + 1) % n], 'Bottom ' + (++k)]);
+  k = 0; for (i=0; i<n; i++) d.cables.push([t[i], t[(i + 1) % n], 'Top ' + (++k)]);
+  k = 0; for (i=0; i<n; i++) d.cables.push([b[i], t[i], 'Side ' + (++k)]);
+  d.top = -1; d.loadNodes = t; d.loadC = null; d.loadRange = 0.3; d.topFloor = 0; d.cam = { T:[0, 0.42, 0], s:300 }; d.def = { mStrut:0.5, load:5 }; d.tray = true;
+  return d; }
+function ballD(){
+  var ph = (1 + Math.sqrt(5))/2, P = [], i, j, s1, s2, d = D();
+  [1, -1].forEach(function(s1){ [1, -1].forEach(function(s2){ P.push([0, s1, s2*ph]); P.push([s2*ph, 0, s1]); P.push([s1, s2*ph, 0]); }); });
+  var E = [], C = [];
+  for (i=0; i<12; i++) for (j=i + 1; j<12; j++){ var dd = len(sub(P[i], P[j]));
+    if (Math.abs(dd - 2*ph) < 1e-6 && (i % 3) === (j % 3)) E.push([i, j]); else if (Math.abs(dd - 2) < 1e-6 && (i % 3) !== (j % 3)) C.push([i, j]); }
+  var cab = {}; C.forEach(function(e){ cab[e[0] + ',' + e[1]] = 1; cab[e[1] + ',' + e[0]] = 1; });
+  var face = null, k; for (i=0; i<12 && !face; i++) for (j=i + 1; j<12 && !face; j++) for (k=j + 1; k<12 && !face; k++) if (cab[i + ',' + j] && cab[j + ',' + k] && cab[i + ',' + k]) face = [i, j, k];
+  var c = mul(add(add(P[face[0]], P[face[1]]), P[face[2]]), 1/3), Rm = rotTo(nrm(c), [0, -1, 0]);
+  P = P.map(function(p){ return mul(mv(Rm, p), 1/(2*ph)); });
+  var ymin = Math.min.apply(null, P.map(function(p){ return p[1]; })); P = P.map(function(p){ return [p[0], p[1] - ymin, p[2]]; });
+  P.forEach(function(p){ node(d, p, -1); });
+  d.struts = E; C.forEach(function(e, m){ d.cables.push([e[0], e[1], 'Cable ' + (m + 1)]); });
+  var yt = Math.max.apply(null, P.map(function(p){ return p[1]; })); for (i=0; i<12; i++) if (yt - P[i][1] < 1e-6) d.loadNodes.push(i);
+  d.top = -1; d.loadC = null; d.loadRange = 0.25; d.topFloor = 0; d.cam = { T:[0, 0.45, 0], s:290 }; d.def = { mStrut:0.5, load:5 }; d.tray = true;
+  return d; }
+var MAKERS = [tableD, triD, loopsD, hooksD, prismD, ballD];
+/* ══════════ state ══════════ */
+var U = { d:0, play:true, yaw:-28, pitch:16, arr:true, lbl:true, rx:true, sel:-1, Fref:200 };
+var PRM = { mTop:2, mBot:3, mStrut:0.5, load:5, off:0, pre:2, brk:800, bkl:1500 };
+var th = { hc:false, lm:false, cb:false, nr:true };
+var S = null;
+function frameOf(s, f){ var o = s.P[f[0]], e1 = nrm(sub(s.P[f[1]], o)), e3 = nrm(cross(e1, sub(s.P[f[2]], o))), e2 = cross(e3, e1); return { o:o, R:[[e1[0], e2[0], e3[0]], [e1[1], e2[1], e3[1]], [e1[2], e2[2], e3[2]]] }; }
+function toLocal(F, p){ var d = sub(p, F.o), R = F.R; return [R[0][0]*d[0] + R[1][0]*d[1] + R[2][0]*d[2], R[0][1]*d[0] + R[1][1]*d[1] + R[2][1]*d[2], R[0][2]*d[0] + R[1][2]*d[1] + R[2][2]*d[2]]; }
+function toWorld(F, q){ return add(F.o, mv(F.R, q)); }
+function build(di){
+  var d = MAKERS[di](), n = d.nodes.length, i, j;
+  var s = { d:di, D:d, P:d.nodes.map(function(q){ return q[0].slice(); }), V:d.nodes.map(function(){ return [0, 0, 0]; }), pc:d.nodes.map(function(q){ return q[1]; }),
+    M:[], Rn:new Array(n).fill(0), t:0, a:{ mTop:PRM.mTop, mBot:PRM.mBot, mStrut:PRM.mStrut, load:0, pre:0 }, collapsed:false };
+  /* members */
+  d.cables.forEach(function(c){ s.M.push({ a:c[0], b:c[1], type:'cable', name:c[2], Ld:len(sub(d.nodes[c[0]][0], d.nodes[c[1]][0])), state:'ok', T:0 }); });
+  d.struts.forEach(function(c, k){ s.M.push({ a:c[0], b:c[1], type:'strut', name:'Strut ' + (k + 1), Ld:len(sub(d.nodes[c[0]][0], d.nodes[c[1]][0])), state:'ok', T:0 }); });
+  d.pieces.forEach(function(pcs, pi){ var ids = []; for (i=0; i<n; i++) if (d.nodes[i][1] === pi) ids.push(i);
+    for (i=0; i<ids.length; i++) for (j=i + 1; j<ids.length; j++) s.M.push({ a:ids[i], b:ids[j], type:'brace', Ld:len(sub(d.nodes[ids[i]][0], d.nodes[ids[j]][0])), state:'ok', T:0 });
+    var F = frameOf(s, pcs.frame);
+    pcs.loc = pcs.draw.map(function(it){ var o = { t:it.t, col:it.col, r:it.r, closed:it.closed };
+      if (it.t === 'tube') o.pts = it.pts.map(function(p){ return toLocal(F, p); });
+      else { var pts = it.t === 'disk' ? circle(it.c, it.R, 28) : it.pts, y0 = it.y0 || 0;
+        o.up = pts.map(function(p){ return toLocal(F, add(p, [0, y0 + it.h/2, 0])); }); o.dn = pts.map(function(p){ return toLocal(F, add(p, [0, y0 - it.h/2, 0])); }); o.t = 'plate'; }
+      return o; }); });
+  if (d.top >= 0){ var Ft = frameOf(s, d.pieces[d.top].frame); s.loadLoc = toLocal(Ft, d.loadC); s.loadDirLoc = mv([[Ft.R[0][0], Ft.R[1][0], Ft.R[2][0]], [Ft.R[0][1], Ft.R[1][1], Ft.R[2][1]], [Ft.R[0][2], Ft.R[1][2], Ft.R[2][2]]], d.loadDir); }
+  /* ground nodes, pins, floors */
+  s.ground = []; for (i=0; i<n; i++) if (d.nodes[i][0][1] < 1e-9) s.ground.push(i);
+  s.pin = s.ground[0]; s.side = s.ground[1]; s.pin0 = s.P[s.pin].slice(); s.side0 = s.P[s.side].slice();
+  s.floor = s.pc.map(function(p){ return (d.top >= 0 && p === d.top) ? d.topFloor : 0; });
+  /* a stable time step */
+  var kk = new Array(n).fill(0);
+  s.M.forEach(function(m){ var k = (m.type === 'cable' ? EAC : m.type === 'brace' ? EAB : EAS)/m.Ld; kk[m.a] += k; kk[m.b] += k; });
+  s.dt = 1; for (i=0; i<n; i++) s.dt = Math.min(s.dt, 0.6*Math.sqrt(1/(kk[i] || 1)));
+  return s; }
+function nodeMass(s){
+  var d = s.D, n = s.P.length, m = new Array(n).fill(0);
+  d.pieces.forEach(function(pcs){ var M = s.a[pcs.mkey]; pcs.w.forEach(function(w){ m[w[0]] += M*w[1]; }); });
+  s.M.forEach(function(e){ if (e.type === 'strut'){ m[e.a] += s.a.mStrut/2; m[e.b] += s.a.mStrut/2; } });
+  return m; }
+function loadPoint(s){
+  var d = s.D;
+  if (d.top >= 0){ var F = frameOf(s, d.pieces[d.top].frame); return add(toWorld(F, s.loadLoc), mul(mv(F.R, s.loadDirLoc), PRM.off*d.loadRange)); }
+  var C = [0, 0, 0]; d.loadNodes.forEach(function(k){ C = add(C, s.P[k]); }); C = mul(C, 1/d.loadNodes.length); return add(C, [PRM.off*d.loadRange, 0.03, 0]); }
+function loadWeights(s){   /* share the load among the load nodes: right total and right torque (least-squares) */
+  var L = s.D.loadNodes, n = L.length, C = [0, 0, 0], i, P = loadPoint(s);
+  L.forEach(function(k){ C = add(C, s.P[k]); }); C = mul(C, 1/n);
+  var a = 1e-4, b = 0, c = 1e-4, r = [];
+  for (i=0; i<n; i++){ var q = sub(s.P[L[i]], C); r.push([q[0], q[2]]); a += q[0]*q[0]; b += q[0]*q[2]; c += q[2]*q[2]; }
+  var det = a*c - b*b, ox = P[0] - C[0], oz = P[2] - C[2], ux = (c*ox - b*oz)/det, uz = (-b*ox + a*oz)/det;
+  return { w:r.map(function(q){ return 1/n + q[0]*ux + q[1]*uz; }), P:P }; }
+function forces(s){
+  var n = s.P.length, F = [], i, m = nodeMass(s); s.mass = m;
+  for (i=0; i<n; i++) F.push([0, -m[i]*GA, 0]);
+  var lw = loadWeights(s), Wl = s.a.load*GA; s.lw = lw;
+  s.D.loadNodes.forEach(function(k, j){ F[k][1] -= Wl*lw.w[j]; });
+  s.M.forEach(function(e){
+    if (e.state !== 'ok'){ e.T = 0; return; }
+    var dd = sub(s.P[e.b], s.P[e.a]), L = len(dd), u = mul(dd, 1/(L || 1)), T;
+    if (e.type === 'cable'){ var L0 = e.Ld*(1 - s.a.pre/100); T = L > L0 ? EAC/L0*(L - L0) : 0; }
+    else T = (e.type === 'brace' ? EAB : EAS)/e.Ld*(L - e.Ld);
+    e.T = T; e.L = L; e.u = u;
+    F[e.a] = add(F[e.a], mul(u, T)); F[e.b] = add(F[e.b], mul(u, -T)); });
+  return F; }
+function step(s, dt){
+  var F = forces(s), n = s.P.length, i, ev = null;
+  s.M.forEach(function(e){ if (e.state !== 'ok') return;
+    if (e.type === 'cable' && e.T > PRM.brk){ e.state = 'snapped'; ev = ev || e; }
+    else if (e.type === 'strut' && -e.T > PRM.bkl){ e.state = 'buckled'; ev = ev || e; } });
+  for (i=0; i<n; i++){
+    var v = add(mul(s.V[i], 1 - GAM*dt), mul(F[i], dt/(1 + s.mass[i]))), p = add(s.P[i], mul(v, dt)), fl = s.floor[i], rn = 0;
+    if (p[1] <= fl){ rn = Math.max(0, -F[i][1]); p[1] = fl; if (v[1] < 0) v[1] = 0; v[0] *= 0.7; v[2] *= 0.7; }
+    if (i === s.pin){ p[0] = s.pin0[0]; p[2] = s.pin0[2]; v[0] = 0; v[2] = 0; }
+    if (i === s.side){ p[2] = s.side0[2]; v[2] = 0; }
+    s.P[i] = p; s.V[i] = v; s.Rn[i] = fl === 0 ? rn : 0; }
+  return ev; }
+function advance(T){
+  var s = S, n = Math.max(1, Math.round(T/s.dt)), i, ev, k = 1 - Math.exp(-s.dt*n/0.3);
+  ['mTop', 'mBot', 'mStrut', 'load', 'pre'].forEach(function(q){ s.a[q] += (PRM[q] - s.a[q])*k; });
+  for (i=0; i<n; i++){ ev = step(s, s.dt); if (ev) failEvent(ev); }
+  s.t += n*s.dt;
+  var vmax = 0; s.V.forEach(function(v){ vmax = Math.max(vmax, len(v)); }); s.moving = vmax > 0.01;
+  var h = topHeight(s); if (s.h0 === undefined && s.t > 1.2 && !s.moving) s.h0 = h;
+  if (s.h0 !== undefined && !s.collapsed && h < 0.8*s.h0){ s.collapsed = true; narrate('Collapsed: the top has fallen. The cables that are left cannot balance the forces and the torques on it. Press Rebuild it to start again.'); }
+  s.tipping = s.D.top >= 0 && s.ground.some(function(k){ return s.P[k][1] > 0.02; }); }
+function topHeight(s){ var h = 0, w = 0, i; for (i=0; i<s.P.length; i++){ var ok = s.D.top >= 0 ? s.pc[i] === s.D.top : s.D.loadNodes.indexOf(i) >= 0; if (ok){ h += s.P[i][1]; w++; } } return h/w; }
+function failEvent(e){
+  narrate(e.type === 'cable' ? e.name + ' snapped: its tension went above the breaking strength, ' + PRM.brk + ' N. Its pull is gone, so the forces and torques on the top no longer balance.'
+    : e.name + ' buckled: it was pushed harder than ' + PRM.bkl + ' N, so it bent and can no longer push.'); }
+/* ══════════ the top piece: its forces and torques ══════════ */
+function topBalance(s){
+  var d = s.D; if (d.top < 0) return null;
+  if (!s.mass){ s.mass = nodeMass(s); s.lw = loadWeights(s); }
+  var hk = s.P[d.hook], up = 0, downC = 0, tw = 0, tc = 0, Wt = 0, i, lift = null, ties = [];
+  for (i=0; i<s.P.length; i++) if (s.pc[i] === d.top){ var w = s.mass[i]*GA; Wt += w; tw += -(s.P[i][0] - hk[0])*w; }
+  var Wl = s.a.load*GA; d.loadNodes.forEach(function(k, j){ var w = Wl*s.lw.w[j]; tw += -(s.P[k][0] - hk[0])*w; });
+  s.M.forEach(function(e){ if (e.type !== 'cable') return;
+    var ta = s.pc[e.a] === d.top, tb = s.pc[e.b] === d.top; if (ta === tb) return;
+    var at = ta ? e.a : e.b, Fv = mul(e.u || [0, 1, 0], ta ? e.T : -e.T), r = sub(s.P[at], hk);
+    if (Fv[1] > 0) up += Fv[1]; else downC += -Fv[1];
+    tc += r[0]*Fv[1] - r[1]*Fv[0];
+    if (at === d.hook) lift = e; else ties.push(e); });
+  return { up:up, downC:downC, Wt:Wt, Wl:Wl, tw:tw, tc:tc, lift:lift, ties:ties }; }
+/* ══════════ the 3D renderer (as in the gyroscope SIM) ══════════ */
+var polys = [], labels = [], cam = {};
+function setCam(){ var a = U.yaw*DEG, e = U.pitch*DEG, c = S.D.cam; cam = { ca:Math.cos(a), sa:Math.sin(a), ce:Math.cos(e), se:Math.sin(e), s:c.s, D:6, T:c.T }; }
+function view(p){ var x0 = p[0] - cam.T[0], y0 = p[1] - cam.T[1], z0 = p[2] - cam.T[2], x1 = x0*cam.ca + z0*cam.sa, z1 = -x0*cam.sa + z0*cam.ca; return [x1, y0*cam.ce - z1*cam.se, y0*cam.se + z1*cam.ce]; }
+function proj(v){ var f = cam.D/Math.max(0.5, cam.D - v[2]); return [W/2 + v[0]*cam.s*f, H*0.56 - v[1]*cam.s*f]; }
+function scr(p){ return proj(view(p)); }
+function poly(pts, col, al){ polys.push({ p:pts, c:col, a:al === undefined ? 1 : al }); }
+var LIGHT = nrm([-0.35, 0.65, 0.68]), HALF = nrm(add(LIGHT, [0, 0, 1]));
+function flush(){
+  var list = polys.map(function(q){ var v = q.p.map(view), z = 0; v.forEach(function(t){ z += t[2]; }); return { v:v, z:z/v.length, c:q.c, a:q.a }; });
+  list.sort(function(A, B){ return A.z - B.z; });
+  list.forEach(function(q){
+    var n = q.v.length > 2 ? nrm(cross(sub(q.v[1], q.v[0]), sub(q.v[2], q.v[0]))) : [0, 0, 1]; if (n[2] < 0) n = mul(n, -1);
+    var k = 0.36 + 0.64*Math.max(0, dot(n, LIGHT)), spec = Math.pow(Math.max(0, dot(n, HALF)), 24)*0.25;
+    var r = Math.min(255, Math.round(q.c[0]*k + 255*spec)), gg = Math.min(255, Math.round(q.c[1]*k + 255*spec)), b = Math.min(255, Math.round(q.c[2]*k + 255*spec));
+    g.fillStyle = 'rgba(' + r + ',' + gg + ',' + b + ',' + q.a + ')'; g.strokeStyle = g.fillStyle; g.lineWidth = 0.6;
+    g.beginPath(); q.v.forEach(function(t, i){ var s2 = proj(t); if (i) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); g.closePath(); g.fill(); if (q.a >= 1) g.stroke(); });
+  polys = []; }
+function ball(c, r, col){ var nu = 8, nv = 4;
+  for (var j=0; j<nv; j++) for (var i=0; i<nu; i++){ var u0 = TAU*i/nu, u1 = TAU*(i + 1)/nu, v0 = Math.PI*j/nv, v1 = Math.PI*(j + 1)/nv;
+    poly([sp(c, r, u0, v0), sp(c, r, u1, v0), sp(c, r, u1, v1), sp(c, r, u0, v1)], col); } }
+function sp(c, r, u, v){ return [c[0] + r*Math.sin(v)*Math.cos(u), c[1] + r*Math.cos(v), c[2] + r*Math.sin(v)*Math.sin(u)]; }
+function tube(p0, p1, r, col, n){
+  var ax = nrm(sub(p1, p0)), u = perp(ax), v = cross(ax, u); n = n || 8;
+  function Rp(p, a){ return add(p, add(mul(u, r*Math.cos(a)), mul(v, r*Math.sin(a)))); }
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n; poly([Rp(p0, a0), Rp(p0, a1), Rp(p1, a1), Rp(p1, a0)], col); } }
+function cone(b, tip, r, col){ var ax = nrm(sub(tip, b)), u = perp(ax), v = cross(ax, u), n = 10;
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n, q0 = add(b, add(mul(u, r*Math.cos(a0)), mul(v, r*Math.sin(a0)))), q1 = add(b, add(mul(u, r*Math.cos(a1)), mul(v, r*Math.sin(a1)))); poly([q0, q1, tip], col); poly([q0, q1, b], col); } }
+function arrow(o, d, L, col, label){
+  if (L < 0.02) return; var u = nrm(d), hl = Math.min(0.07, 0.45*L), tip = add(o, mul(u, L)), neck = add(o, mul(u, L - hl));
+  tube(o, neck, 0.011, col, 6); cone(neck, tip, 0.03, col);
+  if (label) labels.push({ p:add(tip, mul(u, 0.06)), t:label, c:col }); }
+function box(c, hx, hy, hz, col){ var v = [], i; for (i=0; i<8; i++) v.push([c[0] + (i & 1 ? hx : -hx), c[1] + (i & 2 ? hy : -hy), c[2] + (i & 4 ? hz : -hz)]);
+  [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2, 6, 4], [1, 3, 7, 5]].forEach(function(f){ poly(f.map(function(k){ return v[k]; }), col); }); }
+/* ══════════ colours ══════════ */
+function pal(){ var cb = th.cb, hc = th.hc, lm = th.lm;
+  return { bg:hc ? '#000' : (lm ? '#eef2f6' : '#0b0e14'), grid:hc ? 'rgba(255,255,255,0.45)' : (lm ? 'rgba(0,0,0,0.16)' : 'rgba(120,140,170,0.22)'), txt:hc ? '#fff' : (lm ? '#1d232a' : '#e8eef4'),
+    strut:[180, 188, 200], strutHot:cb ? [230, 159, 0] : [255, 80, 60], load:[110, 112, 125], slack:[140, 146, 156], bad:[255, 70, 70], sel:[255, 255, 255], chain:[80, 84, 92],
+    W:cb ? [213, 94, 0] : [255, 140, 60], T:cb ? [0, 158, 115] : [60, 215, 120], N:cb ? [86, 180, 233] : [90, 200, 255] }; }
+function tcol(fr){ fr = clamp(fr, 0, 1); var A = th.cb ? [[59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37], [253, 231, 37]] : [[50, 130, 255], [40, 200, 200], [120, 220, 60], [255, 200, 30], [255, 50, 40]];
+  var x = fr*4, i = Math.min(3, Math.floor(x)), t = x - i, a = A[i], b = A[i + 1]; return [Math.round(a[0] + (b[0] - a[0])*t), Math.round(a[1] + (b[1] - a[1])*t), Math.round(a[2] + (b[2] - a[2])*t)]; }
+function rgb(c){ return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+/* ══════════ the scene ══════════ */
+function line3(a, b){ var A = scr(a), B = scr(b); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke(); }
+function drawFloor(p){ g.strokeStyle = p.grid; g.lineWidth = 1; for (var i=-6; i<=6; i++){ line3([i*0.2, 0, -1.2], [i*0.2, 0, 1.2]); line3([-1.2, 0, i*0.2], [1.2, 0, i*0.2]); } }
+function drawPieces(p){
+  var s = S;
+  s.D.pieces.forEach(function(pcs){ var F = frameOf(s, pcs.frame);
+    pcs.loc.forEach(function(it){
+      if (it.t === 'tube'){ var w = it.pts.map(function(q){ return toWorld(F, q); }), m = w.length, k;
+        for (k=0; k<(it.closed ? m : m - 1); k++) tube(w[k], w[(k + 1) % m], it.r, it.col, 8);
+        if (!it.closed) for (k=1; k<m - 1; k++) ball(w[k], it.r, it.col); }
+      else { var U2 = it.up.map(function(q){ return toWorld(F, q); }), D2 = it.dn.map(function(q){ return toWorld(F, q); }), n = U2.length, k2;
+        poly(U2, it.col); poly(D2, it.col); var dk = [Math.round(it.col[0]*0.8), Math.round(it.col[1]*0.8), Math.round(it.col[2]*0.8)];
+        for (k2=0; k2<n; k2++) poly([U2[k2], U2[(k2 + 1) % n], D2[(k2 + 1) % n], D2[k2]], dk); } }); });
+  s.M.forEach(function(e, i){ if (e.type !== 'strut') return;
+    var A = s.P[e.a], B = s.P[e.b], fr = clamp(-e.T/PRM.bkl, 0, 1);
+    if (e.state === 'buckled'){ var Mi = add(mul(add(A, B), 0.5), mul(perp(nrm(sub(B, A))), 0.12)); tube(A, Mi, 0.02, p.strutHot); tube(Mi, B, 0.02, p.strutHot); return; }
+    var c = [Math.round(p.strut[0] + (p.strutHot[0] - p.strut[0])*fr*fr), Math.round(p.strut[1] + (p.strutHot[1] - p.strut[1])*fr*fr), Math.round(p.strut[2] + (p.strutHot[2] - p.strut[2])*fr*fr)];
+    tube(A, B, i === U.sel ? 0.03 : 0.022, c); ball(A, 0.028, [90, 95, 105]); ball(B, 0.028, [90, 95, 105]); });
+  if (PRM.load > 0.01){ var P = s.lw ? s.lw.P : loadPoint(s), sz = 0.035 + 0.03*Math.cbrt(PRM.load/5); box(add(P, [0, sz, 0]), sz, sz, sz, p.load); } }
+function sag(A, B, depth){ var pts = [], k; for (k=0; k<=8; k++){ var t = k/8; pts.push(add(add(mul(A, 1 - t), mul(B, t)), [0, -4*depth*t*(1 - t), 0])); } return pts; }
+function drawCables(p){
+  var s = S, chain = s.D.chain;
+  s.M.forEach(function(e, i){ if (e.type !== 'cable') return;
+    var A = s.P[e.a], B = s.P[e.b], L = len(sub(B, A)), sel = i === U.sel, k, pts;
+    if (e.state === 'snapped'){ var mA = add(A, add(mul(sub(B, A), 0.2), [0, -0.12, 0])), mB = add(B, add(mul(sub(A, B), 0.2), [0, -0.12, 0]));
+      tube(A, mA, 0.006, p.bad, 5); tube(B, mB, 0.006, p.bad, 5); return; }
+    var col = e.T <= 0.5 ? p.slack : tcol(e.T/PRM.brk), r = sel ? 0.016 : (chain ? 0.011 : 0.007) + 0.006*Math.sqrt(clamp(e.T/PRM.brk, 0, 1));
+    if (sel) col = p.sel;
+    pts = e.T <= 0.5 ? sag(A, B, 0.04*L) : [A, B];
+    for (k=0; k<pts.length - 1; k++) tube(pts[k], pts[k + 1], r, col, 6);
+    if (chain && e.T > 0.5){ var n = Math.round(L/0.04), u = nrm(sub(B, A)); for (k=1; k<n; k++) ball(add(A, mul(u, L*k/n)), r*1.5, sel ? p.sel : [Math.round(col[0]*0.7), Math.round(col[1]*0.7), Math.round(col[2]*0.7)]); } }); }
+function drawArrows(p){
+  var s = S, d = s.D, sc = 0.32/U.Fref;
+  if (U.arr && d.top >= 0 && s.mass){
+    var cm = [0, 0, 0], mt = 0, i; for (i=0; i<s.P.length; i++) if (s.pc[i] === d.top){ cm = add(cm, mul(s.P[i], s.mass[i])); mt += s.mass[i]; } cm = mul(cm, 1/(mt || 1));
+    arrow(cm, [0, -1, 0], mt*GA*sc, p.W, 'W top ' + Math.round(mt*GA) + ' N');
+    if (PRM.load > 0.01) arrow(add(s.lw.P, [0, 0.02, 0]), [0, -1, 0], s.a.load*GA*sc, p.W, 'W load ' + Math.round(s.a.load*GA) + ' N');
+    s.M.forEach(function(e){ if (e.type !== 'cable' || e.state !== 'ok' || e.T < 0.5) return;
+      var ta = s.pc[e.a] === d.top, tb = s.pc[e.b] === d.top; if (ta === tb) return;
+      var at = ta ? e.a : e.b, u = ta ? e.u : mul(e.u, -1);
+      arrow(s.P[at], u, e.T*sc, p.T, (at === d.hook) ? 'T ' + Math.round(e.T) + ' N' : ''); }); }
+  if (U.rx){ s.P.forEach(function(q, i){ var N = s.Rn[i]; if (N < 0.5 || s.floor[i] !== 0) return; var L = Math.max(0.05, N*sc); arrow(sub(q, [0, L, 0]), [0, 1, 0], L - 0.004, p.N, ''); }); } }
+function label(x, y, t, col){ g.font = 'bold 12px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 3.5; g.strokeStyle = th.lm ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y); }
+function drawLabels(p){
+  var s = S;
+  labels.forEach(function(l){ var q = scr(l.p); label(q[0], q[1], l.t, rgb(l.c)); }); labels = [];
+  s.M.forEach(function(e, i){ if (!e.name || (!U.lbl && i !== U.sel)) return; if (s.D.cables.length > 12 && i !== U.sel && !U.lblAll) return;
+    var M = scr(add(mul(add(s.P[e.a], s.P[e.b]), 0.5), [0.0, 0.0, 0])), t;
+    if (e.type === 'cable') t = (s.D.cables.length > 12 ? e.name.replace('Cable ', 'C') : e.name) + ': ' + (e.state === 'snapped' ? 'snapped' : Math.round(e.T) + ' N');
+    else t = e.name + ': ' + (e.state === 'buckled' ? 'buckled' : Math.round(Math.max(0, -e.T)) + ' N push');
+    label(M[0] + 4, M[1], t, i === U.sel ? '#ffffff' : (e.type === 'cable' ? p.txt : '#ffd0a0')); }); }
+function draw(){
+  var p = pal(); setCam(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  drawFloor(p); drawPieces(p); drawCables(p); drawArrows(p); flush(); drawLabels(p);
+  el('tgHint').textContent = (S.moving ? 'settling\u2026' : 'balanced') + ' \u00B7 click a cable to select it \u00B7 drag to turn the view'; }
+/* ══════════ readout, list, narration ══════════ */
+function f(v, k){ return (Math.abs(v) < 0.5*Math.pow(10, -k) ? 0 : v).toFixed(k); }
+function totals(){ var s = S, m = s.mass || nodeMass(s), Wst = 0; m.forEach(function(q){ Wst += q*GA; }); var N = 0; s.Rn.forEach(function(r){ N += r; }); return { Wst:Wst, Wl:s.a.load*GA, N:N }; }
+function info(){
+  var s = S, d = s.D, tt = totals(), tb = topBalance(s), cells = [], st, cmax = null, slack = 0;
+  s.M.forEach(function(e){ if (e.type === 'cable' && e.state === 'ok'){ if (!cmax || e.T > cmax.T) cmax = e; if (e.T <= 0.5) slack++; } });
+  var nsn = s.M.filter(function(e){ return e.state === 'snapped'; }).length, nbk = s.M.filter(function(e){ return e.state === 'buckled'; }).length;
+  if (tb){
+    U.Fref += (Math.max(tb.up, tb.Wt + tb.Wl, 20) - U.Fref)*0.2;
+    cells.push(['WEIGHT: TOP \u00B7 LOAD \u00B7 BOTTOM', f(tb.Wt, 1) + ' \u00B7 ' + f(tb.Wl, 1) + ' \u00B7 ' + f(s.a.mBot*GA, 1) + ' N']);
+    cells.push([(d.tie === 'hold' ? 'LIFT CHAIN' : 'CENTRE CABLE') + ' (UP)', tb.lift && tb.lift.state === 'ok' ? f(tb.lift.T, 1) + ' N' : 'snapped']);
+    cells.push([(d.tie === 'hold' ? 'HOLD-DOWN CHAINS' : d.tie === 'outer' ? 'OUTER CABLES' : 'CORNER CABLES') + ' (DOWN)', tb.ties.map(function(e){ return e.state === 'ok' ? f(e.T, 0) : 'X'; }).join(' + ') + ' = ' + f(tb.ties.reduce(function(a2, e){ return a2 + e.T; }, 0), 0) + ' N']);
+  } else { U.Fref += (Math.max(tt.Wst + tt.Wl, 20) - U.Fref)*0.2; cells.push(['TOTAL WEIGHT', f(tt.Wst + tt.Wl, 1) + ' N']); }
+  cells.push(['GROUND: \u03A3N \u00B7 TOTAL WEIGHT', f(tt.N, 1) + ' \u00B7 ' + f(tt.Wst + tt.Wl, 1) + ' N']);
+  cells.push(['LARGEST TENSION', cmax ? cmax.name + ': ' + f(cmax.T, 0) + ' N (' + f(100*cmax.T/PRM.brk, 0) + '% of breaking)' : '--']);
+  if (d.top < 0){ var smax = null; s.M.forEach(function(e){ if (e.type === 'strut' && e.state === 'ok' && (!smax || e.T < smax.T)) smax = e; });
+    cells.push(['LARGEST PUSH ON A STRUT', smax ? f(Math.max(0, -smax.T), 0) + ' N (' + f(100*Math.max(0, -smax.T)/PRM.bkl, 0) + '% of buckling)' : '--']); }
+  cells.push(['SLACK \u00B7 SNAPPED' + (d.top < 0 ? ' \u00B7 BUCKLED' : ''), slack + ' \u00B7 ' + nsn + (d.top < 0 ? ' \u00B7 ' + nbk : '')]);
+  if (s.collapsed) st = 'Collapsed. The cables that are left cannot balance the forces and torques on the top.';
+  else if (s.tipping) st = 'The whole structure is tipping: the ground can only push up, and on one side it has nothing left to push. A heavier bottom piece, or a centred load, keeps it down.';
+  else if (nsn || nbk) st = (s.moving ? 'Something failed and the structure is moving\u2026' : 'Something failed, but the members that are left found a new balance.') + ' Press Rebuild it to restore it.';
+  else if (s.moving && slack && d.top >= 0) st = 'Tipping: the cables on one side have gone slack, so nothing balances the torque of the weights any more.';
+  else if (s.moving) st = 'Settling: the pieces move until the forces and torques on each one balance.';
+  else if (slack) st = 'Balanced, but ' + slack + ' cable' + (slack > 1 ? 's are' : ' is') + ' slack (grey, sagging): ' + (slack > 1 ? 'they' : 'it') + ' would have to push to help, and a cable cannot push.';
+  else st = d.top >= 0 ? 'Balanced: the ' + (d.tie === 'hold' ? 'lift chain' : 'centre cable') + ' holds the top up, the ' + (d.tie === 'hold' ? 'hold-down chains' : 'other cables') + ' hold it down and level. The forces and the torques on the top piece add up to zero.'
+    : 'Balanced: every cable pulls, every strut pushes, and at every joint the forces add up to zero.';
+  el('tgRead').innerHTML = cells.map(function(c){ return '<div><div class="tg_flabel">' + c[0] + '</div><div class="tg_fvalue">' + c[1] + '</div></div>'; }).join('');
+  el('tgStatus').textContent = st;
+  var eq;
+  if (tb){ var nm = d.tie === 'hold' ? 'lift' : 'centre';
+    eq = 'Forces on the top piece, vertical: up <b>T(' + nm + ')</b> = ' + f(tb.up, 1) + ' N; down <b>W(top) + W(load) + ' + (d.tie === 'hold' ? 'hold-downs' : 'other cables') + '</b> = ' + f(tb.Wt, 1) + ' + ' + f(tb.Wl, 1) + ' + ' + f(tb.downC, 1) + ' = ' + f(tb.Wt + tb.Wl + tb.downC, 1) + ' N. <b>\u03A3F \u2248 0</b>.'
+      + '<br>Torques on the top piece about the end of the ' + nm + (d.tie === 'hold' ? ' chain' : ' cable') + ' (seen from the front, + = counterclockwise): weights ' + f(tb.tw, 2) + ' N\u00B7m, cables ' + f(tb.tc, 2) + ' N\u00B7m, total <b>\u03A3\u03C4 = ' + f(tb.tw + tb.tc, 2) + ' N\u00B7m \u2248 0</b>.'; }
+  else eq = 'At every joint <b>\u03A3F = 0</b>: the push of the strut balances the pulls of the cables and the weights. Whole structure: <b>\u03A3N = W</b>: ' + f(tt.N, 1) + ' N vs ' + f(tt.Wst + tt.Wl, 1) + ' N.';
+  el('tgEq').innerHTML = eq;
+  list(); return st; }
+function list(){
+  var s = S, h = '';
+  s.M.forEach(function(e, i){ if (!e.name) return;
+    var bad = e.state !== 'ok', val, fr, col;
+    if (e.type === 'cable'){ val = bad ? 'snapped' : f(e.T, 0) + ' N'; fr = bad ? 0 : e.T/PRM.brk; col = e.T <= 0.5 ? 'transparent' : rgb(tcol(fr)); }
+    else { val = bad ? 'buckled' : f(Math.max(0, -e.T), 0) + ' N push'; fr = bad ? 0 : Math.max(0, -e.T)/PRM.bkl; col = th.cb ? '#e69f00' : '#ff7050'; }
+    h += '<button type="button" role="listitem" class="tg_row" data-i="' + i + '" aria-pressed="' + (i === U.sel) + '" aria-label="' + e.name + ', ' + (e.type === 'cable' ? 'tension ' : '') + val + (bad ? '' : (e.type === 'cable' && e.T <= 0.5 ? ', slack' : ', ' + Math.round(100*fr) + ' percent of its limit')) + '"><span>' + e.name + '</span><span class="tg_bar"><span style="width:' + Math.round(100*clamp(fr, 0, 1)) + '%;background:' + col + '"></span></span><span class="tg_rv' + (bad ? ' tg_rbad' : '') + '">' + val + '</span></button>'; });
+  var L = el('tgList'), sc = L.scrollTop; L.innerHTML = h; L.scrollTop = sc; }
+el('tgList').addEventListener('click', function(ev){ var b = ev.target.closest('button[data-i]'); if (b) select(+b.getAttribute('data-i')); });
+function select(i){ U.sel = i; el('tgCut').disabled = !(i >= 0 && S.M[i].type === 'cable' && S.M[i].state === 'ok');
+  if (i >= 0){ var e = S.M[i]; narrate(e.type === 'cable' ? e.name + ': tension ' + f(e.T, 1) + ' N, ' + f(100*e.T/PRM.brk, 0) + '% of its breaking strength.' + (e.T <= 0.5 && e.state === 'ok' ? ' It is slack: it pulls on nothing.' : '') : e.name + ': pushed with ' + f(Math.max(0, -e.T), 1) + ' N, ' + f(100*Math.max(0, -e.T)/PRM.bkl, 0) + '% of its buckling limit.'); }
+  info(); }
+function narrate(m){ if (!th.nr) return; el('tgNar').textContent = m; }
+var INTRO = [
+  'The floating table: two wooden pieces that never touch. The top piece hangs from the centre cable; four corner cables hold it down and level. Try moving the load off centre, or making the top heavier.',
+  'The triangle table: two triangles with crossing arms. The top triangle hangs from the centre string between the two arms; three corner strings keep it level.',
+  'Linked loops: the red loop of the top disk passes through the gold loop of the bottom disk. A short link between them holds the top up; four outer cables keep it level.',
+  'Hanging hooks: the upper hook hangs from the lift chain on the end of the lower hook. Its weight is mostly on the left, so it would turn; the two hold-down chains on the right stop it.',
+  'A 3-strut prism: three struts that never touch, held by nine cables. At each joint, one strut pushes and three cables pull.',
+  'A 6-strut ball: three pairs of struts held by 24 cables. Click a cable, or use the list, to read its tension.'];
+function describe(){ var s = S, d = s.D;
+  narrate(INTRO[s.d] + (PRM.load > 0.01 ? ' A ' + PRM.load + ' kg block rests on top' + (Math.abs(PRM.off) > 0.01 ? ', off centre.' : '.') : ' There is no load.') + ' Cables are coloured from blue (small tension) to red (near breaking); slack cables are grey and sag.' + (U.arr && d.top >= 0 ? ' Orange arrows show the weights on the top piece, green arrows the cable pulls on it.' : '') + (U.rx ? ' Blue arrows under the floor show the ground pushing up.' : '') + ' ' + info()); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt, cls){ return '<div class="tg_ctrl' + (cls ? ' ' + cls : '') + '" id="' + id + 'W"><div class="tg_ctrlhdr"><label class="tg_ctrlname" for="' + id + '">' + label + '</label><span class="tg_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function kg(v){ return (+v).toFixed(v < 2 ? 2 : 1) + ' kg (' + f(v*GA, 1) + ' N)'; }
+var TXT = { mTop:kg, mBot:kg, mStrut:kg, load:kg, off:function(v){ return Math.abs(v) < 0.01 ? 'centred' : Math.round(Math.abs(v)*100) + '% to the ' + (v > 0 ? 'right' : 'left'); },
+  pre:function(v){ return (+v).toFixed(1) + '% shorter than the gap'; }, brk:function(v){ return v + ' N'; }, bkl:function(v){ return v + ' N'; } };
+var SL = [['tgMt', 'mTop', 'mass of the top piece', 0.1, 10, 0.05], ['tgMb', 'mBot', 'mass of the bottom piece', 0.1, 20, 0.05], ['tgMs', 'mStrut', 'mass of each strut', 0.1, 3, 0.05],
+  ['tgLd', 'load', 'added mass (the block)', 0, 60, 0.1], ['tgOf', 'off', 'position of the block', -1, 1, 0.05], ['tgPr', 'pre', 'tightening of the cables', 0.2, 5, 0.1],
+  ['tgBr', 'brk', 'breaking strength of a cable', 50, 3000, 10], ['tgBk', 'bkl', 'buckling limit of a strut', 100, 5000, 50]];
+function buildCtl(){
+  el('tgCtl').innerHTML = SL.map(function(q){ return row(q[0], q[2], q[3], q[4], q[5], PRM[q[1]], TXT[q[1]](PRM[q[1]])); }).join('')
+    + '<p class="tg_note">Changes are applied gradually, as if the masses were added slowly. A snapped cable stays snapped until you press Rebuild it.</p>';
+  SL.forEach(function(q){ on(q[0], 'input', function(){ PRM[q[1]] = +this.value; el(q[0] + 'v').textContent = TXT[q[1]](PRM[q[1]]); later(); }); }); }
+function syncCtl(){ SL.forEach(function(q){ el(q[0]).value = PRM[q[1]]; el(q[0] + 'v').textContent = TXT[q[1]](PRM[q[1]]); });
+  var rig = S.D.top >= 0;
+  ['tgMtW', 'tgMbW'].forEach(function(k){ el(k).classList.toggle('tg_hide', !rig); }); ['tgMsW', 'tgBkW'].forEach(function(k){ el(k).classList.toggle('tg_hide', rig); });
+  if (rig){ var nm = S.D.pieces; el('tgMtW').querySelector('label').textContent = 'mass of the ' + nm[1].name; el('tgMbW').querySelector('label').textContent = 'mass of the ' + nm[0].name; } }
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ narrate(info()); }, 1500); }
+function setPlay(v){ U.play = v; el('tgPlay').innerHTML = v ? '\u2759\u2759 Pause' : '\u25B6 Play'; el('tgPlay').classList.toggle('tg_btnon', v); }
+function rebuild(){ S = build(U.d); S.a.load = 0; select(-1); if (!U.play) setPlay(true); narrate('Rebuilt: the ' + NAMES[U.d].toLowerCase() + ' is put together again and the cables are tightened. Watch the tensions rise as it settles.'); }
+function design(i){ U.d = i;
+  for (var k=0; k<6; k++) el('tgT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false');
+  el('tgLab').textContent = NAMES[i];
+  var d0 = MAKERS[i]().def; Object.keys(d0).forEach(function(k2){ PRM[k2] = d0[k2]; }); PRM.off = 0; PRM.pre = 2; PRM.brk = [400, 300, 400, 150, 800, 800][i]; PRM.bkl = 1500;
+  S = build(i); U.yaw = -28; U.pitch = 16; U.Fref = 200; select(-1); syncCtl(); if (!U.play) setPlay(true);
+  narrate(INTRO[i]); }
+on('tgRebuild', 'click', rebuild);
+on('tgCut', 'click', function(){ var i = U.sel; if (i < 0 || S.M[i].type !== 'cable' || S.M[i].state !== 'ok') return; S.M[i].state = 'snapped'; el('tgCut').disabled = true;
+  narrate(S.M[i].name + ' is cut. Its pull is gone, so the forces and torques no longer balance; the structure moves until they balance again, if they can.'); });
+on('tgPlay', 'click', function(){ setPlay(!U.play); });
+on('tgArr', 'change', function(){ U.arr = this.checked; }); on('tgLbl', 'change', function(){ U.lbl = this.checked; }); on('tgRx', 'change', function(){ U.rx = this.checked; });
+on('tgVStd', 'click', function(){ U.yaw = -28; U.pitch = 16; }); on('tgVFr', 'click', function(){ U.yaw = 0; U.pitch = 4; }); on('tgVTop', 'click', function(){ U.yaw = 0; U.pitch = 85; });
+on('tgDsc', 'click', describe);
+var drag = null;
+cv.addEventListener('pointerdown', function(e){ drag = { x:e.clientX, y:e.clientY, yaw:U.yaw, pitch:U.pitch, moved:false }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!drag) return; if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true; if (!drag.moved) return; var r = cv.getBoundingClientRect(), k = W/r.width; U.yaw = drag.yaw + (e.clientX - drag.x)*k*0.45; U.pitch = clamp(drag.pitch + (e.clientY - drag.y)*k*0.35, -10, 88); });
+cv.addEventListener('pointerup', function(e){ if (drag && !drag.moved) pick(e); drag = null; cv.style.cursor = 'grab'; });
+cv.addEventListener('pointercancel', function(){ drag = null; cv.style.cursor = 'grab'; });
+function pick(e){ var r = cv.getBoundingClientRect(), x = (e.clientX - r.left)*W/r.width, y = (e.clientY - r.top)*H/r.height, best = -1, bd = 14;
+  setCam(); S.M.forEach(function(m, i){ if (!m.name) return; var A = scr(S.P[m.a]), B = scr(S.P[m.b]), dx = B[0] - A[0], dy = B[1] - A[1], L2 = dx*dx + dy*dy || 1, t = clamp(((x - A[0])*dx + (y - A[1])*dy)/L2, 0, 1), dd = Math.hypot(x - A[0] - t*dx, y - A[1] - t*dy); if (dd < bd){ bd = dd; best = i; } });
+  select(best); }
+cv.addEventListener('keydown', function(e){ var k = e.key, named = S.M.map(function(m, i){ return m.name ? i : -1; }).filter(function(i){ return i >= 0; });
+  if (k === 'ArrowLeft') U.yaw -= 5; else if (k === 'ArrowRight') U.yaw += 5; else if (k === 'ArrowUp') U.pitch = clamp(U.pitch + 5, -10, 88); else if (k === 'ArrowDown') U.pitch = clamp(U.pitch - 5, -10, 88);
+  else if (k === 'n' || k === 'N'){ var j = named.indexOf(U.sel); select(named[(j + 1) % named.length]); }
+  else if (k === 'p' || k === 'P') setPlay(!U.play); else return; e.preventDefault(); });
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('tg_hc', th.hc); ROOT.classList.toggle('tg_lm', th.lm);
+  [['hc', 'tgBtnHC'], ['lm', 'tgBtnLM'], ['cb', 'tgBtnCB'], ['nr', 'tgBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('tg_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('tgBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('tgNar').style.display = th.nr ? '' : 'none'; info(); }
+function toggleDesc(){ var b = el('tgDescBtn'), d = el('tgDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+/* ══════════ the loop ══════════ */
+var last = 0, tick = 0;
+function loop(t){ var rdt = last ? (t - last)/1000 : 0; last = t;
+  if (U.play && rdt > 0) advance(TFRAME);
+  draw(); if (++tick % 10 === 0) info();
+  requestAnimationFrame(loop); }
+buildCtl(); design(0);
+narrate('Ready: the floating table. ' + INTRO[0] + ' Click a cable, or a row in the list, to read its tension.');
+requestAnimationFrame(loop);
+return { design:design, rebuild:rebuild, theme:theme, toggleDesc:toggleDesc, describe:describe, select:select,
+  _S:function(){ return S; }, _P:PRM, _U:U, _adv:function(T2){ var n = Math.round(T2/TFRAME); for (var i=0; i<n; i++) advance(TFRAME); }, _tot:totals, _bal:function(){ return topBalance(S); } };
+})();
+</script>
+
+</main>
+</body>
+</html>

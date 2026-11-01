@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Energy: Two-Pulley Atwood Machine -- Friction Lab</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, Atwood machine, pulley, friction torque, moment of inertia, energy, lesson, scientific">
+<meta name="description" content="Two-Pulley Atwood Machine -- Friction Lab -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobatw" class="mob_wrap">
+<!-- ═══════════════════════════════════════════════════════
+SIM 5 -- Two-Pulley Atwood Machine WITH FRICTION
+Two identical pulleys (solid disks, mass/radius adjustable, mass can be 0),
+same height, separated by distance d. A string runs over both, with mass mA
+hanging to the right of pulley 1 and mass mB hanging to the left of pulley 2.
+Tracks kinematic AND energetic quantities. Pulley friction torque is redrawn
+with realistic run-to-run variability on every Release, like a real experiment.
+A11y: High Contrast | Color-Blind | Narration
+═══════════════════════════════════════════════════════ -->
+<div id="aw_root">
+<div class="mob_a11ytop th_a11y" role="toolbar" aria-label="Display options">
+<input type="button" id="btnHC"   value="High Contrast: OFF" onclick="sim1.toggleHC()">
+<input type="button" id="thBtnLM" value="Light Mode: OFF" aria-pressed="false"><input type="button" id="btnCB"   value="Color-Blind: OFF"   onclick="sim1.toggleCB()">
+<input type="button" id="btnNarr" value="Narration: ON"      onclick="sim1.toggleNarr()">
+</div>
+
+<div class="sl_tbar th_title"><h3>Two-Pulley Atwood Machine -- Friction Lab</h3></div>
+<div class="sl_mcontent th_diag">
+<canvas id="simCanvas" width="680" height="500" role="img" aria-label="Two pulleys at the same height connected by a string, with a mass hanging between them on each side" aria-describedby="canvasDesc"></canvas>
+<p id="canvasDesc" class="sl_sronly">Two pulleys of adjustable mass and radius sit at the same height, separated by an adjustable distance. A string runs over the top of both, with one mass hanging in the gap near each pulley. Releasing the system may or may not cause it to move, depending on pulley friction.</p>
+</div>
+<!-- Playback buttons -->
+<div class="sl_bbar th_bar">
+<input type="button" id="btnPlay" data-th="p"  value="▶ Release" onclick="sim1.playSim()">
+<input type="button" id="btnPause" value="⏸ Pause"   onclick="sim1.pauseSim()">
+<input type="button" id="btnStep"  value="⏭ Step"    onclick="sim1.stepSim()">
+<input type="button" id="btnReset" value="↺ Reset"   onclick="sim1.resetSim()">
+</div>
+<!-- A11y buttons -->
+<!-- Parameters + Info -->
+<div class="sl_fbar">
+<div class="sl_params th_panel">
+<div class="sl_boxhd th_ptitle">Parameters</div>
+<div class="sl_prow">
+<span class="sl_plbl th_lbl">Mass A m<sub>A</sub> (kg):</span>
+<input type="range" id="mASlider" min="0.05" max="2" step="0.05" value="0.5" style="flex:1;" onchange="sim1.setMassA(this.value)">
+<span id="mAVal" class="sl_pval th_val">0.50</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl th_lbl">Mass B m<sub>B</sub> (kg):</span>
+<input type="range" id="mBSlider" min="0.05" max="2" step="0.05" value="1.0" style="flex:1;" onchange="sim1.setMassB(this.value)">
+<span id="mBVal" class="sl_pval th_val">1.00</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl th_lbl">Pulley mass M<sub>p</sub> (kg):</span>
+<input type="range" id="mpSlider" min="0" max="2" step="0.05" value="0.2" style="flex:1;" onchange="sim1.setPulleyMass(this.value)">
+<span id="mpVal" class="sl_pval th_val">0.20</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl th_lbl">Pulley radius R<sub>p</sub> (m):</span>
+<input type="range" id="rpSlider" min="0.02" max="0.15" step="0.01" value="0.05" style="flex:1;" onchange="sim1.setPulleyRadius(this.value)">
+<span id="rpVal" class="sl_pval th_val">0.05</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl th_lbl">Pulley separation d (m):</span>
+<input type="range" id="sepSlider" min="0.5" max="3" step="0.1" value="1.5" style="flex:1;" onchange="sim1.setPulleySep(this.value)">
+<span id="sepVal" class="sl_pval th_val">1.50</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl th_lbl">Pulley friction τ<sub>f</sub> (N·m):</span>
+<input type="range" id="tauSlider" min="0" max="0.5" step="0.01" value="0.05" style="flex:1;" onchange="sim1.setTauF(this.value)">
+<span id="tauVal" class="sl_pval th_val">0.05</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl th_lbl">Travel distance H (m):</span>
+<input type="range" id="hSlider" min="0.3" max="1.8" step="0.1" value="1.0" style="flex:1;" onchange="sim1.setTravel(this.value)">
+<span id="hVal" class="sl_pval th_val">1.00</span>
+</div>
+<div class="sl_prow" style="margin-bottom:0;">
+<span class="sl_plbl th_lbl">Sim Speed:</span>
+<input type="range" id="speedSlider" min="1" max="80" step="1" value="20" style="flex:1;" onchange="sim1.setSpeed(this.value)">
+<span id="speedVal" class="sl_pval th_val">0.20×</span>
+</div>
+</div>
+<div class="sl_info th_panel" role="note">
+<strong>Physics (2 identical solid-disk pulleys, I=½M<sub>p</sub>R<sub>p</sub>²):</strong><br>
+a = [|m<sub>B</sub>−m<sub>A</sub>|g − 2τ<sub>f,k</sub>/R<sub>p</sub>] / (m<sub>A</sub>+m<sub>B</sub>+M<sub>p</sub>)<br>
+...if |m<sub>B</sub>−m<sub>A</sub>|g &gt; 2τ<sub>f,s</sub>/R<sub>p</sub>, else stays put<br>
+KE = ½(m<sub>A</sub>+m<sub>B</sub>+M<sub>p</sub>)v²<br>
+PE lost = |m<sub>B</sub>−m<sub>A</sub>|g·s &nbsp;&nbsp; Friction energy = 2τ<sub>f,k</sub>s/R<sub>p</sub><br>
+<br><em>Separation d does NOT affect the dynamics!</em><br>
+<em>τ<sub>f,k</sub>, τ<sub>f,s</sub> are redrawn with realistic run-to-run variability (~±15-20%) every time you press Release.</em>
+</div>
+</div>
+<!-- Live readings + Narration -->
+<div class="sl_fbar">
+<div class="sl_readout th_panel" role="region" aria-live="polite" aria-atomic="false">
+<div class="sl_boxhd th_ptitle">Live Readings</div>
+<div class="sl_rrow th_chip"><span>τ<sub>f,k</sub> (this trial):</span>  <span id="r_tauk"  class="sl_rv th_val">--</span></div>
+<div class="sl_rrow th_chip"><span>τ<sub>f,s</sub> (this trial):</span>  <span id="r_taus"  class="sl_rv th_val">--</span></div>
+<div class="sl_rrow th_chip"><span>Critical |m<sub>B</sub>−m<sub>A</sub>|:</span><span id="r_dmc" class="sl_rv th_val">--</span></div>
+<div class="sl_rrow th_chip"><span>Velocity v:</span>        <span id="r_v"     class="sl_rv th_val">0.000 m/s</span></div>
+<div class="sl_rrow th_chip"><span>Distance traveled s:</span><span id="r_s"    class="sl_rv th_val">0.000 m</span></div>
+<div class="sl_rrow th_chip"><span>Accel. a:</span>          <span id="r_a"     class="sl_rv th_val">0.000 m/s²</span></div>
+<div class="sl_rrow th_chip"><span>Kinetic energy KE:</span> <span id="r_ke"    class="sl_rv th_val">0.000 J</span></div>
+<div class="sl_rrow th_chip"><span>PE lost:</span>           <span id="r_pe"    class="sl_rv th_val">0.000 J</span></div>
+<div class="sl_rrow th_chip"><span>Friction energy:</span>   <span id="r_ef"    class="sl_rv th_val">0.000 J</span></div>
+<div class="sl_rrow th_chip"><span>Time t:</span>            <span id="r_t"     class="sl_rv th_val">0.000 s</span></div>
+<div class="sl_rrow th_chip"><span>Status:</span>            <span id="r_state" class="sl_badge" role="status">Ready</span></div>
+</div>
+<div id="narrationBox" class="sl_narr th_panel th_nar" role="region" aria-live="polite" aria-atomic="true">
+<div class="sl_boxhd sl_narrboxhd th_ptitle">What's happening</div>
+<p id="narration" class="sl_narrtext">m_A = 0.50 kg, m_B = 1.00 kg, over two 0.05 m pulleys (0.20 kg each). Press Release to see if it moves -- friction is drawn fresh each attempt.</p>
+</div>
+</div>
+<!-- ── Data Collection & Graph section ── -->
+<div class="sl_fbar" style="flex-direction:column;gap:6px;">
+<div class="sl_boxhd th_ptitle" style="width:100%;padding-bottom:3px;border-bottom:1px solid #888;">Data Collection -- change any parameter to set up a new run, then record</div>
+<!-- Axis controls -->
+<div class="hl_axisbar th_panel">
+<label class="hl_axislbl th_lbl">Y-axis:
+<select id="yAxisSel" onchange="sim1.setYAxis(this.value)">
+<option value="s">Displacement s</option>
+<option value="v">Velocity v</option>
+<option value="a">Acceleration a</option>
+<option value="ke">Kinetic Energy KE</option>
+<option value="pe">PE lost</option>
+<option value="ef">Friction Energy</option>
+</select>
+</label>
+<label class="hl_axislbl th_lbl">X-axis:
+<select id="xAxisSel" onchange="sim1.setXAxis(this.value)">
+<option value="t">Time t (single run)</option>
+<option value="massA">Mass m<sub>A</sub> (all runs)</option>
+<option value="massB">Mass m<sub>B</sub> (all runs)</option>
+<option value="pulleyMass">Pulley mass M<sub>p</sub> (all runs)</option>
+<option value="pulleyRadius">Pulley radius R<sub>p</sub> (all runs)</option>
+<option value="pulleySep">Pulley separation d (all runs)</option>
+<option value="tauF">Friction τ<sub>f,k</sub> (all runs)</option>
+<option value="dist">Travel distance H (all runs)</option>
+<option value="ttotal">Total run time T (all runs)</option>
+<option value="tsq">Time squared T² (all runs)</option>
+</select>
+</label>
+<label class="hl_axislbl th_lbl" id="runSelWrap">Run:
+<select id="fitRun" onchange="sim1.redrawGraph()">
+<option value="-1">Current (unsaved)</option>
+</select>
+</label>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;width:100%;">
+<!-- Graph -->
+<div style="flex:2;min-width:280px;">
+<div class="hl_hint th_lbl" id="graphHint">Displacement s vs. time t -- select a run above.</div>
+<canvas id="vtCanvas" width="420" height="240" role="img" aria-label="Data graph"></canvas>
+<div class="hl_graphbar th_panel">
+<label class="hl_fitlabel th_lbl">
+<input id="showFit" type="checkbox" onchange="sim1.redrawGraph()"> Show linear fit
+</label>
+<input type="button" value="Clear graph" onclick="sim1.clearGraph()" style="font-size:0.75rem;padding:3px 8px;cursor:pointer;background:#ffe0a0;border:1px solid #cc9900;border-radius:3px;">
+<input type="button" value="Clear all data" onclick="sim1.clearData()" style="font-size:0.75rem;padding:3px 8px;cursor:pointer;background:#f0b8b8;border:1px solid #cc6655;border-radius:3px;">
+</div>
+<div id="fitResult" role="status" aria-live="polite" class="hl_fitresult th_val"></div>
+</div>
+<!-- Data table -->
+<div id="datatableBox" class="hl_tblbox th_panel" style="flex:1;min-width:220px;">
+<div class="sl_boxhd th_ptitle">Recorded Runs</div>
+<p id="noDataMsg" class="hl_nodatamsg">Run simulation and click "Record this run".</p>
+<table id="dataTable" class="hl_table" style="display:none;" aria-label="Recorded run data">
+<thead><tr><th>Run</th><th>m<sub>A</sub></th><th>m<sub>B</sub></th><th>M<sub>p</sub></th><th>R<sub>p</sub></th><th>τ<sub>f,k</sub></th><th>a</th><th>v_f</th><th>T(s)</th></tr></thead>
+<tbody id="dataTableBody"></tbody>
+</table>
+</div>
+</div>
+<!-- Record button -->
+<div style="display:flex;gap:8px;align-items:center;width:100%;flex-wrap:wrap;">
+<input type="button" id="btnRecord" value="⊕ Record this run" onclick="sim1.recordRun()"
+ style="font-size:0.82rem;padding:5px 14px;cursor:pointer;background:#8bc4f0;border:1px solid #5599cc;border-radius:3px;font-weight:bold;">
+<span style="font-size:0.78rem;color:#555;">Let the system travel the full distance H (or pause it), then click Record to save this run's data.</span>
+</div>
+</div>
+<div id="srAnnounce" class="sl_sronly" aria-live="assertive" aria-atomic="true"></div>
+<!-- ═══════ STYLES ═══════ -->
+<style>:where(#mobatw) * { margin:0; box-sizing:border-box; }
+:where(#mobatw) { background:#f4f4f4; }
+#aw_root { width:683px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+:where(#mobatw) .sl_tbar { width:683px; height:48px; background:#f90; display:flex; align-items:center; justify-content:center; }
+:where(#mobatw) .sl_tbar h3 { font-size:1rem; color:#222; }
+:where(#mobatw) .sl_mcontent { width:683px; background:#fff; }
+#simCanvas { display:block; border-bottom:2px solid #888; }
+:where(#mobatw) .sl_bbar { width:683px; min-height:46px; background:#df9; padding:8px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center; }
+:where(#mobatw) .sl_bbar input[type=button] { font-size:0.78rem; padding:4px 10px; border:1px solid #888; border-radius:3px; cursor:pointer; font-weight:bold; background:#d4d4d4; color:#111; }
+.sl_bbar input#btnPlay { background:#8bc4f0; border-color:#5599cc; }
+.sl_bbar input#btnReset { background:#f0b8b8; border-color:#cc6655; }
+:where(#mobatw) .sl_bbar input.sl_active { background:#333; color:#fff; border-color:#111; }
+:where(#mobatw) .sl_fbar { width:683px; min-height:80px; background:#fec; padding:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:flex-start; }
+:where(#mobatw) .sl_params { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:2; min-width:220px; }
+:where(#mobatw) .sl_readout { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:1; min-width:160px; }
+:where(#mobatw) .sl_narr { background:#eef4ff; border:2px solid #6699cc; border-radius:4px; padding:9px 11px; flex:2; min-width:160px; }
+:where(#mobatw) .sl_info { background:#fffbe6; border:1px solid #ccaa00; border-radius:4px; padding:9px 11px; font-size:0.76rem; color:#555; line-height:1.6; flex:1; min-width:170px; }
+:where(#mobatw) .sl_boxhd { font-size:0.85rem; font-weight:bold; border-bottom:1px solid #888; padding-bottom:3px; margin-bottom:7px; }
+:where(#mobatw) .sl_narrboxhd { border-bottom-color:#6699cc; color:#112244; }
+:where(#mobatw) .sl_prow { display:flex; align-items:center; gap:5px; margin-bottom:6px; font-size:0.82rem; }
+:where(#mobatw) .sl_plbl { min-width:170px; font-size:0.8rem; }
+:where(#mobatw) .sl_pval { font-size:0.82rem; font-weight:bold; min-width:40px; text-align:right; color:#003399; }
+:where(#mobatw) .sl_prow select { font-size:0.8rem; padding:2px 4px; }
+:where(#mobatw) .sl_rrow { display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.8rem; }
+:where(#mobatw) .sl_rv { font-weight:bold; color:#cc2200; }
+:where(#mobatw) .sl_badge { font-weight:bold; color:#005500; background:#ccffcc; border-radius:3px; padding:0 5px; }
+:where(#mobatw) .sl_narrtext { font-size:0.79rem; color:#112244; line-height:1.55; margin:0; }
+:where(#mobatw) .sl_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* graph area */
+#vtCanvas { border:1px solid #888; background:#fafafa; display:block; }
+:where(#mobatw) .hl_hint { font-size:0.78rem; color:#555; margin-bottom:2px; }
+:where(#mobatw) .hl_graphbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:3px; }
+:where(#mobatw) .hl_fitlabel { font-size:0.78rem; display:flex; align-items:center; gap:4px; cursor:pointer; }
+:where(#mobatw) .hl_fitresult { font-size:0.78rem; font-weight:bold; min-height:15px; color:#005500; margin-top:2px; }
+:where(#mobatw) .hl_tblbox { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; }
+:where(#mobatw) .hl_nodatamsg { font-size:0.74rem; color:#555; margin-top:3px; }
+:where(#mobatw) .hl_table { width:100%; border-collapse:collapse; font-size:0.68rem; margin-top:3px; }
+:where(#mobatw) .hl_table th { background:#d4d4d4; border:1px solid #888; padding:2px 3px; text-align:center; }
+:where(#mobatw) .hl_table td { border:1px solid #ccc; padding:2px 3px; text-align:center; }
+:where(#mobatw) .hl_axisbar { display:flex; gap:14px; flex-wrap:wrap; align-items:center; background:#fff; border:1px solid #888; border-radius:4px; padding:6px 10px; width:100%; }
+:where(#mobatw) .hl_axislbl { font-size:0.78rem; font-weight:bold; color:#333; display:flex; align-items:center; gap:5px; }
+:where(#mobatw) .hl_axislbl select { font-size:0.78rem; padding:2px 4px; }
+/* ── HIGH CONTRAST overrides ── */
+:where(#mobatw) #mobatw.th_hc { background:#111; }
+#mobatw.th_hc #aw_root .sl_tbar { background:#cc7700; }
+#mobatw.th_hc #aw_root .sl_bbar { background:#1a2a1a; }
+#mobatw.th_hc #aw_root .sl_fbar { background:#1a1a2a; }
+#mobatw.th_hc #aw_root .sl_params, #mobatw.th_hc #aw_root .sl_readout, #mobatw.th_hc #aw_root .hl_tblbox, #mobatw.th_hc #aw_root .hl_axisbar { background:#111; border-color:#aaa; color:#eee; }
+#mobatw.th_hc #aw_root .sl_narr { background:#0a0a22; border-color:#6699ff; }
+#mobatw.th_hc #aw_root .sl_info { background:#111100; border-color:#aa8800; color:#ddd; }
+#mobatw.th_hc #aw_root .sl_boxhd { color:#fff; border-bottom-color:#aaa; }
+#mobatw.th_hc #aw_root .sl_pval { color:#88aaff; }
+#mobatw.th_hc #aw_root .sl_rv { color:#ff8888; }
+#mobatw.th_hc #aw_root .sl_badge { background:#003300; color:#88ff88; }
+#mobatw.th_hc #aw_root .sl_narrtext { color:#aaccff; }
+#mobatw.th_hc #aw_root .sl_plbl, #mobatw.th_hc #aw_root .sl_rrow { color:#ddd; }
+#mobatw.th_hc #aw_root .hl_hint { color:#aaa; }
+#mobatw.th_hc #aw_root .hl_fitresult { color:#88ff88; }
+#mobatw.th_hc #aw_root .hl_axislbl { color:#eee; }
+#mobatw.th_hc #vtCanvas { background:#111; border-color:#555; }</style>
+<!-- ═══════ JAVASCRIPT ═══════ -->
+<script>
+var sim1 = (function(){
+/* ── Canvas refs ── */
+var canvas = document.getElementById('simCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var vtC    = document.getElementById('vtCanvas');
+var vtx    = vtC.getContext('2d');
+var VW = vtC.width, VH = vtC.height;
+var VP = {l:50, r:14, t:14, b:32};
+/* ── Palettes ── */
+var PAL = {
+def:{ massA1:'#66ee44', massA2:'#228800', massB1:'#66aaff', massB2:'#224488',
+ post:'#888888', floor:'#999999', pulley1:'#dddddd', pulley2:'#555555', string:'#333333',
+ canvas:'#ffffff', arrow:'#cc0033',
+ runCols:['#cc2200','#0055cc','#007700','#880088','#cc7700','#007799'] },
+cb:{  massA1:'#e69f00', massA2:'#b37200', massB1:'#56b4e9', massB2:'#0072b2',
+post:'#999999', floor:'#999999', pulley1:'#dddddd', pulley2:'#444444', string:'#333333',
+canvas:'#ffffff', arrow:'#d55e00',
+runCols:['#d55e00','#0072b2','#009e73','#cc79a7','#e69f00','#56b4e9'] },
+hc:{  massA1:'#000000', massA2:'#333333', massB1:'#333333', massB2:'#000000',
+post:'#000000', floor:'#777777', pulley1:'#eeeeee', pulley2:'#000000', string:'#000000',
+canvas:'#ffffff', arrow:'#cc0000',
+runCols:['#cc0000','#0000cc','#006600','#660066','#cc6600','#006666'] }
+};
+var pal = PAL.def;
+var hcMode=false, cbMode=false, showNarration=true;
+var STATIC_TORQUE_FRAC = 0.20; /* mu_s-analogue: static torque is ~20% higher than kinetic, on average */
+/* per-trial randomized kinetic & static friction torque, drawn fresh on each Release */
+var curTauK=null, curTauS=null;
+function drawTrialFriction(){
+if(tauF0<=0){ curTauK=0; curTauS=0; return; } /* true frictionless case stays exactly zero */
+curTauK = tauF0 * (1 + (Math.random()*0.30 - 0.15));
+curTauS = tauF0 * (1 + (Math.random()*0.30 - 0.15)) + tauF0*STATIC_TORQUE_FRAC*(1 + (Math.random()*0.20));
+}
+/* ── Physics constants & state ── */
+var G = 9.80;
+var mA=0.5, mB=1.0, pulleyMass=0.2, pulleyRadius=0.05, pulleySep=1.5, tauF0=0.05, travelDist=1.0;
+var simSpeed=0.20;
+var running=false, animId=null, lastTS=null;
+var pos, vel, phase, simTime, direction; /* pos = remaining distance to travel (m), starts at travelDist, -> 0 */
+/* ── Geometry ── */
+var CENTER_X=340, PULLEY_Y=60, FLOOR_Y=470, START_Y=240, SEP_SCALE=150;
+var PX_PER_M_VERT=90;
+function pulleyVisR(){ return Math.min(60, Math.max(18, pulleyRadius*300)); }
+function pulley1X(){ var half=Math.max(pulleySep*SEP_SCALE/2, pulleyVisR()+15); return CENTER_X-half; }
+function pulley2X(){ var half=Math.max(pulleySep*SEP_SCALE/2, pulleyVisR()+15); return CENTER_X+half; }
+function boxSize(m){ return Math.max(20, Math.min(60, 18+m*16)); }
+/* dropped = distance traveled so far by the descending side (m) */
+function dropped(){ return travelDist-pos; }
+/* top-of-box y position for each mass, following the string attachment (tangent) point */
+function hangAY(){ return START_Y - direction*dropped()*PX_PER_M_VERT; }
+function hangBY(){ return START_Y + direction*dropped()*PX_PER_M_VERT; }
+/* ── Data collection ── */
+var currentTrace = [];  /* [{t,s,v,a,ke,pe,ef}] for current run */
+var allRuns = [];
+var ERROR_FRAC = 0.02;  /* ~2% measurement noise on each sample */
+function noise(v){ return v + Math.abs(v)*ERROR_FRAC*(Math.random()-0.5)*2*1.7; }
+var yAxis='s', xAxis='t';
+/* ── SR announcer ── */
+var srTimer=null;
+function srAnnounce(msg){
+var el=document.getElementById('srAnnounce'); if(!el)return;
+el.textContent=''; clearTimeout(srTimer);
+srTimer=setTimeout(function(){el.textContent=msg;},50);
+}
+function setBtnActive(id,on){
+var b=document.getElementById(id); if(!b)return;
+if(on) b.className=(b.className+' sl_active').trim();
+else   b.className=b.className.replace('sl_active','').trim();
+}
+/* ── A11y toggles ── */
+function toggleHC(){
+hcMode=!hcMode;
+if(hcMode){cbMode=false; setBtnActive('btnCB',false); document.getElementById('btnCB').value='Color-Blind: OFF';}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+(function(w){ if (w){ w.classList.toggle('th_hc', hcMode); if (hcMode) w.classList.remove('th_lm'); } })(document.getElementById('mobatw'));
+setBtnActive('btnHC',hcMode); (function(w){ if (!w) return; w.classList.toggle('th_hc', !!hcMode); if (hcMode){ w.classList.remove('th_lm'); var lb = document.getElementById('thBtnLM'); if (lb){ lb.value = 'Light Mode: OFF'; lb.setAttribute('aria-pressed', 'false'); lb.classList.remove('th_on'); } } })(document.getElementById('mobatw'));
+document.getElementById('btnHC').value=hcMode?'High Contrast: ON':'High Contrast: OFF';
+draw(); redrawGraph();
+}
+function toggleCB(){
+cbMode=!cbMode;
+if(cbMode&&hcMode){hcMode=false; setBtnActive('btnHC',false); document.getElementById('btnHC').value='High Contrast: OFF';}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+(function(w){ if (w) w.classList.remove('th_hc'); })(document.getElementById('mobatw'));
+setBtnActive('btnCB',cbMode); (function(w){ if (!w) return; w.classList.toggle('th_hc', !!hcMode); if (hcMode){ w.classList.remove('th_lm'); var lb = document.getElementById('thBtnLM'); if (lb){ lb.value = 'Light Mode: OFF'; lb.setAttribute('aria-pressed', 'false'); lb.classList.remove('th_on'); } } })(document.getElementById('mobatw'));
+document.getElementById('btnCB').value=cbMode?'Color-Blind: ON':'Color-Blind: OFF';
+draw(); redrawGraph();
+}
+function toggleNarr(){
+showNarration=!showNarration;
+var box=document.getElementById('narrationBox');
+if(box) box.style.display=showNarration?'':'none';
+setBtnActive('btnNarr',showNarration);
+document.getElementById('btnNarr').value=showNarration?'Narration: ON':'Narration: OFF';
+}
+/* ── Friction / threshold readouts ── */
+function updateFrictionReadout(){
+function set(id,txt){var el=document.getElementById(id); if(el)el.textContent=txt;}
+if(curTauK===null){
+set('r_tauk','-- (press Release)'); set('r_taus','--'); set('r_dmc','--');
+} else {
+set('r_tauk', curTauK.toFixed(3));
+set('r_taus', curTauS.toFixed(3));
+set('r_dmc', (2*curTauS/(G*pulleyRadius)).toFixed(3)+' kg');
+}
+}
+/* ── Slider / control setters ── */
+function setMassA(v){ mA=parseFloat(v); document.getElementById('mAVal').textContent=mA.toFixed(2); if(!running)resetSim(); }
+function setMassB(v){ mB=parseFloat(v); document.getElementById('mBVal').textContent=mB.toFixed(2); if(!running)resetSim(); }
+function setPulleyMass(v){ pulleyMass=parseFloat(v); document.getElementById('mpVal').textContent=pulleyMass.toFixed(2); if(!running)resetSim(); }
+function setPulleyRadius(v){ pulleyRadius=parseFloat(v); document.getElementById('rpVal').textContent=pulleyRadius.toFixed(2); if(!running)resetSim(); }
+function setPulleySep(v){ pulleySep=parseFloat(v); document.getElementById('sepVal').textContent=pulleySep.toFixed(2); if(!running)resetSim(); }
+function setTauF(v){ tauF0=parseFloat(v); document.getElementById('tauVal').textContent=tauF0.toFixed(2); if(!running)resetSim(); }
+function setTravel(v){ travelDist=parseFloat(v); document.getElementById('hVal').textContent=travelDist.toFixed(2); if(!running)resetSim(); }
+function setSpeed(v){ simSpeed=parseFloat(v)/100; document.getElementById('speedVal').textContent=simSpeed.toFixed(2)+'×'; }
+function readSliders(){
+mA          = parseFloat(document.getElementById('mASlider').value);
+mB          = parseFloat(document.getElementById('mBSlider').value);
+pulleyMass  = parseFloat(document.getElementById('mpSlider').value);
+pulleyRadius= parseFloat(document.getElementById('rpSlider').value);
+pulleySep   = parseFloat(document.getElementById('sepSlider').value);
+tauF0       = parseFloat(document.getElementById('tauSlider').value);
+travelDist  = parseFloat(document.getElementById('hSlider').value);
+}
+/* ── Begin an attempt: draw fresh trial friction, decide static vs moving ── */
+function beginAttempt(){
+drawTrialFriction();
+updateFrictionReadout();
+var deltaM = mB-mA;
+var driveForce = Math.abs(deltaM)*G;
+var staticThresh = 2*curTauS/pulleyRadius;
+if(driveForce <= staticThresh){ phase='static'; direction=0; return false; }
+direction = deltaM>0 ? 1 : -1; /* +1: B descends, A ascends. -1: A descends, B ascends. */
+phase='sliding';
+return true;
+}
+/* ── Physics step ── */
+function step(dt){
+dt = Math.min(dt, 0.016);
+if(phase==='sliding'){
+var deltaM = mB-mA;
+var driveForce = Math.abs(deltaM)*G;
+var kineticTerm = 2*curTauK/pulleyRadius;
+var aDown = (driveForce - kineticTerm)/(mA+mB+pulleyMass);
+if(aDown<0) aDown=0;
+vel += aDown*dt;
+pos -= vel*dt;
+simTime += dt;
+if(pos <= 0){ pos=0; phase='stopped'; }
+var lastT = currentTrace.length>0 ? currentTrace[currentTrace.length-1].t : -99;
+if(simTime - lastT >= 0.04 || phase==='stopped'){
+var sTrav = travelDist - pos;
+var keVal = 0.5*(mA+mB+pulleyMass)*vel*vel;
+var peVal = Math.abs(mB-mA)*G*sTrav;
+var efVal = 2*curTauK*sTrav/pulleyRadius;
+currentTrace.push({
+t: parseFloat(noise(simTime).toFixed(4)),
+s: parseFloat(noise(sTrav).toFixed(4)),
+v: parseFloat(noise(vel).toFixed(4)),
+a: parseFloat(noise(aDown).toFixed(4)),
+ke: parseFloat(noise(keVal).toFixed(4)),
+pe: parseFloat(noise(peVal).toFixed(4)),
+ef: parseFloat(noise(efVal).toFixed(4))
+});
+}
+}
+}
+/* ── Draw ── */
+function draw(){
+ctx.clearRect(0,0,CW,CH);
+ctx.fillStyle = hcMode?'#111':pal.canvas;
+ctx.fillRect(0,0,CW,CH);
+var p1=pulley1X(), p2=pulley2X(), R=pulleyVisR();
+drawFloor();
+drawPost(p1); drawPost(p2);
+drawString(p1,p2,R);
+drawHangingMass(p1-R, hangAY(), mA, pal.massA1, pal.massA2, 'A');
+drawHangingMass(p2+R, hangBY(), mB, pal.massB1, pal.massB2, 'B');
+drawPulley(p1,R); drawPulley(p2,R);
+drawFlowArrow(p1,p2);
+drawTimestamp();
+}
+function drawFloor(){
+ctx.strokeStyle=hcMode?'#555':pal.floor; ctx.lineWidth=hcMode?2:1.5;
+ctx.beginPath(); ctx.moveTo(20,FLOOR_Y); ctx.lineTo(CW-20,FLOOR_Y); ctx.stroke();
+}
+function drawPost(px){
+ctx.fillStyle=pal.post;
+ctx.fillRect(px-4, PULLEY_Y, 8, FLOOR_Y-PULLEY_Y);
+}
+function drawPulleyWrap(cx,cy,R,hangSide){
+ctx.beginPath();
+if(hangSide>0){ ctx.arc(cx,cy,R,-Math.PI/2,0,false); }
+else { ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI,true); }
+ctx.stroke();
+}
+function drawString(p1,p2,R){
+ctx.strokeStyle=pal.string; ctx.lineWidth=hcMode?2:1.5;
+/* mass A vertical segment (left/outward side of pulley 1) */
+ctx.beginPath(); ctx.moveTo(p1-R,PULLEY_Y); ctx.lineTo(p1-R,hangAY()); ctx.stroke();
+drawPulleyWrap(p1,PULLEY_Y,R,-1);
+/* horizontal segment between the two pulleys */
+ctx.beginPath(); ctx.moveTo(p1,PULLEY_Y-R); ctx.lineTo(p2,PULLEY_Y-R); ctx.stroke();
+drawPulleyWrap(p2,PULLEY_Y,R,+1);
+/* mass B vertical segment (right/outward side of pulley 2) */
+ctx.beginPath(); ctx.moveTo(p2+R,PULLEY_Y); ctx.lineTo(p2+R,hangBY()); ctx.stroke();
+}
+function drawPulley(cx,R){
+ctx.beginPath(); ctx.arc(cx,PULLEY_Y,R,0,Math.PI*2);
+ctx.fillStyle=pal.pulley1; ctx.fill();
+ctx.strokeStyle=pal.pulley2; ctx.lineWidth=hcMode?2.5:2; ctx.stroke();
+ctx.beginPath(); ctx.arc(cx,PULLEY_Y,3,0,Math.PI*2);
+ctx.fillStyle=pal.pulley2; ctx.fill();
+}
+function drawHangingMass(cx,top,m,c1,c2,label){
+var w=boxSize(m), h=w;
+if(!hcMode){
+var gr=ctx.createLinearGradient(cx-w/2,top,cx+w/2,top+h);
+gr.addColorStop(0,c1); gr.addColorStop(1,c2);
+ctx.fillStyle=gr;
+} else { ctx.fillStyle=c1; }
+ctx.fillRect(cx-w/2,top,w,h);
+ctx.strokeStyle=c2; ctx.lineWidth=hcMode?2.5:1.5;
+ctx.strokeRect(cx-w/2,top,w,h);
+ctx.fillStyle=hcMode?'#000':'#fff'; ctx.font='bold 9px Arial'; ctx.textAlign='center';
+ctx.fillText('m_'+label, cx, top+h/2-4);
+ctx.fillText(m.toFixed(2)+' kg', cx, top+h/2+8);
+}
+function drawFlowArrow(p1,p2){
+if(Math.abs(vel)<0.05 || direction===0)return;
+var midX=(p1+p2)/2, y=PULLEY_Y-pulleyVisR()-10;
+var dir = direction>0 ? 1 : -1; /* string flows toward the descending side */
+ctx.strokeStyle=pal.arrow; ctx.fillStyle=pal.arrow; ctx.lineWidth=hcMode?3:2.5;
+var len=18;
+ctx.beginPath(); ctx.moveTo(midX-dir*len,y); ctx.lineTo(midX+dir*len,y); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(midX+dir*len,y);
+ctx.lineTo(midX+dir*(len-8),y-6); ctx.lineTo(midX+dir*(len-8),y+6);
+ctx.closePath(); ctx.fill();
+ctx.font='bold '+(hcMode?11:10)+'px Arial'; ctx.textAlign='center';
+ctx.fillText('v='+Math.abs(vel).toFixed(2)+' m/s', midX, y-10);
+}
+function drawTimestamp(){
+var bg=hcMode?'#333':'yellow', tc=hcMode?'#fff':'#000';
+ctx.fillStyle=bg; ctx.fillRect(CW-110,0,110,20);
+ctx.font='10pt Arial'; ctx.fillStyle=tc; ctx.textAlign='left';
+ctx.fillText('t = '+simTime.toFixed(2)+' s', CW-106,14);
+}
+/* ── Readouts & narration ── */
+function updateReadouts(){
+function set(id,txt){var el=document.getElementById(id);if(el)el.textContent=txt;}
+var s = travelDist-pos;
+var keVal = 0.5*(mA+mB+pulleyMass)*vel*vel;
+var peVal = Math.abs(mB-mA)*G*s;
+var efVal = curTauK!==null ? 2*curTauK*s/pulleyRadius : 0;
+set('r_v', vel.toFixed(3)+' m/s');
+set('r_s', s.toFixed(3)+' m');
+var aLive = (phase==='sliding'&&curTauK!==null) ? Math.max(0,(Math.abs(mB-mA)*G-2*curTauK/pulleyRadius)/(mA+mB+pulleyMass)) : 0;
+set('r_a', aLive.toFixed(3)+' m/s²');
+set('r_ke', keVal.toFixed(3)+' J');
+set('r_pe', peVal.toFixed(3)+' J');
+set('r_ef', efVal.toFixed(3)+' J');
+set('r_t', simTime.toFixed(3)+' s');
+var stMap={ready:'Ready',sliding:'Moving',stopped:'Stopped (H reached)',static:"Static -- won't move"};
+set('r_state', stMap[phase]||phase);
+updateFrictionReadout();
+if(showNarration) updateNarration();
+}
+function updateNarration(){
+var el=document.getElementById('narration'); if(!el)return;
+var txt='m_A = '+mA.toFixed(2)+' kg, m_B = '+mB.toFixed(2)+' kg, over two '+pulleyRadius.toFixed(2)+' m pulleys ('+pulleyMass.toFixed(2)+' kg each), separated by '+pulleySep.toFixed(1)+' m. ';
+if(phase==='ready') txt+='Press Release to see if it moves -- friction is drawn fresh each attempt.';
+else if(phase==='static') txt+="This attempt's static friction (τ_f,s≈"+curTauS.toFixed(3)+" N·m) was too strong -- it didn't move. Try again: real friction varies run to run!";
+else if(phase==='sliding'){
+var descending = direction>0 ? 'B' : 'A';
+var ascending  = direction>0 ? 'A' : 'B';
+txt+='Moving -- m_'+descending+' descends, m_'+ascending+' rises. v = '+vel.toFixed(3)+' m/s, traveled '+(travelDist-pos).toFixed(3)+' m.';
+}
+else if(phase==='stopped') txt+='Reached the full travel distance H at v = '+vel.toFixed(3)+' m/s. '+currentTrace.length+' data point(s) collected. Click "Record this run".';
+el.textContent=txt;
+}
+/* ── Animation loop ── */
+function loop(ts){
+if(!running)return;
+if(lastTS===null) lastTS=ts;
+var dt=Math.min((ts-lastTS)/1000,0.05)*simSpeed; lastTS=ts;
+for(var i=0;i<8;i++) step(dt/8);
+draw(); updateReadouts();
+if(phase!=='stopped'){ animId=requestAnimationFrame(loop); }
+else{
+running=false;
+updateNarration();
+srAnnounce('Reached full travel distance. '+currentTrace.length+' data points. Click Record to save.');
+}
+}
+/* ── Playback ── */
+function playSim(){
+if(running)return;
+if(phase==='stopped'||phase==='static') resetSim();
+var started = beginAttempt();
+if(!started){
+running=false;
+draw(); updateReadouts(); updateNarration();
+srAnnounce('Static friction held the system in place this attempt.');
+return;
+}
+running=true; lastTS=null; animId=requestAnimationFrame(loop);
+srAnnounce('Released.');
+}
+function pauseSim(){
+if(!running)return; running=false; if(animId)cancelAnimationFrame(animId);
+updateNarration(); srAnnounce('Paused.');
+}
+function stepSim(){
+pauseSim();
+if(phase==='ready'){
+var started = beginAttempt();
+if(!started){ draw(); updateReadouts(); updateNarration(); return; }
+}
+if(phase==='static') return;
+var dt=0.005*simSpeed;
+for(var i=0;i<8;i++) step(dt/8);
+draw(); updateReadouts(); updateNarration();
+}
+function resetSim(){
+running=false; if(animId)cancelAnimationFrame(animId); lastTS=null;
+readSliders();
+pos=travelDist; vel=0; phase='ready'; simTime=0; direction=0;
+currentTrace=[];
+curTauK=null; curTauS=null;
+draw(); updateReadouts(); updateNarration();
+srAnnounce('Reset. Ready to release.');
+}
+/* ── Record run ── */
+function recordRun(){
+if(phase==='static'){ alert("This attempt's static friction was too strong -- nothing to record. Press Release again (friction is redrawn each attempt) or adjust the masses/torque."); return; }
+if(currentTrace.length<3){ alert('Run the simulation first to collect data.'); return; }
+var fit = linFitTV(currentTrace);
+var vFinal = currentTrace[currentTrace.length-1].v;
+var totalTime = currentTrace[currentTrace.length-1].t;
+var run = { mA:mA, mB:mB, pulleyMass:pulleyMass, pulleyRadius:pulleyRadius, pulleySep:pulleySep,
+dist: travelDist, tauK: curTauK,
+trace: currentTrace.slice(),
+aMeasured: fit?fit.slope:null, aSE: fit?fit.se:null, vFinal: vFinal, totalTime: totalTime,
+KEfinal: 0.5*(mA+mB+pulleyMass)*vFinal*vFinal,
+PEfinal: Math.abs(mB-mA)*G*travelDist,
+EfFinal: 2*curTauK*travelDist/pulleyRadius };
+allRuns.push(run);
+updateRunSelector();
+updateDataTable();
+redrawGraph();
+srAnnounce('Run recorded. '+allRuns.length+' run(s) saved.');
+}
+function updateRunSelector(){
+var sel=document.getElementById('fitRun');
+while(sel.options.length>1) sel.remove(1);
+for(var i=0;i<allRuns.length;i++){
+var r=allRuns[i];
+var opt=document.createElement('option');
+opt.value=i; opt.textContent='Run '+(i+1)+' (mA='+r.mA.toFixed(2)+', mB='+r.mB.toFixed(2)+')';
+sel.appendChild(opt);
+}
+if(allRuns.length>0) sel.value=allRuns.length-1;
+}
+/* ── Linear fit (generic on {x,y} pairs) ── */
+function linFitXY(pts){
+var n=pts.length; if(n<2)return null;
+var sx=0,sy=0,sxx=0,sxy=0;
+for(var i=0;i<n;i++){ var xi=pts[i].x, yi=pts[i].y; sx+=xi;sy+=yi;sxx+=xi*xi;sxy+=xi*yi; }
+var dn=n*sxx-sx*sx; if(Math.abs(dn)<1e-12)return null;
+var sl=(n*sxy-sx*sy)/dn, ic=(sy-sl*sx)/n;
+var ss=0; for(var j=0;j<n;j++){ var r=pts[j].y-(sl*pts[j].x+ic); ss+=r*r; }
+var se=Math.sqrt(ss/Math.max(n-2,1)/Math.max(sxx-sx*sx/n,1e-9));
+return {slope:sl, intercept:ic, se:se};
+}
+function linFitTV(trace){ return linFitXY(trace.map(function(p){return {x:p.t,y:p.v};})); }
+/* ── Axis setters ── */
+function setYAxis(v){ yAxis=v; redrawGraph(); }
+function setXAxis(v){
+xAxis=v;
+document.getElementById('runSelWrap').style.display = (xAxis==='t') ? '' : 'none';
+redrawGraph();
+}
+var Y_LABELS = {s:'Displacement s (m)', v:'Velocity v (m/s)', a:'Acceleration a (m/s²)', ke:'Kinetic Energy (J)', pe:'PE lost (J)', ef:'Friction Energy (J)'};
+var X_LABELS = {t:'t (s)', massA:'Mass m_A (kg)', massB:'Mass m_B (kg)', pulleyMass:'Pulley mass M_p (kg)', pulleyRadius:'Pulley radius R_p (m)', pulleySep:'Pulley separation d (m)', tauF:'Friction τ_f,k (N·m)', dist:'Travel distance H (m)', ttotal:'Total run time T (s)', tsq:'Time squared T² (s²)'};
+/* ── Build the point-set currently selected for display ── */
+function buildDisplayData(){
+if(xAxis==='t'){
+var selVal=parseInt(document.getElementById('fitRun').value);
+var trace=null, label='';
+if(selVal>=0 && selVal<allRuns.length){ trace=allRuns[selVal].trace; label='Run '+(selVal+1); }
+else if(currentTrace.length>1){ trace=currentTrace; label='Current run (unsaved)'; }
+if(!trace) return {pts:[], label:label};
+var pts = trace.map(function(p){ return {x:p.t, y:p[yAxis]}; });
+return {pts:pts, label:label};
+} else {
+var keyMap={massA:'mA', massB:'mB', pulleyMass:'pulleyMass', pulleyRadius:'pulleyRadius', pulleySep:'pulleySep', tauF:'tauK', dist:'dist', ttotal:'totalTime'};
+var key=keyMap[xAxis];
+var yKeyMap={s:'dist', v:'vFinal', a:'aMeasured', ke:'KEfinal', pe:'PEfinal', ef:'EfFinal'};
+var yk=yKeyMap[yAxis];
+var pts = allRuns.map(function(r){
+var yv = r[yk];
+var xv = (xAxis==='tsq') ? r.totalTime*r.totalTime : r[key];
+return {x:xv, y:yv};
+}).filter(function(p){return p.y!==null && p.y!==undefined && !isNaN(p.y);});
+pts.sort(function(a,b){return a.x-b.x;});
+return {pts:pts, label:'All recorded runs'};
+}
+}
+/* ── Graph ── */
+function redrawGraph(){
+vtx.clearRect(0,0,VW,VH);
+vtx.fillStyle=hcMode?'#111':'#fafafa'; vtx.fillRect(0,0,VW,VH);
+var pW=VW-VP.l-VP.r, pH=VH-VP.t-VP.b;
+var data = buildDisplayData();
+var pts = data.pts;
+var hintEl=document.getElementById('graphHint');
+if(hintEl){
+var yl = {s:'Displacement s',v:'Velocity v',a:'Acceleration a',ke:'Kinetic energy',pe:'PE lost',ef:'Friction energy'}[yAxis];
+var xl = {t:'time t',massA:'mass mA',massB:'mass mB',pulleyMass:'pulley mass Mp',pulleyRadius:'pulley radius Rp',pulleySep:'pulley separation d',tauF:'friction τf,k',dist:'travel distance H',ttotal:'total run time T',tsq:'time squared T²'}[xAxis];
+hintEl.textContent = yl+' vs. '+xl+(xAxis==='t' ? ' -- select a run above.' : ' -- one point per recorded run.');
+}
+var allX=[0], allY=[0,1];
+pts.forEach(function(p){ allX.push(p.x); allY.push(p.y); });
+var xMax=Math.max.apply(null,allX)*1.1||1;
+var xMin = xAxis==='t' ? 0 : Math.min.apply(null,allX)*0.9;
+var yMin=Math.min.apply(null,allY), yMax=Math.max.apply(null,allY);
+var yPad=(yMax-yMin)*0.15||0.5;
+yMin-=yPad; yMax+=yPad;
+function px(x){ return VP.l + pW*((x-xMin)/(xMax-xMin||1)); }
+function py(y){ return VP.t + pH*(1-(y-yMin)/(yMax-yMin)); }
+var ac=hcMode?'#eee':'#333';
+vtx.strokeStyle=ac; vtx.lineWidth=hcMode?2:1.5;
+vtx.beginPath();
+vtx.moveTo(VP.l,VP.t); vtx.lineTo(VP.l,VP.t+pH); vtx.lineTo(VP.l+pW,VP.t+pH); vtx.stroke();
+if(yMin<0&&yMax>0){
+vtx.save(); vtx.setLineDash([4,4]); vtx.strokeStyle=hcMode?'#666':'#ccc'; vtx.lineWidth=1;
+vtx.beginPath(); vtx.moveTo(VP.l,py(0)); vtx.lineTo(VP.l+pW,py(0)); vtx.stroke();
+vtx.restore();
+}
+vtx.fillStyle=ac; vtx.font='10px Arial'; vtx.textAlign='center';
+vtx.fillText(X_LABELS[xAxis], VP.l+pW/2, VH-2);
+vtx.save(); vtx.translate(12,VP.t+pH/2); vtx.rotate(-Math.PI/2);
+vtx.fillText(Y_LABELS[yAxis],0,0); vtx.restore();
+vtx.font='9px Arial';
+[xMin, (xMin+xMax)/2, xMax].forEach(function(xv){ vtx.textAlign='center'; vtx.fillStyle=ac; vtx.fillText(xv.toFixed(2),px(xv),VP.t+pH+14); });
+[yMin,(yMin+yMax)/2,yMax].forEach(function(yv){ vtx.textAlign='right'; vtx.fillStyle=ac; vtx.fillText(yv.toFixed(2),VP.l-4,py(yv)+3); });
+var col = pal.runCols[0];
+if(pts.length>0){
+if(xAxis==='t' && pts.length>1){
+vtx.strokeStyle=col; vtx.lineWidth=2;
+vtx.beginPath();
+pts.forEach(function(p,i){ var tx=px(p.x), ty=py(p.y); if(i===0)vtx.moveTo(tx,ty); else vtx.lineTo(tx,ty); });
+vtx.stroke();
+}
+pts.forEach(function(p){
+vtx.beginPath(); vtx.arc(px(p.x),py(p.y),xAxis==='t'?2.5:4,0,Math.PI*2);
+vtx.fillStyle=col; vtx.fill();
+if(xAxis!=='t'){ vtx.strokeStyle=hcMode?'#fff':'#333'; vtx.lineWidth=1; vtx.stroke(); }
+});
+vtx.fillStyle=col; vtx.font='bold 9px Arial'; vtx.textAlign='left';
+vtx.fillText(data.label, VP.l+4, VP.t+12);
+} else {
+vtx.fillStyle=hcMode?'#888':'#bbb'; vtx.font='11px Arial'; vtx.textAlign='center';
+vtx.fillText(xAxis==='t' ? 'Select a run above' : 'Record some runs to see this graph', VP.l+pW/2, VP.t+pH/2);
+}
+var sfEl=document.getElementById('showFit');
+var frEl=document.getElementById('fitResult');
+if(sfEl && sfEl.checked && pts.length>=2){
+var fit=linFitXY(pts);
+if(fit){
+vtx.save(); vtx.strokeStyle=hcMode?'#ffff00':'#1155aa'; vtx.lineWidth=hcMode?3:2;
+vtx.setLineDash([6,3]);
+vtx.beginPath();
+vtx.moveTo(px(xMin), py(fit.slope*xMin+fit.intercept));
+vtx.lineTo(px(xMax), py(fit.slope*xMax+fit.intercept));
+vtx.stroke(); vtx.restore();
+if(frEl) frEl.textContent='slope = '+fit.slope.toFixed(3)+' ± '+fit.se.toFixed(3)+'  (n='+pts.length+')';
+} else if(frEl){ frEl.textContent='Need more spread in x to fit.'; }
+} else if(frEl){ frEl.textContent=''; }
+}
+/* ── Data table ── */
+function updateDataTable(){
+var tb=document.getElementById('dataTableBody');
+var tbl=document.getElementById('dataTable');
+var nm=document.getElementById('noDataMsg');
+if(!tb||!tbl||!nm)return;
+tb.innerHTML='';
+if(allRuns.length===0){ tbl.style.display='none'; nm.style.display=''; return; }
+tbl.style.display=''; nm.style.display='none';
+for(var i=0;i<allRuns.length;i++){
+var r=allRuns[i];
+var aStr = r.aMeasured!==null ? r.aMeasured.toFixed(2)+'±'+r.aSE.toFixed(2) : '--';
+var tr=document.createElement('tr');
+tr.innerHTML='<td>'+(i+1)+'</td><td>'+r.mA.toFixed(2)+'</td><td>'+r.mB.toFixed(2)+'</td>'+
+'<td>'+r.pulleyMass.toFixed(2)+'</td><td>'+r.pulleyRadius.toFixed(2)+'</td><td>'+r.tauK.toFixed(3)+'</td>'+
+'<td>'+aStr+'</td><td>'+r.vFinal.toFixed(2)+'</td><td>'+r.totalTime.toFixed(2)+'</td>';
+tb.appendChild(tr);
+}
+}
+function clearGraph(){
+vtx.clearRect(0,0,VW,VH);
+vtx.fillStyle=hcMode?'#111':'#fafafa'; vtx.fillRect(0,0,VW,VH);
+document.getElementById('fitResult').textContent='';
+document.getElementById('showFit').checked=false;
+srAnnounce('Graph cleared. Data preserved.');
+}
+function clearData(){
+allRuns=[]; currentTrace=[];
+var sel=document.getElementById('fitRun');
+while(sel.options.length>1) sel.remove(1);
+document.getElementById('fitResult').textContent='';
+redrawGraph(); updateDataTable();
+srAnnounce('All recorded data cleared.');
+}
+/* ── Boot ── */
+resetSim();
+redrawGraph();
+return {
+playSim, pauseSim, stepSim, resetSim,
+toggleHC, toggleCB, toggleNarr,
+setMassA, setMassB, setPulleyMass, setPulleyRadius, setPulleySep, setTauF, setTravel, setSpeed,
+setYAxis, setXAxis,
+recordRun, clearData, clearGraph, redrawGraph
+};
+})();
+</script>
+</div><!-- #aw_root -->
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows a two-pulley Atwood machine. Two pulleys of adjustable mass and radius sit at the same height, an adjustable distance apart; a string runs over both, with a mass hanging near each pulley. Each pulley has friction in its axle, so releasing the system may or may not set it in motion.</p>
+<p>The heavier side starts to move only if the difference in weight can overcome the static friction of both pulleys:</p>
+<p class="mob_eq">`|m_B - m_A| g > (2 tau_(f,s))/R_p`.</p>
+<p>Once moving, with two identical solid-disk pulleys (`I = 1/2 M_p R_p^2` each), the acceleration is</p>
+<p class="mob_eq">`a = (|m_B - m_A| g - 2 tau_(f,k)/R_p)/(m_A + m_B + M_p)`.</p>
+<p>In terms of energy, the potential energy released as the masses move a distance `H` goes into the kinetic energy of the masses and the turning pulleys, and into the work done against friction:</p>
+<p class="mob_eq">`|m_B - m_A| g H = 1/2 (m_A + m_B + M_p) v^2 + (2 tau_(f,k) H)/R_p`.</p>
+<p>Runs can be recorded and graphed to measure the friction in the pulleys. This simulation is useful for studying Newton's second law for connected objects, rotational inertia, friction torque and energy.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobatw { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (683 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:723px) {
+#mobatw div, #mobatw p, #mobatw fieldset, #mobatw form, #mobatw section, #mobatw ol, #mobatw ul, #mobatw table { max-width:100%; box-sizing:border-box; }
+#mobatw canvas, #mobatw img, #mobatw svg { max-width:100%; height:auto !important; }
+#mobatw input[type=range], #mobatw select { max-width:100%; min-width:0; }
+#mobatw .sl_tbar, #mobatw .sl_bbar, #mobatw .sl_fbar, #mobatw .sl_prow, #mobatw .sl_rrow, #mobatw .hl_graphbar, #mobatw .hl_fitlabel, #mobatw .hl_axisbar, #mobatw .hl_axislbl { flex-wrap:wrap; }
+#mobatw .sl_tbar > div, #mobatw .sl_bbar > div, #mobatw .sl_fbar > div, #mobatw .sl_prow > div, #mobatw .sl_rrow > div, #mobatw .hl_graphbar > div, #mobatw .hl_fitlabel > div, #mobatw .hl_axisbar > div, #mobatw .hl_axislbl > div { min-width:min(100%, 260px); }
+#mobatw div[style*="height"] { height:auto !important; }
+#mobatw .sl_tbar { height:auto; min-height:0; }
+#mobatw table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:743px) {
+#mobatw div, #mobatw p, #mobatw fieldset, #mobatw form, #mobatw section, #mobatw ol, #mobatw ul, #mobatw table { max-width:100%; box-sizing:border-box; }
+#mobatw canvas, #mobatw img, #mobatw svg { max-width:100%; height:auto !important; }
+#mobatw input[type=range], #mobatw select { max-width:100%; min-width:0; }
+#mobatw .sl_tbar, #mobatw .sl_bbar, #mobatw .sl_fbar, #mobatw .sl_prow, #mobatw .sl_rrow, #mobatw .hl_graphbar, #mobatw .hl_fitlabel, #mobatw .hl_axisbar, #mobatw .hl_axislbl { flex-wrap:wrap; }
+#mobatw .sl_tbar > div, #mobatw .sl_bbar > div, #mobatw .sl_fbar > div, #mobatw .sl_prow > div, #mobatw .sl_rrow > div, #mobatw .hl_graphbar > div, #mobatw .hl_fitlabel > div, #mobatw .hl_axisbar > div, #mobatw .hl_axislbl > div { min-width:min(100%, 260px); }
+#mobatw div[style*="height"] { height:auto !important; }
+#mobatw .sl_tbar { height:auto; min-height:0; }
+#mobatw table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobatw button, #mobatw input[type=button], #mobatw input[type=submit], #mobatw input[type=reset] { min-height:40px; }
+#mobatw input[type=range] { height:28px; }
+#mobatw input[type=checkbox], #mobatw input[type=radio] { width:22px; height:22px; }
+#mobatw select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobatw .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobatw .mob_a11ytop input[type=button], #mobatw .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobatw .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobatw .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobatw .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobatw .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobatw .mob_desc p { margin:0 0 9px 0; }
+#mobatw .mob_eq { text-align:center; font-size:1rem; }
+</style>
+<script>
+/* the light-mode button and the theme classes: on this sim's wrapper only (never on the page's body) */
+(function(){ var W = document.getElementById('mobatw'), b = document.getElementById('thBtnLM'); if (!W || !b) return;
+b.addEventListener('click', function(){ var on = !W.classList.contains('th_lm'); var hb = document.getElementById('btnHC'); if (on && hb && /ON/.test(hb.value)) hb.click();   /* light mode turns high contrast off, through the sim's own button */
+ W.classList.toggle('th_lm', on); if (on) W.classList.remove('th_hc'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.classList.toggle('th_on', on); b.value = 'Light Mode: ' + (on ? 'ON' : 'OFF'); if (b.tagName === 'BUTTON') b.textContent = 'LIGHT MODE'; });
+})();
+</script>
+<style>
+/* ════════ theme: the instrument look of the balance beam (dark; light and high-contrast variants) ════════ */
+#mobatw { --t-chassis:#1a1c1f; --t-panel:#22262b; --t-panel-hi:#2c3138; --t-panel-lo:#14161a; --t-border:#3a4048; --t-border-hi:#525c66; --t-text:#c8d0d8; --t-dim:#8a94a3; --t-accent:#e8a020; --t-green:#3ad08f; --t-val:#ffdd66; --t-nar-bg:#2a2410; --t-nar-bd:#e0b040; --t-nar-tx:#f0e2b8; --t-grid:rgba(255,255,255,0.015); --t-warn:#e0605a; --t-warnbd:#a04040; background:var(--t-chassis) !important; background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, var(--t-grid) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, var(--t-grid) 40px) !important;
+  color:var(--t-text); font-family:Arial, sans-serif; padding:14px 10px 18px !important; border-radius:6px; box-sizing:border-box; max-width:860px; margin:0 auto 10px !important; }
+#mobatw.th_lm { --t-chassis:#e9edf1; --t-panel:#ffffff; --t-panel-hi:#f1f4f7; --t-panel-lo:#f4f6f9; --t-border:#c3cad3; --t-border-hi:#9aa3ae; --t-text:#1d232a; --t-dim:#556070; --t-accent:#a8620a; --t-green:#12805a; --t-val:#8a4a00; --t-nar-bg:#ffefc0; --t-nar-bd:#e0b040; --t-nar-tx:#333333; --t-grid:transparent; --t-warn:#b02020; --t-warnbd:#c06060; }
+#mobatw.th_hc { --t-chassis:#000000; --t-panel:#000000; --t-panel-hi:#111111; --t-panel-lo:#000000; --t-border:#ffffff; --t-border-hi:#ffffff; --t-text:#ffffff; --t-dim:#e0e0e0; --t-accent:#ffd700; --t-green:#00ff88; --t-val:#ffff00; --t-nar-bg:#000000; --t-nar-bd:#ffd700; --t-nar-tx:#ffffff; --t-grid:transparent; --t-warn:#ff6a5a; --t-warnbd:#ff6a5a; }
+#mobatw .th_btn, #mobatw .th_a11y input[type=button], #mobatw .th_a11y button { padding:4px 10px !important; font-size:.68rem !important; font-family:monospace !important; letter-spacing:.06em; border-radius:3px !important; cursor:pointer; background:var(--t-panel-hi) !important; border:1px solid var(--t-border-hi) !important; color:var(--t-dim) !important; text-transform:uppercase; min-height:30px; box-shadow:none !important; }
+#mobatw .th_a11y { display:flex !important; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; background:transparent !important; border:none !important; padding:0 0 10px !important; margin:0 !important; }
+#mobatw .th_a11y .th_on, #mobatw .th_a11y [aria-pressed="true"] { background:rgba(58,208,143,.14) !important; border-color:var(--t-green) !important; color:var(--t-green) !important; font-weight:bold; }
+#mobatw .th_title, #mobatw .th_title h3, #mobatw .th_title H3 { background:transparent !important; border:none !important; color:var(--t-accent) !important; font-size:.95rem !important; font-weight:700 !important; letter-spacing:.2em; text-transform:uppercase; text-align:center; font-family:Arial, sans-serif !important; margin:0 !important; padding:2px 0 !important; min-height:0 !important; }
+#mobatw .th_sub { color:var(--t-dim) !important; font-size:.7rem !important; letter-spacing:.08em; text-transform:uppercase; text-align:center; font-family:Arial, sans-serif !important; margin:0 0 8px !important; }
+#mobatw .th_diag { background:var(--t-panel) !important; border:1px solid var(--t-border) !important; border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); margin:8px 0 0 !important; padding:0 !important; }
+#mobatw .th_diag::before { content:'APPARATUS'; display:block; flex:1 1 100%; background:var(--t-panel-lo); border-bottom:1px solid var(--t-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; color:var(--t-accent); font-weight:bold; text-align:left; }
+#mobatw .th_diag canvas { background:#ffffff; display:block; max-width:100%; height:auto; margin:0 auto; border:none !important; }
+#mobatw .th_bar { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-top:none !important; border-radius:0 0 6px 6px; display:flex !important; flex-wrap:wrap; gap:6px; justify-content:center; align-items:center; padding:8px 10px !important; margin:0 0 10px !important; color:var(--t-text) !important; }
+#mobatw .th_bar input[type=button], #mobatw .th_bar button, #mobatw .th_bbtn { padding:8px 12px !important; font-family:monospace !important; font-size:.72rem !important; letter-spacing:.04em; cursor:pointer; background:var(--t-panel-hi) !important; border:1px solid var(--t-border-hi) !important; color:var(--t-text) !important; border-radius:3px !important; text-transform:uppercase; min-height:34px; box-shadow:none !important; }
+#mobatw .th_bar input[type=button]:hover, #mobatw .th_bar button:hover { border-color:var(--t-accent) !important; }
+#mobatw .th_bar .th_primary { font-weight:bold; border-color:var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobatw .th_bar .th_warn { color:var(--t-warn) !important; border-color:var(--t-warnbd) !important; }
+#mobatw .th_panel { background:var(--t-panel) !important; border:1px solid var(--t-border) !important; border-radius:6px !important; box-shadow:0 4px 20px rgba(0,0,0,.3); color:var(--t-text) !important; font-family:Arial, sans-serif !important; }
+#mobatw .th_ptitle { background:var(--t-panel-lo) !important; color:var(--t-dim) !important; font-family:monospace !important; font-size:.66rem !important; letter-spacing:.15em; text-transform:uppercase; font-weight:normal !important; border:none !important; border-bottom:1px solid var(--t-border) !important; border-left:4px solid var(--t-accent) !important; padding:6px 10px !important; margin:0 0 6px !important; text-align:left; }
+#mobatw .th_lbl { color:var(--t-dim) !important; font-size:.72rem !important; font-weight:600 !important; letter-spacing:.04em; text-transform:uppercase; font-family:Arial, sans-serif !important; }
+#mobatw .th_val { color:var(--t-val) !important; font-family:monospace !important; font-weight:bold; font-size:.78rem !important; background:transparent !important; }
+#mobatw .th_chip { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-radius:3px; padding:3px 7px !important; margin:2px 0 !important; color:var(--t-dim) !important; font-family:monospace !important; font-size:.72rem !important; }
+#mobatw .th_note { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-radius:4px; color:var(--t-dim) !important; font-family:monospace !important; font-size:.7rem !important; line-height:1.55; padding:7px 12px !important; }
+#mobatw .th_note * { color:inherit !important; }
+#mobatw .th_nar { background:var(--t-nar-bg) !important; border:none !important; border-left:4px solid var(--t-nar-bd) !important; color:var(--t-nar-tx) !important; font-style:italic; border-radius:3px !important; box-shadow:none !important; }
+#mobatw .th_nar * { color:var(--t-nar-tx) !important; }
+#mobatw .th_nar .th_ptitle, #mobatw .th_nar h2 { font-style:normal; color:var(--t-dim) !important; }
+#mobatw input[type=range] { -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--t-panel-lo) !important; border:1px solid var(--t-border); accent-color:var(--t-accent); }
+#mobatw input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--t-accent); border:2px solid var(--t-panel); cursor:pointer; }
+#mobatw input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--t-accent); border:2px solid var(--t-panel); cursor:pointer; }
+#mobatw select, #mobatw input[type=number] { background:var(--t-panel-hi) !important; color:var(--t-text) !important; border:1px solid var(--t-border-hi) !important; border-radius:3px; padding:3px 5px; font-size:.78rem; }
+#mobatw input:focus-visible, #mobatw button:focus-visible, #mobatw select:focus-visible { outline:2px solid var(--t-accent); outline-offset:2px; }
+#mobatw table th { background:var(--t-panel-lo) !important; color:var(--t-dim) !important; font-family:monospace; border-color:var(--t-border) !important; }
+#mobatw table td { background:var(--t-panel) !important; color:var(--t-text) !important; border-color:var(--t-border) !important; }
+#mobatw .mob_descbtn { background:var(--t-panel-hi) !important; border:1px solid var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobatw > h2, #mobatw > hr + h2 { color:var(--t-accent) !important; font-size:1rem !important; font-family:Arial, sans-serif; margin:4px 0 !important; }
+#mobatw > hr { border:none !important; border-top:1px solid var(--t-border) !important; margin:6px 0 !important; }
+#mobatw .th_q { background:#fbfbf7; color:#1d232a; border:1px solid #c9ccd2; border-left:4px solid var(--t-accent); border-radius:6px; padding:12px 16px; margin:12px 0 8px; font-family:Arial, sans-serif; font-size:.92rem; line-height:1.5; }
+#mobatw .th_q h2, #mobatw .th_q h3 { color:#1d232a !important; font-size:1.05rem !important; margin:4px 0 8px !important; }
+#mobatw .th_q hr { border:none; border-top:1px solid #c9ccd2; margin:8px 0; }
+#mobatw .th_q li { margin:0 0 8px; }
+@media (pointer:coarse) { #mobatw input[type=range] { height:8px; } #mobatw input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #mobatw input[type=range]::-moz-range-thumb { width:24px; height:24px; } #mobatw .th_bar input[type=button], #mobatw .th_bar button { min-height:40px; } }
+#mobatw [data-th="p"] { font-weight:bold; border-color:var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobatw [data-th="w"] { color:var(--t-warn) !important; border-color:var(--t-warnbd) !important; }
+#mobatw .sl_fbar, #mobatw .sl_fbar { background:transparent !important; border:none !important; display:flex; flex-wrap:wrap; gap:10px; padding:6px 0 !important; }
+#mobatw .th_panel { flex:1 1 260px; padding:0 10px 8px !important; }
+#mobatw .th_chip { color:var(--t-dim) !important; }
+#mobatw .sl_badge, #mobatw .sl_badge { background:rgba(58,208,143,.14) !important; color:var(--t-green) !important; border:1px solid var(--t-green); }
+#mobatw [id^="btnReset"] { color:var(--t-warn) !important; border-color:var(--t-warnbd) !important; }
+</style>
+</div><!-- #mobatw -->
+</main>
+</body>
+</html>

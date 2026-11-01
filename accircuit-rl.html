@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- AC Circuits: RL Series Circuit</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,AC,circuit,RL,series,resistor,inductor,reactance,impedance,phase,phasor,oscilloscope,function generator,lesson,scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="rlRoot1008">
+  <!-- ── Accessibility toolbar ── -->
+  <div class="rl_a11y1008" id="rlA11yBar1008" role="toolbar" aria-label="Display options">
+    <button type="button" class="rl_a11ybtn1008" id="rlBtnHC1008" onclick="rlA11y1008.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+    <button type="button" class="rl_a11ybtn1008" id="rlBtnLM1008" onclick="rlA11y1008.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+    <button type="button" class="rl_a11ybtn1008" id="rlBtnCB1008" onclick="rlA11y1008.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+    <button type="button" class="rl_a11ybtn1008 rl_a11yon1008" id="rlBtnNR1008" onclick="rlA11y1008.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+  </div>
+  <div class="tbar1008"><h3>RL Series Circuit &mdash; Function Generator &amp; Dual-Channel Scope</h3></div>
+  <!-- ── View tabs ── -->
+  <div class="tabs1008" id="rlTabs1008">
+    <button type="button" class="rl_tabbtn1008 rl_tabon1008" id="rlTabScope1008" onclick="rlSim1008.setTab('scope')">CIRCUIT + SCOPE</button>
+    <button type="button" class="rl_tabbtn1008" id="rlTabPhasor1008" onclick="rlSim1008.setTab('phasor')">PHASOR DIAGRAM</button>
+    <button type="button" class="rl_tabbtn1008" id="rlTabEq1008" onclick="rlSim1008.setTab('equations')">EQUATIONS</button>
+  </div>
+  <!-- ── Phasor-tab sub-toggle: voltage phasors vs. impedance diagram ── -->
+  <div class="rl_subbar1008" id="rlPhasorModeBar1008" role="group" aria-label="Phasor diagram representation" style="display:none;">
+    <span class="rl_sublabel1008">Show:</span>
+    <button type="button" class="rl_subbtn1008 rl_subon1008" id="rlModeV1008" onclick="rlSim1008.setPhasorMode('voltage')" aria-pressed="true">Voltage phasors</button>
+    <button type="button" class="rl_subbtn1008" id="rlModeZ1008" onclick="rlSim1008.setPhasorMode('impedance')" aria-pressed="false">Impedance diagram</button>
+  </div>
+  <div class="mcontent1008">
+    <canvas id="rlCanvas1008" style="margin:auto;display:block;border:1px solid #ccc" width="700" height="460"></canvas>
+    <div id="rlEqPanel1008" class="rl_eqpanel1008" style="display:none;"></div>
+  </div>
+  <div id="rlNarBar1008" class="rl_narbar1008" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div class="bbar1008">
+    <input type="button" id="rlPlay1008" value="Play"
+           onclick="if(this.value=='Play'){rlSim1008.pl();this.value='Pause';}else{this.value='Play';rlSim1008.ps();}">
+    <input type="button" value="Step" onclick="document.getElementById('rlPlay1008').value='Play';rlSim1008.step();">
+    <input type="button" value="New Components" onclick="document.getElementById('rlPlay1008').value='Play';rlSim1008.rst();">
+    <input type="button" value="Clear Cursors" onclick="rlSim1008.clearCursors();">
+  </div>
+  <div class="footer1008">
+    <div class="rowgrp1008">
+      <label>R (&Omega;):
+        <input type="range" id="rlR1008" min="500" max="10000" step="50" value="3000"
+               oninput="document.getElementById('rlRVal1008').textContent=this.value; rlSim1008.redraw();">
+        <span id="rlRVal1008">3000</span>
+      </label>
+      <label>L (mH):
+        <input type="range" id="rlL1008" min="10" max="500" step="5" value="400"
+               oninput="document.getElementById('rlLVal1008').textContent=this.value; rlSim1008.redraw();">
+        <span id="rlLVal1008">400</span>
+      </label>
+      <label>f<sub>o</sub> (Hz):
+        <input type="range" id="rlF1008" min="50" max="5000" step="10" value="1200"
+               oninput="document.getElementById('rlFVal1008').textContent=this.value; rlSim1008.redraw();">
+        <span id="rlFVal1008">1200</span>
+      </label>
+      <label>V<sub>m</sub> (V):
+        <input type="range" id="rlVm1008" min="1" max="10" step="0.5" value="5"
+               oninput="document.getElementById('rlVmVal1008').textContent=this.value; rlSim1008.redraw();">
+        <span id="rlVmVal1008">5</span>
+      </label>
+    </div>
+    <div class="rowgrp1008">
+      <label>CH1 (V<sub>R</sub>) V/div:
+        <select id="rlV11008" onchange="rlSim1008.redraw();">
+          <option>0.5</option><option selected>1</option><option>2</option><option>5</option>
+        </select>
+      </label>
+      <label>CH2 (V<sub>L</sub>) V/div:
+        <select id="rlV21008" onchange="rlSim1008.redraw();">
+          <option>0.5</option><option selected>1</option><option>2</option><option>5</option>
+        </select>
+      </label>
+      <label>Time/div (ms):
+        <select id="rlT1008" onchange="rlSim1008.redraw();">
+          <option>0.1</option><option>0.2</option><option selected>0.5</option><option>1</option><option>2</option>
+        </select>
+      </label>
+      <label class="rl_chk1008"><input type="checkbox" id="rlTol1008" onchange="rlSim1008.rst();"> Simulate component tolerance (experimental error)</label>
+    </div>
+  </div>
+</div>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  div { width: 703px; margin: 0; }
+  #rlRoot1008 {
+    --rl-bg:        #ffffff;
+    --rl-scope-bg:  #0b1a0f;
+    --rl-grid:      #2c4a34;
+    --rl-vr:        #e0a800;
+    --rl-vl:        #7a5cff;
+    --rl-src:       #888888;
+    --rl-text:      #111111;
+    --rl-struct:    #111111;
+    --rl-good:      #1a8a3a;
+    --rl-toolbar-bg:#222;
+    --rl-cursor:    #d33fd3;
+  }
+  #rlRoot1008 .rl_a11y1008 {
+    display:flex; gap:6px; padding:6px 8px;
+    background:var(--rl-toolbar-bg); flex-wrap:wrap; width:703px;
+  }
+  #rlRoot1008 .rl_a11ybtn1008 {
+    padding:4px 10px; font-size:.72rem; font-family:monospace;
+    letter-spacing:.06em; border-radius:3px; cursor:pointer;
+    background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+    transition:border-color .15s,color .15s;
+  }
+  #rlRoot1008 .rl_a11ybtn1008:hover { border-color:#00e8d0; color:#00e8d0; }
+  #rlRoot1008 .rl_a11yon1008 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+  #rlRoot1008 .rl_narbar1008 {
+    width:703px; min-height:28px; padding:5px 10px;
+    background:#ffefc0; border-left:4px solid #e0b040;
+    font-size:.86rem; color:#333; font-style:italic;
+  }
+  .tbar1008    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; width:703px;}
+  .tbar1008 h3 { font-size:1.05rem; font-weight:bold; }
+  .tabs1008    { width:703px; display:flex; background:#333; }
+  .rl_tabbtn1008 {
+    flex:1; padding:8px 4px; font-size:.78rem; font-family:sans-serif; letter-spacing:.03em;
+    background:#333; color:#aaa; border:none; border-right:1px solid #222; cursor:pointer;
+  }
+  .rl_tabbtn1008:hover { background:#444; color:#fff; }
+  .rl_tabon1008 { background:#f90 !important; color:#111 !important; font-weight:bold; }
+  .rl_subbar1008 { width:703px; display:flex; align-items:center; justify-content:center; gap:6px; padding:4px; background:#fff3e0; border-bottom:1px solid #e0c090; font-family:sans-serif; font-size:.8rem; }
+  .rl_sublabel1008 { font-weight:bold; color:#333; margin-right:4px; }
+  .rl_subbtn1008 { padding:3px 12px; border:1px solid #c08030; border-radius:12px; background:#fff; color:#7a4a10; cursor:pointer; font-size:.78rem; }
+  .rl_subbtn1008:hover { background:#ffe8c8; }
+  .rl_subon1008 { background:#f90 !important; color:#111 !important; border-color:#d07000 !important; font-weight:bold; }
+  .mcontent1008 { height:462px; width:703px; position:relative; }
+  .rl_eqpanel1008 {
+    width:680px; height:440px; margin:10px auto; padding:14px 20px; overflow-y:auto;
+    background:var(--rl-bg); color:var(--rl-text); font-family:'Cambria','Georgia',serif; font-size:1rem; line-height:1.9;
+  }
+  .rl_eqpanel1008 h4 { margin-top:14px; font-family:sans-serif; color:#c05a00; }
+  .rl_eqpanel1008 .rl_eqline1008 { margin:6px 0 6px 10px; font-size:1.05rem; }
+  .bbar1008    { height:50px; background-color:#df9; padding:10px; text-align:center; width:703px;}
+  .bbar1008 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+  .footer1008  { width:703px; background-color:#fce4ec; padding:8px; font-size:.85rem; }
+  .rowgrp1008  { display:flex; flex-wrap:wrap; gap:14px; align-items:center; padding:4px 2px; width:100%; justify-content:center;}
+  .rowgrp1008 label { display:flex; align-items:center; gap:4px; }
+  .rl_chk1008  { font-weight:bold; }
+</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+  var rlA11y1008 = (function(){
+    var ROOT = null;
+    var states = { hc:false, lm:false, cb:false, nr:true };
+    var THEMES = {
+      hc:{'--rl-bg':'#000','--rl-scope-bg':'#000','--rl-grid':'#444','--rl-vr':'#ffff00','--rl-vl':'#c299ff','--rl-src':'#fff','--rl-text':'#fff','--rl-struct':'#fff','--rl-good':'#30ff70','--rl-toolbar-bg':'#000','--rl-cursor':'#ff66ff'},
+      lm:{'--rl-bg':'#f0f0f0','--rl-scope-bg':'#12261a','--rl-grid':'#33553f','--rl-vr':'#c98a00','--rl-vl':'#5c3fd6','--rl-src':'#555','--rl-text':'#000','--rl-struct':'#000','--rl-good':'#157a30','--rl-toolbar-bg':'#444','--rl-cursor':'#b030b0'},
+      cb:{'--rl-bg':'#fff','--rl-scope-bg':'#0b1a0f','--rl-grid':'#2c4a34','--rl-vr':'#d55e00','--rl-vl':'#0072b2','--rl-src':'#666','--rl-text':'#000','--rl-struct':'#333','--rl-good':'#009e73','--rl-toolbar-bg':'#222','--rl-cursor':'#cc79a7'}
+    };
+    var DEFS = {'--rl-bg':'#fff','--rl-scope-bg':'#0b1a0f','--rl-grid':'#2c4a34','--rl-vr':'#e0a800','--rl-vl':'#7a5cff','--rl-src':'#888','--rl-text':'#111','--rl-struct':'#111','--rl-good':'#1a8a3a','--rl-toolbar-bg':'#222','--rl-cursor':'#d33fd3'};
+    function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+    function styleBtn(id,on){
+      var b=document.getElementById(id); if(!b)return;
+      b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+      b.style.borderColor=on?'#00e8d0':'#404a60';
+      b.style.color=on?'#00e8d0':'#7a8aaa';
+      b.setAttribute('aria-pressed',on?'true':'false');
+    }
+    function applyNarBar(){
+      var nb=document.getElementById('rlNarBar1008');
+      if(nb) nb.style.display=states.nr?'block':'none';
+      var btn=document.getElementById('rlBtnNR1008');
+      if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('rlBtnNR1008',states.nr); }
+    }
+    function apply(){
+      if(!ROOT)return;
+      applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+      applyNarBar();
+      styleBtn('rlBtnHC1008',states.hc);
+      styleBtn('rlBtnLM1008',states.lm);
+      styleBtn('rlBtnCB1008',states.cb);
+    }
+    return {
+      init:function(){ ROOT=document.getElementById('rlRoot1008'); apply(); },
+      toggle:function(k){
+        states[k]=!states[k];
+        if(k==='hc'&&states.hc) states.lm=false;
+        if(k==='lm'&&states.lm) states.hc=false;
+        apply();
+        if(window.rlSim1008) window.rlSim1008.redraw();
+      },
+      narrate:function(msg){
+        if(!states.nr)return;
+        var nb=document.getElementById('rlNarBar1008');
+        if(nb) nb.textContent=msg;
+      },
+      col:function(prop,def){
+        if(!ROOT) return def;
+        var v=ROOT.style.getPropertyValue(prop);
+        return (v&&v.trim())?v.trim():def;
+      }
+    };
+  })();
+</script>
+<!-- ════════ SIMULATION ════════
+Companion to the RC-circuit sim -- same structure, same conventions.
+- var simObj = function() { ... rst(); return {rst,pl,ps,step,...}; }
+- var simObj1008 = new simObj();
+- Animation: recursive window.setTimeout(runMotion, 40) guarded by runFlag
+- rst() is called immediately inside the constructor (no deferred boot)
+-->
+<script>
+  var rlGen = function() {
+    var canvas  = document.getElementById('rlCanvas1008');
+    var ctx     = canvas.getContext('2d');
+    var eqPanel = document.getElementById('rlEqPanel1008');
+    var W = canvas.width, H = canvas.height;
+    var timer, runFlag = 0;
+    var tab = 'scope';                 /* 'scope' | 'phasor' | 'equations' */
+    var phasorMode = 'voltage';        /* phasor tab: 'voltage' | 'impedance' */
+    var sweepPhase = 0;                /* animated beam position, 0..1 across the screen */
+    var phasorAngle = 0;               /* animated rotation for the phasor view, radians */
+    /* ── experimental-error (component tolerance) state ── */
+    var errR = 0, errL = 0, errF = 0, errScope = 0;
+    function rollTolerances() {
+      errR = (Math.random()*2-1) * 0.05;   /* resistor  +/-5%  */
+      errL = (Math.random()*2-1) * 0.10;   /* inductor  +/-10% (typical wound-coil tolerance) */
+      errF = (Math.random()*2-1) * 0.01;   /* function-gen freq accuracy +/-1% */
+      errScope = (Math.random()*2-1) * 0.02; /* scope vertical reading noise +/-2% */
+    }
+    rollTolerances();
+    /* ── cursor state (phase measurement tool, scope tab only) ── */
+    var cur1X = null, cur2X = null, dragCur = null;
+    /* ── color helper ── */
+    function c(prop, def) { return rlA11y1008.col(prop, def); }
+    function tolOn() { var el=document.getElementById('rlTol1008'); return el && el.checked; }
+    /* ── read current control values ── */
+    function controls() {
+      return {
+        Rset:  parseFloat(document.getElementById('rlR1008').value),
+        Lset:  parseFloat(document.getElementById('rlL1008').value),   /* mH */
+        Fset:  parseFloat(document.getElementById('rlF1008').value),
+        Vm:    parseFloat(document.getElementById('rlVm1008').value),
+        v1div: parseFloat(document.getElementById('rlV11008').value),
+        v2div: parseFloat(document.getElementById('rlV21008').value),
+        tdiv:  parseFloat(document.getElementById('rlT1008').value)    /* ms */
+      };
+    }
+    /* ── physics ──
+Current lags the source by phi = arctan(XL/R).
+VR is in phase with current  -> lags source by phi.
+VL leads current by 90°      -> leads VR by exactly 90°.          */
+    function physics() {
+      var k = controls();
+      var tol = tolOn();
+      var R = k.Rset * (1 + (tol ? errR : 0));
+      var L = k.Lset * 1e-3 * (1 + (tol ? errL : 0));
+      var f = k.Fset * (1 + (tol ? errF : 0));
+      var w = 2 * Math.PI * f;
+      var XL = w * L;
+      var Z  = Math.sqrt(R*R + XL*XL);
+      var phi = Math.atan(XL / R);           /* current & VR lag the source by phi (rad) */
+      var Im  = k.Vm / Z;
+      var VRm = Im * R;
+      var VLm = Im * XL;
+      return { k:k, R:R, L:L, f:f, w:w, XL:XL, Z:Z, phi:phi, Im:Im, VRm:VRm, VLm:VLm };
+    }
+    /* ── schematic (always drawn, left panel) ── */
+    function drawSchematic(p) {
+      var x0 = 10, colX = 205;
+      ctx.strokeStyle = c('--rl-struct','#111'); ctx.fillStyle = c('--rl-struct','#111');
+      ctx.lineWidth = 2; ctx.font = '12px monospace'; ctx.textAlign = 'left';
+      /* function generator symbol */
+      var gy = 55;
+      ctx.beginPath(); ctx.arc(colX-100, gy, 26, 0, 2*Math.PI); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(colX-116, gy);
+      for (var i2=0;i2<=16;i2++){ ctx.lineTo(colX-116+i2*2, gy - 8*Math.sin(i2*Math.PI/4)); }
+      ctx.strokeStyle = c('--rl-src','#888'); ctx.stroke();
+      ctx.fillStyle = c('--rl-struct','#111');
+      ctx.fillText('FG', colX-110, gy+42);
+      ctx.fillText('v(t) = Vm sin(\u03C9t)', colX-152, gy+58);
+      /* top wire */
+      ctx.strokeStyle = c('--rl-struct','#111');
+      ctx.beginPath(); ctx.moveTo(colX-74, gy); ctx.lineTo(colX, gy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX, gy); ctx.lineTo(colX, 100); ctx.stroke();
+      /* resistor zigzag (vertical, y 100-170) */
+      var rY0 = 100, rY1 = 170;
+      ctx.beginPath(); ctx.moveTo(colX, rY0);
+      var seg = (rY1-rY0)/8, dir=1, s;
+      for (s=0;s<8;s++){ ctx.lineTo(colX + dir*10, rY0 + seg*(s+1)); dir*=-1; }
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX - dir*10, rY0 + seg*s); ctx.lineTo(colX, rY1+seg); ctx.stroke();
+      ctx.fillText('R', colX+16, (rY0+rY1)/2+4);
+      /* node A -> inductor coil (drawn as a vertical row of bumps) */
+      var coilY0 = rY1+seg+10, loops = 4, loopH, coilY1, coilR;
+      loopH = 15; coilY1 = coilY0 + loops*loopH; coilR = loopH/2;
+      ctx.beginPath(); ctx.moveTo(colX, rY1+seg); ctx.lineTo(colX, coilY0); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(colX, coilY0);
+      for (var li=0; li<loops; li++){
+        var cyy = coilY0 + li*loopH + coilR;
+        ctx.arc(colX, cyy, coilR, -Math.PI/2, Math.PI/2, false);
+      }
+      ctx.stroke();
+      ctx.fillText('L', colX+24, (coilY0+coilY1)/2+4);
+      var lY2 = 300;
+      ctx.beginPath(); ctx.moveTo(colX, coilY1); ctx.lineTo(colX, lY2); ctx.stroke();
+      /* ground bar + return wire to generator */
+      ctx.beginPath(); ctx.moveTo(colX-14, lY2); ctx.lineTo(colX+14, lY2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX-9, lY2+5); ctx.lineTo(colX+9, lY2+5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX-4, lY2+10); ctx.lineTo(colX+4, lY2+10); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(colX, lY2); ctx.lineTo(30, lY2);
+      ctx.lineTo(30, gy); ctx.lineTo(colX-126, gy);
+      ctx.stroke();
+      /* CH1 probe across R (yellow) */
+      ctx.strokeStyle = c('--rl-vr','#e0a800'); ctx.fillStyle = c('--rl-vr','#e0a800');
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(colX+40, rY0); ctx.lineTo(colX+60, rY0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX+40, rY1); ctx.lineTo(colX+60, rY1); ctx.stroke();
+      ctx.beginPath(); ctx.arc(colX+40, rY0, 3, 0, 2*Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(colX+40, rY1, 3, 0, 2*Math.PI); ctx.fill();
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText('CH1', colX+64, (rY0+rY1)/2);
+      ctx.font = '11px monospace';
+      ctx.fillText('(V\u1D63)', colX+64, (rY0+rY1)/2+14);
+      /* CH2 probe across L (purple) */
+      ctx.strokeStyle = c('--rl-vl','#7a5cff'); ctx.fillStyle = c('--rl-vl','#7a5cff');
+      ctx.beginPath(); ctx.moveTo(colX+40, coilY0); ctx.lineTo(colX+70, coilY0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(colX+40, coilY1); ctx.lineTo(colX+70, coilY1); ctx.stroke();
+      ctx.beginPath(); ctx.arc(colX+40, coilY0, 3, 0, 2*Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(colX+40, coilY1, 3, 0, 2*Math.PI); ctx.fill();
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText('CH2', colX+74, (coilY0+coilY1)/2+4);
+      ctx.font = '11px monospace';
+      ctx.fillText('(V\u2097)', colX+74, (coilY0+coilY1)/2+18);
+      /* component values printed under schematic */
+      ctx.fillStyle = c('--rl-text','#111'); ctx.font = '12px monospace';
+      ctx.fillText('R = '+p.R.toFixed(0)+' \u03A9', 20, 340);
+      ctx.fillText('L = '+(p.L*1e3).toFixed(1)+' mH', 20, 358);
+      ctx.fillText('f = '+p.f.toFixed(1)+' Hz', 20, 376);
+      if (tolOn()) {
+        ctx.fillStyle = '#a04a00'; ctx.font = 'italic 11px monospace';
+        ctx.fillText('(values include component', 20, 396);
+        ctx.fillText('tolerance / meas. error)', 20, 410);
+      }
+    }
+    /* ── oscilloscope panel (right side, scope tab) ── */
+    var scopeX = 350, scopeY = 8, scopeW = 340, scopeH = 300;
+    function timeToX(tSec, tdivMs) {
+      var halfSpanSec = (tdivMs/1000) * 5;
+      return scopeX + scopeW/2 + (tSec/halfSpanSec) * (scopeW/2);
+    }
+    function xToTime(x, tdivMs) {
+      var halfSpanSec = (tdivMs/1000) * 5;
+      return ((x - (scopeX+scopeW/2)) / (scopeW/2)) * halfSpanSec;
+    }
+    function drawScopePanel(p) {
+      ctx.fillStyle = c('--rl-scope-bg','#0b1a0f');
+      ctx.fillRect(scopeX, scopeY, scopeW, scopeH);
+      ctx.strokeStyle = c('--rl-grid','#2c4a34'); ctx.lineWidth = 1;
+      var cols = 10, rows = 8;
+      for (var i3=0;i3<=cols;i3++){
+        var gx = scopeX + i3*scopeW/cols;
+        ctx.beginPath(); ctx.moveTo(gx, scopeY); ctx.lineTo(gx, scopeY+scopeH); ctx.stroke();
+      }
+      for (var j3=0;j3<=rows;j3++){
+        var gyy = scopeY + j3*scopeH/rows;
+        ctx.beginPath(); ctx.moveTo(scopeX, gyy); ctx.lineTo(scopeX+scopeW, gyy); ctx.stroke();
+      }
+      var midY = scopeY + scopeH/2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath(); ctx.moveTo(scopeX, midY); ctx.lineTo(scopeX+scopeW, midY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(scopeX+scopeW/2, scopeY); ctx.lineTo(scopeX+scopeW/2, scopeY+scopeH); ctx.stroke();
+      var pxPerDivY = scopeH/rows;
+      var noise = tolOn() ? errScope : 0;
+      function yFor(v, voltsDiv) { return midY - (v*(1+noise)/voltsDiv) * pxPerDivY; }
+      /* CH1 trace: VR(t) */
+      ctx.strokeStyle = c('--rl-vr','#e0a800'); ctx.lineWidth = 2; ctx.beginPath();
+      for (var xpix=scopeX; xpix<=scopeX+scopeW; xpix++) {
+        var tS = xToTime(xpix, p.k.tdiv);
+        var v = p.VRm * Math.sin(p.w*tS - p.phi);
+        var yy2 = yFor(v, p.k.v1div);
+        if (xpix===scopeX) ctx.moveTo(xpix, yy2); else ctx.lineTo(xpix, yy2);
+      }
+      ctx.stroke();
+      /* CH2 trace: VL(t) */
+      ctx.strokeStyle = c('--rl-vl','#7a5cff'); ctx.beginPath();
+      for (var xpix2=scopeX; xpix2<=scopeX+scopeW; xpix2++) {
+        var tS2 = xToTime(xpix2, p.k.tdiv);
+        var v2 = p.VLm * Math.sin(p.w*tS2 - p.phi + Math.PI/2);
+        var yy3 = yFor(v2, p.k.v2div);
+        if (xpix2===scopeX) ctx.moveTo(xpix2, yy3); else ctx.lineTo(xpix2, yy3);
+      }
+      ctx.stroke();
+      /* animated sweep beam dot (visual only, runs when Play is on) */
+      var beamX = scopeX + sweepPhase*scopeW;
+      var tB = xToTime(beamX, p.k.tdiv);
+      var vB = p.VRm * Math.sin(p.w*tB - p.phi);
+      ctx.fillStyle = c('--rl-vr','#e0a800');
+      ctx.beginPath(); ctx.arc(beamX, yFor(vB,p.k.v1div), 3, 0, 2*Math.PI); ctx.fill();
+      /* cursors */
+      ctx.font='11px monospace';
+      if (cur1X!==null) drawCursor(cur1X, '1');
+      if (cur2X!==null) drawCursor(cur2X, '2');
+      /* legend / settings text */
+      ctx.textAlign='left'; ctx.font='11px monospace';
+      ctx.fillStyle = c('--rl-vr','#e0a800');
+      ctx.fillText('CH1: V\u1D63  '+p.k.v1div+' V/div', scopeX+4, scopeY+scopeH+14);
+      ctx.fillStyle = c('--rl-vl','#7a5cff');
+      ctx.fillText('CH2: V\u2097  '+p.k.v2div+' V/div', scopeX+150, scopeY+scopeH+14);
+      ctx.fillStyle = c('--rl-text','#111');
+      ctx.fillText('Time/div: '+p.k.tdiv+' ms', scopeX+4, scopeY+scopeH+28);
+      ctx.fillText('Drag on the screen to place phase-measurement cursors.', scopeX+4, scopeY+scopeH+42);
+    }
+    function drawCursor(x, label) {
+      ctx.strokeStyle = c('--rl-cursor','#d33fd3'); ctx.lineWidth = 1;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(x, scopeY); ctx.lineTo(x, scopeY+scopeH); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = c('--rl-cursor','#d33fd3');
+      ctx.fillText(label, x-3, scopeY-2);
+    }
+    /* ── phasor panel ── */
+    function drawPhasorPanel(p) {
+      if (phasorMode === 'impedance') { drawImpedancePanel(p); return; }
+      var cx = scopeX + scopeW/2, cy = scopeY + scopeH/2 + 10;
+      ctx.strokeStyle = c('--rl-grid','#2c4a34'); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(scopeX, cy); ctx.lineTo(scopeX+scopeW, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, scopeY); ctx.lineTo(cx, scopeY+scopeH); ctx.stroke();
+      var maxV = Math.max(p.k.Vm, p.VRm, p.VLm, 0.01);
+      var scale = (scopeW/2 - 20) / maxV;
+      var rot = phasorAngle;
+      function arrow(angRad, mag, color, label) {
+        var ex = cx + mag*scale*Math.cos(angRad + rot);
+        var ey = cy - mag*scale*Math.sin(angRad + rot);
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex,ey); ctx.stroke();
+        var hAng = Math.atan2(cy-ey, ex-cx);
+        ctx.beginPath();
+        ctx.moveTo(ex,ey);
+        ctx.lineTo(ex-9*Math.cos(hAng-0.3), ey+9*Math.sin(hAng-0.3));
+        ctx.lineTo(ex-9*Math.cos(hAng+0.3), ey+9*Math.sin(hAng+0.3));
+        ctx.closePath(); ctx.fill();
+        ctx.font='bold 12px monospace';
+        ctx.fillText(label, ex+ (ex>=cx?6:-24), ey-(ey<cy? 4 : -14));
+      }
+      arrow(0, p.k.Vm, c('--rl-src','#888'), 'v(t)');
+      arrow(-p.phi, p.VRm, c('--rl-vr','#e0a800'), 'V\u1D63');
+      arrow(-p.phi + Math.PI/2, p.VLm, c('--rl-vl','#7a5cff'), 'V\u2097');
+      /* angle arc for phi, from v(t) clockwise down to VR (current lags).
+         Canvas angles run clockwise, so v(t) is at -rot and VR at phi-rot. */
+      ctx.strokeStyle = c('--rl-text','#111'); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(cx, cy, 26, -rot, p.phi-rot, false); ctx.stroke();
+      ctx.font='12px monospace';
+      ctx.fillStyle = c('--rl-text','#111');
+      ctx.fillText('\u03C6 = '+(p.phi*180/Math.PI).toFixed(1)+'\u00B0', cx+30, cy+42);
+      ctx.font='12px monospace';
+      ctx.fillText('\u2220(V\u1D63 \u2192 V\u2097) = 90.0\u00B0 (always, for series RL)', scopeX+4, scopeY+scopeH+18);
+      ctx.fillText('\u2220(v \u2192 V\u1D63) = \u2212\u03C6 = \u2212'+(p.phi*180/Math.PI).toFixed(1)+'\u00B0  (current lags source; changes with frequency)', scopeX+4, scopeY+scopeH+34);
+    }
+    /* ── impedance diagram (phasor tab, impedance mode) ──
+       Z = R + jXL. R lies along the +real axis, +jXL points straight up,
+       and Z is the resultant, sitting phi above the real axis. Impedance
+       does not depend on time, so this diagram does not rotate.
+       Same scale on both axes so the angle drawn is the true angle.      */
+    function drawImpedancePanel(p) {
+      var ox = scopeX + 40, oy = scopeY + scopeH - 40;   /* origin */
+      var availX = scopeW - 120, availY = scopeH - 70;
+      var scale = Math.min(availX / p.R, availY / p.XL);
+      var rx = ox + p.R * scale;                          /* tip of R */
+      var ty = oy - p.XL * scale;                         /* tip of +jXL / Z */
+      var textCol = c('--rl-text','#111');
+      /* axes */
+      ctx.strokeStyle = c('--rl-grid','#2c4a34'); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(scopeX+10, oy); ctx.lineTo(scopeX+scopeW-10, oy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox, scopeY+4); ctx.lineTo(ox, scopeY+scopeH-4); ctx.stroke();
+      ctx.fillStyle = textCol; ctx.font = '11px monospace'; ctx.textAlign = 'left';
+      ctx.fillText('Re', scopeX+scopeW-28, oy+14);
+      ctx.fillText('+Im', ox+6, scopeY+14);
+      ctx.fillText('\u2212Im', ox+6, scopeY+scopeH-6);
+      function vec(x0, y0, x1, y1, color, w) {
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w;
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+        var len = Math.sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0));
+        if (len < 4) return;
+        var a = Math.atan2(y1-y0, x1-x0);
+        ctx.beginPath(); ctx.moveTo(x1,y1);
+        ctx.lineTo(x1-9*Math.cos(a-0.3), y1-9*Math.sin(a-0.3));
+        ctx.lineTo(x1-9*Math.cos(a+0.3), y1-9*Math.sin(a+0.3));
+        ctx.closePath(); ctx.fill();
+      }
+      /* faint projection of XL onto the imaginary axis */
+      ctx.setLineDash([4,4]);
+      ctx.strokeStyle = c('--rl-vl','#7a5cff'); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ox, ty); ctx.lineTo(rx, ty); ctx.stroke();
+      ctx.setLineDash([]);
+      /* R, then +jXL from the tip of R, then Z from the origin */
+      vec(ox, oy, rx, oy, c('--rl-vr','#e0a800'), 3);
+      vec(rx, oy, rx, ty, c('--rl-vl','#7a5cff'), 3);
+      vec(ox, oy, rx, ty, c('--rl-src','#888'), 3);
+      /* right-angle mark between R and +jXL */
+      ctx.strokeStyle = textCol; ctx.lineWidth = 1;
+      var m = Math.min(10, (rx-ox)/3, (oy-ty)/3);
+      if (m > 3) { ctx.beginPath(); ctx.moveTo(rx-m, oy); ctx.lineTo(rx-m, oy-m); ctx.lineTo(rx, oy-m); ctx.stroke(); }
+      /* phi arc from R counterclockwise up to Z */
+      var arcR = Math.min(34, 0.5*Math.sqrt((rx-ox)*(rx-ox)+(oy-ty)*(oy-ty)));
+      ctx.beginPath(); ctx.arc(ox, oy, arcR, 0, -p.phi, true); ctx.stroke();
+      /* labels */
+      ctx.font = 'bold 12px monospace';
+      ctx.fillStyle = c('--rl-vr','#e0a800');
+      ctx.fillText('R = '+p.R.toFixed(0)+' \u03A9', ox + Math.max(4,(rx-ox)/2 - 40), oy+16);
+      ctx.fillStyle = c('--rl-vl','#7a5cff');
+      /* two-line label beside the +jXL arrow: right side if it fits, else left */
+      var xlL1 = '+jX\u2097 =', xlL2 = '+j'+p.XL.toFixed(0)+' \u03A9';
+      var xlW = Math.max(ctx.measureText(xlL1).width, ctx.measureText(xlL2).width);
+      var xlMidY = (oy - ty < 40) ? ty - 22 : oy - (oy-ty)/2;   /* flat triangle: label above the short arrow */
+      if (rx + 8 + xlW <= scopeX + scopeW - 4) { ctx.textAlign = 'left';  ctx.fillText(xlL1, rx+8, xlMidY-4); ctx.fillText(xlL2, rx+8, xlMidY+12); }
+      else                                     { ctx.textAlign = 'right'; ctx.fillText(xlL1, rx-8, xlMidY-4); ctx.fillText(xlL2, rx-8, xlMidY+12); }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = c('--rl-src','#888');
+      var zx = ox + (rx-ox)*0.45, zyl = oy - (oy-ty)*0.45;
+      var zLabel = 'Z = '+p.Z.toFixed(0)+' \u03A9';
+      if (oy - ty < 40) { ctx.textAlign = 'right'; ctx.fillText(zLabel, rx - 8, ty - 10); ctx.textAlign = 'left'; }   /* flat triangle: above the tip */
+      else if (zx - 92 >= scopeX + 4) ctx.fillText(zLabel, zx - 92, zyl - 6);
+      else ctx.fillText(zLabel, rx + 8, ty - 4);   /* narrow triangle: label beside the tip of Z */
+      ctx.fillStyle = textCol; ctx.font = '12px monospace';
+      if (Math.abs(p.phi) > 0.07) { var bA = Math.abs(p.phi)/2, bR = arcR + 10;
+        ctx.textAlign = 'center'; ctx.fillText('\u03C6', ox + bR*Math.cos(bA), oy - bR*Math.sin(bA) + 4); ctx.textAlign = 'left'; }
+      /* notes under the panel */
+      ctx.font = '12px monospace'; ctx.fillStyle = textCol;
+      ctx.fillText('Z = R + jX\u2097,   |Z| = \u221A(R\u00B2+X\u2097\u00B2) = '+p.Z.toFixed(0)+' \u03A9', scopeX+4, scopeY+scopeH+18);
+      ctx.fillText('\u03C6 = arctan(X\u2097/R) = '+(p.phi*180/Math.PI).toFixed(1)+'\u00B0', scopeX+4, scopeY+scopeH+34);
+      ctx.fillText('Multiply each side by I\u2098 to get V\u1D63, V\u2097 and V\u2098.', scopeX+4, scopeY+scopeH+50);
+    }
+    /* ── shared readout strip (bottom of canvas, all tabs) ── */
+    function drawReadout(p) {
+      var y0 = 380;
+      ctx.fillStyle = c('--rl-text','#111'); ctx.font='12px monospace'; ctx.textAlign='left';
+      ctx.fillText('XL = '+p.XL.toFixed(1)+' \u03A9    Z = '+p.Z.toFixed(1)+' \u03A9    \u03C6 = '+(p.phi*180/Math.PI).toFixed(1)+'\u00B0', 350, y0);
+      ctx.fillText('V\u1D63(pk) = '+p.VRm.toFixed(2)+' V    V\u2097(pk) = '+p.VLm.toFixed(2)+' V', 350, y0+16);
+      var balanced = Math.abs(p.XL - p.R)/p.R < 0.03;
+      if (balanced) {
+        ctx.fillStyle = c('--rl-good','#1a8a3a'); ctx.font='bold 13px monospace';
+        ctx.fillText('\u2713 XL \u2248 R  \u2192  V\u1D63 \u2248 V\u2097  (\u03C6 \u2248 45\u00B0)  BALANCED', 350, y0+38);
+      } else {
+        ctx.fillStyle = c('--rl-text','#111'); ctx.font='12px monospace';
+        var hint = p.XL > p.R ? 'Lower f (or L) to bring XL down toward R.' : 'Raise f (or L) to bring XL up toward R.';
+        ctx.fillText(hint, 350, y0+38);
+      }
+      /* cursor readout */
+      if (cur1X!==null && cur2X!==null) {
+        var t1 = xToTime(cur1X, p.k.tdiv), t2 = xToTime(cur2X, p.k.tdiv);
+        var dt = Math.abs(t2-t1);
+        var dphi = (dt * p.f * 360) % 360;
+        ctx.fillStyle = c('--rl-cursor','#d33fd3'); ctx.font='12px monospace';
+        ctx.fillText('Cursors: \u0394t = '+(dt*1000).toFixed(3)+' ms   \u21D2  \u0394\u03C6 = '+dphi.toFixed(1)+'\u00B0', 350, y0+56);
+      }
+    }
+    /* ── equations panel (DOM) ── */
+    function fmtNum(x, d) { return (Math.round(x*Math.pow(10,d))/Math.pow(10,d)).toString(); }
+    function renderEquations(p) {
+      var wRound = fmtNum(p.w,1);
+      var html = '';
+      html += '<h4>Circuit relations</h4>';
+      html += '<div class="rl_eqline1008">X<sub>L</sub> = 2&pi;f L = '+p.XL.toFixed(1)+' &Omega;</div>';
+      html += '<div class="rl_eqline1008">Z = &radic;(R&sup2; + X<sub>L</sub>&sup2;) = '+p.Z.toFixed(1)+' &Omega;</div>';
+      html += '<div class="rl_eqline1008">&phi; = arctan(X<sub>L</sub>/R) = '+(p.phi*180/Math.PI).toFixed(2)+'&deg;  (current &amp; V<sub>R</sub> lag the source by &phi;)</div>';
+      html += '<div class="rl_eqline1008">I<sub>m</sub> = V<sub>m</sub> / Z = '+(p.Im*1000).toFixed(2)+' mA</div>';
+      html += '<h4>Time-domain waveforms</h4>';
+      html += '<div class="rl_eqline1008">v(t) = '+p.k.Vm.toFixed(2)+' sin('+wRound+' t)  V</div>';
+      html += '<div class="rl_eqline1008">v<sub>R</sub>(t) = I<sub>m</sub> R sin(&omega;t &minus; &phi;) = '+p.VRm.toFixed(2)+' sin('+wRound+' t \u2212 '+(p.phi).toFixed(3)+')  V</div>';
+      html += '<div class="rl_eqline1008">v<sub>L</sub>(t) = I<sub>m</sub> X<sub>L</sub> sin(&omega;t &minus; &phi; + 90&deg;) = '+p.VLm.toFixed(2)+' sin('+wRound+' t \u2212 '+(p.phi).toFixed(3)+' + '+(Math.PI/2).toFixed(3)+')  V</div>';
+      html += '<h4>Key facts to verify experimentally</h4>';
+      html += '<div class="rl_eqline1008">&bull; v<sub>L</sub> always leads v<sub>R</sub> by exactly 90&deg;, for any R, L, f.</div>';
+      html += '<div class="rl_eqline1008">&bull; When you tune f (or L) so that X<sub>L</sub> = R, then V<sub>R</sub>(pk) = V<sub>L</sub>(pk), and &phi; = 45&deg; (halfway between 0&deg; and 90&deg;).</div>';
+      html += '<div class="rl_eqline1008">&bull; At f &rarr; 0, X<sub>L</sub> &rarr; 0, &phi; &rarr; 0&deg; (nearly all of v(t) appears across R; the inductor looks like a short).</div>';
+      html += '<div class="rl_eqline1008">&bull; At f &rarr; &infin;, X<sub>L</sub> &rarr; &infin;, &phi; &rarr; 90&deg; (nearly all of v(t) appears across L; the inductor looks open).</div>';
+      html += '<h4>Currently set values</h4>';
+      html += '<div class="rl_eqline1008">R = '+p.R.toFixed(0)+' &Omega;,  L = '+(p.L*1e3).toFixed(2)+' mH,  f = '+p.f.toFixed(1)+' Hz,  V<sub>m</sub> = '+p.k.Vm.toFixed(2)+' V'+(tolOn()?'  <i>(includes simulated component tolerance)</i>':'')+'</div>';
+      eqPanel.innerHTML = html;
+    }
+    /* ── full redraw ── */
+    function drawFrame() {
+      var p = physics();
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = c('--rl-bg','#fff'); ctx.fillRect(0,0,W,H);
+      if (tab === 'equations') {
+        canvas.style.display = 'none';
+        eqPanel.style.display = 'block';
+        renderEquations(p);
+        return;
+      }
+      canvas.style.display = 'block';
+      eqPanel.style.display = 'none';
+      drawSchematic(p);
+      if (tab === 'scope') drawScopePanel(p); else drawPhasorPanel(p);
+      drawReadout(p);
+    }
+    /* ── narration ── */
+    var frameCount = 0, narrationEvery = 60, lastNarratedTab = null, lastNarratedBalanced = null;
+    function sceneNarration(force) {
+      var p = physics();
+      var balanced = Math.abs(p.XL - p.R)/p.R < 0.03;
+      if (!force && tab === lastNarratedTab && balanced === lastNarratedBalanced) return;
+      lastNarratedTab = tab; lastNarratedBalanced = balanced;
+      var msg = '';
+      if (tab === 'scope') {
+        msg = 'Oscilloscope showing CH1, the resistor voltage in yellow, and CH2, the inductor voltage in purple. ';
+        msg += 'At the current frequency of '+p.f.toFixed(0)+' Hz, the reactance XL is '+p.XL.toFixed(0)+' ohms versus R of '+p.R.toFixed(0)+' ohms. ';
+        msg += balanced ? 'The two traces now have equal amplitude -- the balanced condition XL equals R has been reached.'
+        : 'The traces have unequal amplitude; adjust frequency or inductance to make XL equal R.';
+      } else if (tab === 'phasor' && phasorMode === 'impedance') {
+        msg = 'Impedance diagram. R of '+p.R.toFixed(0)+' ohms lies along the real axis, the inductive reactance of '+p.XL.toFixed(0)+' ohms points straight up along the positive imaginary axis, and the total impedance Z of '+p.Z.toFixed(0)+' ohms is the hypotenuse, '+(p.phi*180/Math.PI).toFixed(0)+' degrees above the real axis. This diagram does not rotate.';
+      } else if (tab === 'phasor') {
+        msg = 'Phasor diagram, rotating counterclockwise, showing the source voltage, the resistor voltage lagging it by phi, and the inductor voltage leading the resistor voltage by exactly ninety degrees. Current phi is '+(p.phi*180/Math.PI).toFixed(0)+' degrees.';
+      } else {
+        msg = 'Equations panel showing the live time-domain expressions for the source, resistor, and inductor voltages.';
+      }
+      rlA11y1008.narrate(msg);
+    }
+    /* ── animation loop ── */
+    function runMotion() {
+      sweepPhase += 0.02; if (sweepPhase > 1) sweepPhase = 0;
+      phasorAngle += 0.03;
+      frameCount++;
+      drawFrame();
+      if (frameCount % narrationEvery === 0) sceneNarration(false);
+      if (runFlag === 1) timer = window.setTimeout(runMotion, 40);
+    }
+    function pl() { window.clearTimeout(timer); runFlag = 1; runMotion(); }
+    function ps() { window.clearTimeout(timer); runFlag = 0; }
+    function step() {
+      window.clearTimeout(timer); runFlag = 0;
+      sweepPhase += 0.05; if (sweepPhase > 1) sweepPhase = 0;
+      phasorAngle += 0.08;
+      drawFrame(); sceneNarration(true);
+    }
+    function rst() {
+      window.clearTimeout(timer); runFlag = 0;
+      rollTolerances();
+      sweepPhase = 0; phasorAngle = 0; cur1X = null; cur2X = null;
+      drawFrame(); sceneNarration(true);
+    }
+    function redraw() { drawFrame(); }
+    function setTab(t) {
+      tab = t;
+      ['scope','phasor','equations'].forEach(function(nm){
+        var el = null;
+        if (nm==='scope') el = document.getElementById('rlTabScope1008');
+        if (nm==='phasor') el = document.getElementById('rlTabPhasor1008');
+        if (nm==='equations') el = document.getElementById('rlTabEq1008');
+        if (el) el.classList.toggle('rl_tabon1008', nm===t);
+      });
+      var modeBar = document.getElementById('rlPhasorModeBar1008');
+      if (modeBar) modeBar.style.display = (t === 'phasor') ? 'flex' : 'none';
+      drawFrame(); sceneNarration(true);
+    }
+    function setPhasorMode(m) {
+      phasorMode = m;
+      var bv = document.getElementById('rlModeV1008'), bz = document.getElementById('rlModeZ1008');
+      if (bv) { bv.classList.toggle('rl_subon1008', m === 'voltage');   bv.setAttribute('aria-pressed', m === 'voltage' ? 'true' : 'false'); }
+      if (bz) { bz.classList.toggle('rl_subon1008', m === 'impedance'); bz.setAttribute('aria-pressed', m === 'impedance' ? 'true' : 'false'); }
+      drawFrame(); sceneNarration(true);
+    }
+    function clearCursors() { cur1X = null; cur2X = null; drawFrame(); }
+    /* ── mouse interaction for phase-measurement cursors ── */
+    function localX(evt) {
+      var rect = canvas.getBoundingClientRect();
+      var cx = (evt.touches ? evt.touches[0].clientX : evt.clientX) - rect.left;
+      return cx * (canvas.width / rect.width);
+    }
+    canvas.addEventListener('mousedown', function(evt){
+      if (tab !== 'scope') return;
+      var x = localX(evt);
+      if (x < scopeX || x > scopeX+scopeW) return;
+      if (cur1X === null || Math.abs(x-cur1X) <= Math.abs(x-(cur2X===null?1e9:cur2X))) {
+        if (cur1X === null) { cur1X = x; }
+        else if (cur2X === null) { cur2X = x; }
+        else { dragCur = Math.abs(x-cur1X) < Math.abs(x-cur2X) ? 1 : 2; }
+      }
+      if (cur1X !== null && cur2X !== null && dragCur === null) {
+        dragCur = Math.abs(x-cur1X) < Math.abs(x-cur2X) ? 1 : 2;
+      }
+      drawFrame();
+    });
+    canvas.addEventListener('mousemove', function(evt){
+      if (tab !== 'scope' || dragCur === null) return;
+      var x = Math.max(scopeX, Math.min(scopeX+scopeW, localX(evt)));
+      if (dragCur===1) cur1X = x; else cur2X = x;
+      drawFrame();
+    });
+    window.addEventListener('mouseup', function(){ dragCur = null; });
+    /* boot */
+    rst();
+    return { pl:pl, ps:ps, step:step, rst:rst, redraw:redraw, setTab:setTab, setPhasorMode:setPhasorMode, clearCursors:clearCursors };
+  };
+  var rlSim1008 = new rlGen();
+</script>
+<script>
+  rlA11y1008.init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1003 @@
+<!-- ═══════════════════════════════════════════════════════════════════
+ RC Circuit with R1, R2, R3 -- SP3T switch (Charge / Open / Discharge)
+ with measurement noise, selectable graphs (raw + linearized),
+ linear fit with uncertainty, and a data-reading cursor.
+CHARGE    : E -> R1 -> (switch) -> R2 -> C         tau_c = (R1 + R2) C
+DISCHARGE : C -> R2 -> (switch) -> R3 -> back to C  tau_d = (R2 + R3) C
+ OPEN      : no external path; the charge slowly leaks through the capacitor's dielectric,
+ modelled as R_leak = LEAK_FACTOR x (R1 + R2) in parallel with C.
+ A resistor set to 0 is a plain wire (short).
+ MANUAL CURVE FIT (available while the simulation is paused): over the fit window the student
+ chooses a model  y = A t + B,  y = A exp(-C (t - t0)) + B  or  y = A (1 - exp(-C (t - t0))) + B
+ and adjusts A, B, C, t0 by hand to minimise the RMS residual.
+ Placeholders used: $thisq, $v (EMF E in V), $R1, $R2, $R3 (ohm), $C (F),
+$minRC, $maxRC, $incRC, $rccharge3Rs, [AB0]..[AB3]
+═══════════════════════════════════════════════════════════════════ -->
+<div id="rc5root$thisq">
+<div class="rc5_a11y$thisq" role="toolbar" aria-label="Display options">
+<button type="button" class="rc5_a11ybtn$thisq" id="rc5BtnHC$thisq" onclick="rc5A11y$thisq.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rc5_a11ybtn$thisq" id="rc5BtnLM$thisq" onclick="rc5A11y$thisq.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rc5_a11ybtn$thisq" id="rc5BtnCB$thisq" onclick="rc5A11y$thisq.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rc5_a11ybtn$thisq rc5_a11yon$thisq" id="rc5BtnNR$thisq" onclick="rc5A11y$thisq.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="rc5_tbar$thisq"><h3>RC Circuit &ndash; SP3T Switch (Charge / Open / Discharge): Curve Fitting to Find the Time Constants</h3></div>
+<div class="rc5_main$thisq">
+<canvas id="rc5Circ$thisq" width="450" height="460" role="img" aria-label="RC circuit: battery, R1, three-position switch, R2, capacitor C, and R3 in the discharge branch, with live meter readings"></canvas>
+<canvas id="rc5Graph$thisq" width="442" height="460" role="img" aria-label="Graph of the selected measured quantity versus time"></canvas>
+</div>
+<div id="rc5NarBar$thisq" class="rc5_narbar$thisq" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- Playback + switch -->
+<div class="rc5_bbar$thisq">
+<input type="button" id="rc5Play$thisq" value="&#9654; Play" onclick="RC5$thisq.togglePlay()">
+<input type="button" value="Step +0.5 s" onclick="RC5$thisq.step()">
+<input type="button" value="Reset" onclick="RC5$thisq.reset()">
+<span class="rc5_gap$thisq">Switch:</span>
+<button type="button" class="rc5_swbtn$thisq" id="rc5Sw1$thisq" onclick="RC5$thisq.setSwitch(1)">CHARGE</button>
+<button type="button" class="rc5_swbtn$thisq" id="rc5Sw2$thisq" onclick="RC5$thisq.setSwitch(2)">OPEN</button>
+<button type="button" class="rc5_swbtn$thisq" id="rc5Sw3$thisq" onclick="RC5$thisq.setSwitch(3)">DISCHARGE</button>
+<span class="rc5_gap$thisq">Speed:</span>
+<select id="rc5Speed$thisq" onchange="RC5$thisq.setSpeed(this.value)">
+<option value="1" selected>1&times;</option><option value="2">2&times;</option><option value="5">5&times;</option><option value="10">10&times;</option><option value="20">20&times;</option>
+</select>
+</div>
+<!-- What to graph -->
+<div class="rc5_row$thisq rc5_rowA$thisq">
+<label class="rc5_lab$thisq">Plot:
+<select id="rc5Y$thisq" onchange="RC5$thisq.setY(this.value)">
+<optgroup label="Measured data">
+<option value="VC" selected>V_C vs t</option>
+<option value="VR1">V_R1 vs t</option>
+<option value="VR2">V_R2 vs t</option>
+<option value="VR3">V_R3 vs t</option>
+</optgroup>
+<optgroup label="Linearized - CHARGE segment">
+<option value="LCC">ln(1 - V_C / E) vs t</option>
+<option value="LR1C">ln(V_R1 / E) vs t</option>
+<option value="LR2C">ln(V_R2 / E) vs t</option>
+</optgroup>
+<optgroup label="Linearized - DISCHARGE segment">
+<option value="LCD">ln(V_C / V0) vs t</option>
+<option value="LR2D">ln(|V_R2| / V0) vs t</option>
+<option value="LR3D">ln(|V_R3| / V0) vs t</option>
+</optgroup>
+<optgroup label="Linearized - OPEN segment (leakage)">
+<option value="LCO">ln(V_C / V0) vs t  (leak)</option>
+</optgroup>
+</select></label>
+<label class="rc5_lab$thisq">Data: <select id="rc5Seg$thisq" onchange="RC5$thisq.setSeg(this.value)" style="max-width:330px;"></select></label>
+</div>
+<!-- Fit -->
+<div class="rc5_row$thisq rc5_rowB$thisq">
+<label class="rc5_lab$thisq" id="rc5FitLbl$thisq"><input type="checkbox" id="rc5Fit$thisq" onchange="RC5$thisq.toggleFit(this.checked)" disabled> Automatic linear fit</label>
+<span class="rc5_lab$thisq">Fit window from</span>
+<input type="range" id="rc5FitLo$thisq" min="0" max="1" step="0.002" value="0" style="width:150px;" oninput="RC5$thisq.setFitLo(this.value)" disabled>
+<span id="rc5FitLoV$thisq" class="rc5_val$thisq">&ndash;</span>
+<span class="rc5_lab$thisq">to</span>
+<input type="range" id="rc5FitHi$thisq" min="0" max="1" step="0.002" value="1" style="width:150px;" oninput="RC5$thisq.setFitHi(this.value)" disabled>
+<span id="rc5FitHiV$thisq" class="rc5_val$thisq">&ndash;</span>
+</div>
+<!-- Manual curve fit -->
+<div class="rc5_row$thisq rc5_rowF$thisq">
+<label class="rc5_lab$thisq"><input type="checkbox" id="rc5MFOn$thisq" onchange="RC5$thisq.toggleMF(this.checked)" disabled> Manual curve fit:</label>
+<select id="rc5MFModel$thisq" onchange="RC5$thisq.setMFModel(this.value)" disabled>
+<option value="lin">y = A&middot;t + B</option>
+<option value="dec" selected>y = A&middot;exp(&minus;C(t &minus; t&#8320;)) + B</option>
+<option value="gro">y = A&middot;(1 &minus; exp(&minus;C(t &minus; t&#8320;))) + B</option>
+</select>
+<input type="button" id="rc5MFRescale$thisq" value="Rescale sliders" onclick="RC5$thisq.mfRescale()" disabled>
+<span id="rc5MFNote$thisq" class="rc5_note$thisq"></span>
+</div>
+<div class="rc5_mfgrid$thisq">
+<div class="rc5_mfcell$thisq" id="rc5MFRow_A$thisq"><b>A</b>
+<input type="range" id="rc5MF_A$thisq" min="-10" max="10" step="0.01" value="1" oninput="RC5$thisq.mfSet('A',this.value,'s')" disabled>
+<input type="number" id="rc5MF_An$thisq" step="any" value="1" onchange="RC5$thisq.mfSet('A',this.value,'n')" disabled>
+<span id="rc5MFU_A$thisq" class="rc5_mfu$thisq"></span></div>
+<div class="rc5_mfcell$thisq" id="rc5MFRow_B$thisq"><b>B</b>
+<input type="range" id="rc5MF_B$thisq" min="-10" max="10" step="0.01" value="0" oninput="RC5$thisq.mfSet('B',this.value,'s')" disabled>
+<input type="number" id="rc5MF_Bn$thisq" step="any" value="0" onchange="RC5$thisq.mfSet('B',this.value,'n')" disabled>
+<span id="rc5MFU_B$thisq" class="rc5_mfu$thisq"></span></div>
+<div class="rc5_mfcell$thisq" id="rc5MFRow_C$thisq"><b>C</b>
+<input type="range" id="rc5MF_C$thisq" min="0" max="2" step="0.001" value="0.5" oninput="RC5$thisq.mfSet('C',this.value,'s')" disabled>
+<input type="number" id="rc5MF_Cn$thisq" step="any" value="0.5" onchange="RC5$thisq.mfSet('C',this.value,'n')" disabled>
+<span class="rc5_mfu$thisq">s<sup>&minus;1</sup></span></div>
+<div class="rc5_mfcell$thisq" id="rc5MFRow_t0$thisq"><b>t&#8320;</b>
+<input type="range" id="rc5MF_t0$thisq" min="-10" max="10" step="0.01" value="0" oninput="RC5$thisq.mfSet('t0',this.value,'s')" disabled>
+<input type="number" id="rc5MF_t0n$thisq" step="any" value="0" onchange="RC5$thisq.mfSet('t0',this.value,'n')" disabled>
+<span class="rc5_mfu$thisq">s</span></div>
+</div>
+<!-- Cursor -->
+<div class="rc5_row$thisq rc5_rowC$thisq">
+<span class="rc5_lab$thisq">Read data at:</span>
+<input type="range" id="rc5Cur$thisq" min="0" max="1" step="0.0005" value="1" style="width:560px;" oninput="RC5$thisq.setCursor(this.value)" aria-label="Move the cursor along the plotted data">
+</div>
+<div id="rc5Read$thisq" class="rc5_read$thisq" aria-live="polite"></div>
+<div id="rc5Stats$thisq" class="rc5_stats$thisq"></div>
+<!-- Circuit sliders -->
+<div class="rc5_srow$thisq">
+<div class="rc5_slbl$thisq">R1 (&Omega;) &ndash; 0 = short</div>
+<div class="rc5_smid$thisq"><input type="range" id="rc5SR1$thisq" min="0" max="$maxRC" step="$incRC" value="$R1" oninput="RC5$thisq.chSlider('rc5VR1',this.value)"></div>
+<div class="rc5_sval$thisq"><span id="rc5VR1$thisq">$R1</span> &Omega;</div>
+</div>
+<div class="rc5_srow$thisq">
+<div class="rc5_slbl$thisq">R2 (&Omega;) &ndash; 0 = short</div>
+<div class="rc5_smid$thisq"><input type="range" id="rc5SR2$thisq" min="0" max="$maxRC" step="$incRC" value="$R2" oninput="RC5$thisq.chSlider('rc5VR2',this.value)"></div>
+<div class="rc5_sval$thisq"><span id="rc5VR2$thisq">$R2</span> &Omega;</div>
+</div>
+<div class="rc5_srow$thisq">
+<div class="rc5_slbl$thisq">R3 (&Omega;) &ndash; 0 = short</div>
+<div class="rc5_smid$thisq"><input type="range" id="rc5SR3$thisq" min="0" max="$maxRC" step="$incRC" value="$R3" oninput="RC5$thisq.chSlider('rc5VR3',this.value)"></div>
+<div class="rc5_sval$thisq"><span id="rc5VR3$thisq">$R3</span> &Omega;</div>
+</div>
+<div class="rc5_srow$thisq">
+<div class="rc5_slbl$thisq">Capacitance C (F)</div>
+<div class="rc5_smid$thisq"><input type="range" id="rc5SC$thisq" min="$minRC" max="$maxRC" step="$incRC" value="$C" oninput="RC5$thisq.chSlider('rc5VC',this.value)"></div>
+<div class="rc5_sval$thisq"><span id="rc5VC$thisq">$C</span> F</div>
+</div>
+<!-- Measurement settings -->
+<div class="rc5_row$thisq rc5_rowD$thisq">
+<span class="rc5_lab$thisq">Measurement noise:</span>
+<input type="range" id="rc5Noise$thisq" min="0" max="5" step="0.1" value="0.5" style="width:140px;" oninput="RC5$thisq.chNoise(this.value)">
+<span class="rc5_val$thisq"><span id="rc5NoiseV$thisq">0.5</span> % of E</span>
+<span class="rc5_lab$thisq">Sampling:</span>
+<select id="rc5Rate$thisq" onchange="RC5$thisq.chRate(this.value)">
+<option value="50">50 Hz</option><option value="20">20 Hz</option><option value="10" selected>10 Hz</option><option value="5">5 Hz</option><option value="2">2 Hz</option><option value="1">1 Hz</option>
+</select>
+<span class="rc5_lab$thisq">Component tolerance:</span>
+<select id="rc5Tol$thisq" onchange="RC5$thisq.chTol(this.value)">
+<option value="0" selected>ideal (0%)</option><option value="2">&plusmn;2%</option><option value="5">&plusmn;5%</option><option value="10">&plusmn;10%</option>
+</select>
+</div>
+<div class="rc5_row$thisq rc5_rowE$thisq">
+<input type="button" id="rc5CsvBtn$thisq" value="Show data table (CSV)" onclick="RC5$thisq.toggleCSV()">
+<span class="rc5_note$thisq">Lists the points currently plotted, so you can copy them into Capstone, Excel or Sheets.</span>
+</div>
+<textarea id="rc5Csv$thisq" class="rc5_csv$thisq" readonly style="display:none;" aria-label="Plotted data as comma-separated values"></textarea>
+<div class="rc5_flex$thisq">
+<p>The <strong>SP3T switch</strong> has three positions: <strong>CHARGE</strong> (battery charges C through R1 and R2),
+<strong>OPEN</strong> (no current in the circuit; the charge only leaks away slowly through the capacitor&rsquo;s dielectric) and <strong>DISCHARGE</strong> (C discharges through R2 and R3).
+Set any resistor to <strong>0</strong> to replace it with a plain wire.
+Every reading of V<sub>C</sub>, V<sub>R1</sub>, V<sub>R2</sub> and V<sub>R3</sub> carries random noise, just like a real voltage sensor.
+Each time you move the switch, a new <em>segment</em> of data begins; pick a single segment under <strong>Data</strong>
+to plot it against the time since the switch, t&nbsp;&minus;&nbsp;t<sub>0</sub>.
+The linearized plots should be straight lines with slope &minus;1/&tau;. Their intercepts tell you something too:
+compare the intercept of ln(V<sub>R1</sub>/E) with ln(V<sub>R2</sub>/E).
+Late in a segment the signal becomes comparable to the noise, so use the fit window to choose which points to fit.<br>
+<strong>Manual curve fit</strong> (available while paused): choose a model, then adjust A, B, C and t<sub>0</sub> by hand until the curve
+matches the points in the fit window; the smaller the RMS residual, the better the fit.</p>
+</div>
+</div><!-- #rc5root$thisq -->
+<style>
+#rc5root$thisq { font-family: Arial, sans-serif; width: 900px; color: var(--rc5-panel-text);
+--rc5-bg:#fffde7; --rc5-graph-bg:#f4fbfd; --rc5-text:#222; --rc5-grid:#cfd8dc; --rc5-wire:#555;
+--rc5-charge:#0044cc; --rc5-vc:#0044cc; --rc5-vr1:#cc0000; --rc5-vr2:#007700; --rc5-vr3:#aa6600;
+--rc5-fit:#c0392b; --rc5-cursor:#7b1fa2;
+--rc5-ui-bg:#f90; --rc5-ctrl-bg:#ddeebb; --rc5-slider-bg:#cce; --rc5-info-bg:#fffde7;
+--rc5-narbar:#ffefc0; --rc5-narborder:#e0b040; --rc5-panel-text:#000; --rc5-stats-bg:#eef3fb;
+--rc5-rowA:#e8e8f8; --rc5-rowB:#fce4ec; --rc5-rowC:#e8f5e9; --rc5-rowD:#fff3cd; --rc5-rowE:#f3e5f5; --rc5-rowF:#fff0e0; --rc5-mfit:#e65100; }
+#rc5root$thisq * { box-sizing: border-box; }
+#rc5root$thisq h3 { margin: 0; font-size: 1.05rem; color: #222; }
+#rc5root$thisq p { margin: 0; }
+#rc5root$thisq .rc5_a11y$thisq { display:flex; gap:6px; padding:4px 6px; background:#222; flex-wrap:wrap; }
+#rc5root$thisq .rc5_a11ybtn$thisq { padding:3px 8px; font-size:.72rem; font-family:monospace; letter-spacing:.06em;
+border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#rc5root$thisq .rc5_a11ybtn$thisq:hover { border-color:#00e8d0; color:#00e8d0; }
+#rc5root$thisq .rc5_a11yon$thisq { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#rc5root$thisq .rc5_tbar$thisq { padding:7px 4px; background:var(--rc5-ui-bg); text-align:center; }
+#rc5root$thisq .rc5_main$thisq { display:flex; gap:4px; justify-content:center; padding:3px 0; background:var(--rc5-bg); }
+#rc5root$thisq canvas { display:block; border:1px solid #999; }
+#rc5root$thisq .rc5_narbar$thisq { min-height:28px; padding:5px 10px; background:var(--rc5-narbar);
+border-left:4px solid var(--rc5-narborder); font-size:.88rem; font-style:italic; }
+#rc5root$thisq .rc5_bbar$thisq { background:var(--rc5-ctrl-bg); padding:5px; display:flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap; }
+#rc5root$thisq .rc5_bbar$thisq input[type=button] { padding:3px 9px; cursor:pointer; }
+#rc5root$thisq .rc5_gap$thisq { margin-left:10px; font-weight:bold; font-size:.88rem; }
+#rc5root$thisq .rc5_swbtn$thisq { padding:3px 11px; border-radius:12px; border:2px solid #888; background:#fff; color:#222;
+cursor:pointer; font-weight:bold; font-size:.82rem; }
+#rc5root$thisq .rc5_swon$thisq { background:#c00; border-color:#800; color:#fff; }
+#rc5root$thisq .rc5_row$thisq { min-height:38px; padding:4px 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.88rem; }
+#rc5root$thisq .rc5_rowA$thisq { background:var(--rc5-rowA); }
+#rc5root$thisq .rc5_rowB$thisq { background:var(--rc5-rowB); }
+#rc5root$thisq .rc5_rowC$thisq { background:var(--rc5-rowC); }
+#rc5root$thisq .rc5_rowD$thisq { background:var(--rc5-rowD); }
+#rc5root$thisq .rc5_rowE$thisq { background:var(--rc5-rowE); }
+#rc5root$thisq .rc5_rowF$thisq { background:var(--rc5-rowF); }
+#rc5root$thisq .rc5_mfgrid$thisq { display:grid; grid-template-columns:1fr 1fr; gap:4px 18px; padding:4px 10px 8px; background:var(--rc5-rowF); font-size:.88rem; }
+#rc5root$thisq .rc5_mfcell$thisq { display:flex; align-items:center; gap:8px; }
+#rc5root$thisq .rc5_mfcell$thisq b { width:20px; }
+#rc5root$thisq .rc5_mfcell$thisq input[type=range] { width:220px; }
+#rc5root$thisq .rc5_mfcell$thisq input[type=number] { width:90px; font-family:monospace; }
+#rc5root$thisq .rc5_mfu$thisq { font-size:.8rem; min-width:40px; }
+#rc5root$thisq .rc5_mfres$thisq { color:var(--rc5-mfit); font-weight:bold; }
+#rc5root$thisq .rc5_lab$thisq { font-weight:bold; }
+#rc5root$thisq .rc5_val$thisq { font-family:monospace; min-width:64px; }
+#rc5root$thisq .rc5_note$thisq { font-size:.8rem; }
+#rc5root$thisq .rc5_read$thisq { padding:6px 12px; background:var(--rc5-stats-bg); border-left:4px solid var(--rc5-cursor);
+font-family:monospace; font-size:.82rem; line-height:1.5; display:flex; flex-wrap:wrap; gap:2px 20px; min-height:30px; }
+#rc5root$thisq .rc5_stats$thisq { padding:6px 12px; background:var(--rc5-stats-bg); border-left:4px solid #6699cc;
+font-family:monospace; font-size:.82rem; line-height:1.5; display:flex; flex-wrap:wrap; gap:2px 20px; }
+#rc5root$thisq .rc5_fitres$thisq { color:var(--rc5-fit); font-weight:bold; }
+#rc5root$thisq .rc5_srow$thisq { height:34px; display:flex; align-items:center; background:var(--rc5-slider-bg); border-bottom:1px solid #bbc; }
+#rc5root$thisq .rc5_slbl$thisq { width:200px; padding:0 10px; font-size:.88rem; font-weight:bold; }
+#rc5root$thisq .rc5_smid$thisq { flex:1; padding:0 8px; }
+#rc5root$thisq .rc5_smid$thisq input { width:100%; }
+#rc5root$thisq .rc5_sval$thisq { width:110px; padding:0 8px; font-weight:bold; }
+#rc5root$thisq .rc5_csv$thisq { width:900px; height:160px; font-family:monospace; font-size:.78rem; }
+#rc5root$thisq .rc5_flex$thisq { min-height:60px; background:var(--rc5-info-bg); padding:6px 10px; font-size:.88rem; line-height:1.45; }
+#rc5root$thisq input:focus-visible, #rc5root$thisq select:focus-visible, #rc5root$thisq button:focus-visible { outline:3px solid #0a84ff; outline-offset:1px; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var rc5A11y$thisq = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var DEFAULTS = {
+'--rc5-bg':'#fffde7','--rc5-graph-bg':'#f4fbfd','--rc5-text':'#222','--rc5-grid':'#cfd8dc','--rc5-wire':'#555',
+'--rc5-charge':'#0044cc','--rc5-vc':'#0044cc','--rc5-vr1':'#cc0000','--rc5-vr2':'#007700','--rc5-vr3':'#aa6600',
+'--rc5-fit':'#c0392b','--rc5-cursor':'#7b1fa2',
+'--rc5-ui-bg':'#f90','--rc5-ctrl-bg':'#ddeebb','--rc5-slider-bg':'#cce','--rc5-info-bg':'#fffde7',
+'--rc5-narbar':'#ffefc0','--rc5-narborder':'#e0b040','--rc5-panel-text':'#000','--rc5-stats-bg':'#eef3fb',
+'--rc5-rowA':'#e8e8f8','--rc5-rowB':'#fce4ec','--rc5-rowC':'#e8f5e9','--rc5-rowD':'#fff3cd','--rc5-rowE':'#f3e5f5','--rc5-rowF':'#fff0e0','--rc5-mfit':'#e65100'
+};
+var THEMES = {
+lm: { '--rc5-bg':'#fff','--rc5-graph-bg':'#fff','--rc5-ctrl-bg':'#c8e8a0','--rc5-slider-bg':'#b8b8e8','--rc5-narbar':'#fff8dc','--rc5-narborder':'#c08000' },
+hc: { '--rc5-bg':'#000','--rc5-graph-bg':'#0a0a0a','--rc5-text':'#fff','--rc5-grid':'#444','--rc5-wire':'#ddd',
+'--rc5-charge':'#00ffff','--rc5-vc':'#00ffee','--rc5-vr1':'#ffcc00','--rc5-vr2':'#66ff66','--rc5-vr3':'#ff8800',
+'--rc5-fit':'#ff5555','--rc5-cursor':'#ff66ff',
+'--rc5-ui-bg':'#cc7700','--rc5-ctrl-bg':'#0a1a00','--rc5-slider-bg':'#00001a','--rc5-info-bg':'#0a0a00',
+'--rc5-narbar':'#111','--rc5-narborder':'#ffcc00','--rc5-panel-text':'#fff','--rc5-stats-bg':'#0a0a1a',
+'--rc5-rowA':'#101020','--rc5-rowB':'#1a0a10','--rc5-rowC':'#0a1a0a','--rc5-rowD':'#1a1500','--rc5-rowE':'#150a1a','--rc5-rowF':'#1a1000','--rc5-mfit':'#ffff00' },
+cb: { '--rc5-charge':'#0072b2','--rc5-vc':'#0072b2','--rc5-vr1':'#d55e00','--rc5-vr2':'#009e73','--rc5-vr3':'#e69f00',
+'--rc5-fit':'#cc79a7','--rc5-cursor':'#56b4e9','--rc5-mfit':'#000000' }
+};
+function styleBtn(id, on){
+var b = document.getElementById(id); if (!b) return;
+if (on) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else    { b.style.background='#2a2e3a'; b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function apply(){
+if (!ROOT) return;
+var v = {}, k;
+for (k in DEFAULTS) v[k] = DEFAULTS[k];
+['lm','hc','cb'].forEach(function(t){ if (states[t]) for (var p in THEMES[t]) v[p] = THEMES[t][p]; });
+for (k in v) ROOT.style.setProperty(k, v[k]);
+['rc5Circ$thisq','rc5Graph$thisq'].forEach(function(id){
+var cv = document.getElementById(id);
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+});
+var nb = document.getElementById('rc5NarBar$thisq'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var nbtn = document.getElementById('rc5BtnNR$thisq'); if (nbtn) nbtn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('rc5BtnHC$thisq', states.hc); styleBtn('rc5BtnLM$thisq', states.lm);
+styleBtn('rc5BtnCB$thisq', states.cb); styleBtn('rc5BtnNR$thisq', states.nr);
+}
+return {
+init: function(){ ROOT = document.getElementById('rc5root$thisq'); apply(); },
+toggle: function(k){
+states[k] = !states[k];
+if (k==='hc' && states.hc) states.lm = false;
+if (k==='lm' && states.lm) states.hc = false;
+apply();
+if (typeof RC5$thisq !== 'undefined') RC5$thisq.redraw();
+},
+narrate: function(msg){ if (!states.nr) return; var nb = document.getElementById('rc5NarBar$thisq'); if (nb) nb.textContent = msg; },
+getColor: function(role){ var r = document.getElementById('rc5root$thisq'); return r ? getComputedStyle(r).getPropertyValue('--rc5-'+role).trim() : ''; }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var RC5$thisq = (function(){
+var cC = document.getElementById('rc5Circ$thisq'), cx = cC.getContext('2d');
+var gC = document.getElementById('rc5Graph$thisq'), gx = gC.getContext('2d');
+function el(id){ return document.getElementById(id + '$thisq'); }
+/* ── Parameters ── */
+var E = $v;
+var SWN = {1:'CHARGE', 2:'OPEN', 3:'DISCHARGE'};
+var T_MAX = 600;                            /* data-logger capacity (s) */
+var N = {R1:0, R2:0, R3:0, C:1};            /* nominal (labelled) values */
+var A = {R1:0, R2:0, R3:0, C:1};            /* actual values (tolerance applied) */
+var tolPct = 0, noisePct = 0.5, sampleDt = 0.1, speed = 1;
+/* Leakage through the dielectric when the switch is OPEN:
+ R_leak = LEAK_FACTOR x (R1 + R2), so the leak is LEAK_FACTOR times slower than the charging. */
+var LEAK_FACTOR = 10;
+/* ── State ── */
+var VC = 0, time = 0, sw = 2, nextSample = 0;
+var data = [];    /* {t, vc, vr1, vr2, vr3, seg} -- noisy measurements */
+var segs = [];    /* {i, type, t0, t1, v0, n} */
+var lastMeas = null;
+var running = false, lastTS = null, rafId = null, dotOff = 0, narFlags = {};
+var yVar = 'VC', segSel = -1, showFit = false, fitLo = 0, fitHi = 1, cursorFrac = 1, csvOn = false;
+var view = null, K = {};
+var mf = { on:false, model:'dec', p:{ A:1, B:0, C:0.5, t0:0 } };   /* manual curve fit */
+var MFK = ['A','B','C','t0'];
+/* ── Plottable quantities ── */
+var INV_S = 's\u207B\u00B9';
+function lnPos(a){ return a > 0 ? Math.log(a) : null; }
+var YV = {
+VC:   { txt:'V_C',  html:'V<sub>C</sub>',  unit:'V', color:'vc',  lin:false, slopeUnit:'V/s', csv:'VC_V',  f:function(p){ return p.vc; } },
+VR1:  { txt:'V_R1', html:'V<sub>R1</sub>', unit:'V', color:'vr1', lin:false, slopeUnit:'V/s', csv:'VR1_V', res:'R1', f:function(p){ return p.vr1; } },
+VR2:  { txt:'V_R2', html:'V<sub>R2</sub>', unit:'V', color:'vr2', lin:false, slopeUnit:'V/s', csv:'VR2_V', res:'R2', f:function(p){ return p.vr2; } },
+VR3:  { txt:'V_R3', html:'V<sub>R3</sub>', unit:'V', color:'vr3', lin:false, slopeUnit:'V/s', csv:'VR3_V', res:'R3', f:function(p){ return p.vr3; } },
+LCC:  { txt:'ln(1 \u2212 V_C/E)', html:'ln(1 &minus; V<sub>C</sub>/E)', unit:'', color:'vc', lin:true, need:1, slopeUnit:INV_S, csv:'ln(1-VC/E)',
+f:function(p){ return lnPos(1 - p.vc/E); } },
+LR1C: { txt:'ln(V_R1/E)', html:'ln(V<sub>R1</sub>/E)', unit:'', color:'vr1', lin:true, need:1, slopeUnit:INV_S, csv:'ln(VR1/E)', res:'R1',
+f:function(p){ return lnPos(p.vr1/E); } },
+LR2C: { txt:'ln(V_R2/E)', html:'ln(V<sub>R2</sub>/E)', unit:'', color:'vr2', lin:true, need:1, slopeUnit:INV_S, csv:'ln(VR2/E)', res:'R2',
+f:function(p){ return lnPos(p.vr2/E); } },
+LCD:  { txt:'ln(V_C/V\u2080)', html:'ln(V<sub>C</sub>/V<sub>0</sub>)', unit:'', color:'vc', lin:true, need:3, slopeUnit:INV_S, csv:'ln(VC/V0)',
+f:function(p, g){ return g.v0 > 0 ? lnPos(p.vc/g.v0) : null; } },
+/* during discharge the current reverses, so V_R2 and V_R3 are negative: |V_R| = -V_R */
+LR2D: { txt:'ln(|V_R2|/V\u2080)', html:'ln(|V<sub>R2</sub>|/V<sub>0</sub>)', unit:'', color:'vr2', lin:true, need:3, slopeUnit:INV_S, csv:'ln(|VR2|/V0)', res:'R2',
+f:function(p, g){ return g.v0 > 0 ? lnPos(-p.vr2/g.v0) : null; } },
+LR3D: { txt:'ln(|V_R3|/V\u2080)', html:'ln(|V<sub>R3</sub>|/V<sub>0</sub>)', unit:'', color:'vr3', lin:true, need:3, slopeUnit:INV_S, csv:'ln(|VR3|/V0)', res:'R3',
+f:function(p, g){ return g.v0 > 0 ? lnPos(-p.vr3/g.v0) : null; } },
+/* OPEN: the capacitor leaks through its own dielectric */
+LCO:  { txt:'ln(V_C/V\u2080)', html:'ln(V<sub>C</sub>/V<sub>0</sub>)', unit:'', color:'vc', lin:true, need:2, slopeUnit:INV_S, csv:'ln(VC/V0)',
+f:function(p, g){ return g.v0 > 0 ? lnPos(p.vc/g.v0) : null; } }
+};
+var PARTNER = { LCC:'LCD', LCD:'LCC', LR2C:'LR2D', LR2D:'LR2C', LR1C:'LR2D', LR3D:'LR2C' };
+var RAWOF = { LCC:'VC', LCD:'VC', LCO:'VC', LR1C:'VR1', LR2C:'VR2', LR2D:'VR2', LR3D:'VR3' };
+var BYTYPE = { 1:'LCC', 2:'LCO', 3:'LCD' };   /* V_C log plot for each kind of segment */
+/* ── Helpers ── */
+function narrate(m){ rc5A11y$thisq.narrate(m); }
+function randn(){ var u=0, v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
+return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function fmt(v, d){ if (!isFinite(v)) return 'n/a'; var s = Math.abs(v).toFixed(d); return (v < 0 && Number(s) !== 0 ? '\u2212' : '') + s; }
+function fmtP(v, p){ if (!isFinite(v)) return 'n/a'; return (v < 0 ? '\u2212' : '') + Math.abs(v).toPrecision(p); }
+function fmtPM(v, e){   /* value +/- uncertainty, uncertainty to 2 significant figures */
+if (!isFinite(v)) return 'n/a';
+if (!(e > 0) || !isFinite(e)) return fmtP(v, 4);
+var d = Math.max(0, Math.min(8, 1 - Math.floor(Math.log10(e))));
+return fmt(v, d) + ' \u00B1 ' + e.toFixed(d);
+}
+function niceStep(range, n){
+var raw = range / n; if (!(raw > 0)) return 1;
+var p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+}
+function decimals(step){ return Math.max(0, -Math.floor(Math.log10(step) + 1e-9)); }
+function loadColors(){
+['bg','graph-bg','text','grid','wire','charge','vc','vr1','vr2','vr3','fit','cursor','mfit'].forEach(function(r){
+K[r] = rc5A11y$thisq.getColor(r) || '#000';
+});
+}
+/* ── Physics (exact exponential update: stable for any time constant, including 0) ── */
+function rLeak(){ return LEAK_FACTOR*Math.max(A.R1 + A.R2, 1); }
+function loopR(){ return sw === 1 ? A.R1 + A.R2 : sw === 3 ? A.R2 + A.R3 : rLeak(); }
+function curI(){   /* conventional current, positive when charging the capacitor */
+var Rt = loopR(); if (!(Rt > 0)) return 0;
+return sw === 1 ? (E - VC)/Rt : sw === 3 ? -VC/Rt : 0;
+}
+function evolve(dt){
+if (!(dt > 0)) return;
+var tau = loopR()*A.C, k = tau > 0 ? Math.exp(-dt/tau) : 0;
+if (sw === 1) VC = E + (VC - E)*k;
+else VC = VC*k;               /* DISCHARGE through R2 + R3, or OPEN: slow internal leak */
+time += dt;
+}
+function record(){
+var s = noisePct/100*E, g = segs[segs.length-1], I = curI();
+var m = { t:Math.round(time*1e6)/1e6, vc:VC + s*randn(),
+vr1:(sw === 1 ? A.R1*I : 0) + s*randn(),
+vr2:A.R2*I + s*randn(),
+vr3:(sw === 3 ? A.R3*I : 0) + s*randn(), seg:g.i };
+data.push(m); g.n++; lastMeas = m;
+}
+function advanceTo(target){
+if (target > T_MAX) target = T_MAX;
+var guard = 0;
+while (nextSample <= target + 1e-9 && guard < 200000){
+evolve(nextSample - time); record();
+nextSample = Math.round((nextSample + sampleDt)*1e6)/1e6; guard++;
+}
+evolve(target - time);
+}
+function startSeg(){ segs.push({ i:segs.length, type:sw, t0:time, t1:null, v0:VC, n:0 }); }
+/* ── Controls ── */
+function readInputs(){
+N.R1 = parseFloat(el('rc5SR1').value); N.R2 = parseFloat(el('rc5SR2').value);
+N.R3 = parseFloat(el('rc5SR3').value); N.C  = parseFloat(el('rc5SC').value);
+noisePct = parseFloat(el('rc5Noise').value);
+sampleDt = 1/parseFloat(el('rc5Rate').value);
+tolPct = parseFloat(el('rc5Tol').value);
+}
+function jitter(x){ return x*(1 + tolPct/100*(2*Math.random()-1)); }
+function reset(){
+pause(true);
+readInputs();
+A.R1 = jitter(N.R1); A.R2 = jitter(N.R2); A.R3 = jitter(N.R3); A.C = Math.max(1e-9, jitter(N.C));
+mfOff();
+VC = 0; time = 0; sw = 2; nextSample = 0; data = []; segs = []; lastMeas = null; dotOff = 0; narFlags = {};
+startSeg();
+segSel = -1; cursorFrac = 1; el('rc5Cur').value = 1;
+if (YV[yVar].need) setYInternal(RAWOF[yVar]);
+rebuildSegSelect(); updateSwButtons();
+redraw();
+narrate('Ready. E = ' + E.toFixed(2) + ' V, R1 = ' + N.R1 + ' \u03A9, R2 = ' + N.R2 + ' \u03A9, R3 = ' + N.R3 + ' \u03A9, C = ' + N.C
++ ' F. Set the switch to CHARGE and press Play. Every reading contains random noise'
++ (tolPct > 0 ? ', and the real components differ from their labels by up to \u00B1' + tolPct + '%' : '') + '.');
+}
+function updatePlayBtn(){ var b = el('rc5Play'); if (b) b.value = running ? '\u23F8 Pause' : '\u25B6 Play'; }
+function updateSwButtons(){
+for (var p = 1; p <= 3; p++){
+var b = el('rc5Sw' + p); if (!b) continue;
+b.className = 'rc5_swbtn$thisq' + (p === sw ? ' rc5_swon$thisq' : '');
+b.setAttribute('aria-pressed', p === sw ? 'true' : 'false');
+}
+}
+function setSwitch(p){
+p = Number(p); if (p === sw) return;
+var last = segs[segs.length-1];
+sw = p;
+if (last.n === 0){
+/* the setting we are leaving recorded nothing: drop it, and merge with the one before if it is the same kind */
+segs.pop();
+var prev = segs[segs.length-1];
+if (prev && prev.type === p) prev.t1 = null; else startSeg();
+} else { last.t1 = time; startSeg(); }
+narFlags = {};
+updateSwButtons(); rebuildSegSelect();
+var msg = { 1:'Switch \u2192 CHARGE: current flows E \u2192 R1 \u2192 R2 \u2192 C.',
+2:'Switch \u2192 OPEN: no current flows in the circuit; the charge only leaks away slowly through the capacitor\u2019s dielectric.',
+3:'Switch \u2192 DISCHARGE: current flows C \u2192 R2 \u2192 R3 \u2192 back to C. Through R2 it now flows the opposite way.' }[p];
+narrate(msg + ' Data from this moment form segment ' + segs.length + '.');
+redraw();
+}
+function play(){
+if (running) return;
+if (time >= T_MAX - 1e-9){ narrate('The data logger is full (' + T_MAX + ' s). Press Reset to start a new run.'); return; }
+if (mf.on) narrate('Manual fit hidden while recording; pause to fit again.');
+mfOff();
+running = true; lastTS = null; updatePlayBtn();
+narrate('Recording ' + Math.round(1/sampleDt) + ' readings per second. Switch: ' + SWN[sw] + '.');
+rafId = requestAnimationFrame(loop);
+}
+function pause(silent){
+running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; updatePlayBtn();
+if (!silent){ rebuildSegSelect(); redraw(); narrate('Paused at t = ' + time.toFixed(2) + ' s with ' + data.length + ' readings. Move the cursor slider to read the data.'); }
+}
+function loop(ts){
+if (!running) return;
+if (lastTS === null) lastTS = ts;
+var dtReal = Math.min(0.1, (ts - lastTS)/1000); lastTS = ts;
+advanceTo(time + dtReal*speed);
+var Rt = loopR(), Imax = Rt > 0 ? E/Rt : 1;
+dotOff = (dotOff + 0.5*dtReal*Math.min(1, Math.abs(curI())/Imax)*Math.min(4, Math.sqrt(speed))) % 1;
+checkNarr();
+if (time >= T_MAX - 1e-9){
+running = false; updatePlayBtn(); rebuildSegSelect();
+narrate('The data logger is full (' + T_MAX + ' s). Analyze your data, or press Reset.');
+}
+redraw();
+if (running) rafId = requestAnimationFrame(loop);
+}
+function checkNarr(){
+if (sw === 1 && !narFlags.full && VC >= 0.99*E){ narFlags.full = 1;
+narrate('The capacitor is essentially fully charged. Pause to analyze this CHARGE segment, or switch to DISCHARGE.'); }
+if (sw === 3 && !narFlags.empty && VC <= 0.01*E){ narFlags.empty = 1;
+narrate('The capacitor is essentially discharged. On the log plots, notice how the points scatter once the signal is comparable to the noise.'); }
+}
+function rebuildSegSelect(){
+var s = el('rc5Seg'); if (!s) return;
+var h = '<option value="-1">All data (absolute time t)</option>';
+for (var i = 0; i < segs.length; i++){
+var g = segs[i];
+if (g.n === 0 && i < segs.length-1) continue;
+h += '<option value="' + i + '">Segment ' + (i+1) + ': ' + SWN[g.type] + ' (t = ' + g.t0.toFixed(1) + ' \u2013 '
+ + (g.t1 === null ? '\u2026' : g.t1.toFixed(1)) + ' s)</option>';
+}
+s.innerHTML = h;
+if (segSel >= segs.length) segSel = -1;
+s.value = String(segSel);
+}
+function setYInternal(v){
+yVar = v; el('rc5Y').value = v;
+var lin = !!YV[v].lin, cb = el('rc5Fit');
+cb.disabled = !lin;
+if (!lin){ cb.checked = false; showFit = false; }
+el('rc5FitLbl').style.opacity = lin ? 1 : 0.5;
+el('rc5FitLo').disabled = !showFit; el('rc5FitHi').disabled = !showFit;
+}
+function segWithData(type){
+if (segSel >= 0 && segs[segSel] && segs[segSel].type === type && segs[segSel].n > 0) return segs[segSel];
+for (var i = segs.length-1; i >= 0; i--) if (segs[i].type === type && segs[i].n > 0){ segSel = i; el('rc5Seg').value = String(i); return segs[i]; }
+return null;
+}
+function setY(v){
+setYInternal(v);
+var yv = YV[v];
+if (yv.need){
+var before = segSel, g = segWithData(yv.need);
+if (!g) narrate('This plot needs a ' + SWN[yv.need] + ' segment. Set the switch to ' + SWN[yv.need] + ' and press Play.');
+else if (before !== segSel) narrate('Showing segment ' + (g.i+1) + ' (' + SWN[g.type] + '), the most recent one of that kind. Time is measured from the switch, t \u2212 t\u2080.');
+}
+redraw();
+}
+function setSeg(v){
+segSel = Number(v);
+var yv = YV[yVar];
+if (yv.need){
+var g = segs[segSel];
+if (!g){
+setYInternal(RAWOF[yVar]);
+narrate('Linearized plots need a single segment, so the measured data are shown instead.');
+} else if (g.type !== yv.need){
+setYInternal(g.type === 2 || yVar === 'LCO' ? BYTYPE[g.type] : PARTNER[yVar]);
+narrate('Switched the plot to ' + YV[yVar].txt + ' to match this ' + SWN[g.type] + ' segment.');
+}
+}
+redraw();
+}
+/* ── Data for the current view ── */
+function buildView(){
+var v = YV[yVar], g = null, msg = '';
+if (v.need){
+g = segWithData(v.need);
+if (!g) return { v:v, sg:null, pts:[], skipped:0, msg:'No ' + SWN[v.need] + ' data yet: set the switch to ' + SWN[v.need] + ' and press Play.' };
+if (v.need !== 1 && !(g.v0 > 0.001*E)) msg = 'V\u2080 \u2248 0: the capacitor was empty when this segment began.';
+} else if (segSel >= 0 && segs[segSel]) g = segs[segSel];
+if (v.res && N[v.res] === 0) msg = v.res + ' = 0 (a plain wire), so V_' + v.res + ' is zero apart from noise.';
+else if (v.res && g && g.type === 2) msg = 'Switch OPEN: no current flows through ' + v.res + ', so V_' + v.res + ' \u2248 0.';
+var pts = [], skipped = 0;
+for (var i = 0; i < data.length; i++){
+var p = data[i];
+if (g && p.seg !== g.i) continue;
+var y = v.f(p, g);
+if (y === null || !isFinite(y)){ skipped++; continue; }
+pts.push({ x: g ? Math.round((p.t - g.t0)*1e6)/1e6 : p.t, y:y, p:p });
+}
+return { v:v, sg:g, pts:pts, skipped:skipped, msg:msg };
+}
+/* ══ Manual curve fit ══ */
+function mfEval(x){
+var P = mf.p;
+if (mf.model === 'lin') return P.A*x + P.B;
+var e = Math.exp(-P.C*(x - P.t0));
+return mf.model === 'dec' ? P.A*e + P.B : P.A*(1 - e) + P.B;
+}
+function windowIdx(n){
+var i0 = Math.round(Math.min(fitLo,fitHi)*(n-1)), i1 = Math.round(Math.max(fitLo,fitHi)*(n-1));
+return [i0, i1];
+}
+function mfStats(pts, i0, i1){
+var ss = 0, k = 0;
+for (var i = i0; i <= i1; i++){ var d = pts[i].y - mfEval(pts[i].x); if (isFinite(d)){ ss += d*d; k++; } }
+return k ? { rms:Math.sqrt(ss/k), n:k } : null;
+}
+function mfAvail(){ return !running && view && view.pts.length >= 3; }
+function mfOff(){ mf.on = false; var cb = el('rc5MFOn'); if (cb) cb.checked = false; }
+function mfUsed(k){ return mf.model !== 'lin' || k === 'A' || k === 'B'; }
+function numStr(v){ return String(parseFloat(Number(v).toPrecision(5))); }
+function mfShow(k){   /* push a parameter value into its slider and number box, widening the slider if needed */
+var s = el('rc5MF_' + k), v = mf.p[k];
+if (v < parseFloat(s.min)) s.min = v;
+if (v > parseFloat(s.max)) s.max = v;
+s.value = v; el('rc5MF_' + k + 'n').value = numStr(v);
+}
+function mfRescale(init){
+var V = view; if (!V || V.pts.length < 3) return;
+var n = V.pts.length, w = windowIdx(n), i0 = w[0], i1 = w[1];
+if (i1 - i0 < 2){ i0 = 0; i1 = n-1; }
+var xmin = V.pts[i0].x, xmax = V.pts[i1].x, ymin = Infinity, ymax = -Infinity;
+for (var i = i0; i <= i1; i++){ ymin = Math.min(ymin, V.pts[i].y); ymax = Math.max(ymax, V.pts[i].y); }
+var xs = Math.max(xmax - xmin, 1e-3), ys = Math.max(ymax - ymin, 1e-3), ya = Math.max(Math.abs(ymin), Math.abs(ymax), ys);
+var R = { A: mf.model === 'lin' ? [-3*ys/xs, 3*ys/xs] : [-2*ya, 2*ya],
+B: [ymin - ys, ymax + ys], C: [0, 20/xs], t0: [xmin - xs, xmax] };
+if (init){   /* neutral starting guess -- deliberately not the answer */
+mf.p.A = mf.model === 'lin' ? 0 : ys/2;
+mf.p.B = mf.model === 'lin' ? (ymin + ymax)/2 : ymin;
+mf.p.C = 2/xs; mf.p.t0 = xmin;
+}
+MFK.forEach(function(k){
+var s = el('rc5MF_' + k);
+s.min = R[k][0]; s.max = R[k][1]; s.step = (R[k][1] - R[k][0])/2000;
+mfShow(k);
+});
+}
+function mfSyncUI(){
+var av = mfAvail(), v = view ? view.v : YV[yVar];
+el('rc5MFOn').disabled = !av;
+el('rc5MFModel').disabled = !av;
+el('rc5MFRescale').disabled = !(av && mf.on);
+MFK.forEach(function(k){
+var dis = !(av && mf.on && mfUsed(k));
+el('rc5MF_' + k).disabled = dis; el('rc5MF_' + k + 'n').disabled = dis;
+el('rc5MFRow_' + k).style.opacity = mfUsed(k) ? (av && mf.on ? 1 : 0.6) : 0.3;
+});
+var yu = v.unit || '(no unit)';
+el('rc5MFU_A').textContent = mf.model === 'lin' ? (v.unit ? v.unit + '/s' : 's\u207B\u00B9') : yu;
+el('rc5MFU_B').textContent = yu;
+var win = (showFit && v.lin) || mf.on;
+el('rc5FitLo').disabled = !win; el('rc5FitHi').disabled = !win;
+el('rc5MFNote').textContent = running ? 'Pause the simulation to fit your data.'
+: (!view || view.pts.length < 3) ? 'Collect some data first.'
+: mf.on ? 'Adjust the parameters to make the RMS residual as small as possible. t is the time on the x-axis.'
+: 'Tick to fit a model to the points in the fit window.';
+}
+function linfit(pts, i0, i1){
+var n = i1 - i0 + 1; if (n < 3) return null;
+var sx = 0, sy = 0, i;
+for (i = i0; i <= i1; i++){ sx += pts[i].x; sy += pts[i].y; }
+var xb = sx/n, yb = sy/n, Sxx = 0, Sxy = 0, Syy = 0;
+for (i = i0; i <= i1; i++){ var dx = pts[i].x - xb, dy = pts[i].y - yb; Sxx += dx*dx; Sxy += dx*dy; Syy += dy*dy; }
+if (Sxx < 1e-15) return null;
+var m = Sxy/Sxx, b = yb - m*xb, ssr = 0;
+for (i = i0; i <= i1; i++){ var r = pts[i].y - (m*pts[i].x + b); ssr += r*r; }
+var s = Math.sqrt(ssr/(n - 2));
+return { m:m, b:b, sm:s/Math.sqrt(Sxx), sb:s*Math.sqrt(1/n + xb*xb/Sxx), r2:Syy > 0 ? 1 - ssr/Syy : 1, n:n };
+}
+function localSlope(pts, ci){
+var i0 = Math.max(0, ci-4), i1 = Math.min(pts.length-1, ci+4);
+var f = linfit(pts, i0, i1); return f ? f.m : null;
+}
+/* ══ Circuit drawing (original schematic layout) ══
+ Top rail: battery+ -> R1 -> T1 contact | switch pivot -> R2 -> capacitor.
+ R3 hangs from the T3 contact down to the bottom rail. */
+var xL=55, xR=410, yTop=60, yBot=380, yMid=220, RES_W=52, RES_H=10;
+var xN1=95, xN2=147, T1x=173, xP=228, xN3=287, xN4=339, xR3=230, yR3top=108;
+function line(x1,y1,x2,y2){ cx.beginPath(); cx.moveTo(x1,y1); cx.lineTo(x2,y2); cx.stroke(); }
+function dot(x,y,r,c){ cx.beginPath(); cx.arc(x,y,r,0,2*Math.PI); cx.fillStyle=c; cx.fill(); }
+function resistorH(x0,y,label){
+var n = 8, seg = RES_W/n;
+cx.beginPath(); cx.moveTo(x0,y);
+for (var i = 0; i < n; i++) cx.lineTo(x0 + seg*(i+0.5), y + (i%2===0 ? -RES_H : RES_H));
+cx.lineTo(x0+RES_W,y); cx.stroke();
+cx.fillStyle = K.text; cx.font = '11px Arial'; cx.textAlign = 'center';
+cx.fillText(label, x0+RES_W/2, y-RES_H-6);
+}
+function resistorV(x,yS,yE,label){
+var ym = (yS+yE)/2, zT = ym-RES_W/2, zB = ym+RES_W/2, n = 8, seg = RES_W/n;
+line(x,yS,x,zT);
+cx.beginPath(); cx.moveTo(x,zT);
+for (var i = 0; i < n; i++) cx.lineTo(x + (i%2===0 ? -RES_H : RES_H), zT + seg*(i+0.5));
+cx.lineTo(x,zB); cx.stroke();
+line(x,zB,x,yE);
+cx.fillStyle = K.text; cx.font = '11px Arial'; cx.textAlign = 'right';
+cx.fillText(label, x-RES_H-8, ym+4);
+return ym;
+}
+function drawCircuit(){
+var W = cC.width, H = cC.height;
+cx.setLineDash([]); cx.clearRect(0,0,W,H);
+cx.fillStyle = K.bg; cx.fillRect(0,0,W,H);
+cx.strokeStyle = K.wire; cx.lineWidth = 2.5; cx.lineCap = 'round';
+/* top rail */
+line(xL,yTop,xN1,yTop);
+if (N.R1 > 0) resistorH(xN1,yTop,'R1 = ' + N.R1.toFixed(2) + ' \u03A9'); else line(xN1,yTop,xN2,yTop);
+cx.strokeStyle = K.wire; line(xN2,yTop,T1x,yTop);
+line(xP,yTop,xN3,yTop);
+if (N.R2 > 0) resistorH(xN3,yTop,'R2 = ' + N.R2.toFixed(2) + ' \u03A9'); else line(xN3,yTop,xN4,yTop);
+cx.strokeStyle = K.wire; line(xN4,yTop,xR,yTop);
+/* right rail with capacitor gap, bottom rail */
+line(xR,yTop,xR,yMid-12); line(xR,yMid+12,xR,yBot);
+line(xR,yBot,xL,yBot);
+/* R3 branch */
+dot(xR3,yBot,5,K.wire);
+cx.strokeStyle = K.wire;
+var r3mid = (yR3top+12+yBot-10)/2;
+if (N.R3 > 0){
+line(xR3,yR3top,xR3,yR3top+12);
+r3mid = resistorV(xR3,yR3top+12,yBot-10,'R3 = ' + N.R3.toFixed(2) + ' \u03A9');
+cx.strokeStyle = K.wire; line(xR3,yBot-10,xR3,yBot);
+} else line(xR3,yR3top,xR3,yBot);
+/* battery */
+cx.strokeStyle = K.wire;
+line(xL,yTop,xL,yMid-6); line(xL,yMid+6,xL,yBot);
+cx.lineWidth = 3.5; line(xL-20,yMid-6,xL+20,yMid-6);
+cx.lineWidth = 2;   line(xL-11,yMid+6,xL+11,yMid+6);
+cx.font = 'bold 13px Arial'; cx.textAlign = 'left';
+cx.fillStyle = '#d00'; cx.fillText('+', xL+24, yMid-2);
+cx.fillStyle = '#06c'; cx.fillText('\u2212', xL+24, yMid+14);
+cx.fillStyle = K.text; cx.font = 'bold 12px Arial';
+cx.fillText('E = ' + E.toFixed(2) + ' V', xL+10, yMid-24);
+/* capacitor, plates tinted by charge */
+var q = Math.min(1, Math.max(0, VC/E));
+cx.lineWidth = 9;
+cx.strokeStyle = 'rgb(' + Math.floor(90+165*q) + ',' + Math.floor(90*(1-q)) + ',' + Math.floor(90*(1-q)) + ')';
+line(xR-32,yMid-12,xR+32,yMid-12);
+cx.strokeStyle = 'rgb(' + Math.floor(90*(1-q)) + ',' + Math.floor(90*(1-q)) + ',' + Math.floor(90+165*q) + ')';
+line(xR-32,yMid+12,xR+32,yMid+12);
+cx.fillStyle = K.text; cx.font = 'bold 12px Arial'; cx.textAlign = 'right';
+cx.fillText('C = ' + N.C.toFixed(2) + ' F', xR-38, yMid+4);
+/* probe labels: the measured voltages */
+cx.font = 'italic bold 12px Arial';
+cx.fillStyle = K.vc; cx.fillText('V_C', xR-38, yMid+22);
+cx.textAlign = 'center';
+cx.fillStyle = K.vr1; cx.fillText('V_R1', xN1+RES_W/2, yTop+30);
+cx.fillStyle = K.vr2; cx.fillText('V_R2', xN3+RES_W/2, yTop+30);
+cx.textAlign = 'left';
+cx.fillStyle = K.vr3; cx.fillText('V_R3', xR3+16, r3mid+4);
+/* SP3T switch */
+dot(T1x,yTop,4,'#080'); dot(xR3,yR3top,4,'#080'); dot(xP,yTop,5,K.wire);
+cx.strokeStyle = '#c00'; cx.lineWidth = 3;
+if (sw === 1) line(xP,yTop,T1x+3,yTop);
+else if (sw === 3) line(xP,yTop,xR3,yR3top);
+else { line(xP,yTop,xP,yTop-28); cx.lineWidth = 2; cx.beginPath(); cx.arc(xP,yTop-32,4,0,2*Math.PI); cx.stroke(); }
+cx.font = 'bold 10px Arial'; cx.textAlign = 'right';
+cx.fillStyle = K.text; cx.fillText('SW', xP-8, yTop+22);
+cx.fillStyle = sw === 2 ? '#888' : '#c00'; cx.fillText(SWN[sw], xP-8, yTop+33);
+/* moving charges */
+if ((sw === 1 || sw === 3) && Math.abs(curI()) > 1e-9) drawDots();
+if (sw === 2 && VC > 0.01*E){
+cx.fillStyle = K.text; cx.globalAlpha = 0.7; cx.font = 'italic 11px Arial'; cx.textAlign = 'right';
+cx.fillText('slowly leaking', W-6, yMid+44); cx.fillText('through the dielectric', W-6, yMid+58); cx.globalAlpha = 1;
+}
+/* meter readings (latest noisy measurement) */
+cx.font = '12px monospace'; cx.textAlign = 'left';
+var m = lastMeas, y0 = 406;
+function rd(c, lab, val, x, y){ cx.fillStyle = c; cx.fillText(lab + ' = ' + (m ? fmt(val,3) + ' V' : '\u2014'), x, y); }
+rd(K.vc,  'V_C ', m && m.vc,  18, y0);
+rd(K.vr1, 'V_R1', m && m.vr1, 18, y0+18);
+rd(K.vr2, 'V_R2', m && m.vr2, 18, y0+36);
+rd(K.vr3, 'V_R3', m && m.vr3, 200, y0);
+cx.fillStyle = K.text;
+cx.fillText('t = ' + time.toFixed(2) + ' s', 200, y0+18);
+cx.fillText('readings: ' + data.length, 200, y0+36);
+cx.font = '10px Arial'; cx.fillText('Meters show the latest noisy reading.', 18, y0+52);
+}
+function activePath(){
+if (sw === 1) return [[xL,yMid-6],[xL,yTop],[T1x,yTop],[xP,yTop],[xR,yTop],[xR,yMid-12],[xR,yMid+12],[xR,yBot],[xL,yBot],[xL,yMid+6]];
+return [[xR,yMid-12],[xR,yTop],[xP,yTop],[xR3,yR3top],[xR3,yBot],[xR,yBot],[xR,yMid+12]];
+}
+function drawDots(){
+var pts = activePath(), L = [0], i;
+for (i = 1; i < pts.length; i++) L.push(L[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
+var tot = L[L.length-1], ND = 12;
+cx.fillStyle = K.charge;
+for (var k = 0; k < ND; k++){
+var s = ((dotOff + k/ND) % 1)*tot;
+for (i = 1; i < pts.length; i++) if (L[i] >= s) break;
+var f = (s - L[i-1])/(L[i] - L[i-1] || 1);
+var x = pts[i-1][0] + (pts[i][0]-pts[i-1][0])*f, y = pts[i-1][1] + (pts[i][1]-pts[i-1][1])*f;
+if (Math.abs(x - xR) < 1 && Math.abs(y - yMid) < 13) continue;   /* no charge crosses the capacitor gap */
+if (Math.abs(x - xL) < 1 && Math.abs(y - yMid) < 7) continue;
+cx.beginPath(); cx.arc(x,y,3,0,2*Math.PI); cx.fill();
+}
+}
+/* ══ Graph drawing ══ */
+function drawGraph(){
+var W = gC.width, H = gC.height, pl = 64, pr = 14, pt = 30, pb = 44, w = W-pl-pr, h = H-pt-pb, i, k;
+var V = view = buildView(), v = V.v, pts = V.pts, n = pts.length;
+gx.setLineDash([]); gx.globalAlpha = 1; gx.clearRect(0,0,W,H);
+gx.fillStyle = K.bg; gx.fillRect(0,0,W,H);
+gx.fillStyle = K['graph-bg']; gx.fillRect(pl,pt,w,h);
+/* ranges */
+var xm = n ? pts[n-1].x : 0; if (!V.sg) xm = Math.max(xm, time); xm = Math.max(xm, 1);
+var xs = niceStep(xm, 5), xmax = Math.ceil(xm*1.02/xs)*xs;
+var lo = Infinity, hi = -Infinity;
+for (i = 0; i < n; i++){ if (pts[i].y < lo) lo = pts[i].y; if (pts[i].y > hi) hi = pts[i].y; }
+if (yVar === 'VC'){ lo = Math.min(lo, 0); hi = Math.max(hi, E); }
+else if (!v.lin){ if (!n){ lo = -E; hi = E; } lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+else { if (!n){ lo = -5; hi = 0; } hi = Math.max(hi, 0); lo = Math.min(lo, -0.5); }
+if (hi - lo < 1e-9) hi = lo + 1;
+var pad = (hi - lo)*0.04; lo -= pad; hi += pad;
+var ys = niceStep(hi - lo, 6); lo = Math.floor(lo/ys)*ys; hi = Math.ceil(hi/ys)*ys;
+function X(x){ return pl + x/xmax*w; }
+function Y(y){ return pt + h - (y - lo)/(hi - lo)*h; }
+/* grid + ticks */
+gx.strokeStyle = K.grid; gx.lineWidth = 1; gx.fillStyle = K.text; gx.font = '11px Arial';
+var xd = decimals(xs), yd = decimals(ys), nx = Math.round(xmax/xs), ny = Math.round((hi-lo)/ys);
+gx.textAlign = 'center';
+for (k = 0; k <= nx; k++){ var xv = k*xs, px = X(xv);
+gx.beginPath(); gx.moveTo(px,pt); gx.lineTo(px,pt+h); gx.stroke(); gx.fillText(xv.toFixed(xd), px, pt+h+14); }
+gx.textAlign = 'right';
+for (k = 0; k <= ny; k++){ var yv = lo + k*ys, py = Y(yv);
+gx.beginPath(); gx.moveTo(pl,py); gx.lineTo(pl+w,py); gx.stroke(); gx.fillText(fmt(yv, yd), pl-5, py+4); }
+if (lo < 0 && hi > 0){ gx.strokeStyle = K.text; gx.globalAlpha = 0.45; gx.setLineDash([4,4]);
+gx.beginPath(); gx.moveTo(pl,Y(0)); gx.lineTo(pl+w,Y(0)); gx.stroke(); gx.setLineDash([]); gx.globalAlpha = 1; }
+gx.strokeStyle = K.text; gx.lineWidth = 1.5; gx.strokeRect(pl,pt,w,h);
+/* segment boundaries when showing all data */
+if (!V.sg){
+gx.font = 'bold 10px Arial'; gx.textAlign = 'left';
+segs.forEach(function(g){
+if (g.t0 <= 0 || g.t0 > xmax) return;
+gx.strokeStyle = K.text; gx.globalAlpha = 0.35; gx.setLineDash([2,3]);
+gx.beginPath(); gx.moveTo(X(g.t0),pt); gx.lineTo(X(g.t0),pt+h); gx.stroke();
+gx.setLineDash([]); gx.globalAlpha = 1; gx.fillStyle = K.text;
+gx.fillText(SWN[g.type].charAt(0), X(g.t0)+3, pt+11);
+});
+}
+/* fit */
+var fit = null, i0 = 0, i1 = n-1, mfOn = mf.on && !running && n >= 3;
+var winOn = (showFit && v.lin && n >= 3) || mfOn;
+if (winOn){ var wi = windowIdx(n); i0 = wi[0]; i1 = wi[1]; }
+if (showFit && v.lin && n >= 3) fit = linfit(pts, i0, i1);
+var mfr = mfOn ? mfStats(pts, i0, i1) : null;
+V.fit = fit; V.mfr = mfr; V.i0 = i0; V.i1 = i1;
+gx.save(); gx.beginPath(); gx.rect(pl,pt,w,h); gx.clip();
+var r = n > 1500 ? 1.6 : 2.4;
+gx.fillStyle = K[v.color];
+for (i = 0; i < n; i++){
+gx.globalAlpha = (winOn && (i < i0 || i > i1)) ? 0.22 : 1;
+gx.beginPath(); gx.arc(X(pts[i].x), Y(pts[i].y), r, 0, 2*Math.PI); gx.fill();
+}
+gx.globalAlpha = 1;
+if (fit){
+gx.strokeStyle = K.fit; gx.lineWidth = 2.2; gx.setLineDash([7,4]);
+gx.beginPath(); gx.moveTo(X(0), Y(fit.b)); gx.lineTo(X(xmax), Y(fit.m*xmax + fit.b)); gx.stroke();
+gx.setLineDash([]);
+}
+if (mfOn){   /* manual model: thin dashed everywhere, thick over the fit window */
+var drawModel = function(xa, xb, lw, dash){
+gx.strokeStyle = K.mfit; gx.lineWidth = lw; gx.setLineDash(dash);
+gx.beginPath(); var first = true;
+for (var s = 0; s <= 400; s++){
+var xx = xa + (xb - xa)*s/400, yy = mfEval(xx);
+if (!isFinite(yy)){ first = true; continue; }
+var Py = Math.max(-1e4, Math.min(1e4, Y(yy)));
+if (first){ gx.moveTo(X(xx), Py); first = false; } else gx.lineTo(X(xx), Py);
+}
+gx.stroke(); gx.setLineDash([]);
+};
+drawModel(0, xmax, 1.3, [5,4]);
+drawModel(pts[i0].x, pts[i1].x, 2.8, []);
+}
+if (winOn){
+gx.strokeStyle = mfOn ? K.mfit : K.fit; gx.lineWidth = 1.5;
+[i0, i1].forEach(function(ix){ var bx = X(pts[ix].x);
+gx.beginPath(); gx.moveTo(bx, pt+h); gx.lineTo(bx, pt+h-10); gx.stroke(); });
+}
+/* cursor */
+if (n){
+var ci = Math.round(cursorFrac*(n-1)), cp = pts[ci]; V.ci = ci;
+gx.strokeStyle = K.cursor; gx.lineWidth = 1.2; gx.setLineDash([3,3]);
+gx.beginPath(); gx.moveTo(X(cp.x),pt); gx.lineTo(X(cp.x),pt+h); gx.stroke();
+gx.beginPath(); gx.moveTo(pl,Y(cp.y)); gx.lineTo(X(cp.x),Y(cp.y)); gx.stroke();
+gx.setLineDash([]); gx.lineWidth = 2.2;
+gx.beginPath(); gx.arc(X(cp.x), Y(cp.y), 6, 0, 2*Math.PI); gx.stroke();
+}
+gx.restore();
+/* empty-state or warning message */
+if (!n || V.msg){
+gx.fillStyle = K.text; gx.font = '12px Arial'; gx.textAlign = 'center';
+gx.fillText(V.msg || 'No data yet: choose CHARGE and press Play.', pl+w/2, pt+h/2);
+}
+/* fit result box */
+if (fit){
+var lines = ['Linear fit, points ' + (i0+1) + '\u2013' + (i1+1) + ' of ' + n,
+'slope = ' + fmtPM(fit.m, fit.sm) + ' ' + v.slopeUnit,
+'intercept = ' + fmtPM(fit.b, fit.sb),
+'R\u00B2 = ' + fit.r2.toFixed(5)];
+gx.font = 'bold 11px monospace';
+var bw = 0; lines.forEach(function(s){ bw = Math.max(bw, gx.measureText(s).width); }); bw += 12;
+var bx = pl + w - bw - 6, by = pt + 6;
+gx.globalAlpha = 0.9; gx.fillStyle = K['graph-bg']; gx.fillRect(bx, by, bw, 62); gx.globalAlpha = 1;
+gx.strokeStyle = K.fit; gx.lineWidth = 1; gx.strokeRect(bx, by, bw, 62);
+gx.fillStyle = K.fit; gx.textAlign = 'left';
+lines.forEach(function(s, j){ gx.fillText(s, bx+6, by+14+j*14); });
+}
+if (mfr){
+var P = mf.p, u = v.unit ? ' ' + v.unit : '';
+var eq = { lin:'y = A\u00B7t + B', dec:'y = A\u00B7exp(\u2212C(t\u2212t\u2080)) + B', gro:'y = A(1\u2212exp(\u2212C(t\u2212t\u2080))) + B' }[mf.model];
+var ml = ['Manual fit: ' + eq,
+'A = ' + numStr(P.A) + '   B = ' + numStr(P.B)];
+if (mf.model !== 'lin') ml.push('C = ' + numStr(P.C) + ' s\u207B\u00B9   t\u2080 = ' + numStr(P.t0) + ' s');
+ml.push('RMS residual = ' + fmtP(mfr.rms, 3) + u + '  (n = ' + mfr.n + ')');
+gx.font = 'bold 11px monospace';
+var mw = 0; ml.forEach(function(s){ mw = Math.max(mw, gx.measureText(s).width); }); mw += 12;
+var mh = 8 + ml.length*14;
+var corners = [[pl+6, pt+6], [pl+w-mw-6, pt+6], [pl+6, pt+h-mh-6], [pl+w-mw-6, pt+h-mh-6]];
+if (fit) corners.splice(1, 1);                         /* top-right holds the automatic fit box */
+var best = corners[0], bestN = Infinity;
+corners.forEach(function(c){
+var cnt = 0;
+for (var q = 0; q < n; q++){ var qx = X(pts[q].x), qy = Y(pts[q].y);
+if (qx >= c[0] && qx <= c[0]+mw && qy >= c[1] && qy <= c[1]+mh) cnt++; }
+if (cnt < bestN){ bestN = cnt; best = c; }
+});
+gx.globalAlpha = 0.92; gx.fillStyle = K['graph-bg']; gx.fillRect(best[0], best[1], mw, mh); gx.globalAlpha = 1;
+gx.strokeStyle = K.mfit; gx.lineWidth = 1; gx.strokeRect(best[0], best[1], mw, mh);
+gx.fillStyle = K.mfit; gx.textAlign = 'left';
+ml.forEach(function(s, j){ gx.fillText(s, best[0]+6, best[1]+14+j*14); });
+}
+/* titles */
+gx.fillStyle = K.text; gx.font = 'bold 12px Arial'; gx.textAlign = 'center';
+gx.fillText(V.sg ? 't \u2212 t\u2080 (s)   [time since the switch]' : 't (s)', pl+w/2, pt+h+34);
+gx.save(); gx.translate(15, pt+h/2); gx.rotate(-Math.PI/2);
+gx.fillText(v.txt + (v.unit ? ' (' + v.unit + ')' : ''), 0, 0); gx.restore();
+gx.fillStyle = K[v.color]; gx.font = 'bold 12px Arial';
+gx.fillText(v.txt + ' vs ' + (V.sg ? 't \u2212 t\u2080   (segment ' + (V.sg.i+1) + ', ' + SWN[V.sg.type] + ')' : 't   (all data)'), pl+w/2, pt-10);
+}
+/* ══ Text panels ══ */
+function updatePanels(){
+var V = view, v = V.v, n = V.pts.length, r = el('rc5Read'), h;
+if (!n){ r.innerHTML = '<span><b>Cursor</b>: no data to read yet.</span>'; }
+else {
+var p = V.pts[V.ci], ls = localSlope(V.pts, V.ci);
+h = '<span><b>Point</b> ' + (V.ci+1) + ' / ' + n + '</span>'
++ '<span><b>' + (V.sg ? 't &minus; t<sub>0</sub>' : 't') + '</b> = ' + p.x.toFixed(2) + ' s</span>'
++ '<span><b>' + v.html + '</b> = ' + fmtP(p.y, 4) + (v.unit ? ' ' + v.unit : '') + '</span>';
+if (ls !== null) h += '<span><b>local slope</b> &asymp; ' + fmtP(ls, 3) + ' ' + v.slopeUnit + '</span>';
+h += '<span>(measured V<sub>C</sub> = ' + fmt(p.p.vc,3) + ', V<sub>R1</sub> = ' + fmt(p.p.vr1,3)
+ + ', V<sub>R2</sub> = ' + fmt(p.p.vr2,3) + ', V<sub>R3</sub> = ' + fmt(p.p.vr3,3) + ' V)</span>';
+r.innerHTML = h;
+}
+h = '';
+if (V.sg){
+var g = V.sg;
+h += '<span><b>Data</b>: segment ' + (g.i+1) + ' (' + SWN[g.type] + '), switched at t<sub>0</sub> = ' + g.t0.toFixed(2)
+ + ' s; V<sub>0</sub> = V<sub>C</sub>(t<sub>0</sub>) = ' + g.v0.toFixed(3) + ' V</span>';
+} else h += '<span><b>Data</b>: all segments, absolute time</span>';
+h += '<span><b>Points plotted</b>: ' + n + (V.skipped ? ' (' + V.skipped + ' omitted: the noisy ratio was &le; 0, so its logarithm is undefined)' : '') + '</span>';
+h += '<span><b>Noise</b>: &sigma; = ' + (noisePct/100*E).toFixed(3) + ' V per reading, ' + Math.round(1/sampleDt) + ' readings/s</span>';
+if (V.fit){
+var f = V.fit;
+h += '<span class="rc5_fitres$thisq">Fit: slope = ' + fmtPM(f.m, f.sm) + ' ' + v.slopeUnit + '; intercept = '
+ + fmtPM(f.b, f.sb) + '; R&sup2; = ' + f.r2.toFixed(5) + '; n = ' + f.n + '</span>';
+} else if (v.lin && n >= 3){
+h += '<span>Tick <b>Automatic linear fit</b>, then use the fit window to leave out the noisy tail.</span>';
+}
+if (V.mfr){
+h += '<span class="rc5_mfres$thisq">Manual fit: RMS residual = ' + fmtP(V.mfr.rms, 3) + (v.unit ? ' ' + v.unit : '')
+ + ' over ' + V.mfr.n + ' points (lower is better)</span>';
+}
+el('rc5Stats').innerHTML = h;
+var lbl = function(fr){ return n ? (V.sg ? 't\u2212t\u2080 = ' : 't = ') + V.pts[Math.round(fr*(n-1))].x.toFixed(2) + ' s' : '\u2013'; };
+el('rc5FitLoV').textContent = lbl(Math.min(fitLo, fitHi));
+el('rc5FitHiV').textContent = lbl(Math.max(fitLo, fitHi));
+}
+function updateCSV(){
+var V = view, ta = el('rc5Csv');
+var rows = [(V.sg ? 't_minus_t0_s' : 't_s') + ',' + V.v.csv + ',VC_V,VR1_V,VR2_V,VR3_V'];
+V.pts.forEach(function(p){
+rows.push(p.x.toFixed(3) + ',' + p.y.toPrecision(6) + ',' + p.p.vc.toFixed(4) + ',' + p.p.vr1.toFixed(4)
++ ',' + p.p.vr2.toFixed(4) + ',' + p.p.vr3.toFixed(4));
+});
+ta.value = rows.join('\n');
+}
+function redraw(){
+loadColors();
+drawCircuit(); drawGraph(); updatePanels(); mfSyncUI();
+if (csvOn && !running) updateCSV();
+}
+return {
+reset: reset, redraw: redraw, setSwitch: setSwitch, setY: setY, setSeg: setSeg,
+togglePlay: function(){ if (running) pause(false); else play(); },
+step: function(){ if (running) pause(true); if (time >= T_MAX) return; advanceTo(time + 0.5); checkNarr(); rebuildSegSelect(); redraw(); },
+setSpeed: function(v){ speed = Number(v); },
+toggleFit: function(c){
+showFit = c; redraw();
+if (c && view && view.fit) narrate('Linear fit: slope = ' + fmtPM(view.fit.m, view.fit.sm) + ' per second, R squared = ' + view.fit.r2.toFixed(4) + '.');
+else if (c) narrate('At least three points are needed in the fit window.');
+},
+toggleMF: function(c){
+if (c && !mfAvail()){ mfOff(); return; }
+mf.on = c;
+if (c){ mfRescale(true); narrate('Manual fit on. Choose the model, then adjust A, B, C and t\u2080 until the orange curve follows the points in the fit window and the RMS residual is as small as possible.'); }
+redraw();
+},
+setMFModel: function(m){ mf.model = m; if (mf.on) mfRescale(true); redraw(); },
+mfRescale: function(){ mfRescale(false); redraw(); },
+mfSet: function(k, val, src){
+var x = parseFloat(val); if (!isFinite(x)) { mfShow(k); return; }
+mf.p[k] = x;
+if (src === 'n') mfShow(k); else el('rc5MF_' + k + 'n').value = numStr(x);
+redraw();
+},
+setFitLo: function(v){ fitLo = Number(v); redraw(); },
+setFitHi: function(v){ fitHi = Number(v); redraw(); },
+setCursor: function(v){ cursorFrac = Number(v); redraw(); },
+chSlider: function(lblId, v){ el(lblId).textContent = v; reset(); },
+chNoise: function(v){ noisePct = Number(v); el('rc5NoiseV').textContent = noisePct.toFixed(1); redraw(); },
+chRate: function(v){ sampleDt = 1/Number(v); if (data.length) nextSample = Math.round((time + sampleDt)*1e6)/1e6; redraw(); },
+chTol: function(){ reset(); },
+toggleCSV: function(){
+csvOn = !csvOn; el('rc5Csv').style.display = csvOn ? 'block' : 'none';
+el('rc5CsvBtn').value = csvOn ? 'Hide data table' : 'Show data table (CSV)';
+if (csvOn){ updateCSV(); if (running) narrate('The table updates when you pause.'); }
+}
+};
+})();
+</script>
+<script>
+rc5A11y$thisq.init();
+RC5$thisq.reset();
+</script>
+<hr>
+$rccharge3Rs<p>a) What is the charge time constant for the capacitor when using the circuit of Part 3?
+<br>[AB0]</p>
+<p>b) What is the discharge time constant for the capacitor when using the circuit of Part 3?
+<br>[AB1]</p>
+<p>c) Which resistor voltage can we measure to get both charge and discharge time constants.
+<br>[AB2]</p>
+<p>d) Which data fits can we use from the Pasco Capstone Data Collection tool can we use to get `tau`?
+<br>[AB3]</p>

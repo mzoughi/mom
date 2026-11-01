@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Circuits: Series-Parallel Circuit with a Second Source - Meter Practice</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, circuits, ammeter, voltmeter, ohmmeter, series, parallel, resistance, lesson, scientific">
+<meta name="description" content="Interactive circuit board: place ammeters, voltmeters and ohmmeters and wire them up to measure currents, voltages and resistances.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+@media (max-width:600px) { body { margin:0 !important; padding:4px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="cmRoot" class="cm_root" role="region" aria-label="Series-Parallel Circuit with a Second Source &mdash; Meter Practice: place ammeters, voltmeters and ohmmeters in the circuit and wire them up">
+<div class="cm_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="cm_a11ybtn" id="cmBtnHC" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="cm_a11ybtn" id="cmBtnLM" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="cm_a11ybtn" id="cmBtnCB" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="cm_a11ybtn cm_a11yon" id="cmBtnNR" aria-pressed="true">NARRATION: ON</button>
+<button type="button" class="cm_a11ybtn" id="cmBtnZ" aria-pressed="false">BIGGER DIAGRAM</button>
+</div>
+<div class="cm_header"><p class="cm_h1">Series-Parallel Circuit with a Second Source &mdash; Meter Practice</p><p class="cm_sub">R1 in series &middot; R2 and R3 in parallel &middot; a reversible second supply</p></div>
+<div class="cm_diag"><div class="cm_dlabel"><b>THE CIRCUIT BOARD</b><span id="cmHintTop"></span></div>
+<div class="cm_cvwrap" id="cmWrap"><canvas id="cmCv" width="680" height="350" role="img" aria-label="Circuit diagram. Numbered zones can hold a meter or a wire. Use the controls below the diagram to place meters and make connections; every action can also be done by tapping the diagram." aria-describedby="cmRead"></canvas></div></div>
+<div class="cm_status" id="cmHint" aria-live="polite"></div>
+<div class="cm_bbar">
+<button type="button" class="cm_btn cm_kick" id="cmPlay">&#9654; Show current flow</button>
+<button type="button" class="cm_btn" id="cmStep">Step</button>
+<button type="button" class="cm_btn" id="cmRst">Restart</button>
+<button type="button" class="cm_btn" id="cmReset">Reset circuit</button>
+<button type="button" class="cm_btn" id="cmDsc">Describe</button>
+</div>
+<div class="cm_panel" id="cmSrcP"><div class="cm_ptitle">Supplies and resistors</div><div class="cm_pbody cm_grid" id="cmSl"></div></div>
+<div class="cm_panels">
+<div class="cm_panel"><div class="cm_ptitle">1. Place or remove a meter</div><div class="cm_pbody">
+<div class="cm_brow" role="group" aria-label="Choose a meter">
+<button type="button" class="cm_dev" id="cmDevA" aria-pressed="false">&#9711; Ammeter (A)</button>
+<button type="button" class="cm_dev" id="cmDevV" aria-pressed="false">&#9711; Voltmeter (V)</button>
+<button type="button" class="cm_dev" id="cmDevO" aria-pressed="false">&#9711; Ohmmeter (&Omega;)</button>
+<button type="button" class="cm_dev" id="cmDevR" aria-pressed="false">Remove device</button>
+</div>
+<div class="cm_ctrl"><label class="cm_ctrlname" for="cmZone">zone</label><select id="cmZone"></select></div>
+<button type="button" class="cm_btn" id="cmPlace">Place / remove in this zone</button>
+<p class="cm_note">Choose a meter, then a zone, then press the button &mdash; or tap a zone number on the diagram.</p>
+</div></div>
+<div class="cm_panel"><div class="cm_ptitle">2. Connect or disconnect a wire</div><div class="cm_pbody">
+<div class="cm_ctrl"><label class="cm_ctrlname" for="cmPA">point A</label><select id="cmPA"></select></div>
+<div class="cm_ctrl"><label class="cm_ctrlname" for="cmPB">point B</label><select id="cmPB"></select></div>
+<button type="button" class="cm_btn" id="cmTog">Connect / disconnect A and B</button>
+<p class="cm_note">Or tap two points on the diagram, one after the other. Small dots are pads on the board; a placed meter&rsquo;s own two terminals are the larger ringed dots next to it.</p>
+</div></div>
+</div>
+<div class="cm_panel"><div class="cm_ptitle">Meter readings</div><div class="cm_pbody"><div id="cmRead" class="cm_read" aria-live="polite">No meters placed yet.</div><div id="cmWires" class="cm_note"></div></div></div>
+<div id="cmNar" class="cm_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="cm_descwrap">
+<button type="button" class="cm_descbtn" id="cmDescBtn" aria-expanded="false" aria-controls="cmDesc">&#9656; SIM DESCRIPTION</button>
+<div class="cm_desc" id="cmDesc" role="region" aria-labelledby="cmDescBtn" hidden>
+<p>The main supply drives a current through R1; after R1 the current splits between two branches, R2 and R3, which join again at the bottom. The R3 branch also contains a second supply (zone 12) whose voltage V2 can be set from &minus;20 V to +20 V: its sign sets its polarity, and the + and &minus; marks on the drawing follow it. With V2 = 0 it is just a wire. Zones 1, 3, 5, 8 and 11 carry a wire in the path of the current; zones 6, 7 and 10 are empty pads beside R1, R2 and R3.</p>
+<p><b>Using the meters.</b> An <b>ammeter</b> measures the current through it; it has almost no resistance, so it must be placed <b>in series</b>, in a zone that is part of the path the current follows (zones that carry a wire by default). A <b>voltmeter</b> measures the voltage between its two terminals; its resistance is very large, so it is connected <b>in parallel</b>, across a component, in an empty zone, with wires from its terminals to the two ends of that component. An <b>ohmmeter</b> sends its own small current to measure a resistance, so it only works on a component that is <b>disconnected from every source</b>: if a voltage is still present across it, it shows an error. Remove wires (for example the wire in zone 1) to isolate a resistor before measuring it.</p>
+<p><b>Safety.</b> If any current would exceed 5 A (a short circuit, for example an ammeter placed in parallel across the supply), the supply switches itself off and shows TRIPPED.</p>
+<p><b>Controls.</b> Everything can be done without the diagram: choose a meter and a zone in panel 1, or two points in panel 2. On the diagram, tap a zone number to place the chosen meter, or tap two points to connect or disconnect them. The meter readings are listed under the diagram and announced. &ldquo;Bigger diagram&rdquo; lets the diagram scroll sideways on a small screen, so the points are easier to tap.</p>
+</div></div>
+</div><!-- #cmRoot -->
+<style>
+#cmRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8; --c-bad:#ff8a7a;
+  background:var(--c-chassis); color:var(--c-text); font-family:Arial, sans-serif; font-size:14px; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:900px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#cmRoot * { box-sizing:border-box; }
+#cmRoot.cm_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; --c-bad:#a02010; }
+#cmRoot.cm_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e8e8e8; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; --c-bad:#ff5555; }
+#cmRoot .cm_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#cmRoot .cm_a11ybtn { padding:4px 10px; font-size:.72em; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:32px; }
+#cmRoot .cm_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#cmRoot .cm_header { text-align:center; }
+#cmRoot .cm_h1 { margin:0; font-size:1.05em; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--c-accent); }
+#cmRoot .cm_sub { margin:3px 0 0; font-size:.75em; color:var(--c-dim); letter-spacing:.06em; text-transform:uppercase; }
+#cmRoot .cm_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; }
+#cmRoot .cm_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.68em; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#cmRoot .cm_dlabel b { color:var(--c-accent); }
+#cmRoot .cm_cvwrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+#cmRoot canvas { display:block; width:100%; height:auto; touch-action:manipulation; cursor:pointer; }
+#cmRoot .cm_big canvas { width:680px; max-width:none; }
+#cmRoot .cm_bbar { display:flex; flex-wrap:wrap; gap:6px 10px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; }
+#cmRoot .cm_btn { padding:7px 12px; font-family:monospace; font-size:.8em; letter-spacing:.03em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; min-height:38px; }
+#cmRoot .cm_btn:hover { border-color:var(--c-accent); }
+#cmRoot .cm_kick { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#cmRoot .cm_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#cmRoot .cm_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; min-width:0; }
+#cmRoot .cm_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.68em; letter-spacing:.12em; text-transform:uppercase; color:var(--c-dim); }
+#cmRoot .cm_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#cmRoot .cm_grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:9px 16px; }
+#cmRoot .cm_ctrl { display:flex; flex-direction:column; gap:3px; min-width:0; }
+#cmRoot .cm_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#cmRoot .cm_ctrlname { font-size:.8em; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.03em; }
+#cmRoot .cm_sval { font-family:monospace; font-size:.9em; color:var(--c-val); white-space:nowrap; }
+#cmRoot .cm_brow { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:6px; }
+#cmRoot .cm_dev { padding:7px 8px; font-size:.84em; border-radius:4px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); min-height:40px; }
+#cmRoot .cm_dev[aria-pressed="true"] { background:var(--c-accent); border-color:var(--c-accent); color:#1a1f24; font-weight:bold; }
+#cmRoot .cm_note { margin:0; font-size:.8em; color:var(--c-dim); line-height:1.4; }
+#cmRoot select { width:100%; background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:5px; font-size:.92em; min-height:36px; }
+#cmRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); margin:9px 0; }
+#cmRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#cmRoot input[type=range]::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#cmRoot .cm_read { font-family:monospace; font-size:.92em; line-height:1.6; color:var(--c-text); }
+#cmRoot .cm_read b { color:var(--c-val); }
+#cmRoot .cm_bad { color:var(--c-bad); font-weight:bold; }
+#cmRoot .cm_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.9em; line-height:1.4; }
+#cmRoot .cm_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.92em; font-style:italic; line-height:1.45; border-radius:3px; }
+#cmRoot .cm_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#cmRoot .cm_descbtn { padding:8px 18px; font-family:monospace; font-size:.8em; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#cmRoot .cm_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.95em; line-height:1.55; }
+#cmRoot .cm_desc p { margin:0 0 9px; }
+#cmRoot [hidden] { display:none !important; }
+#cmRoot button:focus-visible, #cmRoot input:focus-visible, #cmRoot select:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #cmRoot { padding:10px 6px 14px; } #cmRoot .cm_panels { grid-template-columns:minmax(0,1fr); } #cmRoot .cm_bbar .cm_btn { flex:1 1 30%; } }
+@media (pointer:coarse) { #cmRoot input[type=range] { height:8px; } #cmRoot input[type=range]::-webkit-slider-thumb { width:28px; height:28px; } #cmRoot input[type=range]::-moz-range-thumb { width:26px; height:26px; } #cmRoot .cm_a11ybtn, #cmRoot .cm_btn, #cmRoot .cm_dev, #cmRoot select { min-height:44px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Board of fixed pads (N), zones (two pads each: a default wire, or empty, or a meter), fixed leads, resistors and supplies.
+The circuit is solved by modified nodal analysis (every supply has its own branch current). Ammeter: 0.001 ohm.
+Voltmeter: 20 Mohm. Ohmmeter: measured with all supplies replaced by wires and the meter itself removed; it reports
+an error if a voltage is present across it in the live circuit. Any current above 5 A trips the supplies to 0 V.
+CFG at the top of the script: the topology and the starting values (from the MOM variables in the MOM version).
+-->
+<script>
+(function(){
+var thisq = '';
+var CFG = { topo:'two', V:9, R1:100, R2:150, R3:200, V2:0, hideR:0, showSliders:1 };
+function el(id){ return document.getElementById(id + thisq); }
+var ROOT = el('cmRoot'), canvas = el('cmCv'), ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height, DPR = window.devicePixelRatio || 1;
+var OX = 30, OY = 95;   /* the drawing is cropped to the board */
+canvas.width = W*DPR; canvas.height = H*DPR; ctx.scale(DPR, DPR); ctx.translate(-OX, -OY);
+/* ══════════ the board ══════════ */
+var N, ZONES, LEADS, ZL, RES, SRC2 = CFG.topo === 'two';
+if (!SRC2){
+  N = { SP:{x:180,y:243}, SN:{x:180,y:317}, S1A:{x:285,y:160}, S1B:{x:355,y:160}, R1L:{x:425,y:160}, R1R:{x:495,y:160}, S3A:{x:530,y:200}, S3B:{x:530,y:280},
+    R2T:{x:530,y:290}, R2B:{x:530,y:350}, S5A:{x:425,y:390}, S5B:{x:355,y:390}, S6A:{x:420,y:190}, S6B:{x:500,y:190}, S7A:{x:490,y:290}, S7B:{x:490,y:350} };
+  ZONES = { 1:{a:'S1A', b:'S1B', c:{x:320,y:160}, w:true, g:{x:320,y:120}}, 3:{a:'S3A', b:'S3B', c:{x:530,y:240}, w:true, g:{x:572,y:240}}, 5:{a:'S5A', b:'S5B', c:{x:390,y:390}, w:true, g:{x:390,y:422}},
+    6:{a:'S6A', b:'S6B', c:{x:460,y:190}, w:false, g:{x:460,y:224}}, 7:{a:'S7A', b:'S7B', c:{x:490,y:320}, w:false, g:{x:440,y:320}} };
+  LEADS = [{a:'SP', b:'S1A', pts:['SP', {x:180,y:160}, 'S1A']}, {a:'S1B', b:'R1L', pts:['S1B', 'R1L']}, {a:'R1R', b:'S3A', pts:['R1R', {x:530,y:160}, 'S3A']}, {a:'S3B', b:'R2T', pts:['S3B', 'R2T']},
+    {a:'R2B', b:'S5A', pts:['R2B', {x:530,y:390}, 'S5A']}, {a:'S5B', b:'SN', pts:['S5B', {x:180,y:390}, 'SN']}];
+  ZL = [1, 3, 5, 6, 7]; RES = [['R1', 'R1L', 'R1R', 'h'], ['R2', 'R2T', 'R2B', 'v']];
+} else {
+  N = { SP:{x:70,y:243}, SN:{x:70,y:317}, S1A:{x:185,y:160}, S1B:{x:255,y:160}, R1L:{x:325,y:160}, R1R:{x:395,y:160}, S3A:{x:430,y:200}, S3B:{x:430,y:280},
+    R2T:{x:430,y:290}, R2B:{x:430,y:350}, S5A:{x:325,y:390}, S5B:{x:255,y:390}, S6A:{x:320,y:190}, S6B:{x:400,y:190}, S7A:{x:390,y:290}, S7B:{x:390,y:350},
+    S8A:{x:580,y:200}, S8B:{x:580,y:280}, R3T:{x:580,y:290}, R3B:{x:580,y:350}, S10A:{x:530,y:290}, S10B:{x:530,y:350}, S11A:{x:460,y:160}, S11B:{x:520,y:160}, S12A:{x:520,y:390}, S12B:{x:460,y:390} };
+  ZONES = { 1:{a:'S1A', b:'S1B', c:{x:220,y:160}, w:true, g:{x:220,y:120}}, 3:{a:'S3A', b:'S3B', c:{x:430,y:240}, w:true, g:{x:472,y:240}}, 5:{a:'S5A', b:'S5B', c:{x:290,y:390}, w:true, g:{x:290,y:422}},
+    6:{a:'S6A', b:'S6B', c:{x:360,y:190}, w:false, g:{x:360,y:224}}, 7:{a:'S7A', b:'S7B', c:{x:390,y:320}, w:false, g:{x:340,y:320}}, 8:{a:'S8A', b:'S8B', c:{x:580,y:240}, w:true, g:{x:622,y:240}},
+    10:{a:'S10A', b:'S10B', c:{x:530,y:320}, w:false, g:{x:530,y:372}}, 11:{a:'S11A', b:'S11B', c:{x:490,y:160}, w:true, g:{x:490,y:120}} };
+  LEADS = [{a:'SP', b:'S1A', pts:['SP', {x:70,y:160}, 'S1A']}, {a:'S1B', b:'R1L', pts:['S1B', 'R1L']}, {a:'R1R', b:'S3A', pts:['R1R', {x:430,y:160}, 'S3A']}, {a:'S3B', b:'R2T', pts:['S3B', 'R2T']},
+    {a:'R2B', b:'S5A', pts:['R2B', {x:430,y:390}, 'S5A']}, {a:'S5B', b:'SN', pts:['S5B', {x:70,y:390}, 'SN']}, {a:'R1R', b:'S11A', pts:['R1R', 'S11A']}, {a:'S11B', b:'S8A', pts:['S11B', {x:580,y:160}, 'S8A']},
+    {a:'S8B', b:'R3T', pts:['S8B', 'R3T']}, {a:'R3B', b:'S12A', pts:['R3B', {x:580,y:390}, 'S12A']}, {a:'S12B', b:'S5A', pts:['S12B', 'S5A']}];
+  ZL = [1, 3, 5, 6, 7, 8, 10, 11]; RES = [['R1', 'R1L', 'R1R', 'h'], ['R2', 'R2T', 'R2B', 'v'], ['R3', 'R3T', 'R3B', 'v']];
+}
+LEADS.forEach(function(l){ l.pts = l.pts.map(function(p){ return typeof p === 'string' ? N[p] : p; }); });
+var LBL = { SP:'Supply + terminal', SN:'Supply \u2212 terminal', R1L:'R1, left lead', R1R:'R1, right lead', R2T:'R2, top lead', R2B:'R2, bottom lead', R3T:'R3, top lead', R3B:'R3, bottom lead',
+  S12A:'Zone 12 supply, right terminal', S12B:'Zone 12 supply, left terminal' };
+ZL.forEach(function(z){ var Z = ZONES[z], hor = N[Z.a].y === N[Z.b].y; LBL[Z.a] = 'Zone ' + z + ', ' + (hor ? (N[Z.a].x < N[Z.b].x ? 'left' : 'right') : 'top') + ' pad'; LBL[Z.b] = 'Zone ' + z + ', ' + (hor ? (N[Z.b].x > N[Z.a].x ? 'right' : 'left') : 'bottom') + ' pad'; });
+var DEV = { ammeter:'Ammeter', voltmeter:'Voltmeter', ohmmeter:'Ohmmeter' }, LET = { ammeter:'A', voltmeter:'V', ohmmeter:'\u03A9' };
+var WIRE_R = 0.001, VM_R = 2e7, REG = 1e-9, TRIP = 5;
+/* ══════════ state ══════════ */
+var P = { V:CFG.V, R1:CFG.R1, R2:CFG.R2, R3:CFG.R3, V2:CFG.V2 };
+var conn, zoneDev, armed = null, sel = null, hov = null, last = null, wasTripped = false, run = 0, phase = 0, timer = null, frames = 0;
+var th = { hc:false, lm:false, cb:false, nr:true, big:false };
+function ck(a, b){ return [a, b].sort().join('|'); }
+function defConn(){ var s = new Set(); ZL.forEach(function(z){ if (ZONES[z].w) s.add(ck(ZONES[z].a, ZONES[z].b)); }); return s; }
+function tid(z, n){ return 'Z' + z + '_T' + n; } function isT(id){ return /^Z\d+_T[12]$/.test(id); }
+function tpos(z){ var Z = ZONES[z], a = N[Z.a], b = N[Z.b], dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, ux = dx/L, uy = dy/L, h = Math.max(4, Math.min(9, L*0.5 - 7)), cx = (a.x + b.x)/2, cy = (a.y + b.y)/2;
+  return { T1:{x:cx - ux*h, y:cy - uy*h}, T2:{x:cx + ux*h, y:cy + uy*h} }; }
+var STUBZ = {}; ZL.forEach(function(z){ STUBZ[ZONES[z].a] = z; STUBZ[ZONES[z].b] = z; });
+function pos(id){ if (N[id]) return N[id]; var m = /^Z(\d+)_T([12])$/.exec(id); if (m){ var t = tpos(+m[1]); return m[2] === '1' ? t.T1 : t.T2; } return null; }
+function lab(id){ if (LBL[id]) return LBL[id]; var m = /^Z(\d+)_T([12])$/.exec(id); if (m) return 'Zone ' + m[1] + ' ' + (DEV[zoneDev[+m[1]]] || 'device') + ', terminal ' + m[2]; return id; }
+function allIds(){ var ids = Object.keys(N).slice(); ZL.forEach(function(z){ if (zoneDev[z]){ ids.push(tid(z, 1)); ids.push(tid(z, 2)); } }); return ids; }
+function deg(id){ var c = 0; conn.forEach(function(k){ if (k.split('|').indexOf(id) >= 0) c++; }); return c; }
+/* ══════════ placing devices and wires ══════════ */
+function removeDev(z, quiet){ if (zoneDev[z]){ var t1 = tid(z, 1), t2 = tid(z, 2); Array.from(conn).forEach(function(k){ if (k.indexOf(t1) >= 0 || k.indexOf(t2) >= 0) conn.delete(k); }); }
+  var Z = ZONES[z]; conn.delete(ck(Z.a, Z.b)); zoneDev[z] = null; if (Z.w) conn.add(ck(Z.a, Z.b));
+  if (!quiet) narrate('Zone ' + z + ' cleared' + (Z.w ? ': a plain wire is back in place.' : '.')); }
+function placeDev(z, t){ removeDev(z, true); conn.delete(ck(ZONES[z].a, ZONES[z].b)); zoneDev[z] = t;   /* the zone's own wire is taken out: in the original it stayed in parallel with the meter */ narrate(DEV[t] + ' placed in zone ' + z + '. It is not connected yet: wire each of its two terminals to complete a path.'); }
+function toggle(a, b){ if (a === b) return; var k = ck(a, b); if (conn.has(k)){ conn.delete(k); narrate('Disconnected ' + lab(a) + ' from ' + lab(b) + '.'); } else { conn.add(k); narrate('Connected ' + lab(a) + ' to ' + lab(b) + '.'); } }
+/* ══════════ solver (as in the original) ══════════ */
+function Rv(k){ return P[k] > 0 ? P[k] : WIRE_R; }
+function edges(o){ o = o || {}; var E = [];
+  LEADS.forEach(function(l){ E.push({a:l.a, b:l.b, R:WIRE_R}); });
+  RES.forEach(function(r){ E.push({a:r[1], b:r[2], R:Rv(r[0])}); });
+  if (o.short){ E.push({a:'SP', b:'SN', R:WIRE_R}); if (SRC2) E.push({a:'S12A', b:'S12B', R:WIRE_R}); }
+  ZL.forEach(function(z){ var t = zoneDev[z]; if (t && o.ex !== z) E.push({a:tid(z, 1), b:tid(z, 2), R:t === 'ammeter' ? 0.001 : VM_R}); });
+  conn.forEach(function(k){ var p = k.split('|'); E.push({a:p[0], b:p[1], R:WIRE_R}); });
+  return E; }
+function mna(E, S, gnd, inj){ inj = inj || {}; var set = {};
+  E.forEach(function(e){ set[e.a] = 1; set[e.b] = 1; }); S.forEach(function(s){ set[s.p] = 1; set[s.n] = 1; }); Object.keys(inj).forEach(function(n){ set[n] = 1; });
+  var ids = Object.keys(set).filter(function(i){ return i !== gnd; }), nN = ids.length, T = nN + S.length, ix = {}, i, A = [], b = new Array(T).fill(0);
+  ids.forEach(function(id, k){ ix[id] = k; }); for (i=0; i<T; i++) A.push(new Array(T).fill(0)); for (i=0; i<nN; i++) A[i][i] += REG;
+  E.forEach(function(e){ var g = 1/e.R, ia = e.a === gnd ? -1 : ix[e.a], ib = e.b === gnd ? -1 : ix[e.b]; if (ia >= 0) A[ia][ia] += g; if (ib >= 0) A[ib][ib] += g; if (ia >= 0 && ib >= 0){ A[ia][ib] -= g; A[ib][ia] -= g; } });
+  Object.keys(inj).forEach(function(n){ if (n !== gnd && ix[n] !== undefined) b[ix[n]] += inj[n]; });
+  S.forEach(function(s, k){ var c = nN + k, ip = s.p === gnd ? -1 : ix[s.p], iN = s.n === gnd ? -1 : ix[s.n]; if (ip >= 0){ A[ip][c] -= 1; A[c][ip] += 1; } if (iN >= 0){ A[iN][c] += 1; A[c][iN] -= 1; } b[c] += s.V; });
+  for (var col=0; col<T; col++){ var pv = col, r; for (r=col + 1; r<T; r++) if (Math.abs(A[r][col]) > Math.abs(A[pv][col])) pv = r;
+    if (pv !== col){ var tA = A[col]; A[col] = A[pv]; A[pv] = tA; var tB = b[col]; b[col] = b[pv]; b[pv] = tB; }
+    var d = A[col][col]; if (Math.abs(d) < 1e-14) continue;
+    for (r=0; r<T; r++){ if (r === col) continue; var f = A[r][col]/d; if (!f) continue; for (var c2=col; c2<T; c2++) A[r][c2] -= f*A[col][c2]; b[r] -= f*b[col]; } }
+  var V = {}; ids.forEach(function(id, k){ V[id] = Math.abs(A[k][k]) > 1e-14 ? b[k]/A[k][k] : 0; }); V[gnd] = 0;
+  return { V:V, I:S.map(function(s, k){ var c = nN + k; return Math.abs(A[c][c]) > 1e-14 ? b[c]/A[c][c] : 0; }) }; }
+function sources(on){ var S = [{p:'SP', n:'SN', V:on ? P.V : 0}]; if (SRC2) S.push({p:'S12A', n:'S12B', V:on ? P.V2 : 0}); return S; }
+function curr(E, V){ return E.map(function(e){ return {a:e.a, b:e.b, I:((V[e.a] || 0) - (V[e.b] || 0))/e.R}; }); }
+function compute(){ var E = edges(), r = mna(E, sources(true), 'SN'), ec = curr(E, r.V), mx = 0;
+  ec.forEach(function(e){ mx = Math.max(mx, Math.abs(e.I)); }); r.I.forEach(function(I){ mx = Math.max(mx, Math.abs(I)); });
+  if (mx > TRIP){ var r2 = mna(E, sources(false), 'SN'); return { V:r2.V, ec:curr(E, r2.V), tripped:true }; }
+  return { V:r.V, ec:ec, tripped:false }; }
+function eI(ec, a, b){ for (var i=0; i<ec.length; i++){ if (ec[i].a === a && ec[i].b === b) return ec[i].I; if (ec[i].a === b && ec[i].b === a) return -ec[i].I; } return 0; }
+function ohm(z){ var t1 = tid(z, 1), t2 = tid(z, 2), E = edges({ex:z, short:true}), o = {}; o[t1] = 1; var r = mna(E, [], t2, o); return r.V[t1]; }
+function reading(z){ var t = zoneDev[z]; if (!t) return null; var t1 = tid(z, 1), t2 = tid(z, 2);
+  if (deg(t1) === 0 && deg(t2) === 0) return { text:'not connected', bad:false };
+  if (t === 'ammeter'){ if (last.tripped) return { text:'0 A \u2014 supply tripped off (short circuit)', bad:true }; var I = Math.abs(eI(last.ec, t1, t2)); return { text:I < 1 ? (I*1000).toFixed(1) + ' mA' : I.toFixed(3) + ' A', bad:false }; }
+  var dv = Math.abs((last.V[t1] || 0) - (last.V[t2] || 0));
+  if (t === 'voltmeter') return { text:dv.toFixed(2) + ' V', bad:false };
+  if (dv > 0.05) return { text:'ERROR \u2014 the circuit is still live (\u2248' + dv.toFixed(2) + ' V across it). Disconnect it from the supply first.', bad:true };
+  var R = ohm(z); if (!isFinite(R) || R > 5e5) return { text:'OL (open circuit)', bad:false };
+  return { text:R >= 1000 ? (R/1000).toFixed(2) + ' k\u03A9' : R.toFixed(1) + ' \u03A9', bad:false }; }
+/* ══════════ colours ══════════ */
+function pal(){ var cb = th.cb, hc = th.hc, lm = th.lm;
+  return { bg:hc ? '#000' : (lm ? '#ffffff' : '#0f141b'), wire:hc ? '#ffffff' : (lm ? '#666' : '#8a96a6'), flow:hc ? '#00e8ff' : (cb ? '#0072B2' : (lm ? '#1155cc' : '#5aa0ff')),
+    struct:hc ? '#ffffff' : (lm ? '#111' : '#e6ecf2'), res:hc ? '#ffaa33' : (cb ? '#E69F00' : (lm ? '#a05a00' : '#e0a050')), meter:hc ? '#111' : (lm ? '#fff' : '#1c232c'),
+    mline:hc ? '#fff' : (lm ? '#111' : '#e6ecf2'), txt:hc ? '#fff' : (lm ? '#111' : '#e6ecf2'), bad:hc ? '#ff4400' : (cb ? '#D55E00' : (lm ? '#cc2200' : '#ff6a5a')),
+    selc:hc ? '#ffe000' : (cb ? '#CC79A7' : '#e0a800'), term:hc ? '#00e8ff' : (cb ? '#56B4E9' : '#4a8cff'), badge:hc ? '#ffffff' : (lm ? '#111' : '#e6ecf2'), badgeT:hc ? '#000' : (lm ? '#fff' : '#0f141b') }; }
+/* ══════════ drawing (as in the original) ══════════ */
+function line(pts, I, p){ ctx.strokeStyle = p.wire; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (var i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke();
+  if (run !== 1 || Math.abs(I) < 0.0004) return;
+  var sl = [], tot = 0; for (i=0; i<pts.length - 1; i++){ var l = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y); sl.push(l); tot += l; } if (tot < 1) return;
+  var sp = Math.min(3, Math.max(0.3, Math.abs(I)*20)); ctx.fillStyle = p.flow;
+  for (var d=0; d<2; d++){ var t = (phase*sp + d/2) % 1; if (I < 0) t = 1 - t; var dist = t*tot, acc = 0, px = pts[0].x, py = pts[0].y;
+    for (i=0; i<sl.length; i++){ if (acc + sl[i] >= dist){ var f = (dist - acc)/sl[i]; px = pts[i].x + (pts[i + 1].x - pts[i].x)*f; py = pts[i].y + (pts[i + 1].y - pts[i].y)*f; break; } acc += sl[i]; }
+    ctx.beginPath(); ctx.arc(px, py, 3.2, 0, 2*Math.PI); ctx.fill(); } }
+function zig(a, b, p){ var n = 7, dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, px = -dy/L, py = dx/L; ctx.strokeStyle = p.res; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(a.x, a.y);
+  for (var i=1; i<n; i++){ var t = i/n, o = i % 2 ? 8 : -8; ctx.lineTo(a.x + dx*t + px*o, a.y + dy*t + py*o); } ctx.lineTo(b.x, b.y); ctx.stroke(); }
+function dot(id, p){ var q = pos(id); if (!q) return; var s = sel === id, h = hov === id && !s, T = isT(id), dim = !T && STUBZ[id] && zoneDev[STUBZ[id]];
+  var r = s ? 7 : (h ? 6 : (T ? 5.5 : (dim ? 2.2 : 3.4)));
+  ctx.fillStyle = (s || h) ? p.selc : (T ? p.term : (dim ? p.wire : p.struct)); ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, 2*Math.PI); ctx.fill();
+  if (T){ ctx.strokeStyle = p.mline; ctx.lineWidth = 1.2; ctx.stroke(); }
+  if (s || h){ ctx.strokeStyle = p.selc; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q.x, q.y, r + 5, 0, 2*Math.PI); ctx.stroke(); } }
+function badge(x, y, n, p, on){ ctx.fillStyle = on ? p.selc : p.badge; ctx.beginPath(); ctx.arc(x, y, 11, 0, 2*Math.PI); ctx.fill(); ctx.fillStyle = p.badgeT; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(n), x, y + 1); ctx.textBaseline = 'alphabetic'; }
+function meter(z, p){ var Z = ZONES[z], t = zoneDev[z], tp = tpos(z), cx = Z.c.x, cy = Z.c.y;
+  ctx.strokeStyle = p.mline; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tp.T1.x, tp.T1.y); ctx.moveTo(cx, cy); ctx.lineTo(tp.T2.x, tp.T2.y); ctx.stroke();
+  ctx.fillStyle = p.meter; ctx.beginPath(); ctx.arc(cx, cy, 16, 0, 2*Math.PI); ctx.fill(); ctx.strokeStyle = p.mline; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = p.mline; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(LET[t], cx, cy + 1); ctx.textBaseline = 'alphabetic';
+  dot(tid(z, 1), p); dot(tid(z, 2), p);
+  var r = reading(z); if (r){ var tx = r.bad && r.text.length > 20 ? (t === 'ohmmeter' ? 'ERROR: live circuit' : 'TRIPPED') : r.text; ctx.font = (r.bad ? 'bold ' : '') + '12px monospace'; ctx.textAlign = 'center';
+    ctx.lineWidth = 3; ctx.strokeStyle = p.bg; ctx.strokeText((r.bad ? '\u26A0 ' : '') + tx, cx, cy + 33); ctx.fillStyle = r.bad ? p.bad : p.txt; ctx.fillText((r.bad ? '\u26A0 ' : '') + tx, cx, cy + 33); } }
+function supplyBox(x1, y1, x2, y2, p){ ctx.strokeStyle = last.tripped ? p.bad : p.struct; ctx.lineWidth = 2; ctx.setLineDash(last.tripped ? [5, 3] : []); ctx.strokeRect(x1, y1, x2 - x1, y2 - y1); ctx.setLineDash([]); }
+function draw(){
+  last = compute(); var p = pal(), ec = last.ec;
+  if (last.tripped && !wasTripped) narrate('\u26A0 Safety shut-off: a short circuit was detected, so the supply switched itself off (0 V). Remove the short, or make the resistances larger than 0 \u03A9, to restore power.');
+  else if (!last.tripped && wasTripped) narrate('Power restored: the short circuit has been removed.');
+  wasTripped = last.tripped;
+  ctx.fillStyle = p.bg; ctx.fillRect(OX, OY, W, H);
+  LEADS.forEach(function(l){ line(l.pts, eI(ec, l.a, l.b), p); });
+  ZL.forEach(function(z){ var Z = ZONES[z]; if (zoneDev[z]) meter(z, p); else if (conn.has(ck(Z.a, Z.b))) line([N[Z.a], N[Z.b]], eI(ec, Z.a, Z.b), p);
+    else { dot(Z.a, p); dot(Z.b, p); ctx.fillStyle = p.txt; ctx.font = 'italic 11px monospace'; ctx.textAlign = 'center'; ctx.fillText('(empty)', Z.c.x, Z.c.y + 4); }
+    badge(Z.g.x, Z.g.y, z, p, armed && armed !== 'remove'); });
+  conn.forEach(function(k){ var q = k.split('|'), a = q[0], b = q[1];
+    if (ZL.some(function(z){ var Z = ZONES[z]; return !zoneDev[z] && ck(Z.a, Z.b) === k; })) return;
+    var pa = pos(a), pb = pos(b); if (!pa || !pb) return; line([pa, pb], eI(ec, a, b), p); dot(a, p); dot(b, p); });
+  Object.keys(N).forEach(function(id){ dot(id, p); });
+  RES.forEach(function(r){ if (P[r[0]] > 0) zig(N[r[1]], N[r[2]], p); else line([N[r[1]], N[r[2]]], eI(ec, r[1], r[2]), p);
+    var val = CFG.hideR ? '?' : P[r[0]]; ctx.fillStyle = p.txt; ctx.font = '12px monospace';
+    if (r[3] === 'h'){ ctx.textAlign = 'center'; ctx.fillText(r[0] + ' = ' + val + ' \u03A9' + (P[r[0]] === 0 && !CFG.hideR ? ' (wire)' : ''), (N[r[1]].x + N[r[2]].x)/2, N[r[1]].y - 16); }
+    else { ctx.textAlign = 'left'; ctx.fillText(r[0] + ' = ' + val + ' \u03A9' + (P[r[0]] === 0 && !CFG.hideR ? ' (wire)' : ''), N[r[1]].x + (SRC2 ? 10 : 38), (N[r[1]].y + N[r[2]].y)/2); } });
+  supplyBox(N.SP.x - 20, N.SP.y, N.SP.x + 20, N.SN.y, p);
+  ctx.font = 'bold 14px monospace'; ctx.fillStyle = p.struct; ctx.textAlign = 'center'; ctx.fillText('+', N.SP.x, N.SP.y + 16); ctx.fillText('\u2212', N.SP.x, N.SN.y - 6);
+  if (last.tripped){ ctx.fillStyle = p.bad; ctx.font = 'bold 10px monospace'; ctx.fillText('TRIPPED', N.SP.x, (N.SP.y + N.SN.y)/2 - 3); ctx.font = '9px monospace'; ctx.fillText('0 V', N.SP.x, (N.SP.y + N.SN.y)/2 + 10); }
+  else { ctx.font = '11px monospace'; ctx.fillText(P.V + ' V', N.SP.x, (N.SP.y + N.SN.y)/2 + 4); }
+  if (SRC2){ var cx = (N.S12A.x + N.S12B.x)/2, cy = N.S12A.y, plusA = P.V2 >= 0; supplyBox(cx - 30, cy - 12, cx + 30, cy + 12, p);
+    ctx.font = 'bold 13px monospace'; ctx.fillStyle = p.struct; ctx.textAlign = 'center'; ctx.fillText(plusA ? '+' : '\u2212', N.S12A.x - 14, cy + 5); ctx.fillText(plusA ? '\u2212' : '+', N.S12B.x + 14, cy + 5);
+    ctx.font = '11px monospace'; ctx.fillStyle = last.tripped ? p.bad : p.txt; ctx.fillText(last.tripped ? '0 V' : 'V2 = ' + Math.abs(P.V2) + ' V' + (P.V2 === 0 ? ' (off: a wire)' : ''), cx, cy + 40);
+    badge(cx, cy - 24, 12, p, false); }
+  readouts(); }
+function readouts(){ var h = '', any = false;
+  ZL.forEach(function(z){ if (!zoneDev[z]) return; any = true; var r = reading(z); h += '<div><b>Zone ' + z + ' ' + DEV[zoneDev[z]].toLowerCase() + ':</b> <span' + (r.bad ? ' class="cm_bad' + thisq + '">\u26A0 ' : '>') + r.text + '</span></div>'; });
+  el('cmRead').innerHTML = (any ? h : 'No meters placed yet.') + (last && last.tripped ? '<div class="cm_bad' + thisq + '">\u26A0 The supply has tripped off: there is a short circuit.</div>' : '');
+  var extra = []; conn.forEach(function(k){ var q = k.split('|'); if (ZL.some(function(z){ return ck(ZONES[z].a, ZONES[z].b) === k; })) return; extra.push(lab(q[0]) + ' \u2194 ' + lab(q[1])); });
+  el('cmWires').textContent = extra.length ? 'Extra wires: ' + extra.join('; ') + '.' : '';
+  var open = ZL.filter(function(z){ return ZONES[z].w && !zoneDev[z] && !conn.has(ck(ZONES[z].a, ZONES[z].b)); });
+  if (open.length) el('cmWires').textContent += (extra.length ? ' ' : '') + 'Open (wire removed): zone ' + open.join(', ') + '.'; }
+/* ══════════ the controls ══════════ */
+var SLD = [['V', 'supply voltage', 0, 20, 1, 'V'], ['R1', 'R1' + (SRC2 ? ' (series)' : ''), 0, 500, 10, '\u03A9'], ['R2', 'R2' + (SRC2 ? ' (parallel)' : ''), 0, 500, 10, '\u03A9']];
+if (SRC2){ SLD.push(['R3', 'R3 (parallel)', 0, 500, 10, '\u03A9']); SLD.push(['V2', 'zone 12 second supply V2 (\u00B1 = polarity)', -20, 20, 1, 'V']); }
+function buildSliders(){
+  var shown = SLD.filter(function(s){ return CFG.showSliders || (s[0] === 'V2'); });
+  if (!shown.length){ el('cmSrcP').hidden = true; return; }
+  el('cmSl').innerHTML = shown.map(function(s){ return '<div class="cm_ctrl' + thisq + '"><div class="cm_ctrlhdr' + thisq + '"><label class="cm_ctrlname' + thisq + '" for="cmS' + s[0] + thisq + '">' + s[1] + '</label><span class="cm_sval' + thisq + '" id="cmS' + s[0] + 'v' + thisq + '"></span></div><input type="range" id="cmS' + s[0] + thisq + '" min="' + s[2] + '" max="' + s[3] + '" step="' + s[4] + '" value="' + P[s[0]] + '"></div>'; }).join('');
+  shown.forEach(function(s){ var e = el('cmS' + s[0]); function upd(){ var t = P[s[0]] + ' ' + s[5] + (s[0] === 'V2' && P.V2 < 0 ? ' (reversed)' : ''); el('cmS' + s[0] + 'v').textContent = t; e.setAttribute('aria-valuetext', t); }
+    upd(); e.addEventListener('input', function(){ P[s[0]] = +this.value; upd(); draw(); }); e.addEventListener('change', function(){ narrateState(); }); }); }
+function devBtns(){ var m = { ammeter:'cmDevA', voltmeter:'cmDevV', ohmmeter:'cmDevO', remove:'cmDevR' }; Object.keys(m).forEach(function(k){ el(m[k]).setAttribute('aria-pressed', armed === k ? 'true' : 'false'); });
+  hint(armed ? (armed === 'remove' ? 'Now choose an occupied zone and press "Place / remove", or tap its number on the diagram.' : 'Now choose a zone and press "Place / remove", or tap a zone number on the diagram, to place the ' + DEV[armed].toLowerCase() + '.') : 'Choose a meter, then a zone. Tap two points on the diagram to connect or disconnect them.'); }
+function hint(m){ el('cmHint').textContent = m; }
+function selects(){
+  var zs = el('cmZone'), cur = zs.value; zs.innerHTML = ZL.map(function(z){ return '<option value="' + z + '">Zone ' + z + ' (' + (zoneDev[z] ? DEV[zoneDev[z]].toLowerCase() : (conn.has(ck(ZONES[z].a, ZONES[z].b)) ? 'wire' : 'empty')) + ')</option>'; }).join(''); if (cur) zs.value = cur;
+  var ids = allIds(); ['cmPA', 'cmPB'].forEach(function(k){ var s = el(k), v = s.value; s.innerHTML = ids.map(function(id){ return '<option value="' + id + '">' + lab(id) + '</option>'; }).join(''); if (v && ids.indexOf(v) >= 0) s.value = v; }); }
+function act(z){
+  if (armed === 'remove'){ if (zoneDev[z]) removeDev(z); else narrate('Zone ' + z + ' has no device to remove.'); }
+  else if (armed){ placeDev(z, armed); } else { narrate('Choose a meter (or Remove device) first.'); return; }
+  armed = null; devBtns(); draw(); selects(); }
+function on(id, ev, fn){ var x = el(id); if (x) x.addEventListener(ev, fn); }
+[['cmDevA', 'ammeter'], ['cmDevV', 'voltmeter'], ['cmDevO', 'ohmmeter'], ['cmDevR', 'remove']].forEach(function(q){ on(q[0], 'click', function(){ armed = armed === q[1] ? null : q[1]; devBtns(); draw(); }); });
+on('cmPlace', 'click', function(){ act(+el('cmZone').value); });
+on('cmTog', 'click', function(){ var a = el('cmPA').value, b = el('cmPB').value; if (!a || !b || a === b){ narrate('Choose two different points.'); return; } toggle(a, b); draw(); selects(); });
+/* tapping the diagram: hit areas grow when the diagram is drawn small */
+function xy(e){ var r = canvas.getBoundingClientRect(); return { x:OX + (e.clientX - r.left)*W/r.width, y:OY + (e.clientY - r.top)*H/r.height, k:Math.max(1, W/r.width) }; }
+function hitNode(q){ var best = null, bs = 1e9, R = 15*Math.min(q.k, 2.2); allIds().forEach(function(id){ var p = pos(id), d = Math.hypot(p.x - q.x, p.y - q.y), s = d - (isT(id) ? 4*q.k : 0); if (d < R && s < bs){ bs = s; best = id; } }); return best; }
+function hitZone(q){ var best = null, bd = 30*Math.min(q.k, 1.8); ZL.forEach(function(z){ [ZONES[z].c, ZONES[z].g].forEach(function(c){ var d = Math.hypot(q.x - c.x, q.y - c.y); if (d < bd){ bd = d; best = z; } }); }); return best; }
+canvas.addEventListener('click', function(e){ var q = xy(e);
+  if (armed){ var z0 = hitZone(q); if (z0 !== null){ act(z0); return; } }
+  var n = hitNode(q);
+  if (n){ if (!sel){ sel = n; var m = 'Selected: ' + lab(n) + '. Now tap a second point to connect or disconnect them.'; narrate(m); hint(m); }
+    else if (sel === n){ sel = null; hint('Selection cleared.'); }
+    else { var a = sel; toggle(a, n); sel = null; hint('Changed the link between ' + lab(a) + ' and ' + lab(n) + '.'); selects(); }
+    draw(); return; }
+  var z = hitZone(q); if (z !== null && armed) act(z); });
+canvas.addEventListener('pointermove', function(e){ if (e.pointerType !== 'mouse') return; var n = hitNode(xy(e)); if (n !== hov){ hov = n; draw(); if (n && !sel) hint('Point: ' + lab(n) + '. Click to select it.'); } });
+canvas.addEventListener('pointerleave', function(){ if (hov){ hov = null; draw(); } });
+/* play, step, reset */
+function loop(){ phase = (phase + 0.02) % 1; draw(); if (++frames % 70 === 0) narrateState(); if (run) timer = setTimeout(loop, 40); }
+function setRun(v){ clearTimeout(timer); run = v ? 1 : 0; el('cmPlay').innerHTML = v ? '\u2759\u2759 Pause the flow' : '\u25B6 Show current flow'; if (v) loop(); else draw(); }
+on('cmPlay', 'click', function(){ setRun(!run); });
+on('cmStep', 'click', function(){ setRun(false); phase = (phase + 0.08) % 1; run = 1; draw(); run = 0; narrateState(); });
+on('cmRst', 'click', function(){ setRun(false); phase = 0; frames = 0; draw(); selects(); narrate('Ready. Add meters, wire them, then show the current flow.'); });
+on('cmReset', 'click', function(){ setRun(false); conn = defConn(); zoneDev = {}; ZL.forEach(function(z){ zoneDev[z] = null; }); armed = null; sel = null; devBtns(); draw(); selects(); narrate('Circuit reset: meters and extra wires removed. The values of the supplies and resistors are unchanged.'); });
+function narrateState(){ var m;
+  if (last && last.tripped) m = 'The supply is switched off (0 V) because of a short circuit.';
+  else { var I = Math.abs(eI(last.ec, 'SP', 'S1A')); m = 'The circuit is on' + (I > 1e-6 ? ', with current flowing from the main supply' : ', but no current flows from the main supply (the circuit is open)') + '.'; }
+  ZL.forEach(function(z){ if (zoneDev[z]) m += ' Zone ' + z + ' ' + DEV[zoneDev[z]].toLowerCase() + ' reads ' + reading(z).text + '.'; });
+  narrate(m); }
+on('cmDsc', 'click', function(){ var m = (SRC2 ? 'The main supply, on the left, drives R1 at the top; after R1 the circuit splits into two branches, R2 in the middle and R3 on the right, which join again at the bottom. The R3 branch also contains a second supply, zone 12, at the bottom. ' : 'The supply, on the left, drives a single loop: R1 at the top, then R2 on the right, back along the bottom. ')
+  + 'Zones ' + ZL.filter(function(z){ return ZONES[z].w; }).join(', ') + ' carry a wire in the path of the current; zones ' + ZL.filter(function(z){ return !ZONES[z].w; }).join(', ') + ' are empty pads beside the resistors, for meters connected across them. ';
+  narrate(m); setTimeout(narrateState, 6000); });
+/* display options */
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('cm_hc' + thisq, th.hc); ROOT.classList.toggle('cm_lm' + thisq, th.lm); el('cmWrap').classList.toggle('cm_big' + thisq, th.big);
+  [['hc', 'cmBtnHC'], ['lm', 'cmBtnLM'], ['cb', 'cmBtnCB'], ['nr', 'cmBtnNR'], ['big', 'cmBtnZ']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('cm_a11yon' + thisq, th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('cmBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('cmNar').style.display = th.nr ? '' : 'none'; draw();
+  if (k === 'cb' && th.cb) narrate('Colour-blind safe colours: the current dots are blue, the resistors orange, a selected point pink, warnings orange-red with a warning sign. Readings are also written out below the diagram.'); }
+on('cmBtnHC', 'click', function(){ theme('hc'); }); on('cmBtnLM', 'click', function(){ theme('lm'); }); on('cmBtnCB', 'click', function(){ theme('cb'); }); on('cmBtnNR', 'click', function(){ theme('nr'); }); on('cmBtnZ', 'click', function(){ theme('big'); });
+on('cmDescBtn', 'click', function(){ var d = el('cmDesc'), o = d.hidden; d.hidden = !o; this.setAttribute('aria-expanded', o ? 'true' : 'false'); this.innerHTML = (o ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION'; });
+function narrate(m){ if (th.nr) el('cmNar').textContent = m; }
+/* start, from CFG (the original ignored the question's values here) */
+conn = defConn(); zoneDev = {}; ZL.forEach(function(z){ zoneDev[z] = null; });
+buildSliders(); devBtns(); draw(); selects();
+narrate('Ready. Choose a meter and a zone to place it, then connect its two terminals with wires. Press "Show current flow" to watch the current.');
+window['cmSim' + thisq] = { _P:P, _read:function(z){ return reading(z); }, _place:placeDev, _toggle:function(a, b){ toggle(a, b); draw(); selects(); }, _remove:removeDev, _last:function(){ return last; }, _draw:draw, _zones:ZL };
+})();
+</script>
+
+</body>
+</html>

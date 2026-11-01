@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Forces: Free Body Diagram Builder</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, force, free body diagram, forces, Newton laws, lesson, scientific">
+<meta name="description" content="Free body diagram builder -- interactive physics tool.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<!-- ══════════════════════════════════════════════════════════════════
+FREE BODY DIAGRAM BUILDER  (multi-instance, for MOM Conditional questions)
+QUESTION TEXT LAYOUT
+1. One empty host div per diagram, e.g.  <div id="fbdA"></div>
+2. The hidden answer boxes:  <span style="display:none">(dollar)answerbox[0](dollar)answerbox[1]</span>
+3. The SETUP script below (edit it per question)
+4. The ENGINE script (paste unchanged)
+Each diagram writes ONE string into its answer box:
+key|angle|length|key|angle|length|...      e.g.  grav_1|270|1|norm_1|90|1
+(older answers written with commas are still read)
+"none"  when the student chose zero forces;  ""  when not finished.
+key = palette key + "_" + index (if an index was chosen), always lower case.
+angle = degrees from +x (0-359).  length = 1 unless lengths:true.
+═══════════════════════════════════════════════════════════════════ -->
+<!-- ════════ SETUP (edit per question) ════════
+Shared settings sit at the top level; each entry in instances can override any of them.
+host        : id of the div the diagram is built in
+part        : MOM part index of that diagram's (hidden) string answer box
+title       : heading of the diagram
+palette     : force symbols the student can choose; key is what MOM sees (lower case, no commas or |).
+Add misconception distractors here, e.g. {key:'motion', sym:'F', sub:'motion', name:''}
+index       : extra subscript added by the student, for multi-body problems
+{mode:'none'} | {mode:'list', options:['','1','2','12','21']} | {mode:'free', maxLen:3}
+indexSep    : text between the palette subscript and the index (''  -&gt; F_g1,  ','  -&gt; F_g,1)
+maxForces   : largest number of forces (up to 12)
+dirMode     : '8' (45 degree steps) or 'free' (angleStep steps)
+lengths     : true lets students set arrow lengths (sent to MOM, for relative-magnitude checks)
+verdict     : per-force marks from your question code (see the grading code), e.g. the fbk[0] variable
+showMissing : true also tells the student how many required forces were missing
+size        : canvas size in px (default 500); smaller sizes allow diagrams side by side
+-->
+<script>
+  var fbdSetup = {
+    palette: [
+      { key:'grav',   sym:'F', sub:'g', name:'gravity'  },
+      { key:'norm',   sym:'F', sub:'N', name:'normal'   },
+      { key:'ten',    sym:'F', sub:'T', name:'tension'  },
+      { key:'fric',   sym:'F', sub:'f', name:'friction' },
+      { key:'app',    sym:'F', sub:'A', name:'applied'  },
+      { key:'spr',    sym:'F', sub:'s', name:'spring'   },
+      { key:'force',  sym:'F', sub:'',  name:''         }
+    ],
+    index:     { mode:'list', options:['', '1', '2', '12', '21'] },
+    indexSep:  '',
+    maxForces: 8,
+    dirMode:   'free',
+    angleStep: 5,
+    lengths:   false,
+    showMissing: false,
+    instances: [
+      { host:'fbdA', part:0, title:'Free Body Diagram: Block 1' },
+      { host:'fbdB', part:1, title:'Free Body Diagram: Block 2' }
+    ]
+  };
+</script>
+<!-- ════════ ENGINE (paste unchanged) ════════
+Each diagram keeps the VDG-sim structure: accessibility toolbar, title bar, canvas,
+narration bar, button bar, control footer. All CSS is scoped to the diagram so it
+cannot restyle the rest of the MOM page. The script avoids backticks, backslashes
+and dollar signs (other than thisq) so MOM's question-text processing leaves it alone.
+-->
+<style>
+  .fbd-wrap, .fbd-wrap * { margin:0; box-sizing:border-box; }
+  .fbd-wrap { display:inline-block; vertical-align:top; margin:0 8px 12px 0; font-family:sans-serif; }
+  .fbd-a11y { display:flex; gap:6px; padding:6px 8px; flex-wrap:wrap; }
+  .fbd-a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em;
+    border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+  .fbd-a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+  .fbd-tbar { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:30px; }
+  .fbd-tbar h3 { font-size:1.05rem; font-weight:bold; }
+  .fbd-canvas { display:block; margin:auto; border:1px solid #ccc; touch-action:none; cursor:crosshair; }
+  .fbd-narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040;
+    font-size:.88rem; color:#333; font-style:italic; }
+  .fbd-bbar { background-color:#df9; padding:8px; text-align:center; }
+  .fbd-bbar input, .fbd-bbar select { margin:2px 3px; padding:3px 8px; cursor:pointer; }
+  .fbd-footer { background-color:#fce4ec; padding:4px 0 6px 0; font-size:.85rem; }
+  .fbd-row { display:flex; flex-wrap:wrap; align-items:center; gap:4px; padding:4px 6px; border-left:4px solid transparent; }
+  .fbd-rowsel { background:#fff8d6; border-left-color:#e0b040 !important; }
+  .fbd-row button { cursor:pointer; }
+  .fbd-pick { min-width:58px; padding:2px 4px; font-weight:bold; }
+  .fbd-num  { width:52px; }
+  .fbd-idx  { width:44px; }
+  .fbd-stat { min-width:14px; font-weight:bold; }
+  .fbd-hint { padding:6px 10px 0 10px; color:#555; font-size:.78rem; }
+</style>
+<script>
+  var fbdEngine = (function(){
+    var QN    = Number('');
+    var P     = 'fbd-';            /* CSS class prefix */
+    var DIRS  = [0,45,90,135,180,225,270,315];
+    var GLYPH = ['→','↗','↑','↖','←','↙','↓','↘'];
+    var DEFCOL= ['#d32f2f','#1565c0','#2e7d32','#7b1fa2','#00838f','#ef6c00','#5d4037','#c2185b','#558b2f','#283593','#6d4c41','#ad1457'];
+    var DEFS  = {'--bg':'#ffffff','--grid':'#d6d6d6','--axis':'#111111','--text':'#111111','--sel':'rgba(255,200,0,.45)','--unl':'#777777','--toolbar':'#222'};
+    var THEMES = {
+      hc:{'--bg':'#000000','--grid':'#444444','--axis':'#ffffff','--text':'#ffffff','--sel':'rgba(255,255,0,.55)','--unl':'#bbbbbb','--toolbar':'#000',
+          cols:['#ff5555','#55aaff','#55ff55','#ff77ff','#00ffff','#ffaa00','#ffffff','#ffff55','#aaff55','#aaaaff','#ffcc99','#ff99cc']},
+      lm:{'--bg':'#f6f6f2','--grid':'#dedede','--axis':'#222222','--text':'#000000','--sel':'rgba(255,190,0,.4)','--unl':'#666666','--toolbar':'#444',
+          cols:['#b71c1c','#0d47a1','#1b5e20','#4a148c','#006064','#e65100','#3e2723','#880e4f','#33691e','#1a237e','#4e342e','#880e4f']},
+      cb:{'--bg':'#ffffff','--grid':'#cccccc','--axis':'#000000','--text':'#000000','--sel':'rgba(240,228,66,.6)','--unl':'#777777','--toolbar':'#222',
+          cols:['#d55e00','#0072b2','#009e73','#cc79a7','#56b4e9','#e69f00','#000000','#999933','#882255','#44aa99','#332288','#aa4499']}
+    };
+    var DEFPAL = [
+      { key:'grav', sym:'F', sub:'g', name:'gravity' }, { key:'norm', sym:'F', sub:'N', name:'normal' },
+      { key:'ten',  sym:'F', sub:'T', name:'tension' }, { key:'fric', sym:'F', sub:'f', name:'friction' },
+      { key:'app',  sym:'F', sub:'A', name:'applied' }
+    ];
+    function mk(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = P + cls; if (txt !== undefined) e.textContent = txt; return e; }
+    function merge(a, b){ var o = {}, k; for (k in a) if (k !== 'instances') o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
+    function clean(s){ return String(s || '').split('').filter(function(ch){ return /[0-9A-Za-z]/.test(ch); }).join(''); }
+    function Sim(cfg){
+      var host = document.getElementById(cfg.host);
+      if (!host){ if (window.console) console.warn('FBD: host not found', cfg.host); return; }
+      var SIZE = cfg.size || 500, W = SIZE, H = SIZE;
+      var PAL  = cfg.palette || DEFPAL;
+      var IDX  = cfg.index || { mode:'none' };
+      var SEP  = cfg.indexSep || '';
+      var MAXF = Math.max(1, Math.min(cfg.maxForces || 8, 12));
+      var MODE8 = String(cfg.dirMode || 'free') === '8';
+      var STEP = MODE8 ? 45 : (cfg.angleStep || 5);
+      var LENS = !!cfg.lengths, LSTEP = cfg.lengthStep || 0.25, LMAX = 1.2;
+      var GL = 1.25, SC = W/(2*GL), OX = W/2, OY = H/2, DEFLEN = 0.9;
+      var st = { hc:false, lm:false, cb:false, nr:true };
+      var vars = {}, cols = DEFCOL.slice();
+      var forces = [], sel = -1, dragging = false, countChosen = false;
+      var verdict = {}, missing = 0;
+      var rows = [];
+      /* ───── DOM (same layout as the VDG sim) ───── */
+      var wrap = mk('div', 'wrap'); wrap.style.width = (W + 2) + 'px';
+      var bar = mk('div', 'a11y'); bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Display options');
+      var btn = {};
+      [['hc','HIGH CONTRAST'],['lm','LIGHT MODE'],['cb','COLOR-BLIND SAFE'],['nr','NARRATION: ON']].forEach(function(b){
+        var e = mk('button', 'a11ybtn', b[1]); e.type = 'button';
+        e.onclick = function(){ toggle(b[0]); };
+        bar.appendChild(e); btn[b[0]] = e;
+      });
+      var tbar = mk('div', 'tbar'); var h3 = mk('h3', '', cfg.title || 'Free Body Diagram'); tbar.appendChild(h3);
+      var canvas = mk('canvas', 'canvas'); canvas.width = W; canvas.height = H; canvas.tabIndex = 0;
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', (cfg.title || 'Free body diagram') + ': coordinate axes with the forces you add. Use the controls below, or select a force and use the arrow keys. The narration bar describes the diagram.');
+      var nar = mk('div', 'narbar'); nar.setAttribute('role', 'status'); nar.setAttribute('aria-live', 'polite'); nar.setAttribute('aria-atomic', 'true');
+      var bb = mk('div', 'bbar');
+      var cl = mk('label', '', 'Number of forces: '); cl.style.fontWeight = 'bold';
+      var cnt = mk('select'); cnt.setAttribute('aria-label', 'Number of forces');
+      var o = mk('option', '', '--'); o.value = ''; cnt.appendChild(o);
+      for (var n=0; n<=MAXF; n++){ o = mk('option', '', String(n)); o.value = String(n); cnt.appendChild(o); }
+      cnt.onchange = function(){ setCount(this.value); };
+      var bAdd = mk('input'); bAdd.type = 'button'; bAdd.value = 'Add force'; bAdd.onclick = function(){ setCount(String(forces.length + 1)); };
+      var bDes = mk('input'); bDes.type = 'button'; bDes.value = 'Describe'; bDes.onclick = function(){ describe(); };
+      var bRst = mk('input'); bRst.type = 'button'; bRst.value = 'Start over'; bRst.onclick = function(){ rst(); };
+      bb.appendChild(cl); bb.appendChild(cnt); bb.appendChild(bAdd); bb.appendChild(bDes); bb.appendChild(bRst);
+      var foot = mk('div', 'footer'); var rowHost = mk('div', 'rows');
+      var hint = mk('div', 'hint', 'Select a force, then click or drag on the graph to aim it' + (LENS ? ' (the distance from the origin sets its length)' : '') +
+                    '. With the graph focused: left/right arrows rotate' + (LENS ? ', up/down change the length' : '') + ', number keys select a force.');
+      foot.appendChild(rowHost); foot.appendChild(hint);
+      [bar, tbar, canvas, nar, bb, foot].forEach(function(e){ wrap.appendChild(e); });
+      host.appendChild(wrap);
+      var ctx = canvas.getContext('2d');
+      /* ───── a11y: themes layered over defaults ───── */
+      function applyTheme(){
+        var k, m = {}; for (k in DEFS) m[k] = DEFS[k]; cols = DEFCOL.slice();
+        ['lm','cb','hc'].forEach(function(t){ if (st[t]){ for (k in THEMES[t]) if (k !== 'cols') m[k] = THEMES[t][k]; cols = THEMES[t].cols.slice(); } });
+        vars = m; bar.style.background = m['--toolbar'];
+        ['hc','lm','cb','nr'].forEach(function(t){
+          var on = st[t], e = btn[t];
+          e.style.background = on ? 'rgba(0,232,208,.12)' : '#2a2e3a';
+          e.style.borderColor = on ? '#00e8d0' : '#404a60';
+          e.style.color = on ? '#00e8d0' : '#7a8aaa';
+          e.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        btn.nr.textContent = 'NARRATION: ' + (st.nr ? 'ON' : 'OFF');
+        nar.style.display = st.nr ? 'block' : 'none';
+      }
+      function toggle(t){
+        st[t] = !st[t];
+        if (t === 'hc' && st.hc) st.lm = false;
+        if (t === 'lm' && st.lm) st.hc = false;
+        applyTheme(); draw();
+      }
+      function say(msg){ if (st.nr) nar.textContent = msg; }
+      function c(k){ return vars[k] || DEFS[k]; }
+      /* ───── labels ───── */
+      function subOf(f){
+        var ps = f.pal >= 0 ? (PAL[f.pal].sub || '') : '';
+        if (!f.idx) return ps;
+        return ps + (ps ? SEP : '') + f.idx;
+      }
+      function keyOf(f){
+        if (f.pal < 0) return null;
+        return (PAL[f.pal].key + (f.idx ? '_' + f.idx : '')).toLowerCase();
+      }
+      function speech(f){
+        if (f.pal < 0) return 'unnamed';
+        var s = subOf(f), L = PAL[f.pal];
+        return L.sym + (s ? ' sub ' + s : '') + (L.name ? ' (' + L.name + ')' : '');
+      }
+      function colOf(f){ return f.pal < 0 ? c('--unl') : cols[f.pal % cols.length]; }
+      function norm(a){ a = Math.round(Number(a)/STEP)*STEP; return ((a % 360) + 360) % 360; }
+      function clampLen(l){ l = Math.round(Number(l)/LSTEP)*LSTEP; return Math.max(LSTEP, Math.min(LMAX, l)); }
+      function dirName(a){
+        var nm = {0:'to the right (+x)',45:'up and to the right',90:'straight up (+y)',135:'up and to the left',
+                  180:'to the left (−x)',225:'down and to the left',270:'straight down (−y)',315:'down and to the right'};
+        if (nm.hasOwnProperty(a)) return nm[a] + (MODE8 ? '' : ', ' + a + '°');
+        var q = a < 90 ? 'up and to the right' : a < 180 ? 'up and to the left' : a < 270 ? 'down and to the left' : 'down and to the right';
+        return q + ', ' + a + '° from the +x axis';
+      }
+      /* ───── MOM answer box ───── */
+      function box(){
+        if (cfg.boxId) return document.getElementById(cfg.boxId);
+        /* MOM box id = 'qn' + thisq + part padded to 3 digits, e.g. qn3000, qn3001 */
+        var p = cfg.part || 0, pad = String(p); while (pad.length < 3) pad = '0' + pad;
+        return document.getElementById('qn' + '' + pad);
+      }
+      var ANS_SEP = '|';                 /* separator in the answer string (SEP is the subscript/index separator) */
+      function encode(){
+        if (!countChosen) return '';
+        if (forces.length === 0) return 'none';
+        var out = [];
+        forces.forEach(function(f){
+          var k = keyOf(f);
+          if (k && f.ang !== null) out.push(k, String(f.ang), String(LENS ? f.len : 1));
+        });
+        return out.join(ANS_SEP);
+      }
+      function fire(e){
+        ['input','change'].forEach(function(t){
+          var ev; try { ev = new Event(t, { bubbles:true }); } catch(err){ ev = document.createEvent('Event'); ev.initEvent(t, true, true); }
+          e.dispatchEvent(ev);
+        });
+      }
+      function write(){ touched = true; var b = box(), s = encode(); if (b && b.value !== s){ b.value = s; fire(b); } }
+      function restore(){
+        var b = box(); if (!b || !b.value) return false;
+        var v = String(b.value).split(' ').join('');
+        countChosen = true;
+        if (v === 'none') return true;
+        var a = v.split(/[|,]/);           /* | now, commas in answers saved before the change */
+        for (var i=0; i+2<a.length+0 && forces.length < MAXF; i+=3){
+          var key = a[i].toLowerCase(), cut = key.indexOf('_');
+          var base = cut >= 0 ? key.slice(0, cut) : key, idx = cut >= 0 ? key.slice(cut+1) : '';
+          var pi = -1;
+          for (var j=0; j<PAL.length; j++) if (String(PAL[j].key).toLowerCase() === base){ pi = j; break; }
+          if (pi < 0) continue;
+          if (IDX.mode === 'list' && IDX.options){       /* restore the author's capitalisation */
+            for (var m=0; m<IDX.options.length; m++) if (String(IDX.options[m]).toLowerCase() === idx){ idx = IDX.options[m]; break; }
+          }
+          forces.push({ pal:pi, idx:idx, ang:norm(parseFloat(a[i+1]) || 0), len:LENS ? clampLen(parseFloat(a[i+2]) || 1) : 1 });
+        }
+        return true;
+      }
+      function readVerdict(){
+        verdict = {}; missing = 0;
+        String(cfg.verdict || '').split(';').forEach(function(p){
+          p = p.split(' ').join(''); if (!p) return;
+          if (p.charAt(0) === '~'){ missing = parseInt(p.slice(1), 10) || 0; return; }
+          var e = p.indexOf('='); if (e < 0) return;
+          verdict[p.slice(0, e).toLowerCase()] = p.slice(e+1) === '1' ? 'ok' : 'bad';
+        });
+      }
+      /* ───── drawing ───── */
+      function toPx(x, y){ return [OX + x*SC, OY - y*SC]; }
+      function arrow(x0,y0,x1,y1,col,lw){
+        var dx=x1-x0, dy=y1-y0, len=Math.sqrt(dx*dx+dy*dy); if (len < 2) return;
+        var ux=dx/len, uy=dy/len, hl=Math.min(14,len*0.5), hw=hl/2, bx=x1-ux*hl, by=y1-uy*hl;
+        ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw; ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(bx,by); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(bx-uy*hw,by+ux*hw); ctx.lineTo(bx+uy*hw,by-ux*hw); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+      function vecLabel(x, y, sym, sub, col){
+        ctx.save(); ctx.textBaseline='middle'; ctx.textAlign='left';
+        ctx.font='italic bold 20px serif'; var a = ctx.measureText(sym).width;
+        ctx.font='italic 13px serif'; var b = sub ? ctx.measureText(sub).width : 0;
+        var x0 = x - (a+b)/2;
+        ctx.lineJoin='round'; ctx.lineWidth=4; ctx.strokeStyle=c('--bg'); ctx.fillStyle=col;
+        ctx.font='italic bold 20px serif'; ctx.strokeText(sym,x0,y); ctx.fillText(sym,x0,y);
+        if (sub){ ctx.font='italic 13px serif'; ctx.strokeText(sub,x0+a,y+7); ctx.fillText(sub,x0+a,y+7); }
+        ctx.strokeStyle=col; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(x0+1,y-13); ctx.lineTo(x0+a+1,y-13); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0+a+3,y-13); ctx.lineTo(x0+a-3,y-16); ctx.lineTo(x0+a-3,y-10); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+      function tip(k){ var f = forces[k], a = f.ang*Math.PI/180, L = LENS ? f.len : DEFLEN; return [OX + L*SC*Math.cos(a), OY - L*SC*Math.sin(a)]; }
+      function draw(){
+        ctx.fillStyle=c('--bg'); ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle=c('--grid'); ctx.lineWidth=1;
+        for (var v=-GL; v<=GL+1e-9; v+=0.25){
+          var p = toPx(v, v);
+          ctx.beginPath(); ctx.moveTo(p[0],0); ctx.lineTo(p[0],H); ctx.moveTo(0,p[1]); ctx.lineTo(W,p[1]); ctx.stroke();
+        }
+        arrow(8, OY, W-6, OY, c('--axis'), 2); arrow(OX, H-8, OX, 6, c('--axis'), 2);
+        ctx.fillStyle=c('--axis'); ctx.font='italic 20px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('x', W-16, OY-18); ctx.fillText('y', OX+18, 16);
+        var placed = 0, seen = {};
+        forces.forEach(function(f, k){
+          if (f.ang === null) return;
+          placed++;
+          var t = tip(k), col = colOf(f), a = f.ang*Math.PI/180;
+          if (k === sel){
+            ctx.save(); ctx.strokeStyle=c('--sel'); ctx.lineWidth=14; ctx.lineCap='round';
+            ctx.beginPath(); ctx.moveTo(OX,OY); ctx.lineTo(t[0],t[1]); ctx.stroke(); ctx.restore();
+          }
+          arrow(OX, OY, t[0], t[1], col, 3);
+          ctx.fillStyle=col; ctx.beginPath(); ctx.arc(t[0], t[1], 5, 0, 2*Math.PI); ctx.fill();
+          var nn = seen[f.ang] || 0; seen[f.ang] = nn + 1;
+          var side = (f.ang % 90 === 0) ? 18 : 0, px = -Math.sin(a), py = -Math.cos(a);
+          var lx = t[0] + Math.cos(a)*24 + px*(side + nn*24), ly = t[1] - Math.sin(a)*24 + py*(side + nn*24);
+          lx = Math.max(24, Math.min(W-24, lx)); ly = Math.max(20, Math.min(H-16, ly));
+          if (f.pal >= 0) vecLabel(lx, ly, PAL[f.pal].sym, subOf(f), col);
+          else { ctx.save(); ctx.fillStyle=col; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('#' + (k+1) + ' ?', lx, ly); ctx.restore(); }
+        });
+        ctx.fillStyle=c('--axis'); ctx.beginPath(); ctx.arc(OX,OY,4,0,2*Math.PI); ctx.fill();
+        if (placed === 0){
+          ctx.save(); ctx.fillStyle=c('--text'); ctx.font='14px sans-serif'; ctx.textAlign='center';
+          ctx.fillText(forces.length === 0 ? (countChosen ? 'Zero forces chosen.' : 'Choose the number of forces below to begin.')
+                       : 'Select a force below, then click on the graph to aim it.', W/2, H-22);
+          ctx.restore();
+        }
+      }
+      /* ───── control rows ───── */
+      function buildRows(){
+        rowHost.innerHTML = ''; rows = [];
+        forces.forEach(function(f, k){
+          var r = mk('div', 'row'), lab = 'force ' + (k+1);
+          var pick = mk('button', 'pick', 'Force ' + (k+1)); pick.type = 'button';
+          pick.setAttribute('aria-label', 'Select ' + lab); pick.onclick = function(){ select(k); };
+          var ps = mk('select'); ps.setAttribute('aria-label', 'Symbol of ' + lab);
+          var op = mk('option', '', '-- symbol --'); op.value = '-1'; ps.appendChild(op);
+          PAL.forEach(function(L, i){
+            op = mk('option', '', L.sym + (L.sub ? '_' + L.sub : '') + (L.name ? ' (' + L.name + ')' : ''));
+            op.value = String(i); ps.appendChild(op);
+          });
+          ps.onchange = function(){ setLabel(k, parseInt(this.value, 10), forces[k].idx); };
+          r.appendChild(pick); r.appendChild(ps);
+          var ix = null;
+          if (IDX.mode === 'list'){
+            ix = mk('select'); ix.setAttribute('aria-label', 'Subscript index of ' + lab);
+            (IDX.options || ['']).forEach(function(v){ var e = mk('option', '', v === '' ? '--' : v); e.value = v; ix.appendChild(e); });
+            ix.onchange = function(){ setLabel(k, forces[k].pal, this.value); };
+          } else if (IDX.mode === 'free'){
+            ix = mk('input', 'idx'); ix.type = 'text'; ix.maxLength = IDX.maxLen || 3; ix.placeholder = 'sub';
+            ix.setAttribute('aria-label', 'Subscript index of ' + lab + ', letters or digits');
+            ix.onchange = function(){ setLabel(k, forces[k].pal, clean(this.value)); };
+          }
+          if (ix) r.appendChild(ix);
+          var ds = mk('select'); ds.setAttribute('aria-label', 'Direction of ' + lab);
+          op = mk('option', '', MODE8 ? 'dir' : '·'); op.value = ''; ds.appendChild(op);
+          DIRS.forEach(function(d, j){ var e = mk('option', '', GLYPH[j] + ' ' + d + '°'); e.value = String(d); ds.appendChild(e); });
+          ds.onchange = function(){ if (this.value !== '') setDir(k, this.value); };
+          r.appendChild(ds);
+          var an = null, ln = null;
+          if (!MODE8){
+            an = mk('input', 'num'); an.type = 'number'; an.min = '0'; an.max = '359'; an.step = String(STEP);
+            an.setAttribute('aria-label', 'Angle of ' + lab + ' in degrees from the +x axis');
+            an.onchange = function(){ if (this.value !== '') setDir(k, this.value); };
+            r.appendChild(an); r.appendChild(mk('span', '', '°'));
+          }
+          if (LENS){
+            ln = mk('input', 'num'); ln.type = 'number'; ln.min = String(LSTEP); ln.max = String(LMAX); ln.step = String(LSTEP);
+            ln.setAttribute('aria-label', 'Length of ' + lab);
+            ln.onchange = function(){ if (this.value !== '') setLen(k, this.value); };
+            r.appendChild(mk('span', '', 'len')); r.appendChild(ln);
+          }
+          var stt = mk('span', 'stat');
+          var rm = mk('button', '', '✕'); rm.type = 'button'; rm.setAttribute('aria-label', 'Remove ' + lab);
+          rm.onclick = function(){ removeForce(k); };
+          r.appendChild(stt); r.appendChild(rm);
+          rowHost.appendChild(r);
+          rows.push({ r:r, ps:ps, ix:ix, ds:ds, an:an, ln:ln, st:stt });
+        });
+        syncRows();
+      }
+      function syncRows(){
+        rows.forEach(function(R, k){
+          var f = forces[k]; if (!f) return;
+          R.r.className = P + 'row' + (k === sel ? ' ' + P + 'rowsel' : '');
+          R.r.style.borderLeftColor = colOf(f);
+          R.ps.value = String(f.pal);
+          if (R.ix && document.activeElement !== R.ix) R.ix.value = f.idx;
+          R.ds.value = (f.ang !== null && f.ang % 45 === 0) ? String(f.ang) : '';
+          if (R.an && document.activeElement !== R.an) R.an.value = f.ang === null ? '' : String(f.ang);
+          if (R.ln && document.activeElement !== R.ln) R.ln.value = String(f.len);
+          var k2 = keyOf(f), v = k2 ? verdict[k2] : null;
+          R.st.textContent = v === 'ok' ? '✓' : v === 'bad' ? '✗' : '';
+          R.st.style.color = v === 'ok' ? '#2e7d32' : '#c62828';
+          R.st.title = v === 'ok' ? 'Marked correct' : v === 'bad' ? 'Marked incorrect' : '';
+        });
+        cnt.value = countChosen ? String(forces.length) : '';
+      }
+      function refresh(w){ syncRows(); draw(); if (w) write(); }
+      function clearMark(f){ var k = keyOf(f); if (k) delete verdict[k]; }
+      /* ───── narration ───── */
+      function sentence(k){
+        var f = forces[k];
+        return 'Force ' + (k+1) + ', ' + speech(f) + ', ' +
+          (f.ang === null ? 'has no direction yet.' : 'points ' + dirName(f.ang) + (LENS ? ', length ' + f.len : '') + '.');
+      }
+      function describe(){
+        if (!forces.length){ say(countChosen ? 'You chose zero forces: nothing acts on the object.' : 'No forces yet. Choose the number of forces acting on the object.'); return; }
+        var msg = (cfg.title ? cfg.title + '. ' : '') + 'Your diagram has ' + forces.length + (forces.length === 1 ? ' force. ' : ' forces. ');
+        forces.forEach(function(f, k){ msg += sentence(k) + ' '; });
+        var todo = forces.filter(function(f){ return f.pal < 0 || f.ang === null; }).length;
+        if (todo) msg += todo + (todo === 1 ? ' force still needs' : ' forces still need') + ' a symbol or a direction.';
+        say(msg);
+      }
+      /* ───── actions ───── */
+      function setCount(v){
+        if (v === '') return;
+        var n = Math.max(0, Math.min(MAXF, parseInt(v, 10) || 0)), old = forces.length;
+        countChosen = true;
+        while (forces.length < n) forces.push({ pal:-1, idx:'', ang:null, len:1 });
+        if (forces.length > n) forces.splice(n);
+        if (n > old) sel = old; if (sel >= forces.length) sel = forces.length - 1;
+        buildRows(); refresh(true);
+        if (n === 0) say('You chose zero forces: nothing acts on the object.');
+        else if (n > old) say('You now have ' + n + (n === 1 ? ' force' : ' forces') + '. Force ' + (sel+1) + ' is selected: choose its symbol' + (IDX.mode !== 'none' ? ', index' : '') + ' and direction.');
+        else say('You now have ' + n + (n === 1 ? ' force.' : ' forces.'));
+      }
+      function select(k){ if (!forces[k]) return; sel = k; refresh(false); say(sentence(k) + ' Click or drag on the graph, or use the arrow keys, to aim it.'); }
+      function setLabel(k, pal, idx){
+        var f = forces[k]; if (!f) return;
+        var trial = { pal:pal, idx:idx }, tk = keyOf(trial);
+        for (var j=0; j<forces.length; j++){
+          if (j !== k && tk && keyOf(forces[j]) === tk){ syncRows(); say('That label is already used by force ' + (j+1) + '. Choose a different symbol or index.'); return; }
+        }
+        clearMark(f); f.pal = pal; f.idx = idx; sel = k; refresh(true);
+        say('Force ' + (k+1) + ' is now ' + speech(f) + '.' + (f.ang === null ? ' Now give it a direction.' : ''));
+      }
+      function setDir(k, a){ var f = forces[k]; if (!f) return; clearMark(f); f.ang = norm(a); sel = k; refresh(true); say(sentence(k)); }
+      function setLen(k, l){ var f = forces[k]; if (!f) return; clearMark(f); f.len = clampLen(l); if (f.ang === null) f.ang = 0; sel = k; refresh(true); say(sentence(k)); }
+      function removeForce(k){
+        if (!forces[k]) return;
+        var gone = speech(forces[k]); forces.splice(k, 1);
+        if (sel >= forces.length) sel = forces.length - 1;
+        buildRows(); refresh(true);
+        say('Removed force ' + (k+1) + ' (' + gone + '). ' + forces.length + (forces.length === 1 ? ' force remains.' : ' forces remain.'));
+      }
+      function rst(){
+        forces = []; sel = -1; countChosen = false; verdict = {}; missing = 0;
+        buildRows(); refresh(true);
+        say('Diagram cleared. Choose the number of forces acting on the object.');
+      }
+      /* ───── pointer + keyboard ───── */
+      function pos(e){ var r = canvas.getBoundingClientRect(); return [(e.clientX - r.left)*W/r.width, (e.clientY - r.top)*H/r.height]; }
+      function aimAt(p){
+        if (sel < 0 || !forces[sel]) return;
+        var dx = p[0]-OX, dy = OY-p[1], d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 12) return;
+        var f = forces[sel], a = norm(Math.atan2(dy, dx)*180/Math.PI), l = LENS ? clampLen(d/SC) : f.len;
+        if (f.ang !== a || f.len !== l){ clearMark(f); f.ang = a; f.len = l; refresh(false); }
+      }
+      canvas.addEventListener('pointerdown', function(e){
+        var p = pos(e), hit = -1;
+        for (var k=forces.length-1; k>=0; k--){
+          if (forces[k].ang === null) continue;
+          var t = tip(k); if (Math.sqrt((t[0]-p[0])*(t[0]-p[0]) + (t[1]-p[1])*(t[1]-p[1])) < 16){ hit = k; break; }
+        }
+        if (hit >= 0) sel = hit;
+        else if (sel < 0 || !forces[sel]){
+          sel = -1;
+          for (var j=0; j<forces.length; j++) if (forces[j].ang === null){ sel = j; break; }
+          if (sel < 0){ describe(); return; }
+        }
+        dragging = true;
+        try { canvas.setPointerCapture(e.pointerId); } catch(err){}
+        if (hit < 0) aimAt(p); else refresh(false);
+        e.preventDefault();
+      });
+      canvas.addEventListener('pointermove', function(e){ if (dragging) aimAt(pos(e)); });
+      function endDrag(){ if (!dragging) return; dragging = false; write(); if (forces[sel]) say(sentence(sel)); }
+      canvas.addEventListener('pointerup', endDrag);
+      canvas.addEventListener('pointercancel', endDrag);
+      canvas.addEventListener('keydown', function(e){
+        var key = e.key;
+        if (key >= '1' && key <= '9'){ var n = parseInt(key, 10) - 1; if (n < forces.length){ select(n); e.preventDefault(); } return; }
+        if (sel < 0 || !forces[sel]) return;
+        var f = forces[sel], a = f.ang === null ? 0 : f.ang;
+        if (key === 'ArrowLeft'){ setDir(sel, a + STEP); e.preventDefault(); }
+        else if (key === 'ArrowRight'){ setDir(sel, a - STEP); e.preventDefault(); }
+        else if (key === 'ArrowUp'){ if (LENS) setLen(sel, f.len + LSTEP); else setDir(sel, a + STEP); e.preventDefault(); }
+        else if (key === 'ArrowDown'){ if (LENS) setLen(sel, f.len - LSTEP); else setDir(sel, a - STEP); e.preventDefault(); }
+      });
+      /* ───── boot ───── */
+      applyTheme();
+      readVerdict();
+      /* a submitted answer comes back in the hidden answer box: show it */
+      var touched = false;
+      function showSaved(){
+        if (forces.length) sel = 0;
+        buildRows(); draw();
+        describe();
+        var keys = Object.keys(verdict);
+        var msg = 'Your submitted diagram. ' + nar.textContent;
+        if (keys.length || missing){
+          var good = keys.filter(function(k){ return verdict[k] === 'ok'; }).length;
+          msg += ' Last submission: ' + good + ' of ' + keys.length + ' forces you drew were correct.';
+          if (cfg.showMissing && missing > 0) msg += ' ' + missing + (missing === 1 ? ' required force was' : ' required forces were') + ' missing.';
+        }
+        say(msg);
+      }
+      if (restore()) showSaved();
+      else {
+        if (forces.length) sel = 0;
+        buildRows(); draw();
+        say('Ready. Choose the number of forces acting on the object, then set the symbol' + (IDX.mode !== 'none' ? ', index' : '') + ' and direction of each.');
+        /* MOM may place the answer boxes after this diagram, or fill in the saved answer a moment
+           after the page is built: keep looking for a few seconds, unless the student has started */
+        var tries = 0;
+        (function look(){
+          if (touched) return;
+          var b = box();
+          if (b && b.value){ if (restore()) showSaved(); return; }
+          if (tries++ < 40) setTimeout(look, 150);
+        })();
+      }
+    }
+    return {
+      build: function(setup){
+        /* build each diagram as soon as its host div exists, so the host divs
+may come before or after these scripts in the question text */
+        (setup.instances || [{}]).forEach(function(inst){
+          var cfg = merge(setup, inst), tries = 0;
+          (function go(){
+            if (document.getElementById(cfg.host)) new Sim(cfg);
+            else if (tries++ < 50) setTimeout(go, 100);
+            else if (window.console) console.warn('FBD: host not found', cfg.host);
+          })();
+        });
+      }
+    };
+  })();
+  fbdEngine.build(fbdSetup);
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electrostatics: Electric Potential of Three Charges -- 3D Relief Map</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, electrostatics, electric potential, relief map, equipotential, field lines, point charges, 3D, lesson, scientific">
+<meta name="description" content="Interactive 3D relief map of the electric potential of three point charges: hills at positive charges, pits at negative charges, field lines running downhill.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="prRoot" class="pr_root" role="region" aria-label="Electric potential relief map simulator">
+<div class="pr_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="pr_a11ybtn" id="prBtnHC" onclick="prSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="pr_a11ybtn" id="prBtnLM" onclick="prSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="pr_a11ybtn" id="prBtnCB" onclick="prSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="pr_a11ybtn pr_a11yon" id="prBtnNR" onclick="prSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="pr_tbar"><h3>Electric Potential of Three Charges -- a 3D Relief Map</h3></div>
+<div class="pr_mcontent">
+<div class="pr_views">
+<div class="pr_view pr_view3d">
+<div class="pr_vlabel">3D: height = potential V &middot; drag to turn it</div>
+<canvas id="prCv" width="560" height="430" role="img" aria-label="A three-dimensional relief map: the height of the surface is the electric potential. Positive charges make hills, negative charges make pits; field lines run down the slopes."></canvas>
+</div>
+<div class="pr_view pr_viewmap">
+<div class="pr_vlabel">map from above &middot; drag the charges and P</div>
+<canvas id="prMap" width="300" height="300" role="img" aria-label="Map from above: the charges, the field lines and the probe point P, which can be dragged."></canvas>
+</div>
+</div>
+<div class="pr_readout" id="prRead" aria-label="Readout"></div>
+<div class="pr_fnote">surface color: warm = positive potential, cool = negative potential (deeper color = larger |V|) &middot; field lines point downhill, from + to &minus;</div>
+</div>
+<div id="prNarBar" class="pr_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="pr_bbar">
+<button type="button" class="pr_btn" onclick="prSim.preset('dipole')">Dipole</button>
+<button type="button" class="pr_btn" onclick="prSim.preset('three')">Three charges</button>
+<button type="button" class="pr_btn" onclick="prSim.preset('likes')">Two positive</button>
+<button type="button" class="pr_btn" onclick="prSim.view('side')">Side view</button>
+<button type="button" class="pr_btn" onclick="prSim.view('top')">Top view</button>
+<button type="button" class="pr_btn" onclick="prSim.describe()">Describe</button>
+<button type="button" class="pr_btn pr_warn" onclick="prSim.preset('reset')">Reset</button>
+</div>
+<div class="pr_bbar pr_opts">
+<label><input type="checkbox" id="prLines" checked onchange="prSim.set('lines',this.checked)"> Field lines</label>
+<label><input type="checkbox" id="prBands" checked onchange="prSim.set('bands',this.checked)"> Equipotential bands</label>
+<label><input type="checkbox" id="prMesh" onchange="prSim.set('mesh',this.checked)"> Mesh</label>
+</div>
+<div class="pr_controls">
+<div class="pr_crow" style="border-left-color:#ff8a3d"><div class="pr_cname"><b>Q1</b> <span class="pr_cval"><span id="prQ1v">+3</span> &mu;C</span></div>
+<label>charge <input type="range" id="prQ1" min="-5" max="5" step="1" value="3" oninput="prSim.setQ(0,this.value)"></label></div>
+<div class="pr_crow" style="border-left-color:#4dc3ff"><div class="pr_cname"><b>Q2</b> <span class="pr_cval"><span id="prQ2v">&minus;3</span> &mu;C</span></div>
+<label>charge <input type="range" id="prQ2" min="-5" max="5" step="1" value="-3" oninput="prSim.setQ(1,this.value)"></label></div>
+<div class="pr_crow" style="border-left-color:#c6ff4d"><div class="pr_cname"><b>Q3</b> <span class="pr_cval"><span id="prQ3v">+1</span> &mu;C</span></div>
+<label>charge <input type="range" id="prQ3" min="-5" max="5" step="1" value="1" oninput="prSim.setQ(2,this.value)"></label></div>
+<div class="pr_crow" style="border-left-color:#999"><div class="pr_cname"><b>View</b></div>
+<label>turn <input type="range" id="prYaw" min="-180" max="180" step="1" value="-30" oninput="prSim.set('yaw',this.value)"></label>
+<label>tilt <input type="range" id="prTilt" min="0" max="85" step="1" value="55" oninput="prSim.set('tilt',this.value)"></label>
+<label>height <input type="range" id="prH" min="0.2" max="2" step="0.05" value="1" oninput="prSim.set('hs',this.value)"></label></div>
+</div>
+<div class="pr_descwrap">
+<button type="button" class="pr_descbtn" id="prDescBtn" aria-expanded="false" aria-controls="prDesc" onclick="prSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="pr_desc" id="prDesc" role="region" aria-labelledby="prDescBtn" style="display:none">
+<p>This simulation shows the electric potential of three point charges as a relief map. The charges lie in a flat square 20 cm on a side; above every point of the square, the height of the surface is the electric potential there. The view can be turned and tilted, and the charges and a probe point P can be dragged on the map.</p>
+<p>The potential of a set of point charges is the sum of their contributions, with their signs:</p>
+<p class="pr_eq">`V(x,y) = k sum_i q_i/r_i`,&nbsp;&nbsp; `k = 8.99 xx 10^9 " N m"^2"/C"^2`,</p>
+<p>where `r_i` is the distance from charge `i`. A positive charge raises a hill and a negative charge digs a pit. Since `V` grows without limit near a point charge, the heights are compressed (on a logarithmic scale) so that the spikes and the gentle slopes far away can both be seen; the height slider changes the scale.</p>
+<p>The electric field is the downhill slope of the potential:</p>
+<p class="pr_eq">`vec E = -grad V`.</p>
+<p>So the field lines run straight down the slopes, from the hills (positive charges) to the pits (negative charges), crossing the equipotential bands -- the contour lines of the map -- at right angles. Where the bands are close together the slope is steep and the field is strong. A positive test charge placed on the surface would roll downhill, like a ball, along a field line.</p>
+<p>The readout gives the potential and the field at P, computed exactly from the formulas above.</p>
+<p>This simulation is useful for studying electric potential, equipotentials, the relation between field and potential, and the superposition of point charges. It was inspired by Paul Falstad's 2D vector field applet.</p>
+</div>
+</div>
+</div><!-- #prRoot -->
+<style>
+#prRoot, #prRoot * { box-sizing:border-box; }
+#prRoot { container-type:inline-size; width:100%; max-width:900px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --pr-bg:#0a0e12; --pr-panel:#0d1318; --pr-border:#1c262e; --pr-text:#c9d6de; --pr-muted:#5f7180; --pr-val:#8fe3b0; }
+#prRoot .pr_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#prRoot .pr_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#prRoot .pr_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#prRoot .pr_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#prRoot .pr_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#prRoot .pr_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#prRoot .pr_mcontent { background:var(--pr-bg); color:var(--pr-text); padding:10px; }
+#prRoot .pr_views { display:grid; grid-template-columns:minmax(0,560px) minmax(0,300px); gap:10px; justify-content:center; margin-bottom:8px; }
+#prRoot .pr_view { border:1px solid var(--pr-border); border-radius:6px; overflow:hidden; background:var(--pr-panel); }
+#prRoot .pr_vlabel { font-size:10px; color:var(--pr-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#prRoot canvas { display:block; width:100%; height:auto; }
+#prRoot #prCv { touch-action:none; cursor:grab; }
+#prRoot #prMap { touch-action:pan-y; }
+#prRoot .pr_viewmap { align-self:start; }
+#prRoot .pr_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:6px 10px; background:var(--pr-panel); border:1px solid var(--pr-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#prRoot .pr_flabel { font-size:10px; color:var(--pr-muted); letter-spacing:1px; }
+#prRoot .pr_fvalue { font-size:15px; color:var(--pr-val); font-variant-numeric:tabular-nums; }
+#prRoot .pr_fnote { color:var(--pr-muted); font-size:11px; margin-top:6px; font-family:system-ui, sans-serif; }
+#prRoot .pr_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#prRoot .pr_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#prRoot .pr_opts { border-top:1px solid #c5dc9a; gap:16px; }
+#prRoot .pr_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#prRoot .pr_warn { border-color:#b04040; color:#8a2020; }
+#prRoot .pr_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#prRoot .pr_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #888; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#prRoot .pr_cname { font-size:.88rem; display:flex; gap:8px; align-items:baseline; }
+#prRoot .pr_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#prRoot .pr_crow label { display:flex; align-items:center; gap:6px; font-size:.78rem; color:#445; }
+#prRoot input[type=range] { flex:1; min-width:0; accent-color:#e8a020; }
+#prRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#prRoot .pr_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#prRoot .pr_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#prRoot .pr_descbtn[aria-expanded="true"] { background:#3a3220; }
+#prRoot .pr_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#prRoot .pr_desc p { margin:0 0 9px; }
+#prRoot .pr_eq { text-align:center; font-size:1rem; }
+@container (max-width:760px) { #prRoot .pr_views { grid-template-columns:minmax(0,1fr); } #prRoot .pr_viewmap { max-width:340px; width:100%; margin:0 auto; } }
+@media (max-width:780px) { #prRoot .pr_views { grid-template-columns:minmax(0,1fr); } #prRoot .pr_viewmap { max-width:340px; width:100%; margin:0 auto; } }
+@media (pointer:coarse) { #prRoot input[type=range] { height:28px; } #prRoot .pr_a11ybtn { min-height:40px; } #prRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Three point charges in a 20 cm square (x, y from -10 to +10 cm). Potential V = k sum q_i / r_i (exact for the readout;
+softened by 0.35 cm for drawing so the spikes stay finite). The surface height is a compressed potential
+z = s sign(V) ln(1 + |V|/V0), V0 = k (1 uC)/(5 cm). The 3D view is drawn with a small painter's-algorithm renderer
+(quads and field-line segments sorted by depth). Field lines follow E = -grad V from positive charges (or, if there
+are none, backward from negative charges), stepping along the unit field vector.
+-->
+<script>
+var prSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('prRoot'), cv = el('prCv'), g = cv.getContext('2d'), mp = el('prMap'), gm = mp.getContext('2d');
+var CW = cv.width, CH = cv.height, MW = mp.width, MH = mp.height, DPR = window.devicePixelRatio || 1;
+cv.width = CW*DPR; cv.height = CH*DPR; g.scale(DPR, DPR);
+mp.width = MW*DPR; mp.height = MH*DPR; gm.scale(DPR, DPR);
+var K = 8.99e9, L = 10, SOFT = 0.25, N = 56, V0 = 8.99e9*1e-6/0.05;
+var DEF = { q:[3, -3, 1], pos:[[-4.5, 0.5], [4.5, -0.5], [0, 6]], P:[0, -5], yaw:-30, tilt:55, hs:1, lines:true, bands:true, mesh:false };
+var S = {}, th = { hc:false, lm:false, cb:false, nr:true }, narrT = null, lines = [], grid = null;
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+/* ══════════ physics ══════════ */
+function Vat(x, y, soft){ var v = 0; for (var i=0; i<3; i++){ var dx = x - S.pos[i][0], dy = y - S.pos[i][1], r = Math.sqrt(dx*dx + dy*dy + (soft ? SOFT*SOFT : 0))/100; v += K*S.q[i]*1e-6/Math.max(r, 1e-9); } return v; }
+function Eat(x, y){ var ex = 0, ey = 0; for (var i=0; i<3; i++){ var dx = (x - S.pos[i][0])/100, dy = (y - S.pos[i][1])/100, r2 = dx*dx + dy*dy, r = Math.sqrt(r2); if (r < 1e-9) continue; var f = K*S.q[i]*1e-6/(r2*r); ex += f*dx; ey += f*dy; } return [ex, ey]; }
+function relief(v){ return 2.2*Math.sign(v)*Math.log(1 + Math.abs(v)/V0); }      /* compressed potential, before the height scale */
+function height(v){ return S.hs*relief(v); }
+function buildGrid(){
+grid = [];
+for (var j=0; j<=N; j++){ var row = []; for (var i=0; i<=N; i++){ var x = -L + 2*L*i/N, y = -L + 2*L*j/N, v = Vat(x, y, true); row.push([x, y, v, relief(v)]); } grid.push(row); }
+}
+function traceLines(){
+lines = [];
+var sgn = S.q.some(function(q){ return q > 0; }) ? 1 : -1;
+for (var c=0; c<3; c++){
+if (S.q[c]*sgn <= 0) continue;
+var n = Math.round(Math.abs(S.q[c])*5);
+for (var a=0; a<n; a++){
+var ang = (a + 0.5)*2*Math.PI/n, x = S.pos[c][0] + 0.45*Math.cos(ang), y = S.pos[c][1] + 0.45*Math.sin(ang), pts = [[x, y, relief(Vat(x, y, true))]];
+for (var st=0; st<700; st++){
+var e = Eat(x, y), m = Math.hypot(e[0], e[1]); if (m === 0) break;
+var h = 0.06; x += sgn*h*e[0]/m; y += sgn*h*e[1]/m;
+if (Math.abs(x) > L || Math.abs(y) > L) break;
+var stop = false;
+for (var k=0; k<3; k++){ if (k !== c && S.q[k]*sgn < 0 && Math.hypot(x - S.pos[k][0], y - S.pos[k][1]) < 0.4) stop = true; }
+if (st % 2 === 0) pts.push([x, y, relief(Vat(x, y, true))]);
+if (stop) break;
+}
+lines.push(pts);
+}
+}
+}
+/* ══════════ colors ══════════ */
+function pal(){
+if (th.hc) return { bg:'#000', pos:[255,220,0], neg:[0,255,255], zero:[90,90,90], line:'#ffffff', mesh:'rgba(255,255,255,0.35)', map:'#000', grid:'#555', P:'#ff3df2', txt:'#fff', ch:['#ffdc00','#00ffff','#7dff00'] };
+var base = th.lm ? { bg:'#eef2f6', zero:[200,205,210], line:'#1d2730', mesh:'rgba(0,0,0,0.25)', map:'#f7f9fb', grid:'#ccd6dd', P:'#c0008a', txt:'#1d232a' }
+                 : { bg:'#0a0e12', zero:[70,82,92], line:'#f2f6f8', mesh:'rgba(255,255,255,0.18)', map:'#0d1318', grid:'#1c262e', P:'#ff6fae', txt:'#c9d6de' };
+base.pos = th.cb ? [230,159,0] : [255,138,61]; base.neg = th.cb ? [0,114,178] : [77,195,255];
+base.ch = th.cb ? ['#e69f00','#0072b2','#cc79a7'] : ['#ff8a3d','#4dc3ff','#c6ff4d'];
+return base;
+}
+function vcol(v, shade, p){
+var t = Math.min(1, Math.log(1 + Math.abs(v)/V0)/2.4), c = v >= 0 ? p.pos : p.neg, z = p.zero;
+var r = z[0] + (c[0] - z[0])*t, gg = z[1] + (c[1] - z[1])*t, b = z[2] + (c[2] - z[2])*t;
+if (S.bands){ var band = Math.floor(Math.sign(v)*Math.log(1 + Math.abs(v)/V0)*4); if (band % 2 === 0){ r *= 0.82; gg *= 0.82; b *= 0.82; } }
+return 'rgb(' + Math.round(r*shade) + ',' + Math.round(gg*shade) + ',' + Math.round(b*shade) + ')';
+}
+/* ══════════ 3D view ══════════ */
+var cam = {}, SC = 0.95;
+function setupCam(){
+var yaw = S.yaw*Math.PI/180, tilt = S.tilt*Math.PI/180;
+cam = { cy:Math.cos(yaw), sy:Math.sin(yaw), ct:Math.cos(tilt), st:Math.sin(tilt), D:52, f:Math.min(CW, CH)*1.9 };
+SC = 0.95;
+}
+function P3(x, y, z){
+var xr = x*cam.cy - y*cam.sy, yr = x*cam.sy + y*cam.cy;   /* yr: toward the back */
+/* view from the front and above: screen up = yr*sin(tilt)... */
+var up = yr*cam.ct + z*cam.st, depth = yr*cam.st - z*cam.ct;  /* larger depth = farther */
+var persp = cam.f/(cam.D + depth);
+return [CW/2 + xr*persp*SC, CH*0.6 - up*persp*SC, depth];
+}
+function draw3d(p, coarse){
+var st2 = coarse ? 2 : 1;
+g.fillStyle = p.bg; g.fillRect(0, 0, CW, CH);
+setupCam();
+var items = [], Z = [], PJ = [];
+for (var j=0; j<=N; j++){ var zr = [], pr = []; for (var i=0; i<=N; i++){ var c = grid[j][i], zz = S.hs*c[3]; zr.push(zz); pr.push(P3(c[0], c[1], zz)); } Z.push(zr); PJ.push(pr); }
+var lx = -0.35, ly = 0.45, lz = 0.82;
+for (var j2=0; j2<N; j2+=st2) for (var i2=0; i2<N; i2+=st2){
+var j3 = Math.min(N, j2 + st2), i3 = Math.min(N, i2 + st2);
+var a = grid[j2][i2], b = grid[j2][i3], c2 = grid[j3][i3], d = grid[j3][i2];
+var za = Z[j2][i2], zb = Z[j2][i3], zc = Z[j3][i3], zd = Z[j3][i2];
+var pa = PJ[j2][i2], pb = PJ[j2][i3], pc = PJ[j3][i3], pd = PJ[j3][i2];
+var h = st2*2*L/N, nx = -((zb - za) + (zc - zd))/(2*h), ny = -((zd - za) + (zc - zb))/(2*h), nn = Math.sqrt(nx*nx + ny*ny + 1);
+var shade = 0.45 + 0.55*Math.max(0, (nx*lx + ny*ly + lz)/nn);
+var vm = (a[2] + b[2] + c2[2] + d[2])/4;
+items.push({ d:(pa[2] + pb[2] + pc[2] + pd[2])/4, t:0, pts:[pa, pb, pc, pd], col:vcol(vm, shade, p) });
+}
+if (S.lines){
+lines.forEach(function(L2){
+for (var k=0; k<L2.length - 1; k++){
+var u = L2[k], w = L2[k+1];
+var pu = P3(u[0], u[1], S.hs*u[2] + 0.12), pw = P3(w[0], w[1], S.hs*w[2] + 0.12);
+items.push({ d:(pu[2] + pw[2])/2 - 0.45, t:1, a:pu, b:pw });
+}
+});
+}
+items.sort(function(A, B){ return B.d - A.d; });
+g.lineJoin = 'round';
+for (var n=0; n<items.length; n++){
+var it = items[n];
+if (it.t === 0){
+g.fillStyle = it.col; g.beginPath(); g.moveTo(it.pts[0][0], it.pts[0][1]); for (var q=1; q<4; q++) g.lineTo(it.pts[q][0], it.pts[q][1]); g.closePath(); g.fill();
+g.strokeStyle = S.mesh ? p.mesh : it.col; g.lineWidth = S.mesh ? 0.6 : 0.8; g.stroke();
+} else {
+g.strokeStyle = p.line; g.lineWidth = 1.3; g.beginPath(); g.moveTo(it.a[0], it.a[1]); g.lineTo(it.b[0], it.b[1]); g.stroke();
+}
+}
+/* charge labels at the top of each spike or the bottom of each pit */
+g.font = 'bold 13px system-ui, sans-serif'; g.textAlign = 'center';
+for (var c3=0; c3<3; c3++){ if (!S.q[c3]) continue; var z0 = height(Vat(S.pos[c3][0], S.pos[c3][1], true)), pp = P3(S.pos[c3][0], S.pos[c3][1], z0);
+g.fillStyle = p.ch[c3]; g.fillText('Q' + (c3 + 1) + (S.q[c3] > 0 ? ' +' : ' \u2212'), pp[0], pp[1] + (S.q[c3] > 0 ? -8 : 18)); }
+/* P on the surface */
+var zP = height(Vat(S.P[0], S.P[1], true)), pP = P3(S.P[0], S.P[1], zP);
+g.fillStyle = p.P; g.beginPath(); g.arc(pP[0], pP[1], 5, 0, 2*Math.PI); g.fill(); g.fillText('P', pP[0] + 10, pP[1] - 6);
+/* axes */
+var o = P3(-L, -L, 0), ax = P3(-L + 4, -L, 0), ay = P3(-L, -L + 4, 0);
+g.strokeStyle = p.txt; g.lineWidth = 1.5; g.beginPath(); g.moveTo(o[0], o[1]); g.lineTo(ax[0], ax[1]); g.moveTo(o[0], o[1]); g.lineTo(ay[0], ay[1]); g.stroke();
+g.fillStyle = p.txt; g.font = '12px system-ui, sans-serif'; g.fillText('x', ax[0] + 6, ax[1] + 4); g.fillText('y', ay[0] + 6, ay[1] - 2);
+}
+/* ══════════ map from above ══════════ */
+function MX(x){ return (x + L)/(2*L)*MW; } function MY(y){ return MH - (y + L)/(2*L)*MH; }
+function WXm(px){ return px/MW*2*L - L; } function WYm(py){ return (MH - py)/MH*2*L - L; }
+function drawMap(p){
+gm.fillStyle = p.map; gm.fillRect(0, 0, MW, MH);
+var n = 100, cw = MW/n;
+for (var j=0; j<n; j++) for (var i=0; i<n; i++){ var x = -L + (i + 0.5)*2*L/n, y = L - (j + 0.5)*2*L/n; gm.fillStyle = vcol(Vat(x, y, true), 1, p); gm.fillRect(i*cw, j*cw, cw + 0.6, cw + 0.6); }
+if (S.lines){ gm.strokeStyle = p.line; gm.lineWidth = 1; lines.forEach(function(L2){ gm.beginPath(); L2.forEach(function(q, k){ if (k) gm.lineTo(MX(q[0]), MY(q[1])); else gm.moveTo(MX(q[0]), MY(q[1])); }); gm.stroke(); }); }
+for (var c=0; c<3; c++){
+var x0 = MX(S.pos[c][0]), y0 = MY(S.pos[c][1]);
+gm.fillStyle = p.ch[c]; gm.beginPath(); gm.arc(x0, y0, 10, 0, 2*Math.PI); gm.fill();
+gm.strokeStyle = '#000'; gm.lineWidth = 1; gm.stroke();
+gm.fillStyle = '#000'; gm.font = 'bold 12px system-ui, sans-serif'; gm.textAlign = 'center'; gm.fillText(S.q[c] > 0 ? '+' : (S.q[c] < 0 ? '\u2212' : '0'), x0, y0 + 4);
+gm.fillStyle = p.txt; gm.fillText('Q' + (c + 1), x0, y0 - 14);
+}
+var px = MX(S.P[0]), py = MY(S.P[1]);
+gm.strokeStyle = p.P; gm.lineWidth = 2.5; gm.beginPath(); gm.moveTo(px - 8, py); gm.lineTo(px + 8, py); gm.moveTo(px, py - 8); gm.lineTo(px, py + 8); gm.stroke();
+gm.fillStyle = p.P; gm.font = 'bold 12px system-ui, sans-serif'; gm.fillText('P', px + 12, py - 8);
+}
+/* ══════════ readout and narration ══════════ */
+function fmtV(v){ var a = Math.abs(v); return (a >= 1e6 ? (v/1e6).toFixed(2) + ' MV' : (a >= 1e3 ? (v/1e3).toFixed(1) + ' kV' : v.toFixed(0) + ' V')); }
+function fmtE(e){ var a = Math.abs(e); return (a >= 1e6 ? (e/1e6).toFixed(2) + ' MV/m' : (a >= 1e3 ? (e/1e3).toFixed(1) + ' kV/m' : e.toFixed(0) + ' V/m')); }
+function readout(){
+var v = Vat(S.P[0], S.P[1], false), e = Eat(S.P[0], S.P[1]), em = Math.hypot(e[0], e[1]), dir = Math.atan2(e[1], e[0])*180/Math.PI;
+var cells = [['V AT P', fmtV(v)], ['|E| AT P', fmtE(em)], ['E DIRECTION', (em ? dir.toFixed(0) + '\u00B0' : '--')], ['P (x, y)', '(' + S.P[0].toFixed(1) + ', ' + S.P[1].toFixed(1) + ') cm']];
+for (var i=0; i<3; i++) cells.push(['Q' + (i + 1), (S.q[i] > 0 ? '+' : '') + S.q[i] + ' \u00B5C at (' + S.pos[i][0].toFixed(1) + ', ' + S.pos[i][1].toFixed(1) + ')']);
+el('prRead').innerHTML = cells.map(function(c){ return '<div><div class="pr_flabel">' + c[0] + '</div><div class="pr_fvalue">' + c[1] + '</div></div>'; }).join('');
+return { v:v, em:em, dir:dir };
+}
+function summary(){
+var r = readout(), hills = [], pits = [];
+for (var i=0; i<3; i++){ if (S.q[i] > 0) hills.push('Q' + (i + 1)); else if (S.q[i] < 0) pits.push('Q' + (i + 1)); }
+var s = (hills.length ? 'Hills rise at the positive charges ' + hills.join(' and ') + '. ' : 'There are no positive charges, so no hills. ')
+      + (pits.length ? 'Pits sink at the negative charges ' + pits.join(' and ') + '. ' : 'There are no negative charges, so no pits. ');
+s += 'At P the potential is ' + fmtV(r.v) + ' and the field is ' + fmtE(r.em) + (r.em ? ', pointing ' + compass(r.dir) + ', downhill.' : '.');
+return s;
+}
+function compass(d){ var n = ['east (+x)','north-east','north (+y)','north-west','west (\u2212x)','south-west','south (\u2212y)','south-east']; return n[((Math.round(d/45) % 8) + 8) % 8]; }
+function narrate(m){ if (!th.nr) return; el('prNarBar').textContent = m; }
+function later(){ clearTimeout(narrT); narrT = setTimeout(function(){ narrate(summary()); }, 600); }
+/* ══════════ update ══════════ */
+var dirty = true, raf = null;
+function rebuild(){ buildGrid(); traceLines(); dirty = false; }
+var fineT = null;
+function refresh(rebuildAll, coarse){ if (rebuildAll) rebuild(); var p = pal(); draw3d(p, coarse); drawMap(p); readout(); }
+function turnView(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; refresh(dirty, true); clearTimeout(fineT); fineT = setTimeout(function(){ refresh(dirty, false); }, 160); }); }
+function schedule(rebuildAll){ if (rebuildAll) dirty = true; if (raf) return; raf = requestAnimationFrame(function(){ raf = null; refresh(dirty); }); }
+function sync(){
+for (var i=0; i<3; i++){ el('prQ' + (i + 1) + '').value = S.q[i]; el('prQ' + (i + 1) + 'v').textContent = (S.q[i] > 0 ? '+' : (S.q[i] < 0 ? '\u2212' : '')) + Math.abs(S.q[i]); }
+el('prYaw').value = S.yaw; el('prTilt').value = S.tilt; el('prH').value = S.hs;
+el('prLines').checked = S.lines; el('prBands').checked = S.bands; el('prMesh').checked = S.mesh;
+}
+/* ══════════ controls ══════════ */
+function setQ(i, v){ S.q[i] = parseInt(v, 10); sync(); schedule(true); later(); }
+function set(k, v){
+if (k === 'lines' || k === 'bands' || k === 'mesh') S[k] = !!v; else S[k] = parseFloat(v);
+if (k === 'yaw' || k === 'tilt' || k === 'hs') turnView(); else schedule(false); if (k !== 'yaw' && k !== 'tilt') later();   /* heights, colors and lines are redrawn from the stored grid */
+}
+function view(w){ if (w === 'side'){ S.tilt = 12; S.yaw = -30; } else { S.tilt = 85; S.yaw = 0; } sync(); schedule(false); narrate(w === 'side' ? 'Side view: hills and pits seen from nearly level.' : 'Top view: looking straight down, the map of the potential.'); }
+function preset(n){
+var keep = { yaw:S.yaw, tilt:S.tilt, hs:S.hs, lines:S.lines, bands:S.bands, mesh:S.mesh };
+S = clone(DEF);
+if (n !== 'reset'){ for (var k in keep) S[k] = keep[k]; }
+if (n === 'dipole'){ S.q = [3, -3, 0]; S.pos = [[-4, 0], [4, 0], [0, 7]]; }
+if (n === 'likes'){ S.q = [3, 3, 0]; S.pos = [[-4, 0], [4, 0], [0, 7]]; }
+sync(); refresh(true);
+narrate(({ reset:'Reset. ', dipole:'A dipole: equal and opposite charges -- a hill beside a pit. ', three:'Three charges. ', likes:'Two equal positive charges: two hills with a saddle between them, where the field is zero. ' }[n] || '') + summary());
+}
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','prBtnHC'],['lm','prBtnLM'],['cb','prBtnCB'],['nr','prBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('pr_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('prBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('prNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--pr-bg','--pr-panel','--pr-border','--pr-text','--pr-muted','--pr-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+schedule(false);
+}
+function describe(){
+narrate('The left view is a 3D relief map: the height above the 20 cm square is the electric potential. ' + summary() + ' Field lines run down the slopes from the hills to the pits. The map on the right shows the same from above; drag the charges and P there.');
+}
+function toggleDesc(){
+var b = el('prDescBtn'), d = el('prDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* ══════════ pointer: turn the 3D view; drag charges and P on the map ══════════ */
+var rot = null;
+cv.addEventListener('pointerdown', function(e){ rot = { x:e.clientX, y:e.clientY, yaw:S.yaw, tilt:S.tilt }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!rot) return; S.yaw = Math.round(rot.yaw - (e.clientX - rot.x)*0.6); if (S.yaw > 180) S.yaw -= 360; if (S.yaw < -180) S.yaw += 360; S.tilt = Math.round(clamp(rot.tilt + (e.clientY - rot.y)*0.4, 0, 85)); sync(); turnView(); });
+function endRot(){ rot = null; cv.style.cursor = 'grab'; }
+cv.addEventListener('pointerup', endRot); cv.addEventListener('pointercancel', endRot);
+var drag = null;
+function mapPt(cx, cy){ var r = mp.getBoundingClientRect(); return { x:WXm((cx - r.left)*MW/r.width), y:WYm((cy - r.top)*MH/r.height), k:MW/r.width }; }
+function pick(p, touch){
+var tol = (12 + (touch ? 10 : 0))*p.k*2*L/MW, best = null, bd = 1e9;
+var cand = [['P', S.P]].concat(S.pos.map(function(q, i){ return [i, q]; }));
+cand.forEach(function(c){ var d = Math.hypot(p.x - c[1][0], p.y - c[1][1]); if (d < tol && d < bd){ bd = d; best = c[0]; } });
+return best;
+}
+function moveTo(p){
+var x = clamp(p.x, -L + 0.3, L - 0.3), y = clamp(p.y, -L + 0.3, L - 0.3);
+if (drag === 'P') S.P = [x, y]; else S.pos[drag] = [x, y];
+schedule(drag !== 'P'); later();
+}
+mp.addEventListener('mousedown', function(e){ drag = pick(mapPt(e.clientX, e.clientY), false); });
+window.addEventListener('mousemove', function(e){ if (drag !== null) moveTo(mapPt(e.clientX, e.clientY)); else { var h = pick(mapPt(e.clientX, e.clientY), false); mp.style.cursor = h !== null ? 'grab' : 'default'; } });
+window.addEventListener('mouseup', function(){ drag = null; });
+mp.addEventListener('touchstart', function(e){ var t = e.touches[0]; drag = pick(mapPt(t.clientX, t.clientY), true); if (drag !== null) e.preventDefault(); }, { passive:false });
+mp.addEventListener('touchmove', function(e){ if (drag === null) return; e.preventDefault(); var t = e.touches[0]; moveTo(mapPt(t.clientX, t.clientY)); }, { passive:false });
+mp.addEventListener('touchend', function(){ drag = null; });
+/* boot */
+S = clone(DEF); sync(); refresh(true);
+narrate('Ready. ' + summary());
+return { setQ:setQ, set:set, view:view, preset:preset, theme:theme, describe:describe, toggleDesc:toggleDesc,
+_state:function(){ var e = Eat(S.P[0], S.P[1]); return { S:clone(S), V:Vat(S.P[0], S.P[1], false), E:e, lines:lines.length, pts:lines.reduce(function(a, l){ return a + l.length; }, 0) }; },
+_V:function(x, y){ return Vat(x, y, false); }, _E:function(x, y){ return Eat(x, y); } };
+})();
+</script>
+</main>
+</body>
+</html>

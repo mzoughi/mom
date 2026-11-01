@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirchhoff's Rules Tutorial</title>
+</head>
+<body>
+<hr>
+<!--
+CIRCUIT TUTOR -- Example 2 (Bridge), all 5 stages
+Loads CSS and JS from GitHub. Total MOM-question size: ~70 lines.
+Replace XXXXXXX above with your actual MOM question id.
+Replace mzoughi.github.io URLs if you host elsewhere.
+-->
+
+<!-- Stage container divs. Stages 2-5 stay hidden until the previous stage fires
+ctStageComplete. -->
+<div id="ctRoot820"></div>
+<div id="ct2Root820" style="display:none"></div>
+<div id="ct3Root820" style="display:none"></div>
+<div id="ct4Root820" style="display:none"></div>
+<div id="ct5Root820" style="display:none"></div>
+
+<!-- Tell the JS files what 820 is. This bridges the MOM template to GitHub-hosted code. -->
+<script>window.ctThisq = '820';</script>
+
+<!-- CSS for each stage (5 files) -->
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/kirchoff-ex2-st1.css" type="text/css">
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/kirchoff-ex2-st2.css" type="text/css">
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/kirchoff-ex2-st3.css" type="text/css">
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/kirchoff-ex2-st4.css" type="text/css">
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/kirchoff-ex2-st5.css" type="text/css">
+
+<!-- JS for each stage (5 files). Order matters: each stage IIFE registers
+its event handlers when loaded. Stage N+1's reload() reads from Stage N's state. -->
+<script src="https://mzoughi.github.io/mom/kirchoff-ex2-st1.js"></script>
+<script src="https://mzoughi.github.io/mom/kirchoff-ex2-st2.js"></script>
+<script src="https://mzoughi.github.io/mom/kirchoff-ex2-st3.js"></script>
+<script src="https://mzoughi.github.io/mom/kirchoff-ex2-st4.js"></script>
+<script src="https://mzoughi.github.io/mom/kirchoff-ex2-st5.js"></script>
+
+<!-- Stage gating: reveal each stage's container when the previous one completes.
+The widget code already fires CustomEvent('ctStageComplete', { detail: {stage:N, thisq:'...'} }). -->
+<script>
+  (function(){
+    var thisq = window.ctThisq;
+    document.addEventListener('ctStageComplete', function(e){
+      if (!e.detail || e.detail.thisq !== thisq) return;
+      var nextId;
+      if      (e.detail.stage === 1) nextId = 'ct2Root' + thisq;
+      else if (e.detail.stage === 2) nextId = 'ct3Root' + thisq;
+      else if (e.detail.stage === 3) nextId = 'ct4Root' + thisq;
+      else if (e.detail.stage === 4) nextId = 'ct5Root' + thisq;
+      else return;
+      var el = document.getElementById(nextId);
+      if (el) {
+        el.style.display = 'block';
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>

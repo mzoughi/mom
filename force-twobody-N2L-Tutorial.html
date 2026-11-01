@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Mechanics: Newton's Second Law Tutorial For Two Mass Examples</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,Newton's Second Law, Tutorial,teach, learn,friction,static,kinetic,coefficient,incline,tilt test,critical angle,materials,contact area,mass,acceleration,lesson,scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<hr>
+<!-- Two-body Newton's laws tutorial: 4 stages x 5 two-block systems.
+Stage 1 forces on each block, Stage 2 N2L vector form per block + connections,
+Stage 3 two free-body diagrams (checked by the sim), Stage 4 component equations.
+Stages are chained via the tbStageComplete event. CSS/JS hosted on GitHub Pages. -->
+<div id="tbRoot1008"></div>
+<div id="tb2Root1008" style="display:none"></div>
+<div id="tb3Root1008" style="display:none"></div>
+<div id="tb4Root1008" style="display:none"></div>
+<script>window.tbThisq = '1008';</script>
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/twobody-tut.css">
+<script src="https://mzoughi.github.io/mom/twobody-tut-core.js"></script>
+<script src="https://mzoughi.github.io/mom/twobody-tut-st1.js"></script>
+<script src="https://mzoughi.github.io/mom/twobody-tut-st2.js"></script>
+<script src="https://mzoughi.github.io/mom/twobody-tut-st3.js"></script>
+<script src="https://mzoughi.github.io/mom/twobody-tut-st4.js"></script>
+<script>
+  document.addEventListener('tbStageComplete', function(e){
+    if (e.detail.thisq !== window.tbThisq) return;
+    var nextId = ['tb2Root','tb3Root','tb4Root'][e.detail.stage-1];
+    if (nextId) {
+      var el = document.getElementById(nextId + window.tbThisq);
+      if (el) {
+        el.style.display = 'block';
+        var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block:'start'});
+      }
+    }
+  });
+</script>
+<hr>
+</body>
+</html>

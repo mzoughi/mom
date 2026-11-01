@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Mechanics: Free Body Diagram Builder</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching,Newton's Second Law, Tutorial,teach, learn,friction,static,kinetic,coefficient,incline,tilt test,critical angle,materials,contact area,mass,acceleration,lesson,scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="fbdRoot1008">
+<!-- ── Accessibility toolbar ── -->
+<div class="fbd_a11y1008" id="fbdA11yBar1008" role="toolbar" aria-label="Display options">
+<button type="button" class="fbd_a11ybtn1008" id="fbdBtnHC1008" onclick="fbdA11y1008.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fbd_a11ybtn1008" id="fbdBtnLM1008" onclick="fbdA11y1008.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fbd_a11ybtn1008" id="fbdBtnCB1008" onclick="fbdA11y1008.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fbd_a11ybtn1008 fbd_a11yon1008" id="fbdBtnNR1008" onclick="fbdA11y1008.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar1008"><h3>Free Body Diagram</h3></div>
+<div class="mcontent1008">
+<canvas id="fbdCanvas1008" tabindex="0" style="margin:auto;display:block;border:1px solid #ccc;touch-action:none;cursor:crosshair" width="500" height="500" role="img" aria-label="Coordinate axes for the free body diagram. Set each force with the controls below the graph, or select a force and use the left and right arrow keys to rotate it. The narration bar describes the diagram."></canvas>
+</div>
+<div id="fbdNarBar1008" class="fbd_narbar1008" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar1008">
+<label for="fbdCount1008"><b>Number of forces:</b></label>
+<select id="fbdCount1008" onchange="fbdSim1008.setCount(this.value)"></select>
+<input type="button" value="Describe diagram" onclick="fbdSim1008.describe()">
+<input type="button" value="Start over" onclick="fbdSim1008.rst()">
+</div>
+<div class="footer1008">
+<div id="fbdRows1008" class="fbd_rows1008"></div>
+<div class="fbd_hint1008">Select a force, then click or drag on the graph to aim it (or use the arrow buttons). With the graph focused, the left/right arrow keys rotate the selected force and the number keys select a force.</div>
+</div>
+</div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 503px; margin: 0; }
+#fbdRoot1008 {
+--fbd-bg:     #ffffff;
+--fbd-grid:   #d6d6d6;
+--fbd-axis:   #111111;
+--fbd-text:   #111111;
+--fbd-sel:    rgba(255,200,0,.45);
+--fbd-unl:    #777777;
+--fbd-c0: #d32f2f; --fbd-c1: #1565c0; --fbd-c2: #2e7d32;
+--fbd-c3: #7b1fa2; --fbd-c4: #00838f; --fbd-c5: #ef6c00;
+--fbd-c6: #5d4037; --fbd-c7: #c2185b;
+--fbd-toolbar-bg: #222;
+}
+#fbdRoot1008 .fbd_a11y1008 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--fbd-toolbar-bg); flex-wrap:wrap; width:503px;
+}
+#fbdRoot1008 .fbd_a11ybtn1008 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#fbdRoot1008 .fbd_a11ybtn1008:hover { border-color:#00e8d0; color:#00e8d0; }
+#fbdRoot1008 .fbd_a11yon1008 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#fbdRoot1008 .fbd_narbar1008 {
+width:503px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar1008    { padding:4px; height:35px; background-color:#f90; text-align:center; line-height:42px; }
+.tbar1008 h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent1008 { height:502px; }
+.bbar1008    { min-height:50px; background-color:#df9; padding:10px; text-align:center; }
+.bbar1008 input[type=button], .bbar1008 select { margin:0 4px; padding:4px 10px; cursor:pointer; }
+.footer1008  { background-color:#fce4ec; padding:6px 0; font-size:.85rem; }
+.footer1008 .fbd_rows1008 { width:503px; }
+.footer1008 .fbd_row1008 {
+width:503px; display:flex; align-items:center; gap:4px; padding:4px 6px;
+border-left:4px solid transparent;
+}
+.footer1008 .fbd_rowsel1008 { background:#fff8d6; border-left-color:#e0b040; }
+.footer1008 .fbd_row1008 button { cursor:pointer; }
+.footer1008 .fbd_pick1008 { min-width:62px; padding:2px 4px; font-weight:bold; }
+.footer1008 .fbd_dir1008  { width:24px; height:24px; padding:0; font-size:15px; line-height:20px; }
+.footer1008 .fbd_dir1008[aria-pressed=true] { background:#333; color:#fff; }
+.footer1008 .fbd_ang1008  { width:50px; }
+.footer1008 .fbd_stat1008 { min-width:16px; font-weight:bold; }
+.footer1008 .fbd_hint1008 { padding:6px 10px 2px 10px; color:#555; font-size:.78rem; }
+</style>
+<!-- ════════ AUTHOR SETTINGS ════════
+firstPart : MOM part number of the first answer box (the box for labels[0]).
+The sim fills one ntuple box per label, in this order, with
+"(x,y)" for a used label or "(0,0)" for an unused one.
+labels    : the force palette, in the same order as your answer array.
+sym/sub draw the vector symbol; name (optional) is shown in the dropdown
+and narration. Leave a name empty if it would give too much away.
+maxForces : largest number the student can choose.
+dirMode   : '8'    -> directions snap to 45°; components written as 0 or ±outMag
+(same format as your existing answers)
+'free' -> directions snap to angleStep; components written as
+outMag·cosθ, outMag·sinθ rounded to 2 decimals (for inclines)
+angleStep : step in degrees for 'free' mode.
+outMag    : length written to the answer box.
+-->
+<script>
+var fbdConfig1008 = {
+firstPart: 0,
+labels: [
+{ sym:'F', sub:'A', name:'applied'  },
+{ sym:'F', sub:'',  name:''         },
+{ sym:'F', sub:'T', name:'tension'  },
+{ sym:'F', sub:'f', name:'friction' },
+{ sym:'F', sub:'N', name:'normal'   },
+{ sym:'F', sub:'g', name:'gravity'  }
+],
+maxForces: 6,
+dirMode:   '8',
+angleStep: 5,
+outMag:    0.75
+};
+</script>
+<!-- ════════ A11Y CONTROLLER ════════
+Same API as the VDG example (init / toggle / narrate / col), with themes layered
+over the defaults and a canvas redraw on toggle.
+-->
+<script>
+var fbdA11y1008 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--fbd-bg':'#000000','--fbd-grid':'#444444','--fbd-axis':'#ffffff','--fbd-text':'#ffffff','--fbd-sel':'rgba(255,255,0,.55)','--fbd-unl':'#bbbbbb',
+'--fbd-c0':'#ff5555','--fbd-c1':'#55aaff','--fbd-c2':'#55ff55','--fbd-c3':'#ff77ff','--fbd-c4':'#00ffff','--fbd-c5':'#ffaa00','--fbd-c6':'#ffffff','--fbd-c7':'#ffff55','--fbd-toolbar-bg':'#000'},
+lm:{'--fbd-bg':'#f6f6f2','--fbd-grid':'#dedede','--fbd-axis':'#222222','--fbd-text':'#000000','--fbd-sel':'rgba(255,190,0,.4)','--fbd-unl':'#666666',
+'--fbd-c0':'#b71c1c','--fbd-c1':'#0d47a1','--fbd-c2':'#1b5e20','--fbd-c3':'#4a148c','--fbd-c4':'#006064','--fbd-c5':'#e65100','--fbd-c6':'#3e2723','--fbd-c7':'#880e4f','--fbd-toolbar-bg':'#444'},
+cb:{'--fbd-bg':'#ffffff','--fbd-grid':'#cccccc','--fbd-axis':'#000000','--fbd-text':'#000000','--fbd-sel':'rgba(240,228,66,.6)','--fbd-unl':'#777777',
+'--fbd-c0':'#d55e00','--fbd-c1':'#0072b2','--fbd-c2':'#009e73','--fbd-c3':'#cc79a7','--fbd-c4':'#56b4e9','--fbd-c5':'#e69f00','--fbd-c6':'#000000','--fbd-c7':'#999933','--fbd-toolbar-bg':'#222'}
+};
+var DEFS = {'--fbd-bg':'#ffffff','--fbd-grid':'#d6d6d6','--fbd-axis':'#111111','--fbd-text':'#111111','--fbd-sel':'rgba(255,200,0,.45)','--fbd-unl':'#777777',
+'--fbd-c0':'#d32f2f','--fbd-c1':'#1565c0','--fbd-c2':'#2e7d32','--fbd-c3':'#7b1fa2','--fbd-c4':'#00838f','--fbd-c5':'#ef6c00','--fbd-c6':'#5d4037','--fbd-c7':'#c2185b','--fbd-toolbar-bg':'#222'};
+function applyVars(){
+if(!ROOT) return;
+var merged = {}, p, order = ['lm','cb','hc'];
+for (p in DEFS) merged[p] = DEFS[p];
+for (var i=0; i<order.length; i++){
+if (states[order[i]]){ var v = THEMES[order[i]]; for (p in v) merged[p] = v[p]; }
+}
+for (p in merged) ROOT.style.setProperty(p, merged[p]);
+}
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('fbdNarBar1008');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('fbdBtnNR1008');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('fbdBtnNR1008',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars(); applyNarBar();
+styleBtn('fbdBtnHC1008',states.hc);
+styleBtn('fbdBtnLM1008',states.lm);
+styleBtn('fbdBtnCB1008',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('fbdRoot1008'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+if (typeof fbdSim1008 !== 'undefined' && fbdSim1008.redraw) fbdSim1008.redraw();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('fbdNarBar1008');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the VGG (Van de Graaff) example.
+- var simObj = function() { ... rst(); return {...}; }
+- var simObj1008 = new simObj();
+No animation loop: the canvas redraws on every change.
+Grading hook: for each label i the sim writes "(x,y)" into MOM answer box
+id = 'qn' + thisq + (firstPart + i, padded to 3 digits), e.g. qn3000
+and fires input/change events. On page load it reads those boxes back, so a
+submitted or saved diagram is redrawn, and it shows MOM's right/wrong marks
+(when the boxes carry them) next to each force.
+Note: this script avoids backticks, backslashes and dollar signs (other than
+thisq) so MOM's question-text processing leaves it alone.
+-->
+<script>
+var fbdGen = function() {
+var canvas = document.getElementById('fbdCanvas1008');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;   /* 500 x 500 */
+var CFG    = (typeof fbdConfig1008 !== 'undefined') ? fbdConfig1008 : {};
+var QN     = Number('1008');
+var LABELS = CFG.labels || [{sym:'F',sub:'1',name:''},{sym:'F',sub:'2',name:''}];
+var FIRST  = CFG.firstPart || 0;
+var MAXF   = Math.max(1, Math.min(CFG.maxForces || LABELS.length, LABELS.length, 8));
+var MODE8  = String(CFG.dirMode || '8') === '8';
+var STEP   = MODE8 ? 45 : (CFG.angleStep || 5);
+var OUT    = CFG.outMag || 0.75;
+/* ── layout ── */
+var GL = 1.25, SC = W/(2*GL), OX = W/2, OY = H/2, ALEN = 0.9;
+var DIRS   = [0,45,90,135,180,225,270,315];
+var GLYPH  = ['→','↗','↑','↖','←','↙','↓','↘'];
+var DEFCOL = ['#d32f2f','#1565c0','#2e7d32','#7b1fa2','#00838f','#ef6c00','#5d4037','#c2185b'];
+/* ── state ── */
+var forces = [];          /* { label: -1 | index into LABELS, ang: null | degrees } */
+var sel = -1, dragging = false;
+var feedback = {};        /* label index -> 'ok' | 'bad' | 'part' (from MOM marks) */
+var rowsEl = [];
+function c(prop, def){ return fbdA11y1008.col(prop, def); }
+function labCol(i){ return i < 0 ? c('--fbd-unl','#777777') : c('--fbd-c'+(i%8), DEFCOL[i%8]); }
+function labText(i){
+if (i < 0) return 'no name yet';
+var L = LABELS[i];
+return L.sym + (L.sub ? '_' + L.sub : '') + (L.name ? ' (' + L.name + ')' : '');
+}
+function labSpeech(i){
+if (i < 0) return 'unnamed';
+var L = LABELS[i];
+return L.sym + (L.sub ? ' sub ' + L.sub : '') + (L.name ? ' (' + L.name + ')' : '');
+}
+function norm(a){ a = Math.round(Number(a)/STEP)*STEP; a = ((a % 360) + 360) % 360; return a; }
+function dirName(a){
+var names = {0:'to the right (+x)',45:'up and to the right',90:'straight up (+y)',135:'up and to the left',
+180:'to the left (−x)',225:'down and to the left',270:'straight down (−y)',315:'down and to the right'};
+if (names.hasOwnProperty(a)) return names[a] + (MODE8 ? '' : ', ' + a + '°');
+var q = a < 90 ? 'up and to the right' : a < 180 ? 'up and to the left' : a < 270 ? 'down and to the left' : 'down and to the right';
+return q + ', ' + a + '° from the +x axis';
+}
+/* ══════════ MOM answer boxes ══════════ */
+/* MOM box id = 'qn' + thisq + part padded to 3 digits, e.g. qn3000, qn3001 */
+function box(i){ var pad = String(FIRST + i); while (pad.length < 3) pad = '0' + pad; return document.getElementById('qn' + '1008' + pad); }
+function fmt(v){ if (Math.abs(v) < 0.005) return '0'; return String(Math.round(v*100)/100); }
+function comps(a){
+var cs = Math.cos(a*Math.PI/180), sn = Math.sin(a*Math.PI/180);
+if (MODE8){
+return [Math.abs(cs) < 1e-6 ? 0 : (cs > 0 ? OUT : -OUT), Math.abs(sn) < 1e-6 ? 0 : (sn > 0 ? OUT : -OUT)];
+}
+return [OUT*cs, OUT*sn];
+}
+function fire(el){
+var ev;
+['input','change'].forEach(function(t){
+try { ev = new Event(t, { bubbles:true }); }
+catch(e){ ev = document.createEvent('Event'); ev.initEvent(t, true, true); }
+el.dispatchEvent(ev);
+});
+}
+function writeAnswers(){
+for (var i=0; i<LABELS.length; i++){
+var s = '(0,0)';
+for (var k=0; k<forces.length; k++){
+if (forces[k].label === i && forces[k].ang !== null){ var p = comps(forces[k].ang); s = '(' + fmt(p[0]) + ',' + fmt(p[1]) + ')'; }
+}
+var el = box(i);
+if (el && el.value !== s){ el.value = s; fire(el); }
+}
+}
+function parsePair(v){
+if (!v) return null;
+var s = String(v).split('(').join('').split(')').join('').split(' ').join('');
+var parts = s.split(',');
+if (parts.length !== 2) return null;
+var x = parseFloat(parts[0]), y = parseFloat(parts[1]);
+if (isNaN(x) || isNaN(y)) return null;
+return [x, y];
+}
+function restore(){
+forces = []; feedback = {};
+for (var i=0; i<LABELS.length; i++){
+var el = box(i); if (!el) continue;
+var cl = ' ' + (el.className || '') + ' ';
+if (cl.indexOf('ansgrn') >= 0) feedback[i] = 'ok';
+else if (cl.indexOf('ansred') >= 0) feedback[i] = 'bad';
+else if (cl.indexOf('ansyel') >= 0) feedback[i] = 'part';
+var p = parsePair(el.value);
+if (!p || (Math.abs(p[0]) < 1e-9 && Math.abs(p[1]) < 1e-9)) continue;
+if (forces.length >= MAXF) continue;
+forces.push({ label:i, ang:norm(Math.atan2(p[1], p[0])*180/Math.PI) });
+}
+return forces.length > 0;
+}
+/* ══════════ drawing ══════════ */
+function toPx(x, y){ return [OX + x*SC, OY - y*SC]; }
+function arrow(x0,y0,x1,y1,col,lw){
+var dx=x1-x0, dy=y1-y0, len=Math.sqrt(dx*dx+dy*dy); if (len < 2) return;
+var ux=dx/len, uy=dy/len, hl=14, hw=7, bx=x1-ux*hl, by=y1-uy*hl;
+ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw; ctx.lineCap='round';
+ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(bx,by); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(bx-uy*hw,by+ux*hw); ctx.lineTo(bx+uy*hw,by-ux*hw); ctx.closePath(); ctx.fill();
+ctx.restore();
+}
+/* vector symbol: italic letter with an arrow over it and a subscript */
+function vecLabel(x, y, sym, sub, col){
+ctx.save(); ctx.textBaseline='middle'; ctx.textAlign='left';
+ctx.font='italic bold 20px serif'; var a = ctx.measureText(sym).width;
+ctx.font='italic 13px serif'; var b = sub ? ctx.measureText(sub).width : 0;
+var x0 = x - (a+b)/2;
+ctx.lineJoin='round'; ctx.lineWidth=4; ctx.strokeStyle=c('--fbd-bg','#ffffff'); ctx.fillStyle=col;
+ctx.font='italic bold 20px serif'; ctx.strokeText(sym,x0,y); ctx.fillText(sym,x0,y);
+if (sub){ ctx.font='italic 13px serif'; ctx.strokeText(sub,x0+a,y+7); ctx.fillText(sub,x0+a,y+7); }
+ctx.strokeStyle=col; ctx.lineWidth=1.5;
+ctx.beginPath(); ctx.moveTo(x0+1,y-13); ctx.lineTo(x0+a+1,y-13); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(x0+a+3,y-13); ctx.lineTo(x0+a-3,y-16); ctx.lineTo(x0+a-3,y-10); ctx.closePath(); ctx.fill();
+ctx.restore();
+}
+function drawGrid(){
+var grid=c('--fbd-grid','#d6d6d6'), axis=c('--fbd-axis','#111111');
+ctx.fillStyle=c('--fbd-bg','#ffffff'); ctx.fillRect(0,0,W,H);
+ctx.strokeStyle=grid; ctx.lineWidth=1;
+for (var v=-GL; v<=GL+1e-9; v+=0.25){
+var p = toPx(v, v);
+ctx.beginPath(); ctx.moveTo(p[0],0); ctx.lineTo(p[0],H); ctx.moveTo(0,p[1]); ctx.lineTo(W,p[1]); ctx.stroke();
+}
+arrow(8, OY, W-6, OY, axis, 2);
+arrow(OX, H-8, OX, 6, axis, 2);
+ctx.fillStyle=axis; ctx.font='italic 20px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText('x', W-16, OY-18); ctx.fillText('y', OX+18, 16);
+}
+function tip(k){ var a = forces[k].ang*Math.PI/180; return [OX + ALEN*SC*Math.cos(a), OY - ALEN*SC*Math.sin(a)]; }
+function drawFrame(){
+drawGrid();
+var placed = 0, seen = {};
+for (var k=0; k<forces.length; k++){
+var f = forces[k]; if (f.ang === null) continue;
+placed++;
+var t = tip(k), col = labCol(f.label), a = f.ang*Math.PI/180;
+if (k === sel){
+ctx.save(); ctx.strokeStyle=c('--fbd-sel','rgba(255,200,0,.45)'); ctx.lineWidth=14; ctx.lineCap='round';
+ctx.beginPath(); ctx.moveTo(OX,OY); ctx.lineTo(t[0],t[1]); ctx.stroke(); ctx.restore();
+}
+arrow(OX, OY, t[0], t[1], col, 3);
+ctx.fillStyle=col; ctx.beginPath(); ctx.arc(t[0], t[1], 5, 0, 2*Math.PI); ctx.fill();
+/* label beside the tip; forces sharing a direction get stacked labels */
+var n = seen[f.ang] || 0; seen[f.ang] = n+1;
+var px = -Math.sin(a), py = -Math.cos(a);          /* screen-space perpendicular */
+var side = (f.ang % 90 === 0) ? 18 : 0;   /* keep labels off the axis lines */
+var lx = t[0] + Math.cos(a)*22 + px*(side + n*24), ly = t[1] - Math.sin(a)*22 + py*(side + n*24);
+lx = Math.max(22, Math.min(W-22, lx)); ly = Math.max(20, Math.min(H-16, ly));
+if (f.label >= 0) vecLabel(lx, ly, LABELS[f.label].sym, LABELS[f.label].sub, col);
+else {
+ctx.save(); ctx.fillStyle=col; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText('#' + (k+1) + ' ?', lx, ly); ctx.restore();
+}
+}
+ctx.fillStyle=c('--fbd-axis','#111111'); ctx.beginPath(); ctx.arc(OX,OY,4,0,2*Math.PI); ctx.fill();
+if (placed === 0){
+ctx.save(); ctx.fillStyle=c('--fbd-text','#111111'); ctx.font='14px sans-serif'; ctx.textAlign='center';
+ctx.fillText(forces.length === 0 ? 'Choose the number of forces below to begin.'
+       : 'Select a force below, then click on the graph to aim it.', W/2, H-22);
+ctx.restore();
+}
+}
+/* ══════════ control rows ══════════ */
+function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; }
+function buildCountSelect(){
+var s = document.getElementById('fbdCount1008'); if (!s) return;
+s.innerHTML = '';
+var o = el('option', '', '—'); o.value = ''; s.appendChild(o);
+for (var n=0; n<=MAXF; n++){ o = el('option', '', String(n)); o.value = String(n); s.appendChild(o); }
+}
+function buildRows(){
+var host = document.getElementById('fbdRows1008'); if (!host) return;
+host.innerHTML = ''; rowsEl = [];
+forces.forEach(function(f, k){
+var row = el('div', 'fbd_row1008');
+var pick = el('button', 'fbd_pick1008', 'Force ' + (k+1)); pick.type = 'button';
+pick.setAttribute('aria-label', 'Select force ' + (k+1));
+pick.onclick = function(){ api.select(k); };
+var ls = el('select'); ls.setAttribute('aria-label', 'Name of force ' + (k+1));
+var o = el('option', '', '— name —'); o.value = '-1'; ls.appendChild(o);
+LABELS.forEach(function(L, i){ var op = el('option', '', labText(i)); op.value = String(i); ls.appendChild(op); });
+ls.onchange = function(){ api.setLabel(k, this.value); };
+row.appendChild(pick); row.appendChild(ls);
+var btns = [];
+DIRS.forEach(function(d, j){
+var b = el('button', 'fbd_dir1008', GLYPH[j]); b.type = 'button';
+b.setAttribute('aria-label', 'Force ' + (k+1) + ': point ' + dirName(d));
+b.onclick = function(){ api.setDir(k, d); };
+row.appendChild(b); btns.push(b);
+});
+var ang = null;
+if (!MODE8){
+ang = el('input', 'fbd_ang1008'); ang.type = 'number'; ang.min = '0'; ang.max = '359'; ang.step = String(STEP);
+ang.setAttribute('aria-label', 'Force ' + (k+1) + ' angle in degrees from the +x axis');
+ang.onchange = function(){ if (this.value !== '') api.setDir(k, this.value); };
+row.appendChild(ang); row.appendChild(el('span', '', '°'));
+}
+var stat = el('span', 'fbd_stat1008');
+var rm = el('button', '', '✕'); rm.type = 'button';
+rm.setAttribute('aria-label', 'Remove force ' + (k+1));
+rm.onclick = function(){ api.removeForce(k); };
+row.appendChild(stat); row.appendChild(rm);
+host.appendChild(row);
+rowsEl.push({ row:row, ls:ls, btns:btns, ang:ang, stat:stat });
+});
+syncRows();
+}
+function syncRows(){
+var used = {};
+forces.forEach(function(f){ if (f.label >= 0) used[f.label] = true; });
+rowsEl.forEach(function(r, k){
+var f = forces[k]; if (!f) return;
+r.row.className = 'fbd_row1008' + (k === sel ? ' fbd_rowsel1008' : '');
+r.row.style.borderLeftColor = k === sel ? '' : labCol(f.label);
+r.ls.value = String(f.label);
+for (var i=0; i<r.ls.options.length; i++){
+var v = parseInt(r.ls.options[i].value, 10);
+r.ls.options[i].disabled = (v >= 0 && used[v] && v !== f.label);
+}
+r.btns.forEach(function(b, j){ b.setAttribute('aria-pressed', f.ang === DIRS[j] ? 'true' : 'false'); });
+if (r.ang && document.activeElement !== r.ang) r.ang.value = f.ang === null ? '' : String(f.ang);
+var fb = f.label >= 0 ? feedback[f.label] : null;
+r.stat.textContent = fb === 'ok' ? '✓' : fb === 'bad' ? '✗' : fb === 'part' ? '~' : '';
+r.stat.style.color = fb === 'ok' ? '#2e7d32' : fb === 'bad' ? '#c62828' : '#b08000';
+r.stat.title = fb === 'ok' ? 'Marked correct' : fb === 'bad' ? 'Marked incorrect' : fb === 'part' ? 'Partly correct' : '';
+});
+var cs = document.getElementById('fbdCount1008');
+if (cs && cs.value !== '' ) cs.value = String(forces.length);
+}
+function refresh(write){ syncRows(); drawFrame(); if (write) writeAnswers(); }
+/* ══════════ narration ══════════ */
+function forceSentence(k){
+var f = forces[k];
+var s = 'Force ' + (k+1) + ', ' + labSpeech(f.label) + ', ';
+s += f.ang === null ? 'has no direction yet.' : 'points ' + dirName(f.ang) + '.';
+return s;
+}
+function describe(){
+if (forces.length === 0){
+var cs = document.getElementById('fbdCount1008');
+fbdA11y1008.narrate(cs && cs.value === '0' ? 'You have chosen zero forces: no force acts on the object.'
+                   : 'No forces yet. Choose the number of forces acting on the object.');
+return;
+}
+var msg = 'Your diagram has ' + forces.length + (forces.length === 1 ? ' force. ' : ' forces. ');
+for (var k=0; k<forces.length; k++) msg += forceSentence(k) + ' ';
+var todo = forces.filter(function(f){ return f.label < 0 || f.ang === null; }).length;
+if (todo) msg += todo + (todo === 1 ? ' force still needs' : ' forces still need') + ' a name or a direction.';
+fbdA11y1008.narrate(msg);
+}
+/* ══════════ pointer + keyboard ══════════ */
+function pos(e){
+var r = canvas.getBoundingClientRect();
+return [(e.clientX - r.left)*W/r.width, (e.clientY - r.top)*H/r.height];
+}
+function aimAt(p){
+if (sel < 0 || !forces[sel]) return false;
+var dx = p[0]-OX, dy = OY-p[1];
+if (Math.sqrt(dx*dx+dy*dy) < 12) return false;
+var a = norm(Math.atan2(dy, dx)*180/Math.PI);
+if (forces[sel].ang !== a){ forces[sel].ang = a; delete feedback[forces[sel].label]; refresh(false); }
+return true;
+}
+canvas.addEventListener('pointerdown', function(e){
+var p = pos(e), hit = -1;
+for (var k=forces.length-1; k>=0; k--){
+if (forces[k].ang === null) continue;
+var t = tip(k), d = Math.sqrt((t[0]-p[0])*(t[0]-p[0]) + (t[1]-p[1])*(t[1]-p[1]));
+if (d < 16){ hit = k; break; }
+}
+if (hit >= 0) sel = hit;
+else if (sel < 0 || !forces[sel]){
+sel = -1;
+for (var j=0; j<forces.length; j++) if (forces[j].ang === null){ sel = j; break; }
+if (sel < 0){ describe(); return; }
+}
+dragging = true;
+try { canvas.setPointerCapture(e.pointerId); } catch(err){}
+if (hit < 0) aimAt(p); else refresh(false);
+e.preventDefault();
+});
+canvas.addEventListener('pointermove', function(e){ if (dragging) aimAt(pos(e)); });
+function endDrag(){
+if (!dragging) return;
+dragging = false; writeAnswers();
+if (sel >= 0 && forces[sel]) fbdA11y1008.narrate(forceSentence(sel));
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('keydown', function(e){
+var key = e.key;
+if (key >= '1' && key <= '9'){ var n = parseInt(key, 10) - 1; if (n < forces.length){ api.select(n); e.preventDefault(); } return; }
+if (sel < 0 || !forces[sel]) return;
+var a = forces[sel].ang === null ? 0 : forces[sel].ang;
+if (key === 'ArrowLeft' || key === 'ArrowUp'){ api.setDir(sel, a + STEP); e.preventDefault(); }
+else if (key === 'ArrowRight' || key === 'ArrowDown'){ api.setDir(sel, a - STEP); e.preventDefault(); }
+});
+/* ══════════ public ══════════ */
+var api = {
+setCount: function(v){
+if (v === '') return;
+var n = Math.max(0, Math.min(MAXF, parseInt(v, 10) || 0)), old = forces.length;
+while (forces.length < n) forces.push({ label:-1, ang:null });
+if (forces.length > n) forces.splice(n);
+if (sel >= forces.length) sel = forces.length - 1;
+if (sel < 0 && forces.length) sel = 0;
+buildRows(); refresh(true);
+if (n === 0) fbdA11y1008.narrate('You chose zero forces: no force acts on the object.');
+else if (n > old) fbdA11y1008.narrate('You chose ' + n + (n === 1 ? ' force' : ' forces') + '. For each one, choose a name and a direction. Force ' + (sel+1) + ' is selected.');
+else fbdA11y1008.narrate('You now have ' + n + (n === 1 ? ' force' : ' forces') + '; the last ' + (old-n) + ' removed.');
+},
+select: function(k){
+if (!forces[k]) return;
+sel = k; refresh(false);
+fbdA11y1008.narrate(forceSentence(k) + ' Click or drag on the graph, use the arrow buttons, or the arrow keys to aim it.');
+},
+setLabel: function(k, v){
+if (!forces[k]) return;
+var i = parseInt(v, 10); if (isNaN(i)) i = -1;
+for (var j=0; j<forces.length; j++) if (j !== k && forces[j].label === i && i >= 0) return;  /* already used */
+delete feedback[forces[k].label];
+forces[k].label = i; sel = k; refresh(true);
+fbdA11y1008.narrate('Force ' + (k+1) + ' is now named ' + labSpeech(i) + '.' + (forces[k].ang === null ? ' Now give it a direction.' : ''));
+},
+setDir: function(k, a){
+if (!forces[k]) return;
+forces[k].ang = norm(a); sel = k; delete feedback[forces[k].label];
+refresh(true);
+fbdA11y1008.narrate(forceSentence(k));
+},
+removeForce: function(k){
+if (!forces[k]) return;
+var gone = labSpeech(forces[k].label);
+forces.splice(k, 1);
+if (sel >= forces.length) sel = forces.length - 1;
+buildRows(); refresh(true);
+var cs = document.getElementById('fbdCount1008'); if (cs) cs.value = String(forces.length);
+fbdA11y1008.narrate('Removed force ' + (k+1) + ' (' + gone + '). ' + forces.length + (forces.length === 1 ? ' force remains.' : ' forces remain.'));
+},
+describe: describe,
+redraw: function(){ drawFrame(); syncRows(); },
+rst: function(){
+forces = []; sel = -1; feedback = {};
+var cs = document.getElementById('fbdCount1008'); if (cs) cs.value = '';
+buildRows(); drawFrame(); writeAnswers();
+fbdA11y1008.narrate('Diagram cleared. Choose the number of forces acting on the object.');
+}
+};
+/* boot: rebuild a saved/submitted diagram if the answer boxes already hold one */
+buildCountSelect();
+var had = restore();
+if (had){
+sel = 0;
+var cs0 = document.getElementById('fbdCount1008'); if (cs0) cs0.value = String(forces.length);
+buildRows(); drawFrame();
+describe();
+var bad = 0; for (var q in feedback) if (feedback[q] !== 'ok') bad++;
+if (Object.keys(feedback).length){
+var nb = document.getElementById('fbdNarBar1008');
+fbdA11y1008.narrate((nb ? nb.textContent + ' ' : '') + (bad ? bad + ' of the ' + LABELS.length + ' force entries were marked not fully correct.' : 'All force entries were marked correct.'));
+}
+} else {
+buildRows(); drawFrame();
+fbdA11y1008.narrate('Ready. Choose the number of forces acting on the object, then name and aim each one.');
+}
+return api;
+};
+var fbdSim1008 = new fbdGen();
+</script>
+<script>
+fbdA11y1008.init();
+fbdSim1008.redraw();
+</script>
+</body>
+</html>

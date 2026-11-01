@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Momentum: A Ball Hits a Pendulum: Angular Momentum About the Pivot</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, momentum, rotation, angular momentum, physical pendulum, ballistic pendulum, centre of percussion, sweet spot, collision, moment of inertia, impulse, pivot, lesson, scientific">
+<meta name="description" content="Interactive simulation of a ball hitting a physical pendulum: angular momentum about the pivot is conserved, linear momentum is not, and the centre of percussion.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="ppRoot" class="pp_root" role="region" aria-label="A ball hitting a pendulum simulator">
+<div class="pp_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="pp_a11ybtn" id="ppBtnHC" onclick="ppSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="pp_a11ybtn" id="ppBtnLM" onclick="ppSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="pp_a11ybtn" id="ppBtnCB" onclick="ppSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="pp_a11ybtn pp_a11yon" id="ppBtnNR" onclick="ppSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="pp_tbar"><h3>A Ball Hits a Pendulum: Angular Momentum About the Pivot</h3></div>
+<div class="pp_mcontent">
+<div class="pp_view">
+<div class="pp_vlabel">side view: a ball slides along a track and hits a pendulum (a heavy rod with a ball at its end)</div>
+<canvas id="ppCv" width="780" height="420" role="img" aria-label="A pendulum made of a rod and a ball hangs from a pivot; a ball slides along a horizontal track and hits it, and the pendulum swings."></canvas>
+</div>
+<div class="pp_tblwrap" id="ppRead" aria-label="Readout"></div>
+</div>
+<div class="pp_bbar" id="ppBtns"></div>
+<div class="pp_controls" id="ppCtl"></div>
+<div id="ppNarBar" class="pp_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="pp_descwrap">
+<button type="button" class="pp_descbtn" id="ppDescBtn" aria-expanded="false" aria-controls="ppDesc" onclick="ppSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="pp_desc" id="ppDesc" role="region" aria-labelledby="ppDescBtn" style="display:none">
+<p>This simulation shows a ball sliding along a horizontal track and hitting a pendulum: a heavy rod of mass `M_r` and length `L`, with a ball of mass `M_b` at its end, hanging from a pivot. The pendulum's moment of inertia about the pivot is</p>
+<p class="pp_eq">`I = 1/3 M_r L^2 + M_b (L^2 + 2/5 R_b^2)`.</p>
+<p><b>Which quantity is conserved?</b> During the collision the pivot holds the top of the pendulum in place, so it can push on the pendulum with a large force. That force comes from outside the system, so the total linear momentum is not conserved. But it acts at the pivot itself, so it has no torque about the pivot: the angular momentum about the pivot is conserved. For a ball of mass `m` and speed `v` hitting at a depth `d` below the pivot,</p>
+<p class="pp_eq">`m v d = m v' d + I omega'`.</p>
+<p>With a coefficient of restitution `e` (the speed at which they separate, over the speed at which they meet), `omega' d - v' = e v`, which gives</p>
+<p class="pp_eq">`omega' = (m v d (1 + e))/(I + m d^2)`,&nbsp;&nbsp; `v' = v (m d^2 - e I)/(I + m d^2)`.</p>
+<p>If the ball sticks to the pendulum (a ballistic pendulum), `omega' = m v d / (I + m d^2)`.</p>
+<p><b>The pivot's push and the sweet spot.</b> The impulse from the pivot is whatever is needed to make up the change in total momentum, `J_"pivot" = (m v' + M omega' d_(cm)) - m v`, where `M` is the pendulum's mass and `d_(cm)` the depth of its centre of mass. It vanishes when the ball hits the centre of percussion,</p>
+<p class="pp_eq">`d_(cp) = I/(M d_(cm))`,</p>
+<p>which is the "sweet spot" of a bat or a racket: hit there, and the hands (the pivot) feel no jolt. Hit above the sweet spot, closer to the pivot, and the pivot must push backward to hold the top in place; hit below it, and the pivot pushes forward. The push is `J_"pivot" = omega' M d_(cm) (1 - d_(cp)/d)`.</p>
+<p><b>The swing.</b> After the collision, the pendulum (with the ball, if it stuck) swings under gravity, `I theta'' = -M g d_(cm) sin theta`. Energy is conserved during the swing, so the highest angle follows from `1/2 I omega'^2 = M g d_(cm) (1 - cos theta_"max")`.</p>
+</div>
+</div>
+</div><!-- #ppRoot -->
+<style>
+#ppRoot, #ppRoot * { box-sizing:border-box; }
+#ppRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --pp-bg:#0a0e12; --pp-panel:#0d1318; --pp-border:#1c262e; --pp-text:#c9d6de; --pp-muted:#5f7180; --pp-val:#8fe3b0; }
+#ppRoot .pp_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#ppRoot .pp_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#ppRoot .pp_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#ppRoot .pp_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#ppRoot .pp_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#ppRoot .pp_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#ppRoot .pp_tabs { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; background:#2c3138; }
+#ppRoot .pp_tab { flex:1 1 200px; padding:8px 10px; border:1px solid #525c66; background:#22262b; color:#c8d0d8; border-radius:4px; cursor:pointer; font-family:system-ui, sans-serif; font-size:.86rem; min-height:38px; }
+#ppRoot .pp_tab[aria-selected="true"] { background:#e8a020; color:#1a1f24; border-color:#e8a020; font-weight:bold; }
+#ppRoot .pp_mcontent { background:var(--pp-bg); color:var(--pp-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#ppRoot .pp_view { border:1px solid var(--pp-border); border-radius:6px; overflow:hidden; background:var(--pp-panel); }
+#ppRoot .pp_vlabel { font-size:10px; color:var(--pp-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#ppRoot canvas { display:block; width:100%; height:auto; }
+#ppRoot .pp_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--pp-panel); border:1px solid var(--pp-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#ppRoot .pp_flabel { font-size:10px; color:var(--pp-muted); letter-spacing:1px; }
+#ppRoot .pp_fvalue { font-size:14px; color:var(--pp-val); font-variant-numeric:tabular-nums; }
+#ppRoot .pp_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#ppRoot .pp_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#ppRoot .pp_bbar label { display:flex; align-items:center; gap:6px; }
+#ppRoot .pp_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#ppRoot .pp_go { font-weight:bold; border-color:#0a7a5a; background:#e2fff3; }
+#ppRoot .pp_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#ppRoot .pp_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#ppRoot .pp_cname { font-size:.86rem; display:flex; gap:8px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+#ppRoot .pp_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#ppRoot input[type=range] { width:100%; min-width:0; accent-color:#e8a020; }
+#ppRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#ppRoot .pp_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#ppRoot .pp_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#ppRoot .pp_descbtn[aria-expanded="true"] { background:#3a3220; }
+#ppRoot .pp_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#ppRoot .pp_desc p { margin:0 0 9px; }
+#ppRoot .pp_eq { text-align:center; font-size:1rem; }
+@media (pointer:coarse) { #ppRoot input[type=range] { height:28px; } #ppRoot .pp_a11ybtn { min-height:40px; } #ppRoot input[type=checkbox] { width:22px; height:22px; } }
+</style><style>
+#ppRoot .pp_tbl { width:100%; border-collapse:collapse; font-family:system-ui, sans-serif; font-size:.84rem; color:var(--pp-text); }
+#ppRoot .pp_tbl td { padding:3px 6px; border-bottom:1px solid var(--pp-border); font-variant-numeric:tabular-nums; }
+#ppRoot .pp_tbl td:first-child { color:var(--pp-muted); }
+#ppRoot .pp_tbl td.pp_sum { color:var(--pp-val); font-weight:bold; text-align:right; }
+#ppRoot .pp_tblwrap { background:var(--pp-panel); border:1px solid var(--pp-border); border-radius:8px; padding:6px 8px; overflow-x:auto; }
+#ppRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+</style>
+<!-- ════════ SIMULATION ════════
+A physical pendulum (rod M_r, length L, plus a ball M_b of radius R_b at the end) hangs at rest from a pivot. A ball of mass m
+slides along a horizontal track at depth d below the pivot and hits it with speed v. Collision: angular momentum about the
+pivot conserved, restitution e along the line of the hit; or sticking. Pivot impulse = change of total momentum. The swing:
+I theta'' = -M g d_cm sin theta, integrated with RK4. No dollar signs or backticks in the code.
+-->
+<script>
+var ppSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('ppRoot'), cv = el('ppCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var GRAV = 9.81, RB = 0.06, RP = 0.035, DEG = Math.PI/180;
+var S = { run:true, ghosts:true, kind:'stick', e:0.6, m:0.5, v:3, Mr:1.0, Mb:1.0, L:0.9, df:1.0, cp:true };
+var th = { hc:false, lm:false, cb:false, nr:true };
+/* ══════════ the pendulum ══════════ */
+function pend(){ var L = S.L, Mr = S.Mr, Mb = S.Mb, M = Mr + Mb, I = Mr*L*L/3 + Mb*(L*L + 0.4*RB*RB), dcm = (Mr*L/2 + Mb*L)/M; return { L:L, M:M, I:I, dcm:dcm, dcp:I/(M*dcm) }; }
+function depth(){ var L = S.L, top = (L - RB)/L; return S.df >= top ? L : Math.max(0.1, S.df)*L; }   /* on the rod, or the bob's centre */
+var st = null, ghosts = [], tGhost = 0;
+function setup(){
+var q = pend(), d = depth();
+st = { t:0, x:-0.85, v:S.v, th:0, w:0, hit:false, stuck:false, before:null, after:null, J:0, thMax:0, d:d, q:q, Itot:q.I, Mtot:q.M, dtot:q.dcm };
+ghosts = []; tGhost = 0;
+}
+function frontX(d){ var q = st.q; return Math.abs(d - q.L) < 1e-9 ? -RB : 0; }        /* the pendulum's front surface at depth d (at rest) */
+function collide(){
+var q = st.q, d = st.d, m = S.m, v = st.v, e = S.kind === 'elastic' ? 1 : (S.kind === 'stick' ? 0 : S.e);
+st.before = { L:m*v*d, p:m*v, K:0.5*m*v*v };
+var w2, v2;
+if (S.kind === 'stick'){ w2 = m*v*d/(q.I + m*d*d); v2 = w2*d; st.stuck = true; st.Itot = q.I + m*d*d; st.Mtot = q.M + m; st.dtot = (q.M*q.dcm + m*d)/(q.M + m); }
+else { w2 = m*v*d*(1 + e)/(q.I + m*d*d); v2 = v*(m*d*d - e*q.I)/(q.I + m*d*d); }
+st.w = w2; st.v = v2; st.hit = true;
+var pAfter = m*v2 + q.M*w2*q.dcm, Kafter = 0.5*q.I*w2*w2 + (st.stuck ? 0.5*m*v2*v2 : 0.5*m*v2*v2);
+st.after = { L:m*v2*d + q.I*w2, p:pAfter, K:Kafter, w:w2, v:v2 };
+st.J = pAfter - st.before.p;
+/* the highest angle from energy: 1/2 I w^2 = M g d_cm (1 - cos theta) */
+var c = 1 - 0.5*st.Itot*w2*w2/(st.Mtot*GRAV*st.dtot); st.thPred = c < -1 ? null : Math.acos(c);
+narrateHit();
+}
+function acc(th){ return -st.Mtot*GRAV*st.dtot*Math.sin(th)/st.Itot; }
+function step(dt){
+st.t += dt;
+if (!st.hit){ st.x += st.v*dt; if (st.x + RP >= frontX(st.d)) { st.x = frontX(st.d) - RP; collide(); } return; }
+/* RK4 for the swing */
+var th0 = st.th, w0 = st.w;
+var k1t = w0, k1w = acc(th0), k2t = w0 + 0.5*dt*k1w, k2w = acc(th0 + 0.5*dt*k1t), k3t = w0 + 0.5*dt*k2w, k3w = acc(th0 + 0.5*dt*k2t), k4t = w0 + dt*k3w, k4w = acc(th0 + dt*k3t);
+st.th = th0 + dt*(k1t + 2*k2t + 2*k3t + k4t)/6; st.w = w0 + dt*(k1w + 2*k2w + 2*k3w + k4w)/6;
+st.thMax = Math.max(st.thMax, Math.abs(st.th));
+if (!st.stuck) st.x += st.v*dt;
+}
+/* ══════════ drawing ══════════ */
+var PX = 430, PY = 50, SC = 280;
+function sx(x){ return PX + x*SC; } function sy(y){ return PY + y*SC; }           /* y measured downward from the pivot */
+function pal(){ if (th.hc) return { bg:'#000', wall:'#444', rod:'#ffcc00', bob:'#ff6a3d', ball:'#00e0ff', track:'#aaa', txt:'#fff', muted:'#ddd', J:'#ff4040', cp:'#00ff88', L:'#ff66ff' };
+var p = th.lm ? { bg:'#eef2f6', wall:'#c9cfd6', txt:'#1d232a', muted:'#556070', track:'#778' } : { bg:'#0d1318', wall:'#2a3038', txt:'#dbe5ec', muted:'#7a8a98', track:'#5a6470' };
+p.rod = '#c8a060'; p.bob = th.cb ? '#d55e00' : '#d0503a'; p.ball = th.cb ? '#56b4e9' : '#4fc3ff'; p.J = th.cb ? '#e69f00' : '#ff5a4a'; p.cp = th.cb ? '#009e73' : '#3ad08f'; p.L = th.cb ? '#cc79a7' : '#ff7ad9'; return p; }
+function arrow(x1, y1, x2, y2, col, lw, label){
+var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); if (L < 2) return;
+g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw || 2.5; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+var a = Math.atan2(dy, dx), h = Math.min(11, 4 + L*0.25); g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - h*Math.cos(a - 0.4), y2 - h*Math.sin(a - 0.4)); g.lineTo(x2 - h*Math.cos(a + 0.4), y2 - h*Math.sin(a + 0.4)); g.closePath(); g.fill();
+if (label){ g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(label, x2 + 14*Math.cos(a), y2 + 14*Math.sin(a) + 4); }
+}
+function drawPend(th, alpha){
+var q = st.q, s = Math.sin(th), c = Math.cos(th), p = pal();
+g.save(); g.globalAlpha = alpha;
+var ex = sx(q.L*s), ey = sy(q.L*c);
+g.strokeStyle = p.rod; g.lineWidth = 7 + 4*Math.min(1, S.Mr/2); g.lineCap = 'round'; g.beginPath(); g.moveTo(sx(0), sy(0)); g.lineTo(ex, ey); g.stroke(); g.lineCap = 'butt';
+if (S.Mb > 0){ var gr = g.createRadialGradient(ex - 6, ey - 6, 2, ex, ey, RB*SC); gr.addColorStop(0, '#ffb39a'); gr.addColorStop(1, p.bob); g.fillStyle = gr; g.beginPath(); g.arc(ex, ey, RB*SC, 0, 2*Math.PI); g.fill(); }
+if (st.stuck){ var bx = sx(st.d*s - RP*c), by = sy(st.d*c + RP*s); g.fillStyle = p.ball; g.beginPath(); g.arc(bx, by, RP*SC, 0, 2*Math.PI); g.fill(); }
+g.restore();
+}
+function draw(){
+var p = pal(), q = st.q; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+/* the support and the pivot */
+g.fillStyle = p.wall; g.fillRect(PX - 70, PY - 30, 140, 18); g.fillStyle = p.muted; g.beginPath(); g.arc(PX, PY, 6, 0, 2*Math.PI); g.fill();
+g.fillStyle = p.muted; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('pivot', PX + 10, PY - 2);
+/* the track at the depth of the hit */
+var ty = sy(st.d) + RP*SC; g.strokeStyle = p.track; g.lineWidth = 3; g.beginPath(); g.moveTo(0, ty); g.lineTo(sx(-RB - 0.02) , ty); g.moveTo(sx(0.12), ty); g.lineTo(W, ty); g.stroke();
+/* the centre of percussion */
+if (S.cp){ var cy2 = sy(q.dcp), cx2 = sx(0); g.fillStyle = p.cp; g.beginPath(); g.moveTo(cx2 - 22, cy2); g.lineTo(cx2 - 12, cy2 - 6); g.lineTo(cx2 - 12, cy2 + 6); g.closePath(); g.fill();
+g.font = '11px system-ui, sans-serif'; g.textAlign = 'right'; g.fillText('sweet spot (centre of percussion) ' + (q.dcp*100).toFixed(1) + ' cm', cx2 - 26, cy2 + 4);
+g.fillStyle = p.muted; g.textAlign = 'left'; g.beginPath(); g.arc(sx(0), sy(q.dcm), 3, 0, 2*Math.PI); g.fill(); g.fillText('centre of mass', sx(0) + 12, sy(q.dcm) + 4); }
+/* ghost images of the swing */
+if (S.ghosts) ghosts.forEach(function(gq, k){ drawPend(gq, 0.08 + 0.18*k/Math.max(1, ghosts.length)); });
+drawPend(st.th, 1);
+/* the ball (until it sticks) */
+if (!st.stuck){ var bx = sx(st.x), by = sy(st.d); var gr = g.createRadialGradient(bx - 4, by - 4, 1, bx, by, RP*SC); gr.addColorStop(0, '#d8f4ff'); gr.addColorStop(1, p.ball); g.fillStyle = gr; g.beginPath(); g.arc(bx, by, RP*SC, 0, 2*Math.PI); g.fill();
+if (Math.abs(st.v) > 1e-4) arrow(bx, by, bx + st.v*30, by, p.ball, 2.5, 'v'); }
+/* the impact depth, and the pivot's impulse after the hit */
+g.strokeStyle = 'rgba(200,200,200,0.4)'; g.setLineDash([3, 4]); g.lineWidth = 1; g.beginPath(); g.moveTo(PX + 40, sy(0)); g.lineTo(PX + 40, sy(st.d)); g.stroke(); g.setLineDash([]);
+g.fillStyle = p.muted; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('d = ' + (st.d*100).toFixed(1) + ' cm', PX + 46, (sy(0) + sy(st.d))/2);
+if (st.hit && Math.abs(st.J) > 1e-6){ var len = Math.max(-90, Math.min(90, st.J*60)); arrow(PX, PY, PX + len, PY, p.J, 3.5, ''); g.fillStyle = p.J; g.font = 'bold 11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('push from the pivot', PX + len/2, PY + 22); }
+else if (st.hit){ g.fillStyle = p.cp; g.font = 'bold 11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('no push from the pivot', PX, PY + 22); }
+/* the predicted highest angle */
+if (st.hit && st.thPred !== null){ var a = st.thPred*(st.w >= 0 || st.th > 0 ? 1 : 1); g.strokeStyle = p.L; g.setLineDash([5, 4]); g.lineWidth = 1.2; g.beginPath(); g.moveTo(sx(0), sy(0)); g.lineTo(sx(q.L*1.05*Math.sin(a)), sy(q.L*1.05*Math.cos(a))); g.stroke(); g.setLineDash([]); g.fillStyle = p.L; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('predicted highest: ' + (a/DEG).toFixed(1) + '\u00B0', sx(q.L*1.08*Math.sin(a)) + 4, sy(q.L*1.08*Math.cos(a))); }
+}
+/* ══════════ readout, narration ══════════ */
+function f(x, n){ return (Math.abs(x) < 5*Math.pow(10, -(n + 1)) ? 0 : x).toFixed(n); }
+function readout(){
+var q = st.q, b = st.before, a = st.after;
+var rows = [['I about the pivot', f(q.I, 4) + ' kg\u00B7m\u00B2', ''], ['centre of mass / sweet spot', (q.dcm*100).toFixed(1) + ' / ' + (q.dcp*100).toFixed(1) + ' cm', ''], ['hit at depth d', (st.d*100).toFixed(1) + ' cm' + (Math.abs(st.d - q.L) < 1e-9 ? ' (the bob)' : ' (the rod)'), '']];
+if (a){ rows.push(['L about the pivot (kg\u00B7m\u00B2/s)', f(b.L, 4) + ' \u2192 ' + f(a.L, 4), Math.abs(a.L - b.L) < 1e-9 ? 'conserved' : '']);
+rows.push(['momentum (kg\u00B7m/s)', f(b.p, 4) + ' \u2192 ' + f(a.p, 4), Math.abs(st.J) < 1e-6 ? 'conserved (sweet spot)' : 'not conserved']);
+rows.push(['push from the pivot (N\u00B7s)', f(st.J, 4), Math.abs(st.J) < 1e-6 ? 'none' : (st.J > 0 ? 'forward' : 'backward')]);
+rows.push(['kinetic energy (J)', f(b.K, 4) + ' \u2192 ' + f(a.K, 4), (100*(b.K - a.K)/b.K).toFixed(1) + ' % lost']);
+rows.push(['pendulum \u03C9\u2032 / ball v\u2032', f(a.w, 3) + ' rad/s / ' + (st.stuck ? 'stuck' : f(a.v, 3) + ' m/s'), '']);
+rows.push(['highest angle: energy / measured', st.thPred === null ? 'over the top' : (st.thPred/DEG).toFixed(2) + '\u00B0 / ' + (st.thMax/DEG).toFixed(2) + '\u00B0', '']); }
+else rows.push(['ball', S.m.toFixed(2) + ' kg at ' + S.v.toFixed(2) + ' m/s', 'L = m v d = ' + f(S.m*S.v*st.d, 4)]);
+el('ppRead').innerHTML = '<table class="pp_tbl">' + rows.map(function(r){ return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="pp_sum">' + r[2] + '</td></tr>'; }).join('') + '</table>';
+}
+function summary(){
+var q = st.q;
+if (!st.hit) return 'A ' + S.m.toFixed(2) + ' kilogram ball at ' + S.v.toFixed(1) + ' metres per second is about to hit the pendulum ' + (st.d*100).toFixed(0) + ' centimetres below the pivot. The sweet spot is ' + (q.dcp*100).toFixed(0) + ' centimetres below it.';
+var s = 'The angular momentum about the pivot is the same before and after: ' + f(st.before.L, 4) + '. ';
+s += Math.abs(st.J) < 1e-6 ? 'The ball hit the sweet spot: the pivot did not push at all, so linear momentum was conserved too. ' : 'Linear momentum changed by ' + f(st.J, 4) + ' newton seconds: the pivot pushed ' + (st.J > 0 ? 'forward' : 'backward') + '. ';
+s += st.stuck ? 'The ball stuck: ' + (100*(st.before.K - st.after.K)/st.before.K).toFixed(0) + ' percent of the kinetic energy was lost. ' : '';
+s += st.thPred === null ? 'The pendulum goes over the top.' : 'The pendulum will swing up to ' + (st.thPred/DEG).toFixed(1) + ' degrees.';
+return s;
+}
+function narrate(m){ if (!th.nr) return; el('ppNarBar').textContent = m; }
+function narrateHit(){ setTimeout(function(){ narrate(summary()); readout(); }, 50); }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 400); }
+/* ══════════ the loop ══════════ */
+var last = 0, rt = 0;
+function frame(t){
+var dt = last ? Math.min(0.05, (t - last)/1000) : 0; last = t;
+if (S.run && st){ var n = 20, h = dt/n; for (var i=0; i<n; i++) step(h);
+if (st.hit){ tGhost += dt; if (tGhost >= 0.12){ tGhost = 0; ghosts.push(st.th); if (ghosts.length > 14) ghosts.shift(); } } }
+draw(); if (t - rt > 200){ rt = t; readout(); }
+requestAnimationFrame(frame);
+}
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="pp_crow"><div class="pp_cname"><b>' + label + '</b><span class="pp_cval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+var PRESETS = {
+ballistic:{ kind:'stick', m:0.5, v:3, df:1.0, txt:'Ballistic pendulum (sticks)' },
+sweet:{ kind:'elastic', m:0.5, v:3, df:-1, txt:'Hit the sweet spot' },
+high:{ kind:'elastic', m:0.5, v:3, df:0.25, txt:'Hit near the pivot' },
+bounce:{ kind:'elastic', m:0.6, v:3, df:1.0, Mb:0.2, Mr:0.4, txt:'Heavy ball, light pendulum' } };
+function buildCtl(){
+var b = '<button type="button" class="pp_btn pp_go" id="ppFire">&#9654; Again</button><button type="button" class="pp_btn" id="ppRun">' + (S.run ? '&#10074;&#10074; Pause' : '&#9654; Run') + '</button>' +
+Object.keys(PRESETS).map(function(k){ return '<button type="button" class="pp_btn" data-p="' + k + '">' + PRESETS[k].txt + '</button>'; }).join('') +
+'<label>The ball <select id="ppKind"><option value="elastic">bounces off (elastic)</option><option value="inelastic">bounces partly (e &lt; 1)</option><option value="stick">sticks</option></select></label>' +
+'<label><input type="checkbox" id="ppGh"' + (S.ghosts ? ' checked' : '') + '> ghost images</label><label><input type="checkbox" id="ppCp"' + (S.cp ? ' checked' : '') + '> centre of mass and sweet spot</label><button type="button" class="pp_btn" id="ppDsc">Describe</button>';
+var c = row('ppM', 'mass of the ball m', 0.05, 1, 0.01, S.m, S.m.toFixed(2) + ' kg') + row('ppV', 'speed of the ball v', 0.5, 6, 0.1, S.v, S.v.toFixed(1) + ' m/s') +
+row('ppD', 'where it hits (fraction of the rod; the end = the bob)', 0.1, 1, 0.01, Math.min(1, S.df), depthTxt()) +
+row('ppMr', 'mass of the rod', 0.1, 3, 0.05, S.Mr, S.Mr.toFixed(2) + ' kg') + row('ppMb', 'mass of the ball at its end', 0, 3, 0.05, S.Mb, S.Mb.toFixed(2) + ' kg') + row('ppL', 'length of the rod L', 0.4, 1.1, 0.01, S.L, (S.L*100).toFixed(0) + ' cm') +
+(S.kind === 'inelastic' ? row('ppE', 'coefficient of restitution e', 0, 0.95, 0.05, S.e, S.e.toFixed(2)) : '');
+el('ppBtns').innerHTML = b; el('ppCtl').innerHTML = c; el('ppKind').value = S.kind;
+function on(id, ev, fn){ var e = el(id + ''); if (e) e.addEventListener(ev, fn); }
+on('ppFire', 'click', function(){ setup(); later(); }); on('ppRun', 'click', function(){ S.run = !S.run; buildCtl(); });
+[].forEach.call(el('ppBtns').querySelectorAll('button[data-p]'), function(x){ x.addEventListener('click', function(){ var P = PRESETS[x.getAttribute('data-p')]; S.Mr = 1.0; S.Mb = 1.0; S.L = 0.9; for (var k in P) if (k !== 'txt') S[k] = P[k];
+if (S.df < 0){ var q = pend(); S.df = q.dcp/S.L; } buildCtl(); setup(); later(); }); });
+on('ppKind', 'change', function(){ S.kind = this.value; buildCtl(); setup(); later(); });
+on('ppGh', 'change', function(){ S.ghosts = this.checked; }); on('ppCp', 'change', function(){ S.cp = this.checked; }); on('ppDsc', 'click', describe);
+[['ppM', 'm', function(){ return S.m.toFixed(2) + ' kg'; }], ['ppV', 'v', function(){ return S.v.toFixed(1) + ' m/s'; }], ['ppD', 'df', depthTxt], ['ppMr', 'Mr', function(){ return S.Mr.toFixed(2) + ' kg'; }], ['ppMb', 'Mb', function(){ return S.Mb.toFixed(2) + ' kg'; }], ['ppL', 'L', function(){ return (S.L*100).toFixed(0) + ' cm'; }], ['ppE', 'e', function(){ return S.e.toFixed(2); }]].forEach(function(q){
+on(q[0], 'input', function(){ S[q[1]] = +this.value; var t = el(q[0] + 'v'); if (t) t.textContent = q[2](); setup(); later(); }); });
+}
+function depthTxt(){ var L = S.L, top = (L - RB)/L; return S.df >= top ? 'the bob (' + (L*100).toFixed(0) + ' cm)' : (Math.max(0.1, S.df)*L*100).toFixed(1) + ' cm below the pivot'; }
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','ppBtnHC'],['lm','ppBtnLM'],['cb','ppBtnCB'],['nr','ppBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('pp_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('ppBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('ppNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--pp-bg','--pp-panel','--pp-border','--pp-text','--pp-muted','--pp-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+}
+function describe(){ narrate('A side view. A pendulum, a rod with a ball at its end, hangs from a pivot at the top. A blue ball slides along a horizontal track and hits it. The green marker on the rod is the sweet spot; after the hit, the red arrow at the pivot shows the push the pivot gives. ' + summary()); }
+function toggleDesc(){
+var b = el('ppDescBtn'), d = el('ppDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* boot */
+buildCtl(); setup(); readout(); narrate('Ready. ' + summary()); requestAnimationFrame(frame);
+return { theme:theme, describe:describe, toggleDesc:toggleDesc, set:function(k, v){ S[k] = v; buildCtl(); setup(); }, preset:function(n){ el('ppBtns').querySelector('button[data-p="' + n + '"]').click(); },
+_run:function(sec){ S.run = false; var n = Math.round(sec*4000); for (var i=0; i<n; i++) step(1/4000); return JSON.parse(JSON.stringify(st)); } };
+})();
+</script>
+</main>
+</body>
+</html>

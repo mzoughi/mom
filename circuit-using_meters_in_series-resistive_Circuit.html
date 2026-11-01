@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Circuits-Using Meters in a Series Resistive Circuit</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,circuits, using, multimeter, ammeter,voltmeter,ohmmeter,Circuit, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:20px>
+<div id="srcRoot0914">
+<!-- ── Accessibility toolbar ── -->
+<div class="src_a11y0914" id="srcA11yBar0914" role="toolbar" aria-label="Display options">
+<button type="button" class="src_a11ybtn0914" id="srcBtnHC0914" onclick="srcA11y0914.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="src_a11ybtn0914" id="srcBtnLM0914" onclick="srcA11y0914.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="src_a11ybtn0914" id="srcBtnCB0914" onclick="srcA11y0914.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="src_a11ybtn0914 src_a11yon0914" id="srcBtnNR0914" onclick="srcA11y0914.toggle('nr')" aria-pressed="true">NARRATION: ON</button></div>
+<div class="tbar0914"><h3>Series Resistor Circuit -- Meter Practice</h3></div>
+<div class="mcontent0914">
+<canvas id="srcCanvas0914" style="margin:auto;display:block;border:1px solid #ccc" width="640" height="460"></canvas></div>
+<div id="srcNarBar0914" class="src_narbar0914" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0914">
+<input type="button" id="srcPlay0914" value="Play"
+onclick="if(this.value=='Play'){srcSim0914.pl();this.value='Pause';}else{this.value='Play';srcSim0914.ps();}">
+<input type="button" value="Step" onclick="document.getElementById('srcPlay0914').value='Play';srcSim0914.step();">
+<input type="button" value="Restart" onclick="document.getElementById('srcPlay0914').value='Play';srcSim0914.rst();">
+<input type="button" value="Reset Circuit" onclick="document.getElementById('srcPlay0914').value='Play';srcSim0914.resetCircuit();"></div>
+<div class="footer0914">
+<div class="fcol0914">
+<label>Supply Voltage:
+<input type="range" id="srcV0914" min="1" max="20" value="9" step="1"
+oninput="document.getElementById('srcVVal0914').textContent=this.value;srcSim0914.render();"></label>
+<span id="srcVVal0914">9</span> V</div>
+<div class="fcol0914">
+<label>Resistor R1:
+<input type="range" id="srcR10914" min="0" max="500" value="100" step="10"
+oninput="document.getElementById('srcR1Val0914').textContent=this.value;srcSim0914.render();"></label>
+<span id="srcR1Val0914">100</span> Ω</div>
+<div class="fcol0914">
+<label>Resistor R2: 
+<input type="range" id="srcR20914" min="0" max="500" value="150" step="10"
+oninput="document.getElementById('srcR2Val0914').textContent=this.value;srcSim0914.render();"></label>
+<span id="srcR2Val0914">150</span> Ω</div></div>
+<div class="panel0914">
+<h4>Add / Remove a Meter</h4>
+<div class="prow0914">
+<button type="button" class="src_devbtn0914" id="srcDevAmm0914" onclick="srcSim0914.arm('ammeter')">Ammeter</button>
+<button type="button" class="src_devbtn0914" id="srcDevVolt0914" onclick="srcSim0914.arm('voltmeter')">Voltmeter</button>
+<button type="button" class="src_devbtn0914" id="srcDevOhm0914" onclick="srcSim0914.arm('ohmmeter')">Ohmmeter</button>
+<button type="button" class="src_devbtn0914" id="srcDevRem0914" onclick="srcSim0914.arm('remove')">Remove Device</button></div>
+<div class="prow0914">
+<label>Zone:
+<select id="srcZoneSel0914"></select></label>
+<button type="button" onclick="srcSim0914.placeSelected()">Place / Remove in Selected Zone</button></div>
+<p class="hint0914" id="srcHint0914">Choose a meter (or "Remove Device"), then pick a zone from the dropdown -- or click zone 1, 3, 5, 6, or 7 directly on the diagram.</p>
+<h4>Connect / Disconnect a Wire</h4>
+<div class="prow0914">
+<label>Point A: <select id="srcPtA0914"></select></label>
+<label>Point B: <select id="srcPtB0914"></select></label>
+<button type="button" onclick="srcSim0914.toggleFromUI()">Toggle Connection</button></div>
+<p class="hint0914">You can also click any two connection points on the diagram, one after another, to connect or disconnect them. Hover over a point first to see its name in the hint line above. On the diagram, <b>small gray dots</b> are fixed board pads, while a placed meter's own two terminals are the <b>larger blue-ringed dots</b> right next to its body -- click those to wire the meter itself, not the pad behind it. If you'd rather not aim on the canvas, the Point A / Point B dropdowns above name every point exactly and never miss.</p>
+<h4>Meter Readings</h4>
+<div id="srcReadouts0914" class="readouts0914">No meters placed yet.</div></div></div>
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 643px; margin: 0; }
+#srcRoot0914 {
+--src-bg:        #ffffff;
+--src-wire:      #888888;
+--src-flow:      #2266dd;
+--src-struct:    #111111;
+--src-resistor:  #a05a00;
+--src-meter:     #ffffff;
+--src-meterline: #111111;
+--src-text:      #111111;
+--src-danger:    #cc2200;
+--src-selected:  #e0a800;
+--src-toolbar-bg:#222;
+}
+#srcRoot0914 .src_a11y0914 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--src-toolbar-bg); flex-wrap:wrap; width:643px;
+}
+#srcRoot0914 .src_a11ybtn0914 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#srcRoot0914 .src_a11ybtn0914:hover { border-color:#00e8d0; color:#00e8d0; }
+#srcRoot0914 .src_a11yon0914 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#srcRoot0914 .src_narbar0914 {
+width:643px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar0914    { padding:4px; height:50px; background-color:#f90; text-align:center; line-height:42px; }
+.tbar0914 h3 { font-size:1.05rem; font-weight:bold; }
+.mcontent0914 { height:462px; }
+.bbar0914    { height:50px; background-color:#df9; padding:10px; text-align:center; }
+.bbar0914 input[type=button] { margin:0 4px; padding:4px 12px; cursor:pointer; }
+.footer0914  { height:auto; background-color:#fce4ec; text-align:center; font-size:.85rem; display:flex; padding:8px 4px; flex-wrap:wrap; }
+.footer0914 .fcol0914 { width:214px; padding:4px; }
+.panel0914 { width:643px; background:#eef2ff; padding:10px 14px 14px; border-top:2px solid #ccd; }
+.panel0914 h4 { margin:10px 0 6px; font-size:.92rem; }
+.prow0914 { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+.prow0914 select { padding:3px; font-size:.82rem; }
+.prow0914 button { padding:5px 10px; cursor:pointer; font-size:.82rem; }
+.src_devbtn0914 {
+padding:6px 12px; cursor:pointer; font-size:.82rem; border-radius:4px;
+border:1px solid #99a; background:#fff;
+}
+.src_devbtn0914.armed0914 { background:#e0a800; border-color:#a97a00; color:#fff; font-weight:bold; }
+.hint0914 { font-size:.78rem; color:#334; margin:2px 0 8px; }
+.readouts0914 { font-size:.85rem; background:#fff; border:1px solid #ccd; border-radius:4px; padding:8px; min-height:20px; }
+.readouts0914 div { padding:2px 0; }
+.readouts0914 .danger0914 { color:#cc2200; font-weight:bold; }</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var srcA11y0914 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--src-bg':'#000','--src-wire':'#fff','--src-flow':'#00e8ff','--src-struct':'#fff','--src-resistor':'#ffaa33','--src-meter':'#111','--src-meterline':'#fff','--src-text':'#fff','--src-danger':'#ff4400','--src-selected':'#ffe000','--src-toolbar-bg':'#000'},
+lm:{'--src-bg':'#f0f0f0','--src-wire':'#555','--src-flow':'#1155cc','--src-struct':'#000','--src-resistor':'#7a4400','--src-meter':'#fff','--src-meterline':'#000','--src-text':'#000','--src-danger':'#aa1100','--src-selected':'#c98d00','--src-toolbar-bg':'#444'},
+cb:{'--src-bg':'#fff','--src-wire':'#999','--src-flow':'#0072b2','--src-struct':'#333','--src-resistor':'#e69f00','--src-meter':'#fff','--src-meterline':'#333','--src-text':'#000','--src-danger':'#d55e00','--src-selected':'#d55e00','--src-toolbar-bg':'#222'}
+};
+var DEFS = {'--src-bg':'#fff','--src-wire':'#888','--src-flow':'#2266dd','--src-struct':'#111','--src-resistor':'#a05a00','--src-meter':'#fff','--src-meterline':'#111','--src-text':'#111','--src-danger':'#cc2200','--src-selected':'#e0a800','--src-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('srcNarBar0914');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('srcBtnNR0914');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('srcBtnNR0914',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('srcBtnHC0914',states.hc);
+styleBtn('srcBtnLM0914',states.lm);
+styleBtn('srcBtnCB0914',states.cb);
+if(window.srcSim0914) window.srcSim0914.render();
+}
+return {
+init:function(){ ROOT=document.getElementById('srcRoot0914'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('srcNarBar0914');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();</script>
+<!-- ════════ SIMULATION ════════ -->
+<script>
+var srcGen = function() {
+var canvas  = document.getElementById('srcCanvas0914');
+var ctx     = canvas.getContext('2d');
+var W       = canvas.width;
+var H       = canvas.height;
+var timer, runFlag = 0, animPhase = 0;
+function c(prop, def) { return srcA11y0914.col(prop, def); }
+/* ── fixed node positions (the circuit "board") ── */
+var N = {
+SP:{x:180,y:243}, SN:{x:180,y:317},
+S1A:{x:285,y:160}, S1B:{x:355,y:160},
+R1L:{x:425,y:160}, R1R:{x:495,y:160},
+S3A:{x:530,y:200}, S3B:{x:530,y:280},
+R2T:{x:530,y:290}, R2B:{x:530,y:350},
+S5A:{x:425,y:390}, S5B:{x:355,y:390},
+S6A:{x:420,y:190}, S6B:{x:500,y:190},
+S7A:{x:490,y:290}, S7B:{x:490,y:350}
+};
+var ZONES = {
+1:{stubA:'S1A',stubB:'S1B', center:{x:320,y:160}, defaultWire:true,  badge:{x:320,y:120}},
+3:{stubA:'S3A',stubB:'S3B', center:{x:530,y:240}, defaultWire:true,  badge:{x:572,y:240}},
+5:{stubA:'S5A',stubB:'S5B', center:{x:390,y:390}, defaultWire:true,  badge:{x:390,y:422}},
+6:{stubA:'S6A',stubB:'S6B', center:{x:460,y:190}, defaultWire:false, badge:{x:460,y:224}},
+7:{stubA:'S7A',stubB:'S7B', center:{x:490,y:320}, defaultWire:false, badge:{x:440,y:320}}
+};
+var LEADS = [
+{a:'SP', b:'S1A', pts:[N.SP,{x:180,y:160},N.S1A]},
+{a:'S1B',b:'R1L', pts:[N.S1B,N.R1L]},
+{a:'R1R',b:'S3A', pts:[N.R1R,{x:530,y:160},N.S3A]},
+{a:'S3B',b:'R2T', pts:[N.S3B,N.R2T]},
+{a:'R2B',b:'S5A', pts:[N.R2B,{x:530,y:390},N.S5A]},
+{a:'S5B',b:'SN',  pts:[N.S5B,{x:180,y:390},N.SN]}
+];
+var NODE_LABEL = {
+SP:'Supply + terminal', SN:'Supply − terminal',
+R1L:'R1 -- left lead', R1R:'R1 -- right lead',
+R2T:'R2 -- top lead', R2B:'R2 -- bottom lead',
+S1A:'Zone 1 -- left pad', S1B:'Zone 1 -- right pad',
+S3A:'Zone 3 -- top pad', S3B:'Zone 3 -- bottom pad',
+S5A:'Zone 5 -- right pad', S5B:'Zone 5 -- left pad',
+S6A:'Zone 6 -- left pad', S6B:'Zone 6 -- right pad',
+S7A:'Zone 7 -- top pad', S7B:'Zone 7 -- bottom pad'
+};
+var DEV_NAME = { ammeter:'Ammeter', voltmeter:'Voltmeter', ohmmeter:'Ohmmeter' };
+var DEV_LETTER = { ammeter:'A', voltmeter:'V', ohmmeter:'\u03A9' };
+var WIRE_R = 0.001, VOLTMETER_R = 2.0e7, REG = 1e-9;
+/* ── mutable state ── */
+var R1val=100, R2val=150, Vsupply=9;
+var connections;      // Set of "a|b" ideal-wire connections
+var zoneDevice;       // {1:null|'ammeter'|..., 3:..., ...}
+var armed = null;     // device type or 'remove', for placement
+var selectedNode = null;
+var hoveredNode = null;
+var lastResults = null;
+var wasTripped = false;
+function ck(a,b){ return [a,b].sort().join('|'); }
+function defaultConnections(){
+return new Set(['S1A|S1B','S3A|S3B','S5A|S5B']);
+}
+function termId(zone,n){ return 'Z'+zone+'_T'+n; }
+function isTermId(id){ return /^Z\d+_T[12]$/.test(id); }
+function termPos(zone){
+var z=ZONES[zone], a=N[z.stubA], b=N[z.stubB];
+/* terminals sit close to the meter body (fixed pixel offset), leaving a large,
+ unambiguous visual gap to the stub pads so the two are never confusable */
+var dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy)||1;
+var ux=dx/len, uy=dy/len;
+var half = Math.max(4, Math.min(9, len*0.5-7)); // terminals hug the meter body, well clear of the stubs
+var cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+return {
+T1:{x:cx-ux*half, y:cy-uy*half},
+T2:{x:cx+ux*half, y:cy+uy*half}
+};
+}
+var STUB_ZONE = {};
+[1,3,5,6,7].forEach(function(zone){
+var z=ZONES[zone];
+STUB_ZONE[z.stubA]=zone; STUB_ZONE[z.stubB]=zone;
+});
+function getPos(id){
+if(N[id]) return N[id];
+var m = /^Z(\d+)_T([12])$/.exec(id);
+if(m){ var tp=termPos(+m[1]); return m[2]==='1'?tp.T1:tp.T2; }
+return null;
+}
+function nodeLabel(id){
+if(NODE_LABEL[id]) return NODE_LABEL[id];
+var m = /^Z(\d+)_T([12])$/.exec(id);
+if(m){
+var zone=+m[1], type=zoneDevice[zone];
+return 'Zone '+zone+' '+(DEV_NAME[type]||'device')+' -- terminal '+m[2];
+}
+return id;
+}
+function allNodeIds(){
+var ids = Object.keys(N).slice();
+Object.keys(zoneDevice).forEach(function(zs){
+var zone=+zs;
+if(zoneDevice[zone]){ ids.push(termId(zone,1)); ids.push(termId(zone,2)); }
+});
+return ids;
+}
+function externalDegree(id){
+var cnt=0;
+connections.forEach(function(k){ if(k.split('|').indexOf(id)>=0) cnt++; });
+return cnt;
+}
+/* ── device placement ── */
+function removeDevice(zone, silent){
+var had = zoneDevice[zone];
+if(had){
+var t1=termId(zone,1), t2=termId(zone,2);
+Array.from(connections).forEach(function(k){
+if(k.indexOf(t1)>=0 || k.indexOf(t2)>=0) connections.delete(k);
+});
+}
+var z=ZONES[zone];
+connections.delete(ck(z.stubA,z.stubB));
+zoneDevice[zone]=null;
+if(z.defaultWire) connections.add(ck(z.stubA,z.stubB));
+if(!silent) srcA11y0914.narrate('Zone '+zone+' cleared'+(z.defaultWire?' -- a plain wire is back in place.':'.'));
+}
+function placeDevice(zone,type){
+removeDevice(zone, true);
+zoneDevice[zone]=type;
+srcA11y0914.narrate(DEV_NAME[type]+' placed in Zone '+zone+'. It is not yet connected -- wire each of its two terminals to complete a path.');
+}
+function toggleConnection(a,b){
+if(a===b) return;
+var k=ck(a,b);
+if(connections.has(k)){ connections.delete(k); srcA11y0914.narrate('Disconnected '+nodeLabel(a)+' from '+nodeLabel(b)+'.'); }
+else { connections.add(k); srcA11y0914.narrate('Connected '+nodeLabel(a)+' to '+nodeLabel(b)+'.'); }
+}
+/* ── electrical solver (generic nodal analysis) ── */
+function deviceInternalR(type){ return type==='ammeter' ? 0.001 : VOLTMETER_R; }
+function buildEdges(opts){
+opts = opts || {};
+var E = [];
+LEADS.forEach(function(l){ E.push({a:l.a,b:l.b,R:WIRE_R}); });
+E.push({a:'R1L',b:'R1R',R:(R1val>0?R1val:WIRE_R)});
+E.push({a:'R2T',b:'R2B',R:(R2val>0?R2val:WIRE_R)});
+if(opts.sourceAsShort) E.push({a:'SP',b:'SN',R:WIRE_R});
+Object.keys(zoneDevice).forEach(function(zs){
+var zone=+zs, type=zoneDevice[zone];
+if(type){
+if(opts.excludeZone===zone) return;
+E.push({a:termId(zone,1),b:termId(zone,2),R:deviceInternalR(type)});
+}
+});
+connections.forEach(function(k){
+var parts=k.split('|');
+E.push({a:parts[0],b:parts[1],R:WIRE_R});
+});
+return E;
+}
+function solve(edges, fixedV, injections){
+injections = injections || {};
+var nodeSet = {};
+edges.forEach(function(e){ nodeSet[e.a]=1; nodeSet[e.b]=1; });
+Object.keys(fixedV).forEach(function(n){ nodeSet[n]=1; });
+Object.keys(injections).forEach(function(n){ nodeSet[n]=1; });
+var unknowns = Object.keys(nodeSet).filter(function(n){ return !(n in fixedV); });
+var idx = {}; unknowns.forEach(function(n,i){ idx[n]=i; });
+var n = unknowns.length;
+var A = []; for(var i=0;i<n;i++){ A.push(new Array(n).fill(0)); }
+var b = new Array(n).fill(0);
+for(i=0;i<n;i++) A[i][i]+=REG;
+edges.forEach(function(e){
+var g = 1/e.R;
+var aFixed = e.a in fixedV, bFixed = e.b in fixedV;
+if(!aFixed && !bFixed){
+var ia=idx[e.a], ib=idx[e.b];
+A[ia][ia]+=g; A[ib][ib]+=g; A[ia][ib]-=g; A[ib][ia]-=g;
+} else if(!aFixed && bFixed){
+var ia2=idx[e.a]; A[ia2][ia2]+=g; b[ia2]+=g*fixedV[e.b];
+} else if(aFixed && !bFixed){
+var ib2=idx[e.b]; A[ib2][ib2]+=g; b[ib2]+=g*fixedV[e.a];
+}
+});
+Object.keys(injections).forEach(function(node){
+if(node in idx) b[idx[node]] += injections[node];
+});
+/* Gauss-Jordan elimination with partial pivoting */
+for(var col=0; col<n; col++){
+var piv=col;
+for(var r=col+1;r<n;r++){ if(Math.abs(A[r][col])>Math.abs(A[piv][col])) piv=r; }
+if(piv!==col){ var tmpA=A[col];A[col]=A[piv];A[piv]=tmpA; var tmpB=b[col];b[col]=b[piv];b[piv]=tmpB; }
+var d=A[col][col];
+if(Math.abs(d)<1e-14) continue;
+for(var rr=0; rr<n; rr++){
+if(rr===col) continue;
+var f=A[rr][col]/d;
+if(f===0) continue;
+for(var cc=col; cc<n; cc++) A[rr][cc]-=f*A[col][cc];
+b[rr]-=f*b[col];
+}
+}
+var V = {};
+for(i=0;i<n;i++){ V[unknowns[i]] = Math.abs(A[i][i])>1e-14 ? b[i]/A[i][i] : 0; }
+Object.keys(fixedV).forEach(function(nid){ V[nid]=fixedV[nid]; });
+return V;
+}
+var SAFETY_TRIP_A = 5; // any edge current above this trips the supply off entirely
+function computeMain(){
+var edges = buildEdges({});
+var V = solve(edges, {SP:Vsupply, SN:0}, {});
+var edgeCurrents = edges.map(function(e){
+var va = (e.a in V)?V[e.a]:0, vb=(e.b in V)?V[e.b]:0;
+return {a:e.a,b:e.b,I:(va-vb)/e.R};
+});
+var maxAbsI = 0;
+edgeCurrents.forEach(function(e){ if(Math.abs(e.I)>maxAbsI) maxAbsI=Math.abs(e.I); });
+var tripped = maxAbsI > SAFETY_TRIP_A;
+if(tripped){
+/* dead short detected -- the supply automatically cuts power to 0 V */
+V = solve(edges, {SP:0, SN:0}, {});
+edgeCurrents = edges.map(function(e){
+var va = (e.a in V)?V[e.a]:0, vb=(e.b in V)?V[e.b]:0;
+return {a:e.a,b:e.b,I:(va-vb)/e.R};
+});
+}
+return {V:V, edgeCurrents:edgeCurrents, tripped:tripped};
+}
+function findEdgeCurrent(ec, a, b){
+for(var i=0;i<ec.length;i++){
+if((ec[i].a===a&&ec[i].b===b)) return ec[i].I;
+if((ec[i].a===b&&ec[i].b===a)) return -ec[i].I;
+}
+return 0;
+}
+function computeOhm(zone){
+var t1=termId(zone,1), t2=termId(zone,2);
+var edges = buildEdges({excludeZone:zone, sourceAsShort:true});
+var V = solve(edges, {}, {});
+V[t2]=undefined; // not used
+var V2 = solve(edges, (function(){var o={};o[t2]=0;return o;})(), (function(){var o={};o[t1]=1;return o;})());
+return V2[t1];
+}
+/* ── meter readings for readout panel & on-canvas labels ── */
+function meterReading(zone){
+var type = zoneDevice[zone];
+if(!type) return null;
+var t1=termId(zone,1), t2=termId(zone,2);
+var degA = externalDegree(t1), degB = externalDegree(t2);
+if(type==='ammeter'){
+if(degA===0 && degB===0) return {text:'not connected', danger:false};
+if(lastResults.tripped) return {text:'0 A -- supply tripped off (dead short)', danger:true};
+var I = findEdgeCurrent(lastResults.edgeCurrents, t1, t2);
+var absI = Math.abs(I);
+var txt = absI<1 ? (absI*1000).toFixed(1)+' mA' : absI.toFixed(3)+' A';
+return {text:txt, danger:false};
+}
+if(type==='voltmeter'){
+if(degA===0 && degB===0) return {text:'not connected', danger:false};
+var Va=lastResults.V[t1]||0, Vb=lastResults.V[t2]||0;
+var dv=Math.abs(Va-Vb);
+return {text:dv.toFixed(2)+' V', danger:false};
+}
+if(type==='ohmmeter'){
+if(degA===0 && degB===0) return {text:'not connected', danger:false};
+/* The ohmmeter never conducts real current in the live circuit (it behaves
+as high-impedance, like a voltmeter, so it can never quietly become part
+of the circuit). Whether it's safe to use is decided by whether the live
+circuit still imposes a real voltage across its terminals: if it does,
+an energized path reaches it and no valid resistance reading is possible. */
+var Va=lastResults.V[t1]||0, Vb=lastResults.V[t2]||0;
+var liveDiff = Math.abs(Va-Vb);
+if(liveDiff > 0.05){
+return {text:'ERROR -- circuit is still live (\u2248'+liveDiff.toFixed(2)+' V present). Disconnect the supply or fully isolate this branch first.', danger:true};
+}
+var R = computeOhm(zone);
+if(!isFinite(R) || R>5e5) return {text:'OL (open circuit)', danger:false};
+var rtxt = R>=1000 ? (R/1000).toFixed(2)+' k\u03A9' : R.toFixed(1)+' \u03A9';
+return {text:rtxt, danger:false};
+}
+return null;
+}
+/* ── drawing helpers ── */
+function drawPolylineFlow(pts, current){
+ctx.strokeStyle = c('--src-wire','#888'); ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+ctx.stroke();
+if(runFlag!==1 || Math.abs(current)<0.0004) return;
+var segLens=[], total=0;
+for(i=0;i<pts.length-1;i++){ var l=Math.hypot(pts[i+1].x-pts[i].x, pts[i+1].y-pts[i].y); segLens.push(l); total+=l; }
+if(total<1) return;
+var speed = Math.min(3, Math.max(0.3, Math.abs(current)*20));
+var nDots = 2;
+ctx.fillStyle = c('--src-flow','#2266dd');
+for(var d=0; d<nDots; d++){
+var t = (animPhase*speed + d/nDots) % 1;
+if(current<0) t = 1-t;
+var dist = t*total, acc=0, px=pts[0].x, py=pts[0].y;
+for(i=0;i<segLens.length;i++){
+if(acc+segLens[i]>=dist){
+var f=(dist-acc)/segLens[i];
+px = pts[i].x+(pts[i+1].x-pts[i].x)*f;
+py = pts[i].y+(pts[i+1].y-pts[i].y)*f;
+break;
+}
+acc+=segLens[i];
+}
+ctx.beginPath(); ctx.arc(px,py,3,0,2*Math.PI); ctx.fill();
+}
+}
+function drawZigzag(x1,y1,x2,y2){
+var segs=7, dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+var ux=dx/len, uy=dy/len, px=-uy, py=ux, amp=8;
+ctx.strokeStyle = c('--src-resistor','#a05a00'); ctx.lineWidth = 2.5;
+ctx.beginPath(); ctx.moveTo(x1,y1);
+for(var i=1;i<segs;i++){
+var t=i/segs, bx=x1+dx*t, by=y1+dy*t;
+var off = (i%2===1? amp : -amp);
+ctx.lineTo(bx+px*off, by+py*off);
+}
+ctx.lineTo(x2,y2);
+ctx.stroke();
+}
+function drawNodeDot(id){
+var p=getPos(id); if(!p) return;
+var isSel = (selectedNode===id);
+var isHov = (hoveredNode===id && !isSel);
+var isTerm = isTermId(id);
+var occupiedStubDim = (!isTerm && STUB_ZONE[id] && zoneDevice[STUB_ZONE[id]]);
+var r = isSel ? 7 : (isHov ? 6 : (isTerm ? 5 : (occupiedStubDim ? 2.2 : 3.2)));
+var col = isSel ? c('--src-selected','#e0a800')
+: isHov ? c('--src-selected','#e0a800')
+: isTerm ? c('--src-flow','#2266dd')
+: occupiedStubDim ? c('--src-wire','#888')
+: c('--src-struct','#111');
+ctx.fillStyle = col;
+ctx.beginPath(); ctx.arc(p.x,p.y,r,0,2*Math.PI); ctx.fill();
+if(isTerm){ ctx.strokeStyle=c('--src-meterline','#111'); ctx.lineWidth=1; ctx.beginPath(); ctx.arc(p.x,p.y,r,0,2*Math.PI); ctx.stroke(); }
+if(isSel || isHov){ ctx.strokeStyle=c('--src-selected','#e0a800'); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(p.x,p.y,r+5,0,2*Math.PI); ctx.stroke(); }
+}
+function drawBadge(x,y,num){
+ctx.fillStyle = c('--src-struct','#111');
+ctx.beginPath(); ctx.arc(x,y,11,0,2*Math.PI); ctx.fill();
+ctx.fillStyle = c('--src-bg','#fff');
+ctx.font='bold 12px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText(String(num), x, y+1);
+ctx.textBaseline='alphabetic';
+}
+function drawMeter(zone){
+var z=ZONES[zone], type=zoneDevice[zone], tp=termPos(zone);
+var cx=z.center.x, cy=z.center.y;
+ctx.strokeStyle=c('--src-meterline','#111'); ctx.lineWidth=1.5;
+ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(tp.T1.x,tp.T1.y); ctx.moveTo(cx,cy); ctx.lineTo(tp.T2.x,tp.T2.y); ctx.stroke();
+ctx.fillStyle=c('--src-meter','#fff');
+ctx.beginPath(); ctx.arc(cx,cy,16,0,2*Math.PI); ctx.fill();
+ctx.strokeStyle=c('--src-meterline','#111'); ctx.lineWidth=2;
+ctx.beginPath(); ctx.arc(cx,cy,16,0,2*Math.PI); ctx.stroke();
+ctx.fillStyle=c('--src-meterline','#111'); ctx.font='bold 15px monospace';
+ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText(DEV_LETTER[type], cx, cy+1);
+ctx.textBaseline='alphabetic';
+drawNodeDot(termId(zone,1));
+drawNodeDot(termId(zone,2));
+var reading = meterReading(zone);
+if(reading){
+ctx.font='11px monospace'; ctx.textAlign='center';
+ctx.fillStyle = reading.danger ? c('--src-danger','#cc2200') : c('--src-text','#111');
+ctx.fillText(reading.text, cx, cy+32);
+}
+}
+function drawEmptyZone(zone){
+var z=ZONES[zone];
+drawNodeDot(z.stubA); drawNodeDot(z.stubB);
+ctx.fillStyle=c('--src-text','#111'); ctx.font='italic 10px monospace'; ctx.textAlign='center';
+ctx.fillText('(empty)', z.center.x, z.center.y+4);
+}
+/* ── full redraw ── */
+function drawFrame(){
+lastResults = computeMain();
+var V = lastResults.V, ec = lastResults.edgeCurrents;
+if(lastResults.tripped && !wasTripped){
+srcA11y0914.narrate('\u26A0 SAFETY SHUTOFF: a dead short was detected, so the supply automatically cut power (0 V) to protect the circuit. Raise R1 and/or R2 above 0 \u03A9, or remove the short, to restore power.');
+} else if(!lastResults.tripped && wasTripped){
+srcA11y0914.narrate('Power restored -- the short has been cleared.');
+}
+wasTripped = lastResults.tripped;
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle = c('--src-bg','#fff'); ctx.fillRect(0,0,W,H);
+/* fixed leads */
+LEADS.forEach(function(l){ drawPolylineFlow(l.pts, findEdgeCurrent(ec,l.a,l.b)); });
+/* zone contents: an actual wire only if that connection still exists */
+[1,3,5,6,7].forEach(function(zone){
+var z=ZONES[zone];
+if(zoneDevice[zone]){ drawMeter(zone); }
+else if(connections.has(ck(z.stubA,z.stubB))){ drawPolylineFlow([N[z.stubA],N[z.stubB]], findEdgeCurrent(ec,z.stubA,z.stubB)); }
+else { drawEmptyZone(zone); }
+drawBadge(z.badge.x, z.badge.y, zone);
+});
+/* user jumper wires not already covered above (extra connections) */
+connections.forEach(function(k){
+var parts=k.split('|'), a=parts[0], b=parts[1];
+var isZoneDefault = [1,3,5,6,7].some(function(zn){ var z=ZONES[zn]; return !zoneDevice[zn] && ck(z.stubA,z.stubB)===k; });
+if(isZoneDefault) return;
+var pa=getPos(a), pb=getPos(b);
+if(!pa||!pb) return;
+drawPolylineFlow([pa,pb], findEdgeCurrent(ec,a,b));
+drawNodeDot(a); drawNodeDot(b);
+});
+/* all fixed stub / component pads (so they're visible/clickable even if bare) */
+Object.keys(N).forEach(function(id){ drawNodeDot(id); });
+/* resistors -- a zeroed-out resistor is shown (and behaves) as a plain wire */
+if(R1val>0){ drawZigzag(N.R1L.x,N.R1L.y,N.R1R.x,N.R1R.y); }
+else { drawPolylineFlow([N.R1L,N.R1R], findEdgeCurrent(ec,'R1L','R1R')); }
+if(R2val>0){ drawZigzag(N.R2T.x,N.R2T.y,N.R2B.x,N.R2B.y); }
+else { drawPolylineFlow([N.R2T,N.R2B], findEdgeCurrent(ec,'R2T','R2B')); }
+ctx.fillStyle=c('--src-text','#111'); ctx.font='11px monospace'; ctx.textAlign='center';
+ctx.fillText('R1 = '+R1val+' \u03A9'+(R1val===0?' (wire)':''), (N.R1L.x+N.R1R.x)/2, N.R1L.y-16);
+ctx.save(); ctx.translate(N.R2T.x+38, (N.R2T.y+N.R2B.y)/2); ctx.textAlign='left'; ctx.fillText('R2 = '+R2val+' \u03A9'+(R2val===0?' (wire)':''),0,0); ctx.restore();
+/* supply symbol */
+ctx.strokeStyle = lastResults.tripped ? c('--src-danger','#cc2200') : c('--src-struct','#111');
+ctx.lineWidth=2;
+ctx.strokeRect(N.SP.x-20, N.SP.y, 40, N.SN.y-N.SP.y);
+ctx.beginPath(); ctx.moveTo(N.SP.x,N.SP.y-0); ctx.lineTo(N.SP.x,N.SP.y); ctx.stroke();
+ctx.font='bold 14px monospace'; ctx.fillStyle=c('--src-struct','#111'); ctx.textAlign='center';
+ctx.fillText('+', N.SP.x, N.SP.y+16);
+ctx.fillText('\u2212', N.SP.x, N.SN.y-6);
+if(lastResults.tripped){
+ctx.fillStyle=c('--src-danger','#cc2200'); ctx.font='bold 10px monospace';
+ctx.fillText('TRIPPED', N.SP.x, (N.SP.y+N.SN.y)/2-3);
+ctx.font='9px monospace';
+ctx.fillText('0 V -- short!', N.SP.x, (N.SP.y+N.SN.y)/2+10);
+} else {
+ctx.font='11px monospace';
+ctx.fillStyle=c('--src-struct','#111');
+ctx.fillText(Vsupply+' V', N.SP.x, (N.SP.y+N.SN.y)/2+4);
+}
+/* selection hint ring on selected node already handled in drawNodeDot */
+/* live readouts panel */
+updateReadoutsPanel();
+}
+function updateReadoutsPanel(){
+var panel = document.getElementById('srcReadouts0914');
+if(!panel) return;
+var any=false, html='';
+[1,3,5,6,7].forEach(function(zone){
+if(!zoneDevice[zone]) return;
+any=true;
+var r = meterReading(zone);
+html += '<div><b>Zone '+zone+' ('+DEV_NAME[zoneDevice[zone]]+'):</b> '
++ '<span'+(r.danger?' class="danger0914"':'')+'>'+r.text+'</span></div>';
+});
+panel.innerHTML = any ? html : 'No meters placed yet.';
+}
+/* ── narration ── */
+var frameCount=0, narrationEvery=70;
+function periodicNarration(){
+var msg;
+if(lastResults && lastResults.tripped){
+msg = 'Supply is shut off (0 V) due to a detected short circuit. Raise R1 and/or R2 above 0 \u03A9, or remove the short, to restore power.';
+} else {
+var totalR = R1val+R2val;
+var I = totalR>0 ? Vsupply/totalR : 0;
+msg = 'Current flowing through the series loop: '+(I<1?(I*1000).toFixed(1)+' mA':I.toFixed(3)+' A')+
+'. Supply is '+Vsupply+' V, R1 is '+R1val+' \u03A9'+(R1val===0?' (wire)':'')+', R2 is '+R2val+' \u03A9'+(R2val===0?' (wire)':'')+'.';
+}
+var meterMsgs=[];
+[1,3,5,6,7].forEach(function(zone){
+if(!zoneDevice[zone]) return;
+var r=meterReading(zone);
+meterMsgs.push('Zone '+zone+' '+DEV_NAME[zoneDevice[zone]]+' reads '+r.text+'.');
+});
+if(meterMsgs.length) msg += ' ' + meterMsgs.join(' ');
+srcA11y0914.narrate(msg);
+}
+/* ── canvas interaction ── */
+function hitTestNode(x,y){
+/* device terminals get a bias bonus so an ambiguous click between a meter
+ terminal and its nearby (now visually dimmed) stub pad favors the meter */
+var best=null, bestScore=13;
+allNodeIds().forEach(function(id){
+var p=getPos(id); if(!p) return;
+var d=Math.hypot(p.x-x,p.y-y);
+var score = d - (isTermId(id) ? 4 : 0);
+if(d<15 && score<bestScore){ bestScore=score; best=id; }
+});
+return best;
+}
+function hitTestZone(x,y){
+/* pick the nearest zone center within a modest radius, so zones 6 and 7
+ (which sit in the same column) never fight over an overlapping click region */
+var best=null, bestD=30;
+[1,3,5,6,7].forEach(function(zone){
+var c2=ZONES[zone].center;
+var d=Math.hypot(x-c2.x,y-c2.y);
+if(d<bestD){ bestD=d; best=zone; }
+});
+return best;
+}
+function setHint(msg){ var h=document.getElementById('srcHint0914'); if(h) h.textContent=msg; }
+function handleNodeClick(id){
+if(!selectedNode){
+selectedNode=id;
+var msg='Selected: '+nodeLabel(id)+'. Now click a second point to connect or disconnect them.';
+srcA11y0914.narrate(msg); setHint(msg);
+drawFrame(); return;
+}
+if(selectedNode===id){ selectedNode=null; setHint('Selection cleared.'); drawFrame(); return; }
+var labelA=nodeLabel(selectedNode), labelB=nodeLabel(id);
+toggleConnection(selectedNode,id);
+setHint('Toggled the link between '+labelA+' and '+labelB+'. Choose another pair, or use a meter/zone control above.');
+selectedNode=null;
+drawFrame();
+}
+function handleZoneClick(zone){
+if(armed==='remove'){
+if(zoneDevice[zone]){ removeDevice(zone); }
+else { srcA11y0914.narrate('Zone '+zone+' has no device to remove.'); }
+armed=null; updatePaletteUI(); drawFrame();
+return;
+}
+if(armed==='ammeter'||armed==='voltmeter'||armed==='ohmmeter'){
+placeDevice(zone, armed);
+armed=null; updatePaletteUI(); drawFrame();
+return;
+}
+}
+function canvasXY(e){
+var rect=canvas.getBoundingClientRect();
+var sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+return {x:(e.clientX-rect.left)*sx, y:(e.clientY-rect.top)*sy};
+}
+canvas.addEventListener('click', function(e){
+var p=canvasXY(e);
+var node = hitTestNode(p.x,p.y);
+if(node){ handleNodeClick(node); return; }
+var zone = hitTestZone(p.x,p.y);
+if(zone!=null){ handleZoneClick(zone); return; }
+});
+canvas.addEventListener('mousemove', function(e){
+var p=canvasXY(e);
+var node = hitTestNode(p.x,p.y);
+if(node!==hoveredNode){
+hoveredNode=node;
+drawFrame();
+if(node && !selectedNode) setHint('Point under cursor: '+nodeLabel(node)+'. Click to select it.');
+else if(!node && !selectedNode) updatePaletteUI();
+}
+});
+canvas.addEventListener('mouseleave', function(){
+if(hoveredNode){ hoveredNode=null; drawFrame(); if(!selectedNode) updatePaletteUI(); }
+});
+/* ── palette / dropdown UI wiring ── */
+function updatePaletteUI(){
+['Amm','Volt','Ohm','Rem'].forEach(function(k){ document.getElementById('srcDev'+k+'0914').classList.remove('armed0914'); });
+var map={ammeter:'srcDevAmm0914',voltmeter:'srcDevVolt0914',ohmmeter:'srcDevOhm0914',remove:'srcDevRem0914'};
+if(armed && map[armed]) document.getElementById(map[armed]).classList.add('armed0914');
+var hint=document.getElementById('srcHint0914');
+if(armed){
+hint.textContent = armed==='remove'
+? 'Click an occupied zone (1, 3, 5, 6, or 7) on the diagram, or pick one below, to remove its device.'
+: 'Now click zone 1, 3, 5, 6, or 7 on the diagram -- or pick one below -- to place the '+DEV_NAME[armed]+'.';
+} else {
+hint.textContent = 'Choose a meter (or "Remove Device"), then pick a zone from the dropdown -- or click zone 1, 3, 5, 6, or 7 directly on the diagram.';
+}
+}
+function refreshSelects(){
+var zoneSel = document.getElementById('srcZoneSel0914');
+var cur = zoneSel.value;
+zoneSel.innerHTML='';
+[1,3,5,6,7].forEach(function(zone){
+var opt=document.createElement('option');
+opt.value=zone;
+opt.textContent='Zone '+zone+' ('+(zoneDevice[zone]?DEV_NAME[zoneDevice[zone]]:(ZONES[zone].defaultWire?'wire':'empty'))+')';
+zoneSel.appendChild(opt);
+});
+if(cur) zoneSel.value=cur;
+var ids = allNodeIds();
+[ 'srcPtA0914','srcPtB0914' ].forEach(function(selId){
+var sel=document.getElementById(selId);
+var curV=sel.value;
+sel.innerHTML='';
+ids.forEach(function(id){
+var opt=document.createElement('option');
+opt.value=id; opt.textContent=nodeLabel(id);
+sel.appendChild(opt);
+});
+if(curV && ids.indexOf(curV)>=0) sel.value=curV;
+});
+}
+/* ── animation loop ── */
+function runMotion(){
+animPhase = (animPhase + 0.02) % 1;
+drawFrame();
+frameCount++;
+if(frameCount % narrationEvery === 0) periodicNarration();
+if(runFlag===1) timer = window.setTimeout(runMotion, 40);
+}
+function pl(){ window.clearTimeout(timer); runFlag=1; runMotion(); }
+function ps(){ window.clearTimeout(timer); runFlag=0; }
+function step(){
+window.clearTimeout(timer); runFlag=0;
+animPhase=(animPhase+0.08)%1;
+drawFrame(); refreshSelects();
+periodicNarration();
+}
+function rst(){
+window.clearTimeout(timer); runFlag=0; animPhase=0; frameCount=0;
+drawFrame(); refreshSelects();
+srcA11y0914.narrate('Ready. Adjust the supply voltage or resistors, add meters, then press Play to watch current flow.');
+}
+function resetCircuit(){
+window.clearTimeout(timer); runFlag=0; animPhase=0; frameCount=0;
+connections = defaultConnections();
+zoneDevice = {1:null,3:null,5:null,6:null,7:null};
+armed=null; selectedNode=null;
+updatePaletteUI();
+drawFrame(); refreshSelects();
+srcA11y0914.narrate('Circuit reset -- back to R1 and R2 in series with no meters.');
+}
+function render(){
+R1val = +document.getElementById('srcR10914').value;
+R2val = +document.getElementById('srcR20914').value;
+Vsupply = +document.getElementById('srcV0914').value;
+drawFrame(); refreshSelects();
+}
+/* ── UI-driven actions (dropdowns) ── */
+function arm(type){
+armed = (armed===type) ? null : type;
+updatePaletteUI();
+}
+function placeSelected(){
+var zone = +document.getElementById('srcZoneSel0914').value;
+if(armed==='remove'){
+if(zoneDevice[zone]) removeDevice(zone); else srcA11y0914.narrate('Zone '+zone+' has no device to remove.');
+} else if(armed==='ammeter'||armed==='voltmeter'||armed==='ohmmeter'){
+placeDevice(zone, armed);
+} else {
+srcA11y0914.narrate('Pick a meter type (or "Remove Device") first.');
+return;
+}
+armed=null; updatePaletteUI(); drawFrame(); refreshSelects();
+}
+function toggleFromUI(){
+var a=document.getElementById('srcPtA0914').value;
+var b=document.getElementById('srcPtB0914').value;
+if(!a||!b||a===b){ srcA11y0914.narrate('Choose two different connection points.'); return; }
+toggleConnection(a,b);
+drawFrame(); refreshSelects();
+}
+/* ── boot ── */
+R1val = 100; R2val = 150; Vsupply = 9;
+connections = defaultConnections();
+zoneDevice = {1:null,3:null,5:null,6:null,7:null};
+drawFrame();
+refreshSelects();
+updatePaletteUI();
+return { pl:pl, ps:ps, step:step, rst:rst, resetCircuit:resetCircuit, render:render,
+arm:arm, placeSelected:placeSelected, toggleFromUI:toggleFromUI };
+};
+var srcSim0914 = new srcGen();</script>
+<script>
+srcA11y0914.init();</script></body></html>

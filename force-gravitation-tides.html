@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Gravitation: Tides and the Moon's Hidden Side</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, gravitation, tides, tidal force, center of gravity, spring tide, neap tide, tidal locking, moon, torque, lesson, scientific">
+<meta name="description" content="Interactive simulation of the tides: the Moon's pull on pieces of the Earth, the two tidal bulges, tides at a harbour through a day, spring and neap tides, and why the same side of the Moon always faces the Earth.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="tdRoot" class="td_root" role="region" aria-label="Tides simulator: the Moon's pull on different pieces of the Earth, the two tidal bulges, tides through a day, spring and neap tides, and why the same side of the Moon faces the Earth">
+<div class="td_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="td_a11ybtn" id="tdBtnHC" onclick="tdSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="td_a11ybtn" id="tdBtnLM" onclick="tdSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="td_a11ybtn" id="tdBtnCB" onclick="tdSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="td_a11ybtn td_a11yon" id="tdBtnNR" onclick="tdSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="td_header"><p class="td_h1">Tides and the Moon&rsquo;s Hidden Side</p><p class="td_sub">the Moon pulls harder on the near side than on the far side &middot; the difference stretches the Earth</p></div>
+<div class="td_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="td_tab" id="tdT0" aria-selected="true" onclick="tdSim.tab(0)">1. The pull on each piece</button>
+<button type="button" role="tab" class="td_tab" id="tdT1" aria-selected="false" onclick="tdSim.tab(1)">2. Tides through a day</button>
+<button type="button" role="tab" class="td_tab" id="tdT2" aria-selected="false" onclick="tdSim.tab(2)">3. Sun and Moon</button>
+<button type="button" role="tab" class="td_tab" id="tdT3" aria-selected="false" onclick="tdSim.tab(3)">4. The Moon&rsquo;s same face</button>
+</div>
+<div class="td_diag"><div class="td_dlabel"><b id="tdLab">THE EARTH AND THE MOON</b><span id="tdHint"></span></div>
+<canvas id="tdCv" width="780" height="470" tabindex="0" role="img" aria-label="The Earth and the Moon seen from above the North Pole, with force arrows and the water drawn around the Earth. Space plays or pauses; the left and right arrow keys step the time." aria-describedby="tdStatus"></canvas></div>
+<div class="td_status" id="tdStatus"></div>
+<div class="td_bbar" id="tdBar"></div>
+<div class="td_read" id="tdRead" aria-label="Readout"></div>
+<div class="td_panels"><div class="td_panel"><div class="td_ptitle">Controls</div><div class="td_pbody" id="tdCtl"></div></div>
+<div class="td_panel"><div class="td_ptitle">Things to try</div><div class="td_pbody" id="tdTry"></div></div></div>
+<div class="td_eqs" id="tdEq"></div>
+<div id="tdNar" class="td_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="td_descwrap">
+<button type="button" class="td_descbtn" id="tdDescBtn" aria-expanded="false" aria-controls="tdDesc" onclick="tdSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="td_desc" id="tdDesc" role="region" aria-labelledby="tdDescBtn" style="display:none">
+<p>The Earth and the Moon are drawn as seen from far above the North Pole. The Earth turns counterclockwise, and the Moon goes around the Earth counterclockwise too. Distances and water heights are not drawn to scale.</p>
+<p><b>1. The pull on each piece.</b> Think of the Earth as made of many small pieces of mass `dm`. The Moon pulls on each piece with a gravitational force</p>
+<p class="td_eq">`dF = (G M_(moon) dm)/r^2`,</p>
+<p>where `r` is the distance from the piece to the Moon. The piece on the near side is closer to the Moon, so it is pulled harder; the piece on the far side is pulled less. Pieces above and below the Earth&ndash;Moon line are pulled along slightly different directions, all pointing at the Moon. Because the force is not the same everywhere, the <b>center of gravity</b>, the average position of the gravitational force,</p>
+<p class="td_eq">`x_(cg) = (F_(g1) x_1 + F_(g2) x_2 + ...)/(F_(g1) + F_(g2) + ...)`,</p>
+<p>is not at the <b>center of mass</b>: it is a little closer to the Moon. The whole Earth accelerates toward the Moon as if every piece got the pull felt at the center. What is left over, each piece&rsquo;s pull minus the pull at the center, is the <b>tidal force</b>. On the near side it points toward the Moon; on the far side it points away from the Moon (that piece is pulled less than the Earth as a whole, so it is left behind); on the sides it points slightly inward. The tidal force stretches the Earth along the Earth&ndash;Moon line. The water, free to move, piles up into <b>two bulges</b>: one facing the Moon and one on the far side. The size of the tidal force at the Earth&rsquo;s surface is about</p>
+<p class="td_eq">`a_(tidal) ~~ (2 G M_(moon) R)/d^3`,</p>
+<p>so it falls off as the cube of the distance `d`, faster than gravity itself.</p>
+<p><b>2. Tides through a day.</b> The bulges stay lined up with the Moon while the Earth turns under them. A harbour therefore passes through two high tides and two low tides each day. Because the Moon also moves along its orbit in the same direction, the harbour needs a little more than a day, about 24 h 50 min, to face the Moon again: high tides come every 12 h 25 min.</p>
+<p><b>3. Sun and Moon.</b> The Sun also raises two bulges. The Sun is far more massive, but it is also far more distant, and the tidal force goes as `M//d^3`: the Sun&rsquo;s bulges are only about 46% as large as the Moon&rsquo;s. At new moon and full moon the Sun, the Earth and the Moon line up, the bulges add, and the tides are large: <b>spring tides</b>. At first and third quarter the bulges are at right angles and partly cancel: <b>neap tides</b>. This happens twice a month.</p>
+<p>The heights shown are those of the &ldquo;equilibrium tide&rdquo;: about 0.36 m for the Moon&rsquo;s bulge and 0.16 m for the Sun&rsquo;s. Real tides along a coast are often several metres high, because the shape of the coast and the ocean basins amplify them.</p>
+<p><b>4. The Moon&rsquo;s same face.</b> The Earth also raises tides on the Moon, and long ago it stretched the Moon into a slightly elongated shape (drawn much exaggerated). The Earth pulls harder on the Moon&rsquo;s near end than on its far end. If the long axis is not lined up with the Earth, the two pulls are not along the same line: the center of gravity of the Moon is off the line through its center, and the Earth exerts a <b>torque</b> on the Moon that turns its long axis back toward the Earth. A Moon spinning faster or slower than it orbits is slowed down or sped up by this torque and by friction inside the flexing Moon, until it turns exactly once per orbit, every 27.3 days. Then the same side always faces the Earth: the Moon is <b>tidally locked</b>. Note that the locked Moon <b>does</b> spin: a Moon that did not spin at all would show us all of its sides during one orbit. The inset shows the Moon as seen from the Earth.</p>
+<p>The same tidal effects act on the Earth: friction from the tides slowly lengthens the day (by about 2 milliseconds per century) and the Moon slowly moves away (about 3.8 cm per year).</p>
+</div></div>
+</div><!-- #tdRoot -->
+<style>
+#tdRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#tdRoot * { box-sizing:border-box; }
+#tdRoot.td_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#tdRoot.td_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#tdRoot .td_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#tdRoot .td_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#tdRoot .td_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#tdRoot .td_header { text-align:center; }
+#tdRoot .td_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#tdRoot .td_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#tdRoot .td_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#tdRoot .td_tab { flex:1 1 170px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#tdRoot .td_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#tdRoot .td_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#tdRoot .td_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#tdRoot .td_dlabel b { color:var(--c-accent); }
+#tdRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#tdRoot .td_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#tdRoot .td_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#tdRoot .td_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#tdRoot .td_btn:hover { border-color:var(--c-accent); }
+#tdRoot .td_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#tdRoot .td_kick { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#tdRoot .td_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#tdRoot .td_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#tdRoot .td_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#tdRoot .td_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#tdRoot .td_ctrl { display:flex; flex-direction:column; gap:3px; }
+#tdRoot .td_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#tdRoot .td_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#tdRoot .td_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#tdRoot .td_brow { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+#tdRoot .td_brow label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; cursor:pointer; }
+#tdRoot .td_note { margin:0; font-size:.74rem; color:var(--c-dim); line-height:1.4; }
+#tdRoot .td_try { margin:0; padding-left:18px; font-size:.8rem; line-height:1.45; color:var(--c-text); }
+#tdRoot .td_try li { margin-bottom:5px; }
+#tdRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#tdRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#tdRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#tdRoot input[type=checkbox], #tdRoot input[type=radio] { accent-color:var(--c-accent); width:16px; height:16px; }
+#tdRoot .td_read { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; padding:8px 12px; }
+#tdRoot .td_flabel { font-family:monospace; font-size:.62rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#tdRoot .td_fvalue { font-family:monospace; font-size:.9rem; color:var(--c-val); font-variant-numeric:tabular-nums; }
+#tdRoot .td_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#tdRoot .td_eqs b { color:var(--c-val); }
+#tdRoot .td_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#tdRoot .td_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#tdRoot .td_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#tdRoot .td_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#tdRoot .td_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#tdRoot .td_desc p { margin:0 0 9px; }
+#tdRoot .td_eq { text-align:center; font-size:1rem; }
+#tdRoot button:focus-visible, #tdRoot input:focus-visible, #tdRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #tdRoot .td_panels { grid-template-columns:minmax(0,1fr); } #tdRoot .td_tab { font-size:.66rem; padding:8px 3px; } }
+@media (pointer:coarse) { #tdRoot input[type=range] { height:8px; } #tdRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #tdRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #tdRoot .td_a11ybtn { min-height:40px; } #tdRoot input[type=checkbox], #tdRoot input[type=radio] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Seen from above the North Pole; math axes (x right, y up), angles counterclockwise.
+Tab 1: the Moon's pull per kilogram on pieces of the Earth, a = G M / r^2 toward the Moon; tidal part = a - a(centre).
+       Centre of gravity x_cg = sum(Fx x)/sum(Fx), integrated over a uniform sphere.
+Tab 2: equilibrium tide h = H (3 cos^2(theta) - 1)/2 at a harbour on the equator; Earth turns once per 23.934 h,
+       the Moon goes around once per 27.32 days.  H(Moon) = 0.357 m at 384 400 km, H(Sun) = 0.164 m.
+Tab 3: Moon and Sun bulges added; the Moon's angle from the Sun advances once per 29.53 days.
+Tab 4: an elongated Moon on a circular orbit: d(omega)/dt = -K sin(2 delta) - c (omega - Omega), delta = angle between
+       its long axis and the line to the Earth. Time scale and elongation exaggerated so locking can be watched.
+No dollar signs or backticks in the code.
+-->
+<script>
+var tdSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('tdRoot'), cv = el('tdCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var DEG = Math.PI/180, TAU = 2*Math.PI;
+var GM = 4.9048e12, RE = 6.371e6, DREAL = 60.34, HM0 = 0.3568, HS = 0.164, TSID = 23.934, TMOON = 27.322*24, TSYN = 29.53;
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function f(v, k){ return (Math.abs(v) < 0.5*Math.pow(10, -k) ? 0 : v).toFixed(k); }
+function P2(c){ return 1.5*c*c - 0.5; }
+/* ══════════ state ══════════ */
+var U = { tab:0, play:true };
+var T1 = { d:4, pieces:'line', show:'pull', water:true, cg:true };
+var T2 = { t:0, spd:2, orbit:true, sun:false, arrows:true };
+var T3 = { day:0, spd:1, dist:384.4 };
+var T4 = { t:0, psi:Math.PI + 0.9, w:TAU/5, K:0.2, c:0.08, spd:2, torque:true, arrows:true, inset:true, locked:0 };
+var th = { hc:false, lm:false, cb:false, nr:true };
+/* ══════════ colours ══════════ */
+function pal(){ var cb = th.cb, hc = th.hc, lm = th.lm;
+  return { bg:hc ? '#000' : (lm ? '#eef2f6' : '#0b0e14'), star:hc ? 'rgba(255,255,255,0.8)' : (lm ? 'rgba(40,50,70,0.25)' : 'rgba(200,215,240,0.55)'),
+    txt:hc ? '#fff' : (lm ? '#1d232a' : '#e8eef4'), dim:hc ? '#ddd' : (lm ? '#556070' : '#8a94a3'), grid:hc ? 'rgba(255,255,255,0.4)' : (lm ? 'rgba(0,0,0,0.15)' : 'rgba(140,160,190,0.22)'),
+    ocean:'#1f62c4', ocean2:'#0f3f8f', land:'#5f9e4a', land2:'#c8a65a', ice:'#eef4ff', water:hc ? 'rgba(80,170,255,0.9)' : 'rgba(70,150,240,0.75)',
+    pull:cb ? '#e69f00' : '#ff3b30', tidal:cb ? '#56b4e9' : '#ffd23f', net:cb ? '#009e73' : '#3ad08f', cg:cb ? '#f0e442' : '#ff6fd8', cm:hc ? '#fff' : '#dfe6ee',
+    moon:'#b9bcc2', mare:'#7b7f88', mark:cb ? '#d55e00' : '#ff3b30', sunB:'#e8b04a', moonB:'#9aa3ad', totB:cb ? '#009e73' : '#2f8f80', orbit:hc ? '#ffffff' : '#4f7fbf', torque:cb ? '#cc79a7' : '#ff6fd8' }; }
+/* ══════════ drawing helpers ══════════ */
+function arrow(x1, y1, x2, y2, col, w, lab){
+  var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); if (L < 2) return; w = w || 3;
+  var ux = dx/L, uy = dy/L, hl = Math.min(14, 0.45*L + 4), hw = hl*0.55;
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2 - ux*hl*0.8, y2 - uy*hl*0.8); g.stroke();
+  g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - ux*hl - uy*hw, y2 - uy*hl + ux*hw); g.lineTo(x2 - ux*hl + uy*hw, y2 - uy*hl - ux*hw); g.closePath(); g.fill();
+  if (lab) label(x2 + ux*12, y2 + uy*12, lab, col); }
+function label(x, y, t, col, size, align){ g.font = 'bold ' + (size || 13) + 'px Arial, sans-serif'; g.textAlign = align || 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 3.5; g.strokeStyle = th.lm ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y); }
+var STARS = []; (function(){ var s = 7; function r(){ s = (s*16807) % 2147483647; return s/2147483647; } for (var i=0; i<140; i++) STARS.push([r()*780, r()*470, r()*1.4 + 0.3]); })();
+function stars(p){ if (th.lm) return; g.fillStyle = p.star; STARS.forEach(function(s){ g.beginPath(); g.arc(s[0], s[1], s[2], 0, TAU); g.fill(); }); }
+/* continents: blobs in polar view (angle, radius fraction, size) */
+var CONT = [[90, 0.78, 0.30, 1], [205, 0.62, 0.34, 2], [318, 0.6, 0.28, 3], [22, 0.88, 0.2, 4], [258, 0.9, 0.18, 5], [150, 0.92, 0.16, 6]];
+function blob(cx, cy, R, rot, b, col){
+  var a = (b[0]*DEG + rot), bx = cx + R*b[1]*Math.cos(a), by = cy - R*b[1]*Math.sin(a), k;
+  g.fillStyle = col; g.beginPath();
+  for (k=0; k<=28; k++){ var t = TAU*k/28, rr = R*b[2]*(1 + 0.22*Math.sin(3*t + b[3]) + 0.12*Math.sin(5*t + 2*b[3])); var x = bx + rr*Math.cos(t + rot), y = by - rr*Math.sin(t + rot); if (k) g.lineTo(x, y); else g.moveTo(x, y); }
+  g.closePath(); g.fill(); }
+function earth(cx, cy, R, rot, p){
+  var gr = g.createRadialGradient(cx - R*0.3, cy - R*0.3, R*0.1, cx, cy, R); gr.addColorStop(0, p.ocean); gr.addColorStop(1, p.ocean2);
+  g.save(); g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.fillStyle = gr; g.fill(); g.clip();
+  CONT.forEach(function(b){ blob(cx, cy, R, rot, [b[0], b[1], b[2]*1.08, b[3]], p.land2); blob(cx, cy, R, rot, b, p.land); });
+  blob(cx, cy, R, rot, [150, 0.28, 0.14, 9], p.ice);
+  g.restore(); g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke(); }
+function water(cx, cy, R, hfun, scale, fill, stroke){   /* r = R (1 + scale h(theta)) */
+  g.beginPath(); for (var k=0; k<=120; k++){ var t = TAU*k/120, r = R*(1 + scale*hfun(t)); var x = cx + r*Math.cos(t), y = cy - r*Math.sin(t); if (k) g.lineTo(x, y); else g.moveTo(x, y); }
+  g.closePath(); if (fill){ g.fillStyle = fill; g.fill(); } if (stroke){ g.strokeStyle = stroke; g.lineWidth = 2; g.stroke(); } }
+var MARIA = [[0.5, 0.15, 0.22], [-0.45, 0.35, 0.18], [-0.2, -0.3, 0.26], [0.25, -0.5, 0.14], [2.6, 0.2, 0.1], [3.4, -0.3, 0.12]];   /* longitude (rad, 0 = end A), latitude-ish, size */
+function moonTop(cx, cy, r, psi, el2, p, mark){   /* the Moon seen from above: an ellipse, long axis along psi */
+  g.save(); g.translate(cx, cy); g.rotate(-psi);
+  var gr = g.createRadialGradient(-r*0.3, -r*0.3, r*0.1, 0, 0, r*(1 + el2)); gr.addColorStop(0, '#d9dbe0'); gr.addColorStop(1, '#8d9098');
+  g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, r*(1 + el2), r, 0, 0, TAU); g.fill();
+  g.fillStyle = p.mare; MARIA.forEach(function(m){ if (Math.cos(m[0]) < 0) return; g.beginPath(); g.arc(r*0.62*Math.cos(m[0])*(1 + el2), -r*0.62*Math.sin(m[0]), r*m[2], 0, TAU); g.fill(); });
+  if (mark){ g.fillStyle = p.mark; g.beginPath(); g.arc(r*(1 + el2)*0.86, 0, Math.max(3, r*0.14), 0, TAU); g.fill(); }
+  g.restore(); }
+function moonDisk(cx, cy, r, p){ var gr = g.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r); gr.addColorStop(0, '#e2e4e8'); gr.addColorStop(1, '#8d9098');
+  g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.fill(); g.fillStyle = p.mare; [[0.3, -0.2, 0.25], [-0.25, 0.1, 0.2], [0.05, 0.4, 0.15]].forEach(function(m){ g.beginPath(); g.arc(cx + m[0]*r, cy + m[1]*r, m[2]*r, 0, TAU); g.fill(); }); }
+function sun(x, y, r){ var gr = g.createRadialGradient(x, y, r*0.1, x, y, r*2.2); gr.addColorStop(0, '#fff6d0'); gr.addColorStop(0.35, '#ffb43a'); gr.addColorStop(0.6, 'rgba(255,120,30,0.45)'); gr.addColorStop(1, 'rgba(255,90,20,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r*2.2, 0, TAU); g.fill(); }
+function graph(x, y, w, h, opt, p){   /* opt: { x0, x1, y0, y1, xt:[[v, lab]], yt:[[v, lab]], series:[{pts, col, dash}], mark:[x, y], title, xl } */
+  g.fillStyle = th.lm ? 'rgba(255,255,255,0.85)' : 'rgba(10,14,22,0.75)'; g.fillRect(x - 40, y - 24, w + 52, h + 50);
+  g.strokeStyle = p.grid; g.lineWidth = 1; g.font = '11px Arial, sans-serif'; g.fillStyle = p.dim;
+  function X(v){ return x + (v - opt.x0)/(opt.x1 - opt.x0)*w; } function Y(v){ return y + h - (v - opt.y0)/(opt.y1 - opt.y0)*h; }
+  (opt.xt || []).forEach(function(t){ g.beginPath(); g.moveTo(X(t[0]), y); g.lineTo(X(t[0]), y + h); g.stroke(); g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(t[1], X(t[0]), y + h + 3); });
+  (opt.yt || []).forEach(function(t){ g.beginPath(); g.moveTo(x, Y(t[0])); g.lineTo(x + w, Y(t[0])); g.stroke(); g.textAlign = 'right'; g.textBaseline = 'middle'; g.fillText(t[1], x - 4, Y(t[0])); });
+  g.strokeStyle = p.dim; g.strokeRect(x, y, w, h);
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+  opt.series.forEach(function(s){ g.strokeStyle = s.col; g.lineWidth = 2.2; g.setLineDash(s.dash || []); g.beginPath(); s.pts.forEach(function(q, i){ if (i) g.lineTo(X(q[0]), Y(q[1])); else g.moveTo(X(q[0]), Y(q[1])); }); g.stroke(); });
+  g.setLineDash([]); g.restore();
+  if (opt.mark){ g.fillStyle = p.tidal; g.beginPath(); g.arc(X(opt.mark[0]), Y(opt.mark[1]), 5, 0, TAU); g.fill(); }
+  g.textAlign = 'left'; g.textBaseline = 'bottom'; g.fillStyle = p.txt; g.font = 'bold 12px Arial, sans-serif'; g.fillText(opt.title, x - 34, y - 6);
+  if (opt.xl){ g.textAlign = 'center'; g.textBaseline = 'top'; g.font = '11px Arial, sans-serif'; g.fillStyle = p.dim; g.fillText(opt.xl, x + w/2, y + h + 15); } }
+/* ══════════ tab 1: the pull on each piece ══════════ */
+function pullAt(x, y, d){ var dx = d - x, dy = -y, r2 = dx*dx + dy*dy, r = Math.sqrt(r2); return [GM*dx/(r2*r)/(RE*RE), GM*dy/(r2*r)/(RE*RE)]; }   /* m/s^2, positions in Earth radii */
+function cgOf(d){ var Nx = 80, Nr = 40, sF = 0, sFx = 0, i, j;
+  for (i=0; i<Nx; i++){ var x = -1 + (i + 0.5)*2/Nx, rm = Math.sqrt(1 - x*x);
+    for (j=0; j<Nr; j++){ var rho = (j + 0.5)*rm/Nr, wgt = rho*rm/Nr, a = pullAt(x, rho, d)[0]; sF += a*wgt; sFx += a*x*wgt; } }
+  return sFx/sF; }
+var cgCache = { d:-1, v:0 };
+function pieces(){ var P = [], k;
+  if (T1.pieces === 'line') P = [[-0.7, 0], [0.7, 0]];
+  else if (T1.pieces === 'tb') P = [[0, 0.7], [0, -0.7]];
+  else for (k=0; k<8; k++) P.push([0.72*Math.cos(TAU*k/8), 0.72*Math.sin(TAU*k/8)]);
+  return P; }
+function draw1(p){
+  var cx = 210, cy = 235, R = 125, d = T1.d, far = d > 4.6, mx = cx + R*(far ? 4.4 : d), aC = pullAt(0, 0, d), P = pieces(), sc, tsc;
+  stars(p);
+  if (T1.water){ var A = clamp(0.25*Math.pow(4/d, 3), 0.05, 0.32); water(cx, cy, R, function(t){ return A*(P2(Math.cos(t)) + 0.5); }, 1, p.water, null); }
+  earth(cx, cy, R, 0, p);
+  moonDisk(mx, cy, 30, p); label(mx, cy + 46, 'Moon', p.txt, 13);
+  if (far){ g.strokeStyle = p.dim; g.lineWidth = 2; g.beginPath(); g.moveTo(mx - 70, cy - 12); g.lineTo(mx - 60, cy + 12); g.moveTo(mx - 62, cy - 12); g.lineTo(mx - 52, cy + 12); g.stroke(); label(mx - 60, cy - 26, 'not to scale: ' + f(d, 0) + ' R', p.dim, 11); }
+  var aCm = Math.hypot(aC[0], aC[1]); sc = 70/aCm;
+  var tmax = 1e-30; P.forEach(function(q){ var a = pullAt(q[0], q[1], d); tmax = Math.max(tmax, Math.hypot(a[0] - aC[0], a[1] - aC[1])); }); tsc = 60/tmax;
+  P.concat([[0, 0]]).forEach(function(q, i){ var isC = i === P.length, a = pullAt(q[0], q[1], d), x = cx + q[0]*R, y = cy - q[1]*R;
+    if (!isC){ g.fillStyle = 'rgba(255,220,60,0.75)'; g.beginPath(); g.arc(x, y, 11, 0, TAU); g.fill(); label(x, y - 20, 'dm', '#ffe9a8', 12); }
+    if (T1.show !== 'tidal'){ var L = Math.min(190, Math.hypot(a[0], a[1])*sc); var u = [a[0]/Math.hypot(a[0], a[1]), a[1]/Math.hypot(a[0], a[1])]; arrow(x, y, x + u[0]*L, y - u[1]*L, isC ? p.net : p.pull, isC ? 4 : 3.5); }
+    if (T1.show !== 'pull' && !isC){ var tx = (a[0] - aC[0])*tsc, ty = (a[1] - aC[1])*tsc; arrow(x, y, x + tx, y - ty, p.tidal, 3.5); } });
+  if (T1.show !== 'tidal') label(cx + 40, cy + 22, 'pull at the centre', p.net, 11);
+  if (T1.cg){ var c = cgCache.d === d ? cgCache.v : (cgCache = { d:d, v:cgOf(d) }).v, xg = cx + c*R;
+    g.strokeStyle = p.cm; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - 8, cy); g.lineTo(cx + 8, cy); g.moveTo(cx, cy - 8); g.lineTo(cx, cy + 8); g.stroke();
+    g.strokeStyle = p.cg; g.lineWidth = 3; g.beginPath(); g.moveTo(xg - 7, cy - 7); g.lineTo(xg + 7, cy + 7); g.moveTo(xg - 7, cy + 7); g.lineTo(xg + 7, cy - 7); g.stroke();
+    label(cx - 6, cy + 40, 'CM', p.cm, 12); label(xg + 4, cy - 40, 'CG', p.cg, 12); }
+  label(cx, 28, T1.show === 'pull' ? 'The Moon\u2019s pull on each piece' : T1.show === 'tidal' ? 'Pull minus the pull at the centre: the tidal force' : 'Pull (red) and tidal force (yellow)', p.txt, 15);
+  label(cx, H - 18, 'seen from above the North Pole \u00B7 ' + (T1.water ? 'water heights exaggerated' : 'water hidden'), p.dim, 11); }
+function info1(){
+  var d = T1.d, aN = pullAt(1, 0, d)[0], aC = pullAt(0, 0, d)[0], aF = pullAt(-1, 0, d)[0], c = cgOf(d);
+  cell([['MOON DISTANCE', f(d, 1) + ' R = ' + f(d*6371, 0) + ' km'], ['PULL: NEAR \u00B7 CENTRE \u00B7 FAR', U3(aN) + ' \u00B7 ' + U3(aC) + ' \u00B7 ' + U3(aF)], ['FAR PULL / NEAR PULL', f(aF/aN, 3)],
+    ['TIDAL: NEAR SIDE \u00B7 FAR SIDE', U3(aN - aC) + ' toward \u00B7 ' + U3(aC - aF) + ' away'], ['CG IS CLOSER TO THE MOON BY', f(c*6371, 0) + ' km (' + f(100*c, 2) + '% of R)'],
+    ['MOON\u2019S BULGE HEIGHT', f(HM0*Math.pow(DREAL/d, 3), d < 10 ? 0 : 2) + ' m']]);
+  status(T1.show === 'pull' ? 'Every piece is pulled toward the Moon, but the near piece is pulled harder than the far one. The average position of these pulls, the center of gravity, is a little closer to the Moon than the center of mass.'
+    : 'Subtract the pull at the centre from each pull: on the near side the leftover points toward the Moon, on the far side it points away. The Earth is stretched along the Earth\u2013Moon line, and the water piles up on both sides.');
+  eq('Pull on a piece: <b>a = G M\u2098\u2092\u2092\u2099 / r\u00B2</b> toward the Moon. Tidal force per kg: <b>a \u2212 a(centre) \u2248 2 G M\u2098\u2092\u2092\u2099 R / d\u00B3</b> = ' + U3(2*GM*RE/Math.pow(d*RE, 3)) + ' (near side).<br>Center of gravity: <b>x(cg) = (F\u2081x\u2081 + F\u2082x\u2082 + \u2026)/(F\u2081 + F\u2082 + \u2026)</b> = ' + f(c, 4) + ' R from the centre of mass, toward the Moon.'); }
+function U3(a){ var v = a*1e6; return (Math.abs(v) >= 100 ? f(v, 0) : Math.abs(v) >= 1 ? f(v, 2) : f(v, 3)) + ' \u00B5N/kg'; }
+/* ══════════ tab 2: tides through a day ══════════ */
+function moonAng2(t){ return 90*DEG + (T2.orbit ? TAU*t/TMOON : 0); }
+function rot2(t){ return TAU*t/TSID; }
+function harbour(t){ var a = 90*DEG + rot2(t); return HM0*P2(Math.cos(a - moonAng2(t))) + (T2.sun ? HS*P2(Math.cos(a - Math.PI)) : 0); }
+function period2(){ return 0.5/(1/TSID - (T2.orbit ? 1/TMOON : 0)); }
+function draw2(p){
+  var cx = 235, cy = 262, R = 95, t = T2.t, ma = moonAng2(t), rot = rot2(t);
+  stars(p);
+  if (T2.sun){ sun(-30, cy, 40); }
+  var hf = function(a){ return HM0*(P2(Math.cos(a - ma)) + 0.5) + (T2.sun ? HS*(P2(Math.cos(a - Math.PI)) + 0.5) : 0); };
+  water(cx, cy, R, hf, 0.75, p.water, null);
+  earth(cx, cy, R, rot, p);
+  var mx = cx + 190*Math.cos(ma), my = cy - 190*Math.sin(ma); moonDisk(mx, my, 20, p); label(mx + 42, my, 'Moon', p.txt, 12);
+  if (T2.arrows){ for (var k=0; k<8; k++){ var a = ma + TAU*k/8, c = Math.cos(a - ma), s = Math.sin(a - ma), x = cx + R*0.55*Math.cos(a), y = cy - R*0.55*Math.sin(a), L = 34;
+    var fx = 2*c*Math.cos(ma) + s*Math.sin(ma), fy = 2*c*Math.sin(ma) - s*Math.cos(ma); arrow(x, y, x + fx*L*0.5, y - fy*L*0.5, p.tidal, 3); } }
+  var ha = 90*DEG + rot, hx = cx + R*Math.cos(ha), hy = cy - R*Math.sin(ha);
+  g.fillStyle = p.mark; g.beginPath(); g.arc(hx, hy, 7, 0, TAU); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+  label(hx + 30*Math.cos(ha), hy - 30*Math.sin(ha), 'Harbour', p.mark, 12);
+  label(cx + (R + 70)*Math.cos(ma), cy - (R + 70)*Math.sin(ma) + 14, 'High tide', p.txt, 12); label(cx - (R + 55)*Math.cos(ma), cy + (R + 55)*Math.sin(ma), 'High tide', p.txt, 12);
+  label(cx + (R + 50)*Math.cos(ma + Math.PI/2), cy - (R + 50)*Math.sin(ma + Math.PI/2), 'Low tide', p.dim, 12); label(cx + (R + 50)*Math.cos(ma - Math.PI/2), cy - (R + 50)*Math.sin(ma - Math.PI/2), 'Low tide', p.dim, 12);
+  var day = Math.floor(t/24), hr = t - 24*day; label(14, H - 18, 'Day ' + day + ', hour ' + f(hr, 1), p.txt, 15, 'left');
+  var pts = [], fut = [], k2; for (k2=0; k2<=240; k2++){ var tt = t - 36 + 48*k2/240; (tt <= t ? pts : fut).push([tt, harbour(tt)]); } fut.unshift([t, harbour(t)]);
+  var xt = []; for (var q = Math.ceil((t - 36)/6)*6; q <= t + 12; q += 6) xt.push([q, (((q % 24) + 24) % 24) + ' h']);
+  graph(500, 70, 250, 300, { x0:t - 36, x1:t + 12, y0:-0.35, y1:0.6, xt:xt, yt:[[-0.2, '\u22120.2'], [0, '0'], [0.2, '0.2'], [0.4, '0.4']], series:[{ pts:pts, col:p.water }, { pts:fut, col:p.dim, dash:[4, 4] }], mark:[t, harbour(t)], title:'Water height at the harbour (m)', xl:'hour of the day' }, p); }
+function info2(){
+  var t = T2.t, h = harbour(t), per = period2(), nx = null, dt;
+  for (dt = 0.05; dt < 14; dt += 0.05){ if (harbour(t + dt) > harbour(t + dt - 0.05) && harbour(t + dt) >= harbour(t + dt + 0.05)){ nx = dt; break; } }
+  var day = Math.floor(t/24), hr = t - 24*day;
+  cell([['TIME', 'day ' + day + ', ' + hm(hr)], ['WATER AT THE HARBOUR', f(h, 2) + ' m'], ['NEXT HIGH TIDE IN', nx === null ? '--' : hm(nx)], ['TIME BETWEEN HIGH TIDES', hm(per)],
+    ['MOON MOVED IN ITS ORBIT', f(T2.orbit ? 360*t/TMOON : 0, 1) + '\u00B0'], ['EARTH TURNED', f(360*t/TSID, 0) + '\u00B0']]);
+  status(h > 0.25 ? 'High tide at the harbour: it is under one of the two bulges.' : h < -0.1 ? 'Low tide at the harbour: it is halfway between the bulges.' : (harbour(t + 0.1) > h ? 'The tide is rising: the harbour is turning toward a bulge.' : 'The tide is falling: the harbour is turning away from a bulge.'));
+  eq('The bulges stay lined up with the Moon; the Earth turns under them once every <b>23 h 56 min</b>. The Moon moves ahead along its orbit, so the harbour needs <b>24 h 50 min</b> to face it again: high tides every <b>' + hm(per) + '</b>.<br>Height at the harbour: <b>h = H (3 cos\u00B2\u03B8 \u2212 1)/2</b>, H = ' + f(HM0, 2) + ' m (Moon)' + (T2.sun ? ' plus 0.16 m (Sun)' : '') + '; \u03B8 is the angle between the harbour and the Moon.'); }
+function hm(hrs){ var h = Math.floor(hrs), m = Math.round((hrs - h)*60); if (m === 60){ h++; m = 0; } return h + ' h ' + (m < 10 ? '0' : '') + m + ' min'; }
+/* ══════════ tab 3: Sun and Moon ══════════ */
+function moonAng3(day){ return Math.PI + TAU*day/TSYN; }
+function Hm3(){ return HM0*Math.pow(384.4/T3.dist, 3); }
+function range3(day){ var ma = moonAng3(day), hm2 = Hm3(), mx = -9, mn = 9, k; for (k=0; k<90; k++){ var a = Math.PI*k/90, h = hm2*P2(Math.cos(a - ma)) + HS*P2(Math.cos(a - Math.PI)); mx = Math.max(mx, h); mn = Math.min(mn, h); } return [mx, mn]; }
+function phase3(day){ var x = ((day % TSYN) + TSYN) % TSYN/TSYN; return x < 0.0625 || x >= 0.9375 ? 'new moon' : x < 0.1875 ? 'waxing crescent' : x < 0.3125 ? 'first quarter' : x < 0.4375 ? 'waxing gibbous' : x < 0.5625 ? 'full moon' : x < 0.6875 ? 'waning gibbous' : x < 0.8125 ? 'third quarter' : 'waning crescent'; }
+function draw3(p){
+  var cx = 330, cy = 185, R = 58, ma = moonAng3(T3.day), hm2 = Hm3(), S = 1.0;
+  stars(p); sun(-20, cy, 70); label(60, cy + 100, 'Sun', p.txt, 13);
+  g.strokeStyle = p.orbit; g.lineWidth = 2; g.beginPath(); g.ellipse(cx, cy, 125, 125, 0, 0, TAU); g.stroke();
+  g.beginPath(); g.moveTo(cx - 60, -10); g.quadraticCurveTo(cx + 30, cy, cx - 60, 400); g.stroke(); label(cx - 70, 56, 'Earth\u2019s yearly orbit (part)', p.orbit, 11, 'right');
+  var low = 0.5*(hm2 + HS);
+  var tot = function(a){ return hm2*P2(Math.cos(a - ma)) + HS*P2(Math.cos(a - Math.PI)) + low; }, mo = function(a){ return hm2*(P2(Math.cos(a - ma)) + 0.5); }, su = function(a){ return HS*(P2(Math.cos(a - Math.PI)) + 0.5); };
+  water(cx, cy, R, tot, S, th.hc ? 'rgba(0,200,150,0.5)' : 'rgba(47,143,128,0.55)', p.totB); water(cx, cy, R, mo, S, 'rgba(154,163,173,0.35)', p.moonB); water(cx, cy, R, su, S, null, p.sunB);
+  earth(cx, cy, R, 0, p);
+  var mx = cx + 125*Math.cos(ma), my = cy - 125*Math.sin(ma); moonDisk(mx, my, 16, p); label(mx + 36, my, 'Moon', p.txt, 12);
+  /* bottom strip, as on the slide */
+  var y0 = 400, items = [['Bulge from the Sun', su, p.sunB], ['Bulge from the Moon', mo, p.moonB], ['Total bulge', tot, p.totB]];
+  items.forEach(function(it, i){ var x = 85 + i*165; water(x, y0, 26, it[1], S*1.6, it[2] === p.totB ? 'rgba(47,143,128,0.6)' : null, it[2]); earth(x, y0, 26, 0, p); label(x + 32, y0 - 40, it[0], it[2], 12, 'left'); });
+  var r = range3(T3.day), sp = [], k; for (k=0; k<=120; k++){ var dd = TSYN*k/120, q = range3(dd); sp.push([dd, q[0] - q[1]]); }
+  graph(565, 60, 190, 160, { x0:0, x1:TSYN, y0:0, y1:0.95, xt:[[0, 'new'], [TSYN/4, '1st q'], [TSYN/2, 'full'], [3*TSYN/4, '3rd q']], yt:[[0, '0'], [0.4, '0.4'], [0.8, '0.8']], series:[{ pts:sp, col:p.totB }], mark:[((T3.day % TSYN) + TSYN) % TSYN, r[0] - r[1]], title:'Tide range (m) over a month', xl:'phase of the Moon' }, p);
+  label(14, 22, 'Day ' + f(T3.day % TSYN, 1) + ' of the lunar month: ' + phase3(T3.day), p.txt, 15, 'left');
+  label(W - 60, H - 14, 'NOT TO SCALE', p.dim, 11); }
+function info3(){
+  var r = range3(T3.day), rng = r[0] - r[1], hm2 = Hm3(), x = ((T3.day % TSYN) + TSYN) % TSYN/TSYN, ang = Math.abs(Math.cos(TAU*x));
+  var kind = ang > 0.8 ? 'SPRING TIDE' : ang < 0.3 ? 'NEAP TIDE' : 'in between';
+  cell([['LUNAR MONTH DAY', f(((T3.day % TSYN) + TSYN) % TSYN, 1) + ' \u00B7 ' + phase3(T3.day)], ['MOON\u2019S BULGE \u00B7 SUN\u2019S BULGE', f(hm2, 2) + ' m \u00B7 ' + f(HS, 2) + ' m (' + f(100*HS/hm2, 0) + '%)'],
+    ['HIGHEST WATER \u00B7 LOWEST', f(r[0], 2) + ' m \u00B7 ' + f(r[1], 2) + ' m'], ['TIDE RANGE', f(rng, 2) + ' m'], ['TYPE', kind], ['MOON DISTANCE', f(T3.dist, 1) + ' thousand km']]);
+  status(ang > 0.8 ? 'Sun, Earth and Moon are lined up (' + phase3(T3.day) + '): the two pairs of bulges point the same way and add up. Large tides: spring tide.' : ang < 0.3 ? 'The Sun and the Moon are at right angles (' + phase3(T3.day) + '): the Sun\u2019s bulges fill in the Moon\u2019s low tides. Small tides: neap tide.' : 'The bulges are partly lined up: the tides are between spring and neap.');
+  eq('Tidal effect \u221D <b>M / d\u00B3</b>. The Sun is 27 million times more massive than the Moon but 390 times farther: 27\u00B710\u2076 / 390\u00B3 \u2248 <b>0.46</b>.<br>Spring tide range \u2248 1.5 (H\u2098 + H\u209B) = ' + f(1.5*(hm2 + HS), 2) + ' m; neap tide range \u2248 1.5 (H\u2098 \u2212 H\u209B) = ' + f(1.5*(hm2 - HS), 2) + ' m.'); }
+/* ══════════ tab 4: the Moon's same face ══════════ */
+var OM = TAU/27.32, RO = 165, RM = 26, ELV = 0.28;
+function geo4(){ var th2 = OM*T4.t, ex = 200, ey = 235, mx = ex + RO*Math.cos(th2), my = ey - RO*Math.sin(th2); return { th:th2, ex:ex, ey:ey, mx:mx, my:my, delta:wrap(T4.psi - (th2 + Math.PI)) }; }
+function wrap(a){ while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU; return a; }
+function step4(dt){ var G = geo4(), K = T4.torque ? T4.K : 0, c = T4.torque ? T4.c : 0;
+  T4.w += (-K*Math.sin(2*G.delta) - c*(T4.w - OM))*dt; T4.psi += T4.w*dt; T4.t += dt; }
+function draw4(p){
+  var G = geo4(); stars(p);
+  g.strokeStyle = p.orbit; g.lineWidth = 1.5; g.setLineDash([5, 5]); g.beginPath(); g.arc(G.ex, G.ey, RO, 0, TAU); g.stroke(); g.setLineDash([]);
+  earth(G.ex, G.ey, 46, TAU*T4.t*(24/TSID)*0.02, p); label(G.ex, G.ey + 62, 'Earth', p.txt, 12);
+  moonTop(G.mx, G.my, RM, T4.psi, ELV, p, true);
+  if (T4.arrows){
+    var u = [Math.cos(T4.psi), Math.sin(T4.psi)], v = [-u[1], u[0]], a = RM*(1 + ELV)*0.85, pts = [[a, 0, 'near/far end'], [-a, 0, ''], [0, RM*0.8, ''], [0, -RM*0.8, '']], sumF = 0, cgx = 0, cgy = 0;
+    pts.forEach(function(q){ var x = G.mx + q[0]*u[0] + q[1]*v[0], y = G.my - (q[0]*u[1] + q[1]*v[1]), dx = G.ex - x, dy = G.ey - y, r = Math.hypot(dx, dy), F = Math.pow(RO/r, 2), L = 34*F*F;
+      arrow(x, y, x + dx/r*L, y + dy/r*L, p.pull, 3); sumF += F; cgx += F*x; cgy += F*y; });
+    cgx /= sumF; cgy /= sumF;
+    g.strokeStyle = p.cg; g.lineWidth = 2.5; g.beginPath(); g.moveTo(cgx - 5, cgy - 5); g.lineTo(cgx + 5, cgy + 5); g.moveTo(cgx - 5, cgy + 5); g.lineTo(cgx + 5, cgy - 5); g.stroke();
+    var tq = T4.torque ? -Math.sin(2*G.delta) : 0;
+    if (Math.abs(tq) > 0.05){ var r2 = RM*1.9, a0 = T4.psi, a1 = a0 + 1.1*tq; g.strokeStyle = p.torque; g.lineWidth = 3; g.beginPath(); g.arc(G.mx, G.my, r2, -a0, -a1, tq > 0); g.stroke();
+      var ex2 = G.mx + r2*Math.cos(a1), ey2 = G.my - r2*Math.sin(a1), dd = tq > 0 ? 1 : -1; arrow(ex2 + 6*Math.sin(a1)*dd, ey2 + 6*Math.cos(a1)*dd, ex2 - 4*Math.sin(a1)*dd, ey2 - 4*Math.cos(a1)*dd, p.torque, 3); label(G.mx + (r2 + 16)*Math.cos(a0 + 0.55*tq), G.my - (r2 + 16)*Math.sin(a0 + 0.55*tq), '\u03C4', p.torque, 15); } }
+  /* the line to the Earth and the long axis */
+  g.strokeStyle = p.dim; g.lineWidth = 1; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(G.ex, G.ey); g.lineTo(G.mx, G.my); g.stroke(); g.setLineDash([]);
+  if (T4.inset){ var ix = 660, iy = 300, ir = 62; g.fillStyle = th.lm ? 'rgba(255,255,255,0.85)' : 'rgba(10,14,22,0.75)'; g.fillRect(ix - 92, iy - 104, 184, 186);
+    label(ix, iy - 86, 'Seen from the Earth', p.txt, 12);
+    var gr = g.createRadialGradient(ix - 15, iy - 15, 5, ix, iy, ir); gr.addColorStop(0, '#e2e4e8'); gr.addColorStop(1, '#8d9098'); g.fillStyle = gr; g.beginPath(); g.arc(ix, iy, ir, 0, TAU); g.fill();
+    var sub = -G.delta;   /* the longitude (in the Moon's frame, 0 = end A) that faces the Earth */
+    MARIA.forEach(function(m){ var lon = m[0] - sub, c = Math.cos(lon); if (c <= 0) return; g.fillStyle = p.mare; g.beginPath(); g.ellipse(ix - ir*0.9*Math.sin(lon), iy - m[1]*ir*0.8, Math.max(1, ir*m[2]*c), ir*m[2], 0, 0, TAU); g.fill(); });
+    var lonA = -sub; if (Math.cos(lonA) > 0){ g.fillStyle = p.mark; g.beginPath(); g.ellipse(ix - ir*0.9*Math.sin(lonA), iy, Math.max(1.5, 7*Math.cos(lonA)), 7, 0, 0, TAU); g.fill(); }
+    label(ix, iy + ir + 10, Math.cos(lonA) > 0.7 ? 'the marked side faces us' : Math.cos(lonA) > 0 ? 'the marked side is turning' : 'the marked side is hidden', p.dim, 11); }
+  label(390, 22, 'Day ' + f(T4.t, 1) + ' \u00B7 orbit ' + (Math.floor(T4.t/27.32) + 1), p.txt, 15);
+  label(390, H - 14, 'elongation of the Moon and its effect exaggerated \u00B7 not to scale', p.dim, 11); }
+function info4(){
+  var G = geo4(), Ps = Math.abs(T4.w) > 1e-4 ? TAU/T4.w : Infinity, locked = Math.abs(T4.w - OM) < 0.03*OM && Math.abs(Math.sin(G.delta)) < 0.15, tq = T4.torque ? -T4.K*Math.sin(2*G.delta) : 0;
+  T4.locked = locked ? T4.locked + 1 : 0;
+  cell([['MOON SPINS ONCE EVERY', isFinite(Ps) ? (Ps < 0 ? f(-Ps, 1) + ' days (backward)' : f(Ps, 1) + ' days') : 'no spin'], ['MOON ORBITS ONCE EVERY', '27.3 days'],
+    ['LONG AXIS FROM THE EARTH LINE', f(Math.abs(G.delta) > Math.PI/2 ? (Math.PI - Math.abs(G.delta))/DEG : Math.abs(G.delta)/DEG, 0) + '\u00B0'],
+    ['TORQUE FROM THE EARTH', Math.abs(tq) < 0.01 ? 'none' : (tq > 0 ? 'counterclockwise' : 'clockwise')], ['STATE', T4.locked > 30 ? 'LOCKED: same face toward Earth' : 'not locked']]);
+  status(!T4.torque ? (Math.abs(T4.w) < 1e-3 ? 'No spin and no torque: the Moon keeps pointing the same way in space, so during one orbit the Earth sees all of its sides.' : 'No torque: the Moon keeps whatever spin it had.')
+    : T4.locked > 30 ? 'Locked: the Moon spins exactly once per orbit, so its long axis always points at the Earth' + (Math.abs(G.delta) > Math.PI/2 ? '. Here the unmarked end won: either end of the long axis can end up facing the Earth, and from then on that same side always faces us.' : ', and the marked side always faces us.') : 'The Earth pulls harder on the near end than on the far end. When the long axis is not lined up with the Earth, the center of gravity (x) is off the line through the center: the torque turns the long axis back toward the Earth.');
+  eq('Spin rate \u03C9 vs orbit rate \u03A9 = 2\u03C0/27.3 days. Torque from the Earth: <b>\u03C4 \u221D \u2212 sin 2\u03B4</b> (\u03B4: angle between the long axis and the Earth line), plus friction inside the flexing Moon, <b>\u221D \u2212(\u03C9 \u2212 \u03A9)</b>. Both stop when <b>\u03C9 = \u03A9</b> and \u03B4 = 0: one spin per orbit.'); }
+function start4(k){ var G = geo4(); T4.psi = G.th + Math.PI + (k === 'fast' ? 0.4 : 0.9); T4.locked = 0;
+  if (k === 'fast') T4.w = TAU/5; else if (k === 'none') T4.w = 0; else if (k === 'lock'){ T4.w = OM; T4.psi = G.th + Math.PI; } else if (k === 'back') T4.w = -TAU/10;
+  narrate(k === 'fast' ? 'The Moon starts spinning once every 5 days, faster than it orbits. Watch the inset: we see all its sides at first. The torque and the friction slow the spin down until it locks.'
+    : k === 'none' ? (T4.torque ? 'The Moon starts with no spin. The torque from the Earth soon starts turning it; it settles at one spin per orbit.' : 'No spin, no torque: the Moon keeps pointing the same way in space. In the inset, the Earth sees all of its sides during one orbit.')
+    : k === 'lock' ? 'The Moon spins once per orbit, its long axis toward the Earth: locked, as the real Moon is.' : 'The Moon starts spinning backward. The torque and the friction stop it and spin it the other way, until it locks.'); }
+/* ══════════ shared UI ══════════ */
+function cell(c){ el('tdRead').innerHTML = c.map(function(q){ return '<div><div class="td_flabel">' + q[0] + '</div><div class="td_fvalue">' + q[1] + '</div></div>'; }).join(''); }
+var lastStatus = ''; function status(s){ lastStatus = s; el('tdStatus').textContent = s; }
+function eq(s){ el('tdEq').innerHTML = s; }
+function narrate(m){ if (!th.nr) return; el('tdNar').textContent = m; }
+function row(id, label, min, max, step, val, txt){ return '<div class="td_ctrl"><div class="td_ctrlhdr"><label class="td_ctrlname" for="' + id + '">' + label + '</label><span class="td_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function btn(id, t, cls){ return '<button type="button" class="td_btn' + (cls ? ' ' + cls : '') + '" id="' + id + '">' + t + '</button>'; }
+function chk(id, t, v){ return '<label><input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '> ' + t + '</label>'; }
+function radio(name, id, t, v){ return '<label><input type="radio" name="' + name + '" id="' + id + '"' + (v ? ' checked' : '') + '> ' + t + '</label>'; }
+function tries(a){ el('tdTry').innerHTML = '<ol class="td_try">' + a.map(function(s){ return '<li>' + s + '</li>'; }).join('') + '</ol>'; }
+var playBtn = function(){ return btn('tdPlay', U.play ? '\u2759\u2759 Pause' : '\u25B6 Play', U.play ? 'td_btnon' : ''); };
+function setPlay(v){ U.play = v; var b = el('tdPlay'); if (!b) return; b.innerHTML = v ? '\u2759\u2759 Pause' : '\u25B6 Play'; b.classList.toggle('td_btnon', v); }
+var dsc = function(){ return btn('tdDsc', 'Describe'); };
+function buildTab(i){
+  var bar = '', ctl = '';
+  if (i === 0){
+    bar = '<span>' + radio('tdShow', 'tdS1', 'pull of the Moon', T1.show === 'pull') + '</span>' + radio('tdShow', 'tdS2', 'pull minus pull at centre', T1.show === 'tidal') + radio('tdShow', 'tdS3', 'both', T1.show === 'both') + chk('tdWat', 'water', T1.water) + chk('tdCg', 'CM and CG', T1.cg) + dsc();
+    ctl = row('tdD', 'distance of the Moon (Earth radii R)', 2.5, 60.3, 0.1, T1.d, f(T1.d, 1) + ' R')
+      + '<div class="td_brow">' + btn('tdDc', 'Close (4 R)') + btn('tdDr', 'Real distance (60 R)') + '</div>'
+      + '<div class="td_brow"><span class="td_ctrlname">pieces:</span>' + radio('tdPc', 'tdP1', 'on the line', T1.pieces === 'line') + radio('tdPc', 'tdP2', 'top and bottom', T1.pieces === 'tb') + radio('tdPc', 'tdP3', 'all around', T1.pieces === 'all') + '</div>'
+      + '<p class="td_note">The Moon is drawn much closer than it really is, so the differences between the pulls can be seen. At the real distance (60 R) they are only about 3% of the pull, but the tides still happen.</p>';
+    tries(['With the pieces on the line, compare the red arrows: which piece is pulled harder? Where is the center of gravity (CG)?', 'Choose \u201Cpull minus pull at centre\u201D: which way does the leftover force point on the far side? Why does the far side bulge too?', 'Choose \u201Ctop and bottom\u201D: the pulls point at the Moon, so they lean inward. What does that do to the water at the sides?', 'Move the Moon away: the pull drops as 1/d\u00B2 but the stretching drops as 1/d\u00B3. Check with the readout.']);
+  } else if (i === 1){
+    bar = playBtn() + '<label>speed <input type="range" id="tdSp" min="0.25" max="8" step="0.25" value="' + T2.spd + '" style="width:90px"> <span id="tdSpV">' + T2.spd + ' h/s</span></label>' + btn('tdH0', 'hour 0') + btn('tdH6', 'hour 6') + btn('tdH12', 'hour 12') + btn('tdH18', 'hour 18') + dsc();
+    ctl = '<div class="td_brow">' + chk('tdOrb', 'the Moon moves along its orbit', T2.orbit) + '</div><div class="td_brow">' + chk('tdSun', 'add the Sun\u2019s tide', T2.sun) + '</div><div class="td_brow">' + chk('tdArr', 'tidal force arrows', T2.arrows) + '</div>'
+      + '<div class="td_brow">' + btn('tdR2', 'Back to day 0') + '</div><p class="td_note">The harbour is the red dot on the Earth\u2019s rim (the equator). The graph shows its water height over the last 36 hours (solid) and the next 12 (dashed).</p>';
+    tries(['Step through hours 0, 6, 12 and 18, as on the slides: where is the harbour each time, and is the tide high or low?', 'How many high tides does the harbour get in one day? Use the graph.', 'Read the time between high tides. Now stop the Moon from moving along its orbit: what changes, and why?', 'Add the Sun: the highs are no longer all the same height.']);
+  } else if (i === 2){
+    bar = playBtn() + '<label>speed <input type="range" id="tdSp" min="0.25" max="5" step="0.25" value="' + T3.spd + '" style="width:90px"> <span id="tdSpV">' + T3.spd + ' days/s</span></label>' + btn('tdNew', 'New moon') + btn('tdQ1', 'First quarter') + btn('tdFull', 'Full moon') + btn('tdQ3', 'Third quarter') + dsc();
+    ctl = row('tdDay', 'day of the lunar month', 0, 29.5, 0.1, T3.day % TSYN, f(T3.day % TSYN, 1)) + row('tdDist', 'distance of the Moon (perigee to apogee)', 356, 407, 0.5, T3.dist, f(T3.dist, 1) + ' thousand km')
+      + '<p class="td_note">Each shape shows the water around the Earth: gold for the Sun\u2019s bulges, grey for the Moon\u2019s, green for the total. The Earth\u2019s daily turning is not shown here.</p>';
+    tries(['At new moon and full moon, are the Sun\u2019s and the Moon\u2019s bulges lined up? Read the tide range.', 'At first quarter, where are the Sun\u2019s high tides compared with the Moon\u2019s? Read the range again.', 'Why are there two spring tides each month, not one?', 'Bring the Moon to perigee (closest): how much larger does its bulge get? (\u221D 1/d\u00B3)']);
+  } else {
+    bar = playBtn() + '<label>speed <input type="range" id="tdSp" min="0.5" max="10" step="0.5" value="' + T4.spd + '" style="width:90px"> <span id="tdSpV">' + T4.spd + ' days/s</span></label>' + btn('tdFast', 'Start spinning fast') + btn('tdNone', 'Start with no spin') + btn('tdBack', 'Start spinning backward') + btn('tdLock', 'Start locked') + dsc();
+    ctl = '<div class="td_brow">' + chk('tdTq', 'the Earth\u2019s pull can turn the Moon (torque)', T4.torque) + '</div>'
+      + row('tdK', 'how elongated the Moon is (torque strength)', 0, 1, 0.02, T4.K, f(T4.K, 2)) + row('tdFr', 'friction inside the Moon', 0, 0.3, 0.01, T4.c, f(T4.c, 2))
+      + '<div class="td_brow">' + chk('tdFa', 'force arrows', T4.arrows) + chk('tdIn', 'seen from the Earth', T4.inset) + '</div>'
+      + '<p class="td_note">The red dot marks one end of the Moon\u2019s long axis. Red arrows: the Earth\u2019s pull on four parts of the Moon. x: the Moon\u2019s center of gravity. Pink curved arrow: the torque.</p>';
+    tries(['Untick the torque and start with no spin: does the Earth see all sides of the Moon? So does the locked Moon spin or not?', 'Turn the torque back on and start spinning fast: watch the spin period in the readout approach 27.3 days.', 'When the long axis is tilted from the Earth line, which end gets the bigger pull? Which way is the torque?', 'Set friction to zero: the Moon rocks back and forth around facing the Earth but takes much longer to settle. Real Moon: a small rocking called libration.']);
+  }
+  el('tdBar').innerHTML = bar; el('tdCtl').innerHTML = ctl;
+  on('tdPlay', 'click', function(){ setPlay(!U.play); }); on('tdDsc', 'click', describe);
+  on('tdSp', 'input', function(){ var v = +this.value; if (i === 1) T2.spd = v; else if (i === 2) T3.spd = v; else T4.spd = v; el('tdSpV').textContent = v + (i === 1 ? ' h/s' : ' days/s'); });
+  if (i === 0){
+    on('tdS1', 'change', function(){ T1.show = 'pull'; later(); }); on('tdS2', 'change', function(){ T1.show = 'tidal'; later(); }); on('tdS3', 'change', function(){ T1.show = 'both'; later(); });
+    on('tdWat', 'change', function(){ T1.water = this.checked; }); on('tdCg', 'change', function(){ T1.cg = this.checked; });
+    on('tdD', 'input', function(){ T1.d = +this.value; el('tdDv').textContent = f(T1.d, 1) + ' R'; later(); });
+    on('tdDc', 'click', function(){ T1.d = 4; el('tdD').value = 4; el('tdDv').textContent = '4.0 R'; later(); }); on('tdDr', 'click', function(){ T1.d = 60.3; el('tdD').value = 60.3; el('tdDv').textContent = '60.3 R'; later(); });
+    on('tdP1', 'change', function(){ T1.pieces = 'line'; later(); }); on('tdP2', 'change', function(){ T1.pieces = 'tb'; later(); }); on('tdP3', 'change', function(){ T1.pieces = 'all'; later(); });
+  } else if (i === 1){
+    [0, 6, 12, 18].forEach(function(h){ on('tdH' + h, 'click', function(){ T2.t = h; setPlay(false); narrate('Hour ' + h + ': ' + info2() + ' Water at the harbour: ' + f(harbour(T2.t), 2) + ' m.'); }); });
+    on('tdOrb', 'change', function(){ T2.orbit = this.checked; later(); }); on('tdSun', 'change', function(){ T2.sun = this.checked; later(); }); on('tdArr', 'change', function(){ T2.arrows = this.checked; });
+    on('tdR2', 'click', function(){ T2.t = 0; later(); });
+  } else if (i === 2){
+    [['tdNew', 0], ['tdQ1', TSYN/4], ['tdFull', TSYN/2], ['tdQ3', 3*TSYN/4]].forEach(function(q){ on(q[0], 'click', function(){ T3.day = q[1]; setPlay(false); syncDay(); narrate(info3()); }); });
+    on('tdDay', 'input', function(){ T3.day = +this.value; setPlay(false); syncDay(); later(); });
+    on('tdDist', 'input', function(){ T3.dist = +this.value; el('tdDistv').textContent = f(T3.dist, 1) + ' thousand km'; later(); });
+  } else {
+    [['tdFast', 'fast'], ['tdNone', 'none'], ['tdBack', 'back'], ['tdLock', 'lock']].forEach(function(q){ on(q[0], 'click', function(){ start4(q[1]); if (!U.play) setPlay(true); }); });
+    on('tdTq', 'change', function(){ T4.torque = this.checked; later(); });
+    on('tdK', 'input', function(){ T4.K = +this.value; el('tdKv').textContent = f(T4.K, 2); }); on('tdFr', 'input', function(){ T4.c = +this.value; el('tdFrv').textContent = f(T4.c, 2); });
+    on('tdFa', 'change', function(){ T4.arrows = this.checked; }); on('tdIn', 'change', function(){ T4.inset = this.checked; });
+  } }
+function syncDay(){ var e = el('tdDay'); if (!e) return; var v = ((T3.day % TSYN) + TSYN) % TSYN; e.value = v; el('tdDayv').textContent = f(v, 1); }
+var LABS = ['THE PULL OF THE MOON ON PIECES OF THE EARTH', 'TIDES THROUGH A DAY', 'SPRING AND NEAP TIDES', 'WHY THE SAME SIDE OF THE MOON FACES THE EARTH'];
+var INTRO = ['The Moon pulls on every piece of the Earth, but not equally: the near piece is pulled harder than the far piece. Compare the red arrows, then choose \u201Cpull minus pull at centre\u201D to see what stretches the Earth.',
+  'The two bulges stay lined up with the Moon while the Earth turns under them. Follow the red harbour: two high tides and two low tides a day.',
+  'The Sun raises bulges too, about half as large as the Moon\u2019s. Watch the total bulge through the month: big at new and full moon, small at the quarters.',
+  'The Moon starts spinning once every 5 days. The Earth pulls harder on the Moon\u2019s near end: that torque, with friction inside the Moon, slows the spin until the same side always faces the Earth.'];
+function tab(i){ U.tab = i; for (var k=0; k<4; k++) el('tdT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false');
+  el('tdLab').textContent = LABS[i]; if (i === 3 && T4.t === 0) start4('fast'); buildTab(i); info(); narrate(INTRO[i]); }
+function info(){ return [info1, info2, info3, info4][U.tab]() || lastStatus; }
+info2 = (function(fn){ return function(){ fn(); return lastStatus; }; })(info2);
+info3 = (function(fn){ return function(){ fn(); return lastStatus; }; })(info3);
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ info(); narrate(lastStatus); }, 900); }
+function describe(){ var p = ['The Earth is seen from above the North Pole, with the Moon to its right at ' + f(T1.d, 1) + ' Earth radii. Yellow circles mark pieces of mass dm. Red arrows show the Moon\u2019s pull on each piece, green the pull at the centre, yellow the pull minus the pull at the centre. The white plus is the center of mass, the pink x the center of gravity. ',
+    'The Earth is seen from above the North Pole, turning counterclockwise, with the Moon at ' + f(((moonAng2(T2.t)/DEG) % 360), 0) + ' degrees. The light blue water forms two bulges, toward and away from the Moon. A red dot marks a harbour on the equator; the graph on the right shows its water height. ',
+    'The Sun is at the left; the Earth is at the centre with the Moon on a circular orbit around it. Around the Earth, a gold outline shows the Sun\u2019s bulges, grey the Moon\u2019s, green the total. Small Earths at the bottom show each one separately. A graph shows the tide range over a month. ',
+    'The Earth is at the left; the elongated Moon goes around it on a dashed orbit. A red dot marks one end of the Moon\u2019s long axis. Red arrows show the Earth\u2019s pull on four parts of the Moon; a pink x marks the Moon\u2019s center of gravity; a pink curved arrow shows the torque. An inset shows the Moon as seen from the Earth. '][U.tab];
+  info(); narrate(p + lastStatus); }
+/* keyboard: space plays, arrows step */
+cv.addEventListener('keydown', function(e){ var k = e.key;
+  if (k === ' '){ setPlay(!U.play); } else if (k === 'ArrowRight' || k === 'ArrowLeft'){ var s = k === 'ArrowRight' ? 1 : -1;
+    if (U.tab === 0){ T1.d = clamp(T1.d + s*0.5, 2.5, 60.3); var d = el('tdD'); if (d){ d.value = T1.d; el('tdDv').textContent = f(T1.d, 1) + ' R'; } }
+    else if (U.tab === 1) T2.t = Math.max(0, T2.t + s); else if (U.tab === 2){ T3.day = Math.max(0, T3.day + s); syncDay(); } else { for (var i=0; i<40; i++) step4(s > 0 ? 0.025 : 0); }
+    later(); } else return; e.preventDefault(); });
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('td_hc', th.hc); ROOT.classList.toggle('td_lm', th.lm);
+  [['hc', 'tdBtnHC'], ['lm', 'tdBtnLM'], ['cb', 'tdBtnCB'], ['nr', 'tdBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('td_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('tdBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('tdNar').style.display = th.nr ? '' : 'none'; }
+function toggleDesc(){ var b = el('tdDescBtn'), d = el('tdDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+/* ══════════ the loop ══════════ */
+var last = 0, tick = 0;
+function advance(rdt){
+  if (U.tab === 1) T2.t += rdt*T2.spd;
+  else if (U.tab === 2){ T3.day += rdt*T3.spd; syncDay(); }
+  else if (U.tab === 3){ var T = rdt*T4.spd, n = Math.max(1, Math.ceil(T/0.02)); for (var i=0; i<n; i++) step4(T/n); } }
+function loop(t){ var rdt = last ? Math.min(0.05, (t - last)/1000) : 0; last = t;
+  if (U.play && rdt > 0) advance(rdt);
+  var p = pal(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H); [draw1, draw2, draw3, draw4][U.tab](p);
+  el('tdHint').textContent = U.tab === 0 ? 'top view \u00B7 not to scale' : (U.play ? 'playing' : 'paused') + ' \u00B7 space: play/pause \u00B7 \u2190 \u2192: step';
+  if (++tick % 8 === 0) info();
+  requestAnimationFrame(loop); }
+tab(0);
+narrate('Ready. ' + INTRO[0]);
+requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, describe:describe, start4:start4, _T:[T1, T2, T3, T4], _cg:cgOf, _h:harbour, _per:period2, _r3:range3, _s4:step4, _g4:geo4, _U:U };
+})();
+</script>
+
+</main>
+</body>
+</html>

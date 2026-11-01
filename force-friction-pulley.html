@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Forces: Horizontal Track -- Pulley &amp; Hanging Mass Friction Lab</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, force, forces, mechanics, friction, static friction, kinetic friction, coefficient of friction, pulley, hanging mass, modified Atwood, Newton second law, lesson, scientific">
+<meta name="description" content="Interactive friction lab: a block on a horizontal track pulled over a pulley by a hanging mass, with release and add-mass tests and recorded data.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<!-- ═══════════════════════════════════════════════════════
+SIM 4 -- Horizontal Track + Pulley + Hanging Mass (Modified Atwood) WITH FRICTION
+Experiments: (1) Release test  -- fixed hanging mass, release and measure the motion
+ (2) Add-mass test -- add small masses to the hanger until the block slips (static friction)
+Vary: block mass (m1), hanging mass (m2), release distance (d),
+track material, block material, contact-surface size
+μk and μs are redrawn with realistic run-to-run variability on every attempt,
+just like a real friction experiment.
+A11y: High Contrast | Color-Blind | Narration
+═══════════════════════════════════════════════════════ -->
+<div id="hm_root">
+<div class="sl_tbar"><h3>Horizontal Track -- Pulley &amp; Hanging Mass Friction Lab</h3></div>
+<div class="sl_mcontent">
+<canvas id="simCanvas" width="680" height="360" role="img" aria-label="Block on a horizontal track connected over a pulley to a hanging mass" aria-describedby="canvasDesc"></canvas>
+<p id="canvasDesc" class="sl_sronly">A block sits on a horizontal track. A string runs from the block over a pulley at the edge of the track down to a hanging mass. In the release test the system is released with a fixed hanging mass. In the add-mass test small masses are added to the hanger until the block slips.</p>
+</div>
+<!-- Playback buttons -->
+<div class="sl_bbar">
+<input type="button" id="btnPlay"  value="▶ Start adding mass" onclick="sim1.playSim()">
+<input type="button" id="btnPause" value="⏸ Pause"   onclick="sim1.pauseSim()">
+<input type="button" id="btnStep"  value="⏭ Step"    onclick="sim1.stepSim()">
+<input type="button" id="btnReset" value="↺ Reset"   onclick="sim1.resetSim()">
+</div>
+<!-- A11y buttons -->
+<div class="sl_bbar sl_a11ybar" role="toolbar" aria-label="Display options">
+<input type="button" id="btnHC"   value="High Contrast: OFF" onclick="sim1.toggleHC()">
+<input type="button" id="btnCB"   value="Color-Blind: OFF"   onclick="sim1.toggleCB()">
+<input type="button" id="btnNarr" value="Narration: ON"      onclick="sim1.toggleNarr()">
+</div>
+<!-- Parameters + Info -->
+<div class="sl_fbar">
+<div class="sl_params">
+<div class="sl_boxhd">Parameters</div>
+<div class="sl_prow">
+<span class="sl_plbl"><b>Experiment:</b></span>
+<select id="expSel" style="flex:1;" onchange="sim1.setExperiment(this.value)">
+<option value="release">Release test (fixed hanging mass)</option>
+<option value="add" selected>Add-mass test (add mass until it slides)</option>
+</select>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl">Release distance d (m):</span>
+<input type="range" id="dSlider" min="0.3" max="1.8" step="0.1" value="1.0" style="flex:1;" onchange="sim1.setDist(this.value)">
+<span id="dVal" class="sl_pval">1.00</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl">Block mass m₁ (kg):</span>
+<input type="range" id="mSlider" min="0.1" max="2" step="0.1" value="0.5" style="flex:1;" onchange="sim1.setMass(this.value)">
+<span id="mVal" class="sl_pval">0.50</span>
+</div>
+<div class="sl_prow" id="hangRow">
+<span class="sl_plbl">Hanging mass m₂ (kg):</span>
+<input type="range" id="hangSlider" min="0.1" max="2" step="0.1" value="0.3" style="flex:1;" onchange="sim1.setHangMass(this.value)">
+<span id="hangVal" class="sl_pval">0.30</span>
+</div>
+<div class="sl_prow" id="incRow" style="display:none;">
+<span class="sl_plbl">Mass added each time Δm:</span>
+<select id="incSel" style="flex:1;" onchange="sim1.setIncrement(this.value)">
+<option value="0.005">5 g</option>
+<option value="0.010" selected>10 g</option>
+<option value="0.020">20 g</option>
+<option value="0.050">50 g</option>
+</select>
+<span class="sl_pval" style="min-width:90px;font-weight:normal;font-size:0.72rem;">hanger = 50 g</span>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl">Track material:</span>
+<select id="trackMatSel" style="flex:1;" onchange="sim1.setTrackMat(this.value)"></select>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl">Block material:</span>
+<select id="blockMatSel" style="flex:1;" onchange="sim1.setBlockMat(this.value)"></select>
+</div>
+<div class="sl_prow">
+<span class="sl_plbl">Contact surface A (cm²):</span>
+<input type="range" id="contactSlider" min="4" max="200" step="2" value="36" style="flex:1;" onchange="sim1.setContact(this.value)">
+<span id="contactVal" class="sl_pval">36</span>
+</div>
+<div class="sl_prow" style="margin-bottom:0;">
+<span class="sl_plbl">Sim Speed (sliding):</span>
+<input type="range" id="speedSlider" min="1" max="80" step="1" value="75" style="flex:1;" onchange="sim1.setSpeed(this.value)">
+<span id="speedVal" class="sl_pval">0.75×</span>
+</div>
+</div>
+<div class="sl_info" role="note">
+<strong>Physics (horizontal track + pulley):</strong><br>
+N = m₁g<br>
+f_k = μ<sub>k</sub>N &nbsp;(opposes block's motion)<br>
+a = g(m₂ − μ<sub>k</sub>m₁) / (m₁+m₂), if m₂ &gt; μ<sub>s</sub>m₁<br>
+Stays put if m₂ ≤ μ<sub>s</sub>m₁<br>
+<strong>Add-mass test:</strong> slips once m₂ &gt; μ<sub>s</sub>m₁, so μ<sub>s</sub> ≈ m₂,c / m₁ (to within one Δm)<br>
+<br><em>f_k does NOT depend on contact area!</em><br>
+<em>μ<sub>k</sub>, μ<sub>s</sub> are redrawn with realistic run-to-run variability (~±15-20%) on every attempt -- just like a real experiment. The same setup may slide one time and not the next!</em>
+</div>
+</div>
+<!-- Live readings + Narration -->
+<div class="sl_fbar">
+<div class="sl_readout" role="region" aria-live="polite" aria-atomic="false">
+<div class="sl_boxhd">Live Readings</div>
+<div class="sl_rrow"><span>μ<sub>k</sub> (this trial):</span>  <span id="r_muk"  class="sl_rv">--</span></div>
+<div class="sl_rrow"><span>μ<sub>s</sub> (this trial):</span>  <span id="r_mus"  class="sl_rv">--</span></div>
+<div class="sl_rrow"><span>Critical m<sub>2</sub> (this trial):</span><span id="r_m2c" class="sl_rv">--</span></div>
+<div class="sl_rrow"><span>Hanging mass m<sub>2</sub>:</span><span id="r_m2" class="sl_rv">--</span></div>
+<div class="sl_rrow"><span>Velocity v:</span>        <span id="r_v"     class="sl_rv">0.000 m/s</span></div>
+<div class="sl_rrow"><span>Distance traveled s:</span><span id="r_s"    class="sl_rv">0.000 m</span></div>
+<div class="sl_rrow"><span>Accel. a:</span>          <span id="r_a"     class="sl_rv">0.000 m/s²</span></div>
+<div class="sl_rrow"><span>Time t:</span>            <span id="r_t"     class="sl_rv">0.000 s</span></div>
+<div class="sl_rrow"><span>Status:</span>            <span id="r_state" class="sl_badge" role="status">Ready</span></div>
+</div>
+<div id="narrationBox" class="sl_narr" role="region" aria-live="polite" aria-atomic="true">
+<div class="sl_boxhd sl_narrboxhd">What's happening</div>
+<p id="narration" class="sl_narrtext">Wood block (0.5 kg) on a Wood track, connected over a pulley to a 0.30 kg hanging mass. Press Release to see if it slides -- friction is drawn fresh each attempt.</p>
+</div>
+</div>
+<!-- ── Data Collection & Graph section ── -->
+<div class="sl_fbar" style="flex-direction:column;gap:6px;">
+<div class="sl_boxhd" style="width:100%;padding-bottom:3px;border-bottom:1px solid #888;">Data Collection -- change any parameter to set up a new run, then record</div>
+<!-- Axis controls -->
+<div class="hl_axisbar">
+<label class="hl_axislbl">Y-axis:
+<select id="yAxisSel" onchange="sim1.setYAxis(this.value)"></select>
+</label>
+<label class="hl_axislbl">X-axis:
+<select id="xAxisSel" onchange="sim1.setXAxis(this.value)"></select>
+</label>
+<label class="hl_axislbl" id="runSelWrap">Run:
+<select id="fitRun" onchange="sim1.redrawGraph()">
+<option value="-1">Current (unsaved)</option>
+<option value="all">All recorded runs (overlay)</option>
+</select>
+</label>
+</div>
+<div class="hl_hint" id="graphHint">Displacement s vs. time t -- select a run above.</div>
+<canvas id="vtCanvas" width="660" height="300" role="img" aria-label="Data graph: scatter plot of the selected quantities" aria-describedby="vtDesc"></canvas>
+<p id="vtDesc" class="sl_sronly">Scatter plot. Each run or material pair has its own color and marker shape.</p>
+<div class="hl_graphbar">
+<label class="hl_fitlabel"><input id="showFit" type="checkbox" onchange="sim1.redrawGraph()"> <b>Linear fit</b></label>
+<label class="hl_fitlabel"><input id="fitOrigin" type="checkbox" onchange="sim1.redrawGraph()"> through origin (y = a&middot;x)</label>
+<label class="hl_fitlabel"><input id="showAvg" type="checkbox" onchange="sim1.redrawGraph()"> <b>Average &plusmn; std. dev.</b></label>
+<label class="hl_fitlabel" id="groupWrap">Group:
+<select id="groupSel" onchange="sim1.redrawGraph()" style="font-size:0.75rem;">
+<option value="pair" selected>Each material pair &amp; test</option>
+<option value="all">All runs together</option>
+</select></label>
+<input type="button" value="Clear graph" onclick="sim1.clearGraph()" style="font-size:0.75rem;padding:3px 8px;cursor:pointer;background:#ffe0a0;border:1px solid #cc9900;border-radius:3px;">
+</div>
+<div id="fitBox" class="stats_box" style="display:none;" role="region" aria-live="polite">
+<div class="stats_title" id="fitTitle">Analysis</div>
+<div id="fitResult" class="stats_content"></div>
+</div>
+<!-- Record button -->
+<div style="display:flex;gap:8px;align-items:center;width:100%;flex-wrap:wrap;">
+<input type="button" id="btnRecord" value="⊕ Record this run" onclick="sim1.recordRun()"
+ style="font-size:0.82rem;padding:5px 14px;cursor:pointer;background:#8bc4f0;border:1px solid #5599cc;border-radius:3px;font-weight:bold;">
+<span id="recordHint" style="font-size:0.78rem;color:#555;">Let the block reach the pulley (or pause it), then click Record to save this run's data.</span>
+</div>
+<!-- Data table -->
+<div id="datatableBox" class="hl_tblbox" style="width:100%;">
+<div class="sl_boxhd">Recorded Runs</div>
+<p id="noDataMsg" class="hl_nodatamsg">Run simulation and click "Record this run".</p>
+<div class="hl_tblwrap">
+<table id="dataTable" class="hl_table" style="display:none;" aria-label="Recorded run data">
+<thead><tr><th>Run</th><th>Test</th><th>Track / Block</th><th>m₁</th><th>m₂</th><th>d</th><th>A(cm²)</th><th>μ<sub>k</sub> trial</th><th>a (m/s²)</th><th>v_f</th><th>T(s)</th><th>μ<sub>k</sub> meas.</th><th>m₂,c</th><th>μ<sub>s</sub>=m₂,c/m₁</th><th></th></tr></thead>
+<tbody id="dataTableBody"></tbody>
+</table>
+</div>
+<div class="hl_graphbar" style="margin-top:6px;">
+<input type="button" value="Download CSV" onclick="sim1.downloadCSV()" class="hl_btn">
+<input type="button" value="Copy table" onclick="sim1.copyTable()" class="hl_btn">
+<input type="button" value="Delete last run" onclick="sim1.deleteRun(-1)" class="hl_btn">
+<input type="button" value="Clear all data" onclick="sim1.clearData()" class="hl_btn" style="background:#f0b8b8;border-color:#cc6655;">
+</div>
+</div>
+</div>
+<div id="srAnnounce" class="sl_sronly" aria-live="assertive" aria-atomic="true"></div>
+<!-- ═══════ STYLES ═══════ -->
+<style>
+#hm_root, #hm_root * { margin:0; box-sizing:border-box; }
+#hm_root { width:683px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+.sl_tbar { width:683px; height:48px; background:#f90; display:flex; align-items:center; justify-content:center; }
+.sl_tbar h3 { font-size:1rem; color:#222; }
+.sl_mcontent { width:683px; background:#fff; }
+#simCanvas { display:block; border-bottom:2px solid #888; }
+.sl_bbar { width:683px; min-height:46px; background:#df9; padding:8px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center; }
+.sl_bbar input[type=button] { font-size:0.78rem; padding:4px 10px; border:1px solid #888; border-radius:3px; cursor:pointer; font-weight:bold; background:#d4d4d4; color:#111; }
+.sl_bbar input#btnPlay  { background:#8bc4f0; border-color:#5599cc; }
+.sl_bbar input#btnReset { background:#f0b8b8; border-color:#cc6655; }
+.sl_bbar input.sl_active { background:#333; color:#fff; border-color:#111; }
+.sl_fbar { width:683px; min-height:80px; background:#fec; padding:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:flex-start; }
+.sl_params { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:2; min-width:220px; }
+.sl_readout { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; flex:1; min-width:150px; }
+.sl_narr { background:#eef4ff; border:2px solid #6699cc; border-radius:4px; padding:9px 11px; flex:2; min-width:160px; }
+.sl_info { background:#fffbe6; border:1px solid #ccaa00; border-radius:4px; padding:9px 11px; font-size:0.77rem; color:#555; line-height:1.6; flex:1; min-width:150px; }
+.sl_boxhd { font-size:0.85rem; font-weight:bold; border-bottom:1px solid #888; padding-bottom:3px; margin-bottom:7px; }
+.sl_narrboxhd { border-bottom-color:#6699cc; color:#112244; }
+.sl_prow { display:flex; align-items:center; gap:5px; margin-bottom:6px; font-size:0.82rem; }
+.sl_plbl { min-width:150px; font-size:0.8rem; }
+.sl_pval { font-size:0.82rem; font-weight:bold; min-width:40px; text-align:right; color:#003399; }
+.sl_prow select { font-size:0.8rem; padding:2px 4px; }
+.sl_rrow { display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.82rem; }
+.sl_rv   { font-weight:bold; color:#cc2200; }
+.sl_badge { font-weight:bold; color:#005500; background:#ccffcc; border-radius:3px; padding:0 5px; }
+.sl_narrtext { font-size:0.79rem; color:#112244; line-height:1.55; margin:0; }
+.sl_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+/* graph area */
+#vtCanvas { border:1px solid #888; background:#fafafa; display:block; }
+.hl_hint { font-size:0.78rem; color:#555; margin-bottom:2px; }
+.hl_graphbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:3px; }
+.hl_fitlabel { font-size:0.78rem; display:flex; align-items:center; gap:4px; cursor:pointer; }
+.hl_btn { font-size:0.75rem; padding:3px 9px; cursor:pointer; border:1px solid #888; border-radius:3px; background:#d4d4d4; }
+.stats_box { background:#fff; border:1px solid #aaa; border-radius:3px; padding:8px 12px; font-size:0.78rem; line-height:1.7; width:100%; }
+.stats_title { font-weight:bold; font-size:0.82rem; margin-bottom:4px; border-bottom:1px solid #ccc; padding-bottom:3px; }
+.stats_content { font-family:'Courier New',monospace; font-size:0.76rem; }
+.hl_tblbox { background:#fff; border:2px solid #888; border-radius:4px; padding:9px 11px; }
+.hl_nodatamsg { font-size:0.74rem; color:#555; margin-top:3px; }
+.hl_tblwrap { max-height:220px; overflow:auto; }
+.hl_table { width:100%; border-collapse:collapse; font-size:0.66rem; margin-top:3px; }
+.hl_table th { background:#d4d4d4; border:1px solid #888; padding:2px 3px; text-align:center; position:sticky; top:0; }
+.hl_table td { border:1px solid #ccc; padding:2px 3px; text-align:center; white-space:nowrap; }
+.hl_del { font-size:0.68rem; padding:0 5px; cursor:pointer; border:1px solid #c66; background:#fdd; border-radius:3px; color:#900; }
+.hl_axisbar { display:flex; gap:14px; flex-wrap:wrap; align-items:center; background:#fff; border:1px solid #888; border-radius:4px; padding:6px 10px; width:100%; }
+.hl_axislbl { font-size:0.78rem; font-weight:bold; color:#333; display:flex; align-items:center; gap:5px; }
+.hl_axislbl select { font-size:0.78rem; padding:2px 4px; max-width:250px; }
+/* ── HIGH CONTRAST overrides ── */
+#hm_root.hc-mode { background:#111; }
+#hm_root.hc-mode .sl_tbar { background:#cc7700; }
+#hm_root.hc-mode .sl_bbar { background:#1a2a1a; }
+#hm_root.hc-mode .sl_fbar { background:#1a1a2a; }
+#hm_root.hc-mode .sl_params,
+#hm_root.hc-mode .sl_readout,
+#hm_root.hc-mode .hl_tblbox,
+#hm_root.hc-mode .hl_axisbar,
+#hm_root.hc-mode .stats_box { background:#111; border-color:#aaa; color:#eee; }
+#hm_root.hc-mode .sl_narr { background:#0a0a22; border-color:#6699ff; }
+#hm_root.hc-mode .sl_info { background:#111100; border-color:#aa8800; color:#ddd; }
+#hm_root.hc-mode .sl_boxhd, #hm_root.hc-mode .stats_title { color:#fff; border-bottom-color:#aaa; }
+#hm_root.hc-mode .sl_pval { color:#88aaff; }
+#hm_root.hc-mode .sl_rv { color:#ff8888; }
+#hm_root.hc-mode .sl_badge { background:#003300; color:#88ff88; }
+#hm_root.hc-mode .sl_narrtext { color:#aaccff; }
+#hm_root.hc-mode .sl_plbl,
+#hm_root.hc-mode .sl_rrow,
+#hm_root.hc-mode .hl_fitlabel { color:#ddd; }
+#hm_root.hc-mode .hl_hint { color:#aaa; }
+#hm_root.hc-mode .hl_axislbl { color:#eee; }
+#hm_root.hc-mode .hl_table th { background:#333; color:#fff; }
+#hm_root.hc-mode .hl_table td { color:#eee; border-color:#444; }
+#hm_root.hc-mode #vtCanvas { background:#111; border-color:#555; }
+/* ════════ Hall effect template layer: mobile friendly, scoped to #hm_root ════════ */
+#hm_root {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3; --tp-bright:#e8eef5;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66; --tp-warn:#e0605a;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+width:100%; max-width:760px; margin:0 auto 10px; box-sizing:border-box; position:relative;
+display:flex; flex-direction:column; gap:10px; padding:14px 10px 18px; border-radius:6px;
+font-family:Arial, sans-serif; color:var(--tp-text); background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+}
+#hm_root.hc-mode { --tp-chassis:#000000; --tp-panel:#000000; --tp-panel-hi:#111111; --tp-panel-lo:#000000; --tp-border:#ffffff; --tp-border-hi:#ffffff;
+--tp-text:#ffffff; --tp-dim:#e0e0e0; --tp-bright:#ffffff; --tp-accent:#ffd700; --tp-green:#00ff88; --tp-val:#ffff00; --tp-warn:#ff5555;
+--tp-focus:#ffff00; --tp-nar-bg:#000000; --tp-nar-border:#ffd700; --tp-nar-text:#ffffff; background-image:none; }
+#hm_root *, #hm_root *::before, #hm_root *::after { box-sizing:border-box; }
+#hm_root input:focus-visible, #hm_root select:focus-visible, #hm_root canvas:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+#hm_root .sl_tbar { width:auto; height:auto; min-height:0; background:none !important; padding:2px 4px; display:flex; justify-content:center; }
+#hm_root .sl_tbar h3 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent) !important; text-align:center; line-height:1.35; }
+#hm_root .sl_mcontent { width:auto; background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#hm_root canvas#simCanvas { display:block; width:100%; max-width:680px; height:auto; margin:0 auto; }
+#hm_root canvas#vtCanvas { display:block; width:100%; max-width:660px; height:auto; margin:0 auto; }
+#hm_root .sl_bbar { width:auto; min-height:0; background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border); border-radius:6px; padding:8px 10px; gap:6px; justify-content:center; color:var(--tp-text); }
+#hm_root .sl_a11ybar { background:none !important; border:none; padding:0; }
+#hm_root input[type=button] { font-family:monospace; font-size:.7rem; letter-spacing:.04em; text-transform:uppercase; font-weight:bold; padding:7px 10px; cursor:pointer;
+  background:var(--tp-panel-hi) !important; border:1px solid var(--tp-border-hi) !important; color:var(--tp-text) !important; border-radius:3px; line-height:1.25; white-space:normal; }
+#hm_root input[type=button]:hover { border-color:var(--tp-accent) !important; }
+#hm_root .sl_a11ybar input[type=button] { font-size:.68rem; font-weight:normal; letter-spacing:.06em; padding:4px 10px; color:var(--tp-dim) !important; }
+#hm_root #btnPlay { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#hm_root #btnStart { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#hm_root #btnCheck { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#hm_root #btnRecord { color:var(--tp-accent) !important; border-color:var(--tp-accent) !important; }
+#hm_root input[type=button][value*="Clear"], #hm_root input[type=button][value*="Delete"], #hm_root input[type=button][value*="Retry"], #hm_root #btnReset, #hm_root #btnReplay { color:var(--tp-warn) !important; border-color:#a04040 !important; }
+#hm_root input[type=button].sl_active { background:rgba(58,208,143,.14) !important; border-color:var(--tp-green) !important; color:var(--tp-green) !important; }
+#hm_root #btnViewStatic { border-bottom:3px solid #5599cc !important; }
+#hm_root #btnViewKinetic { border-bottom:3px solid #779933 !important; }
+#hm_root .sl_taglbl, #hm_root .sl_plbl { color:var(--tp-dim) !important; font-size:.72rem; font-weight:600; letter-spacing:.03em; }
+#hm_root .sl_pval { color:var(--tp-val) !important; font-family:monospace; }
+#hm_root select { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.78rem; max-width:100%; }
+#hm_root input[type=number], #hm_root input[type=text], #hm_root .sl_input { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; }
+#hm_root .sl_good { color:#111 !important; }
+#hm_root .sl_ok { color:#111 !important; }
+#hm_root .sl_off { color:#111 !important; }
+#hm_root input[type=range] { accent-color:var(--tp-accent); min-width:0; }
+#hm_root select { min-width:0; }
+#hm_root .hl_axislbl { display:inline-flex; flex-wrap:wrap; align-items:center; gap:4px; max-width:100%; }
+#hm_root input[type=checkbox] { accent-color:var(--tp-accent); }
+#hm_root .sl_fbar { width:auto; min-height:0; background:none !important; padding:0; gap:10px; }
+#hm_root .sl_fbar[style*="column"] { background:var(--tp-panel) !important; border:1px solid var(--tp-border); border-radius:6px; padding:10px; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#hm_root .sl_prompt, #hm_root .sl_readout, #hm_root .sl_narr, #hm_root .sl_info, #hm_root .sl_params, #hm_root .sl_tablebox { background:var(--tp-panel) !important; border:1px solid var(--tp-border) !important; border-radius:6px; padding:9px 12px; color:var(--tp-text) !important; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#hm_root .hl_tblbox { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; border-radius:6px; color:var(--tp-text); }
+#hm_root .hl_axisbar { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; border-radius:4px; }
+#hm_root .sl_boxhd { font-family:monospace; font-size:.66rem; font-weight:bold; letter-spacing:.12em; text-transform:uppercase; color:var(--tp-dim) !important; border-bottom-color:var(--tp-border) !important; }
+#hm_root .sl_prompt > .sl_boxhd:first-child, #hm_root .sl_readout > .sl_boxhd:first-child, #hm_root .sl_narr > .sl_boxhd:first-child, #hm_root .sl_info > .sl_boxhd:first-child, #hm_root .sl_params > .sl_boxhd:first-child, #hm_root .sl_tablebox > .sl_boxhd:first-child { background:var(--tp-panel-lo); margin:-9px -12px 9px; padding:6px 12px; border-bottom:1px solid var(--tp-border); }
+#hm_root .sl_prompttext, #hm_root .sl_info, #hm_root .sl_rrow { color:var(--tp-text) !important; }
+#hm_root .sl_info { font-size:.74rem; }
+#hm_root .sl_rv { color:var(--tp-val) !important; font-family:monospace; }
+#hm_root .sl_badge { background:rgba(58,208,143,.14) !important; color:var(--tp-green) !important; }
+#hm_root .sl_narr { background:var(--tp-nar-bg) !important; border:none !important; border-left:4px solid var(--tp-nar-border) !important; border-radius:3px; }
+#hm_root .sl_narr > .sl_boxhd:first-child { background:none; color:var(--tp-nar-border) !important; border-bottom-color:rgba(224,176,64,.35) !important; }
+#hm_root .sl_narrtext { color:var(--tp-nar-text) !important; font-style:italic; font-size:.82rem; }
+#hm_root .sl_stats_box { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; color:var(--tp-text) !important; border-radius:4px; }
+#hm_root .stats_box { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; color:var(--tp-text) !important; border-radius:4px; }
+#hm_root .sl_stats_title { color:var(--tp-accent) !important; border-bottom-color:var(--tp-border) !important; }
+#hm_root .stats_title { color:var(--tp-accent) !important; border-bottom-color:var(--tp-border) !important; }
+#hm_root .sl_table { color:var(--tp-text); }
+#hm_root .sl_table th { background:var(--tp-panel-hi) !important; color:var(--tp-text) !important; }
+#hm_root .sl_table th, #hm_root .sl_table td { border-color:var(--tp-border) !important; }
+#hm_root .dt_table { color:var(--tp-text); }
+#hm_root .dt_table th { background:var(--tp-panel-hi) !important; color:var(--tp-text) !important; }
+#hm_root .dt_table th, #hm_root .dt_table td { border-color:var(--tp-border) !important; }
+#hm_root .hl_table { color:var(--tp-text); }
+#hm_root .hl_table th { background:var(--tp-panel-hi) !important; color:var(--tp-text) !important; }
+#hm_root .hl_table th, #hm_root .hl_table td { border-color:var(--tp-border) !important; }
+#hm_root .dt_wrap { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; overflow:auto; -webkit-overflow-scrolling:touch; }
+#hm_root .hl_tblwrap { background:var(--tp-panel-lo) !important; border:1px solid var(--tp-border) !important; overflow:auto; -webkit-overflow-scrolling:touch; }
+#hm_root .dt_ctrl, #hm_root .hl_axisbar, #hm_root .hl_graphbar, #hm_root .hl_axislbl, #hm_root .hl_fitlabel, #hm_root .hl_hint, #hm_root .hl_nodatamsg, #hm_root .dt_empty { color:var(--tp-text) !important; }
+#hm_root [style*="color:#333"], #hm_root [style*="color:#555"] { color:var(--tp-dim) !important; }
+#hm_root [style*="color:#0072b2"], #hm_root [style*="color:#d55e00"] { background:#ffffff; border-radius:2px; padding:0 3px; }
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#hm_root input[type=button] { min-height:40px; }
+#hm_root .sl_a11ybar input[type=button] { min-height:36px; }
+#hm_root select { min-height:36px; font-size:16px; }
+#hm_root input[type=number], #hm_root input[type=text], #hm_root .sl_input { font-size:16px; min-height:30px; }
+#hm_root input[type=checkbox] { width:20px; height:20px; }
+#hm_root input[type=range] { height:28px; }
+}
+@media (max-width:560px) {
+#hm_root { padding:10px 6px 14px; }
+#hm_root .sl_fbar > *:not(.sl_sronly) { min-width:100% !important; }
+#hm_root .sl_fbar[style*="column"] { padding:8px 6px; }
+#hm_root .sl_plbl { min-width:0 !important; width:100%; }
+#hm_root .sl_prow { flex-wrap:wrap; row-gap:2px; margin-bottom:10px; }
+}
+</style>
+<!-- ═══════ JAVASCRIPT ═══════ -->
+<script>
+var sim1 = (function(){
+var ROOT_EL = document.getElementById('hm_root');
+/* ── Canvas refs ── */
+var canvas = document.getElementById('simCanvas');
+var ctx    = canvas.getContext('2d');
+var CW = canvas.width, CH = canvas.height;
+var DPR = window.devicePixelRatio || 1;   /* sharp on phones: draw at device resolution, CSS scales each canvas to the page */
+canvas.width = CW*DPR; canvas.height = CH*DPR; ctx.scale(DPR, DPR);
+var vtC    = document.getElementById('vtCanvas');
+var vtx    = vtC.getContext('2d');
+var VW = vtC.width, VH = vtC.height;
+vtC.width = VW*DPR; vtC.height = VH*DPR; vtx.scale(DPR, DPR);
+var VP = {l:58, r:16, t:14, b:40};
+/* ── Palettes ── */
+var PAL = {
+def:{ block1:'#66ee44', block2:'#228800', pad:'#333333', hang1:'#aabbcc', hang2:'#556677',
+ track1:'#bbbbbb', track2:'#666666', post:'#888888', stop:'#cc3333', floor:'#999999',
+ pulley1:'#dddddd', pulley2:'#555555', string:'#333333',
+ canvas:'#ffffff', friction:'#ff8800',
+ arrow:'#cc0033', gate:'#0055cc', slip:'#aa00aa' },
+cb:{  block1:'#e69f00', block2:'#b37200', pad:'#333333', hang1:'#a9c4e0', hang2:'#3a5f80',
+track1:'#cccccc', track2:'#555555', post:'#999999', stop:'#d55e00', floor:'#999999',
+pulley1:'#dddddd', pulley2:'#444444', string:'#333333',
+canvas:'#ffffff', friction:'#d55e00',
+arrow:'#d55e00', gate:'#0072b2', slip:'#cc79a7' },
+hc:{  block1:'#000000', block2:'#333333', pad:'#000000', hang1:'#666666', hang2:'#000000',
+track1:'#555555', track2:'#000000', post:'#000000', stop:'#cc0000', floor:'#777777',
+pulley1:'#eeeeee', pulley2:'#000000', string:'#000000',
+canvas:'#ffffff', friction:'#cc6600',
+arrow:'#cc0000', gate:'#0000cc', slip:'#ff66ff' }
+};
+var pal = PAL.def;
+var hcMode=false, cbMode=false, showNarration=true;
+/* ── Materials & friction (approximate demonstration base values) ──
+ Pairs listed in MU_K use those values. Any other pair uses the geometric
+ mean of the two materials' "grip" values in GRIP.                     */
+var MATERIALS = ['Wood','Rubber','Steel','Aluminum','Brass','Glass','Acrylic','Teflon','Ice','Felt','Cardboard','Sandpaper'];
+var GRIP = { Wood:0.30, Rubber:0.80, Steel:0.20, Aluminum:0.30, Brass:0.25, Glass:0.35, Acrylic:0.35,
+Teflon:0.04, Ice:0.02, Felt:0.30, Cardboard:0.35, Sandpaper:0.85 };
+var MU_K = {
+'Ice|Ice':0.02, 'Ice|Rubber':0.15, 'Ice|Steel':0.03, 'Ice|Teflon':0.02, 'Ice|Wood':0.05,
+'Rubber|Rubber':0.80, 'Rubber|Steel':0.45, 'Rubber|Teflon':0.10, 'Rubber|Wood':0.55,
+'Steel|Steel':0.15, 'Steel|Teflon':0.04, 'Steel|Wood':0.20,
+'Teflon|Teflon':0.04, 'Teflon|Wood':0.04,
+'Wood|Wood':0.25
+};
+var STATIC_OFFSET = 0.05; /* base mu_s = mu_k + this, before per-trial randomization */
+function getMuK(a,b){
+var arr=[a,b].sort(), key=arr[0]+'|'+arr[1];
+if(MU_K[key]!==undefined) return MU_K[key];
+return Math.round(Math.sqrt(GRIP[a]*GRIP[b])*100)/100;
+}
+/* per-trial randomized kinetic & static friction, drawn fresh on each attempt --
+ models the real-world variability of friction coefficients between nominally-identical trials.
+ mu_s is kept above mu_k: otherwise the block could "slip" with zero acceleration and never move. */
+var curMuK=null, curMuS=null;
+function drawTrialFriction(){
+var muKbase = getMuK(trackMat,blockMat);
+curMuK = muKbase * (1 + (Math.random()*0.30 - 0.15));
+curMuS = muKbase * (1 + (Math.random()*0.30 - 0.15)) + STATIC_OFFSET * (1 + (Math.random()*0.20));
+if(curMuS < curMuK*1.05) curMuS = curMuK*1.05;
+}
+/* ── Physics constants ── */
+var G = 9.80;
+var relDist = 1.0, mass = 0.5, hangMass = 0.3;
+var trackMat='Wood', blockMat='Wood', contact=36;
+var simSpeed = 0.20;
+/* add-mass test */
+var experiment='add', HANGER=0.050, increment=0.010, ADD_INTERVAL=0.6, M2_MAX=5.0;
+var addTimer=0, flashLeft=0, m2Slip=null, tSlip=0;
+/* ── Sim state ── */
+var running=false, animId=null, lastTS=null;
+var pos, vel, phase, simTime; /* pos = remaining distance to pulley (m), starts at relDist, -> 0 */
+var TOP_X=70, BASE_X=470, TRACK_Y=90, TRACK_THICK=16, BLOCK_W=48, BLOCK_H=34;
+var PULLEY_X=495, PULLEY_R=14, HANG_OFFSET=25, FLOOR_Y=340;
+var PX_PER_M=90;
+function blockRightX(){ return BASE_X - pos*PX_PER_M; }
+function hangW(){ return Math.max(20, Math.min(60, 18+hangMass*16)); }
+function hangTopY(){ var dropped = relDist-pos; return TRACK_Y+HANG_OFFSET+dropped*PX_PER_M; }
+function padPx(){ return Math.min(100, 15 + Math.sqrt(contact)*5); }
+/* ── Data collection ── */
+var currentTrace = [];  /* [{t,s,v,a}] for current run (t from release / slip) */
+var allRuns = [];       /* array of run summary objects */
+var runCounter = 0;
+var ERROR_FRAC = 0.02;  /* ~2% measurement noise on each sample */
+function noise(v){ return v + Math.abs(v)*ERROR_FRAC*(Math.random()-0.5)*2*1.7; }
+var yAxis='s', xAxis='t';
+/* ── SR announcer ── */
+var srTimer=null;
+function srAnnounce(msg){
+var el=document.getElementById('srAnnounce'); if(!el)return;
+el.textContent=''; clearTimeout(srTimer);
+srTimer=setTimeout(function(){el.textContent=msg;},50);
+}
+function setBtnActive(id,on){
+var b=document.getElementById(id); if(!b)return;
+if(on) b.className=(b.className+' sl_active').trim();
+else   b.className=b.className.replace('sl_active','').trim();
+}
+/* ── A11y toggles (classList, so the host page's own body classes are left alone) ── */
+function toggleHC(){
+hcMode=!hcMode;
+if(hcMode){cbMode=false; setBtnActive('btnCB',false); document.getElementById('btnCB').value='Color-Blind: OFF';}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+ROOT_EL.classList.toggle('hc-mode', hcMode);
+setBtnActive('btnHC',hcMode);
+document.getElementById('btnHC').value=hcMode?'High Contrast: ON':'High Contrast: OFF';
+draw(); redrawGraph();
+}
+function toggleCB(){
+cbMode=!cbMode;
+if(cbMode&&hcMode){hcMode=false; setBtnActive('btnHC',false); document.getElementById('btnHC').value='High Contrast: OFF';}
+pal=hcMode?PAL.hc:(cbMode?PAL.cb:PAL.def);
+ROOT_EL.classList.remove('hc-mode');
+setBtnActive('btnCB',cbMode);
+document.getElementById('btnCB').value=cbMode?'Color-Blind: ON':'Color-Blind: OFF';
+draw(); redrawGraph();
+}
+function toggleNarr(){
+showNarration=!showNarration;
+var box=document.getElementById('narrationBox');
+if(box) box.style.display=showNarration?'':'none';
+setBtnActive('btnNarr',showNarration);
+document.getElementById('btnNarr').value=showNarration?'Narration: ON':'Narration: OFF';
+}
+/* ── Friction readouts (in the add-mass test they stay hidden until the block slips) ── */
+function updateMuReadout(){
+var el1=document.getElementById('r_muk');
+var el2=document.getElementById('r_mus');
+var el3=document.getElementById('r_m2c');
+var hidden = (experiment==='add' && (phase==='adding' || (phase==='ready' && curMuK!==null)));
+if(curMuK===null){
+if(el1) el1.textContent='-- (press '+(experiment==='add'?'Start':'Release')+')';
+if(el2) el2.textContent='--';
+if(el3) el3.textContent='--';
+} else if(hidden){
+if(el1) el1.textContent='(hidden until it slips)';
+if(el2) el2.textContent='(hidden)';
+if(el3) el3.textContent='(hidden)';
+} else {
+if(el1) el1.textContent=curMuK.toFixed(3);
+if(el2) el2.textContent=curMuS.toFixed(3);
+if(el3) el3.textContent=(curMuS*mass).toFixed(3)+' kg';
+}
+}
+/* ── Slider / control setters ── */
+function setDist(v){ relDist=parseFloat(v); document.getElementById('dVal').textContent=relDist.toFixed(2); if(!running)resetSim(); }
+function setMass(v){ mass=parseFloat(v); document.getElementById('mVal').textContent=mass.toFixed(2); if(!running)resetSim(); }
+function setHangMass(v){ hangMass=parseFloat(v); document.getElementById('hangVal').textContent=hangMass.toFixed(2); if(!running)resetSim(); }
+function setSpeed(v){ simSpeed=parseFloat(v)/100; document.getElementById('speedVal').textContent=simSpeed.toFixed(2)+'×'; }
+function setIncrement(v){ increment=parseFloat(v); if(!running)resetSim(); }
+function setTrackMat(v){ trackMat=v; if(!running)resetSim(); }
+function setBlockMat(v){ blockMat=v; if(!running)resetSim(); }
+function setContact(v){ contact=parseFloat(v); document.getElementById('contactVal').textContent=contact.toFixed(0); if(!running)resetSim(); }
+function setExperiment(v){
+experiment=v;
+document.getElementById('hangRow').style.display = (v==='release')?'':'none';
+document.getElementById('incRow').style.display  = (v==='add')?'':'none';
+document.getElementById('btnPlay').value = (v==='add')?'▶ Start adding mass':'▶ Release';
+document.getElementById('recordHint').textContent = (v==='add')
+? 'Keep adding mass until the block slips (it then slides to the pulley), then click Record to save the slip mass.'
+: "Let the block reach the pulley (or pause it), then click Record to save this run's data.";
+if(running) pauseSim();
+resetSim();
+}
+function readSliders(){
+relDist   = parseFloat(document.getElementById('dSlider').value);
+mass      = parseFloat(document.getElementById('mSlider').value);
+hangMass  = parseFloat(document.getElementById('hangSlider').value);
+trackMat  = document.getElementById('trackMatSel').value;
+blockMat  = document.getElementById('blockMatSel').value;
+contact   = parseFloat(document.getElementById('contactSlider').value);
+increment = parseFloat(document.getElementById('incSel').value);
+}
+/* ── Begin an attempt: draw fresh trial friction, decide static vs sliding ── */
+function beginAttempt(){
+drawTrialFriction();
+if(experiment==='add'){
+phase='adding'; addTimer=0;
+if(hangMass > curMuS*mass){ slipNow(); }   /* even the empty hanger is enough */
+updateMuReadout();
+return true;
+}
+updateMuReadout();
+if(hangMass <= curMuS*mass){ phase='static'; return false; }
+phase='sliding'; tSlip=0; return true;
+}
+function slipNow(){ phase='sliding'; m2Slip=hangMass; tSlip=simTime; updateMuReadout(); }
+/* add one increment to the hanger; the block slips as soon as m2 exceeds mu_s m1 */
+function addOne(){
+hangMass = Math.round((hangMass+increment)*1000)/1000;
+flashLeft = 0.45;
+if(hangMass > curMuS*mass) slipNow();
+else if(hangMass >= M2_MAX) phase='static';
+}
+/* ── Physics step (friction depends on materials only, NOT contact area) ── */
+function step(dt){
+if(phase==='adding'){
+simTime += dt; addTimer += dt; flashLeft = Math.max(0, flashLeft-dt);
+if(addTimer >= ADD_INTERVAL){ addTimer -= ADD_INTERVAL; addOne(); }
+return;
+}
+dt = Math.min(dt, 0.016);
+flashLeft = Math.max(0, flashLeft-dt);
+if(phase==='sliding'){
+var aDown = G*(hangMass - curMuK*mass)/(mass+hangMass);
+if(aDown<0) aDown=0;
+vel += aDown*dt;
+pos -= vel*dt;
+simTime += dt;
+if(pos <= 0){ pos=0; phase='stopped'; }
+var tRel = simTime - tSlip;
+var lastT = currentTrace.length>0 ? currentTrace[currentTrace.length-1].tTrue : -99;
+if(tRel - lastT >= 0.04 || phase==='stopped'){
+var sTrav = relDist - pos;
+currentTrace.push({
+tTrue: tRel,
+t: parseFloat(noise(tRel).toFixed(4)),
+s: parseFloat(noise(sTrav).toFixed(4)),
+v: parseFloat(noise(vel).toFixed(4)),
+a: parseFloat(noise(aDown).toFixed(4))
+});
+}
+}
+}
+/* ── Draw ── */
+function draw(){
+ctx.clearRect(0,0,CW,CH);
+ctx.fillStyle = hcMode?'#111':pal.canvas;
+ctx.fillRect(0,0,CW,CH);
+drawFloor();
+drawTable();
+drawPulleyPost();
+drawReleaseGate();
+drawFrictionMarks();
+drawString();
+drawHangingMass();
+drawPulley();
+drawBlock();
+drawVelocityArrow();
+drawTimestamp();
+}
+function drawFloor(){
+ctx.strokeStyle=hcMode?'#555':pal.floor; ctx.lineWidth=hcMode?2:1.5;
+ctx.beginPath(); ctx.moveTo(20,FLOOR_Y); ctx.lineTo(CW-20,FLOOR_Y); ctx.stroke();
+}
+function drawTable(){
+var gr = ctx.createLinearGradient(0,TRACK_Y,0,TRACK_Y+TRACK_THICK);
+gr.addColorStop(0, pal.track1); gr.addColorStop(0.4,pal.track2); gr.addColorStop(1,pal.track2);
+ctx.fillStyle=gr; ctx.fillRect(TOP_X-16,TRACK_Y,(BASE_X+10)-(TOP_X-14),TRACK_THICK);
+ctx.strokeStyle=hcMode?'#000':'#555'; ctx.lineWidth=hcMode?2:1;
+ctx.beginPath(); ctx.moveTo(TOP_X-16,TRACK_Y); ctx.lineTo(BASE_X+8,TRACK_Y); ctx.stroke();
+/* legs */
+ctx.fillStyle=pal.post;
+ctx.fillRect(TOP_X-16,TRACK_Y+TRACK_THICK,14,FLOOR_Y-(TRACK_Y+TRACK_THICK));
+ctx.fillRect(BASE_X-6,TRACK_Y+TRACK_THICK,14,FLOOR_Y-(TRACK_Y+TRACK_THICK));
+/* track material label */
+ctx.fillStyle=hcMode?'#ccc':'#444'; ctx.font='9px Arial'; ctx.textAlign='center';
+ctx.fillText('track: '+trackMat, (TOP_X+BASE_X)/2, TRACK_Y+TRACK_THICK+13);
+/* stop marker (s = 0, at the pulley end) */
+ctx.strokeStyle=pal.stop; ctx.lineWidth=hcMode?3:2;
+ctx.setLineDash([5,4]);
+ctx.beginPath(); ctx.moveTo(BASE_X,TRACK_Y-30); ctx.lineTo(BASE_X,TRACK_Y+TRACK_THICK); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle=pal.stop; ctx.font='bold 10px Arial'; ctx.textAlign='center';
+ctx.fillText('s = 0', BASE_X, TRACK_Y-34);
+}
+function drawPulleyPost(){
+ctx.fillStyle=pal.post;
+ctx.fillRect(PULLEY_X-4, TRACK_Y, 8, FLOOR_Y-TRACK_Y);
+}
+function drawReleaseGate(){
+var gateX = BASE_X - relDist*PX_PER_M;
+ctx.strokeStyle=hcMode?'#fff':pal.gate; ctx.lineWidth=hcMode?2.5:1.5;
+ctx.setLineDash([4,3]);
+ctx.beginPath(); ctx.moveTo(gateX,TRACK_Y-30); ctx.lineTo(gateX,TRACK_Y); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle=hcMode?'#fff':pal.gate; ctx.font='bold 9px Arial'; ctx.textAlign='center';
+ctx.fillText('release', gateX, TRACK_Y-38);
+}
+/* small hatch marks trailing the block while sliding, to visualize kinetic friction */
+function drawFrictionMarks(){
+if(phase!=='sliding' || Math.abs(vel)<0.05) return;
+var brx=blockRightX(), blx=brx-BLOCK_W, by=TRACK_Y;
+ctx.strokeStyle=pal.friction; ctx.lineWidth=hcMode?2:1.3;
+for(var i=0;i<4;i++){
+var mx = blx - 6 - i*7;
+if(mx < TOP_X) break;
+ctx.beginPath(); ctx.moveTo(mx,by-2); ctx.lineTo(mx-4,by+4); ctx.stroke();
+}
+}
+function drawString(){
+var brx=blockRightX();
+var attachY = TRACK_Y - PULLEY_R; /* tied a radius above the pulley's center, not its axle -- keeps the run horizontal */
+var hangX = PULLEY_X + PULLEY_R; /* tangent point on the right of the pulley, not the axle */
+ctx.strokeStyle=pal.string; ctx.lineWidth=hcMode?2:1.5;
+ctx.beginPath();
+ctx.moveTo(brx,attachY);
+ctx.lineTo(PULLEY_X,attachY);
+ctx.stroke();
+/* quarter-turn wrap over the top-right of the pulley, from the top tangent to the right tangent */
+ctx.beginPath();
+ctx.arc(PULLEY_X,TRACK_Y,PULLEY_R,-Math.PI/2,0);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(hangX,TRACK_Y);
+ctx.lineTo(hangX,hangTopY());
+ctx.stroke();
+}
+function drawPulley(){
+ctx.beginPath(); ctx.arc(PULLEY_X,TRACK_Y,PULLEY_R,0,Math.PI*2);
+ctx.fillStyle=pal.pulley1; ctx.fill();
+ctx.strokeStyle=pal.pulley2; ctx.lineWidth=hcMode?2.5:2; ctx.stroke();
+ctx.beginPath(); ctx.arc(PULLEY_X,TRACK_Y,3,0,Math.PI*2);
+ctx.fillStyle=pal.pulley2; ctx.fill();
+}
+function drawHangingMass(){
+var w=hangW(), h=w, top=hangTopY();
+var hangX = PULLEY_X + PULLEY_R; /* hangs from the tangent point on the right of the pulley */
+if(!hcMode){
+var gr=ctx.createLinearGradient(hangX-w/2,top,hangX+w/2,top+h);
+gr.addColorStop(0,pal.hang1); gr.addColorStop(1,pal.hang2);
+ctx.fillStyle=gr;
+} else { ctx.fillStyle=pal.hang1; }
+ctx.fillRect(hangX-w/2,top,w,h);
+ctx.strokeStyle=pal.hang2; ctx.lineWidth=hcMode?2.5:1.5;
+ctx.strokeRect(hangX-w/2,top,w,h);
+/* in the add-mass test, draw the stack of added slotted masses */
+if(experiment==='add'){
+var nAdded=Math.round((hangMass-HANGER)/increment);
+ctx.strokeStyle=hcMode?'#fff':'rgba(0,0,0,0.35)'; ctx.lineWidth=1;
+var nLines=Math.min(nAdded, Math.floor(h/3));
+for(var k=1;k<=nLines;k++){ var yy=top+h-k*(h/(nLines+1)); ctx.beginPath(); ctx.moveTo(hangX-w/2+2,yy); ctx.lineTo(hangX+w/2-2,yy); ctx.stroke(); }
+}
+ctx.fillStyle=hcMode?'#fff':pal.gate;
+ctx.font='bold 9px Arial'; ctx.textAlign='left';
+ctx.fillText(hangMass.toFixed(experiment==='add'?3:2)+' kg', hangX+w/2+6, top+h/2+3);
+if(flashLeft>0 && phase==='adding'){
+ctx.fillStyle=pal.slip; ctx.font='bold 12px Arial';
+ctx.fillText('+'+Math.round(increment*1000)+' g', hangX+w/2+6, top-4);
+}
+if(experiment==='add' && m2Slip!==null){
+ctx.fillStyle=pal.slip; ctx.font='bold 11px Arial'; ctx.textAlign='right';
+ctx.fillText('slipped at m\u2082 = '+m2Slip.toFixed(3)+' kg', PULLEY_X-24, TRACK_Y+60);
+}
+}
+function drawBlock(){
+var brx=blockRightX(), blx=brx-BLOCK_W, by=TRACK_Y-BLOCK_H, bh=BLOCK_H;
+if(!hcMode){
+var gr=ctx.createLinearGradient(blx,by,brx,by+bh);
+gr.addColorStop(0,pal.block1); gr.addColorStop(1,pal.block2);
+ctx.fillStyle=gr;
+} else { ctx.fillStyle=pal.block1; }
+ctx.fillRect(blx,by,BLOCK_W,bh);
+ctx.strokeStyle=pal.block2; ctx.lineWidth=hcMode?2.5:1.5;
+ctx.strokeRect(blx,by,BLOCK_W,bh);
+ctx.fillStyle='#fff'; ctx.font='bold 10px Arial'; ctx.textAlign='center';
+ctx.fillText(mass.toFixed(1)+' kg', blx+BLOCK_W/2, by+bh/2-2);
+ctx.font='8px Arial';
+ctx.fillText(blockMat, blx+BLOCK_W/2, by+bh/2+10);
+/* flat contact pad -- width reflects contact-surface size */
+var pw=padPx();
+ctx.fillStyle=pal.pad;
+ctx.fillRect(blx+BLOCK_W/2-pw/2, by+bh-3, pw, 5);
+ctx.strokeStyle=hcMode?'#fff':'#000'; ctx.lineWidth=1;
+ctx.strokeRect(blx+BLOCK_W/2-pw/2, by+bh-3, pw, 5);
+ctx.fillStyle=hcMode?'#ccc':'#555'; ctx.font='8px Arial'; ctx.textAlign='center';
+ctx.fillText('A='+contact.toFixed(0)+'cm²', blx+BLOCK_W/2, by+bh+13);
+}
+function drawVelocityArrow(){
+if(Math.abs(vel)<0.05)return;
+var brx=blockRightX(), midY=TRACK_Y-BLOCK_H/2;
+var arrowLen=Math.min(Math.abs(vel)*14,80);
+var startX=brx-8, endX=startX+arrowLen;
+ctx.strokeStyle=pal.arrow; ctx.fillStyle=pal.arrow; ctx.lineWidth=hcMode?3:2.5;
+ctx.beginPath(); ctx.moveTo(startX,midY-14); ctx.lineTo(endX,midY-14); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(endX,midY-14);
+ctx.lineTo(endX-10,midY-20); ctx.lineTo(endX-10,midY-8);
+ctx.closePath(); ctx.fill();
+ctx.font='bold '+(hcMode?12:11)+'px Arial'; ctx.textAlign='left';
+ctx.fillText('v='+Math.abs(vel).toFixed(2)+' m/s', endX+4, midY-12);
+}
+function drawTimestamp(){
+var bg=hcMode?'#333':'yellow', tc=hcMode?'#fff':'#000';
+ctx.fillStyle=bg; ctx.fillRect(CW-110,0,110,20);
+ctx.font='10pt Arial'; ctx.fillStyle=tc; ctx.textAlign='left';
+ctx.fillText('t = '+simTime.toFixed(2)+' s', CW-106,14);
+if(experiment==='add'){
+ctx.fillStyle=bg; ctx.fillRect(CW-130,22,130,20);
+ctx.fillStyle=tc; ctx.fillText('m\u2082 = '+hangMass.toFixed(3)+' kg', CW-126,36);
+}
+}
+/* ── Readouts & narration ── */
+function updateReadouts(){
+function set(id,txt){var el=document.getElementById(id);if(el)el.textContent=txt;}
+set('r_m2', hangMass.toFixed(3)+' kg');
+set('r_v', vel.toFixed(3)+' m/s');
+set('r_s', (relDist-pos).toFixed(3)+' m');
+set('r_a', (phase==='sliding'&&curMuK!==null?Math.max(0,G*(hangMass-curMuK*mass)/(mass+hangMass)):0).toFixed(3)+' m/s²');
+set('r_t', simTime.toFixed(3)+' s');
+var stMap={ready:'Ready',adding:'Adding mass…',sliding:'Sliding',stopped:'Stopped at pulley',static:(experiment==='add'?'No slip by '+M2_MAX+' kg':"Static -- won't slide")};
+set('r_state', stMap[phase]||phase);
+updateMuReadout();
+if(showNarration) updateNarration();
+}
+function updateNarration(){
+var el=document.getElementById('narration'); if(!el)return;
+var txt;
+if(experiment==='add'){
+txt='Add-mass test: '+blockMat+' block ('+mass.toFixed(1)+' kg) on '+trackMat+' track. ';
+if(phase==='ready') txt+='The empty hanger is 50 g. Press Start: a '+Math.round(increment*1000)+' g mass is added about every '+ADD_INTERVAL+' s until the block slips. (Step adds one mass at a time.)';
+else if(phase==='adding') txt+='m\u2082 = '+hangMass.toFixed(3)+' kg so far. Static friction is still holding the block.';
+else if(phase==='static') txt+='Reached '+M2_MAX+' kg without slipping -- the static friction is very large.';
+else if(phase==='sliding'||phase==='stopped'){
+var mus=m2Slip/mass;
+txt+=(m2Slip<=HANGER+1e-9 ? 'It slipped as soon as the empty hanger was attached, so the slip mass is not measured well -- try a heavier block. '
+     : 'It slipped when m\u2082 reached '+m2Slip.toFixed(3)+' kg, so \u03bcs \u2248 m\u2082,c/m\u2081 = '+mus.toFixed(3)+' (to within one '+Math.round(increment*1000)+' g step). ');
+txt+=(phase==='sliding'?'Now sliding, v = '+vel.toFixed(3)+' m/s.':'Click "Record this run".');
+}
+} else {
+txt=blockMat+' block ('+mass.toFixed(1)+' kg) on '+trackMat+' track, over a pulley to a '+hangMass.toFixed(2)+' kg hanging mass, released '+relDist.toFixed(2)+' m from the pulley. ';
+if(phase==='ready') txt+='Press Release to see if it slides -- friction is drawn fresh each attempt.';
+else if(phase==='static') txt+="This attempt's static friction (μs≈"+curMuS.toFixed(3)+") was too strong -- it didn't slide. Try again: real friction varies run to run, so the same setup might slide next time!";
+else if(phase==='sliding') txt+='Sliding -- v = '+vel.toFixed(3)+' m/s, traveled '+(relDist-pos).toFixed(3)+' m.';
+else if(phase==='stopped') txt+='Reached the pulley at v = '+vel.toFixed(3)+' m/s. '+currentTrace.length+' data point(s) collected. Click "Record this run".';
+}
+el.textContent=txt;
+}
+/* ── Animation loop ── (adding mass runs in real time; sliding uses the Sim Speed setting) */
+function loop(ts){
+if(!running)return;
+if(lastTS===null) lastTS=ts;
+var raw=Math.min((ts-lastTS)/1000,0.05); lastTS=ts;
+var dt=raw*(phase==='adding'?1:simSpeed);
+for(var i=0;i<8;i++) step(dt/8);
+draw(); updateReadouts();
+if(phase!=='stopped' && phase!=='static'){ animId=requestAnimationFrame(loop); }
+else{
+running=false; animId=null;
+updateNarration(); redrawGraph();
+srAnnounce(phase==='static' ? 'The block did not slip.' :
+(experiment==='add' ? 'Slipped at '+m2Slip.toFixed(3)+' kilograms and reached the pulley. Click Record to save.' : 'Stopped at the pulley. '+currentTrace.length+' data points. Click Record to save.'));
+}
+}
+/* ── Playback ── */
+function playSim(){
+if(running)return;
+if(phase==='stopped'||phase==='static') resetSim();
+if(phase==='ready'){
+var started = beginAttempt();
+if(!started){
+running=false;
+draw(); updateReadouts(); updateNarration();
+srAnnounce('Static friction held the block in place this attempt.');
+return;
+}
+}
+running=true; lastTS=null; animId=requestAnimationFrame(loop);
+srAnnounce(experiment==='add'?'Adding mass.':'Released.');
+}
+function pauseSim(){
+if(!running)return; running=false; if(animId)cancelAnimationFrame(animId); animId=null;
+updateNarration(); srAnnounce('Paused.');
+}
+function stepSim(){
+pauseSim();
+if(phase==='ready'){
+var started = beginAttempt();
+if(!started){ draw(); updateReadouts(); updateNarration(); return; }
+if(phase==='adding'){ draw(); updateReadouts(); return; }   /* first Step just attaches the hanger */
+}
+if(phase==='static'||phase==='stopped') return;
+if(phase==='adding'){ addOne(); draw(); updateReadouts(); srAnnounce('Added '+Math.round(increment*1000)+' grams. m2 = '+hangMass.toFixed(3)+' kilograms.'); return; }
+var dt=0.005*simSpeed;
+for(var i=0;i<8;i++) step(dt/8);
+draw(); updateReadouts(); updateNarration();
+}
+function resetSim(){
+running=false; if(animId)cancelAnimationFrame(animId); animId=null; lastTS=null;
+readSliders();
+if(experiment==='add') hangMass=HANGER;
+pos=relDist; vel=0; phase='ready'; simTime=0;
+currentTrace=[];
+curMuK=null; curMuS=null;
+m2Slip=null; tSlip=0; addTimer=0; flashLeft=0;
+draw(); updateReadouts(); updateNarration();
+redrawGraph();
+srAnnounce('Reset. Ready.');
+}
+/* ── Record run ── */
+function recordRun(){
+var isAdd=(experiment==='add');
+if(isAdd){
+if(m2Slip===null){ alert(phase==='static' ? 'The block never slipped, even with '+M2_MAX+' kg hanging. Try other materials.' : 'Start adding mass and wait until the block slips, then record.'); return; }
+} else {
+if(phase==='static'){ alert("This attempt's static friction was too strong -- nothing to record. Press Release again (friction is redrawn each attempt) or adjust the masses/materials."); return; }
+if(currentTrace.length<3){ alert('Run the simulation first to collect data.'); return; }
+}
+var complete=(phase==='stopped');
+var fit = currentTrace.length>=3 ? linFit(currentTrace.map(function(p){return {x:p.t,y:p.v};}), false) : null;
+var last = currentTrace.length ? currentTrace[currentTrace.length-1] : null;
+var aM = fit?fit.a:null;
+var vf = (complete&&last)?last.v:null, T=(complete&&last)?last.t:null;
+var KE = (vf!==null)?0.5*(mass+hangMass)*vf*vf:null;
+runCounter+=1;
+var run = { n:runCounter, type:(isAdd?'add':'release'),
+mass: mass, hangMass: hangMass, dist: relDist,
+trackMat: trackMat, blockMat: blockMat, contact: contact,
+muK: curMuK, muS: curMuS,
+trace: currentTrace.slice(),
+aMeasured: aM, aSE: fit?fit.sa:null, vFinal: vf, totalTime: T,
+mukMeas: (aM!==null)?(hangMass*G-(mass+hangMass)*aM)/(mass*G):null,
+m2c: isAdd?m2Slip:null, musMeas: isAdd?m2Slip/mass:null, increment: isAdd?increment:null,
+KE: KE, Eloss: (KE!==null)?hangMass*G*relDist-KE:null, complete:complete };
+allRuns.push(run);
+updateRunSelector();
+updateDataTable();
+redrawGraph();
+srAnnounce('Run recorded. '+allRuns.length+' run(s) saved.'+(isAdd?' Slip mass '+m2Slip.toFixed(3)+' kilograms.':''));
+}
+function runLabel(r){ return 'Run '+r.n+' ('+(r.type==='add'?'add-mass, ':'')+r.trackMat+'/'+r.blockMat+', m\u2081='+r.mass.toFixed(1)+', m\u2082='+r.hangMass.toFixed(r.type==='add'?3:1)+')'; }
+function updateRunSelector(){
+var sel=document.getElementById('fitRun'), prev=sel.value;
+while(sel.options.length>2) sel.remove(2);
+for(var i=0;i<allRuns.length;i++){
+var opt=document.createElement('option');
+opt.value=i; opt.textContent=runLabel(allRuns[i]);
+sel.appendChild(opt);
+}
+if(allRuns.length>0 && prev!=='all') sel.value=allRuns.length-1;
+}
+/* ══════════ Statistics helpers ══════════ */
+/* Least-squares line with standard errors of the parameters.
+ y = a x + b :  s^2 = SSres/(n-2),  sa = s*sqrt(n/D),  sb = s*sqrt(Sxx/D),  D = n*Sxx - Sx^2
+ y = a x     :  a = Sxy/Sxx,  s^2 = SSres/(n-1),  sa = s/sqrt(Sxx)                     */
+function linFit(pts, origin){
+var n=pts.length; if(n<(origin?1:2)) return null;
+var sx=0,sy=0,sxx=0,sxy=0;
+for(var i=0;i<n;i++){ var x=pts[i].x,y=pts[i].y; sx+=x; sy+=y; sxx+=x*x; sxy+=x*y; }
+var a, b, den;
+if(origin){ if(sxx<1e-15) return null; a=sxy/sxx; b=0; }
+else { den=n*sxx-sx*sx; if(Math.abs(den)<1e-12) return null; a=(n*sxy-sx*sy)/den; b=(sy-a*sx)/n; }
+var ybar=sy/n, ssTot=0, ssRes=0, syy=0;
+for(var j=0;j<n;j++){ var yy=pts[j].y; ssTot+=(yy-ybar)*(yy-ybar); syy+=yy*yy; var e=yy-(a*pts[j].x+b); ssRes+=e*e; }
+if(origin) ssTot=syy;   /* through-origin fit: R^2 measured against y = 0, the usual convention */
+var dof=n-(origin?1:2), sa=null, sb=null;
+if(dof>0){
+var sres=Math.sqrt(ssRes/dof);
+if(origin) sa=sres/Math.sqrt(sxx);
+else { sa=sres*Math.sqrt(n/den); sb=sres*Math.sqrt(sxx/den); }
+}
+return {a:a, b:b, sa:sa, sb:sb, r2:(ssTot>1e-15)?Math.max(0,1-ssRes/ssTot):1, n:n};
+}
+function average(pts){
+var n=pts.length, m=0; for(var i=0;i<n;i++) m+=pts[i].y; m/=n;
+var ss=0; for(var j=0;j<n;j++) ss+=(pts[j].y-m)*(pts[j].y-m);
+var sd=(n>1)?Math.sqrt(ss/(n-1)):null;
+return {mean:m, sd:sd, sem:(sd!==null)?sd/Math.sqrt(n):null, n:n};
+}
+/* value +/- uncertainty: uncertainty to 2 significant figures, value to the same decimal place */
+function pm(v,u){
+if(u===null||!isFinite(u)||u<=0) return v.toPrecision(4);
+var d=Math.max(0,Math.min(8,1-Math.floor(Math.log(u)/Math.LN10)));
+return v.toFixed(d)+' \u00b1 '+u.toFixed(d);
+}
+function unitTxt(u){ return u?' '+u:''; }
+function ratioUnit(uy,ux){ if(uy===ux) return ''; if(!ux) return uy; if(!uy) return '1/'+ux; return uy+'/'+ux; }
+/* round tick values (1, 2, 2.5, 5 x 10^n) */
+function niceStep(range, target){
+var raw=range/Math.max(target,1), mag=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)), f=raw/mag;
+return ((f<=1)?1:(f<=2)?2:(f<=2.5)?2.5:(f<=5)?5:10)*mag;
+}
+function niceTicks(lo, hi, target){
+var stp=niceStep(hi-lo,target), out=[];
+for(var v=Math.ceil(lo/stp-1e-9)*stp; v<=hi+stp*1e-9; v+=stp) out.push(Math.abs(v)<stp*1e-9?0:v);
+return {ticks:out, step:stp};
+}
+function tickDec(stp){ if(stp>=1) return 0; var e=Math.ceil(-Math.log(stp)/Math.LN10-1e-9); return Math.min(3, e+((stp*Math.pow(10,e))%1>1e-6?1:0)); }
+/* ══════════ Graph quantities ══════════ */
+/* single-run (time) graphs */
+var T_QTY = { s:{lbl:'Displacement s',unit:'m'}, v:{lbl:'Velocity v',unit:'m/s'}, a:{lbl:'Acceleration a',unit:'m/s\u00b2'} };
+/* one value per recorded run -- any of these can go on either axis */
+var QTY_ORDER = ['m1','m2','M','frac','W2','Ma','d','A','T','T2','a','vf','vf2','KE','dPE','Eloss','mukM','m2c','musM','inc','mukT','musT','run'];
+var QTY = {
+m1:   {lbl:'Block mass m\u2081',              unit:'kg',  get:function(r){return r.mass;}},
+m2:   {lbl:'Hanging mass m\u2082',            unit:'kg',  get:function(r){return r.hangMass;}},
+M:    {lbl:'Total mass m\u2081+m\u2082',      unit:'kg',  get:function(r){return r.mass+r.hangMass;}},
+frac: {lbl:'m\u2082/(m\u2081+m\u2082)',       unit:'',    get:function(r){return r.hangMass/(r.mass+r.hangMass);}},
+W2:   {lbl:'Hanging weight m\u2082g',         unit:'N',   get:function(r){return r.hangMass*G;}},
+Ma:   {lbl:'Net force (m\u2081+m\u2082)a',    unit:'N',   get:function(r){return r.aMeasured===null?null:(r.mass+r.hangMass)*r.aMeasured;}},
+d:    {lbl:'Release distance d',              unit:'m',   get:function(r){return r.dist;}},
+A:    {lbl:'Contact area A',                  unit:'cm\u00b2', get:function(r){return r.contact;}},
+T:    {lbl:'Slide time T',                    unit:'s',   get:function(r){return r.totalTime;}},
+T2:   {lbl:'Slide time squared T\u00b2',      unit:'s\u00b2', get:function(r){return r.totalTime===null?null:r.totalTime*r.totalTime;}},
+a:    {lbl:'Acceleration a',                  unit:'m/s\u00b2', get:function(r){return r.aMeasured;}},
+vf:   {lbl:'Final speed v_f',                 unit:'m/s', get:function(r){return r.vFinal;}},
+vf2:  {lbl:'Final speed squared v_f\u00b2',   unit:'m\u00b2/s\u00b2', get:function(r){return r.vFinal===null?null:r.vFinal*r.vFinal;}},
+KE:   {lbl:'Final kinetic energy (both masses)', unit:'J', get:function(r){return r.KE;}},
+dPE:  {lbl:'PE released m\u2082gd',           unit:'J',   get:function(r){return r.hangMass*G*r.dist;}},
+Eloss:{lbl:'Energy lost to friction',         unit:'J',   get:function(r){return r.Eloss;}},
+mukM: {lbl:'\u03bck measured (from a)',       unit:'',    get:function(r){return r.mukMeas;}},
+m2c:  {lbl:'Slip mass m\u2082,c (add-mass test)', unit:'kg', get:function(r){return r.m2c;}},
+musM: {lbl:'\u03bcs = m\u2082,c/m\u2081 (add-mass test)', unit:'', get:function(r){return r.musMeas;}},
+inc:  {lbl:'Mass increment \u0394m (add-mass test)', unit:'g', get:function(r){return r.increment===null?null:r.increment*1000;}},
+mukT: {lbl:'\u03bck (this trial)',            unit:'',    get:function(r){return r.muK;}},
+musT: {lbl:'\u03bcs (this trial)',            unit:'',    get:function(r){return r.muS;}},
+run:  {lbl:'Run #',                           unit:'',    get:function(r){return r.n;}}
+};
+function axisLbl(q){ return q.lbl+(q.unit?' ('+q.unit+')':''); }
+function fillSelect(sel, items, value){
+sel.innerHTML='';
+for(var i=0;i<items.length;i++){ var o=document.createElement('option'); o.value=items[i][0]; o.textContent=items[i][1]; sel.appendChild(o); }
+sel.value=value;
+}
+function buildAxisSelects(){
+var xs=[['t','Time t (single run)']];
+for(var i=0;i<QTY_ORDER.length;i++) xs.push([QTY_ORDER[i], axisLbl(QTY[QTY_ORDER[i]])+' (all runs)']);
+fillSelect(document.getElementById('xAxisSel'), xs, xAxis);
+rebuildYOptions();
+}
+function rebuildYOptions(){
+var sel=document.getElementById('yAxisSel'), items=[], keep=yAxis;
+if(xAxis==='t'){ items=[['s','Displacement s'],['v','Velocity v'],['a','Acceleration a']]; if(!T_QTY[keep]) keep='s'; }
+else { for(var i=0;i<QTY_ORDER.length;i++) items.push([QTY_ORDER[i], axisLbl(QTY[QTY_ORDER[i]])]); if(!QTY[keep]) keep='a'; }
+fillSelect(sel, items, keep);
+yAxis=keep;
+}
+/* ── Axis setters ── */
+function setYAxis(v){ yAxis=v; redrawGraph(); }
+function setXAxis(v){
+var wasT=(xAxis==='t');
+xAxis=v;
+document.getElementById('runSelWrap').style.display = (xAxis==='t') ? '' : 'none';
+document.getElementById('groupWrap').style.display  = (xAxis==='t') ? 'none' : '';
+if(wasT!==(xAxis==='t')) rebuildYOptions();
+redrawGraph();
+}
+/* group colors (Okabe-Ito) + marker shapes, so groups stay distinguishable without color */
+var GROUP_COLS=['#0072B2','#D55E00','#009E73','#CC79A7','#E69F00','#56B4E9','#000000','#999999'];
+var SHAPES=['circle','square','triangle','diamond'];
+var SHAPE_CHAR={circle:'\u25cf',square:'\u25a0',triangle:'\u25b2',diamond:'\u25c6'};
+function groupCol(i){ var c=GROUP_COLS[i%GROUP_COLS.length]; return (hcMode&&c==='#000000')?'#ffffff':c; }
+function drawMarker(g,x,y,shape,col,sz){
+g.fillStyle=col; g.strokeStyle=hcMode?'#fff':'#222'; g.lineWidth=0.8;
+g.beginPath();
+if(shape==='square') g.rect(x-sz,y-sz,2*sz,2*sz);
+else if(shape==='triangle'){ g.moveTo(x,y-sz*1.2); g.lineTo(x+sz*1.1,y+sz*0.9); g.lineTo(x-sz*1.1,y+sz*0.9); g.closePath(); }
+else if(shape==='diamond'){ g.moveTo(x,y-sz*1.3); g.lineTo(x+sz*1.1,y); g.lineTo(x,y+sz*1.3); g.lineTo(x-sz*1.1,y); g.closePath(); }
+else g.arc(x,y,sz,0,2*Math.PI);
+g.fill(); g.stroke();
+}
+/* ── Build the groups of points currently selected for display ── */
+function buildGroups(){
+var groups=[];
+if(xAxis==='t'){
+var selVal=document.getElementById('fitRun').value, list=[];
+if(selVal==='all'){ for(var i=0;i<allRuns.length;i++) list.push({r:allRuns[i], idx:i}); }
+else if(selVal==='-1'){ if(currentTrace.length>0) list.push({r:null, idx:0}); }
+else { var ix=parseInt(selVal); if(allRuns[ix]) list.push({r:allRuns[ix], idx:ix}); }
+for(var k=0;k<list.length;k++){
+var it=list[k], tr=it.r?it.r.trace:currentTrace;
+groups.push({ label: it.r?runLabel(it.r):'Current run (unsaved)', col:groupCol(it.idx), shape:SHAPES[it.idx%SHAPES.length],
+pts: tr.map(function(p){ return {x:p.t, y:p[yAxis]}; }) });
+}
+} else {
+var X=QTY[xAxis], Y=QTY[yAxis], grouping=document.getElementById('groupSel').value, byKey={}, order=[];
+for(var j=0;j<allRuns.length;j++){
+var xv=X.get(allRuns[j]), yv=Y.get(allRuns[j]);
+if(xv===null||yv===null||xv===undefined||yv===undefined||!isFinite(xv)||!isFinite(yv)) continue;
+var key=(grouping==='all')?'All runs':(allRuns[j].trackMat+' track / '+allRuns[j].blockMat+' block'+(allRuns[j].type==='add'?' (add-mass test)':''));
+if(!byKey[key]){ byKey[key]={label:key, pts:[]}; order.push(key); }
+byKey[key].pts.push({x:xv, y:yv});
+}
+for(var q=0;q<order.length;q++){
+var gq=byKey[order[q]];
+gq.col=(grouping==='all')?(hcMode?'#eee':'#333'):groupCol(q);
+gq.shape=SHAPES[q%SHAPES.length];
+groups.push(gq);
+}
+}
+return groups;
+}
+/* ── Graph ── */
+function redrawGraph(){
+vtx.clearRect(0,0,VW,VH);
+vtx.fillStyle=hcMode?'#111':'#fafafa'; vtx.fillRect(0,0,VW,VH);
+var tMode=(xAxis==='t');
+var Xq=tMode?{lbl:'Time t',unit:'s'}:QTY[xAxis], Yq=tMode?T_QTY[yAxis]:QTY[yAxis];
+var hintEl=document.getElementById('graphHint');
+if(hintEl) hintEl.textContent = Yq.lbl+' vs. '+Xq.lbl+(tMode ? ' -- choose a run, or overlay all recorded runs.' : ' -- one point per recorded run.');
+var groups=buildGroups();
+var fb=document.getElementById('fitBox'), frEl=document.getElementById('fitResult');
+var npts=0; groups.forEach(function(gp){ npts+=gp.pts.length; });
+var ac=hcMode?'#eee':'#333';
+if(npts===0){
+vtx.fillStyle=hcMode?'#888':'#999'; vtx.font='italic 12px Arial'; vtx.textAlign='center';
+vtx.fillText(tMode ? 'Select a run above (or run the simulation)' : (allRuns.length?'No recorded run has values for this pair of quantities.':'Record some runs to see this graph'), VW/2, VH/2);
+if(fb) fb.style.display='none';
+return;
+}
+var pW=VW-VP.l-VP.r, pH=VH-VP.t-VP.b;
+var xs=[], ys=[];
+groups.forEach(function(gp){ gp.pts.forEach(function(p){ xs.push(p.x); ys.push(p.y); }); });
+var xMin=Math.min.apply(null,xs), xMax=Math.max.apply(null,xs);
+var yMin=Math.min.apply(null,ys), yMax=Math.max.apply(null,ys);
+if(xMin>=0) xMin=0;                   /* start at zero so flat trends look flat */
+if(xMax-xMin<1e-9) xMax=xMin+1;
+xMax+=(xMax-xMin)*0.04;
+if(yMin>=0) yMin=0; else yMin-=(yMax-yMin)*0.08;
+if(yMax<=0) yMax=Math.max(0.1,Math.abs(yMin)*0.1);
+yMax+=(yMax-yMin)*0.08;
+var XT=niceTicks(xMin,xMax,7), YT=niceTicks(yMin,yMax,6);
+xMax=Math.ceil(xMax/XT.step-1e-9)*XT.step; yMax=Math.ceil(yMax/YT.step-1e-9)*YT.step;
+if(yMin<0) yMin=Math.floor(yMin/YT.step+1e-9)*YT.step;
+XT=niceTicks(xMin,xMax,7); YT=niceTicks(yMin,yMax,6);
+function px(x){ return VP.l + pW*(x-xMin)/(xMax-xMin); }
+function py(y){ return VP.t + pH*(1-(y-yMin)/(yMax-yMin)); }
+/* grid, axes, ticks */
+vtx.strokeStyle=hcMode?'#333':'#e6e6e6'; vtx.lineWidth=0.8;
+XT.ticks.forEach(function(v){ vtx.beginPath(); vtx.moveTo(px(v),VP.t); vtx.lineTo(px(v),VP.t+pH); vtx.stroke(); });
+YT.ticks.forEach(function(v){ vtx.beginPath(); vtx.moveTo(VP.l,py(v)); vtx.lineTo(VP.l+pW,py(v)); vtx.stroke(); });
+vtx.strokeStyle=ac; vtx.lineWidth=hcMode?2:1.5;
+vtx.beginPath(); vtx.moveTo(VP.l,VP.t); vtx.lineTo(VP.l,VP.t+pH); vtx.lineTo(VP.l+pW,VP.t+pH); vtx.stroke();
+if(yMin<0&&yMax>0){
+vtx.save(); vtx.setLineDash([4,4]); vtx.strokeStyle=hcMode?'#666':'#bbb'; vtx.lineWidth=1;
+vtx.beginPath(); vtx.moveTo(VP.l,py(0)); vtx.lineTo(VP.l+pW,py(0)); vtx.stroke(); vtx.restore();
+}
+vtx.fillStyle=ac; vtx.font='9px Arial';
+XT.ticks.forEach(function(v){ vtx.textAlign='center'; vtx.fillText(v.toFixed(tickDec(XT.step)),px(v),VP.t+pH+13); });
+YT.ticks.forEach(function(v){ vtx.textAlign='right'; vtx.fillText(v.toFixed(tickDec(YT.step)),VP.l-4,py(v)+3); });
+vtx.font='11px Arial'; vtx.textAlign='center';
+vtx.fillText(axisLbl(Xq), VP.l+pW/2, VH-6);
+vtx.save(); vtx.translate(13,VP.t+pH/2); vtx.rotate(-Math.PI/2); vtx.fillText(axisLbl(Yq),0,0); vtx.restore();
+/* analysis (drawn under the markers) */
+var showFit=document.getElementById('showFit').checked, origin=document.getElementById('fitOrigin').checked;
+var showAvg=document.getElementById('showAvg').checked;
+var slopeU=ratioUnit(Yq.unit,Xq.unit), summary=[];
+groups.forEach(function(gp){
+var gx0=Math.min.apply(null,gp.pts.map(function(p){return p.x;})), gx1=Math.max.apply(null,gp.pts.map(function(p){return p.x;}));
+if(gx1-gx0<1e-12){ gx0-=(xMax-xMin)*0.03; gx1+=(xMax-xMin)*0.03; }
+var line='<span style="color:'+gp.col+';font-weight:bold;">'+SHAPE_CHAR[gp.shape]+' '+gp.label+'</span> (n = '+gp.pts.length+')';
+if(showAvg){
+var av=average(gp.pts);
+vtx.save();
+if(av.sd!==null){ vtx.globalAlpha=0.15; vtx.fillStyle=gp.col; var yT=py(av.mean+av.sd), yB=py(av.mean-av.sd); vtx.fillRect(px(gx0),yT,px(gx1)-px(gx0),yB-yT); vtx.globalAlpha=1; }
+vtx.strokeStyle=gp.col; vtx.lineWidth=2; vtx.beginPath(); vtx.moveTo(px(gx0),py(av.mean)); vtx.lineTo(px(gx1),py(av.mean)); vtx.stroke();
+vtx.restore();
+line+='<br>&nbsp;&nbsp;Average: '+(av.sd!==null
+? 'y\u0304 = '+pm(av.mean,av.sd)+unitTxt(Yq.unit)+'  (\u00b1 = std. dev.);  std. error of mean = '+av.sem.toPrecision(2)+unitTxt(Yq.unit)
+: 'y\u0304 = '+av.mean.toPrecision(4)+unitTxt(Yq.unit)+'  (one point: no std. dev.)');
+}
+if(showFit){
+var fit=linFit(gp.pts,origin);
+if(fit){
+var fx0=origin?Math.min(0,gx0):gx0, fx1=gx1;
+vtx.save(); vtx.setLineDash([6,4]); vtx.strokeStyle=gp.col; vtx.lineWidth=2;
+vtx.beginPath(); vtx.moveTo(px(fx0),py(fit.a*fx0+fit.b)); vtx.lineTo(px(fx1),py(fit.a*fx1+fit.b)); vtx.stroke(); vtx.restore();
+var slopeTxt='slope a = '+(fit.sa!==null?pm(fit.a,fit.sa):fit.a.toPrecision(4))+unitTxt(slopeU);
+if(origin) line+='<br>&nbsp;&nbsp;Fit y = a\u00b7x:  '+slopeTxt+',  R\u00b2 = '+fit.r2.toFixed(3);
+else line+='<br>&nbsp;&nbsp;Fit y = a\u00b7x + b:  '+slopeTxt+',  intercept b = '+(fit.sb!==null?pm(fit.b,fit.sb):fit.b.toPrecision(4))+unitTxt(Yq.unit)+',  R\u00b2 = '+fit.r2.toFixed(3);
+if(fit.sa===null) line+='<br>&nbsp;&nbsp;<i>(uncertainties need at least '+(origin?2:3)+' points)</i>';
+} else line+='<br>&nbsp;&nbsp;Fit: needs at least two different x values';
+}
+summary.push(line);
+});
+/* scatter markers -- points are never joined */
+var msz=tMode?3:4.5;
+groups.forEach(function(gp){ gp.pts.forEach(function(p){ drawMarker(vtx,px(p.x),py(p.y),gp.shape,gp.col,msz); }); });
+if(fb&&frEl){
+var note='';
+if(showAvg||showFit) note='<br><span style="font-family:inherit;font-size:0.72rem;color:'+(hcMode?'#aaa':'#666')+';">'+
+(showAvg?'Average: shaded band and \u00b1 show one standard deviation of the points. ':'')+
+(showFit?'Fit: \u00b1 are the standard errors of the fit parameters.':'')+'</span>';
+document.getElementById('fitTitle').textContent=Yq.lbl+' vs '+Xq.lbl;
+frEl.innerHTML=summary.join('<br>')+note;
+fb.style.display='';
+}
+}
+/* ── Data table ── */
+function f(v,d){ return (v===null||v===undefined||!isFinite(v))?'\u2014':v.toFixed(d); }
+function updateDataTable(){
+var tb=document.getElementById('dataTableBody');
+var tbl=document.getElementById('dataTable');
+var nm=document.getElementById('noDataMsg');
+if(!tb||!tbl||!nm)return;
+tb.innerHTML='';
+if(allRuns.length===0){ tbl.style.display='none'; nm.style.display=''; return; }
+tbl.style.display=''; nm.style.display='none';
+for(var i=0;i<allRuns.length;i++){
+var r=allRuns[i];
+var aStr = r.aMeasured!==null ? (r.aSE!==null?pm(r.aMeasured,r.aSE):r.aMeasured.toFixed(2)) : '\u2014';
+var tr=document.createElement('tr');
+tr.innerHTML='<td>'+r.n+'</td><td>'+(r.type==='add'?'add-mass':'release')+'</td><td>'+r.trackMat+' / '+r.blockMat+'</td><td>'+r.mass.toFixed(1)+'</td><td>'+r.hangMass.toFixed(r.type==='add'?3:2)+'</td><td>'+r.dist.toFixed(1)+'</td>'+
+'<td>'+r.contact.toFixed(0)+'</td><td>'+f(r.muK,3)+'</td><td>'+aStr+'</td><td>'+f(r.vFinal,2)+'</td><td>'+f(r.totalTime,2)+'</td><td>'+f(r.mukMeas,3)+'</td>'+
+'<td>'+f(r.m2c,3)+'</td><td>'+f(r.musMeas,3)+'</td>'+
+'<td><input type="button" class="hl_del" value="\u00d7" title="Delete run '+r.n+'" aria-label="Delete run '+r.n+'" onclick="sim1.deleteRun('+i+')"></td>';
+tb.appendChild(tr);
+}
+var wrap=tbl.parentNode; if(wrap) wrap.scrollTop=wrap.scrollHeight;
+}
+function deleteRun(i){
+if(allRuns.length===0) return;
+if(i<0) i=allRuns.length-1;
+var gone=allRuns.splice(i,1)[0];
+updateRunSelector(); updateDataTable(); redrawGraph();
+srAnnounce('Run '+gone.n+' deleted.');
+}
+function clearGraph(){
+vtx.clearRect(0,0,VW,VH);
+vtx.fillStyle=hcMode?'#111':'#fafafa'; vtx.fillRect(0,0,VW,VH);
+document.getElementById('fitBox').style.display='none';
+document.getElementById('showFit').checked=false;
+document.getElementById('showAvg').checked=false;
+srAnnounce('Graph cleared. Data preserved.');
+}
+function clearData(){
+if(allRuns.length && !window.confirm('Delete all '+allRuns.length+' recorded runs?')) return;
+allRuns=[]; currentTrace=[]; runCounter=0;
+updateRunSelector();
+redrawGraph(); updateDataTable();
+srAnnounce('All recorded data cleared.');
+}
+/* ── Export ── */
+function csvText(sep){
+var head=['run','test','track','block','m1_kg','m2_kg','d_m','area_cm2','mu_k_trial','mu_s_trial','a_m_s2','a_se','v_final_m_s','T_s','mu_k_measured','slip_mass_kg','increment_kg','mu_s_measured','KE_final_J','E_lost_J'];
+var rows=[head.join(sep)];
+function v(x,d){ return (x===null||x===undefined||!isFinite(x))?'':x.toFixed(d); }
+for(var i=0;i<allRuns.length;i++){
+var r=allRuns[i];
+rows.push([r.n, r.type, r.trackMat, r.blockMat, v(r.mass,2), v(r.hangMass,3), v(r.dist,2), v(r.contact,0), v(r.muK,4), v(r.muS,4),
+v(r.aMeasured,4), v(r.aSE,4), v(r.vFinal,4), v(r.totalTime,4), v(r.mukMeas,4), v(r.m2c,3), v(r.increment,3), v(r.musMeas,4),
+v(r.KE,4), v(r.Eloss,4)].join(sep));
+}
+return rows.join('\r\n');
+}
+function downloadCSV(){
+if(!allRuns.length){ srAnnounce('No runs to download.'); return; }
+var blob=new Blob([csvText(',')],{type:'text/csv'});
+var a=document.createElement('a');
+a.href=URL.createObjectURL(blob); a.download='pulley_friction_runs.csv';
+document.body.appendChild(a); a.click(); document.body.removeChild(a);
+setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+srAnnounce('CSV downloaded.');
+}
+function copyTable(){
+if(!allRuns.length){ srAnnounce('No runs to copy.'); return; }
+var txt=csvText('\t');
+function fallback(){
+var ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta);
+}
+if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){},fallback); }
+else fallback();
+srAnnounce('Table copied. Paste it into a spreadsheet.');
+}
+/* ── Boot ── */
+(function(){
+var items=MATERIALS.map(function(m){ return [m,m]; });
+fillSelect(document.getElementById('trackMatSel'), items, 'Wood');
+fillSelect(document.getElementById('blockMatSel'), items, 'Wood');
+})();
+buildAxisSelects();
+document.getElementById('groupWrap').style.display='none';
+resetSim();
+redrawGraph();
+return {
+playSim, pauseSim, stepSim, resetSim,
+toggleHC, toggleCB, toggleNarr,
+setDist, setMass, setHangMass, setSpeed, setIncrement, setTrackMat, setBlockMat, setContact, setExperiment,
+setYAxis, setXAxis,
+recordRun, deleteRun, clearData, clearGraph, redrawGraph, downloadCSV, copyTable
+};
+})();
+</script>
+</div><!-- #hm_root -->
+</main>
+</body>
+</html>

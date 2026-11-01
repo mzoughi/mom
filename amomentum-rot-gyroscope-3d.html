@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Rotation: The Gyroscope: Kicks, Spin and Gravity</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, rotation, gyroscope, angular momentum, torque, impulse, angular impulse, precession, nutation, friction, space station, weightlessness, rigid body, 3D, lesson, scientific">
+<meta name="description" content="Interactive 3D gyroscope: a stick kicks a floating gyroscope with and without spin, showing that a spinning rotor keeps its axis; a second tab puts it upright on a pivot, where gravity makes it precess and friction eventually makes it fall.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="gyRoot" class="gy_root" role="region" aria-label="Gyroscope simulator: a stick kicks a gyroscope, with or without spin, floating free or on a stand with gravity">
+<div class="gy_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="gy_a11ybtn" id="gyBtnHC" onclick="gySim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="gy_a11ybtn" id="gyBtnLM" onclick="gySim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="gy_a11ybtn" id="gyBtnCB" onclick="gySim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="gy_a11ybtn gy_a11yon" id="gyBtnNR" onclick="gySim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="gy_header"><p class="gy_h1">The Gyroscope: Kicks, Spin and Gravity</p><p class="gy_sub">a kick gives &Delta;L = r &times; J &middot; it barely tilts a large L</p></div>
+<div class="gy_tabs" role="tablist" aria-label="Situations">
+<button type="button" role="tab" class="gy_tab" id="gyT0" aria-selected="true" onclick="gySim.tab(0)">1. Floating free (space station)</button>
+<button type="button" role="tab" class="gy_tab" id="gyT1" aria-selected="false" onclick="gySim.tab(1)">2. On a stand, with gravity</button>
+</div>
+<div class="gy_diag"><div class="gy_dlabel"><b id="gyLab">THE GYROSCOPE AND THE STICK</b><span id="gyHint"></span></div>
+<canvas id="gyCv" width="780" height="470" tabindex="0" role="img" aria-label="A three-dimensional toy gyroscope: a rotor disk on an axle inside a frame of two hoops, and a stick that can strike it. Drag, or use the arrow keys, to turn the view; press K to strike." aria-describedby="gyStatus"></canvas></div>
+<div class="gy_status" id="gyStatus"></div>
+<div class="gy_bbar">
+<button type="button" class="gy_btn gy_kick" id="gyKick">&#10148; Strike with the stick</button>
+<button type="button" class="gy_btn gy_btnon" id="gyPlay">&#10073;&#10073; Pause</button>
+<button type="button" class="gy_btn gy_t1" id="gyHold">Hold it still</button>
+<button type="button" class="gy_btn gy_t1" id="gyRelP">Release with steady precession</button>
+<button type="button" class="gy_btn gy_t0" id="gyStop">Stop the tumbling</button>
+<button type="button" class="gy_btn gy_t0" id="gyCenter">Catch it and bring it back</button>
+<label>slow motion <input type="range" id="gySpd" min="0.02" max="1" step="0.01" value="0.25" style="width:100px"> <span id="gySpdV">0.25&times;</span></label>
+</div>
+<div class="gy_bbar">
+<label><input type="checkbox" id="gyArr" checked> L and &omega; arrows</label>
+<label><input type="checkbox" id="gyTr" checked> trace of the axle's tip</label>
+<label class="gy_t0"><input type="checkbox" id="gyFol" checked> camera follows it</label>
+<label><input type="checkbox" id="gyAim" checked> show where the stick aims</label>
+<button type="button" class="gy_btn" id="gyVStd">Standard view</button>
+<button type="button" class="gy_btn" id="gyVTop">From above</button>
+<button type="button" class="gy_btn" id="gyDsc">Describe</button>
+</div>
+<div class="gy_read" id="gyRead" aria-label="Readout"></div>
+<div class="gy_panels"><div class="gy_panel"><div class="gy_ptitle">The gyroscope</div><div class="gy_pbody" id="gyCtlG"></div></div>
+<div class="gy_panel"><div class="gy_ptitle">The stick</div><div class="gy_pbody" id="gyCtlS"></div></div></div>
+<div class="gy_eqs" id="gyEq"></div>
+<div id="gyNar" class="gy_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="gy_descwrap">
+<button type="button" class="gy_descbtn" id="gyDescBtn" aria-expanded="false" aria-controls="gyDesc" onclick="gySim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="gy_desc" id="gyDesc" role="region" aria-labelledby="gyDescBtn" style="display:none">
+<p>A toy gyroscope is a heavy rotor (a disk) that spins on an axle inside a light frame, here two crossed hoops. The rotor turns on bearings, so the frame does not have to spin with it. A stick can strike the gyroscope anywhere, in any direction: you choose the point along the axle, the distance off the axle, the direction of the push and its strength. After each strike the stick pulls back out of view.</p>
+<p><b>1. Floating free.</b> In the space station there is no gravity to speak of, so nothing pushes on the gyroscope except the stick. A short kick delivers an impulse `vec J` at a point `vec r` from the centre of mass. It changes the momentum and the angular momentum:</p>
+<p class="gy_eq">`Delta vec p = m Delta vec v_(cm) = vec J`,&nbsp;&nbsp; `Delta vec L = vec r xx vec J`.</p>
+<p>A push through the centre of mass gives no torque: the gyroscope drifts away without turning. A push at the end of the axle also turns it. If the rotor is not spinning, `vec L` comes only from the kick, and the gyroscope tumbles end over end, with `omega = Delta L // I_(perp)`. If the rotor spins, the gyroscope already carries a large angular momentum along its axle, `L = I_s omega_s`. The same kick only adds a small `Delta vec L` to it, so `vec L` turns by a small angle,</p>
+<p class="gy_eq">`Delta theta ~~ (Delta L_(perp))/(I_s omega_s)`,</p>
+<p>and with no torque afterwards `vec L` stays fixed. The axle wobbles quickly in a narrow cone around the new direction of `vec L` (a free nutation) but keeps nearly its old direction. The faster the spin, the smaller the cone. A stick that catches the rim of the rotor at right angles to the axle changes the spin itself. Choosing a new spin starts the situation again: the gyroscope floats at rest in its starting position. Floating free, it touches nothing, so there is no friction.</p>
+<p><b>2. On a stand, with gravity.</b> The lower end of the axle rests on a pivot at the top of a post. Gravity acts at the centre of mass, a distance `ell` from the pivot, and exerts a torque about the pivot,</p>
+<p class="gy_eq">`vec tau = vec r_(cm) xx m vec g`,&nbsp;&nbsp; `tau = m g ell sin theta`,</p>
+<p>which is horizontal and at right angles to the axle. Each time this tab is opened, or the spin is changed, the gyroscope starts the usual way: spinning, almost upright (0.5&deg; off the vertical), with just the right sideways speed. The torque of gravity, `d vec L = vec tau dt`, only turns `vec L` sideways: the axle swings around the vertical, the precession, at the rate</p>
+<p class="gy_eq">`Omega ~~ (m g ell)/(I_s omega_s)`.</p>
+<p>Near upright, a fast spin keeps the gyroscope up: it stays up only while `I_s omega_s &gt; 2 sqrt(I_(perp) m g ell)`, here about 35 rev/s. Friction (air drag and the bearings) slowly takes the spin away. Once the spin falls below that value, the upright position becomes unstable: the circle traced by the tip widens, faster and faster, until the gyroscope falls against the post. Friction at the pivot also exerts a torque that opposes the precession, `tau_f = -c Omega`, about the vertical. It lowers the vertical part of `vec L`, so a tilted gyroscope drops further. Two sliders set these frictions; with both at zero the circle keeps its size. With no spin, nothing resists the torque of gravity and the gyroscope simply topples. A kick at the top end can make it speed up, slow down, rise or drop.</p>
+<p>The model: rotor 100 g, radius 3.0 cm; frame 50 g, radius 3.6 cm; axle 9 cm long, so `ell` = 4.5 cm. The equations of rigid-body motion are solved numerically. The coloured sectors on the rotor show its rotation. When the rotor turns too fast for the screen to follow, the sectors turn at a slower, readable rate in the correct direction, and a curved arrow appears on the rotor as a reminder. Collisions with the post are modeled only as a bump that stops the fall.</p>
+</div></div>
+</div><!-- #gyRoot -->
+<style>
+#gyRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#gyRoot * { box-sizing:border-box; }
+#gyRoot.gy_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#gyRoot.gy_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#gyRoot .gy_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#gyRoot .gy_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#gyRoot .gy_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#gyRoot .gy_header { text-align:center; }
+#gyRoot .gy_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#gyRoot .gy_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#gyRoot .gy_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#gyRoot .gy_tab { flex:1 1 200px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#gyRoot .gy_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#gyRoot .gy_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#gyRoot .gy_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#gyRoot .gy_dlabel b { color:var(--c-accent); }
+#gyRoot canvas { display:block; width:100%; height:auto; touch-action:none; cursor:grab; }
+#gyRoot .gy_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#gyRoot .gy_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#gyRoot .gy_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#gyRoot .gy_btn:hover { border-color:var(--c-accent); }
+#gyRoot .gy_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#gyRoot .gy_kick { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#gyRoot .gy_hide { display:none !important; }
+#gyRoot .gy_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#gyRoot .gy_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#gyRoot .gy_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#gyRoot .gy_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#gyRoot .gy_ctrl { display:flex; flex-direction:column; gap:3px; }
+#gyRoot .gy_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#gyRoot .gy_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#gyRoot .gy_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#gyRoot .gy_brow { display:flex; flex-wrap:wrap; gap:5px; }
+#gyRoot .gy_note { margin:0; font-size:.74rem; color:var(--c-dim); line-height:1.4; }
+#gyRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#gyRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#gyRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#gyRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#gyRoot .gy_read { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; padding:8px 12px; }
+#gyRoot .gy_flabel { font-family:monospace; font-size:.62rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#gyRoot .gy_fvalue { font-family:monospace; font-size:.9rem; color:var(--c-val); font-variant-numeric:tabular-nums; }
+#gyRoot .gy_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#gyRoot .gy_eqs b { color:var(--c-val); }
+#gyRoot .gy_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#gyRoot .gy_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#gyRoot .gy_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#gyRoot .gy_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#gyRoot .gy_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#gyRoot .gy_desc p { margin:0 0 9px; }
+#gyRoot .gy_eq { text-align:center; font-size:1rem; }
+#gyRoot button:focus-visible, #gyRoot input:focus-visible, #gyRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #gyRoot .gy_panels { grid-template-columns:minmax(0,1fr); } #gyRoot .gy_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #gyRoot input[type=range] { height:8px; } #gyRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #gyRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #gyRoot .gy_a11ybtn { min-height:40px; } #gyRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+A gyrostat: a symmetric frame (two crossed hoops) with a rotor that spins about the frame's axis (body z).
+State: orientation q of the frame (unit quaternion, body to world), total angular momentum L (world; about the centre
+of mass when floating, about the pivot on the stand), and the rotor's own axial angular momentum h.
+Frame angular velocity, in body axes: w1 = L1/I1, w2 = L2/I1, w3 = (L3 - h)/I3f.
+dL/dt = torque: zero when floating; on the stand r_cm x m g, plus pivot friction -c (w . up) up, which opposes the
+precession. On the stand the spin also decays (air and bearing friction). RK4 with enough substeps.
+A kick: impulse J at point P. Floating: dv = J/m, dL = (P - cm) x J. Stand: dL = (P - pivot) x J. If the stick
+hits the rotor, the axial part of the angular impulse goes into h. After the kick the stick withdraws along the
+line it came in on and is hidden. Opening a tab, or changing the spin, starts that tab again (reinit).
+The rotor's sectors are drawn at a display angle vpsi that follows the true spin but never turns more than VMAX
+radians per frame, so the pattern stays readable (no strobe effect) and turns the correct way.
+No dollar signs or backticks in the code.
+-->
+<script>
+var gySim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('gyRoot'), cv = el('gyCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var DEG = Math.PI/180, TAU = 2*Math.PI;
+/* the model, in SI units */
+var RR = 0.030, RA = 0.036, LA = 0.045, MR = 0.10, MH = 0.025, M = MR + 2*MH, GA = 9.8, DS = 20;
+var I3R = 0.5*MR*RR*RR, I3F = MH*RA*RA, I1C = 0.25*MR*RR*RR + 1.5*MH*RA*RA, I1P = I1C + M*LA*LA, MGL = M*GA*LA;
+var THSTOP = 125;          /* on the stand, the frame touches the post beyond this tilt (degrees from straight up) */
+var FL = -2.0;             /* floor height under the stand, in drawing units (1 unit = 5 cm) */
+var VMAX = 0.28;           /* largest drawn turn of the rotor per frame (radians): the 4 coloured sectors stay readable */
+var DEF = [{ ti:60, az:30, rev:0 }, { ti:0.5, az:0, rev:60 }];   /* starting situations; on the stand: almost upright, 0.5 degree off the vertical */
+/* ══════════ vectors and quaternions ══════════ */
+function add(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; } function sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function mul(a, k){ return [a[0]*k, a[1]*k, a[2]*k]; } function dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function cross(a, b){ return [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]; }
+function len(a){ return Math.sqrt(dot(a, a)); } function nrm(a){ var l = len(a) || 1; return [a[0]/l, a[1]/l, a[2]/l]; }
+function perp(a){ var t = Math.abs(a[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]; return nrm(cross(a, t)); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function ang(a, b){ var la = len(a), lb = len(b); if (la < 1e-15 || lb < 1e-15) return 0; return Math.acos(clamp(dot(a, b)/(la*lb), -1, 1))/DEG; }
+function qmul(a, b){ return [a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3], a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2], a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1], a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0]]; }
+function qn(q){ var l = Math.sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]) || 1; return [q[0]/l, q[1]/l, q[2]/l, q[3]/l]; }
+function qmat(q){ var w = q[0], x = q[1], y = q[2], z = q[3];
+  return [[1 - 2*(y*y + z*z), 2*(x*y - z*w), 2*(x*z + y*w)], [2*(x*y + z*w), 1 - 2*(x*x + z*z), 2*(y*z - x*w)], [2*(x*z - y*w), 2*(y*z + x*w), 1 - 2*(x*x + y*y)]]; }
+function mv(R, v){ return [R[0][0]*v[0] + R[0][1]*v[1] + R[0][2]*v[2], R[1][0]*v[0] + R[1][1]*v[1] + R[1][2]*v[2], R[2][0]*v[0] + R[2][1]*v[1] + R[2][2]*v[2]]; }
+function mtv(R, v){ return [R[0][0]*v[0] + R[1][0]*v[1] + R[2][0]*v[2], R[0][1]*v[0] + R[1][1]*v[1] + R[2][1]*v[2], R[0][2]*v[0] + R[1][2]*v[1] + R[2][2]*v[2]]; }
+function qFromTo(a, b){ var d = dot(a, b); if (d < -0.999999){ var p = perp(a); return [0, p[0], p[1], p[2]]; } var c = cross(a, b); return qn([1 + d, c[0], c[1], c[2]]); }
+function dirTA(ti, az){ return [Math.sin(ti*DEG)*Math.cos(az*DEG), Math.cos(ti*DEG), -Math.sin(ti*DEG)*Math.sin(az*DEG)]; }
+function dirAE(az, e){ return [Math.cos(e*DEG)*Math.cos(az*DEG), Math.sin(e*DEG), -Math.cos(e*DEG)*Math.sin(az*DEG)]; }
+function tiltOf(a){ return Math.acos(clamp(a[1], -1, 1))/DEG; } function azOf(a){ return Math.atan2(-a[2], a[0])/DEG; }
+/* ══════════ state ══════════ */
+function fresh(tab, ti, az, rev){ var a = dirTA(ti, az), h = I3R*TAU*rev;
+  return { tab:tab, q:qFromTo([0, 0, 1], a), L:mul(a, h), h:h, x:[0, 0, 0], v:[0, 0, 0], psi:0, vpsi:0, held:false, t:0, trace:[], hist:[], kick:null, swing:0 }; }
+var ST = [fresh(0, 60, 30, 0), fresh(1, 0.5, 0, 60)], S = ST[0];   /* replaced by reinit() whenever a tab is opened */
+var U = { tab:0, fric:16, sdec:30, play:true, spd:0.25, yaw:-30, pitch:16, zoom:1, arrows:true, trace:true, follow:true, aim:true, blur:false, retracted:false,
+  st:{ s:1, rho:0, az:0, el:0, J:8 }, stick:null, touched:{} };
+var th = { hc:false, lm:false, cb:false, nr:true };
+function axisOf(s){ var R = qmat(s.q); return [R[0][2], R[1][2], R[2][2]]; }
+function cmOf(s){ return s.tab ? mul(axisOf(s), LA) : s.x; }       /* metres; on the stand the pivot is the origin */
+function I1e(s){ return s.tab ? I1P : I1C; }
+function omegaQ(s, q, L){ var R = qmat(q), Lb = mtv(R, L), I = I1e(s); return mv(R, [Lb[0]/I, Lb[1]/I, (Lb[2] - s.h)/I3F]); }
+function omegaW(s){ return omegaQ(s, s.q, s.L); }
+function torqueQ(s, q){ if (!s.tab) return [0, 0, 0]; var R = qmat(q); return cross([R[0][2]*LA, R[1][2]*LA, R[2][2]*LA], [0, -M*GA, 0]); }
+/* ══════════ the motion ══════════ */
+function deriv(s, q, L){ var w = omegaQ(s, q, L), dq = qmul([0, w[0], w[1], w[2]], q), tq = torqueQ(s, q);
+  if (s.tab && U.fric > 0) tq = add(tq, [0, -U.fric*1e-5*w[1], 0]);   /* friction at the pivot opposes the turning around the vertical (the precession) */
+  return [[dq[0]/2, dq[1]/2, dq[2]/2, dq[3]/2], tq]; }
+function qa(q, d, k){ return [q[0] + d[0]*k, q[1] + d[1]*k, q[2] + d[2]*k, q[3] + d[3]*k]; }
+function rk4(s, dt){ var q = s.q, L = s.L, k1 = deriv(s, q, L), k2 = deriv(s, qa(q, k1[0], dt/2), add(L, mul(k1[1], dt/2))),
+  k3 = deriv(s, qa(q, k2[0], dt/2), add(L, mul(k2[1], dt/2))), k4 = deriv(s, qa(q, k3[0], dt), add(L, mul(k3[1], dt))), nq = [], i;
+  for (i=0; i<4; i++) nq.push(q[i] + dt/6*(k1[0][i] + 2*k2[0][i] + 2*k3[0][i] + k4[0][i]));
+  s.q = qn(nq); s.L = add(L, mul(add(add(k1[1], mul(k2[1], 2)), add(mul(k3[1], 2), k4[1])), dt/6)); }
+function stopper(s){   /* the frame bumps against the post: put it back at the stop and reverse most of the tilting motion */
+  var a = axisOf(s); if (tiltOf(a) < THSTOP) return;
+  var et = nrm([a[0]*a[1], a[1]*a[1] - 1, a[2]*a[1]]), n = cross(a, et), td = dot(omegaW(s), n), hd = -(tiltOf(a) - THSTOP)*DEG/2;
+  s.q = qn(qmul([Math.cos(hd), n[0]*Math.sin(hd), n[1]*Math.sin(hd), n[2]*Math.sin(hd)], s.q));
+  if (td > 0) s.L = add(s.L, mul(n, -1.3*I1P*td)); }
+function advance(T){   /* returns how far the rotor turned relative to the frame (radians) */
+  var s = S, i, turned = 0;
+  if (s.held){ turned = s.h/I3R*T; s.psi = (s.psi + turned) % TAU; s.t += T; return turned; }
+  var w = omegaW(s), I = I1e(s), rate = len(w) + 2*Math.abs(s.h)/I + len(s.L)/I + (s.tab ? Math.sqrt(MGL/I1P) : 0) + 1;
+  var n = Math.min(4000, Math.max(1, Math.ceil(T*rate/0.04))), dt = T/n;
+  for (i=0; i<n; i++){
+    var Lb = mtv(qmat(s.q), s.L), dp = (s.h/I3R - (Lb[2] - s.h)/I3F)*dt; s.psi += dp; turned += dp;
+    rk4(s, dt);
+    if (s.tab) stopper(s); else s.x = add(s.x, mul(s.v, dt));
+  }
+  if (s.tab && U.sdec > 0 && Math.abs(s.h) > 1e-12){   /* air and bearing friction slow the rotor: it loses spin to the surroundings */
+    var nh = s.h*Math.exp(-U.sdec*1e-3*T); s.L = add(s.L, mul(axisOf(s), nh - s.h)); s.h = nh; }
+  s.psi = s.psi % TAU; s.t += T; return turned; }
+function critRev(){ return Math.sqrt(4*I1P*MGL)/I3R/TAU; }   /* below this spin the upright gyroscope cannot stay up */
+function steadyOmega(ti, h){ var A = (I3F - I1P)*Math.cos(ti*DEG);
+  if (Math.abs(A) < 1e-12) return Math.abs(h) > 1e-9 ? MGL/h : null;
+  var disc = h*h + 4*A*MGL; if (disc < 0) return null;
+  return (-h + (h < 0 ? -1 : 1)*Math.sqrt(disc))/(2*A); }
+function steadyL(s, Om){ var a = axisOf(s), w = [0, Om, 0], wa = dot(w, a), wp = sub(w, mul(a, wa)); return add(mul(wp, I1P), mul(a, I3F*wa + s.h)); }
+/* ══════════ starting again ══════════ */
+function reinit(i, rev){   /* a fresh start for tab i: default position, the given spin, the stick aimed at the end of the axle */
+  var d = DEF[i], s = ST[i] = fresh(i, d.ti, d.az, rev);
+  if (i){ var Om = Math.abs(s.h) > 1e-9 ? steadyOmega(d.ti, s.h) : null; s.L = Om === null ? mul(axisOf(s), s.h) : steadyL(s, Om); }   /* spinning: steady precession; no spin: it topples */
+  U.stick = null; U.retracted = false;
+  if (U.tab === i){ S = s; preset('e', true); holdLabel(); syncG(true); info(); }
+  if (!U.play) setPlay(true); return s; }
+function respin(rev){ var i = U.tab; rev = Math.round(rev); reinit(i, rev); var r = spinTxt(rev);
+  narrate(i ? (rev === 0 ? 'Started again, almost upright, with no spin: nothing resists gravity\u2019s torque, so it simply topples against the post.' : 'Started again, almost upright, spinning at ' + r + ': it precesses around the vertical at ' + f(Math.abs(steadyOmega(DEF[1].ti, S.h)), 2) + ' rad/s' + ((U.fric > 0 || U.sdec > 0) ? '; as friction slows the spin, the circle will widen.' : '; with no friction, the circle keeps its size.'))
+    : (rev === 0 ? 'Started again: floating at rest, rotor not spinning. Strike it: it will tumble.' : 'Started again: floating at rest, rotor spinning at ' + r + '. Strike it: the axle will barely move.')); }
+/* ══════════ the stick ══════════ */
+function stickGeom(){ var s = S, a = axisOf(s), d = dirAE(U.st.az, U.st.el), n = cross(a, d);
+  n = len(n) < 1e-6 ? perp(a) : nrm(n);
+  var c = cmOf(s), P = add(c, add(mul(a, U.st.s*LA), mul(n, U.st.rho*RA)));
+  return { a:a, d:d, n:n, c:c, P:P, rotor:Math.abs(U.st.s) <= 0.15 && Math.abs(U.st.rho*RA) <= RR + 0.0005 }; }
+function strike(){ if (U.stick) return; U.retracted = false; U.stick = { ph:0, t:0 }; if (!U.play) setPlay(true); }
+function applyKick(){
+  var s = S, G = stickGeom(), J = mul(G.d, U.st.J/1000), ref = s.tab ? [0, 0, 0] : G.c, dL = cross(sub(G.P, ref), J);
+  if (U.stick){ U.stick.P = G.P; U.stick.d = G.d; }   /* from here the stick withdraws along its own line: it does not follow the gyroscope */
+  if (s.held){ s.held = false; s.L = mul(G.a, s.h); s.hist = []; holdLabel(); }
+  var L0 = s.L.slice(), spin0 = s.h/I3R/TAU;
+  s.L = add(s.L, dL);
+  if (G.rotor) s.h += dot(G.a, cross(sub(G.P, G.c), J));
+  if (!s.tab) s.v = add(s.v, mul(J, 1/M));
+  s.kick = { a0:G.a, L0:L0, dL:dL, rotor:G.rotor, spin0:spin0, J:U.st.J }; s.swing = 0;
+  setTimeout(kickReport, 1100); }
+function preset(k, quiet){
+  var a = axisOf(S), d = cross([0, 1, 0], a);
+  d = len(d) > 0.2 ? nrm(d) : nrm(sub([1, 0, 0], mul(a, a[0])));      /* a push at right angles to the axle */
+  if (S.tab && d[1] < 0) d = mul(d, -1);
+  U.st.az = Math.round(azOf(d)); U.st.el = Math.round(Math.asin(clamp(d[1], -1, 1))/DEG);
+  if (k === 'c'){ U.st.s = 0; U.st.rho = 0; } if (k === 'e'){ U.st.s = 1; U.st.rho = 0; } if (k === 'r'){ U.st.s = 0; U.st.rho = 0.8; }
+  syncStick(); if (quiet) return;
+  narrate(k === 'c' ? 'The stick now aims through the centre of the gyroscope: no torque, only a push.' : k === 'e' ? 'The stick now aims at the end of the axle, at right angles to it: the largest torque that tilts the axle.' : 'The stick now aims at the rim of the rotor, at right angles to the axle: it will change the spin.'); }
+/* ══════════ the 3D renderer: shaded polygons sorted by depth ══════════ */
+var polys = [], labels = [], cam = {}, PA = 1;
+function setCam(){ var a = U.yaw*DEG, e = U.pitch*DEG, T = U.tab ? [0, 0, 0] : (U.follow ? mul(S.x, DS) : [0, 0, 0]);
+  cam = { ca:Math.cos(a), sa:Math.sin(a), ce:Math.cos(e), se:Math.sin(e), s:(U.tab ? 100 : 135)*U.zoom, D:10, T:T }; }
+function view(p){ var x0 = p[0] - cam.T[0], y0 = p[1] - cam.T[1], z0 = p[2] - cam.T[2], x1 = x0*cam.ca + z0*cam.sa, z1 = -x0*cam.sa + z0*cam.ca; return [x1, y0*cam.ce - z1*cam.se, y0*cam.se + z1*cam.ce]; }
+function proj(v){ var f = cam.D/Math.max(0.6, cam.D - v[2]); return [W/2 + v[0]*cam.s*f, H*0.55 - v[1]*cam.s*f]; }
+function scr(p){ return proj(view(p)); }
+function poly(pts, col, alpha){ polys.push({ p:pts, c:col, a:alpha === undefined ? PA : alpha }); }
+var LIGHT = nrm([-0.35, 0.65, 0.68]), HALF = nrm(add(LIGHT, [0, 0, 1]));
+function flush(){
+  var list = polys.map(function(q){ var v = q.p.map(view), z = 0; v.forEach(function(t){ z += t[2]; }); return { v:v, z:z/v.length, c:q.c, a:q.a }; });
+  list.sort(function(A, B){ return A.z - B.z; });
+  list.forEach(function(q){
+    var n = q.v.length > 2 ? nrm(cross(sub(q.v[1], q.v[0]), sub(q.v[2], q.v[0]))) : [0, 0, 1]; if (n[2] < 0) n = mul(n, -1);
+    var k = 0.34 + 0.66*Math.max(0, dot(n, LIGHT)), spec = Math.pow(Math.max(0, dot(n, HALF)), 24)*0.3;
+    var r = Math.min(255, Math.round(q.c[0]*k + 255*spec)), gg = Math.min(255, Math.round(q.c[1]*k + 255*spec)), b = Math.min(255, Math.round(q.c[2]*k + 255*spec));
+    g.fillStyle = 'rgba(' + r + ',' + gg + ',' + b + ',' + q.a + ')'; g.strokeStyle = g.fillStyle; g.lineWidth = 0.6;
+    g.beginPath(); q.v.forEach(function(t, i){ var s2 = proj(t); if (i) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); g.closePath(); g.fill(); if (q.a >= 1) g.stroke(); });
+  polys = []; }
+var ID = function(p){ return p; };
+function ellipsoid(c, A, B, C, col, nu, nv, X){
+  function P(u, v){ var su = Math.sin(v)*Math.cos(u), sv = Math.sin(v)*Math.sin(u), cw = Math.cos(v); return X(add(add(add(c, mul(A, su)), mul(B, sv)), mul(C, cw))); }
+  for (var j=0; j<nv; j++) for (var i=0; i<nu; i++){ var u0 = TAU*i/nu, u1 = TAU*(i + 1)/nu, v0 = Math.PI*j/nv, v1 = Math.PI*(j + 1)/nv; poly([P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)], col); } }
+function tube(p0, p1, r0, r1, col, n, X){
+  var ax = nrm(sub(p1, p0)), u = perp(ax), v = cross(ax, u);
+  function Rp(p, r, a){ return X(add(p, add(mul(u, r*Math.cos(a)), mul(v, r*Math.sin(a))))); }
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n; poly([Rp(p0, r0, a0), Rp(p0, r0, a1), Rp(p1, r1, a1), Rp(p1, r1, a0)], col); } }
+function cone(b, tip, r, col, n, X){
+  var ax = nrm(sub(tip, b)), u = perp(ax), v = cross(ax, u);
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n, q0 = add(b, add(mul(u, r*Math.cos(a0)), mul(v, r*Math.sin(a0)))), q1 = add(b, add(mul(u, r*Math.cos(a1)), mul(v, r*Math.sin(a1))));
+    poly([X(q0), X(q1), X(tip)], col); poly([X(q0), X(q1), X(b)], col); } }
+function arrow(o, d, L, col, label, w){
+  w = w || 1; var u = nrm(d), tip = add(o, mul(u, L)), neck = add(o, mul(u, Math.max(0.01, L - 0.22*w)));
+  tube(o, neck, 0.03*w, 0.03*w, col, 8, ID); cone(neck, tip, 0.08*w, col, 10, ID);
+  if (label) labels.push({ p:add(o, mul(u, L + 0.2)), t:label, c:col }); }
+/* ══════════ colours ══════════ */
+function pal(){ var cb = th.cb, hc = th.hc, lm = th.lm;
+  return { bg:hc ? '#000' : (lm ? '#eef2f6' : '#0b0e14'), dot:hc ? 'rgba(255,255,255,0.7)' : (lm ? 'rgba(30,40,60,0.35)' : 'rgba(160,180,210,0.45)'),
+    grid:hc ? 'rgba(255,255,255,0.45)' : (lm ? 'rgba(0,0,0,0.16)' : 'rgba(120,140,170,0.22)'), txt:hc ? '#fff' : (lm ? '#1d232a' : '#dbe5ec'),
+    rotor:[205, 160, 60], stripe:cb ? [0, 114, 178] : [200, 45, 40], frame:hc ? [235, 235, 235] : [170, 182, 198], axle:[130, 135, 145], knob:cb ? [230, 159, 0] : [225, 95, 60],
+    stick:[176, 122, 66], tip:[70, 70, 70], post:[115, 120, 130], L:cb ? [0, 158, 115] : [60, 215, 120], w:cb ? [86, 180, 233] : [90, 165, 255], J:cb ? [230, 159, 0] : [255, 205, 40], tq:cb ? [204, 121, 167] : [255, 110, 200],
+    trace:cb ? '#cc79a7' : '#ff6fae', mark:hc ? '#ffff00' : '#ff3df2', spin:hc ? '#ffff00' : '#ffd23f' }; }
+function rgb(c){ return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+/* ══════════ the scene ══════════ */
+function drawSpace(p){   /* a lattice of dots fixed in the station: they show the drift */
+  var SP = 1.2, T = cam.T, bx = Math.round(T[0]/SP)*SP, by = Math.round(T[1]/SP)*SP, bz = Math.round(T[2]/SP)*SP, i, j, k;
+  g.fillStyle = p.dot;
+  for (i=-3; i<=3; i++) for (j=-2; j<=2; j++) for (k=-3; k<=3; k++){ var v = view([bx + i*SP, by + j*SP, bz + k*SP]); if (cam.D - v[2] < 1) continue; var s2 = proj(v), r = clamp(2.2*cam.D/(cam.D - v[2]), 0.6, 3.2); g.beginPath(); g.arc(s2[0], s2[1], r, 0, TAU); g.fill(); } }
+function drawStand(p){
+  g.strokeStyle = p.grid; g.lineWidth = 1;
+  for (var i=-6; i<=6; i++){ var a = scr([i*0.5, FL, -3]), b = scr([i*0.5, FL, 3]), c = scr([-3, FL, i*0.5]), d = scr([3, FL, i*0.5]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.moveTo(c[0], c[1]); g.lineTo(d[0], d[1]); g.stroke(); }
+  ellipsoid([0, FL + 0.04, 0], [0.55, 0, 0], [0, 0.05, 0], [0, 0, 0.55], p.post, 16, 4, ID);
+  tube([0, FL, 0], [0, -0.24, 0], 0.06, 0.05, p.post, 10, ID); cone([0, -0.26, 0], [0, 0, 0], 0.09, p.post, 10, ID); }
+function drawGyro(p){
+  var s = S, R = qmat(s.q), c = mul(cmOf(s), DS), cps = Math.cos(s.vpsi), sps = Math.sin(s.vpsi);
+  function X(v){ var w = mv(R, v); return [c[0] + w[0], c[1] + w[1], c[2] + w[2]]; }
+  function XR(v){ return X([v[0]*cps - v[1]*sps, v[0]*sps + v[1]*cps, v[2]]); }
+  var rr = RR*DS, ht = 0.08, k = 24, j, ra = RA*DS, ax = LA*DS;
+  for (j=0; j<k; j++){ var a0 = TAU*j/k, a1 = TAU*(j + 1)/k, x0 = rr*Math.cos(a0), y0 = rr*Math.sin(a0), x1 = rr*Math.cos(a1), y1 = rr*Math.sin(a1);
+    var st = j % 6 < 2, col = st ? p.stripe : p.rotor;   /* four coloured sectors: the pie pattern that shows the rotation */
+    poly([XR([0, 0, ht]), XR([x0, y0, ht]), XR([x1, y1, ht])], col); poly([XR([0, 0, -ht]), XR([x0, y0, -ht]), XR([x1, y1, -ht])], col);
+    poly([XR([x0, y0, ht]), XR([x1, y1, ht]), XR([x1, y1, -ht]), XR([x0, y0, -ht])], st ? p.stripe : [175, 135, 50]); }
+  [[1, 0, 0], [0, 1, 0]].forEach(function(u){ var n = 22; for (var i=0; i<n; i++){ var b0 = TAU*i/n, b1 = TAU*(i + 1)/n;
+    tube([u[0]*ra*Math.cos(b0), u[1]*ra*Math.cos(b0), ra*Math.sin(b0)], [u[0]*ra*Math.cos(b1), u[1]*ra*Math.cos(b1), ra*Math.sin(b1)], 0.035, 0.035, p.frame, 5, X); } });
+  tube([0, 0, -ax], [0, 0, ax], 0.032, 0.032, p.axle, 8, X);
+  ellipsoid([0, 0, ax], [0.075, 0, 0], [0, 0.075, 0], [0, 0, 0.075], p.knob, 10, 6, X);
+  ellipsoid([0, 0, -ax], [0.075, 0, 0], [0, 0.075, 0], [0, 0, 0.075], s.tab ? p.axle : p.knob, 10, 6, X); }
+function drawArrows(p){
+  var s = S, o = s.tab ? [0, 0, 0] : mul(s.x, DS), Lm = len(s.L), w = omegaW(s), wm = len(w);
+  if (Lm > 1e-6) arrow(o, s.L, 2.4*Lm/(Lm + 0.006), p.L, 'L', 1.1);
+  if (wm > 0.05 && !s.held) arrow(s.tab ? [0, 0, 0] : o, w, 1.9*wm/(wm + 6), p.w, '\u03C9', 0.85);
+  if (s.tab){ var tq = torqueQ(s, s.q), tm = len(tq); if (tm > 1e-5) arrow([0, 0, 0], tq, 1.3*tm/(tm + 0.03), p.tq, '\u03C4', 0.8); } }
+function stickGap(){ var k = U.stick; if (!k) return 1.0; return k.ph === 0 ? 1.0*(1 - k.t/0.18) : 9*k.t/0.6; }   /* in, then back out of view */
+function drawStick(p){
+  if (!U.stick && (!U.aim || U.retracted)) return;
+  var G = (U.stick && U.stick.P) ? U.stick : stickGeom(), P = mul(G.P, DS), d = G.d, gap = Math.max(0, stickGap()), ghost = !U.stick;
+  PA = ghost ? 0.42 : 1;
+  tube(sub(P, mul(d, gap + 3.4)), sub(P, mul(d, gap + 0.14)), 0.055, 0.05, p.stick, 8, ID);
+  ellipsoid(sub(P, mul(d, gap + 0.1)), [0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.1], p.tip, 8, 5, ID);
+  PA = 1;
+  if (U.stick && U.stick.ph === 1 && U.stick.t < 0.3) arrow(P, d, 0.9, p.J, 'J', 0.8); }
+function drawAim(p){
+  if (!U.aim || U.stick || U.retracted) return;
+  var G = stickGeom(), P = mul(G.P, DS), a = scr(sub(P, mul(G.d, 3.8))), b = scr(add(P, mul(G.d, 1.4))), c = scr(P);
+  g.strokeStyle = p.mark; g.lineWidth = 1.4; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); g.setLineDash([]);
+  g.lineWidth = 2; g.beginPath(); g.arc(c[0], c[1], 6, 0, TAU); g.stroke(); }
+function drawTrace(p){
+  var s = S; if (!U.trace || s.trace.length < 2) return;
+  var o = s.tab ? [0, 0, 0] : mul(s.x, DS);
+  g.strokeStyle = p.trace; g.lineWidth = 1.6; g.globalAlpha = 0.9; g.beginPath();
+  s.trace.forEach(function(t, i){ var q = scr(add(o, t)); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke(); g.globalAlpha = 1; }
+function drawSpin(p){   /* when the drawing is slowed down: a curved arrow on the rotor shows which way it turns */
+  var s = S; if (!U.blur || Math.abs(s.h) < 1e-9) return;
+  var R = qmat(s.q), c = mul(cmOf(s), DS), sg = s.h > 0 ? 1 : -1, pts = [], i;
+  for (i=0; i<=20; i++){ var t = sg*(i/20)*1.5*Math.PI, v = mv(R, [0.42*Math.cos(t), 0.42*Math.sin(t), 0.1]); pts.push(scr(add(c, v))); }
+  g.strokeStyle = p.spin; g.lineWidth = 2.5; g.beginPath(); pts.forEach(function(q, i2){ if (i2) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke();
+  var e = pts[20], f2 = pts[18], dx = e[0] - f2[0], dy = e[1] - f2[1], l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+  g.fillStyle = p.spin; g.beginPath(); g.moveTo(e[0] + dx*8, e[1] + dy*8); g.lineTo(e[0] - dy*6, e[1] + dx*6); g.lineTo(e[0] + dy*6, e[1] - dx*6); g.closePath(); g.fill(); }
+function drawLabels(){ labels.forEach(function(l){ var s2 = scr(l.p); g.font = 'bold 16px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,0.7)'; g.strokeText(l.t, s2[0], s2[1]); g.fillStyle = rgb(l.c); g.fillText(l.t, s2[0], s2[1]); }); labels = []; g.textBaseline = 'alphabetic'; }
+function draw(){
+  var p = pal(); setCam(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  if (U.tab) drawStand(p); else drawSpace(p);
+  drawGyro(p); if (U.arrows) drawArrows(p); drawStick(p); flush();
+  drawTrace(p); drawSpin(p); drawAim(p); drawLabels();
+  el('gyHint').textContent = 't = ' + S.t.toFixed(2) + ' s \u00B7 slow motion ' + U.spd.toFixed(2) + '\u00D7' + (U.blur ? ' \u00B7 rotor drawn slower than real' : '') + ' \u00B7 drag to turn the view'; }
+/* ══════════ readout, status, narration ══════════ */
+function f(v, k){ return (Math.abs(v) < 0.5*Math.pow(10, -k) ? 0 : v).toFixed(k); }
+function spinTxt(rev){ return (rev > 0.05 ? '+' : '') + f(rev, Math.abs(rev) < 10 ? 1 : 0) + ' rev/s'; }
+function precRate(){ var h = S.hist; if (h.length < 2) return null; var a = h[0], b = h[h.length - 1]; if (b[0] - a[0] < 0.3) return null; return (b[1] - a[1])/(b[0] - a[0]); }
+function info(){
+  var s = S, a = axisOf(s), w = omegaW(s), wp = sub(w, mul(a, dot(w, a))), rev = s.h/I3R/TAU, Lm = len(s.L), cells = [], st = '';
+  cells.push(['ROTOR SPIN \u03C9s', spinTxt(rev) + ' = ' + f(rev*TAU, 0) + ' rad/s']);
+  cells.push(['|L| ABOUT ' + (s.tab ? 'THE PIVOT' : 'THE CM'), f(Lm*1000, 2) + ' \u00D7 10\u207B\u00B3 kg\u00B7m\u00B2/s']);
+  cells.push(['AXLE TILT \u00B7 DIRECTION', f(tiltOf(a), tiltOf(a) < 10 ? 1 : 0) + '\u00B0 from up \u00B7 ' + f(azOf(a), 0) + '\u00B0 around']);
+  if (!s.tab){
+    var cn = Lm > 1e-9 ? ang(a, s.L) : 0, tum = len(wp)/TAU;
+    cells.push(['TUMBLING RATE', f(tum, 2) + ' rev/s']);
+    cells.push(['CONE: AXLE TO L', Lm > 1e-9 ? f(Math.min(cn, 180 - cn), 1) + '\u00B0' : '--']);
+    cells.push(['AXLE SWING SINCE KICK', s.kick ? f(s.swing, 1) + '\u00B0' : '--']);
+    cells.push(['DRIFT SPEED', f(len(s.v)*100, 1) + ' cm/s']);
+    if (Lm < 1e-9 && len(s.v) < 1e-6) st = 'At rest, floating. Strike it, or choose a spin first.';
+    else if (Lm < 1e-9) st = 'Drifting without turning: the kick went through the centre of mass.';
+    else if (Math.abs(rev) < 0.5) st = 'Tumbling end over end: with no spin, the axle swings all the way around.';
+    else if (cn < 1 || cn > 179) st = 'Spinning steadily: the axle points in a fixed direction in space' + (len(s.v) > 1e-4 ? ', even as the gyroscope drifts.' : '.');
+    else st = 'Spinning and wobbling: the axle sweeps a cone of ' + f(Math.min(cn, 180 - cn), 1) + '\u00B0 around the fixed L, but keeps its general direction.';
+  } else {
+    var ti = tiltOf(a), Om = precRate(), pred = Math.abs(s.h) > 1e-9 ? MGL/Math.abs(s.h) : null, ss = steadyOmega(ti, s.h);
+    cells.push(['PRECESSION, MEASURED', s.held ? '--' : (Om === null ? '...' : f(Om, 2) + ' rad/s')]);
+    cells.push(['m g \u2113/(I\u209B \u03C9\u209B)', pred === null ? '\u221E (no spin)' : f(pred, 2) + ' rad/s \u00B7 T = ' + f(TAU/pred, 1) + ' s']);
+    cells.push(['TORQUE m g \u2113 sin\u03B8', f(MGL*Math.sin(ti*DEG)*1000, 2) + ' mN\u00B7m']);
+    cells.push(['SPIN NEEDED TO STAY UP', '> ' + f(critRev(), 0) + ' rev/s']);
+    if (s.held) st = 'Held still by hand at ' + f(ti, 1) + '\u00B0 from straight up. Release it, or strike it.';
+    else if (ti > THSTOP - 2 && len(w) < 0.5) st = 'Resting against the post: it fell.';
+    else if (Math.abs(rev) < 3) st = 'Falling: with little or no spin, gravity\u2019s torque tips it over.';
+    else st = 'Precessing: gravity\u2019s torque turns L sideways, so the axle swings around the vertical instead of falling' + (ss === null ? '.' : ' (steady rate at this tilt: ' + f(Math.abs(ss), 2) + ' rad/s).') + (ti < 20 && Math.abs(rev) < critRev() ? ' The spin is now below ' + f(critRev(), 0) + ' rev/s, too slow to stay upright: the circle widens.' : ((U.fric > 0 || U.sdec > 0) ? ' Friction slowly takes the spin away; once it is too slow, the circle widens until it falls.' : ' With no friction, the circle keeps its size.'));
+  }
+  el('gyRead').innerHTML = cells.map(function(c){ return '<div><div class="gy_flabel">' + c[0] + '</div><div class="gy_fvalue">' + c[1] + '</div></div>'; }).join('');
+  el('gyStatus').textContent = st;
+  var hm = Math.abs(s.h);
+  el('gyEq').innerHTML = !s.tab ? 'Kick: <b>\u0394p = J</b>, <b>\u0394L = r \u00D7 J</b>; then no torque, so <b>L stays fixed</b>. Spin: L\u209B = I\u209B\u03C9\u209B = ' + f(hm*1000, 2) + ' \u00D7 10\u207B\u00B3 kg\u00B7m\u00B2/s. A ' + U.st.J + ' mN\u00B7s kick at the end of the axle gives \u0394L = ' + f(LA*U.st.J, 3) + ' \u00D7 10\u207B\u00B3 kg\u00B7m\u00B2/s' + (hm > 1e-9 ? ': it tilts L by about ' + f(Math.atan(LA*U.st.J/1000/hm)/DEG, 1) + '\u00B0.' : ', all of the angular momentum there is: it tumbles.')
+    : 'Torque about the pivot: <b>\u03C4 = r \u00D7 mg</b>, |\u03C4| = m g \u2113 sin\u03B8 with m = ' + f(M*1000, 0) + ' g, \u2113 = ' + f(LA*100, 1) + ' cm. <b>dL/dt = \u03C4</b>: L turns sideways at <b>\u03A9 \u2248 m g \u2113/(I\u209B\u03C9\u209B)</b>' + (hm > 1e-9 ? ' = ' + f(MGL/hm, 2) + ' rad/s.' : ' (no spin: it simply falls).') + ' Near upright it stays up only while <b>I\u209B\u03C9\u209B &gt; 2\u221A(I\u22A5 m g \u2113)</b>, i.e. above ' + f(critRev(), 0) + ' rev/s. Friction slows the spin' + (U.fric > 0 ? '; pivot friction <b>\u03C4f = \u2212c\u03A9</b> also lowers the vertical part of L, which drops a tilted axle.' : '.');
+  return st; }
+function narrate(m){ if (!th.nr) return; el('gyNar').textContent = m; }
+function kickReport(){
+  var s = S, k = s.kick; if (!k) return;
+  var rev = s.h/I3R/TAU, w = omegaW(s), a = axisOf(s), dLm = len(k.dL), msg = '';
+  if (k.rotor) msg = 'The stick caught the rim of the rotor: its spin went from ' + spinTxt(k.spin0) + ' to ' + spinTxt(rev) + '. ';
+  if (!s.tab){
+    var drift = ' It also drifts away at ' + f(len(s.v)*100, 1) + ' cm/s.';
+    if (dLm < 1e-9) msg += 'The push went through the centre of mass: no torque, so L did not change. The gyroscope only drifts, at ' + f(len(s.v)*100, 1) + ' cm/s, without turning.';
+    else if (Math.abs(rev) < 0.5) msg += 'With no spin, all of its angular momentum comes from the kick: it tumbles at ' + f(len(w)/TAU, 2) + ' rev/s, and the axle has already swung ' + f(s.swing, 0) + '\u00B0.' + drift;
+    else { var dth = len(k.L0) > 1e-12 ? ang(k.L0, s.L) : 90, cn = ang(a, s.L);
+      msg += (k.rotor ? '' : 'Spinning at ' + f(Math.abs(rev), 0) + ' rev/s, it carries a large L, ' + f(len(k.L0)/dLm, 0) + ' times the angular impulse of the kick. ') + 'L turned by only ' + f(dth, 1) + '\u00B0; the axle wobbles in a narrow cone (' + f(Math.min(cn, 180 - cn), 1) + '\u00B0) around the new L and keeps nearly its old direction.' + drift; }
+  } else {
+    msg += dLm < 1e-9 ? 'The push went through the pivot: no torque about it, no change.' : 'The kick changed L by ' + f(dLm*1000, 2) + ' \u00D7 10\u207B\u00B3 kg\u00B7m\u00B2/s. ' + (Math.abs(rev) < 3 ? 'With little spin, it swings off and falls.' : 'The axle swung ' + f(s.swing, 1) + '\u00B0 at most; it nods (nutation) and goes on precessing, now at a tilt of ' + f(tiltOf(a), 0) + '\u00B0.');
+  }
+  narrate(msg); }
+function describe(){
+  narrate((S.tab ? 'A toy gyroscope stands on the pointed top of a post, the lower end of its axle on the pivot. ' : 'A toy gyroscope floats free in the space station: a brass rotor with four red sectors, on an axle inside two crossed hoops. ') + 'The green arrow is the angular momentum L, the blue arrow the angular velocity \u03C9 of the frame' + (S.tab ? ', and the pink arrow the torque of gravity about the pivot. The pink curve traces the top of the axle. ' : '. ') + (U.blur ? 'The rotor spins too fast to draw: its sectors turn more slowly than in reality, in the correct direction, and a yellow curved arrow marks the sense of rotation. ' : '') + (U.retracted ? 'The stick has pulled back out of view; touch a stick control to aim it again. ' : 'A wooden stick, shown faintly, aims at the gyroscope along the dashed line. ') + info()); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="gy_ctrl"><div class="gy_ctrlhdr"><label class="gy_ctrlname" for="' + id + '">' + label + '</label><span class="gy_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function fricTxt(v){ return v === 0 ? 'none' : v + ' \u00D7 10\u207B\u2075 N\u00B7m\u00B7s'; }
+function sdTxt(v){ return v === 0 ? 'none' : (v/10).toFixed(1) + ' % of the spin per s'; }
+function cmTxt(v){ return Math.abs(v) < 0.05 ? '0 (centre)' : (v > 0 ? '+' : '\u2212') + Math.abs(v).toFixed(1) + ' cm'; }
+function build(){
+  el('gyCtlG').innerHTML = row('gySp', 'spin of the rotor \u03C9s (starts again)', -100, 100, 1, 0, '0 rev/s')
+    + '<div class="gy_brow"><button type="button" class="gy_btn" id="gySp0">No spin</button><button type="button" class="gy_btn" id="gySpF">Spin it fast</button><button type="button" class="gy_btn" id="gySpR">Reverse the spin</button></div>'
+    + '<div class="gy_t1">' + row('gyFr', 'pivot friction (opposes the precession)', 0, 40, 1, U.fric, fricTxt(U.fric)) + row('gySd', 'spin slowdown (air and bearing friction)', 0, 60, 1, U.sdec, sdTxt(U.sdec)) + '</div>'
+    + row('gyTi', 'axle tilt from straight up', 0, 180, 0.5, 60, '60\u00B0') + row('gyAz', 'axle direction around', -180, 180, 1, 30, '30\u00B0')
+    + '<p class="gy_note">Choosing a spin (buttons or slider) starts the situation again from its starting position. The two axle sliders set the gyroscope by hand: any tumbling stops, and the rotor keeps its spin. They follow the gyroscope as it moves.</p>';
+  el('gyCtlS').innerHTML = '<div class="gy_brow"><button type="button" class="gy_btn" data-pre="c">Through the centre</button><button type="button" class="gy_btn" data-pre="e">End of the axle</button><button type="button" class="gy_btn" data-pre="r">Rim of the rotor</button></div>'
+    + row('gyHs', 'hit point along the axle', -1, 1, 0.05, U.st.s, cmTxt(U.st.s*LA*100)) + row('gyHr', 'hit point off the axle', -1, 1, 0.05, U.st.rho, cmTxt(U.st.rho*RA*100))
+    + row('gyDa', 'push direction around', -180, 180, 1, U.st.az, U.st.az + '\u00B0') + row('gyDe', 'push direction up or down', -80, 80, 1, U.st.el, U.st.el + '\u00B0')
+    + row('gyJ', 'strength of the kick (impulse J)', 1, 30, 1, U.st.J, U.st.J + ' mN\u00B7s')
+    + '<p class="gy_note">The three buttons aim the stick at right angles to the axle as it is now. The dashed line is the line of action of the push; the ring marks the point it hits. Within 0.7 cm of the rotor\u2019s plane and inside its 3 cm radius, the stick hits the rotor; elsewhere, the frame. After a strike the stick pulls back out of view; touch any stick control to see it aim again.</p>';
+  on('gySp', 'input', function(){ touch('gySp'); el('gySpv').textContent = spinTxt(+this.value); });
+  on('gySp', 'change', function(){ respin(+this.value); });
+  on('gySp0', 'click', function(){ respin(0); });
+  on('gySpF', 'click', function(){ respin(DEF[U.tab].rev || 40); });
+  on('gySpR', 'click', function(){ respin(-S.h/I3R/TAU); });
+  on('gyFr', 'input', function(){ U.fric = +this.value; el('gyFrv').textContent = fricTxt(U.fric); later(); });
+  on('gySd', 'input', function(){ U.sdec = +this.value; el('gySdv').textContent = sdTxt(U.sdec); later(); });
+  on('gyTi', 'input', function(){ touch('gyTi'); setAxis(); }); on('gyAz', 'input', function(){ touch('gyAz'); setAxis(); });
+  [].forEach.call(el('gyCtlS').querySelectorAll('button[data-pre]'), function(b){ b.addEventListener('click', function(){ preset(b.getAttribute('data-pre')); }); });
+  on('gyHs', 'input', function(){ U.st.s = +this.value; syncStick(); }); on('gyHr', 'input', function(){ U.st.rho = +this.value; syncStick(); });
+  on('gyDa', 'input', function(){ U.st.az = +this.value; syncStick(); }); on('gyDe', 'input', function(){ U.st.el = +this.value; syncStick(); });
+  on('gyJ', 'input', function(){ U.st.J = +this.value; syncStick(); }); }
+function syncStick(){ U.retracted = false;
+  var t = [['gyHs', U.st.s, cmTxt(U.st.s*LA*100)], ['gyHr', U.st.rho, cmTxt(U.st.rho*RA*100)], ['gyDa', U.st.az, U.st.az + '\u00B0'], ['gyDe', U.st.el, U.st.el + '\u00B0'], ['gyJ', U.st.J, U.st.J + ' mN\u00B7s']];
+  t.forEach(function(q){ el(q[0]).value = q[1]; el(q[0] + 'v').textContent = q[2]; });
+  el('gyHsv').textContent = cmTxt(U.st.s*LA*100) + (S.tab ? (U.st.s <= -0.95 ? ' (the pivot)' : (U.st.s >= 0.95 ? ' (top end)' : '')) : ''); }
+function touch(id){ U.touched[id] = Date.now(); }
+function setSl(id, v, txt, force){ var e = el(id); if (!e) return; if (!force && (document.activeElement === e && Date.now() - (U.touched[id] || 0) < 1500)) return; e.value = v; el(id + 'v').textContent = txt; }
+function syncG(force){ var a = axisOf(S), rev = S.h/I3R/TAU, ti = tiltOf(a); setSl('gySp', Math.round(rev), spinTxt(rev), force); setSl('gyTi', Math.round(ti*2)/2, f(ti, ti < 10 ? 1 : 0) + '\u00B0', force); setSl('gyAz', Math.round(azOf(a)), f(azOf(a), 0) + '\u00B0', force); }
+function setSpin(rev){ var s = S, nh = I3R*TAU*rev; s.L = add(s.L, mul(axisOf(s), nh - s.h)); s.h = nh; s.hist = []; }   /* test hook only */
+function setAxis(){ var s = S, ti = +el('gyTi').value, az = +el('gyAz').value;
+  if (s.tab) ti = Math.min(ti, THSTOP - 1);
+  var a = dirTA(ti, az); s.q = qFromTo([0, 0, 1], a); s.L = mul(a, s.h); s.trace = []; s.hist = []; s.kick = null;
+  if (s.tab){ s.held = true; holdLabel(); }
+  el('gyTiv').textContent = f(ti, ti < 10 ? 1 : 0) + '\u00B0'; el('gyAzv').textContent = f(az, 0) + '\u00B0'; later(); }
+function hold(){ var s = S; if (!s.tab) return;
+  if (s.held){ s.held = false; s.L = mul(axisOf(s), s.h); s.hist = []; s.trace = []; s.kick = null; narrate('Released from rest: ' + (Math.abs(s.h) < 1e-9 ? 'with no spin, it falls.' : 'it dips a little at first, then precesses while nodding (nutation). Watch the trace of the tip.')); if (!U.play) setPlay(true); }
+  else { s.held = true; s.L = mul(axisOf(s), s.h); narrate('Held still by hand. The rotor keeps spinning. Tilt it with the slider, then release it from rest to see it dip and nod.'); }
+  holdLabel(); }
+function releaseSteady(){ var s = S; if (!s.tab) return; var a = axisOf(s), ti = tiltOf(a), Om = steadyOmega(ti, s.h);
+  s.held = false; s.hist = []; s.trace = []; s.kick = null; holdLabel(); if (!U.play) setPlay(true);
+  if (Om === null || Math.abs(s.h) < 1e-9){ s.L = mul(a, s.h); narrate('There is too little spin for a steady precession at this tilt: released from rest instead.'); return; }
+  s.L = steadyL(s, Om);
+  narrate('Released with a sideways push of exactly the right speed: it precesses smoothly at ' + f(Math.abs(Om), 2) + ' rad/s, one turn in ' + f(TAU/Math.abs(Om), 1) + ' s' + ((U.fric > 0 || U.sdec > 0) ? '; friction will slowly change that.' : ', without nodding.')); }
+function holdLabel(){ el('gyHold').textContent = S.held ? 'Release (from rest)' : 'Hold it still'; }
+function stopAll(){ var s = S; s.L = mul(axisOf(s), s.h); s.trace = []; s.kick = null; s.hist = []; narrate('The tumbling is stopped by hand; it keeps its spin and its drift.'); }
+function setPlay(v){ U.play = v; el('gyPlay').innerHTML = v ? '\u2759\u2759 Pause' : '\u25B6 Play'; el('gyPlay').classList.toggle('gy_btnon', v); }
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ narrate(info()); }, 600); }
+on('gyKick', 'click', strike);
+on('gyPlay', 'click', function(){ setPlay(!U.play); });
+on('gyHold', 'click', hold); on('gyRelP', 'click', releaseSteady); on('gyStop', 'click', stopAll);
+on('gyCenter', 'click', function(){ S.x = [0, 0, 0]; S.v = [0, 0, 0]; S.trace = []; narrate('Caught and brought back to the middle, at rest; it keeps its spin and its rotation.'); });
+on('gySpd', 'input', function(){ U.spd = +this.value; el('gySpdV').textContent = U.spd.toFixed(2) + '\u00D7'; });
+on('gyArr', 'change', function(){ U.arrows = this.checked; }); on('gyTr', 'change', function(){ U.trace = this.checked; S.trace = []; });
+on('gyFol', 'change', function(){ U.follow = this.checked; }); on('gyAim', 'change', function(){ U.aim = this.checked; U.retracted = false; });
+on('gyVStd', 'click', function(){ U.yaw = -30; U.pitch = U.tab ? 22 : 16; }); on('gyVTop', 'click', function(){ U.yaw = 0; U.pitch = 88; });
+on('gyDsc', 'click', describe);
+/* drag (mouse or finger) or the arrow keys turn the view; K strikes; P pauses */
+var drag = null;
+cv.addEventListener('pointerdown', function(e){ drag = { x:e.clientX, y:e.clientY, yaw:U.yaw, pitch:U.pitch }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!drag) return; var r = cv.getBoundingClientRect(), k = W/r.width; U.yaw = drag.yaw + (e.clientX - drag.x)*k*0.45; U.pitch = clamp(drag.pitch + (e.clientY - drag.y)*k*0.35, -85, 88); });
+function endDrag(){ drag = null; cv.style.cursor = 'grab'; } cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('keydown', function(e){ var k = e.key;
+  if (k === 'ArrowLeft'){ U.yaw -= 5; } else if (k === 'ArrowRight'){ U.yaw += 5; } else if (k === 'ArrowUp'){ U.pitch = clamp(U.pitch + 5, -85, 88); } else if (k === 'ArrowDown'){ U.pitch = clamp(U.pitch - 5, -85, 88); }
+  else if (k === 'k' || k === 'K' || k === 'Enter'){ strike(); } else if (k === 'p' || k === 'P'){ setPlay(!U.play); } else return; e.preventDefault(); });
+function tab(i){   /* opening a tab starts it again from its defaults */
+  U.tab = i;
+  for (var k=0; k<2; k++) el('gyT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false');
+  [].forEach.call(ROOT.querySelectorAll('.gy_t0'), function(e){ e.classList.toggle('gy_hide', i !== 0); });
+  [].forEach.call(ROOT.querySelectorAll('.gy_t1'), function(e){ e.classList.toggle('gy_hide', i !== 1); });
+  el('gyLab').textContent = i ? 'ON A STAND, WITH GRAVITY' : 'FLOATING FREE: NO GRAVITY';
+  U.yaw = -30; U.pitch = i ? 22 : 16;
+  reinit(i, DEF[i].rev);
+  narrate(i ? 'On a stand, with gravity. As usual, the gyroscope is started almost upright, 0.5\u00B0 off the vertical, its rotor spinning at ' + spinTxt(DEF[1].rev) + '. Gravity\u2019s torque makes it precess around the vertical at ' + f(Math.abs(steadyOmega(DEF[1].ti, S.h)), 2) + ' rad/s. Friction slowly takes the spin away; below ' + f(critRev(), 0) + ' rev/s it can no longer stay upright, and the circle of the tip widens until it falls.'
+    : 'Floating free, as in the space station. The gyroscope is at rest with its rotor not spinning. Strike it with the stick, then press Spin it fast and strike it again.'); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('gy_hc', th.hc); ROOT.classList.toggle('gy_lm', th.lm);
+  [['hc', 'gyBtnHC'], ['lm', 'gyBtnLM'], ['cb', 'gyBtnCB'], ['nr', 'gyBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('gy_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('gyBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('gyNar').style.display = th.nr ? '' : 'none'; }
+function toggleDesc(){ var b = el('gyDescBtn'), d = el('gyDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+/* ══════════ the loop ══════════ */
+var last = 0, tick = 0;
+function loop(t){
+  var rdt = last ? Math.min(0.05, (t - last)/1000) : 0, s = S; last = t;
+  if (U.play && rdt > 0){ var T = rdt*U.spd, turned = advance(T);
+    U.blur = Math.abs(turned) > VMAX;
+    s.vpsi = (s.vpsi + clamp(turned, -VMAX, VMAX)) % TAU;   /* the drawn rotor follows the real one, never faster than VMAX per frame */
+    var a = axisOf(s);
+    if (s.kick) s.swing = Math.max(s.swing, ang(a, s.kick.a0));
+    if (U.trace && !s.held){ s.trace.push(s.tab ? mul(a, 2*LA*DS) : mul(a, LA*DS)); if (s.trace.length > (s.tab ? 4000 : 900)) s.trace.shift(); }
+    if (s.tab && !s.held){ var ph = Math.atan2(-a[2], a[0]), hh = s.hist;
+      if (hh.length){ var pr = hh[hh.length - 1], d = ph - pr[2]; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; hh.push([s.t, pr[1] + d, ph]); } else hh.push([s.t, ph, ph]);
+      while (hh.length > 2 && s.t - hh[0][0] > 1.5) hh.shift(); } }
+  if (U.stick){ U.stick.t += rdt;
+    if (U.stick.ph === 0 && U.stick.t >= 0.18){ applyKick(); U.stick.ph = 1; U.stick.t = 0; }
+    else if (U.stick.ph === 1 && U.stick.t >= 0.6){ U.stick = null; U.retracted = true; } }
+  draw(); if (++tick % 6 === 0) info(); if (tick % 12 === 0) syncG(false);
+  requestAnimationFrame(loop); }
+/* boot */
+build(); setPlay(true); tab(0);
+narrate('Ready. The gyroscope floats at rest with its rotor not spinning, like the astronaut\u2019s at the start. Strike it with the stick, then press Spin it fast and strike it again.');
+requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, describe:describe, strike:strike, preset:preset, respin:respin,
+  _S:function(){ return S; }, _U:U, _adv:function(T){ return advance(T); }, _kick:function(){ applyKick(); }, _omega:function(){ return omegaW(S); }, _axis:function(){ return axisOf(S); },
+  _spin:function(r){ setSpin(r); }, _rel:function(st){ if (st) releaseSteady(); else hold(); }, _steady:steadyOmega, _info:info };
+})();
+</script>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Waves: EM Waves</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,EM,spectrum,Transverse, Longitudinal,Frequency, Amplitude, Wave,interference,damping,string, Properties,Rope, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="emAntRoot0922">
+<!-- ── Accessibility toolbar ── -->
+<div class="emant_a11y0922" id="emAntA11yBar0922" role="toolbar" aria-label="Display options">
+<button type="button" class="emant_a11ybtn0922" id="emAntBtnHC0922" onclick="emAntA11y0922.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="emant_a11ybtn0922" id="emAntBtnLM0922" onclick="emAntA11y0922.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="emant_a11ybtn0922" id="emAntBtnCB0922" onclick="emAntA11y0922.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="emant_a11ybtn0922 emant_a11yon0922" id="emAntBtnNR0922" onclick="emAntA11y0922.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar0922"><h3>An Antenna Radiating an Electromagnetic Wave</h3></div>
+<div class="mcontent0922">
+<canvas id="emAntCanvas0922" style="margin:auto;display:block;border:1px solid #ccc;cursor:grab;touch-action:none" width="660" height="480"></canvas>
+<div class="draghint0922">Drag to rotate the view &bull; Scroll / pinch to zoom</div>
+</div>
+<div id="emAntNarBar0922" class="emant_narbar0922" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="emAntEqBar0922" class="emant_eqbar0922" aria-label="Wave equations"></div>
+<div class="playbar0922" role="group" aria-label="Animation playback controls">
+<input type="button" id="emAntPlayBtn0922" class="wv_btn0922 wv_btnmain0922" value="Play"
+onclick="if(this.value=='Play'){emAntSim0922.pl();this.value='Pause';}else{this.value='Play';emAntSim0922.ps();}">
+<input type="button" class="wv_btn0922" value="Step" onclick="document.getElementById('emAntPlayBtn0922').value='Play';emAntSim0922.step();">
+<input type="button" class="wv_btn0922" value="Restart" onclick="document.getElementById('emAntPlayBtn0922').value='Play';emAntSim0922.rst();">
+<input type="button" class="wv_btn0922" value="Reset View" onclick="emAntSim0922.resetView();">
+</div>
+<div class="bbar0922" role="group" aria-label="Show or hide overlays">
+<label class="chk0922"><input type="checkbox" id="showB0922" checked onchange="emAntSim0922.toggleB(this)"> Show B field</label>
+<label class="chk0922"><input type="checkbox" id="showSpectrum0922" checked onchange="emAntSim0922.toggleSpectrum(this)"> Show spectrum strip</label>
+</div>
+<div class="footer0922">
+<div class="left0922">Spectrum band:</div>
+<div class="center0922">
+<select id="emAntBand0922" onchange="emAntSim0922.setBand(this.value)">
+<option value="radio">Radio</option>
+<option value="microwave">Microwave</option>
+<option value="infrared">Infrared</option>
+<option value="visible" selected>Visible</option>
+<option value="uv">Ultraviolet</option>
+<option value="xray">X-ray</option>
+<option value="gamma">Gamma ray</option>
+</select>
+&nbsp; (each band has its own realistic wavelength range and units below)
+</div>
+</div>
+<div class="footer0922">
+<div class="left0922">Wavelength &lambda;:</div>
+<div class="center0922">
+<input class=islide0922 type="range" id="emAntLambda0922" min="1" max="6" value="3" step="0.1"
+ oninput="emAntSim0922.setLambdaSlider(this.value)" onchange="emAntSim0922.setLambdaSlider(this.value)">
+<span id="emAntLambdaVal0922">565</span> <span id="emAntLambdaUnit0922">nm</span>
+</div>
+</div>
+<div class="footer0922">
+<div class="left0922">Antenna angle &theta;:</div>
+<div class="center0922">
+<input class=islide0922 type="range" id="emAntAngle0922" min="0" max="180" value="0" step="5"
+ oninput="emAntSim0922.setAngle(this.value)" onchange="emAntSim0922.setAngle(this.value)">
+<span id="emAntAngleVal0922">0</span>&deg; &nbsp; (sets the E-field's linear polarization direction &mdash; no polarizers involved)
+</div>
+</div>
+<div class="footer0922">
+<div class="left0922">Source amplitude E&#8320;:</div>
+<div class="center0922">
+<input class=islide0922 type="range" id="emAntAmp0922" min="1" max="10" value="6" step="1"
+ oninput="emAntSim0922.setAmp(this.value)" onchange="emAntSim0922.setAmp(this.value)">
+<span id="emAntAmpVal0922">6</span> (rel. units, independent of band)
+</div>
+</div>
+<div class="fnote0922">Propagation is along k&#770; (fixed, world z), the antenna's broadside direction &mdash; real dipole antennas radiate in a donut-shaped pattern, but this sim shows only that one representative direction. B is drawn at the same visual height as E for clarity; in real SI units B = E/c is far too small to see next to E. Changing the band changes &lambda;, its units, and the derived frequency f = c/&lambda; &mdash; it does not change E&#8320; or the on-screen rendering scale, which always shows about 3 wavelengths for legibility (real wavelengths span 12+ orders of magnitude across the spectrum, so true-to-scale rendering isn't possible on one canvas).</div>
+<hr>
+<ol type="a">
+<li>Rotate the antenna to `theta=90^@`. How does the E field's oscillation direction on screen change? Does the B field's direction change the same way?<br /></li>
+<li>Switch from Radio to Visible. What happens to &lambda; and f? Does E&#8320; change?<br /></li>
+<li>At any instant along the wave, is B ever parallel to E? What is the angle between them?<br /></li>
+<li>Using `c=lambda f`, if you move the wavelength slider so &lambda; is cut in half (within the same band), what happens to f?<br /></li>
+<li>Which spectrum band has the longest wavelength? The shortest? The highest frequency?<br /></li>
+<li>Switch to Visible and try a few different &lambda; values. Does the E field's color change to match? Why is this a special feature of only this one band?<br /></li>
+<li>Drag the view until you're looking straight down the propagation axis (along k&#770;). What do you see about E, B, and the antenna's own orientation from that viewpoint?<br /></li>
+<li>Does switching bands (say, Radio to X-ray) change the wave's speed? Why or why not?<br /></li>
+</ol>
+</div><!-- #emAntRoot0922 -->
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 663px; margin: 0; }
+#emAntRoot0922 {
+--emant-bg:      #ffffff;
+--emant-E:       #dd2200;
+--emant-B:       #2255cc;
+--emant-S:       #227744;
+--emant-antenna: #333333;
+--emant-text:    #111111;
+--emant-axis:    #666666;
+--emant-grid:    #999999;
+--emant-toolbar-bg: #222222;
+}
+#emAntRoot0922 .emant_a11y0922 {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--emant-toolbar-bg); flex-wrap:wrap; width:663px;
+}
+#emAntRoot0922 .emant_a11ybtn0922 {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#emAntRoot0922 .emant_a11ybtn0922:hover { border-color:#00e8d0; color:#00e8d0; }
+#emAntRoot0922 .emant_a11yon0922 { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#emAntRoot0922 .emant_narbar0922 {
+width:663px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.85rem; color:#333; font-style:italic;
+}
+#emAntRoot0922 .emant_eqbar0922 {
+width:663px; min-height:20px; padding:5px 10px;
+background:#e8f0ff; border-left:4px solid #3366aa;
+font-size:.78rem; color:#112244; font-family:monospace; line-height:1.55;
+}
+.tbar0922    { padding:2px; height:30px; background-color:#f90; text-align:center; line-height:28px; }
+.mcontent0922 { height:502px; }
+.draghint0922 { text-align:center; font-size:.72rem; color:#777; padding-top:2px; font-style:italic; }
+.playbar0922 {
+height:auto; min-height:40px; background-color:#cfe8ff; padding:6px;
+text-align:center; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;
+}
+.wv_btn0922 {
+padding:6px 14px; font-size:.82rem; border-radius:4px; cursor:pointer;
+background:#fff; border:1px solid #557; color:#223;
+}
+.wv_btn0922:hover { background:#eef4ff; }
+.wv_btnmain0922 { background:#ffd94a; border-color:#a8850a; font-weight:bold; }
+.wv_btnmain0922:hover { background:#ffe97a; }
+.bbar0922 {
+background-color:#df9; padding:8px; text-align:left;
+display:flex; flex-wrap:wrap; gap:4px 16px;
+}
+.bbar0922 .chk0922 { width:auto; font-size:.84rem; white-space:nowrap; }
+.footer0922  { min-height:50px; text-align:left; font-size:.9rem; display:flex; align-items:center; padding:6px 4px; }
+.footer0922 .left0922   { width:150px; padding:2px; flex-shrink:0; }
+.footer0922 .center0922 { flex:1; padding:4px; }
+.footer0922 .islide0922 { width:220px; vertical-align:middle; }
+.footer0922:nth-of-type(odd)  { background-color:#fce4ec; }
+.footer0922:nth-of-type(even) { background-color:#e8f5e9; }
+.fnote0922 { padding:8px 10px; font-size:.72rem; color:#555; font-style:italic; background:#eef2f7; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var emAntA11y0922 = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{ '--emant-bg':'#000','--emant-E':'#ff5555','--emant-B':'#66aaff','--emant-S':'#66ff99','--emant-antenna':'#fff',
+'--emant-text':'#fff','--emant-axis':'#ccc','--emant-grid':'#555','--emant-toolbar-bg':'#000' },
+lm:{ '--emant-bg':'#f0f0f0','--emant-E':'#aa1100','--emant-B':'#1144aa','--emant-S':'#116633','--emant-antenna':'#222',
+'--emant-text':'#000','--emant-axis':'#555','--emant-grid':'#aaa','--emant-toolbar-bg':'#444' },
+cb:{ '--emant-bg':'#fff','--emant-E':'#d55e00','--emant-B':'#0072b2','--emant-S':'#009e73','--emant-antenna':'#333',
+'--emant-text':'#000','--emant-axis':'#555','--emant-grid':'#aaa','--emant-toolbar-bg':'#222' }
+};
+var DEFS = { '--emant-bg':'#fff','--emant-E':'#dd2200','--emant-B':'#2255cc','--emant-S':'#227744','--emant-antenna':'#333',
+ '--emant-text':'#111','--emant-axis':'#666','--emant-grid':'#999','--emant-toolbar-bg':'#222' };
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('emAntNarBar0922');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('emAntBtnNR0922');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('emAntBtnNR0922',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('emAntBtnHC0922',states.hc);
+styleBtn('emAntBtnLM0922',states.lm);
+styleBtn('emAntBtnCB0922',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('emAntRoot0922'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('emAntNarBar0922');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════
+Reuses the 3D orbit-camera engine (rotate/project/ground grid/axis legend) from
+the attached polarization-optics file, stripped of all Jones-matrix/optical-
+element machinery. New: an antenna source (its own angle sets E's linear
+polarization direction directly -- no polarizers), a B field drawn alongside E,
+and a spectrum-band selector that remaps what the wavelength slider means
+physically without touching the render scale or E0.
+-->
+<script>
+var emAntSim0922 = (function() {
+var canvas  = document.getElementById('emAntCanvas0922');
+var ctx     = canvas.getContext('2d');
+var W       = canvas.width;
+var H       = canvas.height;
+var timer;
+var runFlag = 0;
+var c_light = 3e8;
+/* ── vector helpers (world 3-vectors) ── */
+function vadd(a,b){ return {x:a.x+b.x, y:a.y+b.y, z:a.z+b.z}; }
+function vscale(a,s){ return {x:a.x*s, y:a.y*s, z:a.z*s}; }
+/* ── fixed propagation frame: k is the antenna's broadside direction ── */
+var kHat = {x:0,y:0,z:1};   /* propagation, fixed world z */
+var nHat = {x:0,y:1,z:0};   /* transverse reference #1, world y */
+var bHat = {x:-1,y:0,z:0};  /* transverse reference #2 (k x n) */
+/* ── spectrum bands: each maps the SAME 1..6 slider onto a physically
+representative wavelength range and its natural units. Only the
+displayed lambda/frequency and units change with band -- the render
+scale (always ~3 wavelengths across the scene) and E0 never do. ── */
+var BANDS = {
+radio:     { label:'Radio',       lamMin:1,   lamMax:10,    unit:'m'  },
+microwave: { label:'Microwave',   lamMin:1,   lamMax:20,    unit:'cm' },
+infrared:  { label:'Infrared',    lamMin:1,   lamMax:50,    unit:'\u03bcm' },
+visible:   { label:'Visible',     lamMin:380, lamMax:750,   unit:'nm' },
+uv:        { label:'Ultraviolet', lamMin:10,  lamMax:380,   unit:'nm' },
+xray:      { label:'X-ray',       lamMin:10,  lamMax:10000, unit:'pm' },
+gamma:     { label:'Gamma ray',   lamMin:0.1, lamMax:10,    unit:'pm' }
+};
+var UNIT_SCALE = { m:1, cm:1e-2, '\u03bcm':1e-6, nm:1e-9, pm:1e-12 };
+var BAND_ORDER = ['radio','microwave','infrared','visible','uv','xray','gamma'];
+/* ── physics / derived state ── */
+var bandKey = 'visible';
+var sliderVal = 3;          /* the band-independent 1..6 slider position */
+var lambdaPhys, lambdaUnit, lambdaM;  /* displayed wavelength + its meaning in metres */
+var E0, thetaDeg, k, f, omega;
+var animPhase, frameCount, Zmax, zOffsetM, spaceScale;
+var showBField = true, showSpectrum = true;
+var narrationEvery = 70;
+/* ── camera (orbit) state ── */
+var yaw = -0.45, pitch = 0.30, camZoom = 1.0;
+var DEF_YAW = -0.45, DEF_PITCH = 0.30, DEF_ZOOM = 1.0;
+var dragging = false, lastPX = 0, lastPY = 0;
+var perspFactor = 0.0016;
+var centerX = W/2 - 20, centerY = H/2 - 30;
+var ampPxPerUnit = 15;
+function c(prop, def) { return emAntA11y0922.col(prop, def); }
+function rotate(px,py,pz){
+var cy=Math.cos(yaw), sy=Math.sin(yaw);
+var x1 = px*cy + pz*sy;
+var z1 = -px*sy + pz*cy;
+var y1 = py;
+var cp=Math.cos(pitch), sp=Math.sin(pitch);
+var y2 = y1*cp - z1*sp;
+var z2 = y1*sp + z1*cp;
+return {x:x1, y:y2, z:z2};
+}
+function projectScaled(px,py,pz){
+var r = rotate(px,py,pz);
+var denom = 1 + r.z*perspFactor;
+if (denom < 0.35) denom = 0.35;
+var persp = camZoom/denom;
+return {x:centerX + r.x*persp, y:centerY - r.y*persp, depth:r.z};
+}
+function projPoint(spatialM, fieldUnits){
+var px = spatialM.x*spaceScale + (fieldUnits? fieldUnits.x*ampPxPerUnit:0);
+var py = spatialM.y*spaceScale + (fieldUnits? fieldUnits.y*ampPxPerUnit:0);
+var pz = spatialM.z*spaceScale + (fieldUnits? fieldUnits.z*ampPxPerUnit:0);
+return projectScaled(px,py,pz);
+}
+function projAtField(s, fieldUnits){
+var cs = s - zOffsetM;
+return projPoint(vscale(kHat, cs), fieldUnits);
+}
+function projAtSpace(s, lateralM){
+var cs = s - zOffsetM;
+return projPoint(vadd(vscale(kHat, cs), lateralM || {x:0,y:0,z:0}), null);
+}
+function fmtSci(num, digits){
+if (num === 0) return '0';
+var sign = num < 0 ? '-' : '';
+num = Math.abs(num);
+var exp = Math.floor(Math.log10(num));
+var mant = num / Math.pow(10, exp);
+mant = Math.round(mant * Math.pow(10, digits)) / Math.pow(10, digits);
+if (mant >= 10) { mant /= 10; exp += 1; }
+var supMap = {'0':'\u2070','1':'\u00b9','2':'\u00b2','3':'\u00b3','4':'\u2074','5':'\u2075','6':'\u2076','7':'\u2077','8':'\u2078','9':'\u2079','-':'\u207b'};
+var expStr = String(exp).split('').map(function(ch){ return supMap[ch] || ch; }).join('');
+return sign + mant.toFixed(digits) + '\u00d710' + expStr;
+}
+function drawArrow(x0,y0,x1,y1,color,lw){
+var dx=x1-x0, dy=y1-y0, len=Math.sqrt(dx*dx+dy*dy);
+ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw || 2;
+ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+if (len < 2) return;
+var ang = Math.atan2(dy,dx), headLen = 6 + (lw||2);
+ctx.beginPath();
+ctx.moveTo(x1,y1);
+ctx.lineTo(x1-headLen*Math.cos(ang-Math.PI/7), y1-headLen*Math.sin(ang-Math.PI/7));
+ctx.lineTo(x1-headLen*Math.cos(ang+Math.PI/7), y1-headLen*Math.sin(ang+Math.PI/7));
+ctx.closePath(); ctx.fill();
+}
+/* ── wavelength (nm) to an approximate visible RGB colour; public-domain-
+style algorithm (Bruton). Used ONLY for the Visible band's E-field trace. ── */
+function wavelengthToRGB(nm){
+var r=0,g=0,b=0;
+if (nm>=380 && nm<440){ r=-(nm-440)/(440-380); g=0; b=1; }
+else if (nm>=440 && nm<490){ r=0; g=(nm-440)/(490-440); b=1; }
+else if (nm>=490 && nm<510){ r=0; g=1; b=-(nm-510)/(510-490); }
+else if (nm>=510 && nm<580){ r=(nm-510)/(580-510); g=1; b=0; }
+else if (nm>=580 && nm<645){ r=1; g=-(nm-645)/(645-580); b=0; }
+else if (nm>=645 && nm<=750){ r=1; g=0; b=0; }
+var factor;
+if (nm>=380 && nm<420) factor=0.3+0.7*(nm-380)/(420-380);
+else if (nm>=420 && nm<701) factor=1.0;
+else if (nm>=701 && nm<=750) factor=0.3+0.7*(750-nm)/(750-700);
+else factor=0.0;
+function adj(v){ return v===0?0:Math.round(255*Math.pow(v*factor,0.8)); }
+return 'rgb('+adj(r)+','+adj(g)+','+adj(b)+')';
+}
+function eFieldColor(){
+if (bandKey==='visible') return wavelengthToRGB(lambdaPhys);
+return c('--emant-E','#dd2200');
+}
+/* ── ground grid ── */
+function drawGroundGrid(){
+var half = Zmax/2;
+var step = (Zmax/3)/2;
+ctx.strokeStyle = c('--emant-grid','#999');
+ctx.lineWidth = 1;
+ctx.globalAlpha = 0.3;
+var gx, gz;
+for (gx=-half; gx<=half+1e-9; gx+=step){
+var p0=projPoint({x:gx,y:0,z:-half},null), p1=projPoint({x:gx,y:0,z:half},null);
+ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+}
+for (gz=-half; gz<=half+1e-9; gz+=step){
+var q0=projPoint({x:-half,y:0,z:gz},null), q1=projPoint({x:half,y:0,z:gz},null);
+ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.stroke();
+}
+ctx.globalAlpha = 1;
+}
+function drawAxisLegend(){
+var anchor = {x:W-78, y:H-88}, L=32;
+function tip(vx,vy,vz){ var r=rotate(vx*L,vy*L,vz*L); return {x:anchor.x+r.x, y:anchor.y-r.y}; }
+var zT=tip(0,0,1), yT=tip(0,1,0), xT=tip(1,0,0);
+ctx.font='11px monospace'; ctx.fillStyle=c('--emant-axis','#666');
+drawArrow(anchor.x,anchor.y,zT.x,zT.y, c('--emant-axis','#666'), 1.5);
+ctx.fillText('z', zT.x+3, zT.y+3);
+drawArrow(anchor.x,anchor.y,yT.x,yT.y, c('--emant-axis','#666'), 1.5);
+ctx.fillText('y', yT.x+3, yT.y-3);
+drawArrow(anchor.x,anchor.y,xT.x,xT.y, c('--emant-axis','#666'), 1.5);
+ctx.fillText('x', xT.x+3, xT.y+3);
+ctx.fillText('(world frame)', anchor.x-30, anchor.y+18);
+}
+/* ── the antenna: a dipole rod at z=0, oriented by theta in the transverse
+plane. Its own current oscillates with animPhase; the rod's thickness
+pulses with it as a simple "current now flowing" cue. ── */
+function drawAntenna(){
+var th = thetaDeg*Math.PI/180;
+var dir = vadd(vscale(nHat, Math.cos(th)), vscale(bHat, Math.sin(th)));
+var halfLenM = lambdaInternalM()*0.22;
+var p1 = projAtSpace(0, vscale(dir, -halfLenM));
+var p2 = projAtSpace(0, vscale(dir,  halfLenM));
+var pMid = projAtSpace(0, {x:0,y:0,z:0});
+var curNow = Math.cos(-animPhase);
+var lw = 3 + 2.5*Math.abs(curNow);
+ctx.strokeStyle = c('--emant-antenna','#333'); ctx.lineWidth = lw; ctx.lineCap='round';
+ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(pMid.x,pMid.y); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(pMid.x,pMid.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+ctx.fillStyle = '#fff'; ctx.strokeStyle=c('--emant-antenna','#333'); ctx.lineWidth=1.2;
+ctx.beginPath(); ctx.arc(pMid.x,pMid.y,3,0,2*Math.PI); ctx.fill(); ctx.stroke();
+var lbl = projAtSpace(0, vscale(dir, halfLenM+0.35*lambdaInternalM()));
+ctx.fillStyle=c('--emant-text','#111'); ctx.font='11px monospace';
+ctx.fillText('Antenna (\u03b8='+thetaDeg.toFixed(0)+'\u00b0)', lbl.x-40, lbl.y-6);
+var s0 = projAtSpace(0, {x:0,y:0,z:0});
+var s1 = projAtSpace(Zmax, {x:0,y:0,z:0});
+ctx.setLineDash([5,4]);
+drawArrow(s0.x,s0.y,s1.x,s1.y, c('--emant-S','#227744'), 1.8);
+ctx.setLineDash([]);
+ctx.fillStyle = c('--emant-S','#227744'); ctx.font='11px monospace';
+ctx.fillText('S  (propagation direction, k\u0302)', s1.x-90, s1.y-8);
+}
+/* the internal rendering wavelength, in the SAME arbitrary spatial units as
+spaceScale -- always the sliderVal (1..6), decoupled from real metres. */
+function lambdaInternalM(){ return sliderVal; }
+/* ── E and B fields, drawn as corkscrew ribbons along k with per-lambda/10
+arrows for E. theta sets E's direction; B is E rotated +90 deg in the
+transverse plane (verified: this keeps E.B=0 and ExB along k for any
+theta). B is drawn at the SAME visual amplitude as E -- not to true
+relative SI scale, which would make it invisible next to E. ── */
+function fieldAt(s, phase, angleOffsetDeg){
+var amp = E0;
+var th = (thetaDeg+angleOffsetDeg)*Math.PI/180;
+var mag = amp*Math.cos(phase);
+return { x: mag*Math.cos(th), y: mag*Math.sin(th) };  /* (nHat comp, bHat comp) */
+}
+function drawFieldRibbon(angleOffsetDeg, color, label, withArrows){
+var dz = Zmax/200, s;
+var pts = [];
+for (s=0; s<=Zmax; s+=dz){
+var phase = k*s - animPhase;
+var fv = fieldAt(s, phase, angleOffsetDeg);
+pts.push(projAtField(s, vadd(vscale(nHat, fv.x), vscale(bHat, fv.y))));
+}
+ctx.strokeStyle = color; ctx.lineWidth = 1.6;
+ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+for (var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+ctx.stroke();
+if (withArrows){
+var dzArrow = lambdaInternalM()/10, za;
+for (za=0; za<=Zmax+1e-9; za+=dzArrow){
+var ph = k*za - animPhase;
+var fva = fieldAt(za, ph, angleOffsetDeg);
+var base = projAtField(za, {x:0,y:0,z:0});
+var tip = projAtField(za, vadd(vscale(nHat, fva.x), vscale(bHat, fva.y)));
+drawArrow(base.x,base.y,tip.x,tip.y, color, 1.8);
+}
+}
+}
+function drawFields(){
+var a0=projAtField(0,{x:0,y:0,z:0}), a1=projAtField(Zmax,{x:0,y:0,z:0});
+ctx.strokeStyle=c('--emant-axis','#666'); ctx.lineWidth=1; ctx.setLineDash([2,3]);
+ctx.beginPath(); ctx.moveTo(a0.x,a0.y); ctx.lineTo(a1.x,a1.y); ctx.stroke();
+ctx.setLineDash([]);
+drawFieldRibbon(0, eFieldColor(), 'E', true);
+if (showBField) drawFieldRibbon(90, c('--emant-B','#2255cc'), 'B', true);
+ctx.font='12px monospace';
+ctx.fillStyle=eFieldColor(); ctx.fillText('\u2014 E field (V/m)', 14, 18);
+if (showBField){ ctx.fillStyle=c('--emant-B','#2255cc'); ctx.fillText('\u2014 B field (drawn to match E\u2019s height, not true relative scale)', 14, 34); }
+ctx.fillStyle=c('--emant-S','#227744'); ctx.fillText('- - propagation direction', 14, showBField?50:34);
+}
+/* ── spectrum strip: a fixed 2D HUD bar (not part of the 3D scene) showing
+all seven bands, with the active one highlighted. ── */
+function drawSpectrumStrip(){
+if (!showSpectrum) return;
+var x0=14, y0=H-34, w=W-28, h=16;
+var n = BAND_ORDER.length, segW = w/n;
+var stripColors = { radio:'#8899aa', microwave:'#66aacc', infrared:'#cc6644', visible:null, uv:'#8844cc', xray:'#4466cc', gamma:'#222222' };
+ctx.font='9px monospace';
+for (var i=0;i<n;i++){
+var key = BAND_ORDER[i], b = BANDS[key];
+var sx = x0+i*segW;
+var col = stripColors[key];
+if (key==='visible'){
+var grad = ctx.createLinearGradient(sx,0,sx+segW,0);
+grad.addColorStop(0, wavelengthToRGB(750)); grad.addColorStop(0.5, wavelengthToRGB(550)); grad.addColorStop(1, wavelengthToRGB(380));
+ctx.fillStyle = grad;
+} else { ctx.fillStyle = col; }
+ctx.globalAlpha = (key===bandKey) ? 1 : 0.45;
+ctx.fillRect(sx, y0, segW-2, h);
+ctx.globalAlpha = 1;
+if (key===bandKey){
+ctx.strokeStyle='#000'; ctx.lineWidth=1.6; ctx.strokeRect(sx, y0, segW-2, h);
+}
+ctx.fillStyle = (key===bandKey) ? '#000' : '#555';
+ctx.fillText(b.label, sx+2, y0-3);
+}
+}
+function bandUpperFreq(bk){ var b=BANDS[bk]; return c_light/(b.lamMin*UNIT_SCALE[b.unit]); }
+function bandLowerFreq(bk){ var b=BANDS[bk]; return c_light/(b.lamMax*UNIT_SCALE[b.unit]); }
+function updateEquationPanel(){
+var eq = document.getElementById('emAntEqBar0922');
+if (!eq) return;
+var b = BANDS[bandKey];
+var l1 = 'Band: ' + b.label + ' &nbsp; \u03bb = ' + lambdaPhys.toFixed(lambdaPhys<1?2:1) + ' ' + lambdaUnit +
+' &nbsp; f = ' + fmtSci(f,2) + ' Hz &nbsp; c = 3.00\u00d710\u2078 m/s (fixed) &nbsp; E\u2080 = ' + E0.toFixed(1) + ' (rel. units)';
+var l2 = 'Antenna angle \u03b8 = ' + thetaDeg.toFixed(0) + '\u00b0 &nbsp; E is linearly polarized along \u03b8; B is along \u03b8+90\u00b0, in phase with E';
+var l3 = 'n\u0302 = world y &nbsp; \u00ea\u2082 = world x (negated) &nbsp; k\u0302 = propagation = world z (fixed antenna broadside direction)';
+eq.innerHTML = l1 + '<br>' + l2 + '<br>' + l3;
+}
+function drawFrame(){
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle = c('--emant-bg','#fff');
+ctx.fillRect(0,0,W,H);
+drawGroundGrid();
+drawFields();
+drawAntenna();
+drawAxisLegend();
+drawSpectrumStrip();
+ctx.fillStyle = c('--emant-text','#111');
+ctx.font='12px monospace';
+ctx.fillText('\u03bb = '+lambdaPhys.toFixed(lambdaPhys<1?2:1)+' '+lambdaUnit+', band = '+BANDS[bandKey].label, 14, H-46);
+}
+function sceneNarration(){
+var msg = 'Band: ' + BANDS[bandKey].label + '. \u03bb = ' + lambdaPhys.toFixed(lambdaPhys<1?2:1) + ' ' + lambdaUnit +
+', f = ' + fmtSci(f,2) + ' Hz. Antenna at ' + thetaDeg.toFixed(0) + ' degrees sets the E field\u2019s polarization direction.';
+emAntA11y0922.narrate(msg);
+}
+function physicsStep(){
+animPhase += 2*Math.PI/60;
+frameCount++;
+if (frameCount % narrationEvery === 0) sceneNarration();
+}
+function runMotion(){
+physicsStep();
+drawFrame();
+if (runFlag === 1) timer = window.setTimeout(runMotion, 40);
+}
+function pl(){ window.clearTimeout(timer); runFlag=1; runMotion(); }
+function ps(){ window.clearTimeout(timer); runFlag=0; }
+function step(){ window.clearTimeout(timer); runFlag=0; physicsStep(); drawFrame(); sceneNarration(); }
+function resetView(){ yaw=DEF_YAW; pitch=DEF_PITCH; camZoom=DEF_ZOOM; drawFrame(); }
+/* ── recompute lambdaPhys/lambdaM/f from the CURRENT band + slider position;
+the slider itself always stays 1..6, only its physical MEANING changes. ── */
+function recomputeLambda(){
+var b = BANDS[bandKey];
+lambdaUnit = b.unit;
+lambdaPhys = b.lamMin + (sliderVal-1)/(6-1) * (b.lamMax-b.lamMin);
+lambdaM = lambdaPhys * UNIT_SCALE[b.unit];
+k = 2*Math.PI/sliderVal;      /* internal render wavenumber, uses the SAME 1..6 units as the scene */
+f = c_light/lambdaM;
+omega = 2*Math.PI*f;          /* real angular frequency (Hz-based); not used for on-screen timing, which stays illustrative */
+Zmax = 3*sliderVal;
+zOffsetM = Zmax/2;
+spaceScale = 46;
+var valEl = document.getElementById('emAntLambdaVal0922');
+var unitEl = document.getElementById('emAntLambdaUnit0922');
+if (valEl) valEl.textContent = lambdaPhys.toFixed(lambdaPhys<1?2:(lambdaPhys<10?1:0));
+if (unitEl) unitEl.textContent = lambdaUnit;
+}
+function rst(){
+window.clearTimeout(timer);
+runFlag = 0;
+var lamEl = document.getElementById('emAntLambda0922');
+var ampEl = document.getElementById('emAntAmp0922');
+var angEl = document.getElementById('emAntAngle0922');
+sliderVal = lamEl ? parseFloat(lamEl.value) : 3;
+E0        = ampEl ? parseFloat(ampEl.value) : 6;
+thetaDeg  = angEl ? parseFloat(angEl.value) : 0;
+recomputeLambda();
+animPhase = 0;
+frameCount = 0;
+updateEquationPanel();
+drawFrame();
+emAntA11y0922.narrate('Ready. Band: '+BANDS[bandKey].label+'. \u03bb = '+lambdaPhys.toFixed(lambdaPhys<1?2:1)+' '+lambdaUnit+', E\u2080 = '+E0.toFixed(1)+'. Press Play, or drag the canvas to look around.');
+}
+function setBand(bk){
+bandKey = bk;
+var lamEl = document.getElementById('emAntLambda0922');
+sliderVal = lamEl ? parseFloat(lamEl.value) : sliderVal;
+recomputeLambda();
+updateEquationPanel();
+drawFrame();
+emAntA11y0922.narrate('Switched to the '+BANDS[bandKey].label+' band. \u03bb = '+lambdaPhys.toFixed(lambdaPhys<1?2:1)+' '+lambdaUnit+', f = '+fmtSci(f,2)+' Hz. E\u2080 is unchanged.');
+}
+function setLambdaSlider(val){
+sliderVal = parseFloat(val);
+recomputeLambda();
+updateEquationPanel();
+drawFrame();
+}
+function setAngle(val){
+thetaDeg = parseFloat(val);
+document.getElementById('emAntAngleVal0922').textContent = thetaDeg.toFixed(0);
+updateEquationPanel();
+drawFrame();
+}
+function setAmp(val){
+E0 = parseFloat(val);
+document.getElementById('emAntAmpVal0922').textContent = E0.toFixed(0);
+updateEquationPanel();
+drawFrame();
+}
+function toggleB(cb){ showBField = cb.checked; drawFrame(); }
+function toggleSpectrum(cb){ showSpectrum = cb.checked; drawFrame(); }
+function pointerDown(x,y){ dragging=true; lastPX=x; lastPY=y; canvas.style.cursor='grabbing'; }
+function pointerMove(x,y){
+if (!dragging) return;
+var dx=x-lastPX, dy=y-lastPY;
+lastPX=x; lastPY=y;
+yaw += dx*0.007;
+pitch += dy*0.007;
+if (pitch>1.4) pitch=1.4; if (pitch<-1.4) pitch=-1.4;
+drawFrame();
+}
+function pointerUp(){ dragging=false; canvas.style.cursor='grab'; }
+canvas.addEventListener('mousedown', function(e){ pointerDown(e.clientX,e.clientY); });
+window.addEventListener('mousemove', function(e){ pointerMove(e.clientX,e.clientY); });
+window.addEventListener('mouseup', pointerUp);
+canvas.addEventListener('touchstart', function(e){ var t=e.touches[0]; pointerDown(t.clientX,t.clientY); e.preventDefault(); }, {passive:false});
+canvas.addEventListener('touchmove', function(e){ var t=e.touches[0]; pointerMove(t.clientX,t.clientY); e.preventDefault(); }, {passive:false});
+canvas.addEventListener('touchend', function(e){ pointerUp(); }, {passive:false});
+canvas.addEventListener('wheel', function(e){
+e.preventDefault();
+camZoom *= (e.deltaY<0) ? 1.08 : 0.93;
+if (camZoom<0.4) camZoom=0.4; if (camZoom>2.5) camZoom=2.5;
+drawFrame();
+}, {passive:false});
+rst();
+return { pl:pl, ps:ps, step:step, rst:rst, resetView:resetView, setBand:setBand, setLambdaSlider:setLambdaSlider,
+ setAngle:setAngle, setAmp:setAmp, toggleB:toggleB, toggleSpectrum:toggleSpectrum };
+})();
+</script>
+<script>
+emAntA11y0922.init();
+</script>
+
+</body>
+</html>

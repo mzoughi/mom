@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electrostatics: Coulomb Forces Between Three Point Charges</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, electrostatics, Coulomb law, electric force, point charges, superposition, vector addition, lesson, scientific">
+<meta name="description" content="Coulomb Forces Between Three Point Charges -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="tqRoot" class="tq_root" role="region" aria-label="Coulomb Forces Between Three Point Charges simulator">
+<div class="tq_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="tq_a11ybtn" id="tqBtnHC" onclick="tqA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="tq_a11ybtn" id="tqBtnLM" onclick="tqA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="tq_a11ybtn" id="tqBtnCB" onclick="tqA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="tq_a11ybtn tq_a11yon" id="tqBtnNR" onclick="tqA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tq_tbar"><h3>Coulomb Forces Between Three Point Charges</h3></div>
+<div class="tq_mcontent">
+<div class="tq_stage"><canvas id="myCanvas" width="600" height="380" role="img" aria-label="The charges on a grid; drag them to move them. The readout below gives the values."></canvas></div>
+<div class="tq_readout" id="tqRead" aria-label="Readout"></div>
+<div class="tq_fnote">Drag the charges, or use the sliders -- the arrows show the net forces</div>
+</div>
+<div id="tqNarBar" class="tq_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="tq_bbar"><button type="button" class="tq_btn" onclick="threePchargeF.setF(1);tqA11y.say('Net force arrows shown.');">Show net force arrows</button>
+<button type="button" class="tq_btn" onclick="threePchargeF.setF(0);tqA11y.say('Net force arrows hidden.');">Hide net force arrows</button></div>
+<div class="tq_controls">
+<div class="tq_crow" style="border-left-color:#50c88c">
+<div class="tq_cname"><b>Q1</b> <span class="tq_cval"><span id="q1Value">2</span>&nbsp;&mu;C</span></div>
+<div class="tq_csl{S}">
+<label>charge <input type="range" id="q1v" min="-5" max="5" step="1" value="2" oninput="document.getElementById('q1Value').innerHTML=this.value;threePchargeF.setQ1(this.value);"></label>
+<label>x <input type="range" min="0" max="600" step="30" value="120" oninput="threePchargeF.setQ1x(this.value);"></label>
+<label>y <input type="range" min="-360" max="0" step="30" value="-180" oninput="threePchargeF.setQ1y(this.value);"></label>
+</div>
+</div>
+<div class="tq_crow" style="border-left-color:#ff6f7d">
+<div class="tq_cname"><b>Q2</b> <span class="tq_cval"><span id="q2Value">-3</span>&nbsp;&mu;C</span></div>
+<div class="tq_csl{S}">
+<label>charge <input type="range" id="q2v" min="-5" max="5" step="1" value="-3" oninput="document.getElementById('q2Value').innerHTML=this.value;threePchargeF.setQ2(this.value);"></label>
+<label>x <input type="range" min="0" max="600" step="30" value="450" oninput="threePchargeF.setQ2x(this.value);"></label>
+<label>y <input type="range" min="-360" max="0" step="30" value="-240" oninput="threePchargeF.setQ2y(this.value);"></label>
+</div>
+</div>
+<div class="tq_crow" style="border-left-color:#5ad1ff">
+<div class="tq_cname"><b>Q3</b> <span class="tq_cval"><span id="q3Value">1</span>&nbsp;&mu;C</span></div>
+<div class="tq_csl{S}">
+<label>charge <input type="range" id="q3v" min="-5" max="5" step="1" value="1" oninput="document.getElementById('q3Value').innerHTML=this.value;threePchargeF.setQ3(this.value);"></label>
+<label>x <input type="range" min="0" max="600" step="30" value="300" oninput="threePchargeF.setQ3x(this.value);"></label>
+<label>y <input type="range" min="-360" max="0" step="30" value="-330" oninput="threePchargeF.setQ3y(this.value);"></label>
+</div>
+</div>
+<div class="tq_crow" style="border-left-color:#c9d6de">
+<div class="tq_cname"><b>Q4</b> <span class="tq_cval"><span id="q4Value">0</span>&nbsp;&mu;C</span><span class="tq_cnote">optional fourth charge -- 0 turns it off</span></div>
+<div class="tq_csl{S}">
+<label>charge <input type="range" id="q4v" min="-5" max="5" step="1" value="0" oninput="document.getElementById('q4Value').innerHTML=this.value;threePchargeF.setQ4(this.value);"></label>
+<label>x <input type="range" min="0" max="600" step="30" value="300" oninput="threePchargeF.setQ4x(this.value);"></label>
+<label>y <input type="range" min="-360" max="0" step="30" value="-90" oninput="threePchargeF.setQ4y(this.value);"></label>
+</div>
+</div>
+</div>
+<div class="tq_hidden" aria-hidden="true"><input type="checkbox" id="check1" checked tabindex="-1"><input type="checkbox" id="check2" checked tabindex="-1"><input type="checkbox" id="check3" checked tabindex="-1"><input type="checkbox" id="check4" checked tabindex="-1"></div>
+<div class="tq_descwrap">
+<button type="button" class="tq_descbtn" id="tqDescBtn" aria-expanded="false" aria-controls="tqDesc" onclick="tqDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="tq_desc" id="tqDesc" role="region" aria-labelledby="tqDescBtn" style="display:none">
+<p>In this simulation, you can explore the Coulomb force between point charges. The simulation shows three charges. A positive charge is indicated with a plus sign (+), if its corresponding slider is set to a positive value, and a negative charge with a minus sign (&minus;), if its slider is set to a negative value. You can drag the charges around the screen, or use the sliders, to change their positions. The buttons display or remove an arrow representing the net Coulomb force on each charge.</p>
+<p>The force between two point charges `q_1` and `q_2` a distance `r` apart is given by Coulomb's law:</p>
+<p class="tq_eq">`F = k (|q_1 q_2|)/r^2`,&nbsp;&nbsp; `k = 8.99 xx 10^9 " N m"^2"/C"^2`.</p>
+<p>Like charges repel and opposite charges attract. The net force on each charge is the vector sum of the forces from the other two:</p>
+<p class="tq_eq">`vec F_1 = vec F_(12) + vec F_(13)`.</p>
+<p>Doubling a charge doubles every force on it; doubling a distance divides the force by four. A fourth charge, Q4, can be added with its own controls; at 0 it has no effect.</p><p>This simulation was developed by Taha Mzoughi in August&ndash;September 2025. It is based on a simulation written by Andrew Duffy, available at <a href="https://physics.bu.edu/~duffy/HTML5/charge_interaction.html" target="_blank" rel="noopener">physics.bu.edu/~duffy/HTML5/charge_interaction.html</a>.</p>
+</div>
+</div>
+</div><!-- #tqRoot -->
+<style>
+#tqRoot, #tqRoot * { box-sizing:border-box; }
+#tqRoot { container-type:inline-size; width:100%; max-width:640px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8; }
+#tqRoot .tq_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#tqRoot .tq_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#tqRoot .tq_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#tqRoot .tq_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#tqRoot .tq_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#tqRoot .tq_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#tqRoot .tq_mcontent { background:var(--tq-bg); color:#c9d6de; padding:10px; }
+#tqRoot .tq_stage { border:1px solid var(--tq-border); border-radius:6px; overflow:hidden; margin:0 auto 8px; max-width:602px; }
+#tqRoot canvas { display:block; width:100%; height:auto; touch-action:pan-y; }
+#tqRoot .tq_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--tq-panel); border:1px solid var(--tq-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#tqRoot .tq_card .tq_flabel { font-size:10px; color:var(--tq-muted); letter-spacing:1px; }
+#tqRoot .tq_card .tq_fvalue { font-size:14px; font-variant-numeric:tabular-nums; }
+#tqRoot .tq_fnote { color:var(--tq-muted); font-size:11px; margin-top:6px; font-family:system-ui, sans-serif; }
+#tqRoot .tq_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#tqRoot .tq_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#tqRoot .tq_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#tqRoot .tq_controls { display:flex; flex-direction:column; gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#tqRoot .tq_crow { background:#ffffff; border:1px solid #b7cde0; border-left:5px solid #888; border-radius:6px; padding:6px 10px; color:#222; }
+#tqRoot .tq_cname { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; font-size:.88rem; }
+#tqRoot .tq_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#tqRoot .tq_cnote { font-size:.72rem; color:#667; }
+#tqRoot .tq_csl { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:2px 14px; }
+#tqRoot .tq_csl label { display:flex; align-items:center; gap:6px; font-size:.78rem; color:#445; }
+#tqRoot input[type=range] { flex:1; min-width:0; accent-color:#e8a020; }
+#tqRoot .tq_hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+#tqRoot .tq_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#tqRoot .tq_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#tqRoot .tq_descbtn[aria-expanded="true"] { background:#3a3220; }
+#tqRoot .tq_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#tqRoot .tq_desc p { margin:0 0 9px; }
+#tqRoot .tq_eq { text-align:center; font-size:1rem; }
+#tqRoot .tq_bnote { color:#333; }
+.tq_qwrap { width:100%; max-width:640px; margin:0 auto; padding:4px; }
+@media (pointer:coarse) { #tqRoot input[type=range] { height:28px; } #tqRoot .tq_a11ybtn { min-height:40px; } }
+</style>
+<script>
+/* ════ display options, readout and narration. The drawing code is untouched: its five colours are mapped to
+   the chosen theme as they are set, and the text it prints below the plot is shown as readout cards ════ */
+var tqA11y = (function(){
+var ROOT = document.getElementById('tqRoot'), cv = document.getElementById('myCanvas'), RD = document.getElementById('tqRead');
+var states = { hc:false, lm:false, cb:false, nr:true };
+var BASE = { dark:{ '#ffd':'#0a0e12', 'black':'#9fb0bc', 'green':'#50c88c', 'red':'#ff6f7d', 'cyan':'#5ad1ff' },
+             light:{ '#ffd':'#ffffdd', 'black':'#000000', 'green':'#008000', 'red':'#ff0000', 'cyan':'#00b7c7' },
+             hc:{ '#ffd':'#000000', 'black':'#ffffff', 'green':'#00ff88', 'red':'#ff5555', 'cyan':'#00ffff' } };
+var CB = { dark:{ 'green':'#e69f00', 'red':'#cc79a7', 'cyan':'#56b4e9' }, light:{ 'green':'#b36b00', 'red':'#a83f7d', 'cyan':'#0072b2' }, hc:{ 'green':'#ffb000', 'red':'#ff79c6', 'cyan':'#56d4ff' } };
+var UI = { dark:{bg:'#0a0e12', panel:'#0d1318', border:'#1c262e', muted:'#5f7180', val:'#8fe3b0'}, light:{bg:'#f4f6f8', panel:'#ffffff', border:'#ccd6dd', muted:'#556070', val:'#1a5f3a'}, hc:{bg:'#000000', panel:'#000000', border:'#ffffff', muted:'#e0e0e0', val:'#ffff00'} };
+function mode(){ return states.hc ? 'hc' : (states.lm ? 'light' : 'dark'); }
+function map(v){ var k = String(v).toLowerCase().replace(/\s/g, ''); var m = mode(); if (states.cb && CB[m][k]) return CB[m][k]; return BASE[m][k] || v; }
+/* the canvas: colours mapped as they are set; text printed below the plot (y > 372) goes to the readout */
+var ctx = cv.getContext('2d'), Pr = CanvasRenderingContext2D.prototype;
+var fd = Object.getOwnPropertyDescriptor(Pr, 'fillStyle'), sd = Object.getOwnPropertyDescriptor(Pr, 'strokeStyle'), ft = Pr.fillText, lastFill = 'black';
+Object.defineProperty(ctx, 'fillStyle', { configurable:true, set:function(v){ lastFill = String(v); fd.set.call(ctx, map(v)); }, get:function(){ return fd.get.call(ctx); } });
+Object.defineProperty(ctx, 'strokeStyle', { configurable:true, set:function(v){ sd.set.call(ctx, map(v)); }, get:function(){ return sd.get.call(ctx); } });
+var cards = {}, order = [], pending = false;
+ctx.fillText = function(t, x, y){
+if (y > 372){ var s = String(t), i = s.indexOf(':'); var lab = i > 0 ? s.slice(0, i).trim() : s, val = i > 0 ? s.slice(i + 1).trim() : '';
+if (!(lab in cards)) order.push(lab); cards[lab] = { v:val, c:lastFill }; if (!pending){ pending = true; requestAnimationFrame(flush); } return; }
+return ft.apply(ctx, arguments);
+};
+function flush(){
+pending = false; var u = UI[mode()];
+RD.innerHTML = order.map(function(l){ var cc = cards[l], col = (String(cc.c).toLowerCase() === 'black') ? u.val : map(cc.c);
+return '<div class="tq_card"><div class="tq_flabel">' + l + '</div><div class="tq_fvalue" style="color:' + col + '">' + cc.v.replace(/,/g, ', ') + '</div></div>'; }).join('');
+later();
+}
+var nt = null;
+function later(){ clearTimeout(nt); nt = setTimeout(function(){ say(describe()); }, 700); }
+function describe(){
+var q = [1,2,3,4].map(function(n){ var e = document.getElementById('q' + n + 'Value'); return e ? 'Q' + n + ' = ' + e.textContent + ' microcoulombs' : null; }).filter(Boolean);
+return q.join(', ') + '. ' + order.map(function(l){ return l + ': ' + cards[l].v; }).join('; ') + '.';
+}
+function say(m){ if (!states.nr) return; var nb = document.getElementById('tqNarBar'); if (nb) nb.textContent = m; }
+function redraw(){ if (typeof threePchargeF === 'undefined') return; var r = document.getElementById('q1v'); if (r) r.dispatchEvent(new Event('input', { bubbles:true })); }
+function apply(){
+var u = UI[mode()];
+ROOT.style.setProperty('--tq-bg', u.bg); ROOT.style.setProperty('--tq-panel', u.panel); ROOT.style.setProperty('--tq-border', u.border); ROOT.style.setProperty('--tq-muted', u.muted);
+[['hc','tqBtnHC'],['lm','tqBtnLM'],['cb','tqBtnCB'],['nr','tqBtnNR']].forEach(function(p){ var b = document.getElementById(p[1]); b.classList.toggle('tq_a11yon', states[p[0]]); b.setAttribute('aria-pressed', states[p[0]] ? 'true' : 'false'); });
+document.getElementById('tqBtnNR').textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+document.getElementById('tqNarBar').style.display = states.nr ? 'block' : 'none';
+redraw();
+}
+apply();
+return { toggle:function(k){ states[k] = !states[k]; if (k === 'hc' && states.hc) states.lm = false; if (k === 'lm' && states.lm) states.hc = false; apply(); }, say:say, redraw:redraw };
+})();
+</script>
+<script>
+var threePchargeFCtor = function() {
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+/* ── input on any screen: canvas coordinates from the canvas's position and displayed size ── */
+var touchDrag = false, grabDX = 0, grabDY = 0;
+function evXY(e){ var r = canvas.getBoundingClientRect(); return { x:(e.clientX - r.left)*canvas.width/r.width, y:(e.clientY - r.top)*canvas.height/r.height }; }
+function nearestCharge(p, touch){
+var k = canvas.width/canvas.getBoundingClientRect().width, R = 24 + (touch ? 12*k : 0), best = null, bd = 1e9;
+[[charge1X,charge1Y],[charge2X,charge2Y],[charge3X,charge3Y],[charge4X,charge4Y]].forEach(function(c){ var d = Math.max(Math.abs(p.x - c[0]), Math.abs(p.y - c[1])); if (d < R && d < bd){ bd = d; best = c; } });
+return best;
+}
+
+canvas.onmousedown = myDown;							//mouse event handler for computer browsers
+canvas.onmouseup = myUp;								//mouse event handler for computer browsers
+canvas.addEventListener("touchstart", myTouchStart, false);	//touch handler for iPhones, iPads, and Cndroids
+canvas.addEventListener("touchmove", myTouchMove, false);	//touch handler for iPhones, iPads, and Cndroids
+canvas.addEventListener("touchend", myTouchEnd, false);		//touch handler for iPhones, iPads, and Cndroids
+var check1 = 1;
+var check2 = 1;
+var check3 = 1;
+//var check4 = document.getElementById("check4");
+var index = 0;
+var xBase = 50;
+var yBase = 200;
+var radius = 10;
+var runFlag = 1;
+var time = 0.0;
+var timer;
+var charge1X = 120;//300-3*40;
+var charge1Y = 180;//yBase+40;
+var charge2X = 450;//300+3*40;
+var charge2Y = 240;//yBase+40;
+var charge3X = 300;//300;
+var charge3Y = 330;//yBase-140;
+var charge4X = 300;//380;
+var charge4Y = 90;//140;
+var showNetForce = 0;
+var Ex = 0;
+var Ey = 0;
+var F1x = 0;
+var F1y = 0;
+var F2x = 0;
+var F2y = 0;
+var F3x = 0;
+var F3y = 0;
+var F4x = 0;
+var F4y = 0;
+var alreadyGuessedFlag = 0;
+var potential = 0;
+var k = 9E5;
+var rSq = 0;
+var xPos = 0;
+var yPos = 0;
+var vectorColor = 'black';
+var Q1 = 2;
+var Q2 = -3;
+var Q3 = 1;
+var Q4 = 0;
+var fntY = 0;
+var XMin= 50; var YMax=420;;
+var arraySize = 5;
+var ray = new Array(arraySize);
+for (var i = 0; i < arraySize; i++) {
+ray[i] = {};
+ray[i].x = 0.0;
+ray[i].y = 0.0;
+ray[i].charge = 0.0;
+ray[i].color = "black";
+}
+ray[1].x = charge1X;
+ray[1].y = charge1Y;
+ray[1].charge = Q1;
+ray[1].color = "green";//"#f66";
+ray[2].x = charge2X;
+ray[2].y = charge2Y;
+ray[2].charge = Q2;
+ray[2].color = "red";//"#b6b";
+ray[3].x = charge3X;
+ray[3].y = charge3Y;
+ray[3].charge = Q3;
+ray[3].color = "cyan";//"#fa6";
+;drawMotion();
+function drawMotion() {
+runFlag = 1;
+if (runFlag == 1) {    //run if runFlag equal 1, not if equal 0
+//clear
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+index = index + 1;
+//clear
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+//set background color for the entire thing
+ctx.fillStyle = "#ffd";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+//set line color
+ctx.strokeStyle = 'black';
+ctx.lineWidth = 2;
+//draw grid
+for (var i = 0; i<11; i++) {
+ctx.beginPath();
+ctx.moveTo(60*i, 0);
+ctx.lineTo(60*i, 360);
+ctx.stroke();
+}
+for (var j = 0; j<7; j++) {
+ctx.beginPath();
+ctx.moveTo(0,60*j);
+ctx.lineTo(600,60*j);
+ctx.stroke();
+}
+//calculate the forces on wire 1
+rSq = Math.sqrt((charge2X-charge1X)*(charge2X-charge1X) + (charge2Y-charge1Y)*(charge2Y-charge1Y));rSq=Math.abs(Math.pow(rSq, 3));
+var F12x = k*Q1*Q2*(charge2X-charge1X)/rSq;
+var F12y = k*Q1*Q2*(charge1Y-charge2Y)/rSq;
+var F21x = -F12x;
+var F21y = -F12y;
+sLabel = 'F21 : ('+F21x.toFixed(1)+','+F21y.toFixed(1)+') N';
+ctx.font = '14pt Calibri';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'middle';
+ctx.fillStyle = ray[2].color;
+ctx.fillText(sLabel,XMin-25, YMax-25);
+sLabel = 'F12 : ('+F12x.toFixed(1)+','+F12y.toFixed(1)+') N';
+ctx.fillStyle = ray[1].color;
+ctx.fillText(sLabel,XMin+150, YMax-25);
+rSq = Math.sqrt((charge3X-charge1X)*(charge3X-charge1X) + (charge3Y-charge1Y)*(charge3Y-charge1Y));rSq=Math.pow(rSq, 3);
+var F13x = k*Q1*Q3*(charge3X-charge1X)/rSq;
+var F13y = k*Q1*Q3*(charge1Y-charge3Y)/rSq;
+var F31x = -F13x;
+var F31y = -F13y;
+sLabel = 'F31 : ('+F31x.toFixed(1)+','+F31y.toFixed(1)+') N';
+ctx.fillStyle = ray[3].color;
+ctx.fillText(sLabel,XMin-25, YMax+10);
+sLabel = 'F13 : ('+F13x.toFixed(1)+','+F13y.toFixed(1)+') N';
+ctx.fillStyle = ray[1].color;
+ctx.fillText(sLabel,XMin+325, YMax-25);
+rSq = Math.sqrt((charge4X-charge1X)*(charge4X-charge1X) + (charge4Y-charge1Y)*(charge4Y-charge1Y));rSq=Math.pow(rSq, 3);
+var F14x = k*Q1*Q4*(charge4X-charge1X)/rSq;
+var F14y = k*Q1*Q4*(charge1Y-charge4Y)/rSq;
+var F41x = -F14x;
+var F41y = -F14y;
+if (check1) {
+drawArrow(F21x,F21y,charge1X,charge1Y,ray[2].color);
+drawArrow(F31x,F31y,charge1X,charge1Y,ray[3].color);
+drawArrow(F41x,F41y,charge1X,charge1Y,ray[4].color);
+}
+//calculate the forces on wire 2
+rSq = Math.sqrt((charge3X-charge2X)*(charge3X-charge2X) + (charge3Y-charge2Y)*(charge3Y-charge2Y));rSq=Math.pow(rSq, 3);
+var F23x = k*Q3*Q2*(charge3X-charge2X)/rSq;
+var F23y = k*Q3*Q2*(charge2Y-charge3Y)/rSq;
+var F32x = -F23x;
+var F32y = -F23y;
+sLabel = 'F32 : ('+F32x.toFixed(1)+','+F32y.toFixed(1)+') N';
+ctx.font = '14pt Calibri';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'middle';
+ctx.fillStyle = ray[3].color;
+ctx.fillText(sLabel,XMin+150, YMax+10);
+sLabel = 'F23 : ('+F23x.toFixed(1)+','+F23y.toFixed(1)+') N';
+ctx.fillStyle = ray[2].color;
+ctx.fillText(sLabel,XMin+325, YMax+10);
+rSq = Math.sqrt((charge4X-charge2X)*(charge4X-charge2X) + (charge4Y-charge2Y)*(charge4Y-charge2Y));rSq=Math.pow(rSq, 3);
+var F24x = k*Q2*Q4*(charge4X-charge2X)/rSq;
+var F24y = k*Q2*Q4*(charge2Y-charge4Y)/rSq;
+var F42x = -F24x;
+var F42y = -F24y;
+if (check2) {
+drawArrow(F12x,F12y,charge2X,charge2Y,ray[1].color);
+drawArrow(F32x,F32y,charge2X,charge2Y,ray[3].color);
+drawArrow(F42x,F42y,charge2X,charge2Y,ray[4].color);
+}
+//calculate the forces on wire 3
+rSq = Math.sqrt((charge4X-charge3X)*(charge4X-charge3X) + (charge4Y-charge3Y)*(charge4Y-charge3Y));rSq=Math.pow(rSq, 3);
+var F34x = k*Q3*Q4*(charge4X-charge3X)/rSq;
+var F34y = k*Q3*Q4*(charge3Y-charge4Y)/rSq;
+var F43x = -F34x;
+var F43y = -F34y;
+if (check3) {
+drawArrow(F13x,F13y,charge3X,charge3Y,ray[1].color);
+drawArrow(F23x,F23y,charge3X,charge3Y,ray[2].color);
+drawArrow(F43x,F43y,charge3X,charge3Y,ray[4].color);
+}
+F1x = F21x + F31x + F41x;
+F1y = F21y + F31y + F41y;
+F2x = F12x + F32x + F42x;
+F2y = F12y + F32y + F42y;
+F3x = F13x + F23x + F43x;
+F3y = F13y + F23y + F43y;
+F4x = F14x + F24x + F34x;
+F4y = F14y + F24y + F34y;
+sLabel = 'F1 : ('+F1x.toFixed(1)+','+F1y.toFixed(1)+') N';
+ctx.font = '14pt Calibri';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'middle';
+ctx.fillStyle = ray[1].color;
+ctx.fillText(sLabel,XMin-25, YMax+45);
+sLabel = 'F2 : ('+F2x.toFixed(1)+','+F2y.toFixed(1)+') N';
+ctx.fillStyle = ray[2].color;
+ctx.fillText(sLabel,XMin+150, YMax+45);
+sLabel = 'F3 : ('+F3x.toFixed(1)+','+F3y.toFixed(1)+') N';
+ctx.fillStyle = ray[3].color;
+ctx.fillText(sLabel,XMin+325, YMax+45);
+//position
+sLabel = 'P1 : ('+charge1X.toFixed(1)+','+(360-charge1Y).toFixed(1)+') cm';
+ctx.fillStyle = ray[1].color;
+ctx.fillText(sLabel,XMin-25, YMax+80);
+sLabel = 'P2 : ('+charge2X.toFixed(1)+','+(360-charge2Y).toFixed(1)+') cm';
+ctx.fillStyle = ray[2].color;
+ctx.fillText(sLabel,XMin+150, YMax+80);
+sLabel = 'P3 : ('+charge3X.toFixed(1)+','+(360-charge3Y).toFixed(1)+') cm';
+ctx.fillStyle = ray[3].color;
+ctx.fillText(sLabel,XMin+325, YMax+80);
+if (showNetForce == 1) {
+vectorColor = "black";
+drawArrow(F1x,F1y,charge1X,charge1Y,vectorColor);
+drawArrow(F2x,F2y,charge2X,charge2Y,vectorColor);
+drawArrow(F3x,F3y,charge3X,charge3Y,vectorColor);
+drawArrow(F4x,F4y,charge4X,charge4Y,vectorColor);
+}
+//draw wires
+var chargeSymbol = " ";
+if (Q1 > 0) chargeSymbol = "+";
+if (Q1 < 0) chargeSymbol = "-";
+chargeColor = ray[1].color;
+ctx.fillStyle = chargeColor;
+ctx.strokeStyle = chargeColor;
+ctx.beginPath();
+ctx.arc(charge1X, charge1Y, radius, 0, 2 * Math.PI, false);
+ctx.fill();
+ctx.lineWidth = 2;
+ctx.stroke();
+ctx.font = '20pt Calibri';
+ctx.fillStyle = 'black';
+ctx.textAlign = 'center';
+ctx.fillText(chargeSymbol, charge1X, charge1Y+fntY);
+chargeSymbol = " ";
+if (Q2 > 0) chargeSymbol = "+";
+if (Q2 < 0) chargeSymbol = "-";
+chargeColor = ray[2].color;
+ctx.fillStyle = chargeColor;
+ctx.strokeStyle = chargeColor;
+ctx.beginPath();
+ctx.arc(charge2X, charge2Y, radius, 0, 2 * Math.PI, false);
+ctx.fill();
+ctx.lineWidth = 2;
+ctx.stroke();
+ctx.fillStyle = 'black';
+ctx.fillText(chargeSymbol, charge2X, charge2Y+fntY);
+chargeSymbol = " ";
+if (Q3 > 0) chargeSymbol = "+";
+if (Q3 < 0) chargeSymbol = "-";
+chargeColor = ray[3].color;
+ctx.fillStyle = chargeColor;
+ctx.strokeStyle = chargeColor;
+ctx.beginPath();
+ctx.arc(charge3X, charge3Y, radius, 0, 2 * Math.PI, false);
+ctx.fill();
+ctx.lineWidth = 2;
+ctx.stroke();
+ctx.fillStyle = 'black';
+ctx.fillText(chargeSymbol, charge3X, charge3Y+fntY);
+chargeSymbol = " ";
+if (Q4 > 0) chargeSymbol = "";
+if (Q4 < 0) chargeSymbol = "";
+chargeColor = ray[4].color;
+ctx.fillStyle = chargeColor;
+ctx.strokeStyle = chargeColor;
+ctx.beginPath();
+ctx.arc(charge4X, charge4Y, radius, 0, 2 * Math.PI, false);
+ctx.fill();
+ctx.lineWidth = 2;
+ctx.stroke();
+ctx.fillStyle = 'black';
+ctx.fillText(chargeSymbol, charge4X, charge4Y-2);
+ctx.font = '16pt Calibri';
+ctx.fillStyle = 'black';
+ctx.textAlign = 'center';
+ctx.fillText("1", charge1X+8, charge1Y+24);
+ctx.fillText("2", charge2X+8, charge2Y+24);
+ctx.fillText("3", charge3X+8, charge3Y+24);
+ctx.fillText("4", charge4X+8, charge4Y+24);
+}
+}
+function runMotion() {
+drawMotion();
+if (runFlag == 1) {
+timer = window.setTimeout(runMotion, 2000/60);
+}
+}
+function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+var theta = Math.atan2(Fy,Fx);
+var fMult=1;
+ctx.strokeStyle = arrowColor;
+ctx.lineWidth = 4;
+ctx.beginPath();
+ctx.moveTo(Px, Py);
+ctx.lineTo(Px+fMult*Fx, Py-fMult*Fy);
+ctx.stroke();
+ctx.lineWidth = 2;
+var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+if (Fmag > 5) Fmag = 5;
+ctx.fillStyle = arrowColor;
+ctx.beginPath();
+ctx.moveTo(Px+fMult*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-fMult*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+ctx.lineTo(Px+fMult*Fx,Py-fMult*Fy);
+ctx.lineTo(Px+fMult*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-fMult*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+ctx.stroke();
+ctx.fill();
+}
+//Mouse and Touch event functions from  Wolfgang Bauer
+function whereClicked(x_,y_,what_) {    //underscore denotes local variables
+if ((Math.abs(x_ - charge1X) < 24) && (Math.abs(y_ - charge1Y) < 24))   //moving charge 1
+{
+charge1X = x_ ;
+charge1Y = y_ ;
+if (charge1Y > 360) charge1Y = 360;//ctx.style.cursor="pointer";
+drawMotion();
+}
+else if ((Math.abs(x_ - charge2X) < 24) && (Math.abs(y_ - charge2Y) < 24))   //moving charge 2
+{
+charge2X = x_ ;
+charge2Y = y_ ;
+if (charge2Y > 360) charge2Y = 360;
+drawMotion();
+}
+else if ((Math.abs(x_ - charge3X) < 24) && (Math.abs(y_ - charge3Y) < 24))   //moving charge 3
+{
+charge3X = x_ ;
+charge3Y = y_ ;
+if (charge3Y > 360) charge3Y = 360;
+drawMotion();
+}
+}
+function myMove(event){
+var _p = evXY(event); var xClick = _p.x, yClick = _p.y;
+whereClicked(xClick,yClick,'move');
+//	drawAll();
+//	drawMotion();
+}
+function myDown(event){
+var _p = evXY(event); var xClick = _p.x, yClick = _p.y;
+whereClicked(xClick,yClick,'down');
+canvas.onmousemove = myMove;
+//	drawMotion();
+}
+function myUp(event){
+var _p = evXY(event); var xClick = _p.x, yClick = _p.y;
+whereClicked(xClick,yClick,'up');
+canvas.onmousemove = null;
+//	drawMotion();
+}
+function myTouchMove(event){ if (!touchDrag) return; event.preventDefault();
+var _t = (event.targetTouches && event.targetTouches[0]) || (event.changedTouches && event.changedTouches[0]); var _p = evXY(_t); var xClick = _p.x + grabDX, yClick = _p.y + grabDY;
+whereClicked(xClick,yClick,'move');
+//	drawMotion();
+}
+function myTouchStart(event){ var _f = evXY(event.targetTouches[0]), _c = nearestCharge(_f, true); if (!_c) return; event.preventDefault(); touchDrag = true; grabDX = _c[0] - _f.x; grabDY = _c[1] - _f.y; whereClicked(_c[0], _c[1], "down"); return;
+var _t = (event.targetTouches && event.targetTouches[0]) || (event.changedTouches && event.changedTouches[0]); var _p = evXY(_t); var xClick = _p.x + grabDX, yClick = _p.y + grabDY;
+whereClicked(xClick,yClick,'down');
+//	drawMotion();
+}
+function myTouchEnd(event){ if (!touchDrag) return; touchDrag = false; event.preventDefault();
+var _t = (event.targetTouches && event.targetTouches[0]) || (event.changedTouches && event.changedTouches[0]); var _p = evXY(_t); var xClick = _p.x + grabDX, yClick = _p.y + grabDY;
+whereClicked(xClick,yClick,'up');
+//	drawMotion();
+}
+function setQ1(newQ1){Q1 = Number(newQ1);drawMotion();}
+function setQ1x(newQ1x){charge1X = Number(newQ1x);drawMotion();}
+function setQ1y(newQ1y){charge1Y = -Number(newQ1y);drawMotion();}
+function setQ2(newQ2){Q2 = Number(newQ2);drawMotion();}
+function setQ2x(newQ2x){charge2X = Number(newQ2x);drawMotion();}
+function setQ2y(newQ2y){charge2Y = -Number(newQ2y);drawMotion();}
+function setQ3(newQ3){Q3 = Number(newQ3);drawMotion();}
+function setQ3x(newQ3x){charge3X = Number(newQ3x);drawMotion();}
+function setQ3y(newQ3y){charge3Y = -Number(newQ3y);drawMotion();}
+function setF(newF){showNetForce = Number(newF);drawMotion();}
+/* setters for charge 4 / point P (added) */
+function setQ4(newQ4){Q4 = Number(newQ4); if (typeof ray !== "undefined" && ray[4]) ray[4].charge = Q4; drawMotion();}
+function setQ4x(newQ4x){charge4X = Number(newQ4x);drawMotion();}
+function setQ4y(newQ4y){charge4Y = -Number(newQ4y);drawMotion();}
+return { setQ4, setQ4x, setQ4y, drawMotion,
+setQ1,setQ1x,setQ1y,
+setQ2,setQ2x,setQ2y,
+setQ3,setQ3x,setQ3y,
+setF
+};
+}
+</script>
+<script>
+var threePchargeF = new threePchargeFCtor();
+</script>
+<script>
+tqA11y.redraw();
+function tqDesc(){
+var b = document.getElementById('tqDescBtn'), d = document.getElementById('tqDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electrostatics: Work and Potential in a Uniform Field</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, electrostatics, uniform electric field, work, potential energy, electric potential, lesson, scientific">
+<meta name="description" content="Work and Potential in a Uniform Field -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobufd" class="mob_wrap">
+<div id="ufdRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="ufd_a11y" id="ufdA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="ufd_a11ybtn" id="ufdBtnHC" onclick="ufdA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ufd_a11ybtn" id="ufdBtnLM" onclick="ufdA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ufd_a11ybtn" id="ufdBtnCB" onclick="ufdA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ufd_a11ybtn ufd_a11yon" id="ufdBtnNR" onclick="ufdA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar"><h3>Work &amp; Potential in a Uniform Field</h3></div>
+<div class="mcontent">
+<canvas id="ufdCanvas" style="margin:auto;display:block;border:1px solid #ccc" width="500" height="440"></canvas>
+</div>
+<div id="ufdNarBar" class="ufd_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar">
+<input type="button" value="Reset" onclick="ufdSim.rst();">
+&nbsp;|&nbsp; q (−5 to +5 µC):
+<input type="range" id="ufdQ" min="-50" max="50" value="20" step="1"
+oninput="document.getElementById('ufdQVal').textContent=(this.value/10).toFixed(1);ufdSim.setQ(parseInt(this.value,10)/10);">
+<span id="ufdQVal">2.0</span> µC
+</div>
+<div class="ufd_motion">
+<input type="button" value="&#9654; Move q to B" onclick="ufdSim.goB();">
+<input type="button" value="&#8634; Back to A" onclick="ufdSim.goA();">
+<span class="ufd_hint">or drag q, A and B on the picture</span>
+</div>
+<div class="footer">
+<div class="row3">
+<div class="cell">
+<span class="lbl">|E|:</span>
+<input type="range" id="ufdEMag" min="0" max="100" value="50" step="1"
+oninput="document.getElementById('ufdEMagVal').textContent=this.value;ufdSim.setE();">
+<span id="ufdEMagVal">50</span> V/cm
+</div>
+<div class="cell">
+<span class="lbl">∠E:</span>
+<input type="range" id="ufdEAng" min="0" max="359" value="0" step="1"
+oninput="document.getElementById('ufdEAngVal').textContent=this.value+'°';ufdSim.setE();">
+<span id="ufdEAngVal">0°</span>
+</div>
+</div>
+<div class="row3">
+<div class="cell">
+<span class="lbl">A<sub>x</sub>:</span>
+<input type="range" id="ufdAx" min="-10" max="10" value="-6" step="1"
+oninput="document.getElementById('ufdAxVal').textContent=this.value;ufdSim.setPt('A');">
+<span id="ufdAxVal">-6</span> cm
+</div>
+<div class="cell">
+<span class="lbl">A<sub>y</sub>:</span>
+<input type="range" id="ufdAy" min="-10" max="10" value="2" step="1"
+oninput="document.getElementById('ufdAyVal').textContent=this.value;ufdSim.setPt('A');">
+<span id="ufdAyVal">2</span> cm
+</div>
+</div>
+<div class="row3">
+<div class="cell">
+<span class="lbl">q<sub>x</sub>:</span>
+<input type="range" id="ufdQx" min="-10" max="10" value="-6" step="1"
+oninput="document.getElementById('ufdQxVal').textContent=this.value;ufdSim.setPt('Q');">
+<span id="ufdQxVal">-6</span> cm
+</div>
+<div class="cell">
+<span class="lbl">q<sub>y</sub>:</span>
+<input type="range" id="ufdQy" min="-10" max="10" value="2" step="1"
+oninput="document.getElementById('ufdQyVal').textContent=this.value;ufdSim.setPt('Q');">
+<span id="ufdQyVal">2</span> cm
+</div>
+</div>
+<div class="row3">
+<div class="cell">
+<span class="lbl">B<sub>x</sub>:</span>
+<input type="range" id="ufdBx" min="-10" max="10" value="5" step="1"
+oninput="document.getElementById('ufdBxVal').textContent=this.value;ufdSim.setPt('B');">
+<span id="ufdBxVal">5</span> cm
+</div>
+<div class="cell">
+<span class="lbl">B<sub>y</sub>:</span>
+<input type="range" id="ufdBy" min="-10" max="10" value="-3" step="1"
+oninput="document.getElementById('ufdByVal').textContent=this.value;ufdSim.setPt('B');">
+<span id="ufdByVal">-3</span> cm
+</div>
+</div>
+</div>
+</div>
+<style>:where(#mobufd) * { margin: 0; box-sizing: border-box; }
+:where(#mobufd) div { width: 503px; margin: 0; }
+#ufdRoot {
+--ufd-bg:      #f3faf3;
+--ufd-field:   #cc2200;
+--ufd-pos:     #cc2200;
+--ufd-neg:     #0033cc;
+--ufd-force:   #0033cc;
+--ufd-disp:    #555555;
+--ufd-text:    #111111;
+--ufd-struct:  #111111;
+--ufd-bar-w:   #2a7a2a;
+--ufd-bar-u:   #b06800;
+--ufd-bar-v:   #1e6fa8;
+--ufd-toolbar-bg: #222;
+}
+#ufdRoot .ufd_a11y {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--ufd-toolbar-bg); flex-wrap:wrap; width:503px;
+}
+#ufdRoot .ufd_a11ybtn {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#ufdRoot .ufd_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#ufdRoot .ufd_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#ufdRoot .ufd_narbar {
+width:503px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.83rem; color:#333; font-style:italic;
+}
+.tbar { padding:4px; height:50px; background-color:#f90; text-align:center; line-height:42px; }
+.tbar h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent { height:442px; }
+.ufd_motion { width:auto; background:#eaf6d0; padding:6px 8px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; font-family:monospace; font-size:.8rem; }
+.ufd_motion input[type=button] { padding:4px 12px; cursor:pointer; font-weight:bold; }
+.ufd_hint { color:#556; font-style:italic; }
+.bbar { background-color:#df9; padding:8px; text-align:center; font-size:.83rem; font-family:monospace; }
+.bbar input[type=range] { vertical-align:middle; width:130px; }
+.bbar input[type=button] { padding:3px 12px; cursor:pointer; }
+.footer { background-color:#fce4ec; padding:5px 8px; font-size:.78rem; }
+.footer .row3 { width:auto; display:flex; gap:4px; padding:2px 0; }
+.footer .cell { width:auto; flex:1; display:flex; align-items:center; gap:3px; font-family:monospace; font-size:.72rem; }
+.footer .cell input[type=range] { flex:1; min-width:0; }
+.footer .lbl { width:auto; font-weight:bold; min-width:24px; }</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var ufdA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--ufd-bg':'#000','--ufd-field':'#ffff00','--ufd-pos':'#ffaa00','--ufd-neg':'#00ffff','--ufd-force':'#00ffff','--ufd-disp':'#fff','--ufd-text':'#fff','--ufd-struct':'#fff','--ufd-bar-w':'#00ff00','--ufd-bar-u':'#ff8800','--ufd-bar-v':'#00aaff','--ufd-toolbar-bg':'#000'},
+lm:{'--ufd-bg':'#e8eee8','--ufd-field':'#aa1100','--ufd-pos':'#aa1100','--ufd-neg':'#002288','--ufd-force':'#002288','--ufd-disp':'#444','--ufd-text':'#000','--ufd-struct':'#000','--ufd-bar-w':'#1a5a1a','--ufd-bar-u':'#804800','--ufd-bar-v':'#154a78','--ufd-toolbar-bg':'#444'},
+cb:{'--ufd-bg':'#fff','--ufd-field':'#d55e00','--ufd-pos':'#d55e00','--ufd-neg':'#0072b2','--ufd-force':'#0072b2','--ufd-disp':'#555','--ufd-text':'#000','--ufd-struct':'#333','--ufd-bar-w':'#009e73','--ufd-bar-u':'#cc79a7','--ufd-bar-v':'#56b4e9','--ufd-toolbar-bg':'#222'}
+};
+var DEFS = {'--ufd-bg':'#f3faf3','--ufd-field':'#cc2200','--ufd-pos':'#cc2200','--ufd-neg':'#0033cc','--ufd-force':'#0033cc','--ufd-disp':'#555','--ufd-text':'#111','--ufd-struct':'#111','--ufd-bar-w':'#2a7a2a','--ufd-bar-u':'#b06800','--ufd-bar-v':'#1e6fa8','--ufd-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('ufdNarBar');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('ufdBtnNR');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('ufdBtnNR',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('ufdBtnHC',states.hc);
+styleBtn('ufdBtnLM',states.lm);
+styleBtn('ufdBtnCB',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('ufdRoot'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('ufdNarBar');
+if(nb) nb.textContent=msg;
+},
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<!-- ════════ SIMULATION ════════ -->
+<script>
+var ufdGen = function() {
+var canvas  = document.getElementById('ufdCanvas');
+var ctx     = canvas.getContext('2d');
+var W       = canvas.width;
+var H       = canvas.height;
+/* ── state ── */
+/* Physical quantities in display units:
+ q  in µC
+ E  in V/cm  (slider 0..100)
+ positions in cm  (slider -10..+10)
+Then:
+ F  = q*E  [µC * V/cm] = µN  (≈ 1e-9·1e-2 N = 1e-11 N actually, but
+we keep display units consistent)
+ W_E = q*E·s  [µC·V/cm·cm] = µJ
+ ΔU  = -W_E    in µJ
+ ΔV  = -E·s    in V
+For bar scaling we use µJ for energy and V for potential.              */
+var qVal;      /* µC                  */
+var Emag;      /* V/cm   (0..100)     */
+var Eang;      /* radians             */
+var Ax, Ay;    /* fixed initial position (cm)        */
+var Qx, Qy;    /* current charge position (cm)       */
+var Bx, By;    /* target position (cm)               */
+/* ── scene layout ─── scene panel: left/top region; bars: bottom or right? ──
+Approach: a 2D coordinate system in the upper half of the canvas (-10..+10 cm
+in both x and y), and bars in the lower portion.                              */
+var sceneTop = 10;
+var sceneBot = 270;
+var sceneLeft  = 10;
+var sceneRight = W - 10;
+var sceneCx = (sceneLeft + sceneRight) / 2;
+var sceneCy = (sceneTop + sceneBot) / 2;
+/* px per cm: -10..+10 must fit comfortably. Available width ~ 480 px, available
+height ~ 260 px. Min of 480/20=24, 260/20=13 → use 12 px/cm for vertical fit. */
+var pxPerCm = 12;
+/* bar area */
+var bcTop = 295;
+var bcBot = 410;
+var bcMidY = (bcTop + bcBot)/2;
+var bcH = (bcBot - bcTop)/2 - 8;
+var barW = 60;
+/* Three bars centered horizontally.  Tick labels space on the left of bar1. */
+var bar1X = 110;
+var bar2X = 250;
+var bar3X = 390;
+function c(prop, def) { return ufdA11y.col(prop, def); }
+/* ── coordinate transforms ── */
+function cmToPx(xcm, ycm) {
+/* canvas y grows downward; physics y grows upward → flip                */
+return { x: sceneCx + xcm*pxPerCm, y: sceneCy - ycm*pxPerCm };
+}
+/* ── physics ── */
+function getEvec() {
+/* Eang stored in math convention (CCW from +x).  Components:           */
+return { x: Emag * Math.cos(Eang), y: Emag * Math.sin(Eang) };
+}
+/* the same physics, from A to any point (x, y) */
+function physAt(x, y) {
+var E = getEvec(), sx = x - Ax, sy = y - Ay, Edots = E.x*sx + E.y*sy, WE = qVal*Edots;
+return { WE:WE, dU:-WE, dV:-Edots };
+}
+function physics() {
+var E = getEvec();
+/* Displacement s⃗ is from the FIXED start point A to the CURRENT charge position. */
+var sx = Qx - Ax;     /* cm */
+var sy = Qy - Ay;     /* cm */
+var Edots = E.x*sx + E.y*sy;       /* V/cm * cm = V */
+var WE = qVal * Edots;              /* µC * V = µJ            */
+var dU = -WE;                       /* µJ                     */
+var dV = -Edots;                    /* V                      */
+var sMag = Math.sqrt(sx*sx + sy*sy);
+return { sx:sx, sy:sy, sMag:sMag, Edots:Edots, WE:WE, dU:dU, dV:dV, E:E };
+}
+/* ── drawing: field arrows tiled across scene ── */
+function drawFieldArrows() {
+var E = getEvec();
+if (Emag < 0.5) return;
+var col = c('--ufd-field','#cc2200');
+ctx.strokeStyle = col;
+ctx.fillStyle   = col;
+/* draw arrows on a regular grid; orient all along E direction          */
+var spacing = 38;
+var arrLen  = Math.min(28, 14 + Emag*0.18);  /* length scales with |E|  */
+var ux = E.x / Emag;   /* unit-vector in math y-up sense                 */
+var uy = E.y / Emag;
+/* canvas direction: y flipped                                          */
+var cux = ux;
+var cuy = -uy;
+for (var y = sceneTop+spacing/2; y < sceneBot-spacing/3; y += spacing) {
+for (var x = sceneLeft+spacing/2; x < sceneRight; x += spacing) {
+var x1 = x - arrLen/2 * cux;
+var y1 = y - arrLen/2 * cuy;
+var x2 = x + arrLen/2 * cux;
+var y2 = y + arrLen/2 * cuy;
+ctx.lineWidth = 1.5;
+ctx.beginPath();
+ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+/* arrowhead at (x2,y2) */
+var ang = Math.atan2(y2-y1, x2-x1);
+var hl = 5;
+ctx.beginPath();
+ctx.moveTo(x2, y2);
+ctx.lineTo(x2 - hl*Math.cos(ang-Math.PI/6), y2 - hl*Math.sin(ang-Math.PI/6));
+ctx.lineTo(x2 - hl*Math.cos(ang+Math.PI/6), y2 - hl*Math.sin(ang+Math.PI/6));
+ctx.closePath();
+ctx.fill();
+}
+}
+/* E label in scene corner */
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.font = 'italic bold 13px serif';
+ctx.textAlign = 'right';
+ctx.textBaseline = 'top';
+ctx.fillText('E⃗', sceneRight - 6, sceneTop + 4);
+ctx.font = '10px monospace';
+ctx.textBaseline = 'top';
+ctx.fillText('|E|='+Emag+' V/cm', sceneRight - 6, sceneTop + 20);
+}
+/* draw scene axes */
+function drawAxes() {
+ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+ctx.lineWidth = 1;
+ctx.setLineDash([2,3]);
+/* x-axis */
+ctx.beginPath(); ctx.moveTo(sceneLeft, sceneCy); ctx.lineTo(sceneRight, sceneCy); ctx.stroke();
+/* y-axis */
+ctx.beginPath(); ctx.moveTo(sceneCx, sceneTop); ctx.lineTo(sceneCx, sceneBot); ctx.stroke();
+ctx.setLineDash([]);
+}
+/* draw an arrow (canvas coords) */
+function drawArrow(x1, y1, x2, y2, col, lw, headSize) {
+ctx.strokeStyle = col;
+ctx.fillStyle   = col;
+ctx.lineWidth   = lw;
+ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+var ang = Math.atan2(y2-y1, x2-x1);
+ctx.beginPath();
+ctx.moveTo(x2, y2);
+ctx.lineTo(x2 - headSize*Math.cos(ang-Math.PI/6), y2 - headSize*Math.sin(ang-Math.PI/6));
+ctx.lineTo(x2 - headSize*Math.cos(ang+Math.PI/6), y2 - headSize*Math.sin(ang+Math.PI/6));
+ctx.closePath();
+ctx.fill();
+}
+/* draw the scene: start point A, current charge position (Qx,Qy), target B,
+displacement arrow A→q, force arrow on q                                       */
+function drawChargeAndPath() {
+var p = physics();
+var ptA = cmToPx(Ax, Ay);
+var ptQ = cmToPx(Qx, Qy);
+var ptB = cmToPx(Bx, By);
+/* === target B: dashed circle === */
+ctx.strokeStyle = c('--ufd-text','#111');
+ctx.lineWidth = 1.5;
+ctx.setLineDash([3,3]);
+ctx.beginPath(); ctx.arc(ptB.x, ptB.y, 8, 0, 2*Math.PI); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.font = 'italic bold 12px serif';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'top';
+ctx.fillText('B', ptB.x + 10, ptB.y + 6);
+/* === start point A: small filled marker (always shown) === */
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.beginPath(); ctx.arc(ptA.x, ptA.y, 3, 0, 2*Math.PI); ctx.fill();
+/* A label, offset away from the displacement direction to reduce overlap */
+var labOffX = -10, labOffY = -10;
+if (p.sMag > 0.1) {
+/* offset perpendicular to s⃗ so the label doesn't sit on the line */
+var nx = -p.sy / p.sMag, ny = p.sx / p.sMag;   /* perpendicular (math frame) */
+labOffX = -8 * nx;  labOffY = 8 * ny;          /* flipped y for canvas       */
+}
+ctx.font = 'italic bold 12px serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('A', ptA.x + labOffX, ptA.y + labOffY);
+/* === displacement s⃗: dashed arrow A → q === */
+if (p.sMag > 0.1) {
+ctx.strokeStyle = c('--ufd-disp','#555');
+ctx.lineWidth = 1.5;
+ctx.setLineDash([4,3]);
+ctx.beginPath();
+ctx.moveTo(ptA.x, ptA.y);
+ctx.lineTo(ptQ.x, ptQ.y);
+ctx.stroke();
+ctx.setLineDash([]);
+var ang = Math.atan2(ptQ.y - ptA.y, ptQ.x - ptA.x);
+var hs = 7;
+ctx.fillStyle = c('--ufd-disp','#555');
+ctx.beginPath();
+ctx.moveTo(ptQ.x, ptQ.y);
+ctx.lineTo(ptQ.x - hs*Math.cos(ang-Math.PI/6), ptQ.y - hs*Math.sin(ang-Math.PI/6));
+ctx.lineTo(ptQ.x - hs*Math.cos(ang+Math.PI/6), ptQ.y - hs*Math.sin(ang+Math.PI/6));
+ctx.closePath();
+ctx.fill();
+/* s⃗ label at midpoint, offset perpendicular */
+var mx = (ptA.x + ptQ.x)/2;
+var my = (ptA.y + ptQ.y)/2;
+var pang = Math.atan2(ptQ.y - ptA.y, ptQ.x - ptA.x) + Math.PI/2;
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.font = 'italic bold 13px serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('s⃗', mx + 10*Math.cos(pang), my + 10*Math.sin(pang));
+}
+/* === Charge at current position (Qx,Qy) === */
+var col = qVal >= 0 ? c('--ufd-pos','#cc2200') : c('--ufd-neg','#0033cc');
+ctx.fillStyle = col;
+ctx.beginPath(); ctx.arc(ptQ.x, ptQ.y, 9, 0, 2*Math.PI); ctx.fill();
+ctx.strokeStyle = c('--ufd-struct','#111');
+ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.arc(ptQ.x, ptQ.y, 9, 0, 2*Math.PI); ctx.stroke();
+ctx.fillStyle = '#fff';
+ctx.font = 'bold 13px sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText(qVal >= 0 ? '+' : '−', ptQ.x, ptQ.y+1);
+/* q label & value */
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.font = 'italic bold 12px serif';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'bottom';
+ctx.fillText('q', ptQ.x + 12, ptQ.y - 6);
+ctx.font = '10px monospace';
+ctx.textBaseline = 'top';
+ctx.fillText(qVal.toFixed(1)+' µC', ptQ.x + 12, ptQ.y + 6);
+/* === Force arrow F = qE rooted at q === */
+var E = p.E;
+var Fmag = Math.abs(qVal) * Emag;
+if (Fmag > 0.5 && Emag > 0.5) {
+var sign = qVal >= 0 ? 1 : -1;
+var fux = sign * E.x / Emag;
+var fuy = sign * E.y / Emag;
+var cfux = fux;
+var cfuy = -fuy;
+var fLen = Math.min(60, 20 + Fmag * 0.15);
+var fx2 = ptQ.x + fLen * cfux;
+var fy2 = ptQ.y + fLen * cfuy;
+drawArrow(ptQ.x, ptQ.y, fx2, fy2, c('--ufd-force','#0033cc'), 2.5, 7);
+ctx.fillStyle = c('--ufd-force','#0033cc');
+ctx.font = 'italic bold 12px serif';
+ctx.textAlign = 'left';
+ctx.textBaseline = 'middle';
+ctx.fillText('F⃗=qE⃗', fx2 + 4*cfux + 6, fy2 + 4*cfuy);
+}
+}
+/* ── bar drawing ── */
+function drawBar(cx, label, value, valTxt, col, scaleMax, showTicks, unit) {
+ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(cx - barW/2 - 5, bcMidY);
+ctx.lineTo(cx + barW/2 + 5, bcMidY);
+ctx.stroke();
+if (showTicks) {
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.font = '9px monospace';
+ctx.textAlign = 'right';
+ctx.textBaseline = 'middle';
+ctx.fillText('0',          cx - barW/2 - 8, bcMidY);
+ctx.fillText('+'+scaleMax, cx - barW/2 - 8, bcMidY - bcH);
+ctx.fillText('−'+scaleMax, cx - barW/2 - 8, bcMidY + bcH);
+}
+var frac = Math.max(-1, Math.min(1, value / scaleMax));
+var barH = frac * bcH;
+ctx.fillStyle = col;
+if (barH >= 0) ctx.fillRect(cx - barW/2, bcMidY - barH, barW, barH);
+else           ctx.fillRect(cx - barW/2, bcMidY, barW, -barH);
+ctx.strokeStyle = c('--ufd-struct','#111');
+ctx.lineWidth = 1;
+ctx.strokeRect(cx - barW/2, bcTop, barW, bcBot - bcTop);
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.font = 'bold 12px sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'top';
+ctx.fillText(label, cx, bcBot + 3);
+ctx.font = '10px monospace';
+ctx.fillText(valTxt+' '+unit, cx, bcBot + 17);
+}
+/* the value a bar will reach when q arrives at B */
+function drawTarget(cx, value, scaleMax) {
+var y = bcMidY - Math.max(-1, Math.min(1, value/scaleMax))*bcH;
+ctx.save(); ctx.strokeStyle = c('--ufd-text','#111'); ctx.lineWidth = 1.5; ctx.setLineDash([5,3]);
+ctx.beginPath(); ctx.moveTo(cx - barW/2 - 3, y); ctx.lineTo(cx + barW/2 + 3, y); ctx.stroke(); ctx.setLineDash([]);
+ctx.fillStyle = c('--ufd-text','#111'); ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+ctx.fillText('B', cx + barW/2 + 5, y); ctx.restore();
+}
+/* ── full redraw ── */
+function drawFrame() {
+ctx.clearRect(0, 0, W, H);
+ctx.fillStyle = c('--ufd-bg','#f3faf3');
+ctx.fillRect(0, 0, W, H);
+/* scene background slight tint */
+ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+ctx.lineWidth = 1;
+ctx.strokeRect(sceneLeft, sceneTop, sceneRight - sceneLeft, sceneBot - sceneTop);
+drawAxes();
+drawFieldArrows();
+drawChargeAndPath();
+/* Bar scales: set by the whole journey from A to B, so the bars fill up as q travels;
+   the dashed marks show the values the bars will reach when q arrives at B */
+var p = physics(), pB = physAt(Bx, By);
+function nice(v){ v = Math.max(v, 1e-9); var e = Math.pow(10, Math.floor(Math.log(v)/Math.LN10)), m = v/e; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10)*e; }
+var Emax = nice(1.1*Math.max(Math.abs(pB.WE), Math.abs(p.WE), 1));
+var Vmax = nice(1.1*Math.max(Math.abs(pB.dV), Math.abs(p.dV), 1));
+drawBar(bar1X, 'W_E',  p.WE, fmt(p.WE), c('--ufd-bar-w','#2a7a2a'), Emax, true,  'µJ'); drawTarget(bar1X, pB.WE, Emax);
+drawBar(bar2X, 'ΔU',   p.dU, fmt(p.dU), c('--ufd-bar-u','#b06800'), Emax, false, 'µJ'); drawTarget(bar2X, pB.dU, Emax);
+drawBar(bar3X, 'ΔV',   p.dV, fmt(p.dV), c('--ufd-bar-v','#1e6fa8'), Vmax, true,  'V');  drawTarget(bar3X, pB.dV, Vmax);
+var atB = Math.abs(Qx - Bx) < 0.01 && Math.abs(Qy - By) < 0.01, atA = Math.abs(Qx - Ax) < 0.01 && Math.abs(Qy - Ay) < 0.01;
+ctx.fillStyle = c('--ufd-text','#111');
+ctx.font = 'bold 11px sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'top';
+ctx.fillText(atB ? 'Changes from A to B -- q has arrived at B' : (atA ? 'q is at A: nothing has changed yet (dashed marks: values at B)' : 'Changes from A to q (dashed marks: values at B)'), W/2, bcTop - 18);
+}
+function fmt(v) {
+if (Math.abs(v) >= 1000) return (v>=0?'+':'')+(v/1000).toFixed(2)+'k';
+return (v>=0?'+':'')+v.toFixed(1);
+}
+/* ── narration ── */
+function narrate() {
+var p = physics();
+var msg = 'E = '+Emag+' V/cm at ∠'+Math.round(Eang*180/Math.PI)+'°. ';
+msg += 'q = '+qVal.toFixed(1)+' µC. ';
+msg += 'Start A = ('+Ax+', '+Ay+') cm. ';
+msg += 'Current q-position = ('+(+Qx.toFixed(1))+', '+(+Qy.toFixed(1))+') cm. ';
+msg += 'Target B = ('+Bx+', '+By+') cm. ';
+msg += 's⃗ (A → q) = ('+(+p.sx.toFixed(1))+', '+(+p.sy.toFixed(1))+') cm. ';
+msg += 'E·s = '+p.Edots.toFixed(1)+' V. ';
+msg += 'W_E = q(E·s) = '+fmt(p.WE)+' µJ. ';
+msg += 'ΔU = −W_E = '+fmt(p.dU)+' µJ. ';
+msg += 'ΔV = −E·s = '+fmt(p.dV)+' V. ';
+if (Math.abs(Qx - Bx) < 0.01 && Math.abs(Qy - By) < 0.01 && p.sMag >= 0.1) {
+msg += 'q has arrived at B. ' + (Math.abs(p.WE) < 1 ? 'A to B is perpendicular to E: the field does no work.' : (p.WE > 0 ? 'The field did positive work, so the potential energy decreased.' : 'The field did negative work, so the potential energy increased.')) + ' Any other path from A to B gives the same result.';
+} else if (p.sMag < 0.1) {
+msg += 'q is at the starting point A: no displacement, no work done yet. Press Move q to B, or drag it.';
+} else if (Math.abs(p.WE) < 1) {
+msg += 'q has moved perpendicular to E → field does no work.';
+} else if (p.WE > 0) {
+msg += 'Field does positive work on q → PE decreases.';
+} else {
+msg += 'Field does negative work on q → PE increases.';
+}
+ufdA11y.narrate(msg);
+}
+/* ── public API ── */
+function setQ(v) {
+qVal = v;
+drawFrame();
+narrate();
+}
+function setE() {
+var em = document.getElementById('ufdEMag');
+var ea = document.getElementById('ufdEAng');
+Emag = em ? parseInt(em.value, 10) : 50;
+var degs = ea ? parseInt(ea.value, 10) : 0;
+Eang = degs * Math.PI / 180;
+drawFrame();
+narrate();
+}
+function setPt(which) {
+if (which === 'A') {
+var ax = document.getElementById('ufdAx');
+var ay = document.getElementById('ufdAy');
+Ax = ax ? parseInt(ax.value, 10) : -6;
+Ay = ay ? parseInt(ay.value, 10) : 2;
+/* Moving A re-initializes the run: charge snaps to the new start point */
+Qx = Ax; Qy = Ay;
+var qxEl = document.getElementById('ufdQx');
+var qyEl = document.getElementById('ufdQy');
+if (qxEl) qxEl.value = Qx;
+if (qyEl) qyEl.value = Qy;
+var qxRo = document.getElementById('ufdQxVal');
+var qyRo = document.getElementById('ufdQyVal');
+if (qxRo) qxRo.textContent = Qx;
+if (qyRo) qyRo.textContent = Qy;
+} else if (which === 'Q') {
+var qx = document.getElementById('ufdQx');
+var qy = document.getElementById('ufdQy');
+Qx = qx ? parseInt(qx.value, 10) : -6;
+Qy = qy ? parseInt(qy.value, 10) : 2;
+} else {
+var bx = document.getElementById('ufdBx');
+var by = document.getElementById('ufdBy');
+Bx = bx ? parseInt(bx.value, 10) : 5;
+By = by ? parseInt(by.value, 10) : -3;
+}
+drawFrame();
+narrate();
+}
+function rst() {
+/* reset all sliders to defaults: charge starts AT A */
+var defaults = {
+'ufdQ':    [20,'2.0'],
+'ufdEMag': [50,'50'],
+'ufdEAng': [0,'0°'],
+'ufdAx':   [-6,'-6'],
+'ufdAy':   [2,'2'],
+'ufdQx':   [-6,'-6'],
+'ufdQy':   [2,'2'],
+'ufdBx':   [5,'5'],
+'ufdBy':   [-3,'-3']
+};
+for (var id in defaults) {
+var el = document.getElementById(id);
+if (el) el.value = defaults[id][0];
+}
+document.getElementById('ufdQVal').textContent    = '2.0';
+document.getElementById('ufdEMagVal').textContent = '50';
+document.getElementById('ufdEAngVal').textContent = '0°';
+document.getElementById('ufdAxVal').textContent   = '-6';
+document.getElementById('ufdAyVal').textContent   = '2';
+document.getElementById('ufdQxVal').textContent   = '-6';
+document.getElementById('ufdQyVal').textContent   = '2';
+document.getElementById('ufdBxVal').textContent   = '5';
+document.getElementById('ufdByVal').textContent   = '-3';
+init();
+}
+function init() {
+qVal = 2.0;
+Emag = 50;
+Eang = 0;
+Ax = -6; Ay = 2;
+Qx = -6; Qy = 2;
+Bx = 5;  By = -3;
+var qS = document.getElementById('ufdQ');
+if (qS) qVal = parseInt(qS.value,10)/10;
+var em = document.getElementById('ufdEMag'); if(em) Emag = parseInt(em.value,10);
+var ea = document.getElementById('ufdEAng'); if(ea) Eang = parseInt(ea.value,10)*Math.PI/180;
+var ax = document.getElementById('ufdAx');   if(ax) Ax   = parseInt(ax.value,10);
+var ay = document.getElementById('ufdAy');   if(ay) Ay   = parseInt(ay.value,10);
+var qx = document.getElementById('ufdQx');   if(qx) Qx   = parseInt(qx.value,10);
+var qy = document.getElementById('ufdQy');   if(qy) Qy   = parseInt(qy.value,10);
+var bx = document.getElementById('ufdBx');   if(bx) Bx   = parseInt(bx.value,10);
+var by = document.getElementById('ufdBy');   if(by) By   = parseInt(by.value,10);
+drawFrame();
+narrate();
+}
+/* boot */
+/* ── moving the charge ── */
+var anim = null;
+function stopAnim(){ if (anim){ cancelAnimationFrame(anim.raf); anim = null; } }
+function showSliders(){
+[['ufdAx',Ax],['ufdAy',Ay],['ufdQx',Qx],['ufdQy',Qy],['ufdBx',Bx],['ufdBy',By]].forEach(function(p){
+var r = document.getElementById(p[0] + ''), t = document.getElementById(p[0] + 'Val'), v = Math.round(p[1]);
+if (r) r.value = v; if (t) t.textContent = v; });
+}
+function goB(){
+stopAnim();
+var x0 = Qx, y0 = Qy, d = Math.hypot(Bx - x0, By - y0); if (d < 0.01){ narrate(); return; }
+var T = Math.max(600, d*110), t0 = null;
+anim = { raf:0 };
+function step(t){
+if (!anim) return; if (t0 === null) t0 = t;
+var f = Math.min(1, (t - t0)/T), e = f < 0.5 ? 2*f*f : 1 - Math.pow(-2*f + 2, 2)/2;
+Qx = x0 + (Bx - x0)*e; Qy = y0 + (By - y0)*e;
+if (f >= 1){ Qx = Bx; Qy = By; anim = null; }
+showSliders(); drawFrame();
+if (anim) anim.raf = requestAnimationFrame(step); else narrate();
+}
+anim.raf = requestAnimationFrame(step);
+}
+function goA(){ stopAnim(); Qx = Ax; Qy = Ay; showSliders(); drawFrame(); narrate(); }
+/* dragging q, A or B on the picture (1 cm steps, like the sliders) */
+var drag = null;
+function cmAt(cx, cy){ var r = canvas.getBoundingClientRect(), px = (cx - r.left)*W/r.width, py = (cy - r.top)*H/r.height;
+return { x:(px - sceneCx)/pxPerCm, y:(sceneCy - py)/pxPerCm, k:W/r.width }; }
+function pick(p, touch){
+var tol = (12 + (touch ? 10 : 0))*p.k/pxPerCm;
+var cands = [['Q', Qx, Qy], ['B', Bx, By], ['A', Ax, Ay]], best = null, bd = 1e9;
+cands.forEach(function(c2){ var d = Math.hypot(p.x - c2[1], p.y - c2[2]); if (d < tol && d < bd){ bd = d; best = c2[0]; } });
+return best;
+}
+function dragTo(p){
+var x = Math.max(-10, Math.min(10, Math.round(p.x))), y = Math.max(-10, Math.min(10, Math.round(p.y)));
+if (drag === 'Q'){ Qx = x; Qy = y; }
+else if (drag === 'B'){ Bx = x; By = y; }
+else { Ax = x; Ay = y; Qx = Ax; Qy = Ay; }      /* a new start: the charge goes back to A */
+showSliders(); drawFrame();
+}
+canvas.addEventListener('mousedown', function(e){ drag = pick(cmAt(e.clientX, e.clientY), false); if (drag){ stopAnim(); canvas.style.cursor = 'grabbing'; } });
+window.addEventListener('mousemove', function(e){ var p = cmAt(e.clientX, e.clientY); if (drag){ dragTo(p); return; } canvas.style.cursor = pick(p, false) ? 'grab' : 'default'; });
+window.addEventListener('mouseup', function(){ if (drag){ drag = null; canvas.style.cursor = 'default'; narrate(); } });
+canvas.addEventListener('touchstart', function(e){ var t = e.touches[0]; drag = pick(cmAt(t.clientX, t.clientY), true); if (drag){ stopAnim(); e.preventDefault(); } }, { passive:false });
+canvas.addEventListener('touchmove', function(e){ if (!drag) return; e.preventDefault(); var t = e.touches[0]; dragTo(cmAt(t.clientX, t.clientY)); }, { passive:false });
+canvas.addEventListener('touchend', function(){ if (drag){ drag = null; narrate(); } });
+init();
+return { setQ:setQ, setE:setE, setPt:function(w){ stopAnim(); setPt(w); }, rst:function(){ stopAnim(); rst(); }, goB:goB, goA:goA,
+_state:function(){ var p = physics(), pB = physAt(Bx, By); return { A:[Ax,Ay], Q:[Qx,Qy], B:[Bx,By], q:qVal, E:Emag, ang:Eang, WE:p.WE, dU:p.dU, dV:p.dV, WEB:pB.WE, dVB:pB.dV }; } };
+};
+var ufdSim = new ufdGen();
+</script>
+<script>
+ufdA11y.init();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows a charge `q` moving from a point A to a point B in a uniform electric field `vec E`. The charge, the strength and direction of the field, and the positions of A and B can be changed.</p>
+<p>The electric force on the charge is `vec F = q vec E`, constant everywhere. Over the displacement `Delta vec r` from A to B, the work done by the field is</p>
+<p class="mob_eq">`W_E = q vec E * Delta vec r`,</p>
+<p>which depends only on the end points, not on the path. The change in electric potential energy and in electric potential are then</p>
+<p class="mob_eq">`Delta U = -W_E`,&nbsp;&nbsp; `Delta V = (Delta U)/q = -vec E * Delta vec r`.</p>
+<p>Moving along the field lowers the potential; moving perpendicular to the field does not change it. A positive charge moving along the field loses potential energy, a negative one gains it.</p>
+<p>This simulation is useful for studying work, electric potential energy and electric potential in a uniform field.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobufd { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (503 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:543px) {
+#mobufd div, #mobufd p, #mobufd fieldset, #mobufd form, #mobufd section, #mobufd ol, #mobufd ul, #mobufd table { max-width:100%; box-sizing:border-box; }
+#mobufd canvas, #mobufd img, #mobufd svg { max-width:100%; height:auto !important; }
+#mobufd input[type=range], #mobufd select { max-width:100%; min-width:0; }
+#mobufd #ufdRoot .ufd_a11y, #mobufd .footer .row3, #mobufd .footer .cell { flex-wrap:wrap; }
+#mobufd #ufdRoot .ufd_a11y > div, #mobufd .footer .row3 > div, #mobufd .footer .cell > div { min-width:min(100%, 260px); }
+#mobufd div[style*="height"] { height:auto !important; }
+#mobufd .tbar, #mobufd .mcontent { height:auto; min-height:0; }
+#mobufd .tbar { line-height:1.3; padding-top:6px; padding-bottom:6px; }
+#mobufd table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:563px) {
+#mobufd div, #mobufd p, #mobufd fieldset, #mobufd form, #mobufd section, #mobufd ol, #mobufd ul, #mobufd table { max-width:100%; box-sizing:border-box; }
+#mobufd canvas, #mobufd img, #mobufd svg { max-width:100%; height:auto !important; }
+#mobufd input[type=range], #mobufd select { max-width:100%; min-width:0; }
+#mobufd #ufdRoot .ufd_a11y, #mobufd .footer .row3, #mobufd .footer .cell { flex-wrap:wrap; }
+#mobufd #ufdRoot .ufd_a11y > div, #mobufd .footer .row3 > div, #mobufd .footer .cell > div { min-width:min(100%, 260px); }
+#mobufd div[style*="height"] { height:auto !important; }
+#mobufd .tbar, #mobufd .mcontent { height:auto; min-height:0; }
+#mobufd .tbar { line-height:1.3; padding-top:6px; padding-bottom:6px; }
+#mobufd table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobufd button, #mobufd input[type=button], #mobufd input[type=submit], #mobufd input[type=reset] { min-height:40px; }
+#mobufd input[type=range] { height:28px; }
+#mobufd input[type=checkbox], #mobufd input[type=radio] { width:22px; height:22px; }
+#mobufd select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobufd .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobufd .mob_a11ytop input[type=button], #mobufd .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobufd .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobufd .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobufd .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobufd .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobufd .mob_desc p { margin:0 0 9px 0; }
+#mobufd .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobufd -->
+</main>
+</body>
+</html>

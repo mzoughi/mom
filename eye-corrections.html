@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Correcting Vision: Glasses, Contact Lenses and LASIK</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, eye, eye, vision correction, glasses, spectacles, contact lens, LASIK, myopia, hyperopia, astigmatism, presbyopia, reading glasses, vertex distance, diopter, lesson, scientific">
+<meta name="description" content="Interactive simulation of vision correction with exact ray tracing: glasses, contact lenses, reading glasses and LASIK for myopia, hyperopia, astigmatism and presbyopia.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="ekRoot" class="ek_root" role="region" aria-label="Correcting vision simulator">
+<div class="ek_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="ek_a11ybtn" id="ekBtnHC" onclick="ekSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ek_a11ybtn" id="ekBtnLM" onclick="ekSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ek_a11ybtn" id="ekBtnCB" onclick="ekSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ek_a11ybtn ek_a11yon" id="ekBtnNR" onclick="ekSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="ek_tbar"><h3>Correcting Vision: Glasses, Contact Lenses and LASIK</h3></div>
+<div class="ek_mcontent">
+<div class="ek_view">
+<div class="ek_vlabel" id="ekSideLab">cross-section of the eye, light from the left (vertical meridian)</div>
+<canvas id="ekSide" width="780" height="340" role="img" aria-label="Cross-section of the eye with a correcting lens or a reshaped cornea; rays show where the light focuses."></canvas>
+</div>
+<div class="ek_row2">
+<div class="ek_view"><div class="ek_vlabel">what the eye sees</div><canvas id="ekSee" width="320" height="260" role="img" aria-label="An eye chart as the eye sees it, sharp or blurred."></canvas></div>
+<div class="ek_readout" id="ekRead" aria-label="Readout"></div>
+</div>
+</div>
+<div id="ekNarBar" class="ek_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="ek_bbar">
+<label>Eye <select id="ekCond" onchange="ekSim.set('cond',this.value)">
+<option value="myopia">Myopia (nearsighted)</option>
+<option value="hyperopia">Hyperopia (farsighted)</option>
+<option value="astig">Astigmatism</option>
+<option value="presby">Presbyopia (age 55)</option>
+<option value="normal">Normal</option>
+</select></label>
+<label>Correction <select id="ekCorr" onchange="ekSim.set('corr',this.value)">
+<option value="none">none</option>
+<option value="specs">glasses</option>
+<option value="contact">contact lens</option>
+<option value="lasik">LASIK (reshaped cornea)</option>
+</select></label>
+<label>Looking at <select id="ekObj" onchange="ekSim.set('obj',this.value)">
+<option value="far">a distant eye chart</option>
+<option value="near">a book at 40 cm</option>
+</select></label>
+<button type="button" class="ek_btn ek_go" onclick="ekSim.prescribe()">Prescribe</button>
+<button type="button" class="ek_btn" onclick="ekSim.describe()">Describe</button>
+</div>
+<div class="ek_bbar ek_opts">
+<label>Show the <select id="ekMer" onchange="ekSim.set('mer',this.value)">
+<option value="v">vertical</option>
+<option value="h">horizontal</option>
+</select> meridian</label>
+<label><input type="checkbox" id="ekRays" checked onchange="ekSim.set('rays',this.checked)"> Rays</label>
+</div>
+<div class="ek_controls">
+<div class="ek_crow"><div class="ek_cname"><b>Sphere</b> <span class="ek_cval"><span id="ekSv">0.00</span> D</span></div>
+<label>&minus;8 <input type="range" id="ekS" min="-8" max="8" step="0.25" value="0" oninput="ekSim.set('sph',this.value)"> +8</label></div>
+<div class="ek_crow" id="ekCylRow"><div class="ek_cname"><b>Cylinder</b> (vertical meridian) <span class="ek_cval"><span id="ekCv">0.00</span> D</span></div>
+<label>&minus;4 <input type="range" id="ekC" min="-4" max="4" step="0.25" value="0" oninput="ekSim.set('cyl',this.value)"> +4</label></div>
+<div class="ek_crow"><div class="ek_cname"><b>Pupil</b> <span class="ek_cval"><span id="ekPv">4.0</span> mm</span></div>
+<label>2 <input type="range" id="ekP" min="2" max="7" step="0.5" value="4" oninput="ekSim.set('pupil',this.value)"> 7</label></div>
+</div>
+<div class="ek_descwrap">
+<button type="button" class="ek_descbtn" id="ekDescBtn" aria-expanded="false" aria-controls="ekDesc" onclick="ekSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="ek_desc" id="ekDesc" role="region" aria-labelledby="ekDescBtn" style="display:none">
+<p>This simulation corrects the common defects of the eye. The eye is the Le Grand schematic eye, and the rays are traced exactly through every surface, so the focus -- on, in front of, or behind the retina -- is computed, not drawn.</p>
+<p>A defect is measured by its refractive error: the power, in diopters, of the lens that would bring a distant object into focus. A myopic eye focuses too strongly (or is too long) and needs a negative, diverging lens; a hyperopic eye needs a positive, converging one. Lens powers add, so a correcting lens of power `P` simply changes the total power of the system so that the image falls on the retina.</p>
+<p><b>Glasses</b> sit about 12 mm in front of the cornea. Because of that distance, a lens in glasses needs a different power from a contact lens for the same eye. If the eye needs `K` diopters at the cornea, glasses at a distance `d` must have</p>
+<p class="ek_eq">`F = K/(1 + d K)`.</p>
+<p>For a myope of `K = -4.0` D this gives about `-4.2` D in glasses; the stronger the prescription, the bigger the difference. <b>Contact lenses</b> sit on the cornea, so their power is `K` itself.</p>
+<p><b>Astigmatism</b> comes from a cornea curved more steeply in one direction than in the other. The two directions (meridians) focus at different depths, so no single spherical lens can correct both: the prescription adds a cylinder, a lens that has power in one meridian only. Choose which meridian the cross-section shows; the eye chart shows the blur that results from both.</p>
+<p><b>Presbyopia</b> is the loss of accommodation with age. Distant vision may be fine, but a book at 40 cm needs about 2.5 D more than the eye can give. Reading glasses add that power.</p>
+<p><b>LASIK</b> reshapes the cornea itself. A laser removes tissue under a thin flap: to correct myopia it flattens the center of the cornea, increasing its radius `R`; to correct hyperopia it steepens it. The front of the cornea has power `P = (n - 1)/R`, with `n = 1.377`. The depth of tissue removed across an optical zone of diameter `S` is roughly given by Munnerlyn's formula,</p>
+<p class="ek_eq">`t ~~ (S^2 D)/3`&nbsp; (t in micrometres, S in mm, D in diopters),</p>
+<p>about 12 micrometres per diopter for a 6 mm zone. The cornea is only about 550 micrometres thick, and enough of it must remain for the eye to stay strong, which limits how large a correction LASIK can safely make. The simulation computes the depth exactly from the shapes before and after.</p>
+<p>The eye chart shows the blur at its angular size: about one minute of arc corresponds to normal vision (20/20), and the blur grows with the defocus and with the size of the pupil.</p>
+</div>
+</div>
+</div><!-- #ekRoot -->
+<style>
+#ekRoot, #ekRoot * { box-sizing:border-box; }
+#ekRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --ek-bg:#0a0e12; --ek-panel:#0d1318; --ek-border:#1c262e; --ek-text:#c9d6de; --ek-muted:#5f7180; --ek-val:#8fe3b0; }
+#ekRoot .ek_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#ekRoot .ek_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#ekRoot .ek_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#ekRoot .ek_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#ekRoot .ek_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#ekRoot .ek_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#ekRoot .ek_mcontent { background:var(--ek-bg); color:var(--ek-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#ekRoot .ek_view { border:1px solid var(--ek-border); border-radius:6px; overflow:hidden; background:var(--ek-panel); }
+#ekRoot .ek_row2 { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr); gap:8px; }
+#ekRoot .ek_vlabel { font-size:10px; color:var(--ek-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#ekRoot canvas { display:block; width:100%; height:auto; }
+#ekRoot .ek_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); align-content:start; gap:6px 10px; background:var(--ek-panel); border:1px solid var(--ek-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#ekRoot .ek_flabel { font-size:10px; color:var(--ek-muted); letter-spacing:1px; }
+#ekRoot .ek_fvalue { font-size:14px; color:var(--ek-val); font-variant-numeric:tabular-nums; }
+#ekRoot .ek_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#ekRoot .ek_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#ekRoot .ek_opts { border-top:1px solid #c5dc9a; gap:16px; }
+#ekRoot .ek_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#ekRoot .ek_go { font-weight:bold; border-color:#0a7a5a; background:#e2fff3; }
+#ekRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+#ekRoot .ek_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#ekRoot .ek_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#ekRoot .ek_cname { font-size:.88rem; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+#ekRoot .ek_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#ekRoot .ek_crow label { display:flex; align-items:center; gap:6px; font-size:.78rem; color:#445; }
+#ekRoot input[type=range] { flex:1; min-width:0; accent-color:#e8a020; }
+#ekRoot input[type=range]:disabled { opacity:.45; }
+#ekRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#ekRoot .ek_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#ekRoot .ek_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#ekRoot .ek_descbtn[aria-expanded="true"] { background:#3a3220; }
+#ekRoot .ek_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#ekRoot .ek_desc p { margin:0 0 9px; }
+#ekRoot .ek_eq { text-align:center; font-size:1rem; }
+@container (max-width:640px) { #ekRoot .ek_row2 { grid-template-columns:minmax(0,1fr); } #ekRoot .ek_row2 > :first-child { max-width:340px; width:100%; margin:0 auto; } }
+@media (max-width:660px) { #ekRoot .ek_row2 { grid-template-columns:minmax(0,1fr); } #ekRoot .ek_row2 > :first-child { max-width:340px; width:100%; margin:0 auto; } }
+@media (pointer:coarse) { #ekRoot input[type=range] { height:28px; } #ekRoot .ek_a11ybtn { min-height:40px; } #ekRoot input[type=checkbox] { width:22px; height:22px; } #ekRoot select { min-height:36px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Eye: Le Grand full theoretical eye (as in "The Eye in 3D"): cornea front R 7.8 (astigmatism: 7.4 vertically), back R 6.5,
+n 1.3771; aqueous 1.3374; lens front at 3.6, R 10.2 / -6.0, thickness 4.0, n 1.42 (accommodating toward R 6.0 / -5.5,
+thickness 4.5, n 1.427); vitreous 1.336; axial length 24.2 (myopia 25.7, hyperopia 22.7). Rays are traced exactly
+(vector Snell's law) in one meridian. Glasses and contact lenses are ideal thin lenses (at 12 mm and on the cornea)
+with power sphere + cylinder * sin^2(meridian angle). LASIK replaces the corneal front radius; the ablation depth is the
+difference of the sags of the two surfaces across a 6 mm optical zone (edge for myopia, center for hyperopia).
+No dollar signs or backticks in the code.
+-->
+<script>
+var ekSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('ekRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var SD = hi('ekSide'), SE = hi('ekSee');
+var DEG = Math.PI/180, ZC = 13, VD = 12, ZONE = 6, NC = 1.3771;
+var CONDS = { normal:{ AL:24.2 }, myopia:{ AL:25.7 }, hyperopia:{ AL:22.7 }, astig:{ AL:24.2, Rv:7.4 }, presby:{ AL:24.2, amax:0.065 } };
+var S = { cond:'myopia', corr:'none', obj:'far', sph:0, cyl:0, pupil:4, mer:'v', rays:true, lasik:{ v:7.8, h:7.8 } };
+var th = { hc:false, lm:false, cb:false, nr:true };
+function C(){ return CONDS[S.cond]; }
+function natR(phi){ var c = C(); if (c.Rv) return 7.8 + (c.Rv - 7.8)*Math.pow(Math.sin(phi), 2); return 7.8; }
+function corneaR(phi){ return S.corr === 'lasik' ? (S.lasik.h + (S.lasik.v - S.lasik.h)*Math.pow(Math.sin(phi), 2)) : natR(phi); }
+function lensPower(phi){ return S.sph + S.cyl*Math.pow(Math.sin(phi), 2); }
+function lensP(a){ return { z0:3.6 - 0.4*a, Ra:10.2 - 4.2*a, Rp:-6.0 + 0.5*a, T:4.0 + 0.5*a, n:1.42 + 0.007*a }; }
+/* ══════════ exact tracing in one meridian ══════════ */
+function sag(R, r){ var d = R*R - r*r; return d <= 0 ? null : (R > 0 ? R - Math.sqrt(d) : R + Math.sqrt(d)); }
+function surfaces(phi, a){
+var L = lensP(a);
+return [{ z0:0, R:corneaR(phi), n1:1, n2:NC }, { z0:0.55, R:6.5, n1:NC, n2:1.3374 }, { z0:L.z0, R:L.Ra, n1:1.3374, n2:L.n }, { z0:L.z0 + L.T, R:L.Rp, n1:L.n, n2:1.336 }];
+}
+function hit(o, d, s){
+var cz = s.z0 + s.R, oz = o[0] - cz, b = oz*d[0] + o[1]*d[1], c = oz*oz + o[1]*o[1] - s.R*s.R, disc = b*b - c;
+if (disc < 0) return null;
+var sq = Math.sqrt(disc), t1 = -b - sq, t2 = -b + sq, t = null;
+[t1, t2].forEach(function(t0){ if (t0 > 1e-7){ var z = o[0] + t0*d[0]; if (Math.abs(z - s.z0) < Math.abs(s.R) && (t === null || Math.abs(z - s.z0) < Math.abs(o[0] + t*d[0] - s.z0))) t = t0; } });
+return t === null ? null : [o[0] + t*d[0], o[1] + t*d[1]];
+}
+function refract(d, p, s){
+var cz = s.z0 + s.R, n = [p[0] - cz, p[1]], m = Math.hypot(n[0], n[1]); n = [n[0]/m, n[1]/m]; if (n[0]*d[0] + n[1]*d[1] < 0) n = [-n[0], -n[1]];
+var eta = s.n1/s.n2, ci = n[0]*d[0] + n[1]*d[1], k = 1 - eta*eta*(1 - ci*ci); if (k < 0) return null;
+var t = [eta*d[0] + (Math.sqrt(k) - eta*ci)*n[0], eta*d[1] + (Math.sqrt(k) - eta*ci)*n[1]]; m = Math.hypot(t[0], t[1]); return [t[0]/m, t[1]/m];
+}
+function thinLens(o, d, z0, P){
+/* an ideal thin lens of power P (D) at z0 (mm), in air: the slope changes by -y P */
+var t = (z0 - o[0])/d[0], y = o[1] + t*d[1], sl = d[1]/d[0] - y/1000*P, m = Math.hypot(1, sl);
+return { p:[z0, y], d:[1/m, sl/m] };
+}
+function retinaHit(o, d){
+var AL = C().AL, Rr = 11, Rz = AL - ZC;
+var A = d[0]*d[0]/(Rz*Rz) + d[1]*d[1]/(Rr*Rr), B = 2*((o[0] - ZC)*d[0]/(Rz*Rz) + o[1]*d[1]/(Rr*Rr)), Cc = Math.pow(o[0] - ZC, 2)/(Rz*Rz) + o[1]*o[1]/(Rr*Rr) - 1;
+var disc = B*B - 4*A*Cc; if (disc < 0) return null; var t = (-B + Math.sqrt(disc))/(2*A); return [o[0] + t*d[0], o[1] + t*d[1]];
+}
+var EXTRA = 0;                                           /* a probe lens at the cornea, used only to measure the error left */
+function trace(phi, a, hp, objZ){
+var o, d;
+if (objZ === null){ o = [-30, hp]; d = [1, 0]; }
+else { var zt = -0.5; d = [zt - objZ, hp]; var m = Math.hypot(d[0], d[1]); d = [d[0]/m, d[1]/m]; o = [-30, (-30 - objZ)*d[1]/d[0]]; }
+var pts = [o.slice()];
+var lensZ = S.corr === 'specs' ? -VD : (S.corr === 'contact' ? -0.05 : null);
+if (lensZ !== null){ var r = thinLens(o, d, lensZ, lensPower(phi)); pts.push(r.p); o = r.p; d = r.d; }
+if (EXTRA){ var rx2 = thinLens(o, d, -0.02, EXTRA); o = rx2.p; d = rx2.d; }
+var srf = surfaces(phi, a);
+for (var k=0; k<srf.length; k++){ var p = hit(o, d, srf[k]); if (!p) return null; pts.push(p); var nd = refract(d, p, srf[k]); if (!nd) return null; o = [p[0] + 1e-6*nd[0], p[1] + 1e-6*nd[1]]; d = nd; }
+var rh = retinaHit(o, d); if (rh) pts.push(rh);
+return { pts:pts, o:o, d:d, zx:d[1] !== 0 ? o[0] - o[1]*d[0]/d[1] : null };
+}
+function objZ(){ return S.obj === 'far' ? null : -400; }
+function focus(phi, a){ var r = trace(phi, a, 0.05, objZ()); return r ? r.zx : null; }
+function accom(){
+/* the eye accommodates by itself (as much as its age allows) to bring the vertical meridian into focus */
+var amax = C().amax !== undefined ? C().amax : 1, best = 0, bd = 1e9;
+if (S.obj === 'far') return 0;
+for (var i=0; i<=50; i++){ var a = amax*i/50, f = focus(S.cond === 'astig' ? 0 : 90*DEG, a); if (f === null) continue; var dd = Math.abs(f - C().AL); if (dd < bd){ bd = dd; best = a; } }
+return best;
+}
+function errD(phi, a){
+/* the refractive error left, exactly: the power of a thin lens at the cornea that would bring the focus onto the retina */
+var AL = C().AL, f0 = focus(phi, a); if (f0 === null) return null; if (Math.abs(f0 - AL) < 1e-4) return 0;
+var lo = -20, hi = 20;
+function g(P){ EXTRA = P; var f = focus(phi, a); EXTRA = 0; return f === null ? (P > 0 ? -1 : 1) : f - AL; }
+var glo = g(lo); for (var i=0; i<50; i++){ var m = 0.5*(lo + hi), gm = g(m); if ((gm < 0) === (glo < 0)){ lo = m; glo = gm; } else hi = m; }
+return 0.5*(lo + hi);
+}
+/* ══════════ prescribing ══════════ */
+function solve(fn, lo, hi){ var flo = fn(lo); for (var i=0; i<60; i++){ var m = 0.5*(lo + hi), fm = fn(m); if ((fm < 0) === (flo < 0)){ lo = m; flo = fm; } else hi = m; } return 0.5*(lo + hi); }
+function prescribe(){
+var a0 = S.obj === 'far' ? 0 : (C().amax !== undefined ? C().amax : 0);
+var keep = { sph:S.sph, cyl:S.cyl };
+if (S.corr === 'none') S.corr = 'specs';
+if (S.corr === 'lasik'){
+['v', 'h'].forEach(function(m){ var phi = m === 'v' ? 90*DEG : 0;
+S.lasik[m] = solve(function(R){ var o = S.lasik[m]; S.lasik[m] = R; var f = focus(phi, 0) - C().AL; S.lasik[m] = o; return f; }, 6.0, 10.5); });
+S.sph = 0; S.cyl = 0;
+} else {
+S.cyl = 0;
+var sph = solve(function(P){ S.sph = P; return focus(0, a0) - C().AL; }, -12, 12);
+S.sph = sph;
+var cyl = 0; if (C().Rv) cyl = solve(function(cc){ S.cyl = cc; return focus(90*DEG, a0) - C().AL; }, -6, 6);
+S.sph = Math.round(sph*4)/4; S.cyl = Math.round(cyl*4)/4; S.exact = { sph:sph, cyl:cyl };
+}
+sync(); draw();
+var msg = S.corr === 'lasik' ? 'LASIK reshapes the cornea: its front radius goes from ' + natR(90*DEG).toFixed(2) + ' to ' + S.lasik.v.toFixed(2) + ' mm' + (C().Rv ? ' vertically and from ' + natR(0).toFixed(2) + ' to ' + S.lasik.h.toFixed(2) + ' mm horizontally' : '') + ', removing about ' + ablation().toFixed(0) + ' micrometres of tissue.'
+  : 'Prescription: ' + rx() + (S.corr === 'specs' ? ', in glasses 12 mm from the eye.' : ', as a contact lens.') + ' The focus is now on the retina.';
+narrate(msg);
+}
+/* ══════════ LASIK: the tissue removed ══════════ */
+function ablation(){
+if (S.corr !== 'lasik') return 0;
+var r = ZONE/2, worst = 0;
+['v', 'h'].forEach(function(m){ var R0 = natR(m === 'v' ? 90*DEG : 0), R1 = S.lasik[m];
+var t = R1 > R0 ? (sag(R0, r) - sag(R1, r)) : (sag(R1, r) - sag(R0, r));   /* flatten: most at the center; steepen: most at the edge */
+worst = Math.max(worst, Math.abs(t)*1000); });
+return worst;
+}
+function rx(){ var s = (S.sph >= 0 ? '+' : '') + S.sph.toFixed(2) + ' D'; return S.cyl ? s + ' sphere, ' + (S.cyl >= 0 ? '+' : '') + S.cyl.toFixed(2) + ' D cylinder (vertical meridian)' : s; }
+/* ══════════ colours ══════════ */
+function pal(){
+if (th.hc) return { bg:'#000', eye:'#fff', retina:'#ff7a50', fluid:'rgba(80,160,255,0.12)', lens:'#ffe680', cornea:'#66ddff', ray:'#ffff00', glass:'rgba(140,220,255,0.35)', glassE:'#9fe8ff', txt:'#fff', good:'#00ff88', bad:'#ff5555', abl:'#ff5555' };
+var p = th.lm ? { bg:'#eef2f6', eye:'#334', txt:'#1d232a', fluid:'rgba(80,140,200,0.10)' } : { bg:'#0a0e12', eye:'#cfd8de', txt:'#dbe5ec', fluid:'rgba(120,180,230,0.08)' };
+p.retina = '#e28060'; p.lens = '#e8d48a'; p.cornea = '#8fd3ef'; p.ray = th.cb ? '#e69f00' : '#ffd23f'; p.glass = 'rgba(150,215,240,0.28)'; p.glassE = '#8fd3ef';
+p.good = th.cb ? '#56b4e9' : '#3ad08f'; p.bad = th.cb ? '#d55e00' : '#ff6a5a'; p.abl = th.cb ? '#d55e00' : '#ff6a5a'; return p;
+}
+/* ══════════ the cross-section ══════════ */
+function drawSide(){
+var p = pal(), g = SD.g, W = SD.W, H = SD.H; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+var phi = S.mer === 'v' ? 90*DEG : 0, a = accom(), k = 11, x0 = 330, y0 = H/2;
+function X(z){ return x0 + z*k; } function Y(y){ return y0 - y*k; }
+var AL = C().AL, Rz = AL - ZC;
+/* globe and retina (inner wall: front and back half ellipses) */
+g.fillStyle = p.fluid; g.beginPath(); g.ellipse(X(ZC), y0, 11*k, 11*k, 0, Math.PI/2, Math.PI*1.5); g.ellipse(X(ZC), y0, Rz*k, 11*k, 0, Math.PI*1.5, Math.PI*2.5); g.fill();
+g.strokeStyle = p.eye; g.lineWidth = 2; g.beginPath(); g.ellipse(X(ZC), y0, 11.8*k, 11.8*k, 0, Math.PI*0.62, Math.PI*1.38); g.stroke();
+g.strokeStyle = p.retina; g.lineWidth = 5; g.beginPath(); g.ellipse(X(ZC), y0, Rz*k, 11*k, 0, -Math.PI*0.42, Math.PI*0.42); g.stroke();
+g.strokeStyle = p.eye; g.lineWidth = 2; g.beginPath(); g.ellipse(X(ZC), y0, (Rz + 0.8)*k, 11.8*k, 0, -Math.PI*0.45, Math.PI*0.45); g.stroke();
+/* cornea: the natural front surface dashed if LASIK changed it */
+function corneaPath(R){ g.beginPath(); for (var y=-5.9; y<=5.91; y+=0.2){ var z = sag(R, y); if (z === null) continue; var px = X(z), py = Y(y); if (y <= -5.89) g.moveTo(px, py); else g.lineTo(px, py); } }
+if (S.corr === 'lasik'){
+/* the removed tissue, shaded between the old and the new surfaces over the optical zone */
+var R0 = natR(phi), R1 = corneaR(phi), rz = ZONE/2;
+/* myopia (flatter): the new surface meets the old one at the zone edge, so tissue goes from the centre;
+   hyperopia (steeper): it meets it at the centre, so tissue goes from the edge */
+var shift = R1 > R0 ? sag(R0, rz) - sag(R1, rz) : 0;
+function zNew(y){ return sag(R1, y) + shift; }
+var EX = 20;                                      /* exaggerate the depth so a few tens of micrometres can be seen */
+g.fillStyle = p.abl; g.globalAlpha = 0.6; g.beginPath();
+for (var y1=-rz; y1<=rz + 1e-6; y1+=0.1) g.lineTo(X(sag(R0, y1)), Y(y1));
+for (var y2=rz; y2>=-rz - 1e-6; y2-=0.1) g.lineTo(X(sag(R0, y2) + EX*(zNew(y2) - sag(R0, y2))), Y(y2));
+g.closePath(); g.fill(); g.globalAlpha = 1;
+g.fillStyle = p.txt; g.font = '10px system-ui, sans-serif'; g.textAlign = 'right'; g.fillText('removed tissue (depth x' + EX + ')', X(-0.6), Y(rz) - 4);
+g.setLineDash([4, 3]); g.strokeStyle = p.cornea; g.lineWidth = 1.2; corneaPath(R0); g.stroke(); g.setLineDash([]);
+}
+g.strokeStyle = p.cornea; g.lineWidth = 3; corneaPath(corneaR(phi)); g.stroke();
+g.lineWidth = 1.5; g.beginPath(); for (var y3=-5.9; y3<=5.91; y3+=0.2){ var z3 = 0.55 + sag(6.5, Math.min(Math.abs(y3), 6.4)); if (y3 <= -5.89) g.moveTo(X(z3), Y(y3)); else g.lineTo(X(z3), Y(y3)); } g.stroke();
+/* iris and lens */
+var L = lensP(a); g.fillStyle = '#7a4a2a'; g.fillRect(X(L.z0 - 0.15) - 3, Y(6), 6, (6 - S.pupil/2)*k); g.fillRect(X(L.z0 - 0.15) - 3, Y(-S.pupil/2), 6, (6 - S.pupil/2)*k);
+g.fillStyle = p.lens; g.globalAlpha = 0.85; g.beginPath();
+var re = 4.6; for (var y4=-re; y4<=re + 1e-6; y4+=0.2){ var zf = L.z0 + (sag(L.Ra, y4) || 0); if (y4 <= -re + 1e-6) g.moveTo(X(zf), Y(y4)); else g.lineTo(X(zf), Y(y4)); }
+for (var y5=re; y5>=-re - 1e-6; y5-=0.2){ var zb = L.z0 + L.T + (sag(L.Rp, y5) || 0); g.lineTo(X(zb), Y(y5)); } g.closePath(); g.fill(); g.globalAlpha = 1;
+/* glasses or contact lens: drawn thicker for stronger powers, concave for minus, convex for plus */
+if (S.corr === 'specs' || S.corr === 'contact'){
+var P = lensPower(phi), zL = S.corr === 'specs' ? -VD : -0.25, hh = S.corr === 'specs' ? 16 : 5.4, tc = 0.6 + Math.min(4, Math.abs(P)*0.35);
+g.fillStyle = p.glass; g.strokeStyle = p.glassE; g.lineWidth = 1.5; g.beginPath();
+if (S.corr === 'contact'){
+for (var y6=-hh; y6<=hh + 1e-6; y6+=0.2) g.lineTo(X((sag(7.9, y6) || 0) - 0.08), Y(y6));
+for (var y7=hh; y7>=-hh - 1e-6; y7-=0.2){ var u = y7/hh, tk = 0.12 + 0.035*Math.abs(P)*(P < 0 ? u*u : 1 - u*u); g.lineTo(X((sag(7.9, y7) || 0) - 0.08 - tk), Y(y7)); }
+}
+else { var c0 = P < 0 ? 0.6 : tc, ce = P < 0 ? tc : 0.6; g.moveTo(X(zL - c0/2), Y(0)); g.quadraticCurveTo(X(zL - ce/2 + (P < 0 ? 0 : 0)), Y(hh*0.55), X(zL - ce/2), Y(hh)); g.lineTo(X(zL + ce/2), Y(hh)); g.quadraticCurveTo(X(zL + ce/2), Y(hh*0.55), X(zL + c0/2), Y(0)); g.quadraticCurveTo(X(zL + ce/2), Y(-hh*0.55), X(zL + ce/2), Y(-hh)); g.lineTo(X(zL - ce/2), Y(-hh)); g.quadraticCurveTo(X(zL - ce/2), Y(-hh*0.55), X(zL - c0/2), Y(0)); }
+g.closePath(); g.fill(); g.stroke();
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText((P >= 0 ? '+' : '') + P.toFixed(2) + ' D', X(zL), Y(hh) - 6);
+}
+/* rays */
+var fz = focus(phi, a);
+if (S.rays){
+for (var i=-3; i<=3; i++){
+var hp = S.pupil/2*0.95*i/3; if (i === 0) continue;
+var r = trace(phi, a, hp, objZ()); if (!r) continue;
+g.strokeStyle = p.ray; g.lineWidth = 1.3; g.globalAlpha = 0.9; g.beginPath(); g.moveTo(X(r.pts[0][0]), Y(r.pts[0][1])); for (var q=1; q<r.pts.length; q++) g.lineTo(X(r.pts[q][0]), Y(r.pts[q][1])); g.stroke();
+if (fz !== null && fz > AL + 0.05){ var e = r.pts[r.pts.length - 1], t = (fz - e[0])/r.d[0]; g.setLineDash([4, 3]); g.globalAlpha = 0.5; g.beginPath(); g.moveTo(X(e[0]), Y(e[1])); g.lineTo(X(e[0] + t*r.d[0]), Y(e[1] + t*r.d[1])); g.stroke(); g.setLineDash([]); }
+g.globalAlpha = 1;
+}
+}
+if (fz !== null){ var on = Math.abs(fz - AL) < 0.06; g.strokeStyle = on ? p.good : p.bad; g.lineWidth = 2.5; var fx = X(Math.min(fz, AL + 5)); g.beginPath(); g.moveTo(fx - 6, y0 - 6); g.lineTo(fx + 6, y0 + 6); g.moveTo(fx - 6, y0 + 6); g.lineTo(fx + 6, y0 - 6); g.stroke(); }
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left';
+g.fillText(S.obj === 'far' ? 'light from a distant chart' : 'light from a book 40 cm away', 8, 16);
+g.fillText('retina', X(AL) - 10, Y(10.2));
+el('ekSideLab').textContent = 'cross-section of the eye, light from the left (' + (S.mer === 'v' ? 'vertical' : 'horizontal') + ' meridian)';
+}
+/* ══════════ what the eye sees: a chart blurred by the defocus in each meridian ══════════ */
+/* rough uncorrected acuity for a refractive error of D diopters (clinical rule of thumb) */
+function acuity(D){ var T = [[0, 20], [0.5, 30], [1, 60], [2, 150], [3, 250], [4, 400], [6, 800], [10, 1600]];
+for (var i=1; i<T.length; i++){ if (D <= T[i][0]){ var f = (D - T[i-1][0])/(T[i][0] - T[i-1][0]); return Math.round((T[i-1][1] + f*(T[i][1] - T[i-1][1]))/10)*10; } } return 1600; }
+function blurArcmin(phi, a){ var e = errD(phi, a); return e === null ? 30 : Math.max(0, Math.abs(e)*S.pupil/1000*180/Math.PI*60); }   /* angular blur = pupil x defocus */
+function drawSee(){
+var g = SE.g, W = SE.W, H = SE.H, a = accom(); g.fillStyle = '#f4f2ea'; g.fillRect(0, 0, W, H);
+var bv = blurArcmin(90*DEG, a), bh = blurArcmin(0, a), k = 0.55;            /* screen px per arc minute, roughly */
+var by = Math.min(20, bv*k), bx = Math.min(20, bh*k);
+var lines = S.obj === 'far' ? [['E', 52], ['F P', 36], ['T O Z', 26], ['L P E D', 19], ['P E C F D', 14], ['E D F C Z P', 11]] : [['Reading close', 18], ['is harder after', 15], ['forty-five: the', 13], ['lens grows stiff', 11], ['and the near point', 10], ['moves away.', 9]];
+function chart(ox, oy){ g.fillStyle = '#111'; g.textAlign = 'center'; var y = 22; lines.forEach(function(l){ g.font = 'bold ' + l[1] + 'px ' + (S.obj === 'far' ? 'Helvetica, Arial, sans-serif' : 'Georgia, serif'); y += l[1] + 8; g.fillText(l[0], W/2 + ox, y + oy); }); }
+if (bx < 0.4 && by < 0.4) chart(0, 0);
+else {
+/* elliptical blur: shifted copies spread more in the meridian with more defocus */
+var n = 0, pts = [[0, 0]]; for (var r=1; r<=4; r++) for (var i=0; i<12; i++){ var an = (i + 0.5*r)*Math.PI/6; pts.push([bx*0.35*r*Math.cos(an), by*0.35*r*Math.sin(an)]); }
+g.save(); g.globalAlpha = 0.045; pts.forEach(function(q){ chart(q[0], q[1]); }); g.restore();
+}
+g.fillStyle = 'rgba(0,0,0,0.6)'; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left';
+var eV = errD(90*DEG, a), eH = errD(0, a), dmax = Math.max(Math.abs(eV || 0), Math.abs(eH || 0))*Math.sqrt(S.pupil/4);
+g.fillText(dmax < 0.2 ? 'sharp (about 20/20)' : 'about 20/' + acuity(dmax), 6, H - 8);
+}
+/* ══════════ readout and narration ══════════ */
+function readout(){
+var a = accom(), ev = errD(90*DEG, a), eh = errD(0, a);
+var cells = [['EYE', el('ekCond').selectedOptions[0].text], ['CORRECTION', S.corr === 'none' ? 'none' : (S.corr === 'lasik' ? 'LASIK' : rx() + (S.corr === 'specs' ? ' glasses' : ' contact'))],
+['LEFT TO CORRECT', C().Rv || S.cyl || S.corr === 'lasik' ? 'vertical ' + fmtE(ev) + ', horizontal ' + fmtE(eh) : fmtE(ev)]];
+if (S.obj === 'near') cells.push(['ACCOMMODATION USED', (a/1*7.7).toFixed(1) + ' D' + (C().amax !== undefined ? ' (all it has)' : '')]);
+if (S.corr === 'lasik'){ var t = ablation(); cells.push(['CORNEA RADIUS', natR(90*DEG).toFixed(2) + ' \u2192 ' + S.lasik.v.toFixed(2) + ' mm' + (C().Rv ? ' (v), ' + natR(0).toFixed(2) + ' \u2192 ' + S.lasik.h.toFixed(2) + ' (h)' : '')]);
+cells.push(['TISSUE REMOVED', t.toFixed(0) + ' \u00B5m (Munnerlyn: ' + (ZONE*ZONE*Math.abs(cornealChange())/3).toFixed(0) + ' \u00B5m)']); cells.push(['CORNEA LEFT UNDER THE FLAP', (550 - 110 - t).toFixed(0) + ' \u00B5m' + (550 - 110 - t < 250 ? ' -- too thin!' : '')]); }
+if ((S.corr === 'specs' || S.corr === 'contact') && S.exact){ cells.push(['VERTEX FORMULA', 'contact ' + fmtP(contactFromSpecs(S.exact.sph)) + ' \u2194 glasses ' + fmtP(S.exact.sph)]); }
+var bl = Math.max(blurArcmin(90*DEG, a), blurArcmin(0, a)); cells.push(['BLUR', bl < 1.2 ? 'under 1\u2032 (sharp)' : bl.toFixed(1) + '\u2032']);
+el('ekRead').innerHTML = cells.map(function(c){ return '<div><div class="ek_flabel">' + c[0] + '</div><div class="ek_fvalue">' + c[1] + '</div></div>'; }).join('');
+}
+function fmtE(e){ return e === null ? '--' : (Math.abs(e) < 0.13 ? 'none' : (e > 0 ? '+' : '') + e.toFixed(2) + ' D'); }
+function fmtP(P){ return (P >= 0 ? '+' : '') + P.toFixed(2) + ' D'; }
+function contactFromSpecs(F){ return F/(1 - VD/1000*F); }
+function cornealChange(){ return (NC - 1)*1000*(1/S.lasik.v - 1/natR(90*DEG)); }
+function summary(){
+var a = accom(), ev = errD(90*DEG, a), s = 'A ' + el('ekCond').selectedOptions[0].text.toLowerCase() + ' eye looking at ' + (S.obj === 'far' ? 'a distant chart' : 'a book 40 cm away') + (S.corr === 'none' ? ', with no correction. ' : ', corrected with ' + (S.corr === 'lasik' ? 'LASIK. ' : (S.corr === 'specs' ? 'glasses of ' : 'a contact lens of ') + rx() + '. '));
+s += Math.abs(ev) < 0.13 && (!C().Rv || Math.abs(errD(0, a)) < 0.13) ? 'The image is focused on the retina: the chart is sharp.' : 'The focus misses the retina by about ' + Math.abs(ev).toFixed(1) + ' diopters: the chart is blurred.';
+return s;
+}
+function narrate(m){ if (!th.nr) return; el('ekNarBar').textContent = m; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 450); }
+function draw(){ drawSide(); drawSee(); readout(); }
+/* ══════════ controls ══════════ */
+function sync(){
+el('ekCond').value = S.cond; el('ekCorr').value = S.corr; el('ekObj').value = S.obj; el('ekMer').value = S.mer; el('ekRays').checked = S.rays;
+el('ekS').value = S.sph; el('ekSv').textContent = (S.sph >= 0 ? '+' : '') + S.sph.toFixed(2); el('ekC').value = S.cyl; el('ekCv').textContent = (S.cyl >= 0 ? '+' : '') + S.cyl.toFixed(2);
+el('ekP').value = S.pupil; el('ekPv').textContent = (+S.pupil).toFixed(1);
+var lensy = S.corr === 'specs' || S.corr === 'contact'; el('ekS').disabled = !lensy; el('ekC').disabled = !lensy;
+}
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+function set(k, v){
+if (k === 'rays') S.rays = !!v; else if (k === 'cond' || k === 'corr' || k === 'obj' || k === 'mer') S[k] = v; else S[k] = parseFloat(v);
+if (k === 'cond'){ S.sph = 0; S.cyl = 0; S.exact = null; S.lasik = { v:natR(90*DEG), h:natR(0) }; if (S.corr === 'lasik') S.corr = 'none'; if (v === 'presby') S.obj = 'near'; }
+if (k === 'corr'){ S.exact = null; if (v === 'lasik') S.lasik = { v:natR(90*DEG), h:natR(0) }; }
+if (k === 'sph' || k === 'cyl') S.exact = null;
+sync(); schedule(); later();
+}
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','ekBtnHC'],['lm','ekBtnLM'],['cb','ekBtnCB'],['nr','ekBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('ek_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('ekBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('ekNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--ek-bg','--ek-panel','--ek-border','--ek-text','--ek-muted','--ek-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+draw();
+}
+function describe(){ narrate('A cross-section of the eye, light coming from the left' + (S.corr === 'specs' ? ' through glasses 12 mm in front of it' : (S.corr === 'contact' ? ' through a contact lens on the cornea' : (S.corr === 'lasik' ? '; the cornea has been reshaped by LASIK, the removed tissue shown in red' : ''))) + '. The cross marks where the light focuses, green on the retina and red off it. ' + summary()); }
+function toggleDesc(){
+var b = el('ekDescBtn'), d = el('ekDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* boot */
+S.lasik = { v:natR(90*DEG), h:natR(0) }; sync(); draw(); narrate('Ready. ' + summary() + ' Choose a correction and press Prescribe.');
+return { set:set, prescribe:prescribe, theme:theme, describe:describe, toggleDesc:toggleDesc,
+_state:function(){ var a = accom(); return { S:JSON.parse(JSON.stringify(S)), errV:errD(90*DEG, a), errH:errD(0, a), focusV:focus(90*DEG, a), AL:C().AL, abl:ablation(), acc:a, blur:Math.max(blurArcmin(90*DEG, a), blurArcmin(0, a)) }; },
+_errAt:function(P){ var k0 = S.sph; S.sph = P; var e = errD(0, 0); S.sph = k0; return e; } };
+})();
+</script>
+</main>
+</body>
+</html>

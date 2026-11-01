@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electrostatics: Van de Graaff Generator</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, Van de Graaff, capacitance, electric potential, dielectric breakdown, lesson, scientific">
+<meta name="description" content="Van de Graaff Generator -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobvdg" class="mob_wrap">
+<div id="vdgRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="vdg_a11y" id="vdgA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="vdg_a11ybtn" id="vdgBtnHC" onclick="vdgA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="vdg_a11ybtn" id="vdgBtnLM" onclick="vdgA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="vdg_a11ybtn" id="vdgBtnCB" onclick="vdgA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="vdg_a11ybtn vdg_a11yon" id="vdgBtnNR" onclick="vdgA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tbar"><h3>Van de Graaff Generator</h3></div>
+<div class="mcontent">
+<canvas id="vdgCanvas" style="margin:auto;display:block;border:1px solid #ccc" width="500" height="440"></canvas>
+</div>
+<div class="vdg_readout" id="vdgRead" aria-label="Readout"></div>
+<div id="vdgNarBar" class="vdg_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar">
+<input type="button" id="vdgPlay" value="Play"
+onclick="if(this.value=='Play'){vdgSim.pl();this.value='Pause';}else{this.value='Play';vdgSim.ps();}">
+<input type="button" value="Step" onclick="document.getElementById('vdgPlay').value='Play';vdgSim.step();">
+<input type="button" value="Restart" onclick="document.getElementById('vdgPlay').value='Play';vdgSim.rst();">
+</div>
+<div class="footer">
+<div class="left">Radius (25–50 cm):
+<input type="range" id="vdgR" min="25" max="50" value="40" step="1" onchange="vdgSim.rst()" oninput="document.getElementById('vdgRVal').textContent=this.value">
+<span id="vdgRVal">40</span> cm
+</div>
+</div>
+</div>
+<style>:where(#mobvdg) * { margin: 0; box-sizing: border-box; }
+:where(#mobvdg) div { width: 503px; margin: 0; }
+#vdgRoot {
+--vdg-bg:      #ffffff;
+--vdg-sphere:  #cc2200;
+--vdg-belt:    #888888;
+--vdg-charge:  #dd2200;
+--vdg-text:    #111111;
+--vdg-struct:  #111111;
+--vdg-rupture: #cc2200;
+--vdg-toolbar-bg: #222;
+}
+#vdgRoot .vdg_a11y {
+display:flex; gap:6px; padding:6px 8px;
+background:var(--vdg-toolbar-bg); flex-wrap:wrap; width:503px;
+}
+#vdgRoot .vdg_a11ybtn {
+padding:4px 10px; font-size:.72rem; font-family:monospace;
+letter-spacing:.06em; border-radius:3px; cursor:pointer;
+background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa;
+transition:border-color .15s,color .15s;
+}
+#vdgRoot .vdg_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#vdgRoot .vdg_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#vdgRoot .vdg_narbar {
+width:503px; min-height:28px; padding:5px 10px;
+background:#ffefc0; border-left:4px solid #e0b040;
+font-size:.88rem; color:#333; font-style:italic;
+}
+.tbar { padding:4px; height:50px; background-color:#f90; text-align:center; line-height:42px; }
+.tbar h3 { font-size:1.1rem; font-weight:bold; }
+.mcontent { height:442px; }
+.bbar { height:50px; background-color:#df9; padding:10px; text-align:center; }
+.bbar input[type=button] { margin:0 4px; padding:4px 14px; cursor:pointer; }
+.footer { height:60px; background-color:#fce4ec; text-align:center; font-size:larger; display:flex; }
+.footer .left { width:503px; padding:6px; }</style>
+<!-- ════════ A11Y CONTROLLER ════════ -->
+<script>
+var vdgA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var THEMES = {
+hc:{'--vdg-bg':'#000','--vdg-sphere':'#ffff00','--vdg-belt':'#fff','--vdg-charge':'#ff8800','--vdg-text':'#fff','--vdg-struct':'#fff','--vdg-rupture':'#ff4400','--vdg-toolbar-bg':'#000'},
+lm:{'--vdg-bg':'#f0f0f0','--vdg-sphere':'#aa1100','--vdg-belt':'#555','--vdg-charge':'#aa1100','--vdg-text':'#000','--vdg-struct':'#000','--vdg-rupture':'#aa1100','--vdg-toolbar-bg':'#444'},
+cb:{'--vdg-bg':'#fff','--vdg-sphere':'#0072b2','--vdg-belt':'#999','--vdg-charge':'#d55e00','--vdg-text':'#000','--vdg-struct':'#333','--vdg-rupture':'#d55e00','--vdg-toolbar-bg':'#222'}
+};
+var DEFS = {'--vdg-bg':'#fff','--vdg-sphere':'#cc2200','--vdg-belt':'#888','--vdg-charge':'#dd2200','--vdg-text':'#111','--vdg-struct':'#111','--vdg-rupture':'#cc2200','--vdg-toolbar-bg':'#222'};
+function applyVars(k,on){ if(!ROOT)return; var v=THEMES[k]; for(var p in v) ROOT.style.setProperty(p,on?v[p]:DEFS[p]); }
+function styleBtn(id,on){
+var b=document.getElementById(id); if(!b)return;
+b.style.background=on?'rgba(0,232,208,.12)':'#2a2e3a';
+b.style.borderColor=on?'#00e8d0':'#404a60';
+b.style.color=on?'#00e8d0':'#7a8aaa';
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function applyNarBar(){
+var nb=document.getElementById('vdgNarBar');
+if(nb) nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('vdgBtnNR');
+if(btn){ btn.textContent='NARRATION: '+(states.nr?'ON':'OFF'); styleBtn('vdgBtnNR',states.nr); }
+}
+function apply(){
+if(!ROOT)return;
+applyVars('hc',states.hc); applyVars('lm',states.lm); applyVars('cb',states.cb);
+applyNarBar();
+styleBtn('vdgBtnHC',states.hc);
+styleBtn('vdgBtnLM',states.lm);
+styleBtn('vdgBtnCB',states.cb);
+}
+return {
+init:function(){ ROOT=document.getElementById('vdgRoot'); apply(); },
+toggle:function(k){
+states[k]=!states[k];
+if(k==='hc'&&states.hc) states.lm=false;
+if(k==='lm'&&states.lm) states.hc=false;
+apply();
+},
+narrate:function(msg){
+if(!states.nr)return;
+var nb=document.getElementById('vdgNarBar');
+if(nb) nb.textContent=msg;
+},
+/* read a CSS var from the root element's inline style (set by applyVars above) */
+col:function(prop,def){
+if(!ROOT) return def;
+var v=ROOT.style.getPropertyValue(prop);
+return (v&&v.trim())?v.trim():def;
+}
+};
+})();
+</script>
+<script>
+/* the readout the simulation prints in the corner of its canvas is shown as cards below it */
+(function(){
+var cv = document.getElementById('vdgCanvas'), RD = document.getElementById('vdgRead');
+var ctx = cv.getContext('2d'), ft = CanvasRenderingContext2D.prototype.fillText, cards = {}, order = [], pending = false;
+ctx.fillText = function(t, x, y){
+var s = String(t), i = s.indexOf(':');
+if (x < 12 && y <= 60 && i > 0){ var lab = s.slice(0, i).trim(); if (!(lab in cards)) order.push(lab); cards[lab] = s.slice(i + 1).trim(); if (!pending){ pending = true; requestAnimationFrame(flush); } return; }
+return ft.apply(ctx, arguments);
+};
+function flush(){ pending = false; RD.innerHTML = order.map(function(l){ return '<div><div class="vdg_flabel">' + l.toUpperCase() + '</div><div class="vdg_fvalue">' + cards[l] + '</div></div>'; }).join(''); }
+})();
+</script>
+<style>#vdgRoot .vdg_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:6px; background:#0d1318; border:1px solid #1c262e; border-radius:8px; padding:8px 12px; margin:6px 0; font-family:system-ui, sans-serif; width:auto; }
+#vdgRoot .vdg_readout div { width:auto; }
+/* the sim's own rule sets every div to 503 px */
+#vdgRoot .vdg_flabel { font-size:10px; color:#8a9aa8; letter-spacing:1px; }
+#vdgRoot .vdg_fvalue { font-size:15px; color:#8fe3b0; font-variant-numeric:tabular-nums; }</style>
+<!-- ════════ SIMULATION ════════
+Pattern: mirrors the working circularRodH example exactly.
+- var simObj = function() { ... rst(); return {rst,pl,ps,step}; }
+- var simObj = new simObj();
+- Animation: recursive window.setTimeout(runMotion, 40) guarded by runFlag
+- rst() is called immediately inside the constructor (no deferred boot)
+-->
+<script>
+var vdgGen = function() {
+var canvas  = document.getElementById('vdgCanvas');
+var ctx     = canvas.getContext('2d');
+var W       = canvas.width;   /* 500 */
+var H       = canvas.height;  /* 440 */
+var timer;
+var runFlag = 0;
+/* ── physics state ── */
+/* unidadCarga: charge per belt unit in µC.
+ Java original: 0.25 + 0.25*random() but screenshot shows Q≈53 µC at r=40,
+ which requires unidadCarga≈1.0.  The decompiled constant was likely
+ 0.75 + 0.25*random() in a later build; we use that here.
+ Q_max = (r²/30 * uc) * uc = r²/30 * uc²
+ At r=40, uc=1.0: Q_max = 1600/30 ≈ 53.3 µC  ✓                       */
+var unidadCarga = 0.75 + 0.25 * Math.random();
+var radio, angulo, angGirado, cargaTotal, cargasPos, cargaMax;
+/* ── layout (fixed) ── */
+var FH     = 14;
+var rMax   = 50;
+var escala = (H/4 - FH) / rMax;
+var orgX   = W/2 + 6*FH;
+var orgY   = Math.round(H/4);
+var orgYInf= H - 2*FH;
+/* ── color helper — reads from a11y inline vars, falls back to defaults ── */
+function c(prop, def) { return vdgA11y.col(prop, def); }
+/* ── draw one spinning pulley ── */
+function drawPulley(gx, gy) {
+ctx.strokeStyle = c('--vdg-struct','#111'); ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.arc(gx, gy, FH, 0, 2*Math.PI); ctx.stroke();
+ctx.fillStyle = c('--vdg-struct','#111');
+ctx.beginPath(); ctx.arc(gx, gy, 2, 0, 2*Math.PI); ctx.fill();
+for (var s=0; s<8; s++) {
+ctx.beginPath(); ctx.moveTo(gx, gy);
+ctx.lineTo(gx + FH*Math.cos(angulo + s*Math.PI/4),
+ gy + FH*Math.sin(angulo + s*Math.PI/4));
+ctx.stroke();
+}
+}
+/* ── full redraw ── */
+function drawFrame() {
+ctx.clearRect(0, 0, W, H);
+ctx.fillStyle = c('--vdg-bg','#fff');
+ctx.fillRect(0, 0, W, H);
+var sphR   = Math.round(radio * escala);
+var beltHW = Math.round(sphR * 0.383);
+var colTop = orgY + FH;
+var colBot = orgYInf - 2*FH;
+/* sphere */
+ctx.strokeStyle = c('--vdg-struct','#111'); ctx.lineWidth = 2;
+ctx.beginPath(); ctx.arc(orgX, orgY, sphR,     0, 2*Math.PI); ctx.stroke();
+ctx.beginPath(); ctx.arc(orgX, orgY, sphR+1,   0, 2*Math.PI); ctx.stroke();
+/* erase belt interior */
+ctx.fillStyle = c('--vdg-bg','#fff');
+ctx.fillRect(orgX-beltHW-2, colTop, beltHW*2+4, colBot-colTop);
+/* belt edge lines */
+ctx.strokeStyle = c('--vdg-belt','#888'); ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(orgX-FH, orgY); ctx.lineTo(orgX-FH, orgYInf);
+ctx.moveTo(orgX+FH, orgY); ctx.lineTo(orgX+FH, orgYInf);
+ctx.stroke();
+/* column housing rails */
+ctx.strokeStyle = c('--vdg-struct','#111'); ctx.lineWidth = 1.5;
+ctx.strokeRect(orgX-beltHW-2, colTop, 4, colBot-colTop);
+ctx.strokeRect(orgX+beltHW-2, colTop, 4, colBot-colTop);
+/* wires */
+ctx.beginPath();
+ctx.moveTo(orgX-FH, orgY);    ctx.lineTo(orgX-sphR, orgY);
+ctx.moveTo(orgX+FH, orgY);    ctx.lineTo(orgX+sphR, orgY);
+ctx.moveTo(orgX-FH, orgYInf); ctx.lineTo(orgX-3*FH, orgYInf);
+ctx.stroke();
+/* motor box */
+ctx.strokeRect(orgX-3*FH, orgYInf-2*FH, 6*FH, 4*FH);
+/* pulleys */
+drawPulley(orgX, orgY);
+drawPulley(orgX, orgYInf);
+/* belt charge dots */
+var spacing = (orgYInf - orgY) / 10;
+ctx.fillStyle = c('--vdg-charge','#dd2200');
+for (var i=0; i<cargasPos; i++) {
+var dotY = orgYInf - (angGirado*FH + i*spacing);
+ctx.beginPath(); ctx.arc(orgX-FH, dotY, 2.5, 0, 2*Math.PI); ctx.fill();
+}
+/* sphere surface charges */
+var j = Math.min(cargaTotal, cargaMax);
+if (j > 0) {
+ctx.fillStyle = c('--vdg-sphere','#cc2200');
+var arcFrac = 5.498 / j;
+for (var b=0; b<j; b++) {
+var ang = (b+0.5)*arcFrac - 1.178;
+ctx.beginPath();
+ctx.arc(orgX+sphR*Math.cos(ang), orgY-sphR*Math.sin(ang), 2.5, 0, 2*Math.PI);
+ctx.fill();
+}
+}
+/* Java datos(): d2 = (cargaTotal<=cargaMaxima) ? cargaTotal*uc : cargaMaxima*uc */
+var C_pF  = Math.round(radio*10/9*100)/100;
+var Qunits= (cargaTotal <= cargaMax) ? cargaTotal : cargaMax;
+var Q_uC  = Math.round(Qunits * unidadCarga * 100) / 100;
+var V_raw = radio>0 ? Math.round(Q_uC*1000000/(radio*10/9)) : 0;
+ctx.fillStyle = c('--vdg-text','#111');
+ctx.font = '13px monospace'; ctx.textAlign = 'left';
+ctx.fillText('Capacitance (picoFarad): '+C_pF.toFixed(2), 6, 2*FH);
+ctx.fillText('Charge (microCoulomb): '  +Q_uC.toFixed(2), 6, 3*FH);
+ctx.fillText('Potential (Volt): '        +V_raw,           6, 4*FH);
+/* rupture */
+if (cargaTotal > cargaMax && cargaMax > 0) {
+ctx.fillStyle = c('--vdg-rupture','#cc2200');
+ctx.font = 'bold 13px monospace';
+ctx.fillText('Dielectric Rupture',          6, H/2);
+ctx.fillText('No more charge accumulation', 6, H/2+FH+2);
+}
+}
+/* ── one physics step ── */
+var frameCount = 0;           /* counts every rendered frame           */
+var narrationEvery = 75;      /* narrate roughly every 3 s at 25 fps   */
+var lastNarratedQt = -1;      /* track last cargaTotal at narration time */
+var ruptureNarrated = false;  /* only narrate rupture once              */
+function sceneNarration() {
+var Qunits = (cargaTotal <= cargaMax) ? cargaTotal : cargaMax;
+var Q_uC   = Math.round(Qunits * unidadCarga * 100) / 100;
+var C_pF   = Math.round(radio * 10/9 * 100) / 100;
+var V_raw  = radio > 0 ? Math.round(Q_uC * 1000000 / (radio * 10/9)) : 0;
+var pct    = cargaMax > 0 ? Math.round(Qunits / cargaMax * 100) : 0;
+var msg    = '';
+/* belt description */
+if (cargasPos <= 2) {
+msg += 'The belt is just starting to pick up charge — ';
+msg += 'a single red dot is moving upward along the left side of the belt. ';
+} else if (cargasPos <= 6) {
+msg += 'Several red dots are moving upward along the left side of the belt, ';
+msg += 'carrying charge toward the sphere. ';
+} else {
+msg += 'The belt is fully loaded — red dots are moving steadily upward ';
+msg += 'along the left side, delivering charge to the sphere. ';
+}
+/* sphere charge description */
+if (cargaTotal === 0) {
+msg += 'No charge has reached the sphere yet. ';
+} else if (pct < 25) {
+msg += 'A few red dots are now distributed uniformly around the dome, ';
+msg += 'indicating a small charge build-up. ';
+} else if (pct < 50) {
+msg += 'Red dots are spread around the dome — charge is accumulating noticeably. ';
+} else if (pct < 75) {
+msg += 'Many red dots are uniformly distributed around the dome — ';
+msg += 'the sphere is more than half charged. ';
+} else if (pct < 100) {
+msg += 'The dome is densely covered with red dots — ';
+msg += 'the sphere is approaching its maximum charge. ';
+} else {
+msg += 'The dome is fully charged — red dots cover the entire surface. ';
+}
+/* readings */
+msg += 'Accumulated charge: ' + Q_uC.toFixed(2) + ' µC (' + pct + '% of maximum). ';
+msg += 'Potential: ' + V_raw.toLocaleString() + ' V. ';
+msg += 'Capacitance: ' + C_pF.toFixed(2) + ' pF.';
+vdgA11y.narrate(msg);
+lastNarratedQt = cargaTotal;
+}
+function physicsStep() {
+var incr    = Math.PI/90;
+angulo     += incr;
+angGirado  += incr;
+var spacing = (orgYInf - orgY) / 10;
+if (angGirado*FH > spacing) {
+cargasPos++;
+if (cargasPos > 10) { cargaTotal++; cargasPos = 10; }
+angGirado = 0;
+}
+frameCount++;
+/* milestone: rupture just triggered */
+if (cargaTotal > cargaMax && cargaMax > 0 && !ruptureNarrated) {
+ruptureNarrated = true;
+var Q_uC  = Math.round(cargaMax * unidadCarga * 100) / 100;
+var C_pF  = Math.round(radio * 10/9 * 100) / 100;
+var V_raw = Math.round(Q_uC * 1000000 / (radio * 10/9));
+vdgA11y.narrate(
+'Dielectric rupture! The sphere has reached its maximum charge. ' +
+'Final charge: ' + Q_uC.toFixed(2) + ' µC. ' +
+'Final potential: ' + V_raw.toLocaleString() + ' V. ' +
+'No further charge can accumulate.'
+);
+return;
+}
+/* periodic scene description (skip if rupture already narrated) */
+if (!ruptureNarrated && frameCount % narrationEvery === 0) {
+/* only re-narrate if something changed since last time */
+if (cargaTotal !== lastNarratedQt) {
+sceneNarration();
+}
+}
+}
+/* ── animation loop: exactly like circularRodH ── */
+function runMotion() {
+physicsStep();
+drawFrame();
+if (runFlag === 1) {
+timer = window.setTimeout(runMotion, 40);
+}
+}
+/* ── public: play ── */
+function pl() {
+window.clearTimeout(timer);
+runFlag = 1;
+runMotion();
+}
+/* ── public: pause ── */
+function ps() {
+window.clearTimeout(timer);
+runFlag = 0;
+}
+/* ── public: single step ── */
+function step() {
+window.clearTimeout(timer);
+runFlag = 0;
+physicsStep();
+drawFrame();
+sceneNarration();
+}
+/* ── public: restart ── */
+function rst() {
+window.clearTimeout(timer);
+runFlag = 0;
+var sliderEl = document.getElementById('vdgR');
+radio = sliderEl ? parseInt(sliderEl.value, 10) : 40;
+if (radio < 25) radio = 25;
+if (radio > 50) radio = 50;
+angulo          = 0;
+angGirado       = 0;
+cargaTotal      = 0;
+cargasPos       = 1;
+cargaMax        = Math.round(radio * radio / 30 * unidadCarga);
+frameCount      = 0;
+lastNarratedQt  = -1;
+ruptureNarrated = false;
+drawFrame();
+var C_pF = Math.round(radio*10/9*100)/100;
+vdgA11y.narrate('Ready. Radius '+radio+' cm. Capacitance '+C_pF.toFixed(2)+' pF. Press Play.');
+}
+/* boot — called immediately, just like circularRodH does rst() in constructor */
+rst();
+return { pl:pl, ps:ps, step:step, rst:rst };
+};
+var vdgSim = new vdgGen();
+</script>
+<script>
+vdgA11y.init();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows a Van de Graaff generator. A motor turns a belt that picks up charge at the bottom and carries it up into a hollow metal sphere, where it moves to the outer surface. The radius of the sphere can be changed.</p>
+<p>The sphere is a capacitor: an isolated sphere of radius `R` has capacitance</p>
+<p class="mob_eq">`C = 4 pi epsilon_0 R`,</p>
+<p>about 1.11 pF for every centimetre of radius. As charge `Q` builds up, the potential of the sphere rises:</p>
+<p class="mob_eq">`V = Q/C`.</p>
+<p>The field at the surface, `E = V/R`, also grows. When it reaches the dielectric strength of air (about `3 xx 10^6` V/m), the air breaks down and sparks discharge the sphere, so no more charge can accumulate. Since `E = kQ/R^2` at the surface, the largest charge a sphere can hold grows as `R^2`: a larger sphere reaches a higher potential.</p>
+<p>This simulation is useful for studying capacitance, electric potential, and dielectric breakdown.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobvdg { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (503 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:543px) {
+#mobvdg div, #mobvdg p, #mobvdg fieldset, #mobvdg form, #mobvdg section, #mobvdg ol, #mobvdg ul, #mobvdg table { max-width:100%; box-sizing:border-box; }
+#mobvdg canvas, #mobvdg img, #mobvdg svg { max-width:100%; height:auto !important; }
+#mobvdg input[type=range], #mobvdg select { max-width:100%; min-width:0; }
+#mobvdg #vdgRoot .vdg_a11y, #mobvdg .footer { flex-wrap:wrap; }
+#mobvdg #vdgRoot .vdg_a11y > div, #mobvdg .footer > div { min-width:min(100%, 260px); }
+#mobvdg div[style*="height"] { height:auto !important; }
+#mobvdg .tbar, #mobvdg .mcontent, #mobvdg .bbar, #mobvdg .footer { height:auto; min-height:0; }
+#mobvdg .tbar { line-height:1.3; padding-top:6px; padding-bottom:6px; }
+#mobvdg table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:563px) {
+#mobvdg div, #mobvdg p, #mobvdg fieldset, #mobvdg form, #mobvdg section, #mobvdg ol, #mobvdg ul, #mobvdg table { max-width:100%; box-sizing:border-box; }
+#mobvdg canvas, #mobvdg img, #mobvdg svg { max-width:100%; height:auto !important; }
+#mobvdg input[type=range], #mobvdg select { max-width:100%; min-width:0; }
+#mobvdg #vdgRoot .vdg_a11y, #mobvdg .footer { flex-wrap:wrap; }
+#mobvdg #vdgRoot .vdg_a11y > div, #mobvdg .footer > div { min-width:min(100%, 260px); }
+#mobvdg div[style*="height"] { height:auto !important; }
+#mobvdg .tbar, #mobvdg .mcontent, #mobvdg .bbar, #mobvdg .footer { height:auto; min-height:0; }
+#mobvdg .tbar { line-height:1.3; padding-top:6px; padding-bottom:6px; }
+#mobvdg table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobvdg button, #mobvdg input[type=button], #mobvdg input[type=submit], #mobvdg input[type=reset] { min-height:40px; }
+#mobvdg input[type=range] { height:28px; }
+#mobvdg input[type=checkbox], #mobvdg input[type=radio] { width:22px; height:22px; }
+#mobvdg select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobvdg .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobvdg .mob_a11ytop input[type=button], #mobvdg .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobvdg .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobvdg .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobvdg .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobvdg .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobvdg .mob_desc p { margin:0 0 9px 0; }
+#mobvdg .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobvdg -->
+</main>
+</body>
+</html>

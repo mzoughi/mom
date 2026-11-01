@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Energy: Rolling Down an Incline</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, rolling without slipping, moment of inertia, conservation of energy, inclined plane, lesson, scientific">
+<meta name="description" content="Rolling Down an Incline -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobroll" class="mob_wrap">
+<div id="rlroot" role="main" aria-label="Rolling object simulator">
+<div class="rl_a11ybar th_a11y" role="toolbar" aria-label="Accessibility options">
+<input type="button" id="btnHC"    value="High Contrast"    class="rl_abtn" onclick="rollingSimF.toggleHC()">
+<input type="button" id="btnLight" value="Light Mode"       class="rl_abtn" onclick="rollingSimF.toggleLight()">
+<input type="button" id="btnCB"    value="Color-Blind Safe" class="rl_abtn" onclick="rollingSimF.toggleCB()">
+<input type="button" id="btnNarr"  value="Narration: ON"    class="rl_abtn rl_abtnon th_on" onclick="rollingSimF.toggleNarr()">
+</div>
+
+<p class="rl_h1 th_title">Rolling Object Simulator</p>
+<p class="rl_sub th_sub">Conservation of Energy -- Rolling Without Slipping</p>
+<!-- Accessibility toolbar -->
+
+<!-- Reduced motion notice -->
+<div id="motionNotice" class="rl_motionnotice" role="status">
+&#9888; Reduced motion is enabled. The animation jumps directly to the final state without rolling.
+</div>
+<!-- Canvas -->
+<div class="rl_wrapper th_diag">
+<canvas id="rollingCanvas" width="600" height="320" role="img" aria-label="Rolling object simulation" aria-describedby="canvasDesc">
+This browser doesn't support HTML5 canvas.
+</canvas>
+</div>
+<p id="canvasDesc" class="rl_sronly">
+A physics simulation showing a solid object rolling without slipping down an inclined ramp.
+The object's shape, mass, and radius can be changed. Energy values and final velocity
+are shown in the readings panel below.
+</p>
+<!-- Controls + Live Readings side by side -->
+<div class="rl_bottom">
+<!-- LEFT: Controls -->
+<div class="rl_controls th_panel" id="rl_controls">
+<!-- Shape selector -->
+<div class="rl_fieldrow" role="group" aria-labelledby="shapeLbl">
+<span class="rl_fieldlbl th_lbl" id="shapeLbl">Shape</span>
+<select id="shapeSelect" class="rl_select" aria-label="Select rolling object shape" onchange="rollingSimF.onShapeChange(this.value)">
+<option value="sphere">Solid Sphere (2/5 mr²)</option>
+<option value="cylinder">Solid Cylinder (1/2 mr²)</option>
+<option value="hoop">Thin Hoop (mr²)</option>
+<option value="shell">Spherical Shell (2/3 mr²)</option>
+</select>
+</div>
+<!-- Mass slider -->
+<div class="rl_fieldrow" role="group" aria-labelledby="massLbl">
+<span class="rl_fieldlbl th_lbl" id="massLbl">Mass</span>
+<input type="range" id="massSlider" min="50" max="500" value="200" step="10" aria-label="Object mass" aria-valuemin="50" aria-valuemax="500" aria-valuenow="200" aria-valuetext="200 g" onchange="rollingSimF.onMassChange(this.value)">
+<span class="rl_fieldval th_val" id="massDisplay" aria-live="off">200 g</span>
+</div>
+<!-- Radius slider -->
+<div class="rl_fieldrow" role="group" aria-labelledby="radiusLbl">
+<span class="rl_fieldlbl th_lbl" id="radiusLbl">Radius</span>
+<input type="range" id="radiusSlider" min="5" max="30" value="15" step="1" aria-label="Object radius" aria-valuemin="5" aria-valuemax="30" aria-valuenow="15" aria-valuetext="15 cm" onchange="rollingSimF.onRadiusChange(this.value)">
+<span class="rl_fieldval th_val" id="radiusDisplay" aria-live="off">15 cm</span>
+</div>
+<!-- Ramp angle slider -->
+<div class="rl_fieldrow" role="group" aria-labelledby="angleLbl">
+<span class="rl_fieldlbl th_lbl" id="angleLbl">Angle</span>
+<input type="range" id="angleSlider" min="10" max="60" value="30" step="1" aria-label="Ramp incline angle in degrees" aria-valuemin="10" aria-valuemax="60" aria-valuenow="30" aria-valuetext="30 degrees" onchange="rollingSimF.onAngleChange(this.value)">
+<span class="rl_fieldval th_val" id="angleDisplay" aria-live="off">30&#176;</span>
+</div>
+<!-- Speed slider -->
+<div class="rl_fieldrow" role="group" aria-labelledby="speedLbl">
+<span class="rl_fieldlbl th_lbl" id="speedLbl">SIM Speed</span>
+<input type="range" id="speedSlider" min="1" max="10" value="2" step="1" aria-label="Simulation speed multiplier" aria-valuemin="1" aria-valuemax="10" aria-valuenow="2" aria-valuetext="0.2x (normal)" onchange="rollingSimF.onSpeedChange(this.value)">
+<span class="rl_fieldval th_val" id="speedDisplay" aria-live="off">0.2x</span>
+</div>
+<!-- Action buttons -->
+<div class="rl_btnrow th_bar" role="group" aria-label="Simulation controls">
+<input type="button" value="&#9654; Go!" class="rl_btn" aria-label="Start the rolling animation" onclick="rollingSimF.roll()">
+<input type="button" value="&#8634; RESET" class="rl_btn" aria-label="Reset object to top of ramp" onclick="rollingSimF.reset()">
+</div>
+<!-- Keyboard hints -->
+<p class="rl_kbdhint" style=visibility:hidden>
+<kbd>G</kbd> Go &nbsp;
+<kbd>R</kbd> Reset &nbsp;
+<kbd>&#8593; &#8595;</kbd> angle &nbsp;
+<kbd>1</kbd>&#8211;<kbd>4</kbd> shape
+</p>
+</div><!-- /rl_controls -->
+<!-- RIGHT: Live Readings -->
+<div class="rl_readout th_panel" role="region" aria-labelledby="readHd" aria-live="polite" aria-atomic="false" aria-relevant="text">
+<h2 id="readHd" class="th_ptitle">Live Readings</h2>
+<div class="rl_rg">
+<span class="rl_rglbl th_lbl">Shape:</span>
+<span class="rl_rgval th_val" id="r_shape">Solid Sphere</span>
+<span class="rl_rglbl th_lbl">I =</span>
+<span class="rl_rgval th_val" id="r_moi">2/5 mr&#178;</span>
+<span class="rl_rglbl th_lbl">I =</span>
+<span class="rl_rgval th_val" id="r_moiv">0.0018 kg m&#178;</span>
+<span class="rl_rglbl th_lbl">Angle:</span>
+<span class="rl_rgval th_val" id="r_angle">30&#176;</span>
+<span class="rl_rglbl th_lbl">Height:</span>
+<span class="rl_rgval th_val" id="r_height">0.50 m</span>
+<span class="rl_rgdivider"></span>
+<span class="rl_rglbl th_lbl">U:</span>
+<span class="rl_rgval th_val" id="r_PE">&#8212; J</span>
+<span class="rl_rglbl th_lbl">KT:</span>
+<span class="rl_rgval th_val" id="r_KE_t">&#8212; J</span>
+<span class="rl_rglbl th_lbl">KR:</span>
+<span class="rl_rgval th_val" id="r_KE_r">&#8212; J</span>
+<span class="rl_rglbl th_lbl">E:</span>
+<span class="rl_rgval th_val" id="r_E">&#8212; J</span>
+<span class="rl_rgdivider"></span>
+<span class="rl_rglbl th_lbl">t:</span>
+<span class="rl_rgval th_val" id="r_time">0.00 s</span>
+<span class="rl_rglbl th_lbl">v:</span>
+<span class="rl_rgval th_val" id="r_v">0.00 m/s</span>
+<span class="rl_rglbl th_lbl">&#969;:</span>
+<span class="rl_rgval th_val" id="r_omega">0.00 rad/s</span>
+<span class="rl_rglbl th_lbl">a:</span>
+<span class="rl_rgval th_val" id="r_accel">&#8212; m/s&#178;</span>
+</div>
+</div><!-- /rl_readout -->
+</div><!-- /rl_bottom -->
+<!-- Narration (full width below) -->
+<div class="rl_narrbox th_panel th_nar" id="narrationBox" role="region" aria-labelledby="narrHd" aria-live="polite" aria-atomic="true">
+<h2 id="narrHd" class="th_ptitle">What's happening</h2>
+<p id="narration" class="rl_narrtext">
+A solid sphere (mass 100 g, radius 15 cm) sits at the top of a 30&#176; ramp.
+Its moment of inertia is I = 2/5 mr&#178;. Press Roll to release it.
+All gravitational potential energy converts to translational and rotational
+kinetic energy as it rolls without slipping to the bottom.
+</p>
+</div>
+<!-- Physics note -->
+<p class="rl_info th_note" role="note">
+Rolling without slipping: v = &#969;r &nbsp;|&nbsp;
+KE<sub>total</sub> = &#189;mv&#178; + &#189;I&#969;&#178; &nbsp;|&nbsp;
+v = &#8730;(2gh / (1 + I/mr&#178;))
+</p>
+<div id="srAnnounce" class="rl_sronly" aria-live="assertive" aria-atomic="true"></div>
+<p class="rl_credit">Simulation by Taha Mzoughi &#169; 2026 </p>
+</div><!-- #rlroot -->
+<style>/* ════════════════════════════════════════════════
+All rules scoped to #rlroot
+════════════════════════════════════════════════ */
+#rlroot {
+--bg:         #1a1a2e;
+--text:       #e0e0e0;
+--text-dim:   #888;
+--accent:     #7eb8f7;
+--wrapper-bg: #0d0d1a;
+--wrapper-bd: #2a2a4a;
+--row-bg:     #111128;
+--row-bd:     #2a2a4a;
+--btn-bg:     #1a1a3a;
+--btn-bd:     #3a3a6a;
+--btn-hover:  #2a2a5a;
+--narr-bg:    #0d1a2e;
+--narr-bd:    #2255aa;
+--narr-text:  #b8d4f7;
+--info-color: #555;
+--canvas-bg:  #e8f0f8;
+--focus-ring: #7eb8f7;
+background: var(--bg);
+color: var(--text);
+font-family: 'Courier New', monospace;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 20px 16px;
+box-sizing: border-box;
+width: 100%;
+max-width: 680px;
+margin: 0 auto;
+position: relative;
+border-radius: 6px;
+}
+#rlroot *, #rlroot *::before, #rlroot *::after {
+box-sizing: border-box; margin: 0; padding: 0;
+}
+/* High contrast */
+#rlroot.hc {
+--bg:#000; --text:#fff; --text-dim:#ccc; --accent:#88ccff;
+--wrapper-bg:#111; --wrapper-bd:#fff; --row-bg:#111; --row-bd:#fff;
+--btn-bg:#000; --btn-bd:#fff; --btn-hover:#222; --narr-bg:#000033;
+--narr-bd:#aaf; --narr-text:#fff; --info-color:#aaa;
+--canvas-bg:#fff; --focus-ring:#ff0;
+}
+/* Light */
+#rlroot.light {
+--bg:#e8e8f0; --text:#111; --text-dim:#555; --accent:#1144aa;
+--wrapper-bg:#fff; --wrapper-bd:#8888aa; --row-bg:#f0f0f8; --row-bd:#aac;
+--btn-bg:#dde; --btn-bd:#8888aa; --btn-hover:#ccd; --narr-bg:#eef4ff;
+--narr-bd:#69c; --narr-text:#112244; --info-color:#666;
+--canvas-bg:#f0f4f8; --focus-ring:#06c;
+}
+/* Focus */
+#rlroot input:focus-visible, #rlroot select:focus-visible {
+outline: 3px solid var(--focus-ring); outline-offset: 2px;
+}
+/* Headings */
+#rlroot .rl_h1 {
+font-size: 1.1rem; letter-spacing: 0.2em; text-transform: uppercase;
+color: var(--accent); margin-bottom: 4px; text-align: center;
+}
+#rlroot .rl_sub {
+font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.1em;
+margin-bottom: 14px; text-align: center; font-family: Arial, sans-serif;
+}
+/* A11y toolbar */
+#rlroot .rl_a11ybar {
+display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; justify-content: center;
+}
+#rlroot .rl_abtn {
+font-size: 0.68rem; padding: 3px 9px; background: var(--btn-bg);
+border: 1px solid var(--btn-bd); border-radius: 3px; cursor: pointer;
+color: var(--accent); font-family: 'Courier New', monospace;
+letter-spacing: 0.05em; text-transform: uppercase;
+}
+#rlroot .rl_abtn:hover { background: var(--btn-hover); }
+#rlroot .rl_abtnon { background: #2244aa; color: #fff; border-color: #4466cc; }
+#rlroot.hc   .rl_abtnon { background: #333366; border-color: #fff; }
+#rlroot.light .rl_abtnon { background: #3355aa; color: #fff; }
+/* Motion notice */
+#rlroot .rl_motionnotice {
+display: none; background: #ffffcc; border: 2px solid #888;
+border-radius: 4px; padding: 8px 12px; font-size: 0.78rem; color: #333;
+margin-bottom: 10px; text-align: center; max-width: 640px; font-family: Arial, sans-serif;
+}
+/* Canvas wrapper */
+#rlroot .rl_wrapper {
+background: var(--wrapper-bg); border: 1px solid var(--wrapper-bd);
+border-radius: 4px; padding: 10px;
+box-shadow: 0 0 40px rgba(80,120,220,0.15);
+}
+#rlroot.hc .rl_wrapper { border: 2px solid #fff; box-shadow: none; }
+#rlroot.light .rl_wrapper { box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+#rlroot #rollingCanvas {
+display: block; background: var(--canvas-bg); border: 2px solid #333;
+}
+#rlroot.hc #rollingCanvas { border: 3px solid #fff; }
+/* Two-column bottom area */
+#rlroot .rl_bottom {
+margin-top: 12px;
+width: 100%; max-width: 640px;
+display: flex; flex-direction: row; gap: 10px; align-items: flex-start;
+}
+/* Controls column */
+#rlroot .rl_controls {
+flex: 0 0 56%;
+display: flex; flex-direction: column; gap: 7px;
+}
+/* Field row */
+#rlroot .rl_fieldrow {
+display: flex; align-items: center; gap: 8px;
+background: var(--row-bg); border: 1px solid var(--row-bd);
+border-radius: 4px; padding: 8px 10px;
+}
+#rlroot.hc .rl_fieldrow { border: 2px solid #fff; }
+#rlroot .rl_fieldlbl {
+font-size: 0.72rem; color: var(--accent); letter-spacing: 0.08em;
+min-width: 44px; flex-shrink: 0;
+}
+#rlroot .rl_fieldrow input[type=range] {
+flex: 1; -webkit-appearance: none; height: 5px; cursor: pointer;
+background: linear-gradient(to right, #3060c0, #888, #c04030); border-radius: 2px; outline: none;
+}
+#rlroot .rl_fieldrow input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+background: var(--accent); cursor: pointer; border: 2px solid #fff;
+box-shadow: 0 0 5px rgba(126,184,247,0.6);
+}
+#rlroot.hc .rl_fieldrow input[type=range]::-webkit-slider-thumb {
+box-shadow: none; border: 3px solid #fff;
+}
+#rlroot .rl_fieldval {
+font-size: 0.78rem; color: var(--text); min-width: 48px; text-align: right; font-weight: bold;
+}
+/* Select */
+#rlroot .rl_select {
+flex: 1; background: var(--btn-bg); border: 1px solid var(--btn-bd);
+color: var(--accent); font-family: 'Courier New', monospace;
+font-size: 0.68rem; padding: 4px 6px; border-radius: 3px; cursor: pointer;
+}
+#rlroot.hc .rl_select { border: 2px solid #fff; color: #fff; background: #000; }
+#rlroot.light .rl_select { background: #fff; color: #1144aa; }
+/* Button row */
+#rlroot .rl_btnrow { display: flex; gap: 6px; }
+#rlroot .rl_btn {
+flex: 1; padding: 8px 6px; background: var(--btn-bg); border: 1px solid var(--btn-bd);
+color: var(--accent); font-family: 'Courier New', monospace; font-size: 0.72rem;
+letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 3px; font-weight: bold;
+}
+#rlroot .rl_btn:hover { background: var(--btn-hover); }
+#rlroot.hc .rl_btn { border: 2px solid #fff; color: #fff; }
+/* Keyboard hints */
+#rlroot .rl_kbdhint {
+font-size: 0.62rem; color: var(--text-dim); text-align: center;
+font-family: Arial, sans-serif; line-height: 1.6;
+}
+#rlroot .rl_kbdhint kbd {
+background: var(--btn-bg); border: 1px solid var(--btn-bd); border-radius: 2px;
+padding: 1px 4px; font-size: 0.65rem; font-family: monospace; color: var(--accent);
+}
+#rlroot.hc .rl_kbdhint kbd { border-color: #fff; color: #fff; }
+/* Readout panel (right column) */
+#rlroot .rl_readout {
+flex: 1;
+background: var(--row-bg); border: 1px solid var(--row-bd);
+border-radius: 4px; padding: 10px 12px; font-size: 0.78rem; align-self: stretch;
+}
+#rlroot.hc .rl_readout { border: 2px solid #fff; }
+#rlroot .rl_readout h2 {
+font-size: 0.72rem; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase;
+border-bottom: 1px solid var(--row-bd); padding-bottom: 5px; margin-bottom: 8px;
+font-family: 'Courier New', monospace;
+}
+#rlroot.hc .rl_readout h2 { border-bottom-color: #aaa; }
+#rlroot .rl_rg {
+display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; align-items: baseline;
+}
+#rlroot .rl_rglbl { color: var(--text-dim); font-size: 0.70rem; white-space: nowrap; }
+#rlroot .rl_rgval {
+color: var(--accent); font-weight: bold; font-size: 0.76rem; font-family: 'Courier New', monospace;
+}
+#rlroot .rl_rgdivider {
+grid-column: 1 / -1; height: 1px; background: var(--row-bd); margin: 3px 0; opacity: 0.5;
+}
+#rlroot.hc    .rl_rgval { color: #aaddff; }
+#rlroot.light .rl_rgval { color: #1144aa; }
+/* Narration (full width) */
+#rlroot .rl_narrbox {
+background: var(--narr-bg); border: 1px solid var(--narr-bd);
+border-radius: 4px; padding: 10px 14px; font-family: Arial, sans-serif;
+margin-top: 10px; width: 100%; max-width: 640px;
+}
+#rlroot.hc .rl_narrbox { border: 2px solid #aaaaff; }
+#rlroot .rl_narrbox h2 {
+font-size: 0.72rem; font-weight: bold; color: var(--narr-text);
+text-transform: uppercase; letter-spacing: 0.08em;
+border-bottom: 1px solid var(--narr-bd); padding-bottom: 4px; margin-bottom: 7px;
+}
+#rlroot .rl_narrtext {
+font-size: 0.76rem; color: var(--narr-text); line-height: 1.55; min-height: 40px;
+}
+/* Info / misc */
+#rlroot .rl_info {
+font-size: 0.63rem; color: var(--info-color); text-align: center;
+letter-spacing: 0.06em; line-height: 1.4; font-family: Arial, sans-serif;
+margin-top: 8px; max-width: 640px;
+}
+#rlroot .rl_credit {
+margin-top: 12px; font-size: 0.63rem; color: var(--text-dim);
+letter-spacing: 0.08em; font-family: Arial, sans-serif;
+}
+#rlroot .rl_sronly {
+position: absolute; width: 1px; height: 1px; overflow: hidden;
+clip: rect(0,0,0,0); white-space: nowrap;
+}</style>
+<script>
+var rollingSimF = function() {
+/* Refs */
+var ROOT   = document.getElementById('rlroot');
+var canvas = document.getElementById('rollingCanvas');
+var ctx    = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+/* Palettes */
+var PALETTES = {
+def: {
+sky: '#c8dff5', ground: '#7a9a5a', groundTop: '#5a7a3a',
+ramp: '#8b7a5a', rampStroke: '#4a3a2a',
+objFill: '#cc4422', objStroke: '#881100', spokeColor: '#ffcc55',
+energyTrans: '#2244cc', energyRot: '#cc4422', energyPot: '#228844',
+arcColor: '#1a1a3a', textColor: '#1a1a3a',
+label: 'Red object with yellow spokes'
+},
+colorblind: {
+sky: '#d0e8ff', ground: '#a0b060', groundTop: '#708040',
+ramp: '#9a8a6a', rampStroke: '#4a3a2a',
+objFill: '#0077bb', objStroke: '#004488', spokeColor: '#ee7733',
+energyTrans: '#0077bb', energyRot: '#ee7733', energyPot: '#009988',
+arcColor: '#001a33', textColor: '#001a33',
+label: 'Blue object with orange spokes'
+},
+highcontrast: {
+sky: '#ffffff', ground: '#000000', groundTop: '#222222',
+ramp: '#444444', rampStroke: '#000000',
+objFill: '#ffffff', objStroke: '#000000', spokeColor: '#000000',
+energyTrans: '#000000', energyRot: '#555555', energyPot: '#aaaaaa',
+arcColor: '#000000', textColor: '#000000',
+label: 'White object with black spokes'
+}
+};
+var pal = PALETTES.def;
+var hcMode=false, lightMode=false, cbMode=false, showNarration=true;
+/* Reduced motion */
+var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(prefersReducedMotion){
+var mn = document.getElementById('motionNotice');
+if(mn) mn.style.display = 'block';
+}
+var g = 9.8;
+var SHAPES = {
+sphere:   { name: 'Solid Sphere',    moi: '2/5 mr\u00b2', factor: 2/5 },
+cylinder: { name: 'Solid Cylinder',  moi: '1/2 mr\u00b2', factor: 1/2 },
+hoop:     { name: 'Thin Hoop',       moi: 'mr\u00b2',     factor: 1   },
+shell:    { name: 'Spherical Shell', moi: '2/3 mr\u00b2', factor: 2/3 }
+};
+var shapeKey = 'sphere';
+var massG    = 200;
+var radiusCm = 15;
+var angleDeg = 30;
+var II = 0.0018;
+var rolling  = false;
+var animFrame= null;
+var progress = 0;
+var rotAngle = 0;
+var speedFactor = 0.2;   // 1 = normal, <1 = slow-mo
+var simTime  = 0;        // elapsed sim-time in seconds
+function set(id,txt){ var el=document.getElementById(id); if(el) el.textContent=txt; }
+function getPhysics(){
+var shape = SHAPES[shapeKey];
+var m = massG/1000, r = radiusCm/100, h = 0.5;
+var theta = angleDeg * Math.PI/180;
+var PE = m*g*h, denom = 1+shape.factor;
+var v_final = Math.sqrt(2*g*h/denom);   // speed at base
+var omega_final = v_final/r;
+var KE_t = 0.5*m*v_final*v_final;
+var KE_r = 0.5*shape.factor*m*v_final*v_final;
+II = (shape.factor*m*r*r);
+// Linear acceleration along ramp: a = g sinθ / (1 + I/mr²)
+var accel = g*Math.sin(theta) / denom;
+// Physical ramp length: L = h / sinθ
+var L = h / Math.sin(theta);
+// Total time to reach base: L = ½aT² → T = √(2L/a)
+var T = Math.sqrt(2*L/accel);
+return {m:m,r:r,h:h,L:L,PE:PE,v:v_final,omega:omega_final,
+KE_t:KE_t,KE_r:KE_r,II:II,accel:accel,T:T,shape:shape};
+}
+/* Ramp geometry
+bx,by = base (bottom-right) corner of ramp
+tx,ty = top corner
+Surface direction (top->base): unit vector (dx,dy)
+Normal ABOVE surface (perpendicular, pointing away from ramp body):
+rotate surface direction 90deg CCW => (-dy, dx)
+For a ramp rising to the left, dx<0 and dy<0,
+so normal = (-dy, dx) = (positive, negative) = right and up -- WRONG.
+We need the normal pointing UPPER-LEFT (away from the filled triangle body).
+The ramp body fills below+right of the surface line, so the outward normal
+points upper-left, which is rotate 90deg CW from the (top->base) direction:
+CW 90: (dy, -dx).  Since dy<0 and dx<0: (negative, positive) => left & up. 
+*/
+function getRampGeom(){
+var theta = angleDeg * Math.PI/180;
+var rampLen = 410;
+var bx = W - 45, by = H - 42;
+var tx = bx - rampLen*Math.cos(theta);
+var ty = by - rampLen*Math.sin(theta);
+// unit vector along surface from top to base
+var dx = (bx-tx)/rampLen, dy = (by-ty)/rampLen;
+// outward normal (upper-left, away from ramp body) = CW 90 of (dx,dy)
+var nx = dy, ny = -dx;
+return {bx:bx,by:by,tx:tx,ty:ty,theta:theta,rampLen:rampLen,dx:dx,dy:dy,nx:nx,ny:ny};
+}
+function getVisualRadius(){
+return Math.max(13, Math.min(26, radiusCm*1.4));
+}
+/* Object centre = contact point on surface + normal * radius */
+function getObjPos(t){
+var g2 = getRampGeom(), vr = getVisualRadius();
+var cpx = g2.tx + (g2.bx-g2.tx)*t;
+var cpy = g2.ty + (g2.by-g2.ty)*t;
+return { cx: cpx + g2.nx*vr, cy: cpy + g2.ny*vr, r: vr };
+}
+/* Draw */
+function draw(){
+ctx.clearRect(0,0,W,H);
+var g2 = getRampGeom();
+// Sky
+ctx.fillStyle = pal.sky;
+ctx.fillRect(0,0,W,H);
+// Ground
+ctx.fillStyle = pal.ground;
+ctx.fillRect(0, g2.by, W, H-g2.by);
+ctx.fillStyle = pal.groundTop || pal.ground;
+ctx.fillRect(0, g2.by, W, 3);
+// Ramp body
+ctx.beginPath();
+ctx.moveTo(g2.tx, g2.ty);
+ctx.lineTo(g2.bx, g2.by);
+ctx.lineTo(g2.bx, H);
+ctx.lineTo(g2.tx, H);
+ctx.closePath();
+ctx.fillStyle = pal.ramp;
+ctx.fill();
+ctx.strokeStyle = pal.rampStroke;
+ctx.lineWidth = hcMode?3:1.5;
+ctx.stroke();
+/* Angle arc at the base corner.
+At (bx,by):
+- ground runs horizontally to the LEFT  => angle = PI
+- ramp surface runs up-left to the TOP  => angle = PI + theta
+The interior angle between them is theta, opening upward-left.
+We sweep from PI (ground) to PI+theta (ramp surface) going CCW (anticlockwise,
+i.e. counterclockwise = false argument in canvas coords where y increases downward
+means we need to go from the ground line and open upward, so we use
+arc(0,0,r, PI+theta, PI, true) -- clockwise in canvas = visually CCW). */
+ctx.save();
+ctx.translate(g2.bx, g2.by);
+var arcR = 40;
+ctx.beginPath();
+// clockwise=true draws from startAngle to endAngle going the short way round
+// Start at ramp surface direction (PI+theta), end at horizontal ground (PI)
+ctx.arc(0, 0, arcR, Math.PI+g2.theta, Math.PI, true);
+ctx.strokeStyle = pal.arcColor;
+ctx.lineWidth = hcMode?2:1.5;
+ctx.stroke();
+// Label inside the arc
+var midA = Math.PI + g2.theta/2;
+var lx = Math.cos(midA)*(arcR+16);
+var ly = Math.sin(midA)*(arcR+16);
+ctx.fillStyle = pal.textColor;
+ctx.font = 'bold 12px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText(angleDeg+'\u00b0', lx, ly);
+ctx.restore();
+// Rolling object (drawn on top of ramp)
+var op = getObjPos(progress);
+ctx.save();
+ctx.translate(op.cx, op.cy);
+ctx.rotate(rotAngle);
+ctx.beginPath();
+ctx.arc(0,0,op.r,0,Math.PI*2);
+ctx.fillStyle = pal.objFill;
+ctx.fill();
+ctx.strokeStyle = pal.objStroke;
+ctx.lineWidth = hcMode?3:2;
+ctx.stroke();
+var nSpokes = (shapeKey==='hoop')?8:4;
+ctx.strokeStyle = pal.spokeColor;
+ctx.lineWidth = hcMode?2.5:2;
+for(var i=0;i<nSpokes;i++){
+var a = (Math.PI*2/nSpokes)*i;
+ctx.beginPath();
+ctx.moveTo(0,0);
+ctx.lineTo(Math.cos(a)*op.r*0.85, Math.sin(a)*op.r*0.85);
+ctx.stroke();
+}
+ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2);
+ctx.fillStyle = pal.objStroke; ctx.fill();
+ctx.restore();
+// Height indicator
+if(progress < 0.97){
+var op0 = getObjPos(0), opN = getObjPos(progress);
+var lx2 = Math.min(op0.cx, opN.cx) - op0.r - 14;
+ctx.save();
+ctx.strokeStyle = pal.energyPot; ctx.lineWidth = 1.5;
+ctx.setLineDash([4,3]);
+ctx.beginPath(); ctx.moveTo(lx2, op0.cy); ctx.lineTo(lx2, opN.cy); ctx.stroke();
+ctx.setLineDash([]);
+ctx.beginPath(); ctx.moveTo(lx2-5,op0.cy); ctx.lineTo(lx2+5,op0.cy); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(lx2-5,opN.cy);  ctx.lineTo(lx2+5,opN.cy);  ctx.stroke();
+ctx.fillStyle = pal.energyPot;
+ctx.font = '11px Courier New';
+ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+ctx.fillText('h', lx2-7, (op0.cy+opN.cy)/2);
+ctx.restore();
+}
+drawEnergyBars();
+updateCanvasDesc();
+}
+function drawEnergyBars(){
+var ph = getPhysics();
+var barW=13, barMaxH=72, bx0=16, by0=H-16;
+var labels=['PE','KT','KR'];
+var values=[ph.PE*(1-progress), ph.KE_t*progress, ph.KE_r*progress];
+var colors=[pal.energyPot, pal.energyTrans, pal.energyRot];
+ctx.fillStyle='rgba(0,0,0,0.3)';
+ctx.fillRect(bx0-5, by0-barMaxH-22, labels.length*(barW+10)+6, barMaxH+28);
+for(var i=0;i<labels.length;i++){
+var bx=bx0+i*(barW+10);
+var frac=(ph.PE>0)?values[i]/ph.PE:0;
+var bh=frac*barMaxH;
+ctx.fillStyle=colors[i];
+ctx.fillRect(bx, by0-bh, barW, bh);
+ctx.strokeStyle=hcMode?'#fff':'rgba(255,255,255,0.35)';
+ctx.lineWidth=1;
+ctx.strokeRect(bx, by0-barMaxH, barW, barMaxH);
+ctx.fillStyle=hcMode?'#fff':'#eee';
+ctx.font='9px Arial';
+ctx.textAlign='center';
+ctx.fillText(labels[i], bx+barW/2, by0+10);
+}
+ctx.fillStyle=hcMode?'#fff':'#ccc';
+ctx.font='9px Arial'; ctx.textAlign='left';
+ctx.fillText('Energy', bx0-3, by0-barMaxH-8);
+}
+/* Animation -- real-time clock so t readout is accurate */
+function roll(){
+if(rolling) return;
+rolling=true; progress=0; rotAngle=0; simTime=0;
+var ph=getPhysics(), g2=getRampGeom();
+var wallStart=null;   // wall-clock ms at animation start
+function tick(wallNow){
+if(wallStart===null) wallStart=wallNow;
+// Elapsed wall-clock seconds, scaled by speed factor
+var wallElapsed=(wallNow-wallStart)/1000;
+simTime = wallElapsed * speedFactor;
+// Physics: s = ½·a·t²  →  progress = s/L = a·t²/(2L)
+// Clamp to 1 when sim-time exceeds total time T
+var rawP = (ph.accel * simTime * simTime) / (2 * ph.L);
+progress = Math.min(1, rawP);
+// Rotation angle = arc length / visual radius
+rotAngle = (g2.rampLen * progress) / getVisualRadius();
+draw(); updateReadouts();
+if(progress < 1){
+animFrame=requestAnimationFrame(tick);
+} else {
+progress=1; simTime=ph.T; rolling=false;
+draw(); updateReadouts(); updateNarration(true); srAnnounce(getFinalSummary());
+}
+}
+if(prefersReducedMotion){
+progress=1; simTime=ph.T; rolling=false;
+draw(); updateReadouts(); updateNarration(true); srAnnounce(getFinalSummary());
+} else {
+animFrame=requestAnimationFrame(tick);
+}
+}
+function reset(){
+if(animFrame) cancelAnimationFrame(animFrame);
+rolling=false; progress=0; rotAngle=0; simTime=0;
+draw(); updateReadouts(); updateNarration(false);
+srAnnounce('Simulation reset. '+getSetupSummary());
+}
+/* Control handlers */
+function onShapeChange(val){
+shapeKey=val;
+var sl=document.getElementById('shapeSelect'); if(sl) sl.value=val;
+reset();
+srAnnounce('Shape: '+SHAPES[val].name+'. I = '+SHAPES[val].moi+'.');
+}
+function onMassChange(val){
+massG=parseInt(val); set('massDisplay',massG+' g');
+var sl=document.getElementById('massSlider');
+if(sl){sl.setAttribute('aria-valuenow',massG);sl.setAttribute('aria-valuetext',massG+' grams');}
+reset();
+}
+function onRadiusChange(val){
+radiusCm=parseInt(val); set('radiusDisplay',radiusCm+' cm');
+var sl=document.getElementById('radiusSlider');
+if(sl){sl.setAttribute('aria-valuenow',radiusCm);sl.setAttribute('aria-valuetext',radiusCm+' cm');}
+reset();
+}
+function onAngleChange(val){
+angleDeg=Math.max(10,Math.min(60,parseInt(val)));
+set('angleDisplay',angleDeg+'\u00b0');
+var sl=document.getElementById('angleSlider');
+if(sl){sl.value=angleDeg;sl.setAttribute('aria-valuenow',angleDeg);sl.setAttribute('aria-valuetext',angleDeg+' degrees');}
+reset();
+}
+function onSpeedChange(val){
+// Slider: 1 (slowest) to 10 (fastest = 1x real)
+// Map: value 10 → speedFactor 1.0 (normal), value 1 → speedFactor 0.1 (10× slow)
+speedFactor = parseInt(val) / 10;
+var label = (speedFactor===1.0) ? '1x' : (speedFactor).toFixed(1).replace(/\.?0+$/,'')+'x';
+set('speedDisplay', label);
+var sl=document.getElementById('speedSlider');
+if(sl){sl.setAttribute('aria-valuenow',val);sl.setAttribute('aria-valuetext',label+' speed');}
+}
+/* Readouts */
+function updateReadouts(){
+var ph=getPhysics(), sp=SHAPES[shapeKey];
+// Instantaneous speed using kinematics: v = a·t  (or from energy, same result)
+var v_now  = ph.accel * simTime;
+var omg_now= (ph.r > 0) ? v_now / ph.r : 0;
+// Current height: h_now = h*(1 - progress)  but more precisely h - s·sinθ
+var h_now  = Math.max(0, ph.h - ph.L*progress*Math.sin(angleDeg*Math.PI/180));
+// Current energies
+var PE_now = ph.m * g * h_now;
+var KE_t_now = 0.5 * ph.m * v_now * v_now;
+var KE_r_now = 0.5 * SHAPES[shapeKey].factor * ph.m * v_now * v_now;
+var E_now  = PE_now + KE_t_now + KE_r_now;   // should equal ph.PE (conserved)
+set('r_shape',  sp.name);
+set('r_moi',    sp.moi);
+set('r_moiv',  II.toFixed(6)+' kg m\u00b2');
+set('r_angle',  angleDeg+'\u00b0');
+set('r_height', h_now.toFixed(3)+' m');
+set('r_PE',     PE_now.toFixed(4)+' J');
+set('r_KE_t',   KE_t_now.toFixed(4)+' J');
+set('r_KE_r',   KE_r_now.toFixed(4)+' J');
+set('r_v',      v_now.toFixed(3)+' m/s');
+set('r_omega',  omg_now.toFixed(2)+' rad/s');
+set('r_accel',  ph.accel.toFixed(3)+' m/s\u00b2');
+set('r_time',   simTime.toFixed(2)+' s');
+set('r_E',      E_now.toFixed(4)+' J');
+}
+function updateNarration(finished){
+if(!showNarration) return;
+var ph=getPhysics(), sp=SHAPES[shapeKey], txt;
+if(!finished){
+txt='A '+sp.name.toLowerCase()+' (mass '+massG+' g, radius '+radiusCm+' cm) sits at the top of a '
++angleDeg+'\u00b0 ramp. I = '+sp.moi+'. PE = '+ph.PE.toFixed(4)+' J. '
++'Acceleration along ramp: '+ph.accel.toFixed(3)+' m/s\u00b2. '
++'Expected roll time: '+ph.T.toFixed(2)+' s. Press Roll to release it.';
+} else {
+txt='The '+sp.name.toLowerCase()+' reached the base in '+ph.T.toFixed(2)+' s. '
++'v = '+ph.v.toFixed(2)+' m/s, \u03c9 = '+ph.omega.toFixed(2)+' rad/s. '
++'Translational KE = '+ph.KE_t.toFixed(4)+' J ('
++Math.round(ph.KE_t/ph.PE*100)+'%), rotational KE = '+ph.KE_r.toFixed(4)+' J ('
++Math.round(ph.KE_r/ph.PE*100)+'%). Mechanical energy conserved: E = '+ph.PE.toFixed(4)+' J throughout.';
+}
+set('narration', txt);
+}
+function updateCanvasDesc(){
+var ph=getPhysics(), sp=SHAPES[shapeKey];
+set('canvasDesc','Rolling simulation. '+sp.name+', mass '+massG+'g, radius '+radiusCm
++'cm, '+angleDeg+'\u00b0 ramp. Progress: '+Math.round(progress*100)+'%. Speed: '
++(ph.v*Math.sqrt(progress)).toFixed(2)+' m/s. '+pal.label+'.');
+}
+function getSetupSummary(){ var sp=SHAPES[shapeKey],ph=getPhysics(); return sp.name+', '+massG+'g, '+radiusCm+'cm, '+angleDeg+'\u00b0. PE='+ph.PE.toFixed(4)+' J, a='+ph.accel.toFixed(3)+' m/s\u00b2.'; }
+function getFinalSummary(){ var ph=getPhysics(),sp=SHAPES[shapeKey]; return sp.name+' at base in '+ph.T.toFixed(2)+' s. v='+ph.v.toFixed(2)+' m/s, \u03c9='+ph.omega.toFixed(2)+' rad/s. E='+ph.PE.toFixed(4)+' J.'; }
+/* A11y toggles */
+function syncPalette(){ if(hcMode) pal=PALETTES.highcontrast; else if(cbMode) pal=PALETTES.colorblind; else pal=PALETTES.def; }
+function setBtnOn(id,on){
+var b=document.getElementById(id); if(!b) return;
+if(on){ if(b.className.indexOf('rl_abtnon')<0) b.className+=' rl_abtnon'; }
+else { b.className=b.className.replace(' rl_abtnon',''); }
+b.setAttribute('aria-pressed',on);
+}
+function toggleHC(){
+hcMode=!hcMode;
+if(hcMode){lightMode=false;ROOT.classList.remove('light');setBtnOn('btnLight',false);}
+ROOT.classList.toggle('hc',hcMode); setBtnOn('btnHC',hcMode); syncPalette(); draw();
+srAnnounce('High contrast '+(hcMode?'enabled.':'disabled.'));
+}
+function toggleLight(){
+lightMode=!lightMode;
+if(lightMode){hcMode=false;ROOT.classList.remove('hc');setBtnOn('btnHC',false);}
+ROOT.classList.toggle('light',lightMode); setBtnOn('btnLight',lightMode); syncPalette(); draw();
+srAnnounce('Light mode '+(lightMode?'enabled.':'disabled.'));
+}
+function toggleCB(){
+cbMode=!cbMode; ROOT.classList.toggle('cb',cbMode); setBtnOn('btnCB',cbMode); syncPalette(); draw();
+srAnnounce('Color-blind palette '+(cbMode?'enabled. '+pal.label+' used.':'disabled.'));
+}
+function toggleNarr(){
+showNarration=!showNarration;
+var box=document.getElementById('narrationBox');
+if(box) box.style.display=showNarration?'':'none';
+var b=document.getElementById('btnNarr');
+if(b){b.value=showNarration?'Narration: ON':'Narration: OFF';b.setAttribute('aria-pressed',showNarration);}
+setBtnOn('btnNarr',showNarration);
+}
+/* SR announcer */
+var srTimer=null;
+function srAnnounce(msg){
+var el=document.getElementById('srAnnounce'); if(!el) return;
+el.textContent=''; clearTimeout(srTimer);
+srTimer=setTimeout(function(){el.textContent=msg;},60);
+}
+/* Keyboard */
+ROOT.setAttribute('tabindex','0');
+ROOT.addEventListener('keydown',function(e){
+var tag=document.activeElement.tagName;
+if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA'){
+if(e.key!=='ArrowUp'&&e.key!=='ArrowDown') return;
+}
+switch(e.key){
+case 'g': case 'G':  roll();                        e.preventDefault(); break;
+case 'r': case 'R': reset();                    e.preventDefault(); break;
+case 'ArrowUp':   onAngleChange(angleDeg+1);    e.preventDefault(); break;
+case 'ArrowDown': onAngleChange(angleDeg-1);    e.preventDefault(); break;
+case '1': onShapeChange('sphere');               e.preventDefault(); break;
+case '2': onShapeChange('cylinder');             e.preventDefault(); break;
+case '3': onShapeChange('hoop');                 e.preventDefault(); break;
+case '4': onShapeChange('shell');                e.preventDefault(); break;
+}
+});
+/* Boot */
+draw(); updateReadouts(); updateNarration(false);
+return {
+roll:roll, reset:reset,
+onShapeChange:onShapeChange, onMassChange:onMassChange,
+onRadiusChange:onRadiusChange, onAngleChange:onAngleChange,
+onSpeedChange:onSpeedChange,
+toggleHC:toggleHC, toggleLight:toggleLight, toggleCB:toggleCB, toggleNarr:toggleNarr
+};
+};
+</script>
+<script>
+var rollingSimF = new rollingSimF();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows an object rolling without slipping down an inclined ramp. Its shape (solid sphere, solid cylinder, thin hoop or spherical shell), mass, radius and the angle of the ramp can be changed.</p>
+<p>A rolling object has kinetic energy of translation and of rotation. With no slipping, `v = omega r`, and with a moment of inertia `I = c m r^2`, energy conservation gives</p>
+<p class="mob_eq">`m g h = 1/2 m v^2 + 1/2 I omega^2 = 1/2 (1 + c) m v^2`,&nbsp;&nbsp; so&nbsp; `v = sqrt((2 g h)/(1 + c))`.</p>
+<p>The factor `c` is `2/5` for a solid sphere, `1/2` for a solid cylinder, `2/3` for a spherical shell and `1` for a thin hoop. The speed at the bottom does not depend on the mass or the radius, only on the shape: the solid sphere wins and the hoop comes last, because more of its energy goes into turning.</p>
+<p>This simulation is useful for studying rolling motion, moment of inertia and conservation of energy.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobroll { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (680 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:720px) {
+#mobroll div, #mobroll p, #mobroll fieldset, #mobroll form, #mobroll section, #mobroll ol, #mobroll ul, #mobroll table { max-width:100%; box-sizing:border-box; }
+#mobroll canvas, #mobroll img, #mobroll svg { max-width:100%; height:auto !important; }
+#mobroll input[type=range], #mobroll select { max-width:100%; min-width:0; }
+#mobroll #rlroot, #mobroll #rlroot .rl_a11ybar, #mobroll #rlroot .rl_bottom, #mobroll #rlroot .rl_controls, #mobroll #rlroot .rl_fieldrow, #mobroll #rlroot .rl_btnrow { flex-wrap:wrap; }
+#mobroll #rlroot > div, #mobroll #rlroot .rl_a11ybar > div, #mobroll #rlroot .rl_bottom > div, #mobroll #rlroot .rl_controls > div, #mobroll #rlroot .rl_fieldrow > div, #mobroll #rlroot .rl_btnrow > div { min-width:min(100%, 260px); }
+#mobroll div[style*="height"] { height:auto !important; }
+#mobroll table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:740px) {
+#mobroll div, #mobroll p, #mobroll fieldset, #mobroll form, #mobroll section, #mobroll ol, #mobroll ul, #mobroll table { max-width:100%; box-sizing:border-box; }
+#mobroll canvas, #mobroll img, #mobroll svg { max-width:100%; height:auto !important; }
+#mobroll input[type=range], #mobroll select { max-width:100%; min-width:0; }
+#mobroll #rlroot, #mobroll #rlroot .rl_a11ybar, #mobroll #rlroot .rl_bottom, #mobroll #rlroot .rl_controls, #mobroll #rlroot .rl_fieldrow, #mobroll #rlroot .rl_btnrow { flex-wrap:wrap; }
+#mobroll #rlroot > div, #mobroll #rlroot .rl_a11ybar > div, #mobroll #rlroot .rl_bottom > div, #mobroll #rlroot .rl_controls > div, #mobroll #rlroot .rl_fieldrow > div, #mobroll #rlroot .rl_btnrow > div { min-width:min(100%, 260px); }
+#mobroll div[style*="height"] { height:auto !important; }
+#mobroll table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobroll button, #mobroll input[type=button], #mobroll input[type=submit], #mobroll input[type=reset] { min-height:40px; }
+#mobroll input[type=range] { height:28px; }
+#mobroll input[type=checkbox], #mobroll input[type=radio] { width:22px; height:22px; }
+#mobroll select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobroll .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobroll .mob_a11ytop input[type=button], #mobroll .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobroll .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobroll .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobroll .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobroll .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobroll .mob_desc p { margin:0 0 9px 0; }
+#mobroll .mob_eq { text-align:center; font-size:1rem; }
+</style>
+<style>
+/* ════════ theme: the instrument look of the balance beam (dark; light and high-contrast variants) ════════ */
+#mobroll { --t-chassis:#1a1c1f; --t-panel:#22262b; --t-panel-hi:#2c3138; --t-panel-lo:#14161a; --t-border:#3a4048; --t-border-hi:#525c66; --t-text:#c8d0d8; --t-dim:#8a94a3; --t-accent:#e8a020; --t-green:#3ad08f; --t-val:#ffdd66; --t-nar-bg:#2a2410; --t-nar-bd:#e0b040; --t-nar-tx:#f0e2b8; --t-grid:rgba(255,255,255,0.015); --t-warn:#e0605a; --t-warnbd:#a04040; background:var(--t-chassis) !important; background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, var(--t-grid) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, var(--t-grid) 40px) !important;
+  color:var(--t-text); font-family:Arial, sans-serif; padding:14px 10px 18px !important; border-radius:6px; box-sizing:border-box; max-width:860px; margin:0 auto 10px !important; }
+#mobroll.th_lm, #mobroll:has(#rlroot.light) { --t-chassis:#e9edf1; --t-panel:#ffffff; --t-panel-hi:#f1f4f7; --t-panel-lo:#f4f6f9; --t-border:#c3cad3; --t-border-hi:#9aa3ae; --t-text:#1d232a; --t-dim:#556070; --t-accent:#a8620a; --t-green:#12805a; --t-val:#8a4a00; --t-nar-bg:#ffefc0; --t-nar-bd:#e0b040; --t-nar-tx:#333333; --t-grid:transparent; --t-warn:#b02020; --t-warnbd:#c06060; }
+#mobroll.th_hc, #mobroll:has(#rlroot.hc) { --t-chassis:#000000; --t-panel:#000000; --t-panel-hi:#111111; --t-panel-lo:#000000; --t-border:#ffffff; --t-border-hi:#ffffff; --t-text:#ffffff; --t-dim:#e0e0e0; --t-accent:#ffd700; --t-green:#00ff88; --t-val:#ffff00; --t-nar-bg:#000000; --t-nar-bd:#ffd700; --t-nar-tx:#ffffff; --t-grid:transparent; --t-warn:#ff6a5a; --t-warnbd:#ff6a5a; }
+#mobroll .th_btn, #mobroll .th_a11y input[type=button], #mobroll .th_a11y button { padding:4px 10px !important; font-size:.68rem !important; font-family:monospace !important; letter-spacing:.06em; border-radius:3px !important; cursor:pointer; background:var(--t-panel-hi) !important; border:1px solid var(--t-border-hi) !important; color:var(--t-dim) !important; text-transform:uppercase; min-height:30px; box-shadow:none !important; }
+#mobroll .th_a11y { display:flex !important; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; background:transparent !important; border:none !important; padding:0 0 10px !important; margin:0 !important; }
+#mobroll .th_a11y .th_on, #mobroll .th_a11y [aria-pressed="true"] { background:rgba(58,208,143,.14) !important; border-color:var(--t-green) !important; color:var(--t-green) !important; font-weight:bold; }
+#mobroll .th_title, #mobroll .th_title h3, #mobroll .th_title H3 { background:transparent !important; border:none !important; color:var(--t-accent) !important; font-size:.95rem !important; font-weight:700 !important; letter-spacing:.2em; text-transform:uppercase; text-align:center; font-family:Arial, sans-serif !important; margin:0 !important; padding:2px 0 !important; min-height:0 !important; }
+#mobroll .th_sub { color:var(--t-dim) !important; font-size:.7rem !important; letter-spacing:.08em; text-transform:uppercase; text-align:center; font-family:Arial, sans-serif !important; margin:0 0 8px !important; }
+#mobroll .th_diag { background:var(--t-panel) !important; border:1px solid var(--t-border) !important; border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); margin:8px 0 0 !important; padding:0 !important; }
+#mobroll .th_diag::before { content:'APPARATUS'; display:block; flex:1 1 100%; background:var(--t-panel-lo); border-bottom:1px solid var(--t-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; color:var(--t-accent); font-weight:bold; text-align:left; }
+#mobroll .th_diag canvas { background:#ffffff; display:block; max-width:100%; height:auto; margin:0 auto; border:none !important; }
+#mobroll .th_bar { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-top:none !important; border-radius:0 0 6px 6px; display:flex !important; flex-wrap:wrap; gap:6px; justify-content:center; align-items:center; padding:8px 10px !important; margin:0 0 10px !important; color:var(--t-text) !important; }
+#mobroll .th_bar input[type=button], #mobroll .th_bar button, #mobroll .th_bbtn { padding:8px 12px !important; font-family:monospace !important; font-size:.72rem !important; letter-spacing:.04em; cursor:pointer; background:var(--t-panel-hi) !important; border:1px solid var(--t-border-hi) !important; color:var(--t-text) !important; border-radius:3px !important; text-transform:uppercase; min-height:34px; box-shadow:none !important; }
+#mobroll .th_bar input[type=button]:hover, #mobroll .th_bar button:hover { border-color:var(--t-accent) !important; }
+#mobroll .th_bar .th_primary { font-weight:bold; border-color:var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobroll .th_bar .th_warn { color:var(--t-warn) !important; border-color:var(--t-warnbd) !important; }
+#mobroll .th_panel { background:var(--t-panel) !important; border:1px solid var(--t-border) !important; border-radius:6px !important; box-shadow:0 4px 20px rgba(0,0,0,.3); color:var(--t-text) !important; font-family:Arial, sans-serif !important; }
+#mobroll .th_ptitle { background:var(--t-panel-lo) !important; color:var(--t-dim) !important; font-family:monospace !important; font-size:.66rem !important; letter-spacing:.15em; text-transform:uppercase; font-weight:normal !important; border:none !important; border-bottom:1px solid var(--t-border) !important; border-left:4px solid var(--t-accent) !important; padding:6px 10px !important; margin:0 0 6px !important; text-align:left; }
+#mobroll .th_lbl { color:var(--t-dim) !important; font-size:.72rem !important; font-weight:600 !important; letter-spacing:.04em; text-transform:uppercase; font-family:Arial, sans-serif !important; }
+#mobroll .th_val { color:var(--t-val) !important; font-family:monospace !important; font-weight:bold; font-size:.78rem !important; background:transparent !important; }
+#mobroll .th_chip { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-radius:3px; padding:3px 7px !important; margin:2px 0 !important; color:var(--t-dim) !important; font-family:monospace !important; font-size:.72rem !important; }
+#mobroll .th_note { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-radius:4px; color:var(--t-dim) !important; font-family:monospace !important; font-size:.7rem !important; line-height:1.55; padding:7px 12px !important; }
+#mobroll .th_note * { color:inherit !important; }
+#mobroll .th_nar { background:var(--t-nar-bg) !important; border:none !important; border-left:4px solid var(--t-nar-bd) !important; color:var(--t-nar-tx) !important; font-style:italic; border-radius:3px !important; box-shadow:none !important; }
+#mobroll .th_nar * { color:var(--t-nar-tx) !important; }
+#mobroll .th_nar .th_ptitle, #mobroll .th_nar h2 { font-style:normal; color:var(--t-dim) !important; }
+#mobroll input[type=range] { -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--t-panel-lo) !important; border:1px solid var(--t-border); accent-color:var(--t-accent); }
+#mobroll input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--t-accent); border:2px solid var(--t-panel); cursor:pointer; }
+#mobroll input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--t-accent); border:2px solid var(--t-panel); cursor:pointer; }
+#mobroll select, #mobroll input[type=number] { background:var(--t-panel-hi) !important; color:var(--t-text) !important; border:1px solid var(--t-border-hi) !important; border-radius:3px; padding:3px 5px; font-size:.78rem; }
+#mobroll input:focus-visible, #mobroll button:focus-visible, #mobroll select:focus-visible { outline:2px solid var(--t-accent); outline-offset:2px; }
+#mobroll table th { background:var(--t-panel-lo) !important; color:var(--t-dim) !important; font-family:monospace; border-color:var(--t-border) !important; }
+#mobroll table td { background:var(--t-panel) !important; color:var(--t-text) !important; border-color:var(--t-border) !important; }
+#mobroll .mob_descbtn { background:var(--t-panel-hi) !important; border:1px solid var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobroll > h2, #mobroll > hr + h2 { color:var(--t-accent) !important; font-size:1rem !important; font-family:Arial, sans-serif; margin:4px 0 !important; }
+#mobroll > hr { border:none !important; border-top:1px solid var(--t-border) !important; margin:6px 0 !important; }
+#mobroll .th_q { background:#fbfbf7; color:#1d232a; border:1px solid #c9ccd2; border-left:4px solid var(--t-accent); border-radius:6px; padding:12px 16px; margin:12px 0 8px; font-family:Arial, sans-serif; font-size:.92rem; line-height:1.5; }
+#mobroll .th_q h2, #mobroll .th_q h3 { color:#1d232a !important; font-size:1.05rem !important; margin:4px 0 8px !important; }
+#mobroll .th_q hr { border:none; border-top:1px solid #c9ccd2; margin:8px 0; }
+#mobroll .th_q li { margin:0 0 8px; }
+@media (pointer:coarse) { #mobroll input[type=range] { height:8px; } #mobroll input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #mobroll input[type=range]::-moz-range-thumb { width:24px; height:24px; } #mobroll .th_bar input[type=button], #mobroll .th_bar button { min-height:40px; } }
+#mobroll [data-th="p"] { font-weight:bold; border-color:var(--t-accent) !important; color:var(--t-accent) !important; }
+#mobroll [data-th="w"] { color:var(--t-warn) !important; border-color:var(--t-warnbd) !important; }
+#mobroll .rl_rg { background:transparent !important; }
+#mobroll .rl_fieldrow { background:var(--t-panel-lo) !important; border:1px solid var(--t-border) !important; border-radius:3px; }
+#mobroll .rl_controls, #mobroll .rl_readout, #mobroll .rl_narrbox { padding:0 10px 10px !important; }
+#mobroll .rl_credit { color:var(--t-dim) !important; }
+</style>
+</div><!-- #mobroll -->
+</main>
+</body>
+</html>

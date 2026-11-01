@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Where and How Bright: Color Across the Retina, by Day and by Night</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, eye, retina, rods, cones, fovea, peripheral vision, scotopic, photopic, mesopic, Purkinje shift, blind spot, color vision, lesson, scientific">
+<meta name="description" content="Interactive simulation of how the position, size and brightness of an image on the retina affect color vision: rods and cones, the fovea, night vision, the Purkinje shift and the blind spot.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="epRoot" class="ep_root" role="region" aria-label="Where and how bright: color across the retina simulator">
+<div class="ep_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="ep_a11ybtn" id="epBtnHC" onclick="epSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ep_a11ybtn" id="epBtnLM" onclick="epSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ep_a11ybtn ep_a11yon" id="epBtnNR" onclick="epSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="ep_tbar"><h3>Where and How Bright: Color Across the Retina, by Day and by Night</h3></div>
+<div class="ep_mcontent">
+<div class="ep_view">
+<div class="ep_vlabel">what you see while looking at the + (right eye) &middot; drag the flowers</div>
+<canvas id="epField" width="780" height="300" role="img" aria-label="A visual field with a fixation cross and two flowers, shown as they look at their position and at the current light level."></canvas>
+</div>
+<div class="ep_row2">
+<div class="ep_view"><div class="ep_vlabel">rods and cones across the retina</div><canvas id="epDens" width="420" height="250" role="img" aria-label="The density of rods and cones against the distance from the fovea, with the image of the flowers marked."></canvas></div>
+<div class="ep_view"><div class="ep_vlabel">which light the eye is most sensitive to</div><canvas id="epSens" width="380" height="250" role="img" aria-label="The sensitivity of the cones (day) and of the rods (night) across the spectrum."></canvas></div>
+</div>
+<div class="ep_readout" id="epRead" aria-label="Readout"></div>
+</div>
+<div id="epNarBar" class="ep_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="ep_bbar">
+<button type="button" class="ep_btn" onclick="epSim.preset('direct')">Straight on, in daylight</button>
+<button type="button" class="ep_btn" onclick="epSim.preset('side')">Out of the corner of the eye</button>
+<button type="button" class="ep_btn" onclick="epSim.preset('star')">A faint star at night</button>
+<button type="button" class="ep_btn" onclick="epSim.preset('dusk')">Red and blue at dusk</button>
+<button type="button" class="ep_btn" onclick="epSim.preset('tiny')">A tiny blue dot</button>
+<button type="button" class="ep_btn" onclick="epSim.preset('blind')">The blind spot</button>
+<button type="button" class="ep_btn" onclick="epSim.describe()">Describe</button>
+</div>
+<div class="ep_controls">
+<div class="ep_crow"><div class="ep_cname"><b>Light</b> <span class="ep_cval" id="epLv">--</span></div>
+<label>starlight <input type="range" id="epL" min="-3" max="4" step="0.05" value="2" oninput="epSim.set('logL',this.value)"> sunlight</label></div>
+<div class="ep_crow"><div class="ep_cname"><b>Position</b> <span class="ep_cval"><span id="epEv">0</span>&deg; from the center</span></div>
+<label>center <input type="range" id="epE" min="0" max="40" step="0.25" value="0" oninput="epSim.set('ecc',this.value)"> 40&deg;</label></div>
+<div class="ep_crow"><div class="ep_cname"><b>Size</b> <span class="ep_cval"><span id="epSv">2</span>&deg; across</span></div>
+<label>tiny <input type="range" id="epS" min="0" max="100" step="1" value="60" oninput="epSim.set('size',this.value)"> large</label></div>
+<div class="ep_crow"><div class="ep_cname"><b>Flowers</b></div>
+<label>top <select id="epC1" onchange="epSim.set('c1',this.value)"></select></label>
+<label>bottom <select id="epC2" onchange="epSim.set('c2',this.value)"></select></label></div>
+</div>
+<div class="ep_descwrap">
+<button type="button" class="ep_descbtn" id="epDescBtn" aria-expanded="false" aria-controls="epDesc" onclick="epSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="ep_desc" id="epDesc" role="region" aria-labelledby="epDescBtn" style="display:none">
+<p>This simulation shows that what color we see depends not only on the light that reaches the eye, but also on where its image falls on the retina, how large the image is, and how much light there is.</p>
+<p>The retina has two kinds of light detectors. About 6 million cones work in good light and give us color and sharp detail; about 120 million rods work in dim light, are far more sensitive, but cannot tell colors apart. They are not spread evenly. The fovea, in the middle of the retina, is packed with cones -- about 200,000 per square millimetre -- and has no rods at all; away from it the cones thin out quickly and the rods take over, most densely about 20 degrees out. The very center of the fovea also lacks the blue-sensitive S cones. About 15 degrees toward the nose there are no receptors at all: the blind spot.</p>
+<p><b>Where the image falls.</b> We see sharply and in full color only near the center of gaze, which is why we move our eyes to look at things. A small colored object seen out of the corner of the eye looks greyish and blurred; a large one keeps more of its color. A tiny blue dot looked at directly loses its blueness, because its image falls where there are no S cones.</p>
+<p><b>How much light.</b> In daylight (photopic vision, above a few candela per square metre) only the cones work. At night (scotopic vision, below about a thousandth of a candela per square metre) only the rods work: the world turns grey, and since the fovea has no rods, a faint star looked at directly disappears -- astronomers look slightly to one side of it. In between, at dusk (mesopic vision), both work.</p>
+<p>The cones are most sensitive to light of about 555 nm, the rods to about 507 nm. As the light fades and the rods take over, blue and green things look relatively brighter and red things darker: a red rose that looks brighter than a blue flower at noon looks darker than it at dusk. This is the Purkinje shift, after the physiologist who noticed it in his garden. The relative brightness of each flower to the rods is computed from its color with the scotopic luminance formula</p>
+<p class="ep_eq">`Y' ~~ 1.182 Y + 0.362 Z - 0.805 X`,</p>
+<p>in terms of the color's tristimulus values `X`, `Y`, `Z` (Larson, Rushmeier and Piatko, 1997).</p>
+<p>The densities follow the measurements of Curcio and colleagues (1990), in simplified form. The appearance is a conceptual model: it shows the trends -- loss of color and detail away from the center, grey night vision, the rod-free fovea, the Purkinje shift -- rather than an exact rendering of perception.</p>
+</div>
+</div>
+</div><!-- #epRoot -->
+<style>
+#epRoot, #epRoot * { box-sizing:border-box; }
+#epRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --ep-bg:#0a0e12; --ep-panel:#0d1318; --ep-border:#1c262e; --ep-text:#c9d6de; --ep-muted:#5f7180; --ep-val:#8fe3b0; }
+#epRoot .ep_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#epRoot .ep_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#epRoot .ep_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#epRoot .ep_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#epRoot .ep_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#epRoot .ep_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#epRoot .ep_mcontent { background:var(--ep-bg); color:var(--ep-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#epRoot .ep_view { border:1px solid var(--ep-border); border-radius:6px; overflow:hidden; background:var(--ep-panel); }
+#epRoot .ep_row2 { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:8px; }
+#epRoot .ep_vlabel { font-size:10px; color:var(--ep-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#epRoot canvas { display:block; width:100%; height:auto; }
+#epRoot #epField { touch-action:pan-y; }
+#epRoot .ep_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:6px 10px; background:var(--ep-panel); border:1px solid var(--ep-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#epRoot .ep_flabel { font-size:10px; color:var(--ep-muted); letter-spacing:1px; }
+#epRoot .ep_fvalue { font-size:14px; color:var(--ep-val); font-variant-numeric:tabular-nums; }
+#epRoot .ep_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#epRoot .ep_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#epRoot .ep_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#epRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+#epRoot .ep_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#epRoot .ep_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:3px; }
+#epRoot .ep_cname { font-size:.88rem; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+#epRoot .ep_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#epRoot .ep_crow label { display:flex; align-items:center; gap:6px; font-size:.78rem; color:#445; }
+#epRoot input[type=range] { flex:1; min-width:0; accent-color:#e8a020; }
+#epRoot .ep_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#epRoot .ep_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#epRoot .ep_descbtn[aria-expanded="true"] { background:#3a3220; }
+#epRoot .ep_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#epRoot .ep_desc p { margin:0 0 9px; }
+#epRoot .ep_eq { text-align:center; font-size:1rem; }
+@container (max-width:640px) { #epRoot .ep_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:660px) { #epRoot .ep_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (pointer:coarse) { #epRoot input[type=range] { height:28px; } #epRoot .ep_a11ybtn { min-height:40px; } #epRoot select { min-height:36px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Receptor densities (per mm^2) against eccentricity e (degrees), simplified from Curcio et al. (1990):
+cones(e) = 150000 exp(-e/0.35) + 40000 exp(-e/2.5) + 5000; rods(e) = 160000 (1 - exp(-(e/7)^1.5)) exp(-max(0, e - 20)/55).
+S cones: absent within 0.15 degrees of the center. Blind spot: 13 to 18 degrees on the temporal side of the field.
+Light level L (cd/m^2): cones work from about 0.005 cd/m^2 up, rods saturate above about 5 cd/m^2.
+Brightness to the cones: Y; to the rods: Y' = 1.182 Y + 0.362 Z - 0.805 X (Larson, Rushmeier and Piatko 1997).
+Acuity: minimum angle of resolution about 1' (1 + e/2.5) in daylight, much coarser for rods. Conceptual appearance model.
+No dollar signs or backticks in the code.
+-->
+<script>
+var epSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('epRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var FD = hi('epField'), DN = hi('epDens'), SN = hi('epSens');
+var COLORS = { red:[0.80, 0.05, 0.06], blue:[0.05, 0.12, 0.85], green:[0.10, 0.55, 0.12], yellow:[0.85, 0.75, 0.05], white:[0.85, 0.85, 0.85], orange:[0.90, 0.35, 0.03] };
+var S = { logL:2, ecc:0, size:60, c1:'red', c2:'blue' };
+var th = { hc:false, lm:false, nr:true };
+/* ══════════ the retina ══════════ */
+function cones(e){ return 150000*Math.exp(-e/0.35) + 40000*Math.exp(-e/2.5) + 5000; }
+function rods(e){ return 160000*(1 - Math.exp(-Math.pow(e/7, 1.5)))*Math.exp(-Math.max(0, e - 20)/55); }
+function inBlind(e, size){ return e + size/2 > 13 && e - size/2 < 18 && size < 5; }
+function sizeDeg(){ return 0.1*Math.pow(100, S.size/100); }      /* 0.1 to 10 degrees */
+function lum(){ return Math.pow(10, S.logL); }
+function smooth(a, b, x){ var t = Math.max(0, Math.min(1, (x - a)/(b - a))); return t*t*(3 - 2*t); }
+function coneW(){ return smooth(-2.6, 0.6, S.logL); }            /* cones: working from about 0.005 cd/m2 */
+function rodW(){ return 1 - smooth(0.2, 1.4, S.logL); }          /* rods: saturated above about 5-20 cd/m2 */
+function regime(){ var c = coneW(), r = rodW(); return c > 0.95 && r < 0.05 ? 'photopic (day): cones only' : (c < 0.05 ? 'scotopic (night): rods only' : 'mesopic (dusk): rods and cones'); }
+/* ══════════ colour arithmetic ══════════ */
+function toXYZ(c){ return [0.4124*c[0] + 0.3576*c[1] + 0.1805*c[2], 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2], 0.0193*c[0] + 0.1192*c[1] + 0.9505*c[2]]; }
+function photY(c){ return toXYZ(c)[1]; }
+function scotY(c){ var x = toXYZ(c); return Math.max(0, 1.18214*x[1] + 0.36169*x[2] - 0.80498*x[0]); }
+function enc(v){ v = Math.max(0, Math.min(1, v)); return Math.round(255*(v <= 0.0031308 ? 12.92*v : 1.055*Math.pow(v, 1/2.4) - 0.055)); }
+/* Vienot et al. (1999): losing the S cones (for the S-cone-free center of the fovea) */
+var RGB2V = [[17.8824, 43.5161, 4.11935], [3.45565, 27.1554, 3.86714], [0.0299566, 0.184309, 1.46709]];
+function mul(M, v){ return [M[0][0]*v[0] + M[0][1]*v[1] + M[0][2]*v[2], M[1][0]*v[0] + M[1][1]*v[1] + M[1][2]*v[2], M[2][0]*v[0] + M[2][1]*v[1] + M[2][2]*v[2]]; }
+function inv3(m){ var a = m[0][0], b = m[0][1], c = m[0][2], d = m[1][0], e = m[1][1], f = m[1][2], g = m[2][0], h = m[2][1], i = m[2][2]; var A = e*i - f*h, B = -(d*i - f*g), C2 = d*h - e*g, det = a*A + b*B + c*C2;
+return [[A/det, -(b*i - c*h)/det, (b*f - c*e)/det], [B/det, (a*i - c*g)/det, -(a*f - c*d)/det], [C2/det, -(a*h - b*g)/det, (a*e - b*d)/det]]; }
+var V2RGB = inv3(RGB2V);
+/* no S cones: the blue-yellow difference is lost -- S is replaced by what a neutral grey with the same L and M would give */
+var WHITE = mul(RGB2V, [1, 1, 1]), KS = WHITE[2]/(WHITE[0] + WHITE[1]);
+function noS(c){ var q = mul(RGB2V, c); q[2] = KS*(q[0] + q[1]); return mul(V2RGB, q).map(function(v){ return Math.max(0, v); }); }
+/* how a flower of colour c looks at eccentricity e, size s, at the current light level */
+function appearance(c, e, s){
+var cw = coneW(), rw = rodW(), L = S.logL;
+if (inBlind(e, s)) return { col:null, sat:0, vis:0, why:'blind spot' };
+var cc = c.slice(), why = [];
+/* the S-cone-free center: a tiny object looked at directly loses its blue */
+if (e < 0.2 && s < 0.35 && cw > 0.3){ var ns = noS(c), f = Math.min(1, (0.35 - s)/0.2);   /* complete below 0.15 degrees */ cc = cc.map(function(v, i){ return v + (ns[i] - v)*f; }); why.push('no S cones at the very center'); }
+/* fewer cones away from the center: color fades, less for large objects (their image covers many cones) */
+var cd = Math.log10(cones(e)), sat = Math.max(0.12, Math.min(1, (cd - 3.6)/(5.29 - 3.6)));
+sat = sat + (1 - sat)*Math.min(1, s/8); if (sat < 0.85 && e > 1) why.push('fewer cones out here');
+if (s < 0.5){ sat *= 0.3 + 1.4*s; if (e >= 0.2 || s >= 0.35) why.push('a very small image covers few cones'); }   /* small-field desaturation */
+/* the cone picture: the colour, desaturated toward its own brightness */
+var Y = photY(cc), cone = cc.map(function(v){ return Y + (v - Y)*sat; });
+/* the rod picture: grey, with the rods' brightness, only where there are rods */
+var rodLocal = Math.min(1, rods(e)/60000*Math.min(1, 0.4 + s/2)), sy = scotY(c)*0.62;
+var rodGrey = [sy, sy, sy].map(function(v){ return v*rodLocal; });
+if (rw > 0.3 && rodLocal < 0.3) why.push('no rods at the center');
+/* combine; the whole scene also dims with the light level (an adapting eye, compressed) */
+var dim = 0.12 + 0.88*smooth(-3.2, 2.2, L);
+var col = [0, 1, 2].map(function(i){ return (cw*cone[i] + rw*(1 - cw*0.5)*rodGrey[i])*dim; });
+var vis = cw*Y + rw*sy*rodLocal;
+return { col:col, sat:cw > 0.05 ? sat : 0, vis:vis, why:why.join(', ') };
+}
+function blurPx(e){ var mar = 1 + e/2.5, rodMar = 6 + e*0.6, cw = coneW(); var m = cw*mar + (1 - cw)*Math.max(mar, rodMar); return Math.max(0, (m - 1)*0.22); }
+/* ══════════ palette for the chrome ══════════ */
+function pal(){ if (th.hc) return { txt:'#fff', muted:'#ddd', grid:'#555', panel:'#000', rod:'#9aa8ff', cone:'#ffd23f', sc:'#5ad1ff', mark:'#ff5ec4' };
+return th.lm ? { txt:'#1d232a', muted:'#556070', grid:'#d0d8e0', panel:'#fff', rod:'#5a6ad8', cone:'#c08a00', sc:'#0072b2', mark:'#c0008a' } : { txt:'#dbe5ec', muted:'#7a8a98', grid:'#1c262e', panel:'#0d1318', rod:'#8f9cff', cone:'#ffd23f', sc:'#5ad1ff', mark:'#ff5ec4' }; }
+/* ══════════ the visual field ══════════ */
+var PXD = 12;                                                   /* screen px per degree */
+function fx0(){ return 200; }                                   /* the fixation cross, left of center so the right field has room */
+function drawFlower(g, x, y, r, col){
+if (!col) return;
+g.fillStyle = 'rgb(' + col.map(enc).join(',') + ')';
+if (r < 3){ g.beginPath(); g.arc(x, y, Math.max(1.2, r), 0, 2*Math.PI); g.fill(); return; }
+for (var i=0; i<6; i++){ var a = i*Math.PI/3; g.beginPath(); g.ellipse(x + 0.55*r*Math.cos(a), y + 0.55*r*Math.sin(a), 0.48*r, 0.3*r, a, 0, 2*Math.PI); g.fill(); }
+g.beginPath(); g.arc(x, y, 0.3*r, 0, 2*Math.PI); g.fill();
+}
+var NATIVE = (typeof CanvasRenderingContext2D !== 'undefined') && ('filter' in CanvasRenderingContext2D.prototype);
+function blurred(g, b, fn){
+if (b < 0.4){ fn(0, 0); return; }
+if (NATIVE){ g.save(); g.filter = 'blur(' + b.toFixed(1) + 'px)'; fn(0, 0); g.restore(); return; }
+var pts = [[0, 0]], rings = [0.35, 0.7, 1.05, 1.4]; for (var r=0; r<4; r++) for (var i=0; i<10; i++){ var an = (i + 0.5*r)*Math.PI/5; pts.push([rings[r]*b*Math.cos(an), rings[r]*b*Math.sin(an)]); }
+g.save(); g.globalAlpha = 0.07; pts.forEach(function(q){ fn(q[0], q[1]); }); g.restore();
+}
+function flowerPos(i){ var s = sizeDeg(), dy = Math.max(1.6, s*0.75); return [fx0() + S.ecc*PXD, FD.H/2 + (i === 0 ? -1 : 1)*dy*PXD*0.6]; }
+function drawField(){
+var g = FD.g, W = FD.W, H = FD.H, dim = 0.12 + 0.88*smooth(-3.2, 2.2, S.logL);
+var bgv = 0.06 + 0.16*dim; g.fillStyle = 'rgb(' + [bgv, bgv, bgv].map(enc).join(',') + ')'; g.fillRect(0, 0, W, H);
+/* a scale of degrees, and the blind spot */
+g.strokeStyle = 'rgba(255,255,255,0.12)'; g.lineWidth = 1; g.font = '10px system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,0.45)'; g.textAlign = 'center';
+for (var d=-10; d<=50; d+=10){ var x = fx0() + d*PXD; if (x < 0 || x > W) continue; g.beginPath(); g.moveTo(x, H - 16); g.lineTo(x, H - 10); g.stroke(); g.fillText(d + '\u00B0', x, H - 2); }
+g.strokeStyle = 'rgba(255,230,140,0.35)'; g.setLineDash([3, 3]); g.strokeRect(fx0() + 13*PXD, H/2 - 4*PXD, 5*PXD, 8*PXD); g.setLineDash([]);
+g.fillStyle = 'rgba(255,230,140,0.5)'; g.fillText('blind spot', fx0() + 15.5*PXD, H/2 - 4*PXD - 4);
+/* the flowers, as they look there */
+var s = sizeDeg(), r = s/2*PXD;
+[S.c1, S.c2].forEach(function(cn, i){ var p = flowerPos(i), a = appearance(COLORS[cn], S.ecc, s); blurred(g, blurPx(S.ecc), function(ox, oy){ drawFlower(g, p[0] + ox, p[1] + oy, r, a.col); }); });
+/* the fixation cross */
+g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 2; var cx = fx0(), cy = H/2; g.beginPath(); g.moveTo(cx - 8, cy); g.lineTo(cx + 8, cy); g.moveTo(cx, cy - 8); g.lineTo(cx, cy + 8); g.stroke();
+/* the flowers as they really are, for comparison */
+g.fillStyle = 'rgba(255,255,255,0.6)'; g.textAlign = 'left'; g.font = '11px system-ui, sans-serif'; g.fillText('really:', W - 104, 18);
+[S.c1, S.c2].forEach(function(cn, i){ drawFlower(g, W - 44 + i*24, 16, 9, COLORS[cn]); });
+}
+/* ══════════ the receptor densities ══════════ */
+function drawDens(){
+var p = pal(), g = DN.g, W = DN.W, H = DN.H; g.fillStyle = p.panel; g.fillRect(0, 0, W, H);
+var x0 = 50, x1 = W - 12, y0 = H - 30, y1 = 14;
+function X(e){ return x0 + (x1 - x0)*(e + 40)/80; } function Y(d){ return y0 - (y0 - y1)*d/200000; }
+g.strokeStyle = p.grid; g.lineWidth = 1; g.font = '10px system-ui, sans-serif'; g.fillStyle = p.muted; g.textAlign = 'center';
+for (var e=-40; e<=40; e+=10){ g.beginPath(); g.moveTo(X(e), y0); g.lineTo(X(e), y1); g.stroke(); g.fillText(e + '\u00B0', X(e), y0 + 13); }
+g.textAlign = 'right'; for (var d=0; d<=200000; d+=50000){ g.beginPath(); g.moveTo(x0, Y(d)); g.lineTo(x1, Y(d)); g.stroke(); g.fillText((d/1000) + 'k', x0 - 4, Y(d) + 3); }
+g.textAlign = 'center'; g.fillText('distance from the fovea (nasal side: blind spot at 15\u00B0)', (x0 + x1)/2, H - 3);
+g.save(); g.translate(11, (y0 + y1)/2); g.rotate(-Math.PI/2); g.fillText('per mm\u00B2', 0, 0); g.restore();
+/* the blind spot: no receptors */
+g.fillStyle = 'rgba(255,230,140,0.15)'; g.fillRect(X(13), y1, X(18) - X(13), y0 - y1);
+function curve(fn, col){ g.strokeStyle = col; g.lineWidth = 2.2; g.beginPath(); for (var i=0; i<=400; i++){ var ee = -40 + 80*i/400, v = (ee > 13 && ee < 18) ? 0 : fn(Math.abs(ee)); if (i) g.lineTo(X(ee), Y(v)); else g.moveTo(X(ee), Y(v)); } g.stroke(); }
+curve(rods, p.rod); curve(cones, p.cone);
+g.font = 'bold 12px system-ui, sans-serif'; g.fillStyle = p.cone; g.textAlign = 'left'; g.fillText('cones', X(1.5), Y(170000)); g.fillStyle = p.rod; g.fillText('rods', X(22), Y(150000));
+/* where the flowers' image falls: from e - s/2 to e + s/2 */
+var s = sizeDeg(); g.fillStyle = p.mark; g.globalAlpha = 0.35; g.fillRect(X(S.ecc - s/2), y1, Math.max(2, X(S.ecc + s/2) - X(S.ecc - s/2)), y0 - y1); g.globalAlpha = 1;
+g.fillStyle = p.mark; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('the image', X(S.ecc), y1 + 10);
+}
+/* ══════════ the two sensitivity curves ══════════ */
+function gl(x, mu, s1, s2){ var t = (x - mu)/(x < mu ? s1 : s2); return Math.exp(-0.5*t*t); }
+function Vday(l){ return (0.821*gl(l, 568.8, 46.9, 40.5) + 0.286*gl(l, 530.9, 16.3, 31.1))/1.0; }
+function Vnight(l){ return gl(l, 507, 38, 48); }
+function drawSens(){
+var p = pal(), g = SN.g, W = SN.W, H = SN.H; g.fillStyle = p.panel; g.fillRect(0, 0, W, H);
+var x0 = 30, x1 = W - 10, y0 = H - 44, y1 = 14;
+function X(l){ return x0 + (x1 - x0)*(l - 400)/300; } function Y(v){ return y0 - (y0 - y1)*v; }
+var vmax = 0; for (var l0=400; l0<=700; l0++) vmax = Math.max(vmax, Vday(l0));
+for (var l=400; l<=700; l++){ var c = spec(l); g.fillStyle = 'rgb(' + c.join(',') + ')'; g.fillRect(X(l), y0 + 6, (x1 - x0)/300 + 0.8, 12); }
+g.font = '10px system-ui, sans-serif'; g.fillStyle = p.muted; g.textAlign = 'center'; [400, 500, 600, 700].forEach(function(t){ g.fillText(t + ' nm', X(t), y0 + 32); });
+var cw = coneW(), rw = rodW();
+function curve(fn, col, a, norm){ g.strokeStyle = col; g.lineWidth = 2.4; g.globalAlpha = 0.25 + 0.75*a; g.beginPath(); for (var l2=400; l2<=700; l2++){ var v = fn(l2)/norm; if (l2 === 400) g.moveTo(X(l2), Y(v)); else g.lineTo(X(l2), Y(v)); } g.stroke(); g.globalAlpha = 1; }
+curve(Vday, p.cone, cw, vmax); curve(Vnight, p.rod, rw, 1);
+g.font = 'bold 11px system-ui, sans-serif'; g.textAlign = 'center';
+g.fillStyle = p.cone; g.globalAlpha = 0.3 + 0.7*cw; g.fillText('day (cones) 555 nm', X(600), Y(1.0)); g.globalAlpha = 0.3 + 0.7*rw; g.fillStyle = p.rod; g.fillText('night (rods) 507 nm', X(462), Y(1.0)); g.globalAlpha = 1;
+}
+function spec(l){
+/* the colour of a wavelength, for the strip */
+var x = 1.056*gl(l, 599.8, 37.9, 31.0) + 0.362*gl(l, 442.0, 16.0, 26.7) - 0.065*gl(l, 501.1, 20.4, 26.2), y = 0.821*gl(l, 568.8, 46.9, 40.5) + 0.286*gl(l, 530.9, 16.3, 31.1), z = 1.217*gl(l, 437.0, 11.8, 36.0) + 0.681*gl(l, 459.0, 26.0, 13.8);
+var r = [3.2406*x - 1.5372*y - 0.4986*z, -0.9689*x + 1.8758*y + 0.0415*z, 0.0557*x - 0.2040*y + 1.0570*z], mn = Math.min(r[0], r[1], r[2]); if (mn < 0) r = r.map(function(v){ return v - mn; });
+var mx = Math.max(r[0], r[1], r[2]); return r.map(function(v){ return enc(v/mx*0.9); });
+}
+/* ══════════ readout and narration ══════════ */
+function fmtL(L){ return L >= 10 ? Math.round(L).toLocaleString() : (L >= 1 ? L.toFixed(1) : (L >= 0.01 ? L.toFixed(2) : L.toExponential(0))); }
+function word(L){ return L < 0.003 ? 'starlight' : (L < 0.1 ? 'moonlight' : (L < 3 ? 'dusk' : (L < 300 ? 'indoor light' : 'daylight'))); }
+function looks(a){
+if (a.col === null) return 'invisible (blind spot)'; if (a.vis < 0.015) return 'invisible';
+if (a.why.indexOf('no S cones') >= 0) return 'greyish (lost its blue)';
+var mx = Math.max(a.col[0], a.col[1], a.col[2]), mn = Math.min(a.col[0], a.col[1], a.col[2]), ch = mx > 1e-6 ? (mx - mn)/mx : 0;   /* chroma of what is shown */
+return ch < 0.18 ? 'grey' : (ch < 0.55 ? 'faded' : 'colorful');
+}
+function bright(a){ return a.col ? 0.2126*a.col[0] + 0.7152*a.col[1] + 0.0722*a.col[2] : 0; }
+function readout(){
+var s = sizeDeg(), a1 = appearance(COLORS[S.c1], S.ecc, s), a2 = appearance(COLORS[S.c2], S.ecc, s);
+var cells = [['LIGHT', fmtL(lum()) + ' cd/m\u00B2 (' + word(lum()) + ')'], ['VISION', regime()], ['CONES HERE', inBlind(S.ecc, s) ? 'none (blind spot)' : Math.round(cones(S.ecc)).toLocaleString() + ' /mm\u00B2'], ['RODS HERE', inBlind(S.ecc, s) ? 'none (blind spot)' : Math.round(rods(S.ecc)).toLocaleString() + ' /mm\u00B2'],
+[S.c1.toUpperCase() + ' FLOWER', looks(a1)], [S.c2.toUpperCase() + ' FLOWER', looks(a2)], ['BRIGHTER ONE', Math.abs(bright(a1) - bright(a2)) < 0.004 ? 'about the same' : (bright(a1) > bright(a2) ? S.c1 : S.c2)]];
+el('epRead').innerHTML = cells.map(function(c){ return '<div><div class="ep_flabel">' + c[0] + '</div><div class="ep_fvalue">' + c[1] + '</div></div>'; }).join('');
+el('epLv').textContent = fmtL(lum()) + ' cd/m\u00B2, ' + word(lum());
+}
+function summary(){
+var s = sizeDeg(), a1 = appearance(COLORS[S.c1], S.ecc, s), a2 = appearance(COLORS[S.c2], S.ecc, s);
+var t = 'In ' + word(lum()) + ' (' + regime() + '), two flowers ' + s.toFixed(s < 1 ? 1 : 0) + ' degrees across, ' + (S.ecc < 0.5 ? 'looked at directly' : S.ecc.toFixed(0) + ' degrees from the center of gaze') + '. ';
+t += 'The ' + S.c1 + ' one looks ' + looks(a1) + ', the ' + S.c2 + ' one ' + looks(a2) + '. ';
+var why = [a1.why, a2.why].filter(Boolean); if (why.length) t += 'Why: ' + why[0] + '. ';
+if (looks(a1) !== 'invisible' && looks(a2) !== 'invisible' && Math.abs(bright(a1) - bright(a2)) > 0.004) t += 'The ' + (bright(a1) > bright(a2) ? S.c1 : S.c2) + ' one looks brighter.';
+return t;
+}
+function narrate(m){ if (!th.nr) return; el('epNarBar').textContent = m; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 450); }
+function draw(){ drawField(); drawDens(); drawSens(); readout(); }
+/* ══════════ controls ══════════ */
+function buildSelects(){ ['epC1', 'epC2'].forEach(function(id){ el(id).innerHTML = Object.keys(COLORS).map(function(k){ return '<option value="' + k + '">' + k + '</option>'; }).join(''); }); }
+function sync(){
+el('epL').value = S.logL; el('epE').value = S.ecc; el('epEv').textContent = (+S.ecc).toFixed(S.ecc % 1 ? 1 : 0);
+el('epS').value = S.size; var s = sizeDeg(); el('epSv').textContent = s < 1 ? s.toFixed(2) : s.toFixed(1); el('epC1').value = S.c1; el('epC2').value = S.c2;
+}
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+function set(k, v){ if (k === 'c1' || k === 'c2') S[k] = v; else S[k] = parseFloat(v); sync(); schedule(); later(); }
+function sizeSlider(deg){ return 100*Math.log(deg/0.1)/Math.log(100); }
+function preset(n){
+var P = { direct:{ logL:2.5, ecc:0, size:sizeSlider(2), c1:'red', c2:'blue' }, side:{ logL:2.5, ecc:30, size:sizeSlider(0.8), c1:'red', c2:'green' },
+star:{ logL:-2.8, ecc:0, size:sizeSlider(0.6), c1:'white', c2:'white' }, dusk:{ logL:-1.1, ecc:6, size:sizeSlider(3), c1:'red', c2:'blue' },
+tiny:{ logL:2.5, ecc:0, size:sizeSlider(0.15), c1:'blue', c2:'yellow' }, blind:{ logL:2.5, ecc:15.5, size:sizeSlider(1.2), c1:'orange', c2:'green' } }[n];
+for (var k in P) S[k] = P[k]; sync(); draw();
+var intro = { direct:'Straight on in daylight: the image falls on the fovea, full of cones. ', side:'Thirty degrees out: few cones, and the small flowers lose their color. ', star:'Starlight, looking straight at the stars: the fovea has no rods. Move them a few degrees off center to see them. ',
+dusk:'At dusk the rods join in: blue gains on red (the Purkinje shift). Move the light slider up and down. ', tiny:'A tiny blue dot looked at directly: the very center of the fovea has no S cones. ', blind:'Fifteen degrees to the side the image falls on the optic disc: no receptors, nothing seen. ' }[n];
+narrate(intro + summary());
+}
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','epBtnHC'],['lm','epBtnLM'],['nr','epBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('ep_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('epBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('epNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--ep-bg','--ep-panel','--ep-border','--ep-text','--ep-muted','--ep-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+draw();
+}
+function describe(){ narrate('At the top, what you see while looking at the cross with your right eye: two flowers at some distance to the right. Below, the density of rods and cones across the retina, with the flowers\u2019 image marked, and the sensitivity of the cones by day and the rods by night. ' + summary()); }
+function toggleDesc(){
+var b = el('epDescBtn'), d = el('epDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* drag the flowers sideways (their distance from the center of gaze); touch only when on a flower */
+var drag = false;
+function pt(e){ var r = FD.c.getBoundingClientRect(); return { x:(e.clientX - r.left)*FD.W/r.width, y:(e.clientY - r.top)*FD.H/r.height, k:FD.W/r.width }; }
+function onF(q, touch){ var tol = Math.max(12, sizeDeg()/2*PXD) + (touch ? 12*q.k : 0); return [0, 1].some(function(i){ var p = flowerPos(i); return Math.hypot(q.x - p[0], q.y - p[1]) < tol; }); }
+function moveTo(q){ S.ecc = Math.max(0, Math.min(40, Math.round((q.x - fx0())/PXD*4)/4)); sync(); schedule(); later(); }
+FD.c.addEventListener('mousedown', function(e){ if (onF(pt(e), false)) drag = true; });
+window.addEventListener('mousemove', function(e){ if (drag) moveTo(pt(e)); else FD.c.style.cursor = onF(pt(e), false) ? 'ew-resize' : 'default'; });
+window.addEventListener('mouseup', function(){ drag = false; });
+FD.c.addEventListener('touchstart', function(e){ var q = pt(e.touches[0]); if (onF(q, true)){ drag = true; e.preventDefault(); } }, { passive:false });
+FD.c.addEventListener('touchmove', function(e){ if (!drag) return; e.preventDefault(); moveTo(pt(e.touches[0])); }, { passive:false });
+FD.c.addEventListener('touchend', function(){ drag = false; });
+/* boot */
+buildSelects(); sync(); draw(); narrate('Ready. ' + summary());
+return { set:set, preset:preset, theme:theme, describe:describe, toggleDesc:toggleDesc,
+_state:function(){ var s = sizeDeg(); return { S:JSON.parse(JSON.stringify(S)), size:s, cw:coneW(), rw:rodW(), cones:cones(S.ecc), rods:rods(S.ecc), a1:appearance(COLORS[S.c1], S.ecc, s), a2:appearance(COLORS[S.c2], S.ecc, s), looks1:looks(appearance(COLORS[S.c1], S.ecc, s)), looks2:looks(appearance(COLORS[S.c2], S.ecc, s)) }; },
+_scot:function(n){ return [photY(COLORS[n]), scotY(COLORS[n])]; } };
+})();
+</script>
+</main>
+</body>
+</html>

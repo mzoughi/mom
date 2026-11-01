@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Color Vision: Three Cones, Mixing Light, and Color Blindness</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, eye, color vision, cones, trichromacy, additive color mixing, metamers, color matching, color blindness, protanopia, deuteranopia, tritanopia, lesson, scientific">
+<meta name="description" content="Interactive simulation of color vision: the three cone sensitivities, additive mixing of light, metamers and color matching, and color vision deficiencies with test plates.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="cvRoot" class="cv_root" role="region" aria-label="Color vision simulator">
+<div class="cv_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="cv_a11ybtn" id="cvBtnHC" onclick="cvSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="cv_a11ybtn" id="cvBtnLM" onclick="cvSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="cv_a11ybtn cv_a11yon" id="cvBtnNR" onclick="cvSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="cv_tbar"><h3>Color Vision: Three Cones, Mixing Light, and Color Blindness</h3></div>
+<div class="cv_mcontent">
+<div class="cv_view">
+<div class="cv_vlabel">the three kinds of cone: how strongly each responds to each wavelength &middot; drag a light's marker</div>
+<canvas id="cvCones" width="780" height="270" role="img" aria-label="The sensitivity curves of the S, M and L cones across the spectrum, with the lights marked, and bars for how strongly each cone responds."></canvas>
+</div>
+<div class="cv_row2">
+<div class="cv_view"><div class="cv_vlabel">the lights on a white screen</div><canvas id="cvMix" width="380" height="300" role="img" aria-label="Three overlapping spots of colored light on a screen, and their mixtures where they overlap."></canvas></div>
+<div class="cv_view"><div class="cv_vlabel" id="cvMatchLab">match a color: a pure wavelength (left) and the mix of the lights (right)</div><canvas id="cvMatch" width="380" height="300" role="img" aria-label="Left: a patch of light of a single wavelength. Right: the mix of the three lights."></canvas></div>
+</div>
+<div class="cv_row2">
+<div class="cv_view"><div class="cv_vlabel" id="cvPlateLab">a test plate</div><canvas id="cvPlate" width="300" height="300" role="img" aria-label="A color vision test plate: a number made of colored dots among dots of another color."></canvas></div>
+<div class="cv_readout" id="cvRead" aria-label="Readout"></div>
+</div>
+</div>
+<div id="cvNarBar" class="cv_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="cv_bbar">
+<button type="button" class="cv_btn" onclick="cvSim.preset('yellow')">Red + green</button>
+<button type="button" class="cv_btn" onclick="cvSim.preset('white')">Red + green + blue</button>
+<button type="button" class="cv_btn" onclick="cvSim.preset('single')">One wavelength</button>
+<button type="button" class="cv_btn cv_go" onclick="cvSim.match()">Match the target color</button>
+<button type="button" class="cv_btn" onclick="cvSim.describe()">Describe</button>
+</div>
+<div class="cv_bbar cv_opts">
+<label>Seen by <select id="cvVis" onchange="cvSim.set('vis',this.value)">
+<option value="normal">normal color vision</option>
+<option value="protan">protanopia (no L cones: red-blind)</option>
+<option value="deutan">deuteranopia (no M cones: green-blind)</option>
+<option value="tritan">tritanopia (no S cones: blue-blind)</option>
+</select></label>
+<label>severity <input type="range" id="cvSev" min="0" max="1" step="0.05" value="1" oninput="cvSim.set('sev',this.value)"> <span id="cvSevV">100 %</span></label>
+<label>Test plate for <select id="cvPlateT" onchange="cvSim.set('plate',this.value)">
+<option value="protan">red (L cones)</option>
+<option value="deutan">green (M cones)</option>
+<option value="tritan">blue (S cones)</option>
+</select></label>
+</div>
+<div class="cv_controls" id="cvLights"></div>
+<div class="cv_descwrap">
+<button type="button" class="cv_descbtn" id="cvDescBtn" aria-expanded="false" aria-controls="cvDesc" onclick="cvSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="cv_desc" id="cvDesc" role="region" aria-labelledby="cvDescBtn" style="display:none">
+<p>This simulation shows how we see color. Light is a mixture of wavelengths, from about 380 nm (violet) to 700 nm (red), but the eye does not measure the whole spectrum. Color vision in daylight relies on just three kinds of cone cell in the retina, named for the wavelengths they respond to best: S (short, near 445 nm), M (medium, near 545 nm) and L (long, near 570 nm).</p>
+<p>A light of spectrum `I(lambda)` excites each kind of cone by an amount</p>
+<p class="cv_eq">`L = int I(lambda) bar l(lambda) d lambda`,&nbsp;&nbsp; `M = int I(lambda) bar m(lambda) d lambda`,&nbsp;&nbsp; `S = int I(lambda) bar s(lambda) d lambda`,</p>
+<p>where `bar l`, `bar m` and `bar s` are the sensitivity curves of the cones. Everything we know about the color of the light is in these three numbers. The curves overlap a great deal: a light of 580 nm excites the L cones strongly and the M cones somewhat, and the brain reads that ratio as yellow.</p>
+<p>Because only three numbers count, very different lights can look exactly the same. A mixture of red and green light excites the cones in the same proportions as yellow light of 580 nm, so it looks yellow, although it contains no yellow light at all. Such lights are called metamers; television and phone screens use them, making every color from just red, green and blue. Mixing light is additive: adding lights adds their cone excitations, and red, green and blue together look white.</p>
+<p>Three lights cannot match every color, though. To match some pure wavelengths, one of the three lights would have to be added with a negative amount -- which in a real experiment means adding it to the target instead. This is why the colors of a rainbow are more vivid than any screen can show.</p>
+<p>In color vision deficiencies one kind of cone is missing or works abnormally. Without L cones (protanopia) or M cones (deuteranopia), reds and greens that differ only in the excitation of the missing cone look the same; without S cones (tritanopia), blues and yellows are confused. About 8 % of men and 0.5 % of women have a red-green deficiency, mostly in a mild, anomalous form. The simulation shows everything as such a viewer would see it, following Vi&eacute;not, Brettel and Mollon (1999).</p>
+<p>The test plates are made here from the physics: the dots of the hidden number differ from the background only in how strongly they excite one kind of cone. A viewer who lacks that cone cannot tell them apart, so the number disappears.</p>
+<p>The colors use the CIE 1931 color matching functions (in the analytic form of Wyman, Sloan and Shirley, 2013), converted to cone responses with the Hunt-Pointer-Estevez transformation. Pure spectral colors lie outside what a screen can show, so they are displayed as closely as the screen allows.</p>
+</div>
+</div>
+</div><!-- #cvRoot -->
+<style>
+#cvRoot, #cvRoot * { box-sizing:border-box; }
+#cvRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --cv-bg:#0a0e12; --cv-panel:#0d1318; --cv-border:#1c262e; --cv-text:#c9d6de; --cv-muted:#5f7180; --cv-val:#8fe3b0; }
+#cvRoot .cv_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#cvRoot .cv_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#cvRoot .cv_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#cvRoot .cv_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#cvRoot .cv_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#cvRoot .cv_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#cvRoot .cv_mcontent { background:var(--cv-bg); color:var(--cv-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#cvRoot .cv_view { border:1px solid var(--cv-border); border-radius:6px; overflow:hidden; background:var(--cv-panel); }
+#cvRoot .cv_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+#cvRoot .cv_vlabel { font-size:10px; color:var(--cv-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#cvRoot canvas { display:block; width:100%; height:auto; }
+#cvRoot #cvCones { touch-action:pan-y; }
+#cvRoot .cv_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); align-content:start; gap:6px 10px; background:var(--cv-panel); border:1px solid var(--cv-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#cvRoot .cv_flabel { font-size:10px; color:var(--cv-muted); letter-spacing:1px; }
+#cvRoot .cv_fvalue { font-size:14px; color:var(--cv-val); font-variant-numeric:tabular-nums; }
+#cvRoot .cv_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#cvRoot .cv_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#cvRoot .cv_opts { border-top:1px solid #c5dc9a; gap:14px; }
+#cvRoot .cv_opts label { display:flex; align-items:center; gap:6px; }
+#cvRoot .cv_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#cvRoot .cv_go { font-weight:bold; border-color:#0a7a5a; background:#e2fff3; }
+#cvRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+#cvRoot .cv_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#cvRoot .cv_crow { background:#fff; border:1px solid #b7cde0; border-left:8px solid #888; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#cvRoot .cv_cname { font-size:.88rem; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+#cvRoot .cv_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#cvRoot .cv_crow label { display:flex; align-items:center; gap:6px; font-size:.78rem; color:#445; }
+#cvRoot input[type=range] { flex:1; min-width:0; accent-color:#e8a020; }
+#cvRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#cvRoot .cv_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#cvRoot .cv_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#cvRoot .cv_descbtn[aria-expanded="true"] { background:#3a3220; }
+#cvRoot .cv_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#cvRoot .cv_desc p { margin:0 0 9px; }
+#cvRoot .cv_eq { text-align:center; font-size:1rem; }
+@container (max-width:640px) { #cvRoot .cv_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:660px) { #cvRoot .cv_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (pointer:coarse) { #cvRoot input[type=range] { height:28px; } #cvRoot .cv_a11ybtn { min-height:40px; } #cvRoot input[type=checkbox] { width:22px; height:22px; } #cvRoot select { min-height:36px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Color matching functions: CIE 1931 2-degree, multi-lobe Gaussian fit of Wyman, Sloan and Shirley (2013).
+Cone sensitivities: Hunt-Pointer-Estevez, LMS = M_HPE XYZ, each curve shown normalized to its peak.
+Display: XYZ -> linear sRGB (IEC 61966-2-1); colors outside the screen's gamut are desaturated toward white
+just enough to be shown. Color vision deficiencies: Vienot, Brettel and Mollon (1999) in their LMS space
+(linear RGB -> LMS, then the missing cone is replaced by its linear estimate from the other two); "severity"
+blends normal and dichromatic vision. Test plates: figure dots differ from the background only in the excitation
+of one kind of cone. No dollar signs or backticks in the code.
+-->
+<script>
+var cvSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('cvRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CO = hi('cvCones'), MX = hi('cvMix'), MT = hi('cvMatch'), PL = hi('cvPlate');
+/* ══════════ color science ══════════ */
+function gl(x, mu, s1, s2){ var t = (x - mu)/(x < mu ? s1 : s2); return Math.exp(-0.5*t*t); }
+function cmf(l){
+return [1.056*gl(l, 599.8, 37.9, 31.0) + 0.362*gl(l, 442.0, 16.0, 26.7) - 0.065*gl(l, 501.1, 20.4, 26.2),
+        0.821*gl(l, 568.8, 46.9, 40.5) + 0.286*gl(l, 530.9, 16.3, 31.1),
+        1.217*gl(l, 437.0, 11.8, 36.0) + 0.681*gl(l, 459.0, 26.0, 13.8)];
+}
+var HPE = [[0.38971, 0.68898, -0.07868], [-0.22981, 1.18340, 0.04641], [0, 0, 1]];
+function mul(Mx, v){ return [Mx[0][0]*v[0] + Mx[0][1]*v[1] + Mx[0][2]*v[2], Mx[1][0]*v[0] + Mx[1][1]*v[1] + Mx[1][2]*v[2], Mx[2][0]*v[0] + Mx[2][1]*v[1] + Mx[2][2]*v[2]]; }
+function inv3(m){
+var a = m[0][0], b = m[0][1], c = m[0][2], d = m[1][0], e = m[1][1], f = m[1][2], g = m[2][0], h = m[2][1], i = m[2][2];
+var A = e*i - f*h, B = -(d*i - f*g), C = d*h - e*g, det = a*A + b*B + c*C;
+return [[A/det, -(b*i - c*h)/det, (b*f - c*e)/det], [B/det, (a*i - c*g)/det, -(a*f - c*d)/det], [C/det, -(a*h - b*g)/det, (a*e - b*d)/det]];
+}
+/* cone curves on a 1 nm grid, normalized to their peaks */
+var LMS = [], PEAK = [0, 0, 0], PEAKL = [0, 0, 0];
+for (var l=380; l<=700; l++){ var q = mul(HPE, cmf(l)); LMS.push(q); for (var k=0; k<3; k++) if (q[k] > PEAK[k]){ PEAK[k] = q[k]; PEAKL[k] = l; } }
+function cone(l){ var i = Math.max(0, Math.min(320, Math.round(l) - 380)), q = LMS[i]; return [q[0]/PEAK[0], q[1]/PEAK[1], q[2]/PEAK[2]]; }
+var XYZ2RGB = [[3.2406, -1.5372, -0.4986], [-0.9689, 1.8758, 0.0415], [0.0557, -0.2040, 1.0570]];
+/* Vienot, Brettel and Mollon (1999): linear RGB <-> their LMS, and the dichromat projections */
+var RGB2V = [[17.8824, 43.5161, 4.11935], [3.45565, 27.1554, 3.86714], [0.0299566, 0.184309, 1.46709]], V2RGB = inv3(RGB2V);
+function dichromat(rgb, type){
+var q = mul(RGB2V, rgb);
+if (type === 'protan') q[0] = 2.02344*q[1] - 2.52581*q[2];
+else if (type === 'deutan') q[1] = 0.494207*q[0] + 1.24827*q[2];
+else if (type === 'tritan') q[2] = -0.395913*q[0] + 0.801109*q[1];
+return mul(V2RGB, q);
+}
+var S = { vis:'normal', sev:1, plate:'deutan', target:580,
+  lights:[ { on:true, l:630, I:0.8 }, { on:true, l:532, I:0.6 }, { on:false, l:465, I:0.6 } ] };
+var th = { hc:false, lm:false, nr:true };
+function seen(rgb){ if (S.vis === 'normal' || S.sev <= 0) return rgb; var d = dichromat(rgb, S.vis); return [rgb[0] + (d[0] - rgb[0])*S.sev, rgb[1] + (d[1] - rgb[1])*S.sev, rgb[2] + (d[2] - rgb[2])*S.sev]; }
+/* from the XYZ of a light (or of a mix) to something the screen can show */
+function toScreen(xyz, gain){
+var r = mul(XYZ2RGB, xyz);
+var mn = Math.min(r[0], r[1], r[2]); if (mn < 0){ r = [r[0] - mn, r[1] - mn, r[2] - mn]; }      /* out of gamut: add white until it fits */
+r = seen([r[0]*gain, r[1]*gain, r[2]*gain]);
+var mx = Math.max(r[0], r[1], r[2], 1e-9); if (mx > 1){ r = [r[0]/mx, r[1]/mx, r[2]/mx]; }
+return r.map(function(v){ v = Math.max(0, Math.min(1, v)); return Math.round(255*(v <= 0.0031308 ? 12.92*v : 1.055*Math.pow(v, 1/2.4) - 0.055)); });
+}
+function rgbStr(c){ return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+function lightXYZ(list){ var x = [0, 0, 0]; list.forEach(function(L){ if (!L.on || L.I <= 0) return; var c = cmf(L.l); x[0] += L.I*c[0]; x[1] += L.I*c[1]; x[2] += L.I*c[2]; }); return x; }
+function lightLMS(list){ var x = lightXYZ(list), q = mul(HPE, x); return [q[0]/PEAK[0], q[1]/PEAK[1], q[2]/PEAK[2]]; }
+function spectralRGB(l){ return toScreen(cmf(l), 1.6); }
+/* the cone responses as the viewer's cones register them (a missing cone registers nothing) */
+function viewerLMS(q){ var o = q.slice(); var i = { protan:0, deutan:1, tritan:2 }[S.vis]; if (i !== undefined) o[i] = o[i]*(1 - S.sev); return o; }
+/* ══════════ color names (for narration) ══════════ */
+function colorName(c){
+var r = c[0]/255, g = c[1]/255, b = c[2]/255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn)/2, d = mx - mn;
+if (mx < 0.08) return 'black'; var s = d === 0 ? 0 : d/(1 - Math.abs(2*l - 1));
+if (s < 0.15) return mx > 0.85 ? 'white' : 'grey';
+var h = d === 0 ? 0 : (mx === r ? ((g - b)/d + 6) % 6 : (mx === g ? (b - r)/d + 2 : (r - g)/d + 4))*60;
+var n = h < 15 ? 'red' : h < 40 ? 'orange' : h < 65 ? 'yellow' : h < 90 ? 'yellow-green' : h < 160 ? 'green' : h < 200 ? 'cyan' : h < 250 ? 'blue' : h < 290 ? 'violet' : h < 335 ? 'magenta' : 'red';
+return (s < 0.4 ? 'pale ' : '') + n;
+}
+/* ══════════ palette for the chrome ══════════ */
+function pal(){ if (th.hc) return { bg:'#000', txt:'#fff', muted:'#ddd', grid:'#555', panel:'#000' }; return th.lm ? { bg:'#ffffff', txt:'#1d232a', muted:'#556070', grid:'#d0d8e0', panel:'#ffffff' } : { bg:'#0d1318', txt:'#dbe5ec', muted:'#7a8a98', grid:'#1c262e', panel:'#0d1318' }; }
+var CONECOL = ['#ff6a3d', '#5fd35f', '#5a8cff'];
+/* ══════════ the cone curves ══════════ */
+var GX0 = 46, GX1 = 560, GY0 = 210, GY1 = 18;
+function gx(l){ return GX0 + (GX1 - GX0)*(l - 380)/320; } function lx(x){ return 380 + 320*(x - GX0)/(GX1 - GX0); }
+function drawCones(){
+var p = pal(), g = CO.g, W = CO.W, H = CO.H; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+/* the spectrum strip, as the viewer sees it */
+for (var l=380; l<=700; l++){ g.fillStyle = rgbStr(spectralRGB(l)); g.fillRect(gx(l), GY0 + 8, (GX1 - GX0)/320 + 0.8, 14); }
+g.strokeStyle = p.grid; g.lineWidth = 1; g.font = '10px system-ui, sans-serif'; g.fillStyle = p.muted; g.textAlign = 'center';
+for (var t=400; t<=700; t+=50){ g.beginPath(); g.moveTo(gx(t), GY1); g.lineTo(gx(t), GY0); g.stroke(); g.fillText(t + ' nm', gx(t), GY0 + 36); }
+g.textAlign = 'right'; [0, 0.5, 1].forEach(function(v){ var y = GY0 - (GY0 - GY1)*v; g.beginPath(); g.moveTo(GX0, y); g.lineTo(GX1, y); g.stroke(); g.fillText(v.toFixed(1), GX0 - 4, y + 3); });
+g.save(); g.translate(12, (GY0 + GY1)/2); g.rotate(-Math.PI/2); g.textAlign = 'center'; g.fillText('relative sensitivity', 0, 0); g.restore();
+/* the curves (a missing cone is drawn faded and dashed) */
+var miss = { protan:0, deutan:1, tritan:2 }[S.vis];
+for (var k=0; k<3; k++){
+g.strokeStyle = CONECOL[k]; g.lineWidth = 2.4; g.globalAlpha = (k === miss) ? 0.3 + 0.7*(1 - S.sev) : 1; if (k === miss && S.sev > 0.5) g.setLineDash([5, 4]);
+g.beginPath(); for (var l2=380; l2<=700; l2++){ var y = GY0 - (GY0 - GY1)*cone(l2)[k]; if (l2 === 380) g.moveTo(gx(l2), y); else g.lineTo(gx(l2), y); } g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+g.fillStyle = CONECOL[k]; g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(['L', 'M', 'S'][k] + ' ' + PEAKL[k] + ' nm', gx(PEAKL[k]) + [18, -16, 0][k], GY1 + [12, 12, 12][k] + [10, 0, 0][k]);
+}
+/* the lights and the target */
+S.lights.forEach(function(L, i){ if (!L.on) return; var x = gx(L.l); g.strokeStyle = rgbStr(spectralRGB(L.l)); g.lineWidth = 3; g.beginPath(); g.moveTo(x, GY0); g.lineTo(x, GY0 - (GY0 - GY1)*Math.max(0.08, L.I)); g.stroke();
+g.fillStyle = p.txt; g.font = 'bold 11px system-ui, sans-serif'; g.fillText(String(i + 1), x, GY0 - (GY0 - GY1)*Math.max(0.08, L.I) - 6); });
+var tx = gx(S.target); g.strokeStyle = p.txt; g.setLineDash([3, 3]); g.lineWidth = 1.2; g.beginPath(); g.moveTo(tx, GY0); g.lineTo(tx, GY1); g.stroke(); g.setLineDash([]);
+g.fillStyle = p.txt; g.font = '10px system-ui, sans-serif'; g.fillText('target', tx, GY1 - 6 + 4);
+/* bars: how strongly each cone responds to the lights together (the viewer's cones) */
+var q = viewerLMS(lightLMS(S.lights)), mx = Math.max(1, q[0], q[1], q[2]), bx0 = 600, bw = 46;
+g.fillStyle = p.muted; g.font = '10px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('cone responses to the lights', bx0 + 76, GY1 - 2);
+for (var c=0; c<3; c++){ var h = (GY0 - GY1 - 14)*q[c]/mx, x0 = bx0 + c*(bw + 10);
+g.fillStyle = CONECOL[c]; g.fillRect(x0, GY0 - h, bw, h); g.fillStyle = p.txt; g.font = 'bold 12px system-ui, sans-serif'; g.fillText(['L', 'M', 'S'][c], x0 + bw/2, GY0 + 18); g.font = '11px system-ui, sans-serif'; g.fillText(q[c].toFixed(2), x0 + bw/2, GY0 - h - 5); }
+}
+/* ══════════ the lights on a screen ══════════ */
+var CIRC = [[0.36, 0.40], [0.64, 0.40], [0.50, 0.66]], RAD = 0.24;
+function drawMix(){
+var g = MX.g, W = MX.W, H = MX.H, img = g.createImageData(W*DPR, H*DPR), dd = img.data;
+var combos = {};
+for (var m=0; m<8; m++){ var list = S.lights.map(function(L, i){ return { on:L.on && ((m >> i) & 1), l:L.l, I:L.I }; }); combos[m] = toScreen(lightXYZ(list), 1.1); }
+var bg = th.lm ? [235, 235, 232] : [14, 14, 16];
+for (var y=0; y<H*DPR; y++) for (var x=0; x<W*DPR; x++){
+var u = x/(W*DPR), v = y/(H*DPR), m2 = 0;
+for (var i=0; i<3; i++){ var dx = (u - CIRC[i][0])*W/H, dy = v - CIRC[i][1]; if (S.lights[i].on && dx*dx + dy*dy < RAD*RAD) m2 |= (1 << i); }
+var col = m2 ? combos[m2] : bg, o = 4*(y*W*DPR + x);
+dd[o] = col[0]; dd[o + 1] = col[1]; dd[o + 2] = col[2]; dd[o + 3] = 255;
+}
+g.putImageData(img, 0, 0);
+g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'center'; g.fillStyle = th.lm ? '#333' : '#ddd';
+S.lights.forEach(function(L, i){ if (!L.on) return; var a = CIRC[i]; g.fillText(String(i + 1) + ': ' + L.l + ' nm', (a[0] + (a[0] - 0.5)*0.9)*W, (a[1] + (a[1] - 0.5)*0.9)*H + (i === 2 ? 26 : -8)); });
+}
+/* ══════════ matching a target color ══════════ */
+var lastMatch = null;
+function drawMatch(){
+var g = MT.g, W = MT.W, H = MT.H; g.fillStyle = th.lm ? '#e8e8e4' : '#101214'; g.fillRect(0, 0, W, H);
+var tXYZ = cmf(S.target), mXYZ = lightXYZ(S.lights);
+var Y = Math.max(tXYZ[1], mXYZ[1], 1e-6), gain = 0.9/Y;
+var tc = toScreen(tXYZ, gain*Math.max(1, tXYZ[1]/Y)), mc = toScreen(mXYZ, gain);
+var r = Math.min(W, H)*0.36;
+g.save(); g.beginPath(); g.arc(W/2, H/2 - 6, r, 0, 2*Math.PI); g.clip();
+g.fillStyle = rgbStr(tc); g.fillRect(W/2 - r, H/2 - 6 - r, r, 2*r);
+g.fillStyle = rgbStr(mc); g.fillRect(W/2, H/2 - 6 - r, r, 2*r); g.restore();
+g.strokeStyle = th.lm ? '#555' : '#888'; g.lineWidth = 1.5; g.beginPath(); g.arc(W/2, H/2 - 6, r, 0, 2*Math.PI); g.stroke(); g.beginPath(); g.moveTo(W/2, H/2 - 6 - r); g.lineTo(W/2, H/2 - 6 + r); g.stroke();
+g.font = '12px system-ui, sans-serif'; g.textAlign = 'center'; g.fillStyle = th.lm ? '#333' : '#ddd';
+g.fillText(S.target + ' nm alone', W/2 - r/2, H - 12); g.fillText('lights ' + S.lights.map(function(L, i){ return L.on ? String(i + 1) : null; }).filter(Boolean).join(' + '), W/2 + r/2, H - 12);
+}
+function matchLights(){
+/* solve for the intensities of the three lights that excite the cones exactly as the target does */
+var A = [[], [], []], t = lightLMS([{ on:true, l:S.target, I:1 }]);
+for (var i=0; i<3; i++){ var q = lightLMS([{ on:true, l:S.lights[i].l, I:1 }]); A[0][i] = q[0]; A[1][i] = q[1]; A[2][i] = q[2]; }
+var x = mul(inv3(A), t);
+return x;
+}
+/* ══════════ the test plate ══════════ */
+var DOTS = null, PLATE_DIGITS = { protan:'29', deutan:'45', tritan:'8' };
+function rnd(seed){ var s = seed; return function(){ s = (s*16807) % 2147483647; return (s - 1)/2147483646; }; }
+function makeDots(){
+var r = rnd(4242), W = PL.W, H = PL.H, R = Math.min(W, H)*0.46, cx = W/2, cy = H/2, dots = [], tries = 0;
+while (dots.length < 900 && tries < 30000){ tries++;
+var a = r()*2*Math.PI, rr = Math.sqrt(r())*R, x = cx + rr*Math.cos(a), y = cy + rr*Math.sin(a), rad = 2.6 + r()*5.6, ok = true;
+if (Math.hypot(x - cx, y - cy) + rad > R) continue;
+for (var i=0; i<dots.length; i++){ var d = dots[i]; if (Math.hypot(d.x - x, d.y - y) < d.r + rad + 0.8){ ok = false; break; } }
+if (ok) dots.push({ x:x, y:y, r:rad, h:r(), v:r() });
+}
+return dots;
+}
+var MASK = {};
+function maskFor(type){
+if (MASK[type]) return MASK[type];
+var c = document.createElement('canvas'); c.width = PL.W; c.height = PL.H; var g = c.getContext('2d');
+g.fillStyle = '#000'; g.font = 'bold ' + Math.round(PL.H*0.5) + 'px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(PLATE_DIGITS[type], PL.W/2, PL.H/2 + 4);
+MASK[type] = g.getImageData(0, 0, PL.W, PL.H).data; return MASK[type];
+}
+function inFigure(d, type){ var m = maskFor(type), x = Math.round(d.x), y = Math.round(d.y); return m[4*(y*PL.W + x) + 3] > 128; }
+function plateColor(d, fig, type){
+/* background: warm earthy tones with lightness noise; figure: the same, with one cone's excitation changed */
+var base = [0.42 + 0.20*d.h, 0.30 + 0.12*d.h, 0.12 + 0.08*(1 - d.h)].map(function(v){ return v*(0.75 + 0.45*d.v); });
+if (type === 'tritan') base = [0.30 + 0.12*d.h, 0.34 + 0.10*d.h, 0.30 + 0.10*(1 - d.h)].map(function(v){ return v*(0.75 + 0.45*d.v); });
+if (!fig) return base;
+var q = mul(RGB2V, base), i = { protan:0, deutan:1, tritan:2 }[type];
+q[i] *= { protan:0.80, deutan:1.30, tritan:2.4 }[type];
+var out = mul(V2RGB, q); return out.map(function(v){ return Math.max(0, v); });
+}
+function drawPlate(){
+var g = PL.g, W = PL.W, H = PL.H; g.fillStyle = th.lm ? '#f4f1e8' : '#151515'; g.fillRect(0, 0, W, H);
+if (!DOTS) DOTS = makeDots();
+DOTS.forEach(function(d){
+var lin = seen(plateColor(d, inFigure(d, S.plate), S.plate));
+var c = lin.map(function(v){ v = Math.max(0, Math.min(1, v)); return Math.round(255*(v <= 0.0031308 ? 12.92*v : 1.055*Math.pow(v, 1/2.4) - 0.055)); });
+g.fillStyle = rgbStr(c); g.beginPath(); g.arc(d.x, d.y, d.r, 0, 2*Math.PI); g.fill();
+});
+el('cvPlateLab').textContent = 'a test plate for the ' + { protan:'L (red)', deutan:'M (green)', tritan:'S (blue)' }[S.plate] + ' cones, seen with ' + el('cvVis').selectedOptions[0].text.split(' (')[0];
+}
+function plateVisible(){
+/* how different the figure and the background look to this viewer (mean color difference of matched dots) */
+var sum = 0, n = 0;
+DOTS.forEach(function(d){ var a = seen(plateColor(d, false, S.plate)), b = seen(plateColor(d, true, S.plate)); sum += Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); n++; });
+return sum/n;
+}
+/* ══════════ readout and narration ══════════ */
+function readout(){
+var on = S.lights.filter(function(L){ return L.on && L.I > 0; });
+var mc = toScreen(lightXYZ(S.lights), 1.1), q = viewerLMS(lightLMS(S.lights)), tot = q[0] + q[1] + q[2] || 1;
+var cells = [['LIGHTS', on.length ? on.map(function(L){ return L.l + ' nm'; }).join(' + ') : 'none'], ['THE MIX LOOKS', colorName(mc)],
+['L : M : S', (q[0]/tot).toFixed(2) + ' : ' + (q[1]/tot).toFixed(2) + ' : ' + (q[2]/tot).toFixed(2)], ['TARGET', S.target + ' nm, ' + colorName(spectralRGB(S.target))]];
+if (lastMatch) cells.push(['MATCH NEEDS', lastMatch.map(function(v, i){ return (i + 1) + ': ' + v.toFixed(2); }).join(', ')]);
+cells.push(['PLATE NUMBER', plateVisible() > 0.04 ? 'visible: ' + PLATE_DIGITS[S.plate] : 'invisible to this viewer']);
+el('cvRead').innerHTML = cells.map(function(c){ return '<div><div class="cv_flabel">' + c[0] + '</div><div class="cv_fvalue">' + c[1] + '</div></div>'; }).join('');
+}
+function summary(){
+var on = S.lights.filter(function(L){ return L.on && L.I > 0; }), mc = toScreen(lightXYZ(S.lights), 1.1), q = viewerLMS(lightLMS(S.lights));
+var s = on.length ? 'The light' + (on.length > 1 ? 's' : '') + ' (' + on.map(function(L){ return L.l + ' nm'; }).join(' and ') + ') excite the L, M and S cones by ' + q.map(function(v){ return v.toFixed(2); }).join(', ') + ', and look ' + colorName(mc) + '. ' : 'All the lights are off. ';
+if (S.vis !== 'normal') s += 'Everything is shown as seen with ' + el('cvVis').selectedOptions[0].text.split(' (')[0] + (S.sev < 1 ? ' at ' + Math.round(S.sev*100) + ' % severity' : '') + '. ';
+s += 'The number on the test plate is ' + (plateVisible() > 0.04 ? PLATE_DIGITS[S.plate] + '.' : 'invisible to this viewer.');
+return s;
+}
+function narrate(m){ if (!th.nr) return; el('cvNarBar').textContent = m; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 450); }
+function draw(){ drawCones(); drawMix(); drawMatch(); drawPlate(); readout(); }
+/* ══════════ controls ══════════ */
+function buildLights(){
+var h = S.lights.map(function(L, i){ return '<div class="cv_crow" id="cvRow' + i + '"><div class="cv_cname"><label><input type="checkbox" id="cvOn' + i + '"> <b>Light ' + (i + 1) + '</b></label> <span class="cv_cval"><span id="cvLv' + i + '"></span> nm</span></div>' +
+'<label>wavelength <input type="range" id="cvL' + i + '" min="380" max="700" step="1"></label>' +
+'<label>intensity <input type="range" id="cvI' + i + '" min="0" max="1" step="0.01"></label></div>'; }).join('') +
+'<div class="cv_crow" style="border-left-color:#999"><div class="cv_cname"><b>Target</b> <span class="cv_cval"><span id="cvTv"></span> nm</span></div><label>wavelength <input type="range" id="cvT" min="400" max="680" step="1"></label></div>';
+el('cvLights').innerHTML = h;
+S.lights.forEach(function(L, i){
+el('cvOn' + i + '').addEventListener('change', function(){ L.on = this.checked; lastMatch = null; sync(); schedule(); later(); });
+el('cvL' + i + '').addEventListener('input', function(){ L.l = parseInt(this.value, 10); lastMatch = null; sync(); schedule(); later(); });
+el('cvI' + i + '').addEventListener('input', function(){ L.I = parseFloat(this.value); lastMatch = null; sync(); schedule(); later(); });
+});
+el('cvT').addEventListener('input', function(){ S.target = parseInt(this.value, 10); lastMatch = null; sync(); schedule(); later(); });
+}
+function sync(){
+S.lights.forEach(function(L, i){ el('cvOn' + i + '').checked = L.on; el('cvL' + i + '').value = L.l; el('cvI' + i + '').value = L.I; el('cvLv' + i + '').textContent = L.l;
+el('cvRow' + i + '').style.borderLeftColor = rgbStr(spectralRGB(L.l)); el('cvRow' + i + '').style.opacity = L.on ? 1 : 0.6; });
+el('cvT').value = S.target; el('cvTv').textContent = S.target;
+el('cvVis').value = S.vis; el('cvSev').value = S.sev; el('cvSevV').textContent = Math.round(S.sev*100) + ' %'; el('cvSev').disabled = S.vis === 'normal'; el('cvPlateT').value = S.plate;
+}
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+function set(k, v){ if (k === 'vis' || k === 'plate') S[k] = v; else S[k] = parseFloat(v); if (k === 'vis' && v !== 'normal') S.plate = v; sync(); schedule(); later(); }
+function preset(n){
+lastMatch = null;
+if (n === 'yellow'){ S.lights = [{ on:true, l:630, I:0.8 }, { on:true, l:532, I:0.55 }, { on:false, l:465, I:0.6 }]; S.target = 580; }
+if (n === 'white'){
+  S.lights = [{ on:true, l:630, I:1 }, { on:true, l:532, I:1 }, { on:true, l:465, I:1 }];
+  /* the intensities whose mix has the color of daylight white (CIE D65: X 0.9505, Y 1, Z 1.089) */
+  var A = [[], [], []]; for (var i=0; i<3; i++){ var c = cmf(S.lights[i].l); A[0][i] = c[0]; A[1][i] = c[1]; A[2][i] = c[2]; }
+  var x = mul(inv3(A), [0.9505, 1, 1.089]), mx = Math.max(x[0], x[1], x[2]);
+  S.lights.forEach(function(L, k){ L.I = Math.max(0, x[k]/mx); });
+}
+if (n === 'single'){ S.lights = [{ on:true, l:580, I:0.9 }, { on:false, l:532, I:0.6 }, { on:false, l:465, I:0.6 }]; }
+rebind(); sync(); draw();
+narrate({ yellow:'Red and green light together: there is no yellow light here, yet the mix looks yellow, because it excites the L and M cones in the same proportions as yellow light of 580 nm does. ', white:'Red, green and blue together excite all three kinds of cone, and the mix looks white. ', single:'A single wavelength. Drag its marker along the spectrum and watch the cone responses change. ' }[n] + summary());
+}
+function rebind(){ buildLights(); }
+function match(){
+var x = matchLights(), big = Math.max(Math.abs(x[0]), Math.abs(x[1]), Math.abs(x[2]));
+var tiny = x.map(function(v, i){ return v < 0 && -v < 0.03*big ? i : -1; }).filter(function(i){ return i >= 0; });
+var neg = x.map(function(v, i){ return v < 0 && -v >= 0.03*big ? i : -1; }).filter(function(i){ return i >= 0; });
+lastMatch = x;
+if (!neg.length){
+var mx = Math.max(x[0], x[1], x[2]); S.lights.forEach(function(L, i){ L.on = x[i] > 0; L.I = Math.max(0, Math.min(1, x[i]/mx)); });
+sync(); draw();
+narrate('The lights are set to ' + x.map(function(v){ return Math.max(0, v/mx).toFixed(2); }).join(', ') + ' (relative intensities). The mix now excites the cones ' + (tiny.length ? 'almost exactly' : 'exactly') + ' as the ' + S.target + ' nm light does, so the two halves look the same: a metamer, made of quite different light.' +
+(tiny.length ? ' (A perfect match would need a tiny negative amount, ' + x[tiny[0]].toFixed(3) + ', of light ' + (tiny[0] + 1) + ': pure spectral colors lie just outside what three lights can make.)' : ''));
+} else {
+sync(); draw();
+narrate('No mix of these lights can match ' + S.target + ' nm: it would need a negative amount of light ' + neg.map(function(i){ return i + 1; }).join(' and ') + ' (' + neg.map(function(i){ return x[i].toFixed(2); }).join(', ') + '). In a real experiment, that light would be added to the target side instead. Try other wavelengths for the three lights.');
+}
+}
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','cvBtnHC'],['lm','cvBtnLM'],['nr','cvBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('cv_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('cvBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('cvNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--cv-bg','--cv-panel','--cv-border','--cv-text','--cv-muted','--cv-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+draw();
+}
+function describe(){ narrate('At the top, the sensitivity curves of the L, M and S cones across the spectrum, with markers for the lights, and bars for how strongly each cone responds. Below, the lights overlapping on a screen, a target color beside the mix of the lights, and a color vision test plate. ' + summary()); }
+function toggleDesc(){
+var b = el('cvDescBtn'), d = el('cvDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* drag a light's marker (or the target) along the spectrum; touch only when on a marker */
+var drag = null;
+function pt(e){ var r = CO.c.getBoundingClientRect(); return { x:(e.clientX - r.left)*CO.W/r.width, y:(e.clientY - r.top)*CO.H/r.height, k:CO.W/r.width }; }
+function pick(q, touch){ var tol = 9 + (touch ? 10*q.k : 0), best = null, bd = 1e9;
+S.lights.forEach(function(L, i){ if (!L.on) return; var d = Math.abs(q.x - gx(L.l)); if (d < tol && d < bd && q.y > GY1 - 10 && q.y < GY0 + 24){ bd = d; best = i; } });
+if (best === null && Math.abs(q.x - gx(S.target)) < tol && q.y > GY1 - 14 && q.y < GY0) best = 't';
+return best; }
+function moveTo(q){ var l = Math.round(Math.max(380, Math.min(700, lx(q.x)))); if (drag === 't') S.target = Math.max(400, Math.min(680, l)); else S.lights[drag].l = l; lastMatch = null; sync(); schedule(); later(); }
+CO.c.addEventListener('mousedown', function(e){ drag = pick(pt(e), false); });
+window.addEventListener('mousemove', function(e){ if (drag !== null) moveTo(pt(e)); else CO.c.style.cursor = pick(pt(e), false) !== null ? 'ew-resize' : 'default'; });
+window.addEventListener('mouseup', function(){ drag = null; });
+CO.c.addEventListener('touchstart', function(e){ var q = pt(e.touches[0]); drag = pick(q, true); if (drag !== null) e.preventDefault(); }, { passive:false });
+CO.c.addEventListener('touchmove', function(e){ if (drag === null) return; e.preventDefault(); moveTo(pt(e.touches[0])); }, { passive:false });
+CO.c.addEventListener('touchend', function(){ drag = null; });
+/* boot */
+buildLights(); sync(); draw(); narrate('Ready. ' + summary());
+return { set:set, preset:preset, match:match, theme:theme, describe:describe, toggleDesc:toggleDesc,
+_state:function(){ return { S:JSON.parse(JSON.stringify(S)), peaks:PEAKL.slice(), mixLMS:lightLMS(S.lights), viewer:viewerLMS(lightLMS(S.lights)), mixName:colorName(toScreen(lightXYZ(S.lights), 1.1)), plate:plateVisible(), match:lastMatch }; },
+_lms:function(list){ return lightLMS(list); }, _name:function(l){ return colorName(spectralRGB(l)); } };
+})();
+</script>
+</main>
+</body>
+</html>
