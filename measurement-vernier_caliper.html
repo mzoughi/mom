@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Measurement: Vernier Caliper</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, measurement, uncertainty, vernier caliper, vernier scale, measurement, least count, uncertainty, outside jaws, inside jaws, lesson, scientific">
+<meta name="description" content="Interactive vernier caliper simulation: practice reading the main and vernier scales and measure a disk, a block and the inner width of a box.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<hr>
+
+<div id="vcRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="vc_a11y" id="vcA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="vc_a11ybtn" id="vcBtnLM" onclick="vcA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="vc_a11ybtn vc_a11yon" id="vcBtnNR" onclick="vcA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="vc_header">
+<p class="vc_h1">Vernier Caliper</p>
+<p class="vc_sub">Read the main scale and the vernier scale to a hundredth of a centimeter</p>
+</div>
+<div id="vcNarBar" class="vc_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- ── Canvas ── -->
+<div class="vc_diag">
+<div class="vc_diaglabel"><b>VERNIER CALIPER</b><span class="vc_diagnote">drag the red dot (or use the sliders) &middot; zoom in to read the fine scales</span></div>
+<div class="vc_cvwrap">
+<canvas id="cv" width="650" height="300" style="border:1px solid black;display:block;">
+<span style="color:red;">This browser does not support HTML5 canvas.</span>
+</canvas>
+</div>
+<div class="vc_zoombar" role="group" aria-label="Zoom">
+<span class="vc_zlbl">Zoom</span>
+<button type="button" class="vc_zbtn" data-z="1" aria-pressed="true" onclick="vcZoom.set(1)">1&times;</button>
+<button type="button" class="vc_zbtn" data-z="2" aria-pressed="false" onclick="vcZoom.set(2)">2&times;</button>
+<button type="button" class="vc_zbtn" data-z="3" aria-pressed="false" onclick="vcZoom.set(3)">3&times;</button>
+</div>
+</div>
+<!-- ── Object selector ── -->
+<div class="vc_ctrl vc_ctrl_green">
+<span class="vc_ctrlabel">Select Object:</span>
+<label class="vc_radlbl"><input type="radio" name="vcObj" value="noObject" id="vcNoObj" checked onchange="vcSim.setObj('noObject')"> No Object</label>
+<label class="vc_radlbl"><input type="radio" name="vcObj" value="disk1"    id="vcDsk1"          onchange="vcSim.setObj('disk1')">    Disk</label>
+<label class="vc_radlbl"><input type="radio" name="vcObj" value="rect"     id="vcRect"          onchange="vcSim.setObj('rect')">     Block</label>
+<label class="vc_radlbl"><input type="radio" name="vcObj" value="box"      id="vcBox"           onchange="vcSim.setObj('box')">      Box</label>
+</div>
+<!-- ── Vernier arm slider ── -->
+<div class="vc_ctrl vc_ctrl_blue">
+<span class="vc_ctrlabel">&#9658; Vernier arm:</span>
+<input type="range" id="vcSlider" class="vc_slider" min="0" max="4.50" value="0" step="0.01"
+oninput="vcSim.setSlider(+this.value)" onchange="vcSim.setSlider(+this.value)" aria-label="Vernier arm position in centimetres">
+<span class="vc_rdout" id="vcRdout">0.00 cm</span>
+</div>
+<!-- ── Info panel ── -->
+<div class="vc_info" id="vcNoSim">
+<div class="vc_infotitle">Vernier Caliper</div>
+<div class="vc_infotext">
+The upper-scale reading is where the 0 on the vernier scale lines up with the main scale.
+The vernier digit is the line on the lower scale that best aligns with <em>any</em> line on the upper scale.
+Drag the <strong>red dot</strong> or use the <strong>Vernier arm</strong> slider to move the jaw.
+<em>No Object</em> mode shows annotated arrows for practice reading.
+</div>
+<div class="vc_copyright">&copy;&nbsp;Taha Mzoughi 2015</div>
+</div>
+<style>
+/* ── Root scoping ── */
+#vcRoot { display:block; width:652px; font-family:Calibri,Arial,sans-serif; font-size:10pt; }
+#vcRoot * { box-sizing:border-box; margin:0; }
+/* ── Accessibility toolbar ── */
+#vcRoot .vc_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; width:652px; }
+#vcRoot .vc_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#vcRoot .vc_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#vcRoot .vc_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#vcRoot .vc_narbar { width:652px; min-height:26px; padding:4px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.88rem; color:#333; font-style:italic; }
+/* ── Control rows ── */
+#vcRoot .vc_ctrl { display:flex; align-items:center; gap:10px; width:652px; padding:7px 10px; flex-wrap:wrap; }
+#vcRoot .vc_ctrl_green { background:#99ff33; }
+#vcRoot .vc_ctrl_blue  { background:#cce8ff; border-top:1px solid #90c0e0; }
+#vcRoot .vc_ctrlabel { font-weight:bold; font-size:13px; white-space:nowrap; }
+#vcRoot .vc_radlbl { font-size:13px; cursor:pointer; display:flex; align-items:center; gap:4px; }
+#vcRoot .vc_slider { flex:1; min-width:200px; height:16px; cursor:pointer; }
+#vcRoot .vc_rdout { background:#00c; color:#ff0; font-family:monospace; font-size:13px; padding:2px 8px; border-radius:3px; white-space:nowrap; min-width:72px; text-align:right; }
+/* ── Info panel ── */
+#vcRoot .vc_info { width:652px; background:#ffff00; border:1px solid #000; border-top:none; padding:6px 10px 4px; }
+#vcRoot .vc_infotitle { font-weight:bold; font-size:large; margin-bottom:2px; }
+#vcRoot .vc_infotext { font-size:10pt; margin-bottom:3px; }
+#vcRoot .vc_copyright { font-size:9pt; }
+</style>
+<style>
+/* ════════ Hall effect template layer: mobile friendly, scoped to #vcRoot ════════ */
+#vcRoot {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+width:100% !important; max-width:780px; margin:0 auto 10px; box-sizing:border-box; position:relative;
+display:flex; flex-direction:column; gap:10px; padding:14px 10px 18px; border-radius:6px;
+font-family:Arial, sans-serif; color:var(--tp-text); background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+}
+#vcRoot.vc_lmode {
+--tp-chassis:#e9edf1; --tp-panel:#ffffff; --tp-panel-hi:#f1f4f7; --tp-panel-lo:#f4f6f9;
+--tp-border:#c3cad3; --tp-border-hi:#9aa3ae; --tp-text:#1d232a; --tp-dim:#556070;
+--tp-accent:#a8620a; --tp-green:#12805a; --tp-val:#8a4a00;
+--tp-focus:#a8620a; --tp-nar-bg:#ffefc0; --tp-nar-border:#e0b040; --tp-nar-text:#333333; background-image:none;
+}
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#vcRoot :not(mjx-container):not(mjx-container *), #vcRoot :not(mjx-container):not(mjx-container *)::before, #vcRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; }
+#vcRoot input:focus-visible, #vcRoot button:focus-visible, #vcRoot select:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+/* display options */
+#vcRoot .vc_a11y { width:auto !important; background:none; padding:0; justify-content:center; }
+#vcRoot .vc_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-dim); }
+#vcRoot .vc_a11ybtn:hover { border-color:var(--tp-accent); color:var(--tp-accent); }
+#vcRoot .vc_a11yon { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* header */
+#vcRoot .vc_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#vcRoot .vc_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent); text-align:center; }
+#vcRoot .vc_sub { font-size:.7rem; color:var(--tp-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* narration */
+#vcRoot .vc_narbar { width:auto !important; min-height:28px; padding:6px 12px; background:var(--tp-nar-bg); border:none; border-left:4px solid var(--tp-nar-border); font-size:.82rem; color:var(--tp-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* the instrument: canvas in a frame that scrolls sideways when zoomed */
+#vcRoot .vc_diag { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#vcRoot .vc_diaglabel { background:var(--tp-panel-lo); border-bottom:1px solid var(--tp-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--tp-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#vcRoot .vc_diaglabel b { color:var(--tp-accent); }
+#vcRoot .vc_diagnote { text-transform:none; letter-spacing:.02em; }
+#vcRoot .vc_cvwrap { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; background:#ffffff; }
+#vcRoot canvas { display:block; width:100%; max-width:650px; height:auto; margin:0 auto; border:none !important; }
+#vcRoot .vc_zoombar { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; padding:8px 10px; background:var(--tp-panel-lo); border-top:1px solid var(--tp-border); }
+#vcRoot .vc_zlbl { font-family:monospace; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--tp-dim); }
+#vcRoot .vc_zbtn { padding:6px 14px; font-family:monospace; font-size:.74rem; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-text); border-radius:3px; }
+#vcRoot .vc_zbtn[aria-pressed="true"] { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* control rows become panels (their colors become a stripe) */
+#vcRoot .vc_ctrl { width:auto !important; background:var(--tp-panel) !important; border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:6px; padding:9px 12px; gap:8px 12px; color:var(--tp-text); }
+#vcRoot .vc_ctrl_green { border-left-color:#7ccf3a; }
+#vcRoot .vc_ctrl_blue { border-left-color:#6fb3e8; }
+#vcRoot .vc_ctrl_tan { border-left-color:#d2a96a; }
+/* the ruler's X / Y / Angle row: one label, slider and value per line */
+#vcRoot .rul_ctrl_blue { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; }
+#vcRoot .vc_ctrlabel { color:var(--tp-dim); font-size:.74rem; font-weight:700; }
+#vcRoot .vc_radlbl { color:var(--tp-text); font-size:.8rem; }
+#vcRoot input[type=radio] { accent-color:var(--tp-accent); }
+#vcRoot .vc_slider { flex:1 1 140px; min-width:0 !important; width:auto !important; accent-color:var(--tp-accent); }
+#vcRoot .vc_rdout { background:var(--tp-panel-lo) !important; color:var(--tp-val) !important; border:1px solid var(--tp-border); font-family:monospace; font-size:.8rem; }
+#vcRoot select { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.78rem; max-width:100%; }
+/* information panel */
+#vcRoot .vc_info { width:auto !important; background:var(--tp-panel) !important; border:1px solid var(--tp-border) !important; border-radius:6px; padding:9px 12px; color:var(--tp-text); }
+#vcRoot .vc_infotitle { color:var(--tp-accent); font-size:.8rem; font-family:monospace; letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; }
+#vcRoot .vc_infotext { font-size:.8rem; line-height:1.5; color:var(--tp-text); }
+#vcRoot .vc_copyright { font-size:.7rem; color:var(--tp-dim); margin-top:4px; }
+/* SIM description (toggle) */
+#vcRoot .vc_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#vcRoot .vc_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-accent); color:var(--tp-accent); border-radius:3px; font-weight:bold; }
+#vcRoot .vc_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#vcRoot .vc_desc { width:100%; background:var(--tp-panel); border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:4px; padding:12px 16px; color:var(--tp-text); font-size:.86rem; line-height:1.55; }
+#vcRoot .vc_desc p { margin:0 0 9px 0; }
+#vcRoot .vc_desc p:last-child { margin-bottom:0; }
+#vcRoot .vc_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.vc_qwrap { width:100%; max-width:780px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.vc_qwrap li { margin:0 0 10px 0; line-height:1.5; }
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#vcRoot input[type=range] { height:28px; }
+#vcRoot input[type=radio] { width:20px; height:20px; }
+#vcRoot .vc_a11ybtn, #vcRoot .vc_zbtn, #vcRoot .vc_descbtn { min-height:40px; }
+#vcRoot select { min-height:36px; font-size:16px; }
+#vcRoot .vc_ctrl { gap:10px 14px; }
+}
+@media (max-width:560px) {
+#vcRoot { padding:10px 6px 14px; }
+}
+</style>
+<!-- ── Accessibility controller ── -->
+<script>
+var vcA11y = (function(){
+var states={lm:false,nr:true};
+function styleBtn(id,on){
+var b=document.getElementById(id);if(!b)return;
+b.classList.toggle('vc_a11yon', on);
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function apply(){
+var RT=document.getElementById('vcRoot'); if(RT) RT.classList.toggle('vc_lmode', states.lm);
+var cv=document.getElementById('cv');
+if(cv)cv.style.filter=states.lm?'invert(1) hue-rotate(180deg) brightness(0.9)':'';
+var nb=document.getElementById('vcNarBar');
+if(nb)nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('vcBtnNR');
+if(btn){btn.textContent='NARRATION:'+(states.nr?'ON':'OFF');styleBtn('vcBtnNR',states.nr);}
+styleBtn('vcBtnLM',states.lm);
+}
+return {
+init:function(){apply();},
+toggle:function(k){states[k]=!states[k];apply();},
+narrate:function(msg){if(!states.nr)return;var nb=document.getElementById('vcNarBar');if(!nb)return;nb.innerHTML=msg;}
+};
+})();
+</script>
+<!-- ── Simulation ── -->
+<script>
+var vcSim = (function(){
+// ── Constants ──────────────────────────────────────────────────────────
+var colorBackground="#ffffff", colorBody="#ffffff";
+var canvas,ctx,width=650,height=300,mx,my;
+var nr=-1;
+var tol1=50;
+var vw=600, vh=vw*295/767;
+var v2w=200*vw/767, v2h=v2w*295/200;
+var v2Cx=125*v2w/200, v2Cy=190*v2h/295;
+var caliperH={x:75.47,y:50,w:211,h:305};
+caliperH.zero=caliperH.x+26*v2w/200; caliperH.Z=caliperH.zero-caliperH.x;
+var caliper={x:50,y:50,w:865,h:319};
+caliper.zero=caliper.x+56*vw/767; caliper.Z=caliper.zero-caliper.x;
+var px,py;
+// pixels per cm -- derived from measurement formula
+var PX_PER_CM = 391/5;   // ≈ 78.14 px/cm //390.7/5;
+var RING_ZERO = 355;       // caliperRing.x when reading = 0 (from reactionnoObj)
+var caliperRing={x:caliperH.x+v2Cx, y:caliperH.y+v2Cy, r:6, col:"red"};
+//var measureRing1={x:caliper.x+caliper.Z+25+1*PX_PER_CM,y:caliper.y+200,r:1*PX_PER_CM,col:"blue"};
+var measureRing1={x:caliper.x+caliper.Z+25+1*PX_PER_CM,y:caliper.y+200,r:0.33*PX_PER_CM,col:"blue"};
+var measureRing=measureRing1;
+//var measureRect={x:caliper.x+80,y:caliper.y+200,w:2*PX_PER_CM,h:25,col:"blue"};
+var measureRect={x:caliper.x+80,y:caliper.y+200,w:1.22*PX_PER_CM,h:0.29*PX_PER_CM/2,col:"blue"};
+//var measureBox={x:caliper.x+58*vw/767,y:30,w:1.22*PX_PER_CM,h:45,t:0.29*PX_PER_CM/4,col:"blue"};
+var measureBox={x:caliper.x+58*vw/767,y:30,w:2.58*PX_PER_CM,h:45,t:0.19*PX_PER_CM/4,col:"blue"};
+var minX1=caliper.x+caliper.Z+2*measureRing1.r;
+var minX3=caliper.x+caliper.Z+measureRect.w;
+var minX4=caliper.x+caliper.Z+2*measureBox.t;
+var maxX1=width-125;
+var maxX4=measureBox.x+measureBox.w-caliperH.Z;
+var minX=caliper.x+caliper.Z; var maxX=maxX1;
+var adddsk1=0, addrect=0, addbox=0, noObj=1;
+// Actually compute proper zero:
+// zeroPosition = (px - (caliper.x+caliper.Z) - 2)*5/390.7 = 0
+// px = caliper.x+caliper.Z+2 = caliperRing.x - v2Cx + caliperH.Z
+// caliperRing.x = caliper.x+caliper.Z+2 + v2Cx - caliperH.Z
+var _ringZero = caliper.x+caliper.Z+2 + v2Cx - caliperH.Z;
+// = 93.8+2 + 97.8 - 20.3 = 173.3
+// ── Slider sync ──────────────────────────────────────────────────────
+function _readingFromRing(){
+// same formula as paint()
+var p=caliperH.x+caliperH.Z;
+var zp=((p-(caliper.x+caliper.Z)-2)*5/390.7);
+var zp10=(parseInt(10*zp)/10);
+var zp100=(Math.round(1000*(zp+2))/1000);
+var t100=(parseInt(100*(zp100-zp10))%10);
+return (t100/100)+zp10;
+}
+function _syncSlider(){
+var reading=_readingFromRing();
+var sl=document.getElementById('vcSlider');
+var rd=document.getElementById('vcRdout');
+if(sl){var v=Math.max(0,Math.min(4.50,reading));if(Math.abs(sl.value-v)>0.005)sl.value=v.toFixed(2);}
+if(rd)rd.textContent=Math.max(0,reading).toFixed(2)+' cm';
+}
+// ── Object selection ─────────────────────────────────────────────────
+function setObj(which){
+if(which==='noObject'){
+noObj=1;adddsk1=0;addrect=0;addbox=0;minX=minX1;maxX=maxX1;
+caliperRing.x=RING_ZERO;caliperH.x=caliperRing.x-v2Cx;
+vcA11y.narrate('No Object mode: arrows and readings are shown to help you practice reading the vernier scale. Drag the red dot or use the slider.');
+} else if(which==='disk1'){
+noObj=0;adddsk1=1;addrect=0;addbox=0;minX=minX1;maxX=maxX1;
+measureRing=measureRing1;
+// Keep RING_ZERO's usual look for normal sizes, but push the jaw's start
+//
+// start already overlapping the disk (same fix as the box needed).
+caliperRing.x=Math.max(RING_ZERO, measureRing1.x+measureRing1.r+20-caliperH.Z+v2Cx);
+caliperH.x=caliperRing.x-v2Cx;
+vcA11y.narrate('Disk placed between the jaws. Close the jaws around the disk by dragging left, then read the measurement.');
+} else if(which==='rect'){
+noObj=0;adddsk1=0;addrect=1;addbox=0;minX=minX3;maxX=maxX1;
+//
+caliperRing.x=Math.max(RING_ZERO, measureRect.x+measureRect.w+20-caliperH.Z+v2Cx);
+caliperH.x=caliperRing.x-v2Cx;
+vcA11y.narrate('Block placed between the jaws. Close the jaws to measure its width.');
+} else if(which==='box'){
+noObj=0;adddsk1=0;addrect=0;addbox=1;minX=minX4;maxX=maxX4;
+caliperRing.x=205;caliperH.x=caliperRing.x-v2Cx;
+vcA11y.narrate('Box mode: the rear jaws measure an internal width. Open them by dragging right.');
+}
+_syncSlider();
+}
+// ── Slider input ─────────────────────────────────────────────────────
+function setSlider(cm){
+// convert cm reading to caliperRing.x pixel position
+var targetRingX = _ringZero + cm * PX_PER_CM;
+/* ── mirror the drag logic: jaw cannot pass through the object ── */
+var objDX2Ring=v2Cx-caliperH.Z+measureRing.r;
+var minObjDX=minX1-measureRing.r+2;
+var objRX2Ring=v2Cx-caliperH.Z+measureRect.w;
+var minObjRX=minX3-measureRect.w+2;
+var boxX2Ring=-v2Cx+caliperH.Z-measureBox.w;
+var maxBoxX=maxX4+v2Cx+boxX2Ring;
+if(adddsk1){
+/* jaw closes left: push disk, stop at disk's minimum */
+var minRingForDisk = minObjDX + measureRing.r + v2Cx - caliperH.Z;
+if(targetRingX < minRingForDisk){targetRingX=minRingForDisk;}
+caliperRing.x=targetRingX; caliperH.x=caliperRing.x-v2Cx;
+var cHZ=caliperH.x+caliperH.Z;
+if(cHZ <= measureRing.x+measureRing.r){
+measureRing.x=caliperRing.x-objDX2Ring;
+if(measureRing.x<minObjDX)measureRing.x=minObjDX;
+}
+} else if(addrect){
+/* same for rectangle */
+var minRingForRect = minObjRX + measureRect.w + v2Cx - caliperH.Z;
+if(targetRingX < minRingForRect){targetRingX=minRingForRect;}
+caliperRing.x=targetRingX; caliperH.x=caliperRing.x-v2Cx;
+var cHZ=caliperH.x+caliperH.Z;
+if(cHZ <= measureRect.x+measureRect.w){
+measureRect.x=caliperRing.x-objRX2Ring;
+if(measureRect.x<minObjRX)measureRect.x=minObjRX;
+}
+} else if(addbox){
+/* box: jaw opens right, box expands with it, clamp max */
+if(targetRingX > maxX4+v2Cx){targetRingX=maxX4+v2Cx;}
+caliperRing.x=targetRingX; caliperH.x=caliperRing.x-v2Cx;
+var cHZ=caliperH.x+caliperH.Z;
+if(cHZ >= measureBox.x+measureBox.w){
+measureBox.x=caliperRing.x+boxX2Ring;
+if(measureBox.x>maxBoxX)measureBox.x=maxBoxX;
+}
+} else {
+/* no object -- just clamp to valid range */
+targetRingX=Math.max(minX+caliperH.Z-v2Cx-4, Math.min(maxX+v2Cx, targetRingX));
+caliperRing.x=targetRingX; caliperH.x=caliperRing.x-v2Cx;
+}
+var rd=document.getElementById('vcRdout');
+if(rd){var reading=_readingFromRing();rd.textContent=Math.max(0,reading).toFixed(2)+' cm';}
+//vcA11y.narrate('Vernier arm at <strong>'+Math.max(0,_readingFromRing()).toFixed(2)+' cm</strong>.');
+vcA11y.narrate('Vernier arm at <strong>READING</strong>.');
+}
+// ── Mouse / touch drag ────────────────────────────────────────────────
+/* fingers are less precise than a mouse: on touch the handles grab from about 12 screen pixels further out */
+var TOUCH_SLOP=0;
+function reactionDown(x,y){
+var r=canvas.getBoundingClientRect(); x=(x-r.left)*width/r.width; y=(y-r.top)*height/r.height;
+var by1=caliperRing.y-tol1/5-TOUCH_SLOP, ty1=caliperRing.y+tol1/5+TOUCH_SLOP;
+var lx1=caliperRing.x-tol1/5-TOUCH_SLOP, rx1=caliperRing.x+tol1/5+TOUCH_SLOP;
+if(y>=by1&&y<=ty1&&x>=lx1&&x<=rx1){nr=1;}
+}
+function reactionMove(x,y){
+var r=canvas.getBoundingClientRect(); x=(x-r.left)*width/r.width; y=(y-r.top)*height/r.height;
+if(nr===-1){return;}else{canvas.style.cursor="pointer";}
+var caliperHZ=caliperH.x+caliperH.Z;
+var boxX2Ring=-v2Cx+caliperH.Z-measureBox.w;
+var maxBoxX=maxX4+v2Cx+boxX2Ring;
+var ObjMax=(adddsk1?measureRing.x+measureRing.r:measureRect.x+measureRect.w);
+var objDX2Ring=v2Cx-caliperH.Z+measureRing.r, minObjDX=minX1-measureRing.r+2;
+var objRX2Ring=v2Cx-caliperH.Z+measureRect.w, minObjRX=minX3-measureRect.w+2;
+if(x>=caliperRing.x){
+if(caliperH.x<maxX){
+if(addbox){
+if(caliperHZ<measureBox.x+measureBox.w){caliperRing.x=x+1;caliperH.x=caliperRing.x-v2Cx;}
+else{caliperRing.x=x+1;caliperH.x=caliperRing.x-v2Cx;measureBox.x=caliperRing.x+boxX2Ring;if(measureBox.x>maxBoxX)measureBox.x=maxBoxX;}
+} else{caliperRing.x=x+1;caliperH.x=caliperRing.x-v2Cx;}
+} else{caliperRing.x=maxX+v2Cx;caliperH.x=caliperRing.x-v2Cx;}
+} else {
+if(caliperH.x>minX+caliperH.Z-v2Cx-4){
+if(adddsk1){if(caliperHZ>ObjMax){caliperRing.x=x-1;caliperH.x=caliperRing.x-v2Cx;}else{caliperRing.x=x-1;caliperH.x=caliperRing.x-v2Cx;measureRing.x=caliperRing.x-objDX2Ring;if(measureRing.x<minObjDX)measureRing.x=minObjDX;}}
+else if(addrect){if(caliperHZ>ObjMax){caliperRing.x=x-1;caliperH.x=caliperRing.x-v2Cx;}else{caliperRing.x=x-1;caliperH.x=caliperRing.x-v2Cx;measureRect.x=caliperRing.x-objRX2Ring;if(measureRect.x<minObjRX)measureRect.x=minObjRX;}}
+else{caliperRing.x=x-1;caliperH.x=caliperRing.x-v2Cx;}
+} else{caliperRing.x=minX+caliperH.Z-v2Cx-4;caliperH.x=caliperRing.x-v2Cx;}
+caliperH.x=caliperRing.x-v2Cx;
+if(caliperH.x+caliperH.Z<=minX){caliperH.x=-caliperH.Z+minX+3;caliperRing.x=caliperH.x+v2Cx;}
+}
+_syncSlider();
+}
+// ── Drawing ───────────────────────────────────────────────────────────
+function paint(){
+ctx.fillStyle=colorBackground; ctx.fillRect(0,0,width,height);
+ctx.beginPath(); ctx.fillStyle=colorBody; ctx.strokeStyle="#000000";
+vernierMain(caliper.x,caliper.y,vw,vh);
+vernierArm(caliperH.x,caliperH.y,v2w,v2h);
+if(noObj){
+px=caliperH.x+caliperH.Z; py=caliperH.y+80;
+var zeroPosition=((px-(caliper.x+caliper.Z)-2)*5/390.7);
+var zeroPosition10=(parseInt(10*zeroPosition)/10);
+var zeroPosition100=(Math.round(1000*(zeroPosition+2))/1000);
+var the100th=(parseInt(100*(zeroPosition100-zeroPosition10))%10);
+var theResult=(the100th/100)+zeroPosition10;
+ctx.strokeStyle="#f00"; arrowDraw(27,-Math.PI/2);
+ctx.fillText(zeroPosition10.toFixed(1),px,py); ctx.strokeStyle="#000000";
+ctx.strokeStyle="#f00"; px=(caliperH.x+caliperH.Z+the100th*9*390.7/500); py=caliperH.y+220; arrowDraw(100,Math.PI/2);
+ctx.fillText(the100th,px+2,py); ctx.strokeStyle="#000000";
+ctx.fillText(theResult.toFixed(2),caliperH.x+120,caliperH.y+v2h/2+10); ctx.strokeStyle="#000000";
+}
+addRing(caliperRing.x,caliperRing.y,caliperRing.r,caliperRing.col,true);
+if(adddsk1){addRing(measureRing.x,measureRing.y,measureRing.r,measureRing.col);}
+if(addrect){addRectangle(measureRect.x,measureRect.y,measureRect.w,measureRect.h,measureRect.col);}
+if(addbox){addBox(measureBox.x,measureBox.y,measureBox.w,measureBox.h,measureBox.t,measureRect.col);}
+}
+// ── Shape helpers ─────────────────────────────────────────────────────
+function addBox(xr,yr,wr,hr,tr,col){if(!col)col="DarkCyan";ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.rect(xr,yr,wr,tr);ctx.rect(xr-tr,yr,tr,hr+tr);ctx.rect(xr+wr,yr,tr,hr+tr);ctx.fill();ctx.stroke();}
+function addRectangle(xr,yr,wr,hr,col){if(!col)col="DarkCyan";ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.rect(xr,yr,wr,hr);ctx.fill();ctx.stroke();}
+function addRing(xr,yr,r,col,addCross){if(!col)col="DarkCyan";if(!addCross)addCross=false;ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(xr,yr,r,0,2*Math.PI,false);ctx.fill();ctx.stroke();if(addCross){newPath("darkgrey",1);ctx.moveTo(xr-r,yr);ctx.lineTo(xr+r,yr);ctx.stroke();ctx.moveTo(xr,yr-r);ctx.lineTo(xr,yr+r);ctx.stroke();}}
+function newPath(color,thickness){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=thickness;}
+function arrowDraw(r,phi){var xf=px+r*Math.cos(phi),yf=py-r*Math.sin(phi);arrow(px,py,xf,yf,1);}
+function arrow(x1,y1,x2,y2,w,col,txt,spc){if(!w)w=1;if(!txt)txt="";if(!spc)spc=5;if(!col)col=ctx.strokeStyle;ctx.fillStyle=col;ctx.strokeStyle=col;var dx=x2-x1,dy=y2-y1,length=Math.sqrt(dx*dx+dy*dy);if(length==0)return;dx/=length;dy/=length;var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;var h=0.5*w+3.5,xSp1=xSp-h*dy,ySp1=ySp+h*dx,xSp2=xSp+h*dy,ySp2=ySp-h*dx;xSp=x2-0.6*s*dx;ySp=y2-0.6*s*dy;ctx.beginPath();ctx.lineWidth=w;ctx.moveTo(x1,y1);if(length<5)ctx.lineTo(x2,y2);else ctx.lineTo(xSp,ySp);ctx.stroke();if(length<5)return;ctx.beginPath();ctx.fillStyle=ctx.strokeStyle;ctx.moveTo(xSp,ySp);ctx.lineTo(xSp1,ySp1);ctx.lineTo(x2,y2);ctx.lineTo(xSp2,ySp2);ctx.closePath();ctx.fill();}
+// ── Caliper drawing functions (unchanged from original) ───────────────
+function vernierMain(vx,vy,vw,vh){
+ctx.fillStyle="#B6B6B4"; newPath("#000",1);
+ctx.moveTo(vx+58*vw/767,vy+0*vh/295); ctx.lineTo(vx+66*vw/767,vy+16*vh/295); ctx.lineTo(vx+66*vw/767,vy+78*vh/295); ctx.lineTo(vx+58*vw/767,vy+78*vh/295); ctx.closePath(); ctx.fill(); ctx.stroke();
+ctx.fillStyle="#D1D0CE"; newPath("#000",2);
+ctx.moveTo(vx+767*vw/767,vy+96*vh/295); ctx.lineTo(vx+767*vw/767,vy+158*vh/295); ctx.lineTo(vx+56*vw/767,vy+158*vh/295); ctx.lineTo(vx+56*vw/767,vy+295*vh/295); ctx.lineTo(vx+30*vw/767,vy+295*vh/295); ctx.lineTo(vx+0*vw/767,vy+186*vh/295); ctx.lineTo(vx+0*vw/767,vy+78*vh/295); ctx.lineTo(vx+58*vw/767,vy+78*vh/295); ctx.lineTo(vx+63*vw/767,vy+76*vh/295); ctx.lineTo(vx+65*vw/767,vy+74*vh/295); ctx.lineTo(vx+66*vw/767,vy+68*vh/295); ctx.lineTo(vx+66*vw/767,vy+16*vh/295); ctx.lineTo(vx+80*vw/767,vy+48*vh/295); ctx.lineTo(vx+80*vw/767,vy+90*vh/295); ctx.lineTo(vx+82*vw/767,vy+93*vh/295); ctx.lineTo(vx+83*vw/767,vy+94*vh/295); ctx.lineTo(vx+85*vw/767,vy+96*vh/295); ctx.closePath(); ctx.stroke(); ctx.fill();
+ctx.beginPath(); ctx.arc(vx+752*vw/767,vy+106*vh/295,3,0,2*Math.PI,true); ctx.stroke();
+ctx.beginPath(); ctx.arc(vx+752*vw/767,vy+148*vh/295,3,0,2*Math.PI,true); ctx.stroke();
+var dw=100,h=25; ctx.font='12pt Calibri'; ctx.fillStyle="#000"; ctx.textAlign='right'; var startZero=58;
+for(var i=0;i<7;i++){newPath("#000",1);ctx.moveTo(vx+(startZero+dw*i)*vw/767,vy+147*vh/295);ctx.lineTo(vx+(startZero+dw*i)*vw/767,vy+(147-h)*vh/295);ctx.stroke();ctx.fillText(i,vx+(startZero+dw*i-dw/20)*vw/767,vy+(147-2*h/3)*vh/295);}
+ctx.font='14pt Calibri'; ctx.textAlign='left'; ctx.fillText("cm",vx+(startZero+dw*6+dw/10)*vw/767,vy+(147-h/3)*vh/295);
+for(var i=0;i<6;i++){newPath("#000",1);ctx.moveTo(vx+(startZero+dw/2+dw*i)*vw/767,vy+147*vh/295);ctx.lineTo(vx+(startZero+dw/2+dw*i)*vw/767,vy+(147-2*h/3)*vh/295);ctx.stroke();}
+for(var i=0;i<60;i++){if(i%5!=0&&i%10!=0){newPath("#000",1);ctx.moveTo(vx+(startZero+dw/10*i)*vw/767,vy+147*vh/295);ctx.lineTo(vx+(startZero+dw/10*i)*vw/767,vy+(147-h/2)*vh/295);ctx.stroke();}}
+ctx.font='12pt Calibri';
+}
+function vernierArm(v2x,v2y,v2w,v2h){
+ctx.fillStyle="#B6B6B4"; newPath("#000",1);
+ctx.moveTo(v2x+25*v2w/200,v2y+0*v2h/295); ctx.lineTo(v2x+25*v2w/200,v2y+76*v2h/295); ctx.lineTo(v2x+16*v2w/200,v2y+76*v2h/295); ctx.lineTo(v2x+16*v2w/200,v2y+18*v2h/295); ctx.closePath(); ctx.fill(); ctx.stroke();
+ctx.fillStyle="#D1D0CE"; newPath("#000",2);
+ctx.moveTo(v2x+16*v2w/200,v2y+18*v2h/295); ctx.lineTo(v2x+16*v2w/200,v2y+67*v2h/295); ctx.lineTo(v2x+17*v2w/200,v2y+70*v2h/295); ctx.lineTo(v2x+18*v2w/200,v2y+72*v2h/295); ctx.lineTo(v2x+20*v2w/200,v2y+73*v2h/295); ctx.lineTo(v2x+22*v2w/200,v2y+74*v2h/295); ctx.lineTo(v2x+26*v2w/200,v2y+76*v2h/295); ctx.lineTo(v2x+26*v2w/200,v2y+98*v2h/295); ctx.lineTo(v2x+16*v2w/200,v2y+98*v2h/295); ctx.lineTo(v2x+11*v2w/200,v2y+97*v2h/295); ctx.lineTo(v2x+8*v2w/200,v2y+95*v2h/295); ctx.lineTo(v2x+4*v2w/200,v2y+89*v2h/295); ctx.lineTo(v2x+3*v2w/200,v2y+85*v2h/295); ctx.lineTo(v2x+2*v2w/200,v2y+80*v2h/295); ctx.lineTo(v2x+1*v2w/200,v2y+79*v2h/295); ctx.lineTo(v2x+1*v2w/200,v2y+44*v2h/295); ctx.closePath(); ctx.stroke(); ctx.fill();
+newPath("#000",2); ctx.moveTo(v2x+26*v2w/200,v2y+76*v2h/295); ctx.lineTo(v2x+200*v2w/200,v2y+76*v2h/295); ctx.lineTo(v2x+200*v2w/200,v2y+105*v2h/295); ctx.lineTo(v2x+26*v2w/200,v2y+105*v2h/295); ctx.closePath(); ctx.stroke(); ctx.fill();
+newPath("#000",1); ctx.moveTo(v2x+26*v2w/200,v2y+85*v2h/295); ctx.lineTo(v2x+200*v2w/200,v2y+85*v2h/295); ctx.stroke();
+newPath("#000",2);
+ctx.moveTo(v2x+26*v2w/200,v2y+143*v2h/295); ctx.lineTo(v2x+200*v2w/200,v2y+143*v2h/295); ctx.lineTo(v2x+200*v2w/200,v2y+195*v2h/295); ctx.lineTo(v2x+172*v2w/200,v2y+188*v2h/295); ctx.lineTo(v2x+167*v2w/200,v2y+185*v2h/295); ctx.lineTo(v2x+163*v2w/200,v2y+184*v2h/295); ctx.lineTo(v2x+151*v2w/200,v2y+184*v2h/295); ctx.lineTo(v2x+149*v2w/200,v2y+186*v2h/295); ctx.lineTo(v2x+145*v2w/200,v2y+188*v2h/295); ctx.lineTo(v2x+133*v2w/200,v2y+198*v2h/295); ctx.lineTo(v2x+131*v2w/200,v2y+201*v2h/295); ctx.lineTo(v2x+126*v2w/200,v2y+201*v2h/295); ctx.lineTo(v2x+124*v2w/200,v2y+202*v2h/295); ctx.lineTo(v2x+117*v2w/200,v2y+200*v2h/295); ctx.lineTo(v2x+112*v2w/200,v2y+197*v2h/295); ctx.lineTo(v2x+98*v2w/200,v2y+187*v2h/295); ctx.lineTo(v2x+91*v2w/200,v2y+184*v2h/295); ctx.lineTo(v2x+89*v2w/200,v2y+185*v2h/295); ctx.lineTo(v2x+82*v2w/200,v2y+186*v2h/295); ctx.lineTo(v2x+75*v2w/200,v2y+192*v2h/295); ctx.lineTo(v2x+74*v2w/200,v2y+193*v2h/295); ctx.lineTo(v2x+47*v2w/200,v2y+295*v2h/295); ctx.lineTo(v2x+26*v2w/200,v2y+295*v2h/295); ctx.closePath(); ctx.stroke(); ctx.fill();
+newPath("#000",1); ctx.moveTo(v2x+26*v2w/200,v2y+176*v2h/295); ctx.lineTo(v2x+200*v2w/200,v2y+176*v2h/295); ctx.stroke();
+var dw=90,h=25; ctx.font='12pt Calibri'; ctx.fillStyle="#000"; ctx.textAlign='left'; var startZero=25;
+for(var i=0;i<2;i++){newPath("#000",1);ctx.moveTo(v2x+(startZero+dw*i)*v2w/200,v2y+143*v2h/295);ctx.lineTo(v2x+(startZero+dw*i)*v2w/200,v2y+(143+2*h/3)*v2h/295);ctx.stroke();ctx.fillText(i*10,v2x+(startZero+dw*i+dw/40)*v2w/200,v2y+(147+h)*v2h/295);}
+ctx.moveTo(v2x+(startZero+dw/2)*v2w/200,v2y+143*v2h/295); ctx.lineTo(v2x+(26+dw/2)*v2w/200,v2y+(143+h/2)*v2h/295); ctx.stroke();
+for(var i=0;i<10;i++){if(i%5!=0&&i%10!=0){newPath("#000",1);ctx.moveTo(v2x+(startZero+dw/10*i)*v2w/200,v2y+143*v2h/295);ctx.lineTo(v2x+(startZero+dw/10*i)*v2w/200,v2y+(143+h/3)*v2h/295);ctx.stroke();}}
+}
+// ── Boot ─────────────────────────────────────────────────────────────
+function start(){
+canvas=document.getElementById('cv');
+width=canvas.width; height=canvas.height;
+ctx=canvas.getContext('2d');
+mx=width/2; my=height/2;
+canvas.style.cursor='default';
+canvas.onmousedown=function(e){TOUCH_SLOP=0; reactionDown(e.clientX,e.clientY);};
+canvas.ontouchstart=function(e){var o=e.changedTouches[0];TOUCH_SLOP=12*width/canvas.getBoundingClientRect().width;reactionDown(o.clientX,o.clientY);if(nr!=-1)e.preventDefault();};
+canvas.onmouseup=function(){nr=-1;canvas.style.cursor='default';};
+canvas.ontouchend=function(){nr=-1;canvas.style.cursor='default';};
+canvas.onmousemove=function(e){if(nr==-1)return;reactionMove(e.clientX,e.clientY);};
+canvas.ontouchmove=function(e){if(nr==-1)return;var o=e.changedTouches[0];reactionMove(o.clientX,o.clientY);e.preventDefault();};
+setInterval(paint,40);
+vcA11y.narrate('Vernier Caliper simulation. Select an object using the radio buttons, then drag the red dot or use the Vernier arm slider to move the jaw. In No Object mode, annotated arrows show how to read the scale.');
+}
+window.setTimeout(start, 0);
+return {setObj, setSlider};
+})();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="vc_descwrap">
+<button type="button" class="vc_descbtn" id="vcDescBtn" aria-expanded="false" aria-controls="vcDesc" onclick="vcDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="vc_desc" id="vcDesc" role="region" aria-labelledby="vcDescBtn" style="display:none">
+<p>This simulation shows a vernier caliper, an instrument for measuring lengths, outer diameters and inner widths to a tenth of a millimeter. The outside jaws hold an object such as a disk or a block; the inside jaws (the small prongs at the top) measure the inner width of a hollow object such as the box.</p>
+<p>The main scale is marked in millimeters (0.1 cm). The sliding vernier scale has 10 divisions that together span 9 mm, so each vernier division is 0.09 cm, one hundredth of a centimeter shorter than a main-scale division. This difference is the least count of the caliper:</p>
+<p class="vc_eq">`"least count" = 0.1" cm" - 0.09" cm" = 0.01" cm"`.</p>
+<p>To read the caliper, first read the main scale at the position of the vernier zero. Then find the vernier line that lines up best with any line of the main scale; its number `n` gives the hundredths of a centimeter:</p>
+<p class="vc_eq">`"reading" = "main scale reading" + n xx 0.01" cm"`.</p>
+<p>Drag the red dot, or use the Vernier arm slider, to move the jaw. Choose no object to practice reading the scales with the annotated arrows, or choose the disk, the block or the box to measure. In the best case the uncertainty of a single reading is half of the least count, `+- 0.005" cm"`.</p>
+<p>This simulation is useful for practicing the reading of a vernier scale, understanding how two slightly different scales give a finer reading than either one alone, and estimating the uncertainty of a measurement.</p>
+</div>
+</div>
+<script>
+function vcDesc(){
+var b = document.getElementById('vcDescBtn'), d = document.getElementById('vcDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<script>
+var vcZoom = (function(){
+var cv = document.getElementById('cv'), wrap = cv.parentNode, W = 650, H = 300, z = 1;
+function fit(){
+var base = Math.min(wrap.clientWidth || W, W), cssW = base*z, dpr = window.devicePixelRatio || 1, s = Math.max(1, dpr*cssW/W);
+var cx = wrap.scrollWidth > wrap.clientWidth ? (wrap.scrollLeft + wrap.clientWidth/2)/wrap.scrollWidth : 0.5;
+cv.style.maxWidth = 'none'; cv.style.width = cssW + 'px';
+cv.width = Math.round(W*s); cv.height = Math.round(H*s);
+cv.getContext('2d').setTransform(cv.width/W, 0, 0, cv.height/H, 0, 0);
+wrap.scrollLeft = Math.max(0, cx*wrap.scrollWidth - wrap.clientWidth/2);
+var bs = wrap.parentNode.querySelectorAll('.vc_zbtn');
+for (var i=0; i<bs.length; i++) bs[i].setAttribute('aria-pressed', (+bs[i].getAttribute('data-z') === z) ? 'true' : 'false');
+}
+function set(f){ z = f; fit(); }
+window.addEventListener('resize', fit);
+window.setTimeout(fit, 80);   /* after the simulation has started and read its canvas size */
+return { set:set };
+})();
+</script>
+</div><!-- #vcRoot -->
+</main>
+</body>
+</html>

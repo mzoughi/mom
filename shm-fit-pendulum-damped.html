@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Oscillations: SHM: Fitting a Damped Oscillation</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, simple harmonic motion, oscillation, period, frequency, pendulum, spring, damping, energy, data analysis, lesson, scientific">
+<meta name="description" content="SHM: Fitting a Damped Oscillation -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobs6891" class="mob_wrap">
+<div id="shmDPRoot">
+<div class="shm_a11y" id="shmDPA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="shm_a11ybtn" id="shmDPBtnHC" onclick="shmDPA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="shm_a11ybtn" id="shmDPBtnLM" onclick="shmDPA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="shm_a11ybtn shm_a11yon" id="shmDPBtnNR" onclick="shmDPA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div id="shmDPNarBar" class="shm_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="tbar"><H3>SHM &mdash; Damped Oscillator: Fitting Experimental Data</H3></div>
+<div class="mcontent"><canvas id="cv" width="620" height="300"></canvas></div>
+<div class="bbar">
+<input type="button" class="butt" id="play" value="&#9654;" onclick="if(this.value=='\u25b6'){shmDPendulum.pl();this.value='&#9208;';}else{this.value='&#9654;';shmDPendulum.ps();}">
+<input type="button" class="butt" value="&#10073;&#9664;" onclick="shmDPendulum.stepBack();document.getElementById('play').value='&#9654;';">
+<input type="button" class="butt" value="&#9654;&#10073;" onclick="shmDPendulum.stepForward();document.getElementById('play').value='&#9654;';">
+<input type="button" class="butt" value="&#128472;" onclick="shmDPendulum.restart();document.getElementById('play').value='&#9654;';">
+</div>
+<div class="footer footer-pink">
+<div class="left">Fit: Amplitude</div>
+<div class="center">A:&nbsp;<input class="zslider" type="range" id="fitA" min="5" max="30" value="15" step="0.5" oninput="shmDPendulum.updateFit()" onchange="shmDPendulum.updateFit()">
+<span class="txtDPL"><span id="fitAVal">15.0</span> &deg;</span></div>
+<div class="right">Frequency:&nbsp;<input class="zslider" type="range" id="fitF" min="0.1" max="2.0" value="0.8" step="0.05" oninput="shmDPendulum.updateFit()" onchange="shmDPendulum.updateFit()">
+<span class="txtDPL"><span id="fitFVal">0.80</span> Hz</span></div>
+</div>
+<div class="footer footer-green">
+<div class="left">Fit: Phase</div>
+<div class="center">&phi;:&nbsp;<input class="zslider" type="range" id="fitPhi" min="-1" max="1" value="0" step="0.05" oninput="shmDPendulum.updateFit()" onchange="shmDPendulum.updateFit()">
+<span class="txtDPL"><span id="fitPhiVal">0.00</span> &pi; rad</span></div>
+<div class="right">Damping:&nbsp;<input class="zslider" type="range" id="fitBeta" min="0" max="0.6" value="0.1" step="0.01" oninput="shmDPendulum.updateFit()" onchange="shmDPendulum.updateFit()">
+<span class="txtDPL"><span id="fitBetaVal">0.10</span> s<sup>-1</sup></span></div>
+</div>
+<div class="footer footer-blue" style="padding:0 12px;gap:12px;">
+<label style="font-size:13px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:8px;width:auto!important;">
+<input type="checkbox" id="fitCheck" style="width:18px;height:18px;cursor:pointer;" onchange="shmDPendulum.toggleFit(this.checked)" disabled>
+<span id="fitCheckLabel" style="color:#888;">Overlay fit curve &nbsp;(run simulation first)</span>
+</label>
+<span id="fitRMS" style="font-size:12px;font-family:monospace;color:#333;white-space:nowrap;width:auto!important;"></span>
+</div>
+<style>#shmDPRoot * { box-sizing: border-box; margin: 0; }
+#shmDPRoot { display: block; width: 623px; font-family: Calibri, Arial, sans-serif; font-size: 10pt; }
+#shmDPRoot canvas { display: block; }
+#shmDPRoot .shm_a11y { display: flex; gap: 6px; padding: 6px 8px; background: #222; flex-wrap: wrap; width: 623px; }
+#shmDPRoot .shm_a11ybtn { padding: 4px 10px; font-size: .72rem; font-family: monospace; letter-spacing: .06em; border-radius: 3px; cursor: pointer; background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa; }
+#shmDPRoot .shm_a11ybtn:hover { border-color: #00e8d0; color: #00e8d0; }
+#shmDPRoot .shm_a11yon { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#shmDPRoot .shm_narbar { width: 623px; min-height: 28px; padding: 5px 10px; background: #ffefc0; border-left: 4px solid #e0b040; font-size: .88rem; color: #333; font-style: italic; }
+#shmDPRoot div { width: 623px; }
+#shmDPRoot .butt { height: 26px; padding: 0 8px; cursor: pointer; }
+#shmDPRoot .zslider { width: 110px; height: 14px; display: inline-block; vertical-align: middle; }
+#shmDPRoot .txtDPL { background-color: #1a237e; color: #fff176; margin-left: 5px; padding-top: 2px; display: inline-block; font-size: 12px; text-align: center; height: 20px; width: 62px; vertical-align: middle; border-radius: 2px; }
+#shmDPRoot .tbar { padding: 4px; height: 30px; background: #f90; text-align: center; }
+#shmDPRoot .mcontent { height: 302px; }
+#shmDPRoot .bbar { height: 50px; background: #df9; padding: 10px; text-align: center; }
+#shmDPRoot .footer { height: 55px; display: flex; align-items: center; }
+#shmDPRoot .footer .left { width: 90px; padding: 2px; flex-shrink: 0; font-size:12px; font-weight:bold; }
+#shmDPRoot .footer .center { width: 256px; padding: 4px; flex-shrink: 0; }
+#shmDPRoot .footer .right { width: 266px; padding: 4px; flex-shrink: 0; }
+#shmDPRoot .footer-pink { background: #fce4ec; }
+#shmDPRoot .footer-green { background: #e8f5e9; }
+#shmDPRoot .footer-blue { background: #e3f2fd; }</style>
+<script>
+var shmDPA11y = (function(){
+var ROOT=null, states={hc:false,lm:false,nr:true};
+function styleBtn(id,on){
+var b=document.getElementById(id);if(!b)return;
+if(on){b.style.background='rgba(0,232,208,.12)';b.style.borderColor='#00e8d0';b.style.color='#00e8d0';}
+else{b.style.background='#2a2e3a';b.style.borderColor='#404a60';b.style.color='#7a8aaa';}
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function apply(){
+if(!ROOT)return;
+var cv=document.getElementById('cv');
+if(cv)cv.style.filter=states.lm?'invert(1) hue-rotate(180deg) brightness(0.9)':'';
+var nb=document.getElementById('shmDPNarBar');
+if(nb)nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('shmDPBtnNR');
+if(btn){btn.textContent='NARRATION:'+(states.nr?'ON':'OFF');styleBtn('shmDPBtnNR',states.nr);}
+styleBtn('shmDPBtnHC',states.hc);styleBtn('shmDPBtnLM',states.lm);
+}
+return {
+init:function(){ROOT=document.getElementById('shmDPRoot');apply();},
+toggle:function(k){states[k]=!states[k];if(k==='hc'&&states.hc)states.lm=false;if(k==='lm'&&states.lm)states.hc=false;apply();},
+narrate:function(msg){if(!states.nr)return;var nb=document.getElementById('shmDPNarBar');if(!nb)return;nb.innerHTML=msg;}
+};
+})();
+</script>
+<script>
+var shmDPendulum = function(){
+var canvas,ctx,px,py,mx,my;
+var index=0;
+var xBase=160,maxX=400,maxY=200,Daxis=15,yBase=60;
+var xAxisTitle="t (s)", yAxisTitle="\u03b8 (\u00b0)";
+var axisLabel='',axisValue=0;
+var xIncrement=1,xIncrementBase=2,xMin=0,xNumDecimals=1,maxXValue=4.0,_labelSkip=2;
+var yIncrement=6,yMax=30,yNumDecimals=0;
+var varFont='12pt Calibri';
+var runFlag=0,drgStatus=0,_endNarrated=false;
+var timer,t=0;
+/* TRUE hidden parameters */
+var TRUE_A=20, TRUE_F=0.6, TRUE_PHI=0.4, TRUE_BETA=0.15, TRUE_SIGMA=1.8;
+var TRUE_OMEGA=2*Math.PI*TRUE_F;
+var TRUE_T=1/TRUE_F;
+var POINT_STEP=6;
+var MAX_INDEX=Math.round(5*TRUE_T*100);
+/* Stored scatter data */
+var dataPoints=[];
+/* Fit parameters (student controlled) */
+var showFit=false;
+var fitA=15,fitF=0.8,fitPhi=0,fitBeta=0.1;
+/* Gaussian noise Box-Muller */
+function randn(){var u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+/* Coordinate helpers */
+function thetaToY(deg){return yBase-40+maxY/2-(maxY/(2*yMax))*deg;}
+function frameToX(iv){return xBase+40+iv*(maxX/maxXValue)/100;}
+function trueTheta(iv){var tt=iv/100.0;return TRUE_A*Math.exp(-TRUE_BETA*tt)*Math.cos(TRUE_OMEGA*tt+TRUE_PHI);}
+function fitTheta(iv){var tt=iv/100.0;return fitA*Math.exp(-fitBeta*tt)*Math.cos(2*Math.PI*fitF*tt+fitPhi);}
+function computeRMS(){
+if(!dataPoints.length)return 0;
+var ss=0;
+for(var i=0;i<dataPoints.length;i++){var d=dataPoints[i].noisy-fitTheta(dataPoints[i].iv);ss+=d*d;}
+return Math.sqrt(ss/dataPoints.length);
+}
+/* Pendulum visual */
+var PIVOT_X=80,PIVOT_Y=yBase-50,strLen=1.0,radius=8;
+var newTheta=TRUE_A*Math.PI/180;
+function drawPendulum(){
+var bx=PIVOT_X+50*strLen*Math.sin(newTheta),by=yBase+50*strLen*Math.cos(newTheta);
+ctx.fillStyle='black';ctx.fillRect(60,yBase-70,40,20);
+ctx.beginPath();ctx.lineWidth=1;ctx.strokeStyle='black';
+ctx.moveTo(PIVOT_X,PIVOT_Y);ctx.lineTo(bx,by);ctx.stroke();
+ctx.beginPath();ctx.arc(bx,by,radius,0,2*Math.PI,false);
+ctx.fillStyle='#222';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#222';ctx.stroke();
+ctx.beginPath();ctx.strokeStyle='darkgrey';ctx.lineWidth=1;
+ctx.moveTo(bx-radius,by);ctx.lineTo(bx+radius,by);ctx.stroke();
+ctx.moveTo(bx,by-radius);ctx.lineTo(bx,by+radius);ctx.stroke();
+}
+/* Draw scatter data */
+function drawData(){
+ctx.fillStyle='#cc0020';
+for(var i=0;i<dataPoints.length;i++){
+var dp=dataPoints[i];
+var gx=frameToX(dp.iv),gy=thetaToY(dp.noisy);
+if(gx<xBase+40+maxX){ctx.beginPath();ctx.arc(gx,gy,3.5,0,2*Math.PI,false);ctx.fill();}
+}
+}
+/* Draw fit curve */
+function drawFitCurve(){
+if(!showFit||!dataPoints.length)return;
+ctx.strokeStyle='#0055cc';ctx.lineWidth=2.5;ctx.setLineDash([]);ctx.beginPath();
+var started=false;
+for(var iv=1;iv<=MAX_INDEX;iv++){
+var gx=frameToX(iv);if(gx>=xBase+40+maxX)break;
+var gy=thetaToY(fitTheta(iv));
+if(!started){ctx.moveTo(gx,gy);started=true;}else ctx.lineTo(gx,gy);
+}
+ctx.stroke();
+/* Update RMS display */
+var rms=computeRMS();
+var el=document.getElementById('fitRMS');
+if(el)el.textContent='RMS: '+rms.toFixed(2)+'\u00b0';
+}
+/* Axis tools */
+var xrf=-1,Xaxis={x:xBase+39,y:yBase-40+maxY/2};
+var yrf=-1,Yaxis={x:xBase+40,y:yBase-40+maxY};
+var tol1=0.25;
+/* Read fit sliders */
+function readFitSliders(){
+var eA=document.getElementById('fitA');
+var eF=document.getElementById('fitF');
+var ePhi=document.getElementById('fitPhi');
+var eBeta=document.getElementById('fitBeta');
+if(eA){fitA=parseFloat(eA.value);document.getElementById('fitAVal').textContent=fitA.toFixed(1);}
+if(eF){fitF=parseFloat(eF.value);document.getElementById('fitFVal').textContent=fitF.toFixed(2);}
+if(ePhi){fitPhi=parseFloat(ePhi.value)*Math.PI;document.getElementById('fitPhiVal').textContent=parseFloat(ePhi.value).toFixed(2);}
+if(eBeta){fitBeta=parseFloat(eBeta.value);document.getElementById('fitBetaVal').textContent=fitBeta.toFixed(2);}
+}
+function updateFit(){
+readFitSliders();
+if(dataPoints.length>0){
+var wasRunning=runFlag;window.clearTimeout(timer);runFlag=0;
+drawCanvas();
+if(wasRunning){runFlag=1;runMotion();}
+}
+}
+function toggleFit(checked){
+showFit=checked;
+if(!runFlag)drawCanvas();
+if(showFit){
+var rms=computeRMS();
+shmDPA11y.narrate('Fit curve overlaid (blue). RMS residual = '+rms.toFixed(2)+'\u00b0. Adjust sliders to reduce the RMS.');
+} else {
+var el=document.getElementById('fitRMS');if(el)el.textContent='';
+}
+}
+/* Main redraw */
+function drawCanvas(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+mx=canvas.width/2;my=canvas.height/2;
+ctx.fillStyle='#ffd';ctx.fillRect(0,0,canvas.width,canvas.height);
+/* Dynamic time axis */
+xIncrement=xIncrementBase;
+drawGridNoLabels(maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+var _baseSpan=xIncrementBase*2;
+var _dynSpan=_baseSpan;
+while(index/100.0>=_dynSpan*0.90){_dynSpan+=_baseSpan;}
+xIncrement=(_dynSpan<12)?_dynSpan/2:Math.round(_dynSpan/2);
+xNumDecimals=(_dynSpan<12)?1:0;
+_labelSkip=(_dynSpan>36)?4:2;
+addGridLabels(maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+drawData();
+drawFitCurve();
+drawPendulum();
+addXaxis(Xaxis.x,Xaxis.y,maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+addYaxis(Yaxis.x,Yaxis.y,maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+if(runFlag==0&&t>0&&drgStatus==0&&!showFit&&_endNarrated)displayEndMsg(mx,2*my-30,mx,30);
+displayHUD(0,2*my-30,mx,30);
+}
+function drawMotion(){
+if(index>=MAX_INDEX){
+runFlag=0;document.getElementById('play').value='\u25b6';
+if(!_endNarrated){
+_endNarrated=true;
+var cb=document.getElementById('fitCheck');if(cb){cb.disabled=false;}
+var lbl=document.getElementById('fitCheckLabel');if(lbl){lbl.style.color='#0055cc';lbl.textContent='Overlay fit curve';}
+shmDPA11y.narrate('Data collection complete! '+dataPoints.length+' measurements recorded. '
+  +'Adjust the fit sliders, then tick <strong>Overlay fit curve</strong> to compare. '
+  +'Tip: start with frequency f \u2014 estimate from the peak spacing.');
+}
+}
+if(runFlag==1){index+=1;}
+t=index/100.0;
+if(runFlag==1&&index%POINT_STEP===0&&index>0){
+var nd=trueTheta(index)+TRUE_SIGMA*randn();
+dataPoints.push({iv:index,noisy:nd});
+}
+newTheta=TRUE_A*Math.PI/180*Math.exp(-TRUE_BETA*t)*Math.cos(TRUE_OMEGA*t+TRUE_PHI);
+drawCanvas();
+}
+/* Grid */
+function drawGridNoLabels(h,w,dh,dw,xB,yB){ctx.fillStyle='#eff';ctx.fillRect(xB,yB,maxX,maxY);ctx.strokeStyle='#999';ctx.lineWidth=2;addGrid(h,w,dh,dw,xB,yB);}
+function addGrid(h,w,dh,dw,xB,yB){ctx.strokeStyle='black';ctx.lineWidth=0.3;var maxV=parseInt(w/dw),maxH=parseInt(h/dh);for(var i=0;i<=maxH;i++){ctx.beginPath();ctx.moveTo(xB,yB+dh*i);ctx.lineTo(xB+w,yB+dh*i);ctx.stroke();}for(var i=0;i<=maxV;i++){ctx.beginPath();ctx.moveTo(xB+dw*i,yB);ctx.lineTo(xB+dw*i,yB+h);ctx.stroke();}}
+function addGridLabels(h,w,dh,dw,xB,yB){ctx.strokeStyle='black';ctx.lineWidth=0.3;var maxV=parseInt(w/dw),maxH=parseInt(h/dh);ctx.font='14pt Calibri';ctx.fillStyle='black';ctx.textAlign='center';ctx.textBaseline='middle';for(var i=0;i<=maxV;i++){axisValue=xMin+xIncrement*i/10;maxXValue=axisValue;if(parseInt(i/_labelSkip)==i/_labelSkip)ctx.fillText((xNumDecimals===0?Math.round(axisValue):axisValue.toFixed(xNumDecimals)),xB+dw*i,yB+h+dw);}for(var i=0;i<=maxH;i++){axisValue=yMax-yIncrement*i;ctx.textAlign='right';if(parseInt(i/2)==i/2)ctx.fillText(axisValue.toFixed(yNumDecimals),xB-dw,yB+dh*i);}}
+/* Arrows */
+function arrow(x1,y1,x2,y2,w,col,txt,spc){if(!w)w=1;if(!txt)txt="";if(!spc)spc=5;if(!col)col=ctx.strokeStyle;ctx.fillStyle=col;ctx.strokeStyle=col;var dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return;dx/=len;dy/=len;var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;var hh=0.5*w+3.5,xSp1=xSp-hh*dy,ySp1=ySp+hh*dx,xSp2=xSp+hh*dy,ySp2=ySp-hh*dx;xSp=x2-0.6*s*dx;ySp=y2-0.6*s*dy;ctx.beginPath();ctx.lineWidth=w;ctx.moveTo(x1,y1);if(len<5)ctx.lineTo(x2,y2);else ctx.lineTo(xSp,ySp);ctx.stroke();if(len<5)return;ctx.beginPath();ctx.fillStyle=ctx.strokeStyle;ctx.moveTo(xSp,ySp);ctx.lineTo(xSp1,ySp1);ctx.lineTo(x2,y2);ctx.lineTo(xSp2,ySp2);ctx.closePath();ctx.fill();ctx.fillText(txt,x2+((x2<=x1)?-(3*spc):2*spc),y2+spc);}
+function arrowDraw(r,phi2){var xf=px+r*Math.cos(phi2),yf=py-r*Math.sin(phi2);arrow(px,py,xf,yf,3);}
+function addXaxis(x,y,h,w,dh,dw,xB,yB){ctx.strokeStyle='green';px=x;py=y;var l=w+Daxis;var yD=(36-0.3*y).toFixed(1);arrowDraw(l,0);ctx.font='14pt Calibri';ctx.fillStyle='black';ctx.textAlign='left';ctx.fillText(xAxisTitle,x+l-40,y-20);ctx.font='11pt Calibri';ctx.fillStyle='red';ctx.fillText('\u03b8='+yD+'\u00b0',x+l-55,y+12);ctx.fillStyle='black';}
+function addYaxis(x,y,h,w,dh,dw,xB,yB){ctx.strokeStyle='green';px=x;py=y;var l=w+Daxis;var xD=((x-(xBase+40))*xIncrement/200).toFixed(2);arrowDraw(maxY+Daxis,Math.PI/2);ctx.font='14pt Calibri';ctx.fillStyle='black';ctx.textAlign='left';ctx.fillText(yAxisTitle,x+10,35);ctx.font='11pt Calibri';ctx.fillStyle='red';ctx.fillText('t='+xD+' s',x+5,y-10);ctx.fillStyle='black';}
+/* HUD */
+function displayHUD(x,y,w,h){ctx.textBaseline='middle';ctx.fillStyle='yellow';ctx.strokeStyle='red';ctx.lineWidth=0;ctx.beginPath();ctx.rect(x,y,w,h);ctx.fill();ctx.stroke();ctx.font=varFont;ctx.fillStyle='black';ctx.textAlign='left';ctx.fillText('t = '+t.toFixed(2)+' s   pts: '+dataPoints.length,x+6,y+15);}
+function displayEndMsg(x,y,w,h){ctx.textBaseline='middle';ctx.fillStyle='yellow';ctx.strokeStyle='blue';ctx.lineWidth=0;ctx.beginPath();ctx.rect(x,y,w,h);ctx.fill();ctx.stroke();ctx.font=varFont;ctx.fillStyle='#003';ctx.textAlign='left';ctx.fillText('Done \u2014 adjust sliders then tick Overlay fit curve',x+6,y+15);}
+/* Draggable axes */
+function iniTouch(){
+canvas.onmousedown=function(e){var r=canvas.getBoundingClientRect();var x=e.clientX-r.left,y=e.clientY-r.top;canvas.style.cursor='pointer';checkIfXaxis(x,y);checkIfYaxis(x,y);};
+canvas.ontouchstart=function(e){var r=canvas.getBoundingClientRect();var o=e.changedTouches[0];var x=o.clientX-r.left,y=o.clientY-r.top;checkIfXaxis(x,y);checkIfYaxis(x,y);if(xrf!=-1||yrf!=-1)e.preventDefault();};
+canvas.onmouseup=function(){xrf=-1;yrf=-1;canvas.style.cursor='default';};
+canvas.ontouchend=function(){xrf=-1;yrf=-1;canvas.style.cursor='default';};
+canvas.onmousemove=function(e){if(xrf==-1&&yrf==-1)return;var r=canvas.getBoundingClientRect();reactionMove(e.clientX-r.left,e.clientY-r.top);};
+canvas.ontouchmove=function(e){if(xrf==-1&&yrf==-1)return;var r=canvas.getBoundingClientRect();var o=e.changedTouches[0];reactionMove(o.clientX-r.left,o.clientY-r.top);e.preventDefault();};
+}
+function checkIfXaxis(x,y){var by1=Xaxis.y*(1-0.5*tol1),ty1=Xaxis.y*(1+0.5*tol1),bx1=Xaxis.x*(1-0.5*tol1),tx1=Xaxis.x*(1+0.5*tol1);if(y>=by1&&y<=ty1&&x>=bx1&&x<=tx1)xrf=1;}
+function checkIfYaxis(x,y){var by1=Yaxis.y*(1-0.5*tol1),ty1=Yaxis.y*(1+0.5*tol1),bx1=Yaxis.x*(1-0.5*tol1),tx1=Yaxis.x*(1+0.5*tol1);if(y>=by1&&y<=ty1&&x>=bx1&&x<=tx1)yrf=1;}
+function reactionMove(x,y){
+if(xrf==-1&&yrf==-1)return;canvas.style.cursor='pointer';
+if(xrf==1){Xaxis.y=Math.max(yBase-40,Math.min(yBase-40+maxY,y));}
+else if(yrf==1){Yaxis.x=Math.max(xBase+40,Math.min(xBase+40+maxX,x));}
+window.clearTimeout(timer);drgStatus=1;runFlag=0;
+document.getElementById('play').value='\u25b6';drawCanvas();
+}
+/* Controls */
+function start(){
+canvas=document.getElementById('cv');ctx=canvas.getContext('2d');
+mx=canvas.width/2;my=canvas.height/2;
+drawCanvas();iniTouch();readFitSliders();
+shmDPA11y.narrate('Damped Oscillator Data Fitting. Press \u25b6 to collect noisy data. True parameters are hidden. After the run, adjust the A, f, \u03c6, \u03b2 sliders and tick Overlay fit curve.');
+}
+function pl(){window.clearTimeout(timer);runFlag=1;drgStatus=0;if(index>=MAX_INDEX){restart();}runMotion();}
+function ps(){window.clearTimeout(timer);runFlag=0;}
+function stepForward(){window.clearTimeout(timer);if(index<MAX_INDEX){runFlag=1;drawMotion();runFlag=0;}}
+function stepBack(){
+window.clearTimeout(timer);runFlag=0;
+if(index>=POINT_STEP){
+index-=POINT_STEP;
+while(dataPoints.length&&dataPoints[dataPoints.length-1].iv>index)dataPoints.pop();
+} else index=0;
+t=index/100.0;
+newTheta=TRUE_A*Math.PI/180*Math.exp(-TRUE_BETA*t)*Math.cos(TRUE_OMEGA*t+TRUE_PHI);
+drawCanvas();
+}
+function restart(){
+window.clearTimeout(timer);index=0;t=0;runFlag=0;drgStatus=0;_endNarrated=false;
+dataPoints=[];showFit=false;
+var cb=document.getElementById('fitCheck');if(cb){cb.checked=false;cb.disabled=true;}
+var lbl=document.getElementById('fitCheckLabel');if(lbl){lbl.style.color='#888';lbl.textContent='Overlay fit curve \u00a0(run simulation first)';}
+var rms=document.getElementById('fitRMS');if(rms)rms.textContent='';
+newTheta=TRUE_A*Math.PI/180;
+document.getElementById('play').value=String.fromCodePoint(0x25B6);
+drawCanvas();
+}
+function runMotion(){drawMotion();if(runFlag==1)timer=window.setTimeout(runMotion,1000/30);}
+function startTimer(){}
+window.setTimeout(function(){start();},0);
+return {restart,stepBack,stepForward,ps,pl,startTimer,updateFit,toggleFit};
+};
+</script>
+<script>
+var shmDPendulum = new shmDPendulum();
+shmDPA11y.init();
+</script>
+</div>
+<hr><hr>
+<ol type="a">
+<p>Press play to start the simulation. The simulation records experimental measurements of a damped oscillator and plots them as data points. As in real life, these measurements involve uncertainty. The goal of this question is to identify the equation of motion of the pendulum by fitting the experimental data.</p>
+<li>After you run the simulation, examine the graph, then estimate the period T of the pendulum.<br />`T\ =\ ` _____ </li>
+<li>The frequency.<br />`f\ =\ ` _____ </li>
+<li>The initial amplitude<br />`A\ =\ ` _____ </li>
+<li>The damping coefficient estimate &beta;.<br />`beta\ =\ `  _____ </li>  </ol>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation measures a damped oscillation the way an experiment would: each data point carries a little random noise, and the true parameters are hidden. The motion follows</p>
+<p class="mob_eq">`theta(t) = A e^(-beta t) cos(2 pi f t + phi)`,</p>
+<p>with an amplitude `A`, a frequency `f` (the period is `T = 1/f`), a phase `phi` and a damping coefficient `beta`. After collecting the data, adjust the four sliders of the fit curve until it follows the data as closely as possible; the RMS (root-mean-square) residual measures how far the data points are from the curve, and is smallest for the best fit. Good starting points: the time between successive peaks gives `T`, the first peak gives `A`, and the ratio of successive peaks, `e^(-beta T)`, gives `beta`.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobs6891 { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (623 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:663px) {
+#mobs6891 div, #mobs6891 p, #mobs6891 fieldset, #mobs6891 form, #mobs6891 section, #mobs6891 ol, #mobs6891 ul, #mobs6891 table { max-width:100%; box-sizing:border-box; }
+#mobs6891 canvas, #mobs6891 img, #mobs6891 svg { max-width:100%; height:auto !important; }
+#mobs6891 input[type=range], #mobs6891 select { max-width:100%; min-width:0; }
+#mobs6891 #shmDPRoot .shm_a11y, #mobs6891 #shmDPRoot .footer { flex-wrap:wrap; }
+#mobs6891 #shmDPRoot .shm_a11y > div, #mobs6891 #shmDPRoot .footer > div { min-width:min(100%, 260px); }
+#mobs6891 div[style*="height"] { height:auto !important; }
+#mobs6891 #shmDPRoot .butt, #mobs6891 #shmDPRoot .tbar, #mobs6891 #shmDPRoot .mcontent, #mobs6891 #shmDPRoot .bbar, #mobs6891 #shmDPRoot .footer { height:auto; min-height:0; }
+#mobs6891 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:683px) {
+#mobs6891 div, #mobs6891 p, #mobs6891 fieldset, #mobs6891 form, #mobs6891 section, #mobs6891 ol, #mobs6891 ul, #mobs6891 table { max-width:100%; box-sizing:border-box; }
+#mobs6891 canvas, #mobs6891 img, #mobs6891 svg { max-width:100%; height:auto !important; }
+#mobs6891 input[type=range], #mobs6891 select { max-width:100%; min-width:0; }
+#mobs6891 #shmDPRoot .shm_a11y, #mobs6891 #shmDPRoot .footer { flex-wrap:wrap; }
+#mobs6891 #shmDPRoot .shm_a11y > div, #mobs6891 #shmDPRoot .footer > div { min-width:min(100%, 260px); }
+#mobs6891 div[style*="height"] { height:auto !important; }
+#mobs6891 #shmDPRoot .butt, #mobs6891 #shmDPRoot .tbar, #mobs6891 #shmDPRoot .mcontent, #mobs6891 #shmDPRoot .bbar, #mobs6891 #shmDPRoot .footer { height:auto; min-height:0; }
+#mobs6891 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobs6891 button, #mobs6891 input[type=button], #mobs6891 input[type=submit], #mobs6891 input[type=reset] { min-height:40px; }
+#mobs6891 input[type=range] { height:28px; }
+#mobs6891 input[type=checkbox], #mobs6891 input[type=radio] { width:22px; height:22px; }
+#mobs6891 select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobs6891 .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobs6891 .mob_a11ytop input[type=button], #mobs6891 .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobs6891 .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobs6891 .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobs6891 .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobs6891 .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobs6891 .mob_desc p { margin:0 0 9px 0; }
+#mobs6891 .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobs6891 -->
+</main>
+</body>
+</html>

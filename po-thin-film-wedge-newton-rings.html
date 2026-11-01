@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Thin-Film Interference: the Air Wedge and Newton's Rings</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, interference, thin film, interference, air wedge, Newton's rings, phase change on reflection, fringes, white light, reflection, transmission, lesson, scientific">
+<meta name="description" content="Interactive simulation of thin-film interference: an air wedge between two plates and Newton's rings, in reflection and transmission, with white light.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="twRoot" class="tw_root" role="region" aria-label="Thin-film interference: the air wedge and Newton's rings">
+<div class="tw_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="tw_a11ybtn" id="twBtnHC" onclick="twSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="tw_a11ybtn" id="twBtnLM" onclick="twSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="tw_a11ybtn" id="twBtnCB" onclick="twSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="tw_a11ybtn tw_a11yon" id="twBtnNR" onclick="twSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tw_header"><p class="tw_h1">Thin-Film Interference</p><p class="tw_sub">the air wedge &middot; Newton's rings</p></div>
+<div class="tw_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="tw_tab" id="twT0" aria-selected="true" onclick="twSim.tab(0)">The wedge</button>
+<button type="button" role="tab" class="tw_tab" id="twT1" aria-selected="false" onclick="twSim.tab(1)">Newton's rings</button>
+</div>
+<div class="tw_diag" id="twBoxR"><div class="tw_dlabel"><b>SEEN IN REFLECTION (FROM ABOVE)</b><span>drag to move the probe</span></div><canvas id="twR" width="780" height="80" role="img" aria-label="The fringes seen in reflected light."></canvas></div>
+<div class="tw_diag"><div class="tw_dlabel"><b id="twLabS">SIDE VIEW (THE GAP MAGNIFIED)</b><span id="twHintS">drag to move the probe</span></div><canvas id="twSide" width="780" height="240" role="img" aria-label="Side view of the gap, with the light reflected at its top and bottom at the probe."></canvas></div>
+<div class="tw_diag" id="twBoxT"><div class="tw_dlabel"><b>SEEN IN TRANSMISSION (FROM BELOW)</b><span id="twTNote"></span></div><canvas id="twT" width="780" height="80" role="img" aria-label="The fringes seen in transmitted light."></canvas></div>
+<div class="tw_row2" id="twRow2">
+<div class="tw_diag"><div class="tw_dlabel"><b>RINGS SEEN IN REFLECTION</b></div><canvas id="twA" width="380" height="300" role="img" aria-label="Newton's rings in reflected light."></canvas></div>
+<div class="tw_diag"><div class="tw_dlabel"><b>RINGS SEEN IN TRANSMISSION</b><span id="twTNote2"></span></div><canvas id="twB" width="380" height="300" role="img" aria-label="Newton's rings in transmitted light."></canvas></div>
+</div>
+<div class="tw_diag" id="twBoxW"><div class="tw_dlabel"><b>THE TWO REFLECTED WAVES AT THE PROBE</b></div><canvas id="twW" width="780" height="190" role="img" aria-label="The waves reflected at the top and the bottom of the gap, and their sum."></canvas></div>
+<div class="tw_diag"><div class="tw_dlabel"><b id="twLabG">BRIGHTNESS ACROSS THE WEDGE</b></div><canvas id="twG" width="780" height="200" role="img" aria-label="Graph of the reflected and transmitted brightness."></canvas></div>
+<div class="tw_bbar" id="twBtns"></div>
+<div class="tw_panels">
+<div class="tw_panel"><div class="tw_ptitle">Settings</div><div class="tw_pbody" id="twCtl"></div></div>
+<div class="tw_panel"><div class="tw_ptitle">Readout</div><div class="tw_pbody" id="twRead"></div></div>
+</div>
+<div class="tw_eqs" id="twEqs"></div>
+<div id="twNar" class="tw_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="tw_descwrap">
+<button type="button" class="tw_descbtn" id="twDescBtn" aria-expanded="false" aria-controls="twDesc" onclick="twSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="tw_desc" id="twDesc" role="region" aria-labelledby="twDescBtn" style="display:none">
+<p>This simulation shows interference in a thin film: the thin layer of air, or of a liquid of index `n`, between two glass surfaces. Light falling straight down on the film is partly reflected at the top of the gap and partly at its bottom. The second reflection travels an extra distance `2t` in the film, an extra optical path `2nt`. One of the two reflections also has a half-wave (`pi`) phase change: the one where the light meets a medium of higher index. So the reflected light is</p>
+<p class="tw_eq">dark where `2 n t = m lambda`,&nbsp;&nbsp; bright where `2 n t = (m + 1/2) lambda`,</p>
+<p>and the light that gets through is the opposite: bright where the reflection is dark. The simulation uses the exact result for all the multiple reflections, `R = (F sin^2(delta/2))/(1 + F sin^2(delta/2))`, with `delta = 4 pi n t/lambda` and `F = 4R_1/(1 - R_1)^2`, `R_1` being the reflectance of one glass surface; `R + T = 1`. For an air gap in glass the reflected fringes go from black to bright, but the transmitted ones dip by only about 15 %: they are faint, and the option to stretch the contrast makes them easier to see. When the film has the same index as the glass, the fringes disappear.</p>
+<p><b>The wedge.</b> Two flat plates touch along one edge and are held apart by a thin wire at the other, `D` away. The gap grows steadily, `t = D x/L`, so the fringes are straight and evenly spaced, `Delta x = (lambda L)/(2 n D)`. At the line of contact the reflected light is dark. Counting the fringes measures `D`: `N = (2 n D)/lambda`. Drag the probe to see the two reflected waves at any point, in step or opposed.</p>
+<p><b>Newton's rings.</b> A slightly curved lens of radius `R` rests on a flat plate. The gap grows as `t = r^2/(2R)`, so the fringes are rings, crowding closer outward. The dark rings, seen in reflection, have radii `r_m = sqrt((m lambda R)/n)`. With white light every wavelength makes its own rings, and they overlap in colour, as in a soap film.</p>
+</div></div>
+</div><!-- #twRoot -->
+<style>
+#twRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#twRoot * { box-sizing:border-box; }
+#twRoot.tw_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#twRoot.tw_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#twRoot .tw_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#twRoot .tw_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#twRoot .tw_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#twRoot .tw_header { text-align:center; }
+#twRoot .tw_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#twRoot .tw_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#twRoot .tw_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#twRoot .tw_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#twRoot .tw_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#twRoot .tw_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#twRoot .tw_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#twRoot .tw_dlabel b { color:var(--c-accent); }
+#twRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#twRoot .tw_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#twRoot .tw_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#twRoot .tw_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#twRoot .tw_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#twRoot .tw_btn:hover { border-color:var(--c-accent); }
+#twRoot .tw_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#twRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#twRoot .tw_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#twRoot .tw_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#twRoot .tw_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#twRoot .tw_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#twRoot .tw_ctrl { display:flex; flex-direction:column; gap:3px; }
+#twRoot .tw_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#twRoot .tw_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#twRoot .tw_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#twRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#twRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#twRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#twRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#twRoot .tw_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#twRoot .tw_rkey { color:var(--c-dim); }
+#twRoot .tw_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#twRoot .tw_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#twRoot .tw_eqs b { color:var(--c-val); }
+#twRoot .tw_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#twRoot .tw_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#twRoot .tw_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#twRoot .tw_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#twRoot .tw_desc p { margin:0 0 9px; }
+#twRoot .tw_eq { text-align:center; font-size:1rem; }
+#twRoot button:focus-visible, #twRoot input:focus-visible, #twRoot select:focus-visible, #twRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #twRoot .tw_row2, #twRoot .tw_panels { grid-template-columns:minmax(0,1fr); } #twRoot .tw_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #twRoot input[type=range] { height:8px; } #twRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #twRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #twRoot .tw_a11ybtn { min-height:40px; } #twRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Normal incidence. The film (index n) lies between glass (index ng) on both sides. Each surface reflects R1 = ((ng - n)/(ng + n))^2, and the two
+reflections have opposite sign, so the film reflects R = F sin^2(d/2)/(1 + F sin^2(d/2)), d = 4 pi n t/lambda, F = 4 R1/(1 - R1)^2, and T = 1 - R.
+Wedge: t = D x/L. Newton's rings: t = r^2/(2 Rl). White light: the reflectance summed over 400-700 nm with the colour of each wavelength.
+No dollar signs or backticks in the code.
+-->
+<script>
+var twSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('twRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CR = hi('twR'), CS = hi('twSide'), CT = hi('twT'), CA = hi('twA'), CB = hi('twB'), CW = hi('twW'), CG = hi('twG');
+var S = { tab:0, eqs:true, n:1.00, ng:1.52, lam:580, white:false, stretch:true, D:12, L:60, px:0.30, Rl:2.0, rmax:3, pr:0.36 };
+var th = { hc:false, lm:false, cb:false, nr:true };
+/* ══════════ optics ══════════ */
+function F(){ var r = (S.ng - S.n)/(S.ng + S.n), R1 = r*r; return 4*R1/((1 - R1)*(1 - R1)); }
+function refl(t_um, lam_nm){ var d = 4*Math.PI*S.n*t_um*1000/lam_nm, s = Math.sin(d/2), f = F(); return f*s*s/(1 + f*s*s); }
+function rMax(){ var f = F(); return f/(1 + f); }
+function wl2rgb(w){ /* the colour of a wavelength (nm), 0..1 */ var r = 0, g = 0, b = 0;
+  if (w < 440){ r = -(w - 440)/60; b = 1; } else if (w < 490){ g = (w - 440)/50; b = 1; } else if (w < 510){ g = 1; b = -(w - 510)/20; } else if (w < 580){ r = (w - 510)/70; g = 1; } else if (w < 645){ r = 1; g = -(w - 645)/65; } else r = 1;
+  var a = w < 420 ? 0.3 + 0.7*(w - 380)/40 : (w > 700 ? 0.3 + 0.7*(780 - w)/80 : 1); return [r*a, g*a, b*a]; }
+var WL = []; for (var w0=400; w0<=700; w0+=6) WL.push([w0, wl2rgb(w0)]);
+var WSUM = WL.reduce(function(s, q){ return [s[0] + q[1][0], s[1] + q[1][1], s[2] + q[1][2]]; }, [0, 0, 0]);
+function colourAt(t_um, trans){
+  /* the colour seen where the film is t thick: one wavelength, or white light summed over the spectrum */
+  var rm = rMax(), tmin = 1 - rm;
+  function norm(R){ if (!trans) return R/rm; var T = 1 - R; return S.stretch ? (T - tmin)/(1 - tmin) : T; }
+  if (!S.white){ var c = wl2rgb(S.lam), v = norm(refl(t_um, S.lam)); return [c[0]*v, c[1]*v, c[2]*v]; }
+  var s = [0, 0, 0]; for (var i=0; i<WL.length; i++){ var v2 = norm(refl(t_um, WL[i][0])); s[0] += WL[i][1][0]*v2; s[1] += WL[i][1][1]*v2; s[2] += WL[i][1][2]*v2; }
+  return [s[0]/WSUM[0], s[1]/WSUM[1], s[2]/WSUM[2]];
+}
+function toCss(c){ return 'rgb(' + Math.round(255*Math.pow(Math.min(1, c[0]), 0.8)) + ',' + Math.round(255*Math.pow(Math.min(1, c[1]), 0.8)) + ',' + Math.round(255*Math.pow(Math.min(1, c[2]), 0.8)) + ')'; }
+function thickW(x){ return S.D*x; }   /* x from 0 (contact) to 1 (the wire), in units of L */
+function thickN(r_mm){ return (r_mm*1e-3)*(r_mm*1e-3)/(2*S.Rl)*1e6; }   /* micrometres */
+function phaseNote(){ var top = S.n > S.ng, bot = S.ng > S.n; return { top:top, bot:bot }; }
+/* ══════════ palettes and helpers ══════════ */
+function pal(){ if (th.hc) return { bg:'#000', glass:'rgba(150,220,255,0.35)', gedge:'#fff', film:'rgba(255,255,0,0.12)', text:'#fff', ray:'#ffff00', ray2:'#00ffff', grid:'rgba(255,255,255,0.25)', probe:'#ff66ff', R:'#ffff00', T:'#00ffff' };
+  var p = th.lm ? { bg:'#ffffff', text:'#1d2a36', grid:'rgba(0,0,0,0.12)' } : { bg:'#f6f8fb', text:'#1d2a36', grid:'rgba(0,0,0,0.12)' };
+  p.glass = 'rgba(150,200,225,0.55)'; p.gedge = '#5b7c93'; p.film = 'rgba(255,240,180,0.45)'; p.ray = th.cb ? '#e69f00' : '#e07a00'; p.ray2 = th.cb ? '#0072b2' : '#2952c9'; p.probe = th.cb ? '#cc79a7' : '#c2185b'; p.R = th.cb ? '#e69f00' : '#e07a00'; p.T = th.cb ? '#0072b2' : '#2952c9'; return p; }
+function T(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function arrowHead(g, x, y, ang, col){ g.fillStyle = col; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 9*Math.cos(ang - 0.4), y - 9*Math.sin(ang - 0.4)); g.lineTo(x - 9*Math.cos(ang + 0.4), y - 9*Math.sin(ang + 0.4)); g.closePath(); g.fill(); }
+function f2(v, n){ return (+v).toFixed(n === undefined ? 2 : n); }
+var XL = 30, XR = 750;   /* the wedge spans these pixels in every wedge view */
+function xpx(x){ return XL + x*(XR - XL); } function pxx(px){ return Math.max(0, Math.min(1, (px - XL)/(XR - XL))); }
+/* ══════════ tab 0: the wedge ══════════ */
+function band(C, trans){
+  var g = C.g, W = C.W, H = C.H, p = pal(); g.fillStyle = th.hc ? '#000' : '#111'; g.fillRect(0, 0, W, H);
+  for (var px=XL; px<=XR; px++){ g.fillStyle = toCss(colourAt(thickW(pxx(px)), trans)); g.fillRect(px, 0, 1.3, H); }
+  seg(g, xpx(S.px), 0, xpx(S.px), H, p.probe, 2);
+}
+function drawSideW(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), yb = 150, gapMax = 70, thick = 34, x = S.px, t = thickW(x), ph = phaseNote();
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  function yTop(xx){ return yb - xx*gapMax; }
+  /* the plates: the lower one flat; the upper one tilted, resting on the wire at the right */
+  g.fillStyle = p.glass; g.fillRect(XL - 10, yb, XR - XL + 20, thick); g.strokeStyle = p.gedge; g.lineWidth = 1.5; g.strokeRect(XL - 10, yb, XR - XL + 20, thick);
+  g.beginPath(); g.moveTo(XL - 10, yTop(0) + 0.5); g.lineTo(XR + 10, yTop(1) - 0.5); g.lineTo(XR + 10, yTop(1) - thick); g.lineTo(XL - 10, yTop(0) - thick); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = p.film; g.beginPath(); g.moveTo(XL, yb); g.lineTo(XR, yb); g.lineTo(XR, yTop(1)); g.closePath(); g.fill();
+  g.fillStyle = th.hc ? '#fff' : '#222'; g.beginPath(); g.arc(XR + 2, yb - gapMax/2, gapMax/2, 0, 2*Math.PI); g.fill(); T(g, 'wire, D = ' + f2(S.D, 1) + ' \u00B5m', XR - 4, yb + thick + 14, p.text, 'right');
+  T(g, 'contact', XL, yb + thick + 14, p.text, 'left'); T(g, 'film n = ' + f2(S.n), XL + 120, yb - 8, p.text, 'left', '11px Arial'); T(g, 'glass ' + f2(S.ng), XL + 4, yb + thick/2, p.text, 'left', '11px Arial');
+  /* the light at the probe: down through the top plate; reflected at the top of the gap (1) and at its bottom (2) */
+  var X = xpx(x), ytop = yTop(x), sp = 10;
+  seg(g, X - sp, 6, X - sp, ytop, p.ray, 2.2); arrowHead(g, X - sp, ytop - 30, Math.PI/2, p.ray);
+  seg(g, X - sp, ytop, X - sp - 14, 6, p.ray, 2); arrowHead(g, X - sp - 10, 40, -Math.PI/2 - 0.15, p.ray);
+  seg(g, X - sp, ytop, X + sp, yb, p.ray2, 1.6, [4, 3]); seg(g, X + sp, yb, X + sp + 14, 6, p.ray2, 2); arrowHead(g, X + sp + 10, 40, -Math.PI/2 + 0.15, p.ray2);
+  T(g, '1', X - sp - 22, 20, p.ray, 'right', 'bold 13px Arial'); T(g, '2', X + sp + 22, 20, p.ray2, 'left', 'bold 13px Arial');
+  seg(g, X, ytop, X, yb, p.probe, 1.5); T(g, 't = ' + f2(t, 3) + ' \u00B5m', X + 26, (ytop + yb)/2, p.probe, 'left', 'bold 12px Arial');
+  var left = X > W - 260, ax = left ? X - 40 : X + 40, al = left ? 'right' : 'left';
+  T(g, '1: reflected at the top of the gap: ' + (ph.top ? 'half-wave phase change' : 'no phase change'), ax, 46, p.ray, al, '11px Arial');
+  T(g, '2: reflected at the bottom: ' + (ph.bot ? 'half-wave phase change' : 'no phase change') + ', extra path 2nt = ' + f2(2*S.n*t, 3) + ' \u00B5m', ax, 62, p.ray2, al, '11px Arial');
+  T(g, 'the gap is magnified about ' + Math.round(gapMax/(S.D*1e-3)*S.L/(XR - XL)) + ' times; the plates are ' + S.L + ' mm long', W - 10, H - 8, p.text, 'right', '11px Arial');
+}
+function drawWaves(C, t_um){
+  /* the two reflected waves at the probe, with equal amplitude for clarity, and their sum */
+  var g = C.g, W = C.W, H = C.H, p = pal(), lam = S.white ? 550 : S.lam, d = 4*Math.PI*S.n*t_um*1000/lam, ph = Math.PI, rows = [40, 95, 150], A = 16;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  var shift = d + ph, sum = Math.abs(2*Math.cos(shift/2));
+  function wave(y0, phase, amp, col, w){ g.strokeStyle = col; g.lineWidth = w; g.beginPath(); for (var x=160; x<=W - 20; x++){ var v = amp*Math.cos((x - 160)/48 - phase); if (x === 160) g.moveTo(x, y0 - v); else g.lineTo(x, y0 - v); } g.stroke(); }
+  wave(rows[0], 0, A, p.ray, 2); wave(rows[1], shift, A, p.ray2, 2); wave(rows[2], Math.atan2(Math.sin(shift), 1 + Math.cos(shift)), A*sum, th.hc ? '#fff' : '#333', 3);
+  T(g, 'wave 1 (top of the gap)', 10, rows[0], p.ray, 'left', 'bold 11px Arial'); T(g, 'wave 2 (bottom), delayed', 10, rows[1], p.ray2, 'left', 'bold 11px Arial'); T(g, 'their sum', 10, rows[2], p.text, 'left', 'bold 11px Arial');
+  var frac = ((shift/(2*Math.PI)) % 1 + 1) % 1, deg = frac*360;
+  T(g, 'phase difference: 2nt/\u03BB = ' + f2(2*S.n*t_um*1000/lam, 3) + ' wavelengths, plus a half-wave from one reflection \u2192 ' + f2(deg, 0) + '\u00B0' + (sum < 0.3 ? ': opposed, DARK' : (sum > 1.7 ? ': in step, BRIGHT' : '')) + (S.white ? '  (shown for 550 nm)' : ''), W/2 + 60, H - 10, p.text, 'center', 'bold 12px Arial');
+}
+function graphW(C){
+  var g = C.g, W = C.W, H = C.H, p = pal(), Y0 = H - 26, Y1 = 12, lam = S.white ? 550 : S.lam; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  function Y(v){ return Y0 - v*(Y0 - Y1); }
+  for (var v=0; v<=1.0001; v+=0.25){ seg(g, XL, Y(v), XR, Y(v), p.grid, 1); T(g, f2(v, 2), XL - 4, Y(v), p.text, 'right', '10px Arial'); }
+  [[false, p.R, 'reflected R'], [true, p.T, 'transmitted T = 1 \u2212 R']].forEach(function(q, n){ g.strokeStyle = q[1]; g.lineWidth = 2; g.beginPath();
+    for (var px=XL; px<=XR; px++){ var R = refl(thickW(pxx(px)), lam), v = q[0] ? 1 - R : R; if (px === XL) g.moveTo(px, Y(v)); else g.lineTo(px, Y(v)); } g.stroke(); T(g, q[2], XR - 4, Y(q[0] ? 0.8 : 0.3), q[1], 'right', 'bold 11px Arial'); });
+  seg(g, xpx(S.px), Y0, xpx(S.px), Y1, p.probe, 1.5); T(g, 'position across the wedge (contact at the left)' + (S.white ? ', for 550 nm' : ''), (XL + XR)/2, H - 8, p.text, 'center', '11px Arial');
+}
+/* ══════════ tab 1: Newton's rings ══════════ */
+function drawSideN(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), cx = W/2, yb = 170, sc = (W/2 - 40)/S.rmax, tmax = thickN(S.rmax), gmag = 80/Math.max(tmax, 1e-6), thick = 34;
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = p.glass; g.fillRect(20, yb, W - 40, thick); g.strokeStyle = p.gedge; g.lineWidth = 1.5; g.strokeRect(20, yb, W - 40, thick);
+  /* the lens: its lower surface, curved (the gap magnified), its upper surface flat */
+  g.beginPath(); for (var px=20; px<=W - 20; px++){ var r = (px - cx)/sc, y = yb - thickN(Math.abs(r))*gmag; if (px === 20) g.moveTo(px, y); else g.lineTo(px, y); } g.lineTo(W - 20, 40); g.lineTo(20, 40); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = p.film; g.beginPath(); for (var px2=20; px2<=W - 20; px2++){ var r2 = (px2 - cx)/sc, y2 = yb - thickN(Math.abs(r2))*gmag; if (px2 === 20) g.moveTo(px2, y2); else g.lineTo(px2, y2); } g.lineTo(W - 20, yb); g.lineTo(20, yb); g.closePath(); g.fill();
+  var X = cx + S.pr*S.rmax*sc, t = thickN(S.pr*S.rmax), ytop = yb - t*gmag, sp = 9, ph = phaseNote();
+  seg(g, X - sp, 4, X - sp, ytop, p.ray, 2.2); seg(g, X - sp, ytop, X - sp - 12, 4, p.ray, 2); seg(g, X - sp, ytop, X + sp, yb, p.ray2, 1.6, [4, 3]); seg(g, X + sp, yb, X + sp + 12, 4, p.ray2, 2);
+  seg(g, X, ytop, X, yb, p.probe, 1.5); T(g, 't = ' + f2(t, 3) + ' \u00B5m', X + 24, (ytop + yb)/2 - 2, p.probe, 'left', 'bold 12px Arial');
+  T(g, 'lens, radius of curvature R = ' + f2(S.Rl, 1) + ' m', cx, 60, p.text, 'center', 'bold 12px Arial'); T(g, 'r = ' + f2(S.pr*S.rmax, 2) + ' mm', X, yb + thick + 14, p.probe, 'center', 'bold 12px Arial');
+  T(g, '1: ' + (ph.top ? 'half-wave phase change' : 'no phase change') + '   2: ' + (ph.bot ? 'half-wave phase change' : 'no phase change') + ', extra path 2nt', 26, H - 10, p.text, 'left', '11px Arial');
+  T(g, 'the gap is magnified; contact at the centre', W - 24, H - 10, p.text, 'right', '11px Arial');
+}
+function rings(C, trans){
+  var g = C.g, W = C.W, H = C.H, p = pal(), R0 = Math.min(W, H)/2 - 6, cx = W/2, cy = H/2, Wp = Math.round(W*DPR), Hp = Math.round(H*DPR), img = g.createImageData(Wp, Hp), d = img.data, N = 400, lut = [];
+  for (var i=0; i<=N; i++){ var c = colourAt(thickN(S.rmax*i/N), trans); lut.push([Math.round(255*Math.pow(Math.min(1, c[0]), 0.8)), Math.round(255*Math.pow(Math.min(1, c[1]), 0.8)), Math.round(255*Math.pow(Math.min(1, c[2]), 0.8))]); }
+  var bgc = th.hc ? 0 : 24;
+  for (var y=0; y<Hp; y++) for (var x=0; x<Wp; x++){ var rr = Math.hypot(x - cx*DPR, y - cy*DPR)/(R0*DPR), q = 4*(y*Wp + x);
+    if (rr > 1){ d[q] = bgc; d[q + 1] = bgc + 4; d[q + 2] = bgc + 8; } else { var k = lut[Math.round(rr*N)]; d[q] = k[0]; d[q + 1] = k[1]; d[q + 2] = k[2]; } d[q + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  g.strokeStyle = p.probe; g.lineWidth = 1.5; g.setLineDash([4, 3]); g.beginPath(); g.arc(cx, cy, S.pr*R0, 0, 2*Math.PI); g.stroke(); g.setLineDash([]);
+  T(g, 'field ' + f2(2*S.rmax, 0) + ' mm across', W - 6, H - 8, '#ccc', 'right', '10px Arial');
+}
+function graphN(C){
+  var g = C.g, W = C.W, H = C.H, p = pal(), Y0 = H - 26, Y1 = 12, lam = S.white ? 550 : S.lam; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  function Y(v){ return Y0 - v*(Y0 - Y1); } function X(r){ return XL + r/S.rmax*(XR - XL); }
+  for (var v=0; v<=1.0001; v+=0.25){ seg(g, XL, Y(v), XR, Y(v), p.grid, 1); T(g, f2(v, 2), XL - 4, Y(v), p.text, 'right', '10px Arial'); }
+  for (var m=1; m<60; m++){ var rm = Math.sqrt(m*lam*1e-9*S.Rl/S.n)*1000; if (rm > S.rmax) break; seg(g, X(rm), Y0, X(rm), Y0 + 5, p.text, 1); if (m <= 5) T(g, String(m), X(rm), Y0 + 12, p.text, 'center', '10px Arial'); }
+  [[false, p.R, 'reflected R'], [true, p.T, 'transmitted T']].forEach(function(q){ g.strokeStyle = q[1]; g.lineWidth = 2; g.beginPath(); for (var px=XL; px<=XR; px++){ var R = refl(thickN((px - XL)/(XR - XL)*S.rmax), lam), v = q[0] ? 1 - R : R; if (px === XL) g.moveTo(px, Y(v)); else g.lineTo(px, Y(v)); } g.stroke(); T(g, q[2], XR - 4, Y(q[0] ? 0.8 : 0.3), q[1], 'right', 'bold 11px Arial'); });
+  seg(g, X(S.pr*S.rmax), Y0, X(S.pr*S.rmax), Y1, p.probe, 1.5); T(g, 'distance r from the centre: the ticks mark the dark rings m = 1, 2, 3, \u2026' + (S.white ? ' (550 nm)' : ''), (XL + XR)/2, H - 8, p.text, 'center', '11px Arial');
+}
+/* ══════════ readout ══════════ */
+function rrow(k, v){ return '<div class="tw_rrow"><span class="tw_rkey">' + k + '</span><span class="tw_rval">' + v + '</span></div>'; }
+function info(){ var lam = S.white ? 550 : S.lam, t = S.tab === 0 ? thickW(S.px) : thickN(S.pr*S.rmax), m = 2*S.n*t*1000/lam, R = refl(t, lam), rm = rMax();
+  return { lam:lam, t:t, m:m, R:R, T:1 - R, rm:rm, cR:100, cT:rm/(2 - rm)*100, spacing:(lam*1e-6)*S.L/(2*S.n*S.D*1e-3),   /* mm: lambda and D converted to mm */ N:2*S.n*S.D*1000/lam }; }
+function readout(){
+  var I = info(), r = '', e = '', same = Math.abs(S.n - S.ng) < 0.005;
+  r = rrow('thickness at the probe t', f2(I.t, 3) + ' \u00B5m') + rrow('2nt / \u03BB (order)', f2(I.m, 2)) + rrow('reflected R', f2(I.R, 4)) + rrow('transmitted T', f2(I.T, 4)) + rrow('contrast: reflected / transmitted', same ? 'none: n = n_glass' : '100 % / ' + f2(I.cT, 1) + ' %');
+  if (S.tab === 0){ r += rrow('fringe spacing \u0394x', f2(I.spacing, 3) + ' mm') + rrow('fringes across the wedge', f2(I.N, 1));
+    e = 'Gap: t = D x/L. Dark (reflected) where <b>2nt = m\u03BB</b>: spacing <b>\u0394x = \u03BBL/(2nD)</b> = ' + f2(I.lam, 0) + ' nm \u00D7 ' + S.L + ' mm / (2 \u00D7 ' + f2(S.n) + ' \u00D7 ' + f2(S.D, 1) + ' \u00B5m) = <b>' + f2(I.spacing, 3) + ' mm</b>; number of fringes N = 2nD/\u03BB = <b>' + f2(I.N, 1) + '</b>.<br>'; }
+  else { var rings_ = []; for (var m=1; m<=3; m++) rings_.push(f2(Math.sqrt(m*I.lam*1e-9*S.Rl/S.n)*1000, 3));
+    r += rrow('dark-ring radii, m = 1, 2, 3', rings_.join(', ') + ' mm');
+    e = 'Gap: t = r\u00B2/(2R). Dark (reflected) where 2nt = m\u03BB: <b>r_m = \u221A(m\u03BBR/n)</b>; for m = 1: \u221A(' + f2(I.lam, 0) + ' nm \u00D7 ' + f2(S.Rl, 1) + ' m / ' + f2(S.n) + ') = <b>' + rings_[0] + ' mm</b>. The rings crowd outward, r_m \u221D \u221Am.<br>'; }
+  e += 'Each glass surface reflects R\u2081 = ((' + f2(S.ng) + ' \u2212 ' + f2(S.n) + ')/(' + f2(S.ng) + ' + ' + f2(S.n) + '))\u00B2 = ' + f2(Math.pow((S.ng - S.n)/(S.ng + S.n), 2), 4) + '; all the reflections together: R = F sin\u00B2(\u03B4/2)/(1 + F sin\u00B2(\u03B4/2)), F = ' + f2(F(), 4) + ', \u03B4 = 4\u03C0nt/\u03BB; <b>R + T = 1</b>.';
+  el('twRead').innerHTML = r; el('twEqs').innerHTML = e; el('twEqs').style.display = S.eqs ? '' : 'none';
+  var note = S.stretch ? 'contrast stretched (really ' + f2(I.cT, 1) + ' %)' : 'true contrast: ' + f2(I.cT, 1) + ' %'; el('twTNote').textContent = note; el('twTNote2').textContent = note;
+}
+function summary(){ var I = info(), same = Math.abs(S.n - S.ng) < 0.005, where = S.tab === 0 ? 'At the probe the gap is ' : 'At r = ' + f2(S.pr*S.rmax, 2) + ' millimetres the gap is ';
+  if (same) return 'The film has the same index as the glass: nothing reflects at its surfaces, and the fringes disappear.';
+  return where + f2(I.t, 3) + ' micrometres thick: 2nt is ' + f2(I.m, 2) + ' wavelengths. ' + (I.R/I.rm < 0.15 ? 'The two reflected waves are opposed: dark in reflection, bright in transmission.' : (I.R/I.rm > 0.85 ? 'The two reflected waves are in step: bright in reflection.' : 'Partly bright.')) + (S.tab === 0 ? ' The fringes are ' + f2(I.spacing, 2) + ' millimetres apart, ' + f2(I.N, 0) + ' across the wedge.' : ' The first dark ring has a radius of ' + f2(Math.sqrt(I.lam*1e-9*S.Rl/S.n)*1000, 2) + ' millimetres.') + (S.white ? ' With white light, each colour makes its own fringes, and they overlap in colour.' : '');
+}
+function narrate(m){ if (!th.nr) return; el('twNar').textContent = m; }
+var nT = null; function later(){ clearTimeout(nT); nT = setTimeout(function(){ narrate(summary()); }, 400); }
+function draw(){ var w = S.tab === 0;
+  el('twBoxR').style.display = w ? '' : 'none'; el('twBoxT').style.display = w ? '' : 'none'; el('twBoxW').style.display = ''; el('twRow2').style.display = w ? 'none' : '';
+  el('twLabG').textContent = w ? 'BRIGHTNESS ACROSS THE WEDGE' : 'BRIGHTNESS AGAINST THE DISTANCE FROM THE CENTRE';
+  if (w){ band(CR, false); drawSideW(); band(CT, true); graphW(CG); drawWaves(CW, thickW(S.px)); }
+  else { drawSideN(); rings(CA, false); rings(CB, true); graphN(CG); drawWaves(CW, thickN(S.pr*S.rmax)); }
+  readout(); }
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="tw_ctrl"><div class="tw_ctrlhdr"><label class="tw_ctrlname" for="' + id + '">' + label + '</label><span class="tw_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function nTxt(){ return f2(S.n) + ({ '1.00':' (air)', '1.33':' (water)', '1.52':' (= the glass)' }[f2(S.n)] || ''); }
+function buildCtl(){
+  var b = '<label><input type="checkbox" id="twWh"' + (S.white ? ' checked' : '') + '> white light</label><label><input type="checkbox" id="twSt"' + (S.stretch ? ' checked' : '') + '> stretch the transmitted contrast</label>'
+    + '<button type="button" class="tw_btn" id="twAir">air</button><button type="button" class="tw_btn" id="twWat">water</button><button type="button" class="tw_btn" id="twOil">oil (1.52)</button>'
+    + '<label><input type="checkbox" id="twEq"' + (S.eqs ? ' checked' : '') + '> math</label><button type="button" class="tw_btn" id="twDsc">Describe</button>';
+  var c = row('twLam', 'wavelength \u03BB', 400, 700, 1, S.lam, S.lam + ' nm') + row('twN', 'film index n', 1, 2, 0.01, S.n, nTxt());
+  if (S.tab === 0) c += row('twD', 'thickness at the wire D', 1, 40, 0.1, S.D, f2(S.D, 1) + ' \u00B5m') + row('twP', 'probe position', 0, 1, 0.001, S.px, f2(S.px*S.L, 2) + ' mm');
+  else c += row('twRl', 'radius of the lens R', 0.5, 20, 0.1, S.Rl, f2(S.Rl, 1) + ' m') + row('twRm', 'field radius', 1, 15, 0.1, S.rmax, f2(S.rmax, 1) + ' mm') + row('twPr', 'probe radius', 0, 1, 0.001, S.pr, f2(S.pr*S.rmax, 2) + ' mm');
+  el('twBtns').innerHTML = b; el('twCtl').innerHTML = c;
+  function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+  var lamS = el('twLam'); if (lamS){ var cc = wl2rgb(S.lam); lamS.style.accentColor = toCss(cc); }
+  on('twWh', 'change', function(){ S.white = this.checked; schedule(); narrate(S.white ? 'White light: every wavelength makes its own fringes, at its own spacing; they overlap in colour, and only the first few stand out before the colours wash out to white.' + (S.tab === 0 && S.D > 4 ? ' Lower the thickness at the wire, D, to spread the colours across the wedge.' : '') : 'Single wavelength, ' + S.lam + ' nanometres.'); });
+  on('twSt', 'change', function(){ S.stretch = this.checked; schedule(); narrate(S.stretch ? 'The transmitted fringes are shown with their contrast stretched; really they are faint.' : 'The transmitted fringes are shown as they are: faint, because most of the light gets through whatever the thickness.'); });
+  [['twAir', 1.00, 'air'], ['twWat', 1.33, 'water'], ['twOil', 1.52, 'an oil with the index of the glass']].forEach(function(q){ on(q[0], 'click', function(){ S.n = q[1]; buildCtl(); schedule(); narrate('The gap is filled with ' + q[2] + '. ' + summary()); }); });
+  on('twEq', 'change', function(){ S.eqs = this.checked; schedule(); }); on('twDsc', 'click', describe);
+  on('twLam', 'input', function(){ S.lam = +this.value; el('twLamv').textContent = S.lam + ' nm'; this.style.accentColor = toCss(wl2rgb(S.lam)); schedule(); later(); });
+  on('twN', 'input', function(){ S.n = +this.value; el('twNv').textContent = nTxt(); schedule(); later(); });
+  on('twD', 'input', function(){ S.D = +this.value; el('twDv').textContent = f2(S.D, 1) + ' \u00B5m'; schedule(); later(); });
+  on('twP', 'input', function(){ S.px = +this.value; el('twPv').textContent = f2(S.px*S.L, 2) + ' mm'; schedule(); later(); });
+  on('twRl', 'input', function(){ S.Rl = +this.value; el('twRlv').textContent = f2(S.Rl, 1) + ' m'; schedule(); later(); });
+  on('twRm', 'input', function(){ S.rmax = +this.value; el('twRmv').textContent = f2(S.rmax, 1) + ' mm'; var p_ = el('twPrv'); if (p_) p_.textContent = f2(S.pr*S.rmax, 2) + ' mm'; schedule(); later(); });
+  on('twPr', 'input', function(){ S.pr = +this.value; el('twPrv').textContent = f2(S.pr*S.rmax, 2) + ' mm'; schedule(); later(); });
+}
+/* ── pointer: drag the probe on any view of the wedge, or on the rings ── */
+var drag = false;
+function setProbe(C, e){ var r = C.c.getBoundingClientRect(), q = e.touches ? e.touches[0] : e, px = (q.clientX - r.left)*C.W/r.width, py = (q.clientY - r.top)*C.H/r.height;
+  if (S.tab === 0){ S.px = pxx(px); var s = el('twP'); if (s){ s.value = S.px; el('twPv').textContent = f2(S.px*S.L, 2) + ' mm'; } }
+  else { var R0 = Math.min(C.W, C.H)/2 - 6, rr = (C === CS || C === CG) ? Math.abs(px - (C === CS ? C.W/2 : XL))/((C === CS ? C.W/2 - 40 : XR - XL)) : Math.hypot(px - C.W/2, py - C.H/2)/R0; S.pr = Math.max(0, Math.min(1, rr)); var s2 = el('twPr'); if (s2){ s2.value = S.pr; el('twPrv').textContent = f2(S.pr*S.rmax, 2) + ' mm'; } }
+  schedule(); }
+[CR, CS, CT, CA, CB, CG].forEach(function(C){
+  C.c.addEventListener('mousedown', function(e){ drag = C; setProbe(C, e); }); C.c.addEventListener('touchstart', function(e){ drag = C; setProbe(C, e); if (e.cancelable) e.preventDefault(); }, { passive:false });
+  C.c.addEventListener('touchmove', function(e){ if (drag === C){ setProbe(C, e); if (e.cancelable) e.preventDefault(); } }, { passive:false }); });
+window.addEventListener('mousemove', function(e){ if (drag) setProbe(drag, e); }); window.addEventListener('mouseup', function(){ if (drag){ drag = false; later(); } }); window.addEventListener('touchend', function(){ if (drag){ drag = false; later(); } });
+function tab(i){ S.tab = i; for (var k=0; k<2; k++) el('twT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false'); buildCtl(); draw(); narrate(summary()); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('tw_hc', th.hc); ROOT.classList.toggle('tw_lm', th.lm);
+  [['hc', 'twBtnHC'], ['lm', 'twBtnLM'], ['cb', 'twBtnCB'], ['nr', 'twBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('tw_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('twBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('twNar').style.display = th.nr ? '' : 'none'; draw(); }
+function describe(){ narrate((S.tab === 0 ? 'From the top: the fringes seen in reflection, a side view of the wedge with the two reflected rays at the probe, the fringes seen in transmission, the two reflected waves and their sum, and the brightness across the wedge. ' : 'From the top: a side view of the lens on the plate with the two reflected rays at the probe, the rings seen in reflection and in transmission, the two reflected waves and their sum, and the brightness against the distance from the centre. ') + summary()); }
+function toggleDesc(){ var b = el('twDescBtn'), d = el('twDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+buildCtl(); draw(); narrate('Ready. ' + summary());
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc, set:function(k, v){ S[k] = v; buildCtl(); draw(); },
+  _state:function(){ var I = info(); return { S:JSON.parse(JSON.stringify(S)), info:I, F:F() }; }, _refl:refl };
+})();
+</script>
+</main>
+</body>
+</html>

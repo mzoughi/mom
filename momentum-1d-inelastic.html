@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Momentum: Momentum: Inelastic Collision</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, momentum, inelastic collision, conservation of momentum, kinetic energy, lesson, scientific">
+<meta name="description" content="Momentum: Inelastic Collision -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobinel" class="mob_wrap">
+<div id="momICRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="mom_a11y" id="momICA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="mom_a11ybtn" id="momICBtnHC" onclick="momICA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="mom_a11ybtn" id="momICBtnLM" onclick="momICA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="mom_a11ybtn mom_a11yon" id="momICBtnNR" onclick="momICA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Narration bar -->
+<div id="momICNarBar" class="mom_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="canvasesdiv" class="tbar"><H3>Momentum: Inelastic Collision</H3></div>
+<div class="mcontent">
+<canvas id="myCanvas" style="margin:auto;border:1px solid" width="620" height="270"></canvas>
+</div>
+<div class="bbar">
+<div class="left">
+<div class="red">
+<div style="height:24px">Red Cart</div>
+<div style="height:30px">
+<div style="height:30px;display:flex;">
+<div style="height:30px;width:60px;padding-left:10px">`V_i`:</div>
+<div style="height:30px"><input type="range" id="ViRed" min="0" max="25" value="10" step="1" style="width:270px"
+          oninput="momentumIC.reactionViR_a11y(this.value)" onchange="momentumIC.reactionViR_a11y(this.value)"><span class="vDisp"><span id="ViRedValue">10</span> m/s</span></div>
+</div>
+<div style="height:30px;display:flex;">
+<div style="height:30px;width:60px;padding-left:10px">Mass:</div>
+<div style="height:30px"><input type="range" id="RMass" min="1" max="10" value="3" step="1" style="width:270px"
+          oninput="momentumIC.reactionRM_a11y(this.value)" onchange="momentumIC.reactionRM_a11y(this.value)"><span class="vDisp"><span id="RMassValue">3</span> kg</span></div>
+</div>
+</div>
+</div><!-- end red -->
+<div class="blue">
+<div style="height:24px">Blue Cart</div>
+<div style="height:30px">
+<div style="height:30px;display:flex;">
+<div style="height:30px;width:60px;padding-left:10px">`V_i`:</div>
+<div style="height:30px"><input type="range" id="ViBlue" min="-25" max="0" value="-5" step="1" style="width:270px"
+          oninput="momentumIC.reactionViB_a11y(this.value)" onchange="momentumIC.reactionViB_a11y(this.value)"><span class="vDisp"><span id="ViBlueValue">-5</span> m/s</span></div>
+</div>
+<div style="height:30px;display:flex;">
+<div style="height:30px;width:60px;padding-left:10px">Mass:</div>
+<div style="height:30px"><input type="range" id="BMass" min="1" max="10" value="2" step="1" style="width:270px"
+          oninput="momentumIC.reactionBM_a11y(this.value)" onchange="momentumIC.reactionBM_a11y(this.value)"><span class="vDisp"><span id="BMassValue">2</span> kg</span></div>
+</div>
+</div>
+</div><!-- end blue -->
+</div>
+<div class="center">
+<div class="top">
+<span class="Pred">`P_{R_i} = `<span id="Pri">0</span> kg m/s</span>
+<br><span class="Pblue">`P_{B_i} `= <span id="Pbi">0</span> kg m/s</span>
+<br><span class="Pmn">`P_{i} = `<span id="Pi">0</span> kg m/s</span>
+<br><span class="Pred">`P_{R_f} = `<span id="Prf">0</span> kg m/s</span>
+<br><span class="Pblue">`P_{B_f} = `<span id="Pbf">0</span> kg m/s</span>
+<br><span class="Pmn">`P_{f} = `<span id="Pf">0</span> kg m/s</span>
+</div>
+<div class="bot"></div>
+</div>
+</div>
+<div class="bbbar">
+<input type="button" id="play" value="Play" onclick="if(this.value=='Play'){momentumIC.pl();this.value='Pause';}else{this.value='Play';momentumIC.pause();}">
+<input type="button" id="stepback"    value="Step &#9664;&#9664;" onclick="momentumIC.stepBack()">
+<input type="button" id="stepforward" value="Step &#9654;&#9654;" onclick="momentumIC.stepForward()">
+<input type="button" id="restart"     value="Restart" onclick="momentumIC.restart();document.getElementById('play').value='Play';">
+</div>
+</div><!-- #momICRoot -->
+<style>:where(#mobinel) * { margin: 0; box-sizing: border-box; }
+:where(#mobinel) div { width: 623px; margin: 0; }
+:where(#mobinel) canvas { display: block; visibility: visible; }
+/* ── A11y toolbar ── */
+#momICRoot .mom_a11y {
+display: flex; gap: 6px; padding: 6px 8px;
+background: #222; flex-wrap: wrap; width: 623px;
+}
+#momICRoot .mom_a11ybtn {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+}
+#momICRoot .mom_a11ybtn:hover { border-color: #00e8d0; color: #00e8d0; }
+#momICRoot .mom_a11yon { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#momICRoot .mom_narbar {
+width: 623px; min-height: 28px; padding: 5px 10px;
+background: #ffefc0; border-left: 4px solid #e0b040;
+font-size: .88rem; color: #333; font-style: italic;
+}
+.tbar { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+.Pred { padding-left:10px;padding-right:10px;font-size:14px;line-height:1.2;color:red; }
+.Pblue { padding-left:10px;padding-right:10px;font-size:14px;line-height:1.2;color:blue; }
+.Pmn { padding-left:10px;padding-right:10px;line-height:2;font-size:16px;font-weight:bold; }
+.vDisp { background-color:blue;color:yellow;margin-left:10px;padding-top:2px;
+display:inline-block;font-size:14px;text-align:center;height:20px;width:55px; }
+.mcontent { height: 272px; }
+.bbar { height:180px;background-color:#df9;padding:0px;display:flex; }
+.bbar .left { width:423px;padding:0px;text-align:left; }
+.bbar .left .red { background-color:#c9c;height:90px;width:423px;padding:2px; }
+.bbar .left .blue { background-color:#1ab;height:90px;width:423px;padding:2px; }
+.bbar .center { width:200px;padding:0px;text-align:left; }
+.bbar .center .top { background-color:#e8f5e9;height:155px;width:200px;padding:2px; }
+.bbar .center .bot { background-color:#f54;height:25px;width:200px;padding:4px 4px; }
+.bbbar { height:50px;background-color:#df0;text-align:center;padding:10px; }
+.footer { height:60px;text-align:center;font-size:16px;display:flex; }
+.footer .left { width:136px;padding:2px; }
+.footer .center { width:367px;padding:4px; }
+.footer-pink { background-color:#fce4ec; }
+.footer-green { background-color:#e8f5e9; }
+.footer-blue { background-color:#e3f2fd; }
+.footer-cyan { background-color:#aff; }
+.flex { min-height:100px;background-color:#fec;padding:4px; }</style>
+<!-- ════════ Accessibility controller ════════ -->
+<script>
+var momICA11y = (function(){
+var ROOT = null, states = { hc: false, lm: false, nr: true };
+function styleBtn(id, on) {
+var b = document.getElementById(id); if (!b) return;
+if (on) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else    { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('myCanvas');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('momICNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('momICBtnNR');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('momICBtnNR', states.nr); }
+}
+function apply() {
+if (!ROOT) return;
+applyCanvas(); applyNarBar();
+styleBtn('momICBtnHC', states.hc);
+styleBtn('momICBtnLM', states.lm);
+}
+return {
+init: function() { ROOT = document.getElementById('momICRoot'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+},
+isHC: function() { return states.hc; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('momICNarBar'); if (!nb) return;
+nb.innerHTML = msg;
+if (window.MathJax) {
+if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+}
+}
+};
+})();
+</script>
+<!-- ════════ Simulation ════════ -->
+<script>
+var momentumIC = function() {
+var canvas, ctx, mx, my;
+var runFlag = 1, index = -1;
+var xBase = 0, maxX = 420, xScale = 4, xShift = 60;
+var yBase = 220, yScale = 2;
+var yStart = yBase + 160, yStartMD = yStart + 60;
+var timeScale = 20.0;
+var timer, time, maxtime = 19.4;
+var TTC = 0, TT = 0;
+var elastic = 0;                          /* INELASTIC */
+var tbcolor = '#999';
+var varFont = '11pt Calibri';
+var SMass = 2, widthBstripe = 3.0, heightTotalB = SMass * 8;
+var xPos = xBase,  vInit  = 10, xPos0  = 0,   yPos  = 220, massR = 3, widthR = 45;
+var xPos2 = xBase, v2Init = -5, x2Pos0 = 120,  yPos2 = 220, massB = 2, widthB = 30;
+var collEvent = 0, vaC = vInit, vaC2 = v2Init;
+var Sspdup = 1;
+var minL = xBase / 2, maxL = xBase + maxX + xShift;
+var Scale, PXi, VXi, yPos0 = yPos, DPos = 0;
+var v = vInit, v2 = v2Init;
+var time0 = 3, X0t0 = 0, Vx0t0;
+var wheelh=4.0, wheelw=4.0, wheel1x=6.0, wheely=4.0, BA=3, xPs, width, colM, yPs, colP, colG;
+var ballR, ballB;
+var _collNarratedAt = -1;
+function _narrate(msg) { momICA11y.narrate(msg); }
+function _settingsNarration() {
+var dirR = vInit  > 0 ? 'moving right' : (vInit  < 0 ? 'moving left' : 'stationary');
+var dirB = v2Init < 0 ? 'moving left'  : (v2Init > 0 ? 'moving right' : 'stationary');
+var Pri = (vInit  * massR).toFixed(1);
+var Pbi = (v2Init * massB).toFixed(1);
+var Pi  = (vInit  * massR + v2Init * massB).toFixed(1);
+var KiR = (0.5 * massR * vInit  * vInit ).toFixed(1);
+var KiB = (0.5 * massB * v2Init * v2Init).toFixed(1);
+var Ki  = (parseFloat(KiR) + parseFloat(KiB)).toFixed(1);
+_narrate('Inelastic collision. '
++ 'Red cart: ' + massR + ' kg, v<sub>i</sub> = ' + vInit + ' m/s (' + dirR + '). '
++ 'Blue cart: ' + massB + ' kg, v<sub>i</sub> = ' + v2Init + ' m/s (' + dirB + '). '
++ 'P<sub>R</sub> = ' + Pri + ', P<sub>B</sub> = ' + Pbi
++ ', P<sub>total</sub> = ' + Pi + ' kg&middot;m/s. '
++ 'KE<sub>R</sub> = ' + KiR + ', KE<sub>B</sub> = ' + KiB
++ ', KE<sub>total</sub> = ' + Ki + ' J. '
++ 'Press Play to run.');
+}
+function _collisionNarration() {
+/* In a perfectly inelastic collision vaC === vaC2 */
+var vf   = vaC.toFixed(2);
+var Pf   = (vaC * (massR + massB)).toFixed(1);
+var Kf   = (0.5 * (massR + massB) * vaC * vaC).toFixed(1);
+var Pi   = (vInit * massR + v2Init * massB).toFixed(1);
+var Ki   = (0.5 * massR * vInit * vInit + 0.5 * massB * v2Init * v2Init).toFixed(1);
+var dKE  = (parseFloat(Kf) - parseFloat(Ki)).toFixed(1);
+_narrate('Collision at t = ' + TTC.toFixed(2) + ' s. '
++ 'Carts stick together, moving at v<sub>f</sub> = ' + vf + ' m/s. '
++ 'P<sub>total after</sub> = ' + Pf + ' kg&middot;m/s '
++ '(was ' + Pi + ' &mdash; conserved). '
++ 'KE after = ' + Kf + ' J (was ' + Ki + ' J; &Delta;KE = ' + dKE + ' J lost to deformation).');
+}
+function init() {
+drawMotion();
+if (document.getElementById("ViRed")) {
+document.getElementById("ViRed").onchange  = function(){ reactionViR(); };
+}
+if (document.getElementById("RMass")) {
+document.getElementById("RMass").onchange  = function(){ reactionRM(); };
+}
+if (document.getElementById("ViBlue")) {
+document.getElementById("ViBlue").onchange = function(){ reactionViB(); };
+}
+if (document.getElementById("BMass")) {
+document.getElementById("BMass").onchange  = function(){ reactionBM(); };
+}
+window.setTimeout(function(){ _settingsNarration(); }, 0);
+}
+function drawMotion() {
+canvas = document.getElementById("myCanvas");
+ctx    = canvas.getContext("2d");
+mx     = canvas.width / 2; my = canvas.height / 2;
+ballR  = { x: xPos,  v: vInit,  x0: xPos0,  y: yPos,  col: "red",  colG: "#CEECF5", mass: massR, width: widthR, lbl: 1 };
+ballB  = { x: xPos2, v: v2Init, x0: x2Pos0, y: yPos2, col: "blue", colG: "#CEECF5", mass: massB, width: widthB, lbl: 2 };
+if (xPos > 5*maxL || xPos2 > 5*maxL || xPos < minL || xPos2 < minL || time >= maxtime) {
+runFlag = 0; document.getElementById('play').value = 'Play';
+}
+if (runFlag == 1) {
+var bgCol = momICA11y.isHC() ? '#111' : '#fff';
+var tbCol = momICA11y.isHC() ? '#555' : '#999';
+ctx.fillStyle = bgCol;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+drawTable(0, yPos, canvas.width, 20, 25, 52, 105, canvas.width - 155, tbCol);
+index += 1;
+time = index / timeScale;
+if (Sspdup) {
+calMomentum(TTC);
+if (time == 0) { collEvent = 0; }
+DPos = xPos2 - xPos - widthR - 2.0 * widthBstripe;
+if (DPos <= 2.0 * widthBstripe && time > 0 && collEvent == 0) {
+if (elastic) {
+vaC2 = (2*massR*vInit + (massB-massR)*v2Init) / (massR+massB);
+vaC  = (2*massB*v2Init - (massB-massR)*vInit) / (massR+massB);
+} else {
+vaC  = (massR*vInit + massB*v2Init) / (massR+massB);
+vaC2 = vaC;
+}
+collEvent = 1; TTC = time;
+}
+TT = time;
+if (collEvent) { TT = TTC; }
+Scale = xScale;
+PXi = xPos0;  VXi = vInit;
+xPos  = xBase + xShift + Scale*PXi + Scale*VXi*TT + Scale*collEvent*vaC *(time-TTC);
+v  = VXi; if (collEvent) { v  = vaC;  }
+PXi = x2Pos0; VXi = v2Init;
+xPos2 = xBase + xShift + Scale*PXi + Scale*VXi*TT + Scale*collEvent*vaC2*(time-TTC);
+v2 = VXi; if (collEvent) { v2 = vaC2; }
+if (time == time0) { X0t0 = xPos; Vx0t0 = v; }
+ballR = Object.assign({}, ballR, { x: xPos,  v: v  });
+ballB = Object.assign({}, ballB, { x: xPos2, v: v2 });
+if (collEvent && _collNarratedAt !== TTC) {
+_collNarratedAt = TTC;
+_collisionNarration();
+}
+}
+if (Sspdup) { MD(ballR, yStartMD); MD(ballB, yStartMD); }
+displayValues();
+}
+}
+function drawTable(xl, yt, tw, th, lw, lh, ll, lr, tbc) {
+ctx.beginPath(); ctx.rect(xl,yt,tw,th); ctx.fillStyle=tbc; ctx.fill();
+ctx.beginPath(); ctx.rect(ll,yt,lw,lh); ctx.fillStyle=tbc; ctx.fill();
+ctx.beginPath(); ctx.rect(lr,yt,lw,lh); ctx.fillStyle=tbc; ctx.fill();
+}
+function calMomentum(Tc) {
+var Pri = vInit*massR, Pbi = v2Init*massB, Pi = Pri+Pbi;
+if (document.getElementById('Pri')) document.getElementById('Pri').innerHTML = Pri.toFixed(1);
+if (document.getElementById('Pbi')) document.getElementById('Pbi').innerHTML = Pbi.toFixed(1);
+if (document.getElementById('Pi'))  document.getElementById('Pi').innerHTML  = Pi.toFixed(1);
+if (time <= Tc) {
+if (document.getElementById('Prf')) document.getElementById('Prf').innerHTML = "NA";
+if (document.getElementById('Pbf')) document.getElementById('Pbf').innerHTML = "NA";
+if (document.getElementById('Pf'))  document.getElementById('Pf').innerHTML  = "NA";
+} else {
+var Prf=vaC*massR, Pbf=vaC2*massB, Pf=Prf+Pbf;
+if (document.getElementById('Prf')) document.getElementById('Prf').innerHTML = Prf.toFixed(1);
+if (document.getElementById('Pbf')) document.getElementById('Pbf').innerHTML = Pbf.toFixed(1);
+if (document.getElementById('Pf'))  document.getElementById('Pf').innerHTML  = Pf.toFixed(1);
+}
+}
+function MD(ball, ySMD) {
+if (!ball) ball = ballR;
+xPs = ball.x; yPs = ball.y; colP = ball.col; colM = ball.col;
+colG = ball.colG; width = ball.width;
+if (!ySMD) ySMD = yStartMD;
+ctx.strokeStyle = colM; ctx.lineWidth = 4;
+ctx.beginPath();
+addBox(xPs, yPos, width, widthBstripe, heightTotalB, wheelh, wheely, wheel1x, wheelw, colM);
+ctx.lineWidth = 2; ctx.strokeStyle = colM;
+}
+function addBox(xB, yB, wB, dB, hB, hW, yW, xW, wW, cB) {
+if (!xB) xB=xPs; if (!yB) yB=yPos; if (!wB) wB=BA*13; if (!dB) dB=BA*2;
+if (!hB) hB=SMass*8; if (!yW) yW=SMass*6; if (!xW) xW=BA*2;
+if (!hW) hW=SMass*2; if (!wW) wW=BA*1.5; if (!cB) cB='red';
+ctx.beginPath();
+ctx.rect(xB+xW, yB-yW, wW, hW);
+ctx.rect(xB+wB-2*xW, yB-yW, wW, hW);
+ctx.fillStyle = '#000000'; ctx.fill();
+ctx.beginPath();
+ctx.strokeStyle = '#B0B0B0'; ctx.lineWidth = 0;
+var g = ctx.createLinearGradient(xPs, yB, xPs, yB-hB);
+g.addColorStop(0, "#B0B0B0"); g.addColorStop(0.5, "#D8D8D8"); g.addColorStop(1, "#B0B0B0");
+ctx.fillStyle = g;
+ctx.fillRect(xB, yB-hB, wB, hB-yW/2);
+ctx.rect(xB+wB, yB-hB, dB, hB-yW/2);
+ctx.rect(xB-dB, yB-hB, dB, hB-yW/2);
+ctx.fillStyle = cB; ctx.fill();
+ctx.beginPath(); ctx.lineWidth = 1;
+ctx.moveTo(xB, yB-hB/2); ctx.lineTo(xB+wB, yB-hB/2);
+ctx.strokeStyle = '#B0B0B0'; ctx.lineWidth = 1; ctx.stroke();
+ctx.strokeStyle = '#999'; ctx.lineWidth = 2;
+}
+/* ── Slider wrappers with narration ── */
+function reactionViR_a11y(val) {
+vInit = Number(val);
+document.getElementById('ViRedValue').innerHTML = vInit;
+_collNarratedAt = -1; restart(); _settingsNarration();
+}
+function reactionViB_a11y(val) {
+v2Init = Number(val);
+document.getElementById('ViBlueValue').innerHTML = v2Init;
+_collNarratedAt = -1; restart(); _settingsNarration();
+}
+function reactionRM_a11y(val) {
+massR = Number(val);
+document.getElementById('RMassValue').innerHTML = val;
+widthR = 30 + 3*(massR-1);
+_collNarratedAt = -1; restart(); _settingsNarration();
+}
+function reactionBM_a11y(val) {
+massB = Number(val);
+document.getElementById('BMassValue').innerHTML = val;
+widthB = 30 + 3*(massB-1);
+_collNarratedAt = -1; restart(); _settingsNarration();
+}
+/* Original wrappers kept for init() onchange wiring */
+function reactionViR() { reactionViR_a11y(document.getElementById('ViRed').value); }
+function reactionViB() { reactionViB_a11y(document.getElementById('ViBlue').value); }
+function reactionRM()  { reactionRM_a11y(document.getElementById('RMass').value); }
+function reactionBM()  { reactionBM_a11y(document.getElementById('BMass').value); }
+function displayValues() {
+var timeBg  = momICA11y.isHC() ? '#333' : 'yellow';
+var timeStk = momICA11y.isHC() ? '#aaa' : 'blue';
+var timeTxt = momICA11y.isHC() ? '#fff' : 'black';
+displayTime(2*mx-150, 0, 150, 80, timeBg, timeStk, timeTxt);
+ctx.font = varFont;
+if (Sspdup) { displayXVA(ballR, xBase+478, 30); displayXVA(ballB, xBase+478, 50); }
+ctx.fillStyle = momICA11y.isHC() ? '#eee' : 'black';
+}
+function displayTime(x, y, w, h, fCol, sCol, tCol) {
+if (!x)x=0; if (!y)y=0; if (!w)w=70; if (!h)h=20;
+if (!fCol)fCol="yellow"; if (!sCol)sCol="red"; if (!tCol)tCol="black";
+ctx.textBaseline='middle'; ctx.fillStyle=fCol; ctx.strokeStyle=sCol; ctx.lineWidth=0;
+ctx.beginPath(); ctx.rect(x,y,w,h); ctx.fill(); ctx.stroke();
+ctx.font = varFont;
+ctx.fillStyle=tCol; ctx.textAlign='left';
+ctx.fillText('t = ' + time.toFixed(2) + ' s', x+6, y+10);
+}
+function displayXVA(ball, wtX, wtY) {
+if (!ball) ball = ballR;
+ctx.textAlign = 'left';
+ctx.fillStyle = momICA11y.isHC()
+? (ball.col === 'red' ? '#ff8888' : '#8888ff') : ball.col;
+ctx.fillText('vx = ' + ball.v.toFixed(2) + ' m/s', wtX, wtY);
+}
+function runMotion() {
+drawMotion();
+if (runFlag == 1) { timer = window.setTimeout(runMotion, 1000/25); }
+}
+function pl() {
+window.clearTimeout(timer); runFlag = 1;
+if (xPos>maxL || xPos2>maxL || xPos<minL || xPos2<minL || time>=maxtime) { restart(); runMotion(); }
+else { runMotion(); }
+}
+function pause()       { window.clearTimeout(timer); runFlag = 0; }
+function stepForward() { window.clearTimeout(timer); runFlag = 1; drawMotion(); }
+function stepBack() {
+window.clearTimeout(timer);
+index = Math.max(index-2, -1);
+xPos = xBase; xPos2 = xBase; runFlag = 1; drawMotion();
+}
+function restart() {
+window.clearTimeout(timer);
+index = -1; xPos = xBase; xPos2 = xBase;
+runFlag = 1; time = 0; collEvent = 0; _collNarratedAt = -1;
+var pb = document.getElementById("play"); if (pb) pb.value = 'Play';
+drawMotion();
+}
+init();
+return {
+restart, stepBack, stepForward, pause, pl,
+reactionViR_a11y, reactionViB_a11y, reactionRM_a11y, reactionBM_a11y
+};
+};
+</script>
+<script>
+var momentumIC = new momentumIC();
+momICA11y.init();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows two carts, red and blue, in a perfectly inelastic collision: they stick together and move on as one.</p>
+<p>No outside horizontal force acts during the collision, so the total momentum is conserved:</p>
+<p class="mob_eq">`m_R v_(R_i) + m_B v_(B_i) = (m_R + m_B) v_f`.</p>
+<p>Kinetic energy is not conserved; some of it becomes heat and deformation. The kinetic energy lost is</p>
+<p class="mob_eq">`Delta K = 1/2 m_R v_(R_i)^2 + 1/2 m_B v_(B_i)^2 - 1/2 (m_R + m_B) v_f^2`.</p>
+<p>Change the masses and the initial velocities and run the simulation; the readout gives the momentum of each cart before and after, and the totals. This simulation is useful for studying conservation of momentum and inelastic collisions.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobinel { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (623 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:663px) {
+#mobinel div, #mobinel p, #mobinel fieldset, #mobinel form, #mobinel section, #mobinel ol, #mobinel ul, #mobinel table { max-width:100%; box-sizing:border-box; }
+#mobinel canvas, #mobinel img, #mobinel svg { max-width:100%; height:auto !important; }
+#mobinel input[type=range], #mobinel select { max-width:100%; min-width:0; }
+#mobinel #momICRoot .mom_a11y, #mobinel .bbar, #mobinel .footer { flex-wrap:wrap; }
+#mobinel #momICRoot .mom_a11y > div, #mobinel .bbar > div, #mobinel .footer > div { min-width:min(100%, 260px); }
+#mobinel div[style*="height"] { height:auto !important; }
+#mobinel .tbar, #mobinel .mcontent, #mobinel .bbar, #mobinel .bbar .left .red, #mobinel .bbar .left .blue, #mobinel .bbar .center .top, #mobinel .bbar .center .bot, #mobinel .bbbar, #mobinel .footer { height:auto; min-height:0; }
+#mobinel table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:683px) {
+#mobinel div, #mobinel p, #mobinel fieldset, #mobinel form, #mobinel section, #mobinel ol, #mobinel ul, #mobinel table { max-width:100%; box-sizing:border-box; }
+#mobinel canvas, #mobinel img, #mobinel svg { max-width:100%; height:auto !important; }
+#mobinel input[type=range], #mobinel select { max-width:100%; min-width:0; }
+#mobinel #momICRoot .mom_a11y, #mobinel .bbar, #mobinel .footer { flex-wrap:wrap; }
+#mobinel #momICRoot .mom_a11y > div, #mobinel .bbar > div, #mobinel .footer > div { min-width:min(100%, 260px); }
+#mobinel div[style*="height"] { height:auto !important; }
+#mobinel .tbar, #mobinel .mcontent, #mobinel .bbar, #mobinel .bbar .left .red, #mobinel .bbar .left .blue, #mobinel .bbar .center .top, #mobinel .bbar .center .bot, #mobinel .bbbar, #mobinel .footer { height:auto; min-height:0; }
+#mobinel table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobinel button, #mobinel input[type=button], #mobinel input[type=submit], #mobinel input[type=reset] { min-height:40px; }
+#mobinel input[type=range] { height:28px; }
+#mobinel input[type=checkbox], #mobinel input[type=radio] { width:22px; height:22px; }
+#mobinel select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobinel .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobinel .mob_a11ytop input[type=button], #mobinel .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobinel .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobinel .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobinel .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobinel .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobinel .mob_desc p { margin:0 0 9px 0; }
+#mobinel .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobinel -->
+</main>
+</body>
+</html>

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: The Flower in the Vase -- A Concave Mirror Illusion</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, geometrical optics, concave mirror, real image, flower in the vase, illusion, center of curvature, mirror equation, magnification, ray diagram, lesson, scientific">
+<meta name="description" content="Interactive concave mirror illusion: an upside-down flower hidden in a dark box appears upright in an empty vase when the stand is at the center of curvature.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="fvRoot" class="fv_root" role="region" aria-label="Flower in the vase concave mirror simulator">
+<!-- Display options -->
+<div class="fv_a11y" id="fvA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="fv_a11ybtn" id="fvBtnHC" onclick="fvA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fv_a11ybtn" id="fvBtnLM" onclick="fvA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fv_a11ybtn" id="fvBtnCB" onclick="fvA11y.toggle('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fv_a11ybtn fv_a11yon" id="fvBtnNR" onclick="fvA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="fv_header">
+<p class="fv_h1">The Flower in the Vase</p>
+<p class="fv_sub">A hidden upside-down flower and a concave mirror -- the real image appears in an empty vase</p>
+</div>
+<!-- Instrument grid -->
+<div class="fv_instrument">
+<!-- Left column -->
+<div class="fv_leftcol">
+<div class="fv_diagpanel">
+<div class="fv_diaglabel"><b>SIDE VIEW</b><span class="fv_diagnote">drag the stand or the eye &middot; distances in cm from the mirror</span></div>
+<canvas id="fvCanvas" width="640" height="420" role="img" aria-label="Side view: a stand with an empty vase on top and an upside-down flower hidden in a dark box below, in front of a concave mirror. Rays show where the mirror forms the flower's image. The narration and readout describe the result."></canvas>
+<div class="fv_runbar">
+<button type="button" class="fv_btn fv_primary" onclick="fvSim.standAt('C')">Stand at C</button>
+<button type="button" class="fv_btn" onclick="fvSim.standAt('F')">Stand at F</button>
+<button type="button" class="fv_btn" onclick="fvSim.describe()">Describe</button>
+<button type="button" class="fv_btn fv_warn" onclick="fvSim.reset()">Reset</button>
+</div>
+</div>
+<!-- Readout -->
+<div class="fv_panel" role="region" aria-labelledby="fvReadHd">
+<div class="fv_paneltitle" id="fvReadHd">Readout</div>
+<div class="fv_rgrid">
+<div class="fv_rrow"><span class="fv_rkey">Focal length f</span><span class="fv_rval" id="fvRoF">--</span></div>
+<div class="fv_rrow"><span class="fv_rkey">Radius R = 2f</span><span class="fv_rval" id="fvRoR">--</span></div>
+<div class="fv_rrow"><span class="fv_rkey">Object distance d<sub>o</sub></span><span class="fv_rval fv_hi" id="fvRoDo">--</span></div>
+<div class="fv_rrow"><span class="fv_rkey">Image distance d<sub>i</sub></span><span class="fv_rval fv_hi" id="fvRoDi">--</span></div>
+<div class="fv_rrow"><span class="fv_rkey">Magnification m</span><span class="fv_rval" id="fvRoM">--</span></div>
+<div class="fv_rrow"><span class="fv_rkey">Image</span><span class="fv_rval" id="fvRoType">--</span></div>
+<div class="fv_rrow fv_wide"><span class="fv_rkey">What the viewer sees</span><span class="fv_rval" id="fvRoSee">--</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="fv_rightcol">
+<div class="fv_panel" role="group" aria-labelledby="fvEyeHd">
+<div class="fv_paneltitle" id="fvEyeHd">Viewer's view</div>
+<canvas id="fvEye" width="300" height="300" role="img" aria-label="What the viewer's eye sees: the stand, the dark box, the vase, the mirror, and the flower's image when it is visible."></canvas>
+</div>
+<div class="fv_panel" role="group" aria-labelledby="fvSetHd">
+<div class="fv_paneltitle" id="fvSetHd">Mirror &amp; stand</div>
+<div class="fv_panelbody">
+<div class="fv_ctrl">
+<div class="fv_ctrlhdr"><label for="fvF" class="fv_ctrlname">Focal length f</label><span class="fv_sval"><span id="fvFVal">20.0</span> cm</span></div>
+<input type="range" id="fvF" min="10" max="30" step="0.5" value="20" oninput="fvSim.setF(this.value)">
+</div>
+<div class="fv_ctrl">
+<div class="fv_ctrlhdr"><label for="fvDo" class="fv_ctrlname">Stand distance d<sub>o</sub></label><span class="fv_sval"><span id="fvDoVal">40.0</span> cm</span></div>
+<input type="range" id="fvDo" min="3" max="75" step="0.5" value="40" oninput="fvSim.setDo(this.value)">
+</div>
+</div>
+</div>
+<div class="fv_panel" role="group" aria-labelledby="fvViewHd">
+<div class="fv_paneltitle" id="fvViewHd">Viewer's eye</div>
+<div class="fv_panelbody">
+<div class="fv_ctrl">
+<div class="fv_ctrlhdr"><label for="fvXe" class="fv_ctrlname">Distance from mirror</label><span class="fv_sval"><span id="fvXeVal">85</span> cm</span></div>
+<input type="range" id="fvXe" min="40" max="92" step="1" value="85" oninput="fvSim.setXe(this.value)">
+</div>
+<div class="fv_ctrl">
+<div class="fv_ctrlhdr"><label for="fvYe" class="fv_ctrlname">Height above the shelf</label><span class="fv_sval"><span id="fvYeVal">15</span> cm</span></div>
+<input type="range" id="fvYe" min="-25" max="35" step="1" value="15" oninput="fvSim.setYe(this.value)">
+</div>
+</div>
+</div>
+<div class="fv_panel" role="group" aria-labelledby="fvShowHd">
+<div class="fv_paneltitle" id="fvShowHd">Show</div>
+<div class="fv_panelbody">
+<label class="fv_chk"><input type="checkbox" id="fvLamp" checked onchange="fvSim.opt('lamp',this.checked)"> Lamp on (lights the hidden flower)</label>
+<label class="fv_chk"><input type="checkbox" id="fvRays" checked onchange="fvSim.opt('rays',this.checked)"> Principal rays from the flower</label>
+<label class="fv_chk"><input type="checkbox" id="fvView" checked onchange="fvSim.opt('view',this.checked)"> Rays reaching the eye</label>
+<label class="fv_chk"><input type="checkbox" id="fvVaseImg" checked onchange="fvSim.opt('vaseImg',this.checked)"> Image of the vase</label>
+<label class="fv_chk"><input type="checkbox" id="fvMarks" checked onchange="fvSim.opt('marks',this.checked)"> Focal point F and center C</label>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="fv_formulastrip">
+<span class="fv_formulatxt">Mirror equation 1/d<sub>o</sub> + 1/d<sub>i</sub> = 1/f &nbsp;|&nbsp; f = R/2 &nbsp;|&nbsp; m = &minus;d<sub>i</sub>/d<sub>o</sub> &nbsp;|&nbsp; At d<sub>o</sub> = R: d<sub>i</sub> = R and m = &minus;1, so the hidden upside-down flower is imaged upright, same size, where the vase stands</span>
+</div>
+</div><!-- instrument -->
+<div id="fvNarBar" class="fv_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="fv_descwrap">
+<button type="button" class="fv_descbtn" id="fvDescBtn" aria-expanded="false" aria-controls="fvDesc" onclick="fvA11y.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="fv_desc" id="fvDesc" role="region" aria-labelledby="fvDescBtn" style="display:none">
+<p>This simulation demonstrates the classic "flower in the vase" optical illusion produced by a concave mirror. A hidden upside-down flower is placed inside a dark enclosure below a vase, while a concave mirror forms a real image of the flower that appears to float inside the otherwise empty vase. The simulation illustrates image formation by concave mirrors and explains why the observer perceives an upright flower even though the actual flower is hidden from view.</p>
+<p>The main side-view diagram shows the hidden flower, the concave mirror, the vase, and the observer. Principal rays originating from the flower are traced to the mirror and reflected according to the law of reflection. The reflected rays converge to form a real image at a location above the hidden flower and inside the vase.</p>
+<p>A separate viewer's view panel shows what an observer would actually see. When the optical system is properly aligned, the flower appears to be suspended within the vase even though no physical flower is present there. This creates the illusion that the vase contains a real flower.</p>
+<p>Users can adjust the focal length of the concave mirror and the position of the flower stand relative to the mirror. As these parameters change, the image location, magnification, and appearance of the illusion update automatically. The simulation continuously applies the mirror equation to calculate the image distance and image properties.</p>
+<p>A movable observer allows users to investigate how the illusion appears from different viewing positions. The distance of the eye from the mirror and the height of the eye above the shelf can be adjusted to explore lines of sight and determine whether the image remains visible.</p>
+<p>The simulation displays important optical quantities including the focal length `f`, object distance `d_o`, image distance `d_i`, magnification `m`, and image type. These values update in real time as the geometry of the system changes.</p>
+<p>Several viewing options allow users to display or hide principal rays, the image of the vase, the focal point F, the center of curvature C, and the illumination source used to light the hidden flower. These controls help visualize how the image is formed and how the illusion works.</p>
+<p>Buttons provide quick access to important configurations, such as placing the stand at the center of curvature C or at the focal point F. These settings allow users to investigate special mirror positions and compare the resulting image characteristics.</p>
+<p>The simulation emphasizes the mirror equation</p>
+<p class="fv_eq">`1/d_o + 1/d_i = 1/f`</p>
+<p>and the magnification relationship</p>
+<p class="fv_eq">`m = -d_i/d_o`.</p>
+<p>These equations are used to determine the location, orientation, and size of the image formed by the concave mirror.</p>
+<p>Users can explore how the image changes between real and virtual images, how magnification varies with object position, and why a real image can appear to occupy empty space. The simulation provides both a geometric ray-tracing representation and a realistic view of what an observer would see.</p>
+<p>This simulation is useful for studying concave mirrors, real and virtual images, magnification, focal length, center of curvature, principal rays, geometric optics, mirror equations, image formation, and optical illusions based on real-image projection.</p>
+</div>
+</div>
+</div><!-- #fvRoot -->
+<!-- Questions -->
+<div class="fv_qwrap">
+<hr>
+<ol type="a">
+<li>Press <b>Stand at C</b>. Where does the image of the flower form, and is it real or virtual? How does its size compare with the flower?</li>
+<li>Why must the flower be hung upside down for it to appear upright in the vase?</li>
+<li>Turn the lamp off. What does the viewer see now, and why?</li>
+<li>The mirror also forms an image of the vase. Where does it form, and why does the viewer not see it?</li>
+<li>Move the stand slowly from C toward F. Describe what happens to the position and the size of the image.</li>
+<li>Put the stand between F and the mirror. Describe the image now. Can it appear in the vase?</li>
+<li>With the stand at C, raise and lower the viewer's eye. At what heights does the flower disappear? Use the rays reaching the eye to explain why.</li>
+</ol>
+</div>
+<style>
+/* ════════ All simulator rules scoped to #fvRoot (Hall effect template) ════════ */
+#fvRoot {
+--fv-chassis:#1a1c1f; --fv-panel:#22262b; --fv-panel-hi:#2c3138; --fv-panel-lo:#14161a;
+--fv-border:#3a4048; --fv-border-hi:#525c66; --fv-text:#c8d0d8; --fv-dim:#8a94a3;
+--fv-accent:#e8a020; --fv-green:#3ad08f; --fv-val:#ffdd66; --fv-warnc:#ff6a5a;
+--fv-focus:#e8a020; --fv-nar-bg:#2a2410; --fv-nar-border:#e0b040; --fv-nar-text:#f0e2b8;
+background:var(--fv-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+font-family:Arial, sans-serif; color:var(--fv-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#fvRoot.fv_lm {
+--fv-chassis:#e9edf1; --fv-panel:#ffffff; --fv-panel-hi:#f1f4f7; --fv-panel-lo:#f4f6f9;
+--fv-border:#c3cad3; --fv-border-hi:#9aa3ae; --fv-text:#1d232a; --fv-dim:#556070;
+--fv-accent:#a8620a; --fv-green:#12805a; --fv-val:#8a4a00; --fv-warnc:#b02020;
+--fv-focus:#a8620a; --fv-nar-bg:#ffefc0; --fv-nar-border:#e0b040; --fv-nar-text:#333333;
+background-image:none;
+}
+#fvRoot.fv_hc {
+--fv-chassis:#000000; --fv-panel:#000000; --fv-panel-hi:#111111; --fv-panel-lo:#000000;
+--fv-border:#ffffff; --fv-border-hi:#ffffff; --fv-text:#ffffff; --fv-dim:#e0e0e0;
+--fv-accent:#ffd700; --fv-green:#00ff88; --fv-val:#ffff00; --fv-warnc:#ff5555;
+--fv-focus:#ffff00; --fv-nar-bg:#000000; --fv-nar-border:#ffd700; --fv-nar-text:#ffffff;
+background-image:none;
+}
+#fvRoot.fv_hc .fv_panel, #fvRoot.fv_hc .fv_diagpanel { border-width:2px; }
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#fvRoot :not(mjx-container):not(mjx-container *), #fvRoot :not(mjx-container):not(mjx-container *)::before, #fvRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; padding:0; }
+#fvRoot input:focus-visible, #fvRoot button:focus-visible, #fvRoot canvas:focus-visible { outline:2px solid var(--fv-focus); outline-offset:2px; }
+/* toolbar */
+#fvRoot .fv_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#fvRoot .fv_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--fv-panel-hi); border:1px solid var(--fv-border-hi); color:var(--fv-dim); }
+#fvRoot .fv_a11ybtn:hover { border-color:var(--fv-accent); color:var(--fv-accent); }
+#fvRoot .fv_a11yon { background:rgba(58,208,143,.14); border-color:var(--fv-green); color:var(--fv-green); font-weight:bold; }
+/* header */
+#fvRoot .fv_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#fvRoot .fv_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--fv-accent); text-align:center; }
+#fvRoot .fv_sub { font-size:.7rem; color:var(--fv-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* grid */
+#fvRoot .fv_instrument { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:12px; width:100%; }
+#fvRoot .fv_leftcol, #fvRoot .fv_rightcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#fvRoot .fv_diagpanel { background:var(--fv-panel); border:1px solid var(--fv-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#fvRoot .fv_diaglabel { background:var(--fv-panel-lo); border-bottom:1px solid var(--fv-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--fv-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#fvRoot .fv_diaglabel b { color:var(--fv-accent); }
+#fvRoot .fv_diagnote { text-transform:none; letter-spacing:.02em; }
+#fvRoot canvas { display:block; width:100%; height:auto; margin:0 auto; }
+#fvRoot #fvCanvas { max-width:640px; cursor:grab; }
+#fvRoot #fvEye { max-width:300px; }
+#fvRoot .fv_runbar { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; padding:8px 10px; background:var(--fv-panel-lo); border-top:1px solid var(--fv-border); }
+#fvRoot .fv_btn { padding:8px 4px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--fv-panel-hi); border:1px solid var(--fv-border-hi); color:var(--fv-text); border-radius:3px; text-transform:uppercase; }
+#fvRoot .fv_btn:hover { border-color:var(--fv-accent); }
+#fvRoot .fv_primary { font-weight:bold; border-color:var(--fv-accent); color:var(--fv-accent); }
+#fvRoot .fv_warn { color:#e0605a; border-color:#a04040; }
+#fvRoot.fv_lm .fv_warn { color:#b02020; border-color:#c06060; }
+/* panels */
+#fvRoot .fv_panel { background:var(--fv-panel); border:1px solid var(--fv-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#fvRoot .fv_paneltitle { background:var(--fv-panel-lo); border-bottom:1px solid var(--fv-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--fv-dim); }
+#fvRoot .fv_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#fvRoot .fv_ctrl { display:flex; flex-direction:column; gap:4px; }
+#fvRoot .fv_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#fvRoot .fv_ctrlname { font-size:.72rem; font-weight:600; color:var(--fv-dim); }
+#fvRoot .fv_sval { font-family:monospace; font-size:.74rem; color:var(--fv-val); white-space:nowrap; }
+#fvRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--fv-panel-lo); border:1px solid var(--fv-border); }
+#fvRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--fv-accent); border:2px solid var(--fv-panel); cursor:pointer; }
+#fvRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--fv-accent); border:2px solid var(--fv-panel); cursor:pointer; }
+#fvRoot .fv_chk { display:flex; align-items:center; gap:7px; font-size:.76rem; color:var(--fv-text); cursor:pointer; }
+#fvRoot .fv_chk input { accent-color:var(--fv-accent); width:15px; height:15px; flex-shrink:0; }
+/* readout */
+#fvRoot .fv_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px 10px; }
+#fvRoot .fv_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--fv-panel-lo); border:1px solid var(--fv-border); border-radius:3px; }
+#fvRoot .fv_rkey { font-family:monospace; font-size:.64rem; color:var(--fv-dim); letter-spacing:.02em; }
+#fvRoot .fv_rval { font-family:monospace; font-size:.72rem; text-align:right; color:var(--fv-text); }
+#fvRoot .fv_hi { color:var(--fv-val); font-weight:bold; }
+#fvRoot .fv_wide { grid-column:1 / 3; }
+#fvRoot .fv_wide .fv_rval { font-weight:bold; color:var(--fv-val); }
+/* formula strip, narration */
+#fvRoot .fv_formulastrip { grid-column:1 / 3; background:var(--fv-panel-lo); border:1px solid var(--fv-border); border-radius:4px; padding:7px 14px; }
+#fvRoot .fv_formulatxt { font-family:monospace; font-size:.66rem; color:var(--fv-dim); letter-spacing:.04em; line-height:1.6; }
+#fvRoot .fv_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--fv-nar-bg); border-left:4px solid var(--fv-nar-border); font-size:.82rem; color:var(--fv-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* SIM description (toggle) */
+#fvRoot .fv_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#fvRoot .fv_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--fv-panel-hi); border:1px solid var(--fv-accent); color:var(--fv-accent); border-radius:3px; font-weight:bold; }
+#fvRoot .fv_descbtn:hover { background:var(--fv-panel); }
+#fvRoot .fv_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#fvRoot .fv_desc { width:100%; background:var(--fv-panel); border:1px solid var(--fv-border); border-left:4px solid var(--fv-accent); border-radius:4px; padding:12px 16px; color:var(--fv-text); font-size:.86rem; line-height:1.55; }
+#fvRoot .fv_desc p { margin:0 0 9px 0; }
+#fvRoot .fv_desc p:last-child { margin-bottom:0; }
+#fvRoot .fv_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.fv_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.fv_qwrap ol { padding-left:24px; }
+.fv_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#fvRoot .fv_instrument { grid-template-columns:minmax(0,1fr); }
+#fvRoot .fv_formulastrip { grid-column:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#fvRoot input[type=range] { height:8px; }
+#fvRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#fvRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#fvRoot .fv_btn, #fvRoot .fv_a11ybtn { min-height:40px; }
+#fvRoot .fv_chk input { width:22px; height:22px; }
+#fvRoot .fv_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#fvRoot { padding:10px 6px 14px; }
+#fvRoot .fv_runbar { grid-template-columns:repeat(2, 1fr); }
+#fvRoot .fv_rgrid { grid-template-columns:1fr; }
+#fvRoot .fv_wide { grid-column:auto; }
+}
+</style>
+<!-- ════════ DISPLAY OPTIONS (themes are layered: light / colour-blind, high contrast on top) ════════ -->
+<script>
+var fvA11y = (function(){
+var ROOT = null;
+var states = { hc:false, lm:false, cb:false, nr:true };
+var DEFS = {
+'--fvc-bg':'#f4f7fa','--fvc-bg2':'#e3eaf1','--fvc-floor':'#b9a68a','--fvc-text':'#1a1a1a','--fvc-axis':'#6a7380',
+'--fvc-mirror':'#2c4f8f','--fvc-mirrorback':'#9aa8bd','--fvc-wood':'#8b5a2b','--fvc-box':'#16171b','--fvc-boxin':'#2a2b31',
+'--fvc-vase':'#3f8fb5','--fvc-vasefill':'rgba(120,190,225,0.25)','--fvc-petal':'#e0446b','--fvc-petal2':'#f59ab3','--fvc-stem':'#2f8f3a',
+'--fvc-lamp':'#ffd34d','--fvc-ray1':'#d62828','--fvc-ray2':'#0a8f3c','--fvc-ray3':'#1f5fd6','--fvc-view':'#e08a00',
+'--fvc-eye':'#222222','--fvc-mark':'#444444','--fvc-room':'#3a3d44','--fvc-room2':'#24262b','--fvc-img':'rgba(224,68,107,0.35)'
+};
+var THEMES = {
+cb:{ '--fvc-ray1':'#d55e00','--fvc-ray2':'#009e73','--fvc-ray3':'#0072b2','--fvc-petal':'#cc79a7','--fvc-petal2':'#e6b3cf',
+'--fvc-view':'#e69f00','--fvc-vase':'#0072b2','--fvc-img':'rgba(204,121,167,0.35)' },
+hc:{ '--fvc-bg':'#000000','--fvc-bg2':'#000000','--fvc-floor':'#ffffff','--fvc-text':'#ffffff','--fvc-axis':'#cccccc',
+'--fvc-mirror':'#66ccff','--fvc-mirrorback':'#ffffff','--fvc-wood':'#ffcc00','--fvc-box':'#000000','--fvc-boxin':'#111111',
+'--fvc-vase':'#00ffff','--fvc-vasefill':'rgba(0,255,255,0.15)','--fvc-petal':'#ff66aa','--fvc-petal2':'#ffaacc','--fvc-stem':'#66ff66',
+'--fvc-lamp':'#ffff00','--fvc-ray1':'#ff5555','--fvc-ray2':'#66ff66','--fvc-ray3':'#66aaff','--fvc-view':'#ffd700',
+'--fvc-eye':'#ffffff','--fvc-mark':'#ffffff','--fvc-room':'#000000','--fvc-room2':'#000000','--fvc-img':'rgba(255,102,170,0.4)' }
+};
+var cur = {};
+function applyVars(){
+var p, order = ['cb','hc'];
+cur = {}; for (p in DEFS) cur[p] = DEFS[p];
+for (var i=0; i<order.length; i++){ if (states[order[i]]){ var t = THEMES[order[i]]; for (p in t) cur[p] = t[p]; } }
+ROOT.classList.toggle('fv_hc', states.hc); ROOT.classList.toggle('fv_lm', states.lm); ROOT.classList.toggle('fv_cb', states.cb);
+}
+function styleBtn(id, on){
+var b = document.getElementById(id); if (!b) return;
+b.classList.toggle('fv_a11yon', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function apply(){
+if (!ROOT) return;
+applyVars();
+var nb = document.getElementById('fvNarBar'); if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('fvBtnNR'); if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('fvBtnNR', states.nr); styleBtn('fvBtnHC', states.hc); styleBtn('fvBtnLM', states.lm); styleBtn('fvBtnCB', states.cb);
+}
+return {
+init:function(){ ROOT = document.getElementById('fvRoot'); apply(); },
+toggle:function(k){
+states[k] = !states[k];
+if (k==='hc' && states.hc) states.lm = false;
+if (k==='lm' && states.lm) states.hc = false;
+apply();
+if (typeof fvSim !== 'undefined' && fvSim.refresh) fvSim.refresh();
+},
+narrate:function(msg){ if (!states.nr) return; var nb = document.getElementById('fvNarBar'); if (nb) nb.textContent = msg; },
+/* SIM description: show or hide it; typeset its AsciiMath when it opens (MathJax 3 or 2, whichever the page has) */
+toggleDesc:function(){
+var b = document.getElementById('fvDescBtn'), d = document.getElementById('fvDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+},
+col:function(p){ return cur[p] || DEFS[p]; }
+};
+})();
+fvA11y.init();
+</script>
+<!-- ════════ SIMULATION ════════
+Geometry (cm): the mirror vertex is at x = 0 and x is the distance in front of the mirror; y is height
+above the principal axis, which runs through the stand's shelf. Concave spherical mirror of focal length f
+(radius R = 2f), paraxial optics:
+   1/do + 1/di = 1/f ,   m = -di/do ,   a point (do, y) is imaged at (di, m y).
+The stand holds an empty vase above the shelf and, below it, an upside-down flower in a dark box that is
+open only on the mirror side. A point of an image is seen by the eye when the line from the eye through
+that point meets the mirror inside its rim, the eye is beyond a real image, and no wall of the box
+(viewer side, bottom, shelf) blocks the light on its way from the mirror to the eye.
+-->
+<script>
+var fvSim = (function(){
+var cv = document.getElementById('fvCanvas'), ctx = cv.getContext('2d');
+var ec = document.getElementById('fvEye'), etx = ec.getContext('2d');
+/* sharp on phones: draw at device resolution; CSS scales the canvases to the page */
+var LW = cv.width, LH = cv.height, EW = ec.width, EH = ec.height, DPR = window.devicePixelRatio || 1;
+cv.width = LW*DPR; cv.height = LH*DPR; ctx.scale(DPR, DPR);
+ec.width = EW*DPR; ec.height = EH*DPR; etx.scale(DPR, DPR);
+var FONT = 'Calibri, Arial, sans-serif';
+/* ── layout (cm and px) ── */
+var S = 5, X0 = 470, Y0 = 200;                  /* px per cm, mirror vertex column, principal axis row */
+var HMAX = 28, FLOOR = -34, XMAX = 94, YTOP = 40, YBOT = -44;
+/* mirror half-aperture: 28 cm, but never wider than 0.9 R (a spherical cap cannot exceed its sphere) */
+function HMf(){ return Math.min(HMAX, 1.8*f); }
+var BOX_HW = 6, BOX_BOT = -22, SHELF_HW = 7, SHELF_T = 0.8;
+var VASE = [[-2,0],[-2.6,1.2],[-3.3,4],[-3,6.5],[-1.6,9.6],[-1.4,10.8],[-2.2,12],[2.2,12],[1.4,10.8],[1.6,9.6],[3,6.5],[3.3,4],[2.6,1.2],[2,0]];
+var STEM_TOP = -0.8, STEM_BOT = -15.9, BLOSSOM_Y = -17.5, BLOSSOM_R = 1.6, TIP_Y = -19.6, VASE_TOP = 12;
+var DEF = { f:20, dO:40, xe:85, ye:15 };
+var f, dO, xe, ye, show, narrT = null;
+function el(id){ return document.getElementById(id); }
+function c(p){ return fvA11y.col(p); }
+function X(x){ return X0 - x*S; }
+function Y(y){ return Y0 - y*S; }
+function sag(y){ var R = 2*f; return R - Math.sqrt(Math.max(0, R*R - y*y)); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+/* ══════════ optics ══════════ */
+function image(){
+if (Math.abs(dO - f) < 0.25) return { inf:true, di:Infinity, m:-Infinity, real:true };
+var di = 1/(1/f - 1/dO);
+return { inf:false, di:di, m:-di/dO, real:di > 0 };
+}
+function walls(){
+return [[dO+BOX_HW, BOX_BOT, dO+BOX_HW, 0],            /* viewer-side wall */
+[dO-BOX_HW, BOX_BOT, dO+BOX_HW, BOX_BOT],               /* bottom */
+[dO-SHELF_HW, 0, dO+SHELF_HW, 0]];                      /* shelf */
+}
+function cross(ax,ay,bx,by,cx,cy,dx,dy){
+var d = (bx-ax)*(dy-cy) - (by-ay)*(dx-cx); if (Math.abs(d) < 1e-12) return false;
+var t = ((cx-ax)*(dy-cy) - (cy-ay)*(dx-cx))/d, u = ((cx-ax)*(by-ay) - (cy-ay)*(bx-ax))/d;
+return t > 1e-6 && t < 1-1e-6 && u >= 0 && u <= 1;
+}
+function blocked(seg){
+var w = walls();
+for (var i=0; i<w.length; i++) if (cross(seg[0],seg[1],seg[2],seg[3], w[i][0],w[i][1],w[i][2],w[i][3])) return true;
+return false;
+}
+/* is the image point (xi, yi) seen by the eye? */
+function seen(xi, yi, real){
+if (Math.abs(xi - xe) < 1e-6) return { ok:false, why:'eye' };
+if (real && xe <= xi + 1) return { ok:false, why:'behind' };   /* the eye is not beyond the real image */
+var y0 = ye + (yi - ye)*(0 - xe)/(xi - xe), mx = sag(Math.min(Math.abs(y0), HMf()));
+if (Math.abs(y0) > HMf()) return { ok:false, why:'edge', y0:y0 };
+var segs = real ? [[mx,y0,xi,yi],[xi,yi,xe,ye]] : [[mx,y0,xe,ye]];
+for (var i=0; i<segs.length; i++) if (blocked(segs[i])) return { ok:false, why:'box', y0:y0, mx:mx };
+return { ok:true, y0:y0, mx:mx };
+}
+function state(){
+var I = image(), st = { I:I };
+if (I.inf) { st.flower = 'inf'; st.vase = 'none'; return st; }
+/* sample points along each image (the stem's foot sits on the shelf, where the shelf itself hides it) */
+function sample(ys){
+var r = ys.map(function(y){ var s = seen(I.di, I.m*y, I.real); s.y = I.m*y; return s; });
+var n = r.filter(function(s){ return s.ok; }).length, why = '';
+if (n < r.length){ var w = r.filter(function(s){ return !s.ok; }).map(function(s){ return s.why; });
+why = w.indexOf('behind') >= 0 ? 'behind' : (w.indexOf('box') >= 0 ? 'box' : w[0]); }
+return { pts:r, vis:(n === r.length ? 'full' : (n ? 'part' : 'none')), why:why };
+}
+var fl = sample([TIP_Y, BLOSSOM_Y, -8]), va = sample([SHELF_T + 0.5, SHELF_T + 3, SHELF_T + 6, SHELF_T + 9, SHELF_T + VASE_TOP]);
+st.ft = fl.pts[0]; st.fb = fl.pts[2]; st.fpts = fl.pts;
+st.flowerVis = fl.vis; st.why = fl.why; st.vaseVis = va.vis; st.vaseWhy = va.why;
+st.inVase = I.real && Math.abs(I.di - dO) <= 2.5 && I.m*TIP_Y >= 17 && I.m*TIP_Y <= 23 && fl.pts[1].ok && fl.vis !== 'none';
+return st;
+}
+/* ══════════ text ══════════ */
+function f1(v){ return v.toFixed(1); }
+function verdict(st){
+var I = st.I;
+if (!show.lamp) return 'Lamp off: the hidden flower sends almost no light, so no flower appears.';
+if (I.inf) return 'Stand at F: the reflected rays leave parallel, so the image is at infinity -- no flower appears.';
+if (!I.real) return (st.flowerVis !== 'none') ? 'A virtual, enlarged, upside-down flower is seen inside the mirror -- not in the vase.' : (st.why === 'box' ? 'The flower\u2019s virtual image is behind the mirror, but the box is in the way of the light reaching the eye.' : 'The flower\u2019s virtual image is behind the mirror, out of the eye\u2019s view.');
+if (st.flowerVis === 'none') {
+if (st.why === 'behind') return 'The image forms behind the viewer\u2019s eye, so only a blur is seen.';
+if (st.why === 'box') return 'The box blocks the light from the image on its way to the eye.';
+return 'No reflected rays from the image reach the eye -- move the eye or the stand.';
+}
+if (st.inVase) return 'The flower appears upright in the vase!' + (st.flowerVis === 'part' ? ' (only partly)' : '');
+var where = [];
+var dd = I.di - dO;
+if (Math.abs(dd) > 2.5) where.push(f1(Math.abs(dd)) + ' cm ' + (dd > 0 ? 'in front of' : 'behind') + ' the vase');
+var mag = Math.abs(I.m);
+where.push(mag > 1.15 ? 'enlarged ' + mag.toFixed(2) + '\u00D7' : (mag < 0.87 ? 'reduced ' + mag.toFixed(2) + '\u00D7' : 'about life size'));
+return (st.flowerVis === 'part' ? 'Part of an upright flower is seen, ' : 'An upright flower is seen, ') + where.join(', ') + '.';
+}
+function vaseNote(st){
+if (!show.vaseImg || st.I.inf) return '';
+var inBox = st.I.real && st.I.di > dO - BOX_HW && st.I.di < dO + BOX_HW && st.I.m < 0;
+if (st.vaseVis === 'none' && inBox) return ' The vase\u2019s own image forms upside down inside the dark box, whose closed walls keep its light from the viewer.';
+if (st.vaseVis === 'none' && st.vaseWhy === 'box') return ' The box blocks the light from the vase\u2019s image.';
+if (st.vaseVis !== 'none' && st.I.real) return ' An upside-down image of the vase is also visible.';
+return '';
+}
+function readouts(st){
+var I = st.I;
+function set(id, t){ var e = el(id); if (e) e.textContent = t; }
+set('fvRoF', f1(f) + ' cm'); set('fvRoR', f1(2*f) + ' cm'); set('fvRoDo', f1(dO) + ' cm');
+set('fvRoDi', I.inf ? '\u221E' : (f1(I.di) + ' cm' + (I.real ? '' : ' (behind)')));
+set('fvRoM', I.inf ? '\u221E' : I.m.toFixed(2));
+set('fvRoType', I.inf ? 'at infinity' : ((I.real ? 'real, ' : 'virtual, ') + (I.m < 0 ? 'inverted' : 'upright')));
+set('fvRoSee', verdict(st));
+}
+function narrate(force){
+var st = state(), I = st.I;
+var msg = 'Stand ' + f1(dO) + ' cm from a mirror with f = ' + f1(f) + ' cm (C at ' + f1(2*f) + ' cm). ';
+if (I.inf) msg += 'The flower is at the focal point. ';
+else msg += 'Image at ' + f1(Math.abs(I.di)) + ' cm ' + (I.real ? 'in front of' : 'behind') + ' the mirror, magnification ' + I.m.toFixed(2) + '. ';
+msg += verdict(st) + vaseNote(st);
+fvA11y.narrate(msg);
+}
+function later(){ clearTimeout(narrT); narrT = setTimeout(function(){ narrate(true); }, 350); }
+/* ══════════ canvas helpers ══════════ */
+function line(g, x1,y1,x2,y2, col, lw, dash){ g.save(); g.strokeStyle = col; g.lineWidth = lw || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); g.restore(); }
+function arrowHead(g, x1,y1,x2,y2, col){ var a = Math.atan2(y2-y1, x2-x1), h = 8; g.save(); g.fillStyle = col; g.beginPath(); g.moveTo(x2,y2); g.lineTo(x2-h*Math.cos(a-0.35), y2-h*Math.sin(a-0.35)); g.lineTo(x2-h*Math.cos(a+0.35), y2-h*Math.sin(a+0.35)); g.closePath(); g.fill(); g.restore(); }
+function wl(x1,y1,x2,y2,col,lw,dash){ line(ctx, X(x1),Y(y1),X(x2),Y(y2), col, lw, dash); }
+function extend(px, py, dx, dy){
+var t = 1e9;
+if (dx > 1e-9) t = Math.min(t, (XMAX - px)/dx); else if (dx < -1e-9) t = Math.min(t, (-33 - px)/dx);
+if (dy > 1e-9) t = Math.min(t, (YTOP - py)/dy); else if (dy < -1e-9) t = Math.min(t, (YBOT - py)/dy);
+if (!isFinite(t) || t < 0) t = 0;
+return [px + t*dx, py + t*dy];
+}
+/* flower: stem along the axis direction of the stand; sy maps object heights (1 = the real hanging flower) */
+function flowerSide(g, x0, sy, alpha, outline){
+var k = Math.abs(sy);
+function P(dx, y){ return [X(x0 + dx*k), Y(y*sy)]; }
+g.save(); g.globalAlpha = alpha;
+var a = P(0, STEM_TOP), b = P(0, STEM_BOT);
+g.strokeStyle = c('--fvc-stem'); g.lineWidth = Math.max(1, 2*k); g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke();
+var l1 = P(0, -14.4), l2 = P(1.8, -13.6), l3 = P(-1.6, -15.4);
+g.fillStyle = c('--fvc-stem'); g.beginPath(); g.moveTo(l1[0],l1[1]); g.quadraticCurveTo(l2[0], l2[1]+2*k, l2[0], l2[1]); g.quadraticCurveTo(l1[0]+4*k, l1[1], l1[0], l1[1]); g.fill();
+g.beginPath(); g.moveTo(l1[0],l1[1]-6*k*Math.sign(sy)); g.quadraticCurveTo(l3[0], l3[1]-2*k, l3[0], l3[1]); g.quadraticCurveTo(l1[0]-4*k, l1[1], l1[0], l1[1]-6*k*Math.sign(sy)); g.fill();
+var ctr = P(0, BLOSSOM_Y), r = BLOSSOM_R*S*k;
+for (var i=0; i<6; i++){
+var an = i*Math.PI/3;
+g.fillStyle = outline ? 'rgba(0,0,0,0)' : c('--fvc-petal');
+g.strokeStyle = c('--fvc-petal'); g.lineWidth = 1;
+g.beginPath(); g.ellipse(ctr[0] + 0.75*r*Math.cos(an), ctr[1] + 0.75*r*Math.sin(an), 0.62*r, 0.38*r, an, 0, 2*Math.PI);
+if (outline) g.stroke(); else g.fill();
+}
+g.fillStyle = outline ? 'rgba(0,0,0,0)' : c('--fvc-petal2'); g.beginPath(); g.arc(ctr[0], ctr[1], 0.45*r, 0, 2*Math.PI); if (outline) g.stroke(); else g.fill();
+g.restore();
+}
+function vasePath(g, P){ g.beginPath(); for (var i=0; i<VASE.length; i++){ var p = P(VASE[i][0], VASE[i][1]); if (i) g.lineTo(p[0],p[1]); else g.moveTo(p[0],p[1]); } }
+/* ══════════ side view ══════════ */
+function drawSide(st){
+var I = st.I, g = ctx;
+var grd = g.createLinearGradient(0,0,0,LH); grd.addColorStop(0, c('--fvc-bg')); grd.addColorStop(1, c('--fvc-bg2'));
+g.fillStyle = grd; g.fillRect(0,0,LW,LH);
+/* floor and principal axis */
+g.fillStyle = c('--fvc-floor'); g.fillRect(0, Y(FLOOR), LW, LH - Y(FLOOR));
+line(g, 0, Y(0), LW, Y(0), c('--fvc-axis'), 1, [6,5]);
+/* mirror: concave arc, hatched back, support */
+g.save(); g.strokeStyle = c('--fvc-mirrorback'); g.lineWidth = 1;
+var HM = HMf();
+for (var yy = -HM; yy <= HM; yy += 2.2){ var xs = X(sag(yy)); g.beginPath(); g.moveTo(xs+2, Y(yy)); g.lineTo(xs+8, Y(yy)-5); g.stroke(); }
+g.strokeStyle = c('--fvc-mirror'); g.lineWidth = 4; g.beginPath();
+for (var y2 = -HM; y2 <= HM + 0.01; y2 += 0.5){ var p = [X(sag(y2)), Y(y2)]; if (y2 === -HM) g.moveTo(p[0],p[1]); else g.lineTo(p[0],p[1]); }
+g.stroke(); g.restore();
+line(g, X(sag(HM))+4, Y(-HM), X(sag(HM))+4, Y(FLOOR), c('--fvc-mirrorback'), 3);
+/* F and C */
+if (show.marks){
+[[f,'F'],[2*f,'C']].forEach(function(m){ if (m[0] > XMAX) return; var px = X(m[0]);
+g.fillStyle = c('--fvc-mark'); g.beginPath(); g.arc(px, Y(0), 3.5, 0, 2*Math.PI); g.fill();
+g.font = 'bold 12px ' + FONT; g.textAlign = 'center'; g.fillText(m[1], px, Y(0) - 8); });
+}
+/* stand: pedestal, dark box (open toward the mirror), lamp, hanging flower, shelf, vase */
+var wood = c('--fvc-wood');
+g.fillStyle = wood; g.fillRect(X(dO)-4, Y(BOX_BOT), 8, Y(FLOOR) - Y(BOX_BOT)); g.fillRect(X(dO+5), Y(FLOOR)-4, 10*S, 4);
+g.fillStyle = c('--fvc-boxin'); g.fillRect(X(dO+BOX_HW), Y(0), 2*BOX_HW*S, Y(BOX_BOT) - Y(0));
+if (show.lamp){
+var lx = X(dO+3.6), ly = Y(BOX_BOT+2.2), glow = g.createRadialGradient(lx, ly, 2, lx, ly, 45);
+glow.addColorStop(0, 'rgba(255,220,120,0.75)'); glow.addColorStop(1, 'rgba(255,220,120,0)');
+g.save(); g.beginPath(); g.rect(X(dO+BOX_HW), Y(0), 2*BOX_HW*S, Y(BOX_BOT) - Y(0)); g.clip(); g.fillStyle = glow; g.fillRect(lx-45, ly-45, 90, 90); g.restore();
+}
+g.fillStyle = show.lamp ? c('--fvc-lamp') : '#555'; g.beginPath(); g.arc(X(dO+3.6), Y(BOX_BOT+2.2), 4, 0, 2*Math.PI); g.fill();
+flowerSide(g, dO, 1, show.lamp ? 1 : 0.35, false);
+g.fillStyle = c('--fvc-box');
+g.fillRect(X(dO+BOX_HW) - 3, Y(0), 4, Y(BOX_BOT) - Y(0));         /* viewer-side wall (closed) */
+g.fillRect(X(dO+BOX_HW) - 3, Y(BOX_BOT) - 1, 2*BOX_HW*S + 3, 4);  /* bottom */
+line(g, X(dO-BOX_HW), Y(0), X(dO-BOX_HW), Y(BOX_BOT), c('--fvc-axis'), 1, [3,3]);  /* open side */
+g.fillStyle = wood; g.fillRect(X(dO+SHELF_HW), Y(SHELF_T) , 2*SHELF_HW*S, SHELF_T*S + 1);
+vasePath(g, function(dx, y){ return [X(dO+dx), Y(y + SHELF_T)]; });
+g.fillStyle = c('--fvc-vasefill'); g.fill(); g.strokeStyle = c('--fvc-vase'); g.lineWidth = 2; g.stroke();
+/* images */
+if (!I.inf){
+if (show.vaseImg){
+g.save(); g.setLineDash([4,3]);
+vasePath(g, function(dx, y){ return [X(I.di + dx*Math.abs(I.m)), Y((y + SHELF_T)*I.m)]; });
+g.strokeStyle = c('--fvc-vase'); g.globalAlpha = 0.6; g.lineWidth = 1.5; g.stroke(); g.restore();
+}
+flowerSide(g, I.di, I.m, show.lamp ? 0.55 : 0.25, !show.lamp);
+}
+/* principal rays from the tip of the hanging flower */
+if (show.rays && show.lamp) drawRays(I);
+/* rays reaching the eye */
+if (show.view && show.lamp && !I.inf){
+st.fpts.forEach(function(s){
+var yi = s.y; if (!s.ok) return;
+var col = c('--fvc-view');
+if (I.real){ wl(s.mx, s.y0, I.di, yi, col, 1.6); wl(I.di, yi, xe, ye, col, 1.6); }
+else { wl(s.mx, s.y0, xe, ye, col, 1.6); wl(s.mx, s.y0, I.di, yi, col, 1.2, [4,4]); }
+});
+}
+/* eye */
+var ex = X(xe), ey = Y(ye);
+g.save(); g.fillStyle = '#ffffff'; g.strokeStyle = c('--fvc-eye'); g.lineWidth = 1.6;
+g.beginPath(); g.moveTo(ex-11, ey); g.quadraticCurveTo(ex, ey-9, ex+11, ey); g.quadraticCurveTo(ex, ey+9, ex-11, ey); g.fill(); g.stroke();
+g.fillStyle = c('--fvc-eye'); g.beginPath(); g.arc(ex+4, ey, 3.4, 0, 2*Math.PI); g.fill();
+g.font = '11px ' + FONT; g.textAlign = 'center'; g.fillStyle = c('--fvc-text'); g.fillText('viewer', ex, ey - 13); g.restore();
+/* distance labels on the floor */
+g.save(); g.fillStyle = c('--fvc-text'); g.font = '11px ' + FONT; g.textAlign = 'center';
+line(g, X(0), Y(FLOOR)+9, X(dO), Y(FLOOR)+9, c('--fvc-text'), 1); arrowHead(g, X(dO)+10, Y(FLOOR)+9, X(dO), Y(FLOOR)+9, c('--fvc-text'));
+g.fillText('d\u2092 = ' + f1(dO) + ' cm', (X(0)+X(dO))/2, Y(FLOOR)+21);
+if (!I.inf && I.real && I.di <= XMAX){
+line(g, X(0), Y(FLOOR)+29, X(I.di), Y(FLOOR)+29, c('--fvc-text'), 1, [4,3]);
+g.fillText('d\u1D62 = ' + f1(I.di) + ' cm', (X(0)+X(I.di))/2, Y(FLOOR)+41);
+}
+g.restore();
+}
+function drawRays(I){
+var T = [dO, TIP_Y], cols = [c('--fvc-ray1'), c('--fvc-ray2'), c('--fvc-ray3')];
+var hits = [TIP_Y, (Math.abs(dO - f) > 0.25) ? -TIP_Y*f/(dO - f) : null, 0];
+for (var k=0; k<3; k++){
+var yh = hits[k]; if (yh === null) continue;
+var col = cols[k], hx = sag(Math.min(Math.abs(yh), HMf()));
+if (k === 1 && dO < f) wl(f, 0, T[0], T[1], col, 1.2, [4,4]);   /* the ray seems to come from F */
+if (Math.abs(yh) > HMf()){                                          /* misses the mirror */
+wl(T[0], T[1], 0.4, T[1] + (yh - T[1]), col, 1.2, [3,4]);
+continue;
+}
+wl(T[0], T[1], hx, yh, col, 1.8);
+var d;
+if (I.inf) d = [dO, -TIP_Y];
+else if (I.real){ wl(hx, yh, I.di, I.m*TIP_Y, col, 1.8); d = [I.di - hx, I.m*TIP_Y - yh]; }
+else { d = [hx - I.di, yh - I.m*TIP_Y]; wl(hx, yh, I.di, I.m*TIP_Y, col, 1.1, [4,4]); }
+var start = (I.real && !I.inf) ? [I.di, I.m*TIP_Y] : [hx, yh];
+var e = extend(start[0], start[1], d[0], d[1]);
+wl(start[0], start[1], e[0], e[1], col, 1.8);
+}
+}
+/* ══════════ viewer's view (perspective from the eye) ══════════ */
+/* one perspective for everything: the zoom makes the mirror nearly fill the panel, but never so much that the
+   vase and its flower leave the view; the view is centred on the middle of the vase */
+var FV = 300, VASE_MID = SHELF_T + 6, FLOWER_TOP = 21.5;
+function frame(){ FV = Math.min(0.47*EH*xe/HMf(), 0.9*(EH/2)*(xe - dO)/(FLOWER_TOP - VASE_MID)); }
+function EYp(x, y){ var a0 = (VASE_MID - ye)/(xe - dO); return EH/2 - FV*((y - ye)/(xe - x) - a0); }
+function EXw(x, w){ return EW/2 + FV*w/(xe - x); }
+function drawEyeView(st){
+var g = etx, I = st.I;
+frame();
+var grd = g.createLinearGradient(0,0,0,EH); grd.addColorStop(0, c('--fvc-room')); grd.addColorStop(1, c('--fvc-room2'));
+g.fillStyle = grd; g.fillRect(0,0,EW,EH);
+/* mirror seen face-on */
+var mcx = EW/2, mcy = EYp(0,0), mr = FV*HMf()/xe;
+var mg = g.createRadialGradient(mcx, mcy, mr*0.1, mcx, mcy, mr); mg.addColorStop(0,'#5b6676'); mg.addColorStop(1,'#2b313b');
+g.fillStyle = mg; g.beginPath(); g.arc(mcx, mcy, mr, 0, 2*Math.PI); g.fill();
+var flowerOK = show.lamp && !I.inf && st.flowerVis !== 'none';
+var vaseOK = show.vaseImg && !I.inf && st.vaseVis !== 'none';
+/* a virtual image is seen inside the mirror */
+if (!I.inf && !I.real){
+g.save(); g.beginPath(); g.arc(mcx, mcy, mr, 0, 2*Math.PI); g.clip();
+if (vaseOK) vaseFront(g, I.di, I.m, st.vaseVis === 'full' ? 0.5 : 0.25);
+if (flowerOK) flowerFront(g, I.di, I.m, st.flowerVis === 'full' ? 0.95 : 0.4);
+g.restore();
+}
+g.strokeStyle = c('--fvc-mirror'); g.lineWidth = 3; g.beginPath(); g.arc(mcx, mcy, mr, 0, 2*Math.PI); g.stroke();
+/* real images behind the stand are drawn before it, the others after it */
+var before = !I.inf && I.real && I.di < dO - 2.5;
+if (before){ if (vaseOK) vaseFront(g, I.di, I.m, 0.5); if (flowerOK) flowerFront(g, I.di, I.m, st.flowerVis === 'full' ? 0.95 : 0.4); }
+/* stand, drawn back to front so that nearer faces hide what is behind them */
+var wood = c('--fvc-wood'), sf = dO + SHELF_HW, sb = dO - SHELF_HW, bx = dO + BOX_HW;
+g.fillStyle = wood; g.fillRect(EXw(dO,-1.2), EYp(dO, BOX_BOT), EXw(dO,1.2) - EXw(dO,-1.2), EYp(dO, FLOOR) - EYp(dO, BOX_BOT));
+if (ye > SHELF_T){                                   /* the shelf's top surface is seen only from above */
+g.fillStyle = '#a8743f'; g.beginPath();
+g.moveTo(EXw(sf,-SHELF_HW), EYp(sf, SHELF_T)); g.lineTo(EXw(sf,SHELF_HW), EYp(sf, SHELF_T));
+g.lineTo(EXw(sb,SHELF_HW), EYp(sb, SHELF_T)); g.lineTo(EXw(sb,-SHELF_HW), EYp(sb, SHELF_T)); g.closePath(); g.fill();
+}
+vasePath(g, function(dx, y){ return [EXw(dO, dx), EYp(dO, y + SHELF_T)]; });
+g.fillStyle = c('--fvc-vasefill'); g.fill(); g.strokeStyle = c('--fvc-vase'); g.lineWidth = 2; g.stroke();
+var inVaseDepth = !I.inf && I.real && Math.abs(I.di - dO) <= 2.5, inFront = !I.inf && I.real && I.di > dO + 2.5;
+if (inVaseDepth){
+if (vaseOK) vaseFront(g, I.di, I.m, st.vaseVis === 'full' ? 0.5 : 0.25);
+if (flowerOK) flowerFront(g, I.di, I.m, st.flowerVis === 'full' ? 0.95 : 0.4);
+}
+/* near faces: the box front and the shelf's front edge */
+g.fillStyle = c('--fvc-box'); g.fillRect(EXw(bx,-BOX_HW), EYp(bx, 0), EXw(bx,BOX_HW) - EXw(bx,-BOX_HW), EYp(bx, BOX_BOT) - EYp(bx, 0));
+g.strokeStyle = '#555'; g.lineWidth = 1; g.strokeRect(EXw(bx,-BOX_HW), EYp(bx, 0), EXw(bx,BOX_HW) - EXw(bx,-BOX_HW), EYp(bx, BOX_BOT) - EYp(bx, 0));
+g.fillStyle = wood; g.fillRect(EXw(sf,-SHELF_HW), EYp(sf, SHELF_T), EXw(sf,SHELF_HW) - EXw(sf,-SHELF_HW), Math.max(2, EYp(sf,0) - EYp(sf,SHELF_T)));
+if (inFront){
+if (vaseOK) vaseFront(g, I.di, I.m, st.vaseVis === 'full' ? 0.5 : 0.25);
+if (flowerOK) flowerFront(g, I.di, I.m, st.flowerVis === 'full' ? 0.95 : 0.4);
+}
+g.fillStyle = 'rgba(255,255,255,0.75)'; g.font = '11px ' + FONT; g.textAlign = 'left';
+g.fillText(show.lamp ? 'lamp on' : 'lamp off', 8, 16);
+}
+function vaseFront(g, xi, m, alpha){
+if (xe - xi <= 0.5) return;
+g.save(); g.globalAlpha = alpha; g.setLineDash([4,3]);
+vasePath(g, function(dx, y){ return [EXw(xi, dx*Math.abs(m)), EYp(xi, (y + SHELF_T)*m)]; });
+g.strokeStyle = c('--fvc-vase'); g.lineWidth = 1.5; g.stroke(); g.restore();
+}
+function flowerFront(g, xi, m, alpha){
+if (xe - xi <= 0.5) return;
+var k = Math.abs(m);
+function P(dx, y){ return [EXw(xi, dx*k), EYp(xi, y*m)]; }
+g.save(); g.globalAlpha = alpha;
+var a = P(0, STEM_TOP), b = P(0, STEM_BOT);
+g.strokeStyle = c('--fvc-stem'); g.lineWidth = Math.max(1.2, (EXw(xi,0.25*k) - EXw(xi,0))); g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke();
+var lf = P(0, -14.4), lr = P(1.8, -13.5), ll = P(-1.8, -15.2);
+g.fillStyle = c('--fvc-stem');
+g.beginPath(); g.moveTo(lf[0], lf[1]); g.quadraticCurveTo((lf[0]+lr[0])/2, lr[1], lr[0], lr[1]); g.quadraticCurveTo((lf[0]+lr[0])/2, lf[1], lf[0], lf[1]); g.fill();
+g.beginPath(); g.moveTo(lf[0], lf[1]); g.quadraticCurveTo((lf[0]+ll[0])/2, ll[1], ll[0], ll[1]); g.quadraticCurveTo((lf[0]+ll[0])/2, lf[1], lf[0], lf[1]); g.fill();
+var ctr = P(0, BLOSSOM_Y), r = EXw(xi, BLOSSOM_R*k) - EXw(xi, 0);
+for (var i=0; i<6; i++){ var an = i*Math.PI/3 + Math.PI/6;
+g.fillStyle = c('--fvc-petal'); g.beginPath(); g.ellipse(ctr[0] + 0.72*r*Math.cos(an), ctr[1] + 0.72*r*Math.sin(an), 0.6*r, 0.36*r, an, 0, 2*Math.PI); g.fill(); }
+g.fillStyle = c('--fvc-petal2'); g.beginPath(); g.arc(ctr[0], ctr[1], 0.42*r, 0, 2*Math.PI); g.fill();
+g.restore();
+}
+/* ══════════ update ══════════ */
+function refresh(){ var st = state(); drawSide(st); drawEyeView(st); readouts(st); return st; }
+function syncInputs(){
+el('fvF').value = f; el('fvFVal').textContent = f1(f);
+el('fvDo').value = dO; el('fvDoVal').textContent = f1(dO);
+el('fvXe').value = xe; el('fvXeVal').textContent = Math.round(xe);
+el('fvYe').value = ye; el('fvYeVal').textContent = Math.round(ye);
+}
+function limitDo(v){ return clamp(v, 3, Math.min(75, xe - 12)); }
+function setF(v){ f = clamp(parseFloat(v), 10, 30); syncInputs(); refresh(); later(); }
+function setDo(v){ dO = limitDo(parseFloat(v)); syncInputs(); refresh(); later(); }
+function setXe(v){ xe = clamp(parseFloat(v), Math.max(40, dO + 12), 92); syncInputs(); refresh(); later(); }
+function setYe(v){ ye = clamp(parseFloat(v), -25, 35); syncInputs(); refresh(); later(); }
+function opt(k, on){ show[k] = on; refresh(); later(); }
+function standAt(which){
+var target = which === 'C' ? 2*f : f;
+if (target > xe - 12) xe = Math.min(92, target + 12);
+dO = limitDo(target); syncInputs(); refresh(); narrate(true);
+}
+function describe(){
+var st = refresh(), I = st.I;
+var msg = 'Concave mirror with focal length ' + f1(f) + ' cm, so the center of curvature C is ' + f1(2*f) + ' cm from the mirror. ';
+msg += 'The stand is ' + f1(dO) + ' cm from the mirror: an empty vase on the shelf, and an upside-down flower in a dark box below it, ' + (show.lamp ? 'lit by a lamp. ' : 'with the lamp off. ');
+msg += 'The viewer\u2019s eye is ' + Math.round(xe) + ' cm from the mirror and ' + Math.round(ye) + ' cm above the shelf. ';
+if (!I.inf) msg += 'The flower\u2019s image is ' + (I.real ? 'real' : 'virtual') + ', ' + f1(Math.abs(I.di)) + ' cm ' + (I.real ? 'in front of' : 'behind') + ' the mirror, magnification ' + I.m.toFixed(2) + '. ';
+msg += verdict(st) + vaseNote(st);
+fvA11y.narrate(msg);
+}
+function reset(){
+f = DEF.f; dO = DEF.dO; xe = DEF.xe; ye = DEF.ye;
+show = { lamp:true, rays:true, view:true, vaseImg:true, marks:true };
+['fvLamp','fvRays','fvView','fvVaseImg','fvMarks'].forEach(function(id){ var e = el(id + ''); if (e) e.checked = true; });
+syncInputs(); refresh();
+fvA11y.narrate('Ready. The stand is at C, the center of curvature, 40 cm from a mirror with f = 20 cm. The hidden upside-down flower is imaged upright in the empty vase. Drag the stand or the eye, or use the sliders.');
+}
+/* ══════════ pointer: drag the stand or the eye ══════════ */
+var dragging = null;
+function evPt(cx, cy){ var r = cv.getBoundingClientRect(); return { x:(cx - r.left)*(LW/r.width), y:(cy - r.top)*(LH/r.height), k:LW/r.width }; }
+function hit(p, touch){
+var pad = touch ? Math.max(10, 18*p.k) : 6;
+if (Math.hypot(p.x - X(xe), p.y - Y(ye)) < 14 + pad) return 'eye';
+if (p.x > X(dO + SHELF_HW) - pad && p.x < X(dO - SHELF_HW) + pad && p.y > Y(VASE_TOP + 1) - pad && p.y < Y(FLOOR) + pad) return 'stand';
+return null;
+}
+function dragTo(p){
+if (dragging === 'stand') dO = limitDo(Math.round(2*(X0 - p.x)/S)/2);
+else if (dragging === 'eye'){ xe = clamp(Math.round((X0 - p.x)/S), Math.max(40, dO + 12), 92); ye = clamp(Math.round((Y0 - p.y)/S), -25, 35); }
+syncInputs(); refresh(); later();
+}
+cv.addEventListener('mousedown', function(e){ var p = evPt(e.clientX, e.clientY); dragging = hit(p, false); if (dragging) cv.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', function(e){ if (!dragging) return; dragTo(evPt(e.clientX, e.clientY)); });
+window.addEventListener('mouseup', function(){ dragging = null; cv.style.cursor = ''; });
+cv.addEventListener('touchstart', function(e){ var t = e.touches[0], p = evPt(t.clientX, t.clientY); dragging = hit(p, true); if (dragging) e.preventDefault(); }, { passive:false });
+cv.addEventListener('touchmove', function(e){ if (!dragging) return; e.preventDefault(); var t = e.touches[0]; dragTo(evPt(t.clientX, t.clientY)); }, { passive:false });
+cv.addEventListener('touchend', function(){ dragging = null; });
+/* boot */
+reset();
+return { setF:setF, setDo:setDo, setXe:setXe, setYe:setYe, opt:opt, standAt:standAt, describe:describe, reset:reset, refresh:refresh,
+_state:function(){ var st = state(); return { f:f, dO:dO, xe:xe, ye:ye, di:st.I.di, m:st.I.m, real:st.I.real, inf:st.I.inf,
+flowerVis:st.flowerVis, vaseVis:st.vaseVis, why:st.why, vaseWhy:st.vaseWhy, inVase:st.inVase, verdict:verdict(st) }; } };
+})();
+</script>
+</main>
+</body>
+</html>

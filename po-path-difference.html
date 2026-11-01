@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Waves: Path Difference</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of path difference: two waves from identical sources, through a second medium, or reflected, meeting at a point; waves, phasors and the path difference in wavelengths.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="pdRoot" class="pd_root" role="region" aria-label="Path difference: two waves meeting at a point">
+<div class="pd_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="pd_a11ybtn" id="pdBtnHC" onclick="pdSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="pd_a11ybtn" id="pdBtnLM" onclick="pdSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="pd_a11ybtn" id="pdBtnCB" onclick="pdSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="pd_a11ybtn pd_a11yon" id="pdBtnNR" onclick="pdSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="pd_header"><p class="pd_h1">Path Difference: When Two Waves Meet</p><p class="pd_sub">how many wavelengths longer is one path than the other?</p></div>
+<div class="pd_tabs" role="tablist" aria-label="Situations">
+<button type="button" role="tab" class="pd_tab" id="pdTab0" aria-selected="true" onclick="pdSim.tab(0)">Two sources</button>
+<button type="button" role="tab" class="pd_tab" id="pdTab1" aria-selected="false" onclick="pdSim.tab(1)">Through a second medium</button>
+<button type="button" role="tab" class="pd_tab" id="pdTab2" aria-selected="false" onclick="pdSim.tab(2)">Reflected off a second medium</button>
+</div>
+<div class="pd_diag"><div class="pd_dlabel"><b>THE WAVES ON THEIR WAY TO P</b><span id="pdHint">drag the sources and the point P</span></div><canvas id="pdScene" width="780" height="380" role="img" aria-label="The sources, the observation point P and the waves along each path; the path difference is highlighted on the longer path." aria-describedby="pdVerdict"></canvas></div>
+<div class="pd_bbar"><button type="button" class="pd_btn pd_btnon" id="pdPlay">&#10073;&#10073; Pause</button><button type="button" class="pd_btn" id="pdStep">Step &#8539; period &#9656;</button><label>speed <input type="range" id="pdSpd" min="0.05" max="1.5" step="0.05" value="0.5" style="width:110px"></label><span id="pdExtra"></span></div>
+<div class="pd_diag"><div class="pd_dlabel"><b>THE PATHS UNROLLED, LINED UP AT P</b><span>tick marks: one wavelength each, counted from the source</span></div><canvas id="pdUnroll" width="780" height="210" role="img" aria-label="Both paths straightened and lined up at P, with the waves on them and a tick at every wavelength; the extra length of the longer path is marked."></canvas></div>
+<div class="pd_diag"><div class="pd_dlabel"><b id="pdZoomT">ZOOM ON THE PATH DIFFERENCE</b><span id="pdZoomH"></span></div><canvas id="pdZoom" width="780" height="252" role="img" aria-label="A magnified view of the extra stretch of the longer path, with a ruler in fractions of a wavelength, and the line where both paths have the same distance left to P." aria-describedby="pdZoomTxt"></canvas><div class="pd_eqs" id="pdZoomTxt" style="margin:0;border-radius:0"></div></div>
+<div class="pd_diag"><div class="pd_dlabel"><b>AT P: THE TWO WAVES, AND THEIR SUM</b><span>left: against time &middot; right: as rotating arrows (phasors)</span></div><canvas id="pdAtP" width="780" height="220" role="img" aria-label="At P: the displacement of each wave and of their sum against time; and the two phasors with their resultant."></canvas></div>
+<div class="pd_panels"><div class="pd_panel"><div class="pd_ptitle">Settings</div><div class="pd_pbody" id="pdCtl"></div></div>
+<div class="pd_panel"><div class="pd_ptitle">Readout</div><div class="pd_pbody" id="pdRead"></div></div></div>
+<div class="pd_eqs" id="pdVerdict"></div>
+<div id="pdNar" class="pd_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="pd_descwrap">
+<button type="button" class="pd_descbtn" id="pdDescBtn" aria-expanded="false" aria-controls="pdDesc" onclick="pdSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="pd_desc" id="pdDesc" role="region" aria-labelledby="pdDescBtn" style="display:none">
+<p>Two waves of the same wavelength `lambda` reach a point P along different paths. What they do there depends only on how far out of step they arrive, and that depends on the <b>path difference</b> `Delta = r_2 - r_1`: every extra wavelength of path delays a wave by one full cycle, so</p>
+<p class="pd_eq">`phi = 2 pi Delta / lambda`.</p>
+<p>If `Delta` is a whole number of wavelengths (`Delta = m lambda`), the crests arrive together: constructive interference, amplitude `2a`. If it is a whole number plus a half (`Delta = (m + 1/2) lambda`), a crest of one meets a trough of the other: destructive interference, the waves cancel. In general the amplitude is `A = 2 a |cos(phi/2)|` and the intensity `I = I_max cos^2(phi/2)`.</p>
+<p>The scene marks the path difference as a line: an arc centred on P, of radius the shorter path, cuts the longer path; the rest of it is `Delta`. Below, both paths are unrolled side by side and lined up at P, with a tick at each wavelength: counting the ticks gives the path difference in wavelengths. At P, the two waves and their sum are drawn against time, and as phasors: arrows that turn once per period, at an angle `phi` to each other; their sum is the resultant.</p>
+<p>The zoom view magnifies the extra stretch of the longer path, with a ruler in quarters of a wavelength. Where it ends (the dashed line), both waves have the same distance left to P: the fraction of a cycle the longer-path wave has done in that stretch is how far out of step the two arrive. Whole wavelengths do not matter; only the fraction left over does.</p>
+<p><b>Through a second medium.</b> In a medium of index `n` (where the wave is `n` times slower) the wavelength is `lambda/n`: more wavelengths fit in the same distance. What counts is the <b>optical path</b> `n L`, and the optical path difference sets the phase: `phi = 2 pi ((sum n L)_2 - (sum n L)_1)/lambda`. A slab of thickness `t` adds `(n - 1) t` of optical path.</p>
+<p><b>Reflected off a second medium.</b> The reflected wave seems to come from an image of the source behind the boundary. Its path is longer, and if the second medium is denser (slower, higher index) the reflection also flips the wave, adding half a wavelength: `phi = 2 pi Delta/lambda + pi`. Reflection from a less dense (faster) medium does not flip it: the flip happens when `n_2 > n_1`. A reflected wave is also weaker: at normal incidence its amplitude is `|r| = |n_1 - n_2|/(n_1 + n_2)` of the incoming one (a checkbox shows this), so the two waves cannot cancel completely.</p>
+</div></div>
+</div><!-- #pdRoot -->
+<style>
+#pdRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#pdRoot * { box-sizing:border-box; }
+#pdRoot.pd_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#pdRoot.pd_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#pdRoot .pd_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#pdRoot .pd_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#pdRoot .pd_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#pdRoot .pd_header { text-align:center; }
+#pdRoot .pd_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#pdRoot .pd_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#pdRoot .pd_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#pdRoot .pd_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#pdRoot .pd_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#pdRoot .pd_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#pdRoot .pd_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#pdRoot .pd_dlabel b { color:var(--c-accent); }
+#pdRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#pdRoot .pd_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#pdRoot .pd_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#pdRoot .pd_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#pdRoot .pd_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#pdRoot .pd_btn:hover { border-color:var(--c-accent); }
+#pdRoot .pd_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#pdRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#pdRoot .pd_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#pdRoot .pd_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#pdRoot .pd_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#pdRoot .pd_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#pdRoot .pd_ctrl { display:flex; flex-direction:column; gap:3px; }
+#pdRoot .pd_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#pdRoot .pd_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#pdRoot .pd_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#pdRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#pdRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#pdRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#pdRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#pdRoot .pd_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#pdRoot .pd_rkey { color:var(--c-dim); }
+#pdRoot .pd_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#pdRoot .pd_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#pdRoot .pd_eqs b { color:var(--c-val); }
+#pdRoot .pd_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#pdRoot .pd_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#pdRoot .pd_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#pdRoot .pd_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#pdRoot .pd_desc p { margin:0 0 9px; }
+#pdRoot .pd_eq { text-align:center; font-size:1rem; }
+#pdRoot button:focus-visible, #pdRoot input:focus-visible, #pdRoot select:focus-visible, #pdRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #pdRoot .pd_row2, #pdRoot .pd_panels { grid-template-columns:minmax(0,1fr); } #pdRoot .pd_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #pdRoot input[type=range] { height:8px; } #pdRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #pdRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #pdRoot .pd_a11ybtn { min-height:40px; } #pdRoot input[type=checkbox] { width:22px; height:22px; } }
+#pdRoot .pd_chk { display:flex; gap:6px; align-items:center; font-size:.8rem; color:var(--c-text); }
+#pdRoot #pdScene { touch-action:none; cursor:grab; }
+</style>
+<!-- ════════ SIMULATION ════════
+Lengths in cm. Each path is a polyline from its source to P; along it the phase grows by 2 pi n ds / lambda (n = 1 in air, the slab's index
+inside it), plus pi at a reflection from a denser medium. Each wave at P: y = a cos(omega t - phase); equal amplitudes.
+No dollar signs or backticks in the code.
+-->
+<script>
+var pdSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('pdRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CS = hi('pdScene'), CU = hi('pdUnroll'), CP = hi('pdAtP'), CZ = hi('pdZoom');
+var th = { hc:false, lm:false, cb:false, nr:true }, TAB = 0, SC = 10;   /* px per cm */
+var S = { lam:6, off:0, t:0, play:true, spd:0.5, fronts:true, map:false, arc:true, wig:true,
+  T0:{ s1:{ x:10, y:11 }, s2:{ x:10, y:27 }, p:{ x:62, y:21 } },
+  T1:{ s1:{ x:8, y:9 }, s2:{ x:8, y:28 }, p:{ x:68, y:19 }, slab:{ x:33, y:21, w:6, h:15 }, n:1.5 },
+  T2:{ s1:{ x:8, y:12 }, p:{ x:70, y:9 }, by:31, n1:1.0, n2:1.5, img:true, real:false } };
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.1)', w1:'#1f5fd6', w2:'#e07a10', sum:'#1d2a36', d:'#c2185b', med:'rgba(120,170,220,0.28)', ok:'#12805a', bad:'#c0392b' };
+  if (th.cb){ p.w1 = '#0072b2'; p.w2 = '#e69f00'; p.d = '#cc79a7'; p.ok = '#009e73'; p.bad = '#d55e00'; }
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.25)'; p.w1 = '#55aaff'; p.w2 = '#ffaa00'; p.sum = '#fff'; p.d = '#ff66ff'; p.med = 'rgba(80,140,255,0.35)'; }
+  return p; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('pdNar').textContent = m; }
+function rrow(k, v){ return '<div class="pd_rrow"><span class="pd_rkey">' + k + '</span><span class="pd_rval">' + v + '</span></div>'; }
+function row(id, label, min, max, step, val, txt){ return '<div class="pd_ctrl"><div class="pd_ctrlhdr"><label class="pd_ctrlname" for="' + id + '">' + label + '</label><span class="pd_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function dist(a, b){ return Math.hypot(b.x - a.x, b.y - a.y); }
+/* ══════════ the paths ══════════ */
+function inSlab(a, b, R){ /* the length of segment ab inside rectangle R */
+  var t0 = 0, t1 = 1, dx = b.x - a.x, dy = b.y - a.y;
+  [[-dx, a.x - R.x], [dx, R.x + R.w - a.x], [-dy, a.y - R.y], [dy, R.y + R.h - a.y]].forEach(function(q){ var pp = q[0], qq = q[1]; if (pp === 0){ if (qq < 0){ t0 = 1; t1 = 0; } } else { var r = qq/pp; if (pp < 0) t0 = Math.max(t0, r); else t1 = Math.min(t1, r); } });
+  return t1 > t0 ? [t0, t1] : null; }
+function paths(){
+  /* each path: points from the source to P; pieces with an index n; a flip (at a reflection from a denser medium) at a given distance */
+  var L = [];
+  function mk(pts, slab, n, flipAt){ var pieces = []; for (var i=0; i<pts.length - 1; i++){ var a = pts[i], b = pts[i + 1], len = dist(a, b), cut = slab ? inSlab(a, b, slab) : null;
+      if (cut){ pieces.push({ a:a, b:b, f0:0, f1:cut[0], n:1, len:len }); pieces.push({ a:a, b:b, f0:cut[0], f1:cut[1], n:n, len:len }); pieces.push({ a:a, b:b, f0:cut[1], f1:1, n:1, len:len }); }
+      else pieces.push({ a:a, b:b, f0:0, f1:1, n:1, len:len }); }
+    pieces = pieces.filter(function(q){ return q.f1 - q.f0 > 1e-9; });
+    var geo = 0, opt = 0; pieces.forEach(function(q){ q.g0 = geo; q.o0 = opt; var l = (q.f1 - q.f0)*q.len; geo += l; opt += l*q.n; q.l = l; });
+    return { pts:pts, pieces:pieces, geo:geo, opt:opt, flipAt:flipAt === undefined ? null : flipAt }; }
+  if (TAB === 0){ var A = S.T0; L.push(mk([A.s1, A.p])); L.push(mk([A.s2, A.p])); }
+  if (TAB === 1){ var B = S.T1; L.push(mk([B.s1, B.p], B.slab, B.n)); L.push(mk([B.s2, B.p], B.slab, B.n)); }
+  if (TAB === 2){ var C = S.T2, img = { x:C.s1.x, y:2*C.by - C.s1.y }, t = (C.by - C.s1.y)/((C.by - C.s1.y) + (C.by - C.p.y)), R = { x:C.s1.x + t*(C.p.x - C.s1.x), y:C.by };
+    L.push(mk([C.s1, C.p])); var r = mk([C.s1, R, C.p]); r.flipAt = dense() ? dist(C.s1, R) : null; r.R = R; r.img = img; L.push(r); }
+  return L; }
+function phaseAt(path, s){ /* the phase lag (rad) at geometric distance s along the path */ var ph = 0;
+  for (var i=0; i<path.pieces.length; i++){ var q = path.pieces[i]; if (s <= q.g0) break; var l = Math.min(s - q.g0, q.l); ph = 2*Math.PI*(q.o0 + l*q.n)/S.lam; }
+  if (path.flipAt !== null && s > path.flipAt) ph += Math.PI; return ph; }
+function pointAt(path, s){ for (var i=0; i<path.pieces.length; i++){ var q = path.pieces[i]; if (s <= q.g0 + q.l + 1e-9){ var f = q.f0 + (s - q.g0)/q.len; return { x:q.a.x + f*(q.b.x - q.a.x), y:q.a.y + f*(q.b.y - q.a.y), dx:(q.b.x - q.a.x)/q.len, dy:(q.b.y - q.a.y)/q.len, n:q.n }; } }
+  var e = path.pts[path.pts.length - 1]; return { x:e.x, y:e.y, dx:1, dy:0, n:1 }; }
+function dense(){ return S.T2.n2 > S.T2.n1 + 0.004; }   /* the flip: reflection from a medium of higher index */
+function rAmp(){ return Math.abs(S.T2.n1 - S.T2.n2)/(S.T2.n1 + S.T2.n2); }   /* the reflected amplitude, at normal incidence */
+function amp2(){ return TAB === 2 && S.T2.real ? rAmp() : 1; }
+function srcOff(i){ return TAB === 0 && i === 1 ? S.off*Math.PI/180 : 0; }
+function state(){ var L = paths(), p1 = phaseAt(L[0], L[0].geo) + srcOff(0), p2 = phaseAt(L[1], L[1].geo) + srcOff(1), dphi = p2 - p1, w = ((dphi % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  var a2 = amp2(), A = Math.sqrt(1 + a2*a2 + 2*a2*Math.cos(dphi));
+  return { L:L, p1:p1, p2:p2, dphi:dphi, wrap:w, a2:a2, A:A, I:A*A/Math.pow(1 + a2, 2), dgeo:L[1].geo - L[0].geo, dopt:L[1].opt - L[0].opt }; }
+function verdict(st){ var w = st.wrap, d = Math.min(w, 2*Math.PI - w); if (d < 0.2) return ['constructive', 'ok']; if (Math.abs(w - Math.PI) < 0.2) return ['destructive', 'bad']; return ['in between', 'dim']; }
+/* ══════════ the scene ══════════ */
+function X(x){ return x*SC; } function Y(y){ return y*SC; }
+var mapCache = null, mapKey = '';
+function drawMap(g){ var A = S.T0, key = [A.s1.x, A.s1.y, A.s2.x, A.s2.y, S.lam, S.off].join(','); if (key !== mapKey){ mapKey = key; var c = document.createElement('canvas'), W = CS.W, H = CS.H; c.width = W/4; c.height = H/4; var cg = c.getContext('2d'), im = cg.createImageData(c.width, c.height), d = im.data;
+      for (var j=0; j<c.height; j++) for (var i=0; i<c.width; i++){ var x = (i*4 + 2)/SC, y = (j*4 + 2)/SC, ph = 2*Math.PI*(Math.hypot(x - A.s2.x, y - A.s2.y) - Math.hypot(x - A.s1.x, y - A.s1.y))/S.lam + S.off*Math.PI/180, I = Math.pow(Math.cos(ph/2), 2), k = 4*(j*c.width + i);
+        d[k] = 255 - 60*I; d[k + 1] = 255 - 10*I; d[k + 2] = 255 - 120*(1 - I)*0 - 30*I; d[k + 3] = Math.round(150*I); }
+      cg.putImageData(im, 0, 0); mapCache = c; }
+  g.imageSmoothingEnabled = true; g.drawImage(mapCache, 0, 0, CS.W, CS.H); }
+function wiggle(g, path, col, phase0){ /* the wave drawn along the path: a snapshot, moving with time */
+  var amp = 7, step = 0.15; g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); var first = true;
+  for (var s=0; s<=path.geo + 1e-6; s+=step){ var q = pointAt(path, Math.min(s, path.geo)), y = amp*Math.cos(2*Math.PI*S.t - phaseAt(path, s) - phase0), px = X(q.x) - q.dy*y, py = Y(q.y) + q.dx*y; if (first){ g.moveTo(px, py); first = false; } else g.lineTo(px, py); }
+  g.stroke(); }
+function fronts(g, src, col, shift, clipBelow){ /* crests: circles where the phase is a whole number of cycles */ var rmax = 90, base = (S.t - shift/(2*Math.PI))*S.lam;
+  g.strokeStyle = col; g.lineWidth = 1.2; g.globalAlpha = 0.45; for (var m=0; m<40; m++){ var r = base - Math.floor(base/S.lam)*S.lam + m*S.lam; if (r > rmax) break; if (r < 0.2) continue; g.beginPath(); g.arc(X(src.x), Y(src.y), r*SC, 0, 2*Math.PI); g.stroke(); } g.globalAlpha = 1; }
+function dot(g, pt, col, label, big){ g.fillStyle = col; g.beginPath(); g.arc(X(pt.x), Y(pt.y), big ? 9 : 7, 0, 2*Math.PI); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke(); Tx(g, label, X(pt.x) + 12, Y(pt.y) - 12, col, 'left', 'bold 13px Arial'); }
+function drawScene(st){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(), L = st.L; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  if (TAB === 0 && S.map) drawMap(g);
+  if (TAB === 1){ var sl = S.T1.slab; g.fillStyle = p.med; g.fillRect(X(sl.x), Y(sl.y), sl.w*SC, sl.h*SC); g.strokeStyle = p.w1; g.lineWidth = 1; g.strokeRect(X(sl.x), Y(sl.y), sl.w*SC, sl.h*SC); Tx(g, 'n = ' + f2(S.T1.n, 2), X(sl.x) + sl.w*SC/2, Y(sl.y) - 10, p.text, 'center', 'bold 12px Arial'); Tx(g, 'drag the slab', X(sl.x) + sl.w*SC/2, Y(sl.y + sl.h) + 12, p.dim, 'center', '10px Arial'); }
+  if (TAB === 2){ var C = S.T2; g.fillStyle = 'rgba(80,140,210,' + Math.min(0.6, 0.12 + 0.25*(C.n2 - 1)).toFixed(2) + ')'; if (C.n1 > 1.001){ g.fillStyle = 'rgba(80,140,210,' + Math.min(0.6, 0.12 + 0.25*(C.n1 - 1)).toFixed(2) + ')'; g.fillRect(0, 0, W, Y(C.by)); g.fillStyle = 'rgba(80,140,210,' + Math.min(0.6, 0.12 + 0.25*(C.n2 - 1)).toFixed(2) + ')'; } g.fillRect(0, Y(C.by), W, H - Y(C.by)); seg(g, 0, Y(C.by), W, Y(C.by), p.text, 2);
+    Tx(g, 'n\u2082 = ' + f2(C.n2, 2) + (dense() ? ': higher than n\u2081 = ' + f2(C.n1, 2) + ', the reflection flips the wave' : (Math.abs(C.n2 - C.n1) < 0.005 ? ': the same as n\u2081, no boundary, no reflection' : ': lower than n\u2081 = ' + f2(C.n1, 2) + ', no flip')), 10, Y(C.by) + 16, p.text, 'left', 'bold 12px Arial'); Tx(g, 'drag the boundary', W - 10, Y(C.by) + 16, p.dim, 'right', '10px Arial'); }
+  /* wavefronts (crests) */
+  if (S.fronts){ if (TAB === 0){ fronts(g, S.T0.s1, p.w1, srcOff(0)); fronts(g, S.T0.s2, p.w2, srcOff(1)); }
+    if (TAB === 2){ g.save(); g.beginPath(); g.rect(0, 0, W, Y(S.T2.by)); g.clip(); fronts(g, S.T2.s1, p.w1, 0); fronts(g, L[1].img, p.w2, dense() ? Math.PI : 0); g.restore(); } }
+  /* the paths, the waves along them */
+  L.forEach(function(path, i){ var col = i ? p.w2 : p.w1; for (var k=0; k<path.pts.length - 1; k++) seg(g, X(path.pts[k].x), Y(path.pts[k].y), X(path.pts[k + 1].x), Y(path.pts[k + 1].y), col, 1.2, [5, 4]); if (S.wig) wiggle(g, path, col, srcOff(i)); });
+  if (TAB === 2 && S.T2.img){ var r = L[1]; seg(g, X(r.img.x), Y(r.img.y), X(r.R.x), Y(r.R.y), p.w2, 1.2, [2, 4]); g.globalAlpha = 0.5; dot(g, r.img, p.w2, 'image of S', false); g.globalAlpha = 1;
+    if (dense()){ Tx(g, 'flip: + \u00BD\u03BB', X(r.R.x), Y(r.R.y) - 14, p.d, 'center', 'bold 12px Arial'); } }
+  /* the path difference as a line: an arc of radius the shorter path, centred on P; the rest of the longer path is the difference */
+  if (S.arc){ var pp = TAB === 0 ? S.T0.p : TAB === 1 ? S.T1.p : S.T2.p, sh = L[0].geo <= L[1].geo ? 0 : 1, lo = L[1 - sh], rS = L[sh].geo, lng = lo.geo;
+    var a0 = pointAt(lo, lng - rS), ang = Math.atan2(a0.y - pp.y, a0.x - pp.x); g.strokeStyle = p.d; g.lineWidth = 1.2; g.setLineDash([3, 3]); g.beginPath(); g.arc(X(pp.x), Y(pp.y), rS*SC, ang - 0.35, ang + 0.35); g.stroke(); g.setLineDash([]);
+    var a1 = pointAt(lo, 0); g.strokeStyle = p.d; g.lineWidth = 6; g.globalAlpha = 0.55; g.beginPath(); g.moveTo(X(a1.x), Y(a1.y)); for (var s=0; s<=lng - rS; s+=0.2){ var q = pointAt(lo, s); g.lineTo(X(q.x), Y(q.y)); } g.lineTo(X(a0.x), Y(a0.y)); g.stroke(); g.globalAlpha = 1;
+    var mid = pointAt(lo, (lng - rS)/2); Tx(g, '\u0394 = ' + f2(lng - rS, 1) + ' cm', X(mid.x) + 10, Y(mid.y) + (TAB === 2 ? -14 : 16), p.d, 'left', 'bold 13px Arial'); }
+  /* the sources and P */
+  if (TAB === 0){ dot(g, S.T0.s1, p.w1, 'S\u2081'); dot(g, S.T0.s2, p.w2, 'S\u2082'); }
+  if (TAB === 1){ dot(g, S.T1.s1, p.w1, 'S\u2081'); dot(g, S.T1.s2, p.w2, 'S\u2082'); }
+  if (TAB === 2){ dot(g, S.T2.s1, p.w1, 'S'); }
+  var P = TAB === 0 ? S.T0.p : TAB === 1 ? S.T1.p : S.T2.p, a = st.A/2; g.fillStyle = 'rgba(194,24,91,' + (0.15 + 0.5*st.I).toFixed(2) + ')'; g.beginPath(); g.arc(X(P.x), Y(P.y), 10 + 12*st.I, 0, 2*Math.PI); g.fill(); dot(g, P, p.text, 'P', true);
+}
+/* ══════════ the paths unrolled, lined up at P ══════════ */
+function drawUnroll(st){
+  var g = CU.g, W = CU.W, H = CU.H, p = pal(), L = st.L, xP = W - 40, longest = Math.max(L[0].geo, L[1].geo), k = Math.min(16, (W - 100)/longest), ys = [62, 150];
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  L.forEach(function(path, i){ var y0 = ys[i], x0 = xP - path.geo*k, col = i ? p.w2 : p.w1, am = i ? st.a2 : 1;
+    path.pieces.forEach(function(q){ if (q.n !== 1){ g.fillStyle = p.med; g.fillRect(x0 + q.g0*k, y0 - 26, q.l*k, 52); Tx(g, 'n = ' + f2(q.n, 2) + ': \u03BB/n', x0 + (q.g0 + q.l/2)*k, y0 - 32, p.text, 'center', '10px Arial'); } });
+    seg(g, x0, y0, xP, y0, p.grid, 1);
+    if (path.flipAt !== null){ var xf = x0 + path.flipAt*k; seg(g, xf, y0 - 26, xf, y0 + 26, p.d, 2); Tx(g, 'reflection: flip (+\u00BD\u03BB)', xf, y0 + 34, p.d, 'center', 'bold 10px Arial'); } else if (path.R){ var xr = x0 + dist(S.T2.s1, path.R)*k; seg(g, xr, y0 - 22, xr, y0 + 22, p.dim, 1, [3, 3]); Tx(g, 'reflection: no flip', xr, y0 + 34, p.dim, 'center', '10px Arial'); }
+    /* the wave */ g.strokeStyle = col; g.lineWidth = 2.2; g.beginPath(); for (var s=0; s<=path.geo; s+=Math.max(0.05, 1/k)){ var yy = y0 - 18*am*Math.cos(2*Math.PI*S.t - phaseAt(path, s) - srcOff(i)); if (s === 0) g.moveTo(x0, yy); else g.lineTo(x0 + s*k, yy); } g.stroke();
+    /* a tick at each wavelength (each full cycle of phase), counted from the source */
+    var cyc = 1; for (var s2=0; s2<=path.geo; s2+=0.02){ var ph = phaseAt(path, s2) - (path.flipAt !== null && s2 > path.flipAt ? Math.PI : 0); if (ph >= cyc*2*Math.PI){ var xt = x0 + s2*k; seg(g, xt, y0 + 20, xt, y0 + 28, p.text, 1.5); Tx(g, String(cyc), xt, y0 + 36 - (path.flipAt !== null ? 0 : 0), p.dim, 'center', '9px Arial'); cyc++; } }
+    g.fillStyle = col; g.beginPath(); g.arc(x0, y0, 5, 0, 2*Math.PI); g.fill(); Tx(g, i ? (TAB === 2 ? 'reflected' : 'path 2') : (TAB === 2 ? 'direct' : 'path 1'), x0 - 8, y0, col, 'right', 'bold 11px Arial');
+    var cycles = (phaseAt(path, path.geo) - (path.flipAt !== null ? Math.PI : 0))/(2*Math.PI); Tx(g, f2(path.geo, 1) + ' cm = ' + f2(cycles, 2) + ' \u03BB' + (path.opt !== path.geo ? ' (optical path ' + f2(path.opt, 1) + ' cm)' : ''), xP - 2, y0 - 34, col, 'right', 'bold 11px Arial'); });
+  seg(g, xP, 8, xP, H - 8, p.text, 1.5, [4, 3]); Tx(g, 'P', xP + 8, H/2, p.text, 'left', 'bold 13px Arial');
+  /* the difference: the part of the longer path before the shorter one starts */
+  var sh = L[0].geo <= L[1].geo ? 0 : 1, lo = sh ? 0 : 1, xs = xP - L[lo].geo*k, xe = xP - L[sh].geo*k, yy0 = ys[lo];
+  g.fillStyle = 'rgba(194,24,91,0.12)'; g.fillRect(xs, 6, xe - xs, H - 12); seg(g, xs, yy0 + 46, xe, yy0 + 46, p.d, 2);
+  var dl = (st.dphi - srcOff(1) + srcOff(0) - (L[1].flipAt !== null ? Math.PI : 0))/(2*Math.PI);
+  Tx(g, '\u0394 = ' + f2(Math.abs(st.dgeo), 1) + ' cm', (xs + xe)/2, H - 8, p.d, 'center', 'bold 12px Arial');
+  var lng = st.dopt >= 0 ? (TAB === 2 ? 'the reflected path' : 'path 2') : (TAB === 2 ? 'the direct path' : 'path 1');   /* the size of the difference, and which path is longer */
+  Tx(g, (st.dopt !== st.dgeo ? 'optical \u0394 = ' + f2(Math.abs(st.dopt), 2) + ' cm = ' : '\u0394 = ') + f2(Math.abs(dl), 2) + ' \u03BB, ' + lng + ' longer' + (L[1].flipAt !== null ? '; + \u00BD \u03BB for the flip' : ''), Math.max(200, (xs + xe)/2), 14, p.d, 'center', 'bold 12px Arial');
+}
+/* ══════════ zoom on the path difference ══════════ */
+function frac(v){ /* a fraction of a wavelength, in words */ var q = Math.round(v*4)/4, w = Math.floor(q), r = q - w, f = r === 0.25 ? '\u00BC' : r === 0.5 ? '\u00BD' : r === 0.75 ? '\u00BE' : ''; return (w ? w : (f ? '' : '0')) + f; }
+function drawZoom(st){
+  var g = CZ.g, W = CZ.W, H = CZ.H, p = pal(), L = st.L, lam = S.lam, txt = '';
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  if (TAB === 1){ zoomSlab(g, W, H, p, st); return; }
+  el('pdZoomT').textContent = 'ZOOM ON THE PATH DIFFERENCE';
+  var lo = L[0].geo >= L[1].geo ? 0 : 1, sh = 1 - lo, D = L[lo].geo - L[sh].geo, show = Math.min(D, 4*lam), uL = L[sh].geo + show + 0.35*lam, uR = L[sh].geo - 1.2*lam;
+  /* x from the distance left to P */ var x0 = 70, x1 = W - 30; function XU(u){ return x0 + (uL - u)/(uL - uR)*(x1 - x0); }
+  var ys = [88, 168], cols = [p.w1, p.w2];
+  [lo, sh].forEach(function(i, row){ var path = L[i], y0 = ys[i], am = i ? st.a2 : 1; seg(g, x0, y0, x1, y0, p.grid, 1);
+    g.strokeStyle = cols[i]; g.lineWidth = 2.6; g.beginPath(); var first = true;
+    for (var x=x0; x<=x1; x++){ var u = uL - (x - x0)/(x1 - x0)*(uL - uR), sAlong = path.geo - u; if (sAlong < 0){ first = true; continue; } var y = y0 - 28*am*Math.cos(2*Math.PI*S.t - phaseAt(path, sAlong) - srcOff(i)); if (first){ g.moveTo(x, y); first = false; } else g.lineTo(x, y); } g.stroke();
+    var xs = XU(path.geo); if (xs >= x0 - 1){ g.fillStyle = cols[i]; g.beginPath(); g.arc(xs, y0, 6, 0, 2*Math.PI); g.fill(); Tx(g, 'source', xs, y0 + 38, cols[i], 'center', 'bold 10px Arial'); }
+    Tx(g, (TAB === 2 ? (i ? 'reflected' : 'direct') : 'path ' + (i + 1)), 8, y0, cols[i], 'left', 'bold 11px Arial'); });
+  /* the extra stretch, and a ruler in quarters of a wavelength from the longer path's source */
+  var xa = XU(L[sh].geo + show), xb = XU(L[sh].geo); g.fillStyle = 'rgba(194,24,91,0.10)'; g.fillRect(xa, 18, xb - xa, H - 40);
+  var yr = ys[lo] + (lo === 0 ? -60 : 48), start = D - show;   /* the ruler beside the longer path's wave, the label between them */
+  if (D < 0.04*lam){ Tx(g, 'the paths are (almost) equal: no extra stretch', (x0 + x1)/2, yr + (lo === 0 ? 4 : -4), p.d, 'center', 'bold 12px Arial'); }
+  else { seg(g, xa, yr, xb, yr, p.d, 2);
+  for (var q=Math.ceil(start*4/lam)/4; q*lam <= D + 1e-9; q+=0.25){ var xq = XU(L[lo].geo - q*lam), big = Math.abs(q - Math.round(q)) < 1e-6; seg(g, xq, yr - (big ? 8 : 5), xq, yr + (big ? 8 : 5), p.d, big ? 2 : 1.2); Tx(g, frac(q) + '\u03BB', xq, yr + (lo === 0 ? -16 : 18), p.d, 'center', (big ? 'bold ' : '') + '11px Arial'); }
+  Tx(g, '\u0394 = ' + f2(D/lam, 2) + ' \u03BB' + (show < D ? ' (the last 4 \u03BB shown)' : ''), xa + 6, yr + (lo === 0 ? 16 : -16), p.d, 'left', 'bold 12px Arial'); }
+  /* where both have the same distance left to P */
+  seg(g, xb, 14, xb, H - 10, p.text, 1.5, [5, 4]); Tx(g, 'from here, both are ' + f2(L[sh].geo, 1) + ' cm from P', xb + 6, lo === 0 ? H - 12 : 12, p.text, 'left', '11px Arial');
+  var v = [0, 1].map(function(i){ return (i ? st.a2 : 1)*Math.cos(2*Math.PI*S.t - phaseAt(L[i], L[i].geo - L[sh].geo) - srcOff(i)); });
+  [0, 1].forEach(function(i){ g.fillStyle = cols[i]; g.beginPath(); g.arc(xb, ys[i] - 28*v[i], 5, 0, 2*Math.PI); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.stroke(); });
+  var cyc = (phaseAt(L[lo], D) + srcOff(lo) - srcOff(sh))/(2*Math.PI), fl = L[1].flipAt !== null;
+  txt = 'The ' + (TAB === 2 ? (lo ? 'reflected' : 'direct') : 'path ' + (lo + 1)) + ' wave has already travelled <b>' + f2(D/lam, 2) + ' wavelengths</b> when it reaches the dashed line, where the other one starts: it is <b>' + f2(((D/lam) % 1 + 1) % 1, 2) + ' of a cycle</b> behind (whole cycles do not count). From that line on, both have the same distance to go, so they reach P still that far out of step' + (fl ? '; on top of that, the reflection flips the reflected wave: another half cycle' : '') + (TAB === 0 && S.off ? '; and source 2 started ' + f2(S.off/360, 2) + ' of a cycle ahead' : '') + '.';
+  el('pdZoomTxt').innerHTML = txt; el('pdZoomH').textContent = 'magnified: the extra stretch of the longer path';
+}
+function zoomSlab(g, W, H, p, st){
+  /* the slab: the stretch path 2 spends in it, against the same distance in air */
+  el('pdZoomT').textContent = 'ZOOM ON THE SLAB: THE SAME DISTANCE, IN AIR AND IN THE SLAB';
+  var L = st.L, lam = S.lam, n = S.T1.n, seg2 = null; L[1].pieces.forEach(function(q){ if (q.n !== 1 && !seg2) seg2 = q; });
+  var seg1 = null; L[0].pieces.forEach(function(q){ if (q.n !== 1 && !seg1) seg1 = q; });
+  if (!seg2){ Tx(g, 'Path 2 does not cross the slab: drag the slab, or make it taller.', W/2, H/2, p.dim, 'center', 'bold 13px Arial'); el('pdZoomTxt').innerHTML = 'No slab on path 2: the optical path difference equals the geometric one.'; el('pdZoomH').textContent = ''; return; }
+  var t = seg2.l, x0 = 90, x1 = W - 40; function XS(sv){ return x0 + sv/t*(x1 - x0); }
+  var ys = [62, 150];
+  [[0, 1, 'in air (n = 1)'], [1, n, 'in the slab (n = ' + f2(n, 2) + ')']].forEach(function(r, row){ var y0 = ys[row], nn = r[1], col = row ? p.w2 : p.w1;
+    if (row){ g.fillStyle = p.med; g.fillRect(x0, y0 - 40, x1 - x0, 80); }
+    seg(g, x0, y0, x1, y0, p.grid, 1); g.strokeStyle = col; g.lineWidth = 2.6; g.beginPath();
+    for (var x=x0; x<=x1; x++){ var sv = (x - x0)/(x1 - x0)*t, y = y0 - 26*Math.cos(2*Math.PI*S.t - 2*Math.PI*nn*sv/lam); if (x === x0) g.moveTo(x, y); else g.lineTo(x, y); } g.stroke();
+    var lw = lam/nn; for (var k=1; k*lw <= t + 1e-9; k++){ var xk = XS(k*lw); seg(g, xk, y0 + 30, xk, y0 + 38, p.text, 1.5); Tx(g, String(k), xk, y0 + 45, p.dim, 'center', '9px Arial'); }
+    Tx(g, r[2], 8, y0 - 30, col, 'left', 'bold 11px Arial'); Tx(g, f2(nn*t/lam, 2) + ' \u03BB', 8, y0, col, 'left', 'bold 12px Arial');
+    Tx(g, 'wavelength ' + f2(lw, 2) + ' cm', x1, y0 - 46, col, 'right', '10px Arial'); });
+  seg(g, x0, 14, x0, H - 20, p.text, 1, [3, 3]); seg(g, x1, 14, x1, H - 20, p.text, 1, [3, 3]); Tx(g, 'the same ' + f2(t, 2) + ' cm', (x0 + x1)/2, H - 10, p.text, 'center', 'bold 11px Arial');
+  el('pdZoomH').textContent = 'magnified: the stretch path 2 spends in the slab';
+  el('pdZoomTxt').innerHTML = 'In the slab the wave is ' + f2(n, 2) + ' times slower, so its wavelength is ' + f2(n, 2) + ' times shorter: the same ' + f2(t, 2) + ' cm holds <b>' + f2(n*t/lam, 2) + '</b> wavelengths instead of ' + f2(t/lam, 2) + '. The slab adds <b>(n \u2212 1)t = ' + f2((n - 1)*t, 2) + ' cm</b> of optical path: ' + f2((n - 1)*t/lam, 2) + ' of a wavelength' + (seg1 ? '. Path 1 crosses the slab too, for ' + f2(seg1.l, 2) + ' cm: only the difference counts.' : '.');
+}
+/* ══════════ at P: against time, and phasors ══════════ */
+function drawAtP(st){
+  var g = CP.g, W = CP.W, H = CP.H, p = pal(), x0 = 60, x1 = 520, ym = [40, 92, 160], a = 18;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H);
+  function curve(fn, y0, col, amp, lw){ g.strokeStyle = col; g.lineWidth = lw || 2; g.beginPath(); for (var x=x0; x<=x1; x++){ var tt = S.t - 2*(x1 - x)/(x1 - x0), v = fn(tt); if (x === x0) g.moveTo(x, y0 - amp*v); else g.lineTo(x, y0 - amp*v); } g.stroke(); }
+  [0, 1, 2].forEach(function(i){ seg(g, x0, ym[i], x1, ym[i], p.grid, 1); });
+  curve(function(tt){ return Math.cos(2*Math.PI*tt - st.p1); }, ym[0], p.w1, a); curve(function(tt){ return st.a2*Math.cos(2*Math.PI*tt - st.p2); }, ym[1], p.w2, a);
+  curve(function(tt){ return Math.cos(2*Math.PI*tt - st.p1) + st.a2*Math.cos(2*Math.PI*tt - st.p2); }, ym[2], p.sum, a, 2.6);
+  Tx(g, 'wave 1', 8, ym[0], p.w1, 'left', 'bold 11px Arial'); Tx(g, 'wave 2', 8, ym[1], p.w2, 'left', 'bold 11px Arial'); Tx(g, 'sum', 8, ym[2], p.sum, 'left', 'bold 11px Arial');
+  seg(g, x1, 10, x1, H - 22, p.d, 1.5, [3, 3]); Tx(g, 'now', x1, H - 12, p.d, 'center', '10px Arial'); Tx(g, '\u2190 2 periods ago', x0, H - 12, p.dim, 'left', '10px Arial');
+  [0, 1, 2].forEach(function(i){ var v = i === 0 ? Math.cos(2*Math.PI*S.t - st.p1) : i === 1 ? st.a2*Math.cos(2*Math.PI*S.t - st.p2) : Math.cos(2*Math.PI*S.t - st.p1) + st.a2*Math.cos(2*Math.PI*S.t - st.p2); g.fillStyle = i === 0 ? p.w1 : i === 1 ? p.w2 : p.sum; g.beginPath(); g.arc(x1, ym[i] - a*v, 4, 0, 2*Math.PI); g.fill(); });
+  /* phasors: arrows turning once a period; their projection on the vertical is the displacement */
+  var cx = 650, cy = 108, R = 46; seg(g, cx - 2.2*R, cy, cx + 2.2*R, cy, p.grid, 1); seg(g, cx, cy - 2.2*R, cx, cy + 2.2*R, p.grid, 1);
+  function arrow(x0_, y0_, ang, len, col, w){ var x1_ = x0_ + len*Math.cos(ang), y1_ = y0_ - len*Math.sin(ang); seg(g, x0_, y0_, x1_, y1_, col, w); var h = 8, a2 = Math.atan2(y1_ - y0_, x1_ - x0_); g.fillStyle = col; g.beginPath(); g.moveTo(x1_, y1_); g.lineTo(x1_ - h*Math.cos(a2 - 0.4), y1_ - h*Math.sin(a2 - 0.4)); g.lineTo(x1_ - h*Math.cos(a2 + 0.4), y1_ - h*Math.sin(a2 + 0.4)); g.fill(); return [x1_, y1_]; }
+  var b1 = 2*Math.PI*S.t - st.p1 + Math.PI/2, b2 = 2*Math.PI*S.t - st.p2 + Math.PI/2;   /* the vertical component is cos(omega t - phase) */
+  var e1 = arrow(cx, cy, b1, R, p.w1, 2.5); if (st.a2 > 0.02) arrow(e1[0], e1[1], b2, R*st.a2, p.w2, 2.5); var rx = R*(Math.cos(b1) + st.a2*Math.cos(b2)), ry = R*(Math.sin(b1) + st.a2*Math.sin(b2)); if (Math.hypot(rx, ry) > 2) arrow(cx, cy, Math.atan2(ry, rx), Math.hypot(rx, ry), p.sum, 3);
+  Tx(g, 'phasors', cx, 10, p.text, 'center', 'bold 11px Arial'); Tx(g, 'angle between: ' + f2(st.wrap*180/Math.PI, 0) + '\u00B0', cx, H - 12, p.d, 'center', 'bold 11px Arial');
+}
+/* ══════════ readout ══════════ */
+function draw(){ var st = state(); drawScene(st); drawUnroll(st); drawZoom(st); drawAtP(st); readout(st); return st; }
+function readout(st){ var L = st.L, v = verdict(st), p = pal(), flip = L[1].flipAt !== null, dl = st.dopt/S.lam;
+  el('pdRead').innerHTML = rrow(TAB === 2 ? 'direct path r\u2081' : 'path 1, r\u2081', f2(L[0].geo, 2) + ' cm') + rrow(TAB === 2 ? 'reflected path r\u2082' : 'path 2, r\u2082', f2(L[1].geo, 2) + ' cm') + rrow('path difference \u0394 = r\u2082 \u2212 r\u2081', f2(st.dgeo, 2) + ' cm = ' + f2(st.dgeo/S.lam, 2) + ' \u03BB')
+    + (TAB === 1 ? rrow('optical path difference', f2(st.dopt, 2) + ' cm = ' + f2(dl, 2) + ' \u03BB') : '') + (flip ? rrow('flip at the reflection', '+ \u00BD \u03BB') : '') + (TAB === 0 && S.off ? rrow('source 2 starts ahead by', f2(S.off, 0) + '\u00B0 = ' + f2(S.off/360, 2) + ' \u03BB') : '')
+    + rrow('phase difference \u03C6', f2(st.dphi*180/Math.PI, 0) + '\u00B0 \u2192 ' + f2(st.wrap*180/Math.PI, 0) + '\u00B0 (minus whole turns)') + rrow('amplitude at P', f2(st.A, 2) + ' a  (' + (st.a2 === 1 ? 'each wave: a' : 'direct a, reflected ' + f2(st.a2, 2) + ' a') + ')') + rrow('intensity at P', f2(100*st.I, 0) + ' % of the maximum');
+  var tot = st.wrap/(2*Math.PI), lead = TAB === 1 ? 'optical path difference ' + f2(dl, 2) + ' \u03BB' : 'path difference ' + f2(st.dgeo/S.lam, 2) + ' \u03BB';
+  el('pdVerdict').innerHTML = '<b>' + lead + (flip ? ' + \u00BD \u03BB (the flip)' : '') + (TAB === 0 && S.off ? ' + ' + f2(S.off/360, 2) + ' \u03BB (the sources\u2019 offset)' : '') + '</b> \u2192 the waves arrive out of step by ' + f2(tot, 2) + ' of a cycle: \u03C6 = ' + f2(st.wrap*180/Math.PI, 0) + '\u00B0. <span style="color:' + (v[1] === 'ok' ? p.ok : v[1] === 'bad' ? p.bad : 'inherit') + ';font-weight:bold">' + (v[0] === 'constructive' ? 'Constructive: crest meets crest, amplitude 2a.' : v[0] === 'destructive' ? (st.a2 < 0.98 ? 'Destructive: crest meets trough; unequal waves only partly cancel, amplitude ' + f2(st.A, 2) + 'a.' : 'Destructive: crest meets trough, they cancel.') : 'In between: amplitude ' + f2(st.A, 2) + 'a.') + '</span>';
+}
+function summary(){ var st = state(), v = verdict(st); return 'The ' + (TAB === 2 ? 'reflected path is ' : 'second path is ') + f2(Math.abs(st.dgeo), 1) + ' cm ' + (st.dgeo >= 0 ? 'longer' : 'shorter') + ', which is ' + f2(Math.abs(st.dgeo)/S.lam, 2) + ' wavelengths' + (TAB === 1 ? '; with the slab, the optical path difference is ' + f2(st.dopt/S.lam, 2) + ' wavelengths' : '') + (st.L[1].flipAt !== null ? ', plus half a wavelength from the flip' : '') + '. At P the waves are ' + f2(st.wrap*180/Math.PI, 0) + ' degrees out of step: ' + v[0] + ', intensity ' + f2(100*st.I, 0) + ' percent.'; }
+/* ══════════ moving P to the nearest maximum or minimum ══════════ */
+function seekP(target){ var P = TAB === 0 ? S.T0.p : TAB === 1 ? S.T1.p : S.T2.p, best = null, y0 = P.y;
+  for (var d=0; d<=12; d+=0.02){ [1, -1].forEach(function(sg){ if (best) return; var y = y0 + sg*d; if (y < 1 || y > 37 || (TAB === 2 && y > S.T2.by - 0.5)) return; P.y = y; var st = state(), w = st.wrap, e = target === 'max' ? Math.min(w, 2*Math.PI - w) : Math.abs(w - Math.PI); if (e < 0.03) best = y; }); if (best !== null) break; }
+  P.y = best !== null ? best : y0; draw(); narrate(best !== null ? 'P moved ' + f2(Math.abs(best - y0), 1) + ' cm to the nearest ' + (target === 'max' ? 'maximum. ' : 'minimum. ') + summary() : 'No ' + (target === 'max' ? 'maximum' : 'minimum') + ' found within 12 cm.'); }
+/* ══════════ dragging ══════════ */
+var drag = null;
+function cpt(e){ var r = CS.c.getBoundingClientRect(); return { x:(e.clientX - r.left)*CS.W/r.width/SC, y:(e.clientY - r.top)*CS.H/r.height/SC }; }
+function handles(){ if (TAB === 0) return [['s1', S.T0.s1], ['s2', S.T0.s2], ['p', S.T0.p]]; if (TAB === 1) return [['s1', S.T1.s1], ['s2', S.T1.s2], ['p', S.T1.p]]; return [['s1', S.T2.s1], ['p', S.T2.p]]; }
+CS.c.addEventListener('pointerdown', function(e){ var q = cpt(e); drag = null;
+  handles().forEach(function(h){ if (!drag && Math.hypot(q.x - h[1].x, q.y - h[1].y) < 1.6) drag = { pt:h[1], k:h[0] }; });
+  if (!drag && TAB === 1){ var sl = S.T1.slab; if (q.x > sl.x && q.x < sl.x + sl.w && q.y > sl.y && q.y < sl.y + sl.h) drag = { slab:true, dx:q.x - sl.x, dy:q.y - sl.y }; }
+  if (!drag && TAB === 2 && Math.abs(q.y - S.T2.by) < 1.2) drag = { bound:true };
+  if (drag){ try { CS.c.setPointerCapture(e.pointerId); } catch(err){} e.preventDefault(); } });
+CS.c.addEventListener('pointermove', function(e){ if (!drag) return; var q = cpt(e); e.preventDefault();
+  if (drag.pt){ drag.pt.x = Math.max(1, Math.min(77, q.x)); drag.pt.y = Math.max(1, Math.min(37, q.y)); if (TAB === 2) drag.pt.y = Math.min(drag.pt.y, S.T2.by - 0.8); }
+  if (drag.slab){ S.T1.slab.x = Math.max(0, Math.min(78 - S.T1.slab.w, q.x - drag.dx)); S.T1.slab.y = Math.max(0, Math.min(38 - S.T1.slab.h, q.y - drag.dy)); }
+  if (drag.bound){ S.T2.by = Math.max(Math.max(S.T2.s1.y, S.T2.p.y) + 1, Math.min(37, q.y)); }
+  if (!S.play) draw(); });
+CS.c.addEventListener('pointerup', function(){ if (drag){ drag = null; narrate(summary()); } });
+/* ══════════ controls ══════════ */
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function chk(id, label, v){ return '<label class="pd_chk"><input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '> ' + label + '</label>'; }
+function build(){
+  var h = row('pdLam', 'wavelength \u03BB', 2, 14, 0.1, S.lam, f2(S.lam, 1) + ' cm');
+  if (TAB === 0) h += row('pdOff', 'source 2 starts ahead by', 0, 360, 5, S.off, f2(S.off, 0) + '\u00B0') + chk('pdFr', 'wavefronts (crests)', S.fronts) + chk('pdMap', 'interference pattern (bright: maxima)', S.map);
+  if (TAB === 1) h += row('pdN', 'index of the slab n', 1, 2.5, 0.01, S.T1.n, f2(S.T1.n, 2)) + row('pdW', 'thickness of the slab (along the path)', 1, 20, 0.5, S.T1.slab.w, f2(S.T1.slab.w, 1) + ' cm') + row('pdHt', 'height of the slab (across)', 2, 36, 0.5, S.T1.slab.h, f2(S.T1.slab.h, 1) + ' cm');
+  if (TAB === 2) h += row('pdN1', 'index of the first medium n\u2081 (where the waves travel)', 1, 2.5, 0.01, S.T2.n1, f2(S.T2.n1, 2)) + row('pdN2', 'index of the second medium n\u2082', 1, 2.5, 0.01, S.T2.n2, f2(S.T2.n2, 2)) + chk('pdReal', 'reflected amplitude from the indices: |r| = |n\u2081 \u2212 n\u2082|/(n\u2081 + n\u2082)', S.T2.real) + chk('pdFr', 'wavefronts (crests)', S.T2 && S.fronts) + chk('pdImg', 'image of the source', S.T2.img);
+  h += chk('pdArc', 'path difference as a line', S.arc) + chk('pdWig', 'the waves along the paths', S.wig) + '<div class="pd_ctrl"><button type="button" class="pd_btn" id="pdMax">P to the nearest maximum</button> <button type="button" class="pd_btn" id="pdMin">P to the nearest minimum</button></div>';
+  el('pdCtl').innerHTML = h;
+  on('pdLam', 'input', function(){ S.lam = +this.value; el('pdLamv').textContent = f2(S.lam, 1) + ' cm'; draw(); later(); });
+  on('pdOff', 'input', function(){ S.off = +this.value; el('pdOffv').textContent = f2(S.off, 0) + '\u00B0'; draw(); later(); });
+  on('pdN', 'input', function(){ S.T1.n = +this.value; el('pdNv').textContent = f2(S.T1.n, 2); draw(); later(); });
+  on('pdW', 'input', function(){ S.T1.slab.w = +this.value; el('pdWv').textContent = f2(S.T1.slab.w, 1) + ' cm'; draw(); later(); });
+  on('pdHt', 'input', function(){ var sl = S.T1.slab, c = sl.y + sl.h/2; sl.h = +this.value; sl.y = Math.max(0, Math.min(38 - sl.h, c - sl.h/2)); el('pdHtv').textContent = f2(sl.h, 1) + ' cm'; draw(); narrate(sl.h > 20 ? 'A tall slab may cross both paths: then it adds optical path to both, and only the difference matters. ' + summary() : summary()); });
+  function nchg(k){ return function(){ var was = dense(); S.T2[k] = +this.value; el(k === 'n1' ? 'pdN1v' : 'pdN2v').textContent = f2(S.T2[k], 2); draw(); if (was !== dense()) narrate((dense() ? 'Now n\u2082 > n\u2081: the reflection flips the wave, as if its path were half a wavelength longer. ' : 'Now n\u2082 < n\u2081: no flip. ') + summary()); else later(); }; }
+  on('pdN1', 'input', nchg('n1')); on('pdN2', 'input', nchg('n2'));
+  on('pdReal', 'change', function(){ S.T2.real = this.checked; draw(); narrate(S.T2.real ? 'The reflected wave now has its real amplitude: |r| = ' + f2(rAmp(), 2) + ' of the direct wave. The two can no longer cancel completely. ' + summary() : 'Both waves drawn with equal amplitudes again. ' + summary()); });
+  [['pdFr', 'fronts'], ['pdMap', 'map'], ['pdArc', 'arc'], ['pdWig', 'wig']].forEach(function(q){ on(q[0], 'change', function(){ S[q[1]] = this.checked; draw(); }); }); on('pdImg', 'change', function(){ S.T2.img = this.checked; draw(); });
+  on('pdMax', 'click', function(){ seekP('max'); }); on('pdMin', 'click', function(){ seekP('min'); });
+  el('pdExtra').textContent = '';
+}
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ narrate(summary()); }, 500); }
+var raf = null, last = 0;
+function loop(t){ var dt = Math.min(0.05, (t - (last || t))/1000); last = t; if (S.play) S.t += dt*S.spd; draw(); raf = requestAnimationFrame(loop); }
+on('pdPlay', 'click', function(){ S.play = !S.play; el('pdPlay').innerHTML = S.play ? '\u2759\u2759 Pause' : '\u25B6 Play'; });
+on('pdStep', 'click', function(){ S.play = false; el('pdPlay').innerHTML = '\u25B6 Play'; S.t = Math.round(S.t*8)/8 + 0.125; draw(); var st = state();
+  narrate('One eighth of a period later. At P, wave 1 is at ' + f2(Math.cos(2*Math.PI*S.t - st.p1), 2) + ', wave 2 at ' + f2(Math.cos(2*Math.PI*S.t - st.p2), 2) + ', and their sum at ' + f2(Math.cos(2*Math.PI*S.t - st.p1) + Math.cos(2*Math.PI*S.t - st.p2), 2) + ' (in units of one wave\u2019s amplitude).'); });
+on('pdSpd', 'input', function(){ S.spd = +this.value; });
+function tab(k){ TAB = k; for (var i=0; i<3; i++) el('pdTab' + i).setAttribute('aria-selected', i === k ? 'true' : 'false'); build(); draw();
+  el('pdHint').textContent = k === 0 ? 'drag the sources and the point P' : k === 1 ? 'drag the sources, the point P and the slab' : 'drag the source, the point P and the boundary';
+  narrate((k === 0 ? 'Two identical sources. ' : k === 1 ? 'One path crosses a slab where the wave is slower: its wavelength is shorter there. ' : 'One wave goes straight to P; the other reflects off a second medium first. ') + summary()); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('pd_hc', th.hc); ROOT.classList.toggle('pd_lm', th.lm);
+  [['hc', 'pdBtnHC'], ['lm', 'pdBtnLM'], ['cb', 'pdBtnCB'], ['nr', 'pdBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('pd_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('pdBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('pdNar').style.display = th.nr ? '' : 'none'; mapKey = ''; draw(); }
+function toggleDesc(){ var b = el('pdDescBtn'), d = el('pdDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+build(); draw(); narrate('Ready. ' + summary()); raf = requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, seekP:seekP, _zoomTxt:function(){ return el('pdZoomTxt').textContent; }, _st:function(){ var s = state(); return { r1:s.L[0].geo, r2:s.L[1].geo, o1:s.L[0].opt, o2:s.L[1].opt, dphi:s.dphi, wrap:s.wrap, A:s.A, I:s.I, flip:s.L[1].flipAt !== null, a2:s.a2 }; }, _S:S, _draw:draw };
+})();
+</script>
+</main>
+</body>
+</html>

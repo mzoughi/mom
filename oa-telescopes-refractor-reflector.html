@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Telescopes: Refractor, Reflector, Galilean and Monocular</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, telescope, telescope, refractor, reflector, Newtonian, Keplerian, Galilean telescope, monocular, binoculars, erecting lens, objective, eyepiece, magnification, eye relief, exit pupil, resolving power, chromatic aberration, spherical aberration, lesson, scientific">
+<meta name="description" content="Interactive simulation of telescopes: Kepler refractor, Newtonian reflector, Galilean telescope and monocular, with exact ray tracing, textbook diagrams, and the equations worked with your numbers.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="tsRoot" class="ts_root" role="region" aria-label="Telescopes simulator">
+<div class="ts_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="ts_a11ybtn" id="tsBtnHC" onclick="tsSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ts_a11ybtn" id="tsBtnLM" onclick="tsSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ts_a11ybtn" id="tsBtnCB" onclick="tsSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ts_a11ybtn ts_a11yon" id="tsBtnNR" onclick="tsSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="ts_tbar"><h3>Telescopes: Refractor, Reflector, Galilean and Monocular</h3></div>
+<div class="ts_tabs" role="tablist" aria-label="Telescope types">
+<button type="button" role="tab" class="ts_tab" id="tsT0" aria-selected="true" onclick="tsSim.tab(0)">Refractor</button>
+<button type="button" role="tab" class="ts_tab" id="tsT1" aria-selected="false" onclick="tsSim.tab(1)">Reflector</button>
+<button type="button" role="tab" class="ts_tab" id="tsT2" aria-selected="false" onclick="tsSim.tab(2)">Galilean</button>
+<button type="button" role="tab" class="ts_tab" id="tsT3" aria-selected="false" onclick="tsSim.tab(3)">Monocular</button>
+</div>
+<div class="ts_mcontent">
+<div class="ts_view">
+<div class="ts_vlabel" id="tsLab"></div>
+<canvas id="tsSide" width="780" height="310" role="img" aria-label="A cross-section of the telescope, drawn to scale, with rays of starlight traced through it."></canvas>
+</div>
+<div class="ts_row2">
+<div class="ts_view"><div class="ts_vlabel">close-up: the image and the eyepiece</div><canvas id="tsEye" width="380" height="250" role="img" aria-label="A close-up of the focal plane and the eyepiece, with the beam leaving toward the eye."></canvas></div>
+<div class="ts_view"><div class="ts_vlabel">what you see: naked eye and through the telescope</div><canvas id="tsSky" width="380" height="250" role="img" aria-label="Two circular views of the sky: with the naked eye and through the telescope."></canvas></div>
+</div>
+<div class="ts_readout" id="tsRead" aria-label="Readout"></div>
+<div class="ts_eqs" id="tsEqs" role="region" aria-label="The equations, with your numbers"></div>
+</div>
+<div class="ts_bbar" id="tsBtns"></div>
+<div class="ts_controls" id="tsCtl"></div>
+<div id="tsNarBar" class="ts_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="ts_descwrap">
+<button type="button" class="ts_descbtn" id="tsDescBtn" aria-expanded="false" aria-controls="tsDesc" onclick="tsSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="ts_desc" id="tsDesc" role="region" aria-labelledby="tsDescBtn" style="display:none">
+<p>A telescope does two things: it gathers far more light than the eye, and it makes distant things look bigger. Light from a star is so far away that its rays arrive parallel. The objective -- a large lens in a refractor, a concave mirror in a reflector -- brings them to a focus, forming a small real image at its focal plane, a distance `f_o` (its focal length) away. The eyepiece, a small lens of focal length `f_e` placed so that this image sits at its own focal point, then sends the light on to the eye as parallel rays again, but at a steeper angle.</p>
+<p><b>Magnification.</b> A star seen at an angle `theta` from the axis forms its image a height `f_o tan theta` from the axis; the eyepiece sends it on at an angle `theta'` with `tan theta' = f_o tan theta / f_e`. For small angles the angular magnification is</p>
+<p class="ts_eq">`M = theta'/theta = f_o/f_e`.</p>
+<p>The image is upside down. A long-focus objective and a short-focus eyepiece give a high magnification. In a refractor the lenses are `f_o + f_e` apart.</p>
+<p><b>Light and detail.</b> The amount of light gathered grows with the area of the aperture `D`: compared with the eye's pupil (about 7 mm in the dark), a telescope collects `(D / 7 "mm")^2` times more. A wider aperture also resolves finer detail: diffraction limits the smallest angle between two stars that can be told apart to about</p>
+<p class="ts_eq">`theta_R = 1.22 lambda / D`,</p>
+<p>about 1.4 seconds of arc for a 100 mm telescope in green light -- though on most nights the turbulence of the atmosphere (seeing) blurs things to about 1 to 2 seconds of arc anyway. Magnifying more than about twice the aperture in millimetres only enlarges the blur. The beam leaving the eyepiece is `D/M` wide (the exit pupil); when that is larger than the eye's pupil some light is wasted, and when it is very small the image becomes dim.</p>
+<p><b>The refractor</b> uses a lens as its objective. A simple lens bends blue light more than red, so the colours come to a focus at different distances: chromatic aberration, which surrounds bright objects with coloured fringes. An achromatic doublet, two lenses of different glasses cemented together, brings two colours to the same focus.</p>
+<p><b>The Galilean telescope</b> has the same converging objective but a diverging (concave) eyepiece of focal length `-|f_e|`, placed before the objective's focus, at `f_o - |f_e|` from the objective. The light never reaches a focus: the eyepiece makes the converging beam parallel again, steeper but on the same side, so the image is upright and `M = -f_o/f_e = +f_o/|f_e|`. Its exit pupil is virtual, inside the tube, so the eye cannot be put at it, and the field of view is narrow. Galileo used this design; so do opera glasses and simple spyglasses.</p>
+<p><b>The monocular</b> (a terrestrial telescope, half of a pair of binoculars) adds an erecting lens. Placed `2 f_r` after the objective's image, it forms a second image `2 f_r` beyond itself, the same size but turned over again -- upright. The eyepiece then magnifies that: `M = (-f_o/f_e)(-1) = +f_o/f_e`, and the length is `f_o + 4 f_r + f_e`. Binoculars do the same job with prisms, which fold the light and keep them short. The numbers on them, such as 8 &times; 42, are the magnification and the aperture in millimetres; their exit pupil is `42/8 = 5.25` mm.</p>
+<p>The panel <i>The equations, with your numbers</i> (the <i>math</i> box) shows each of these equations with the values set in the simulation, so you can follow each calculation, and the <i>diagram</i> box draws each telescope in the usual textbook way, with the angles greatly exaggerated.</p>
+<p><b>The reflector</b> (Newton's design) uses a concave mirror at the bottom of the tube. A mirror reflects all colours alike, so it has no chromatic aberration, and large mirrors are much easier to make than large lenses -- which is why all big research telescopes are reflectors. A small flat mirror at 45 degrees near the top sends the light out the side to the eyepiece; it blocks a little of the incoming light (the central obstruction). A spherical mirror does not bring all parallel rays to one point -- spherical aberration -- so telescope mirrors are made parabolic, which focuses parallel rays exactly.</p>
+</div>
+</div>
+</div><!-- #tsRoot -->
+<style>
+#tsRoot, #tsRoot * { box-sizing:border-box; }
+#tsRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --ts-bg:#0a0e12; --ts-panel:#0d1318; --ts-border:#1c262e; --ts-text:#c9d6de; --ts-muted:#5f7180; --ts-val:#8fe3b0; }
+#tsRoot .ts_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#tsRoot .ts_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#tsRoot .ts_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#tsRoot .ts_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#tsRoot .ts_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#tsRoot .ts_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#tsRoot .ts_tabs { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; background:#2c3138; }
+#tsRoot .ts_tab { flex:1 1 70px; padding:8px 10px; border:1px solid #525c66; background:#22262b; color:#c8d0d8; border-radius:4px; cursor:pointer; font-family:system-ui, sans-serif; font-size:.86rem; min-height:38px; }
+#tsRoot .ts_tab[aria-selected="true"] { background:#e8a020; color:#1a1f24; border-color:#e8a020; font-weight:bold; }
+#tsRoot .ts_mcontent { background:var(--ts-bg); color:var(--ts-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#tsRoot .ts_view { border:1px solid var(--ts-border); border-radius:6px; overflow:hidden; background:var(--ts-panel); }
+#tsRoot .ts_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+#tsRoot .ts_vlabel { font-size:10px; color:var(--ts-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#tsRoot canvas { display:block; width:100%; height:auto; }
+#tsRoot .ts_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--ts-panel); border:1px solid var(--ts-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#tsRoot .ts_flabel { font-size:10px; color:var(--ts-muted); letter-spacing:1px; }
+#tsRoot .ts_fvalue { font-size:14px; color:var(--ts-val); font-variant-numeric:tabular-nums; }
+#tsRoot .ts_eqs { background:var(--ts-panel); border:1px solid var(--ts-border); border-left:4px solid #e8a020; border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; font-size:.88rem; line-height:1.6; color:var(--ts-text); }
+#tsRoot .ts_eqs h4 { margin:0 0 4px; font-size:.78rem; letter-spacing:1px; text-transform:uppercase; color:var(--ts-muted); font-weight:normal; }
+#tsRoot .ts_eqs .ts_eq1 { margin:2px 0; }
+#tsRoot .ts_eqs .ts_eqn { color:var(--ts-muted); font-size:.75rem; }
+#tsRoot .ts_eqs b { color:var(--ts-val); }
+#tsRoot .ts_eqs .ts_ex { margin-top:6px; padding:6px 8px; background:rgba(232,160,32,.10); border-radius:4px; }
+#tsRoot .ts_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#tsRoot .ts_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#tsRoot .ts_bbar label { display:flex; align-items:center; gap:6px; }
+#tsRoot .ts_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#tsRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+#tsRoot .ts_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#tsRoot .ts_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#tsRoot .ts_cname { font-size:.86rem; display:flex; gap:8px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+#tsRoot .ts_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#tsRoot input[type=range] { width:100%; min-width:0; accent-color:#e8a020; }
+#tsRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#tsRoot .ts_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#tsRoot .ts_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#tsRoot .ts_descbtn[aria-expanded="true"] { background:#3a3220; }
+#tsRoot .ts_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#tsRoot .ts_desc p { margin:0 0 9px; }
+#tsRoot .ts_eq { text-align:center; font-size:1rem; }
+@container (max-width:640px) { #tsRoot .ts_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:660px) { #tsRoot .ts_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:480px) { #tsRoot .ts_tab { padding:8px 3px; font-size:.8rem; } #tsRoot .ts_tabs { gap:3px; padding:6px 5px; } }
+@media (pointer:coarse) { #tsRoot input[type=range] { height:28px; } #tsRoot .ts_a11ybtn { min-height:40px; } #tsRoot input[type=checkbox] { width:22px; height:22px; } #tsRoot select { min-height:36px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Units: mm. Starlight: parallel rays at an angle theta to the axis. Refractor: ideal thin lenses (a ray's slope changes by -y/f);
+a simple lens has f_red = 1.005 f, f_blue = 0.989 f (crown glass, n_C 1.5143, n_d 1.5168, n_F 1.5224), an achromat the same f
+for all. Reflector: exact reflection off a parabola x = V - y^2/(4f) or a sphere of radius 2f, then off a flat at 45 degrees.
+Magnification M = f_o/f_e; diffraction limit 1.22 lambda/D (lambda = 550 nm); seeing 1.5 arcsec; eye pupil 7 mm;
+eyepiece apparent field 50 degrees. No dollar signs or backticks in the code.
+-->
+<script>
+var tsSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('tsRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var SD = hi('tsSide'), EY = hi('tsEye'), SK = hi('tsSky');
+var DEG = Math.PI/180, AS = Math.PI/180/3600, AFOV = 50, PUPIL = 7, SEEING = 1.5, LAMBDA = 550e-6;
+var S = { tab:0, fo:900, D:90, fe:20, fr:30, ang:0.8, lens:'simple', mirror:'para', obj:'moon', n:9, dz:0, colors:true, schem:false, eqs:true };
+var CFG = [{ fo:900, D:90, fe:20, lens:'simple', obj:'moon' }, { fo:1000, D:150, fe:20, lens:'achro', obj:'moon' }, { fo:300, D:40, fe:75, lens:'simple', obj:'tree' }, { fo:160, D:42, fe:20, fr:30, lens:'achro', obj:'tree' }];
+var RANGE = [{ fo:[400, 7000, 10], D:[50, 150, 5], fe:[5, 40, 0.25] }, { fo:[400, 2000, 10], D:[50, 250, 5], fe:[5, 40, 0.25] }, { fo:[150, 1200, 10], D:[20, 60, 1], fe:[10, 100, 1] }, { fo:[80, 400, 5], D:[20, 60, 1], fe:[8, 30, 0.5] }];
+function AF(){ return [50, 50, 22, 55][S.tab]; }        /* the eyepiece's apparent field: a Galilean telescope's is narrow */
+function upright(){ return S.tab >= 2; }
+var th = { hc:false, lm:false, cb:false, nr:true };
+var TABS = ['a refractor (Kepler\u2019s design), drawn to scale: an objective lens at the front, an eyepiece at the back', 'a Newtonian reflector, drawn to scale: a concave mirror at the bottom, a flat mirror sending the light out the side', 'a Galilean telescope, drawn to scale: a converging objective and a diverging eyepiece', 'a monocular, drawn to scale: an objective, an erecting lens and an eyepiece'];
+/* ══════════ optics ══════════ */
+var COLS = [{ n:'red', k:1.005, c:'#ff5a4a' }, { n:'green', k:1.0, c:'#ffe066' }, { n:'blue', k:0.989, c:'#5aa0ff' }];
+function fCol(k){ return S.tab !== 1 && S.lens === 'simple' ? S.fo*k : S.fo; }
+/* the lenses of the refracting kinds: position and focal length, the objective first */
+function train(){
+var L = [{ x:0, f:S.fo, obj:true }];
+if (S.tab === 0) L.push({ x:S.fo + S.fe + S.dz, f:S.fe });
+if (S.tab === 2) L.push({ x:S.fo - S.fe + S.dz, f:-S.fe });
+if (S.tab === 3){ L.push({ x:S.fo + 2*S.fr, f:S.fr, erect:true }); L.push({ x:S.fo + 4*S.fr + S.fe + S.dz, f:S.fe }); }
+return L; }
+/* a ray reaching the objective at height y0 with a given slope (starlight: -tan theta), through the thin lenses */
+function traceT(y0, k, slope){
+var sl = slope === undefined ? -Math.tan(S.ang*DEG) : slope, L = train(), pts = [[-120, y0 + sl*120]], y = y0, x = 0;
+L.forEach(function(e){ y = y + sl*(e.x - x); x = e.x; pts.push([x, y]); sl = sl - y/(e.obj ? fCol(k) : e.f); });
+var ext = 3.5*S.fe; pts.push([x + ext, y + sl*ext]); return { pts:pts, s:sl, x:x, y:y };
+}
+/* the exit pupil: where the chief ray (through the centre of the objective) crosses the axis, measured from the eyepiece; negative = virtual */
+function eyeRelief(){ if (S.tab === 1) return S.fe*(S.fo + S.fe)/S.fo; var r = traceT(0, 1, -0.01); return -r.y/r.s; }
+function tubeLength(){ return [S.fo + S.fe, V() + 40, S.fo - S.fe, S.fo + 4*S.fr + S.fe][S.tab]; }
+function M(){ return S.fo/S.fe; }
+/* refractor: trace a ray of height y0 at the objective, colour k; returns the polyline and the height at the focal plane */
+function traceR(y0, k){
+var t = Math.tan(S.ang*DEG), s0 = -t, x0 = -120, ya = y0 - s0*(0 - x0)*0;  /* the ray enters at height y0 at the lens */
+var pts = [[x0, y0 - s0*(0 - x0)], [0, y0]];
+var f = fCol(k), s1 = s0 - y0/f, xe = S.fo + S.fe + S.dz, ye = y0 + s1*xe;
+pts.push([xe, ye]); var s2 = s1 - ye/S.fe; pts.push([xe + 3.5*S.fe, ye + s2*3.5*S.fe]);
+return { pts:pts, yf:y0 + s1*S.fo, s2:s2 };
+}
+/* reflector geometry */
+function V(){ return S.fo + 30; }                                 /* the mirror's vertex */
+function tubeR(){ return S.D/2 + 12; }
+function xDiag(){ return V() - S.fo + tubeR() + 30; }             /* the flat, so that the focus lies just outside the tube */
+function diagHalf(){ var df = V() - xDiag(); return 0.5*(S.D*(S.fo - df)/S.fo) + 6; }
+function mirrorX(y){ var f = S.fo; return S.mirror === 'para' ? V() - y*y/(4*f) : V() - 2*f + Math.sqrt(Math.max(0, 4*f*f - y*y)); }
+function mirrorSlope(y){ var f = S.fo, h = 1e-4; return (mirrorX(y + h) - mirrorX(y - h))/(2*h); }   /* dx/dy */
+function segHit(p, d, a, b){ /* where the ray p + t d meets segment ab (t > 0), or null */
+var ex = b[0] - a[0], ey = b[1] - a[1], den = d[0]*ey - d[1]*ex; if (Math.abs(den) < 1e-12) return null;
+var t = ((a[0] - p[0])*ey - (a[1] - p[1])*ex)/den, u = ((a[0] - p[0])*d[1] - (a[1] - p[1])*d[0])/den;
+return t > 1e-6 && u >= 0 && u <= 1 ? { t:t, x:p[0] + t*d[0], y:p[1] + t*d[1] } : null;
+}
+function traceM(y0){
+var t = Math.tan(S.ang*DEG), d = [1, -t], m = Math.hypot(d[0], d[1]); d = [d[0]/m, d[1]/m];
+var p = [-60, y0 + t*60], pts = [p.slice()], xd = xDiag(), h = diagHalf(), A = [xd - h*0.7071, h*0.7071], B = [xd + h*0.7071, -h*0.7071];
+/* blocked by the back of the flat on the way in? */
+var hb = segHit(p, d, A, B), tm = null;
+/* the mirror: solve x(t) = mirrorX(y(t)) by bisection along the ray */
+var lo = 0, hi = (V() + 50 - p[0])/d[0]; function F(tt){ return p[0] + tt*d[0] - mirrorX(p[1] + tt*d[1]); }
+for (var i=0; i<60; i++){ var mid = 0.5*(lo + hi); if (F(mid) < 0) lo = mid; else hi = mid; } tm = 0.5*(lo + hi);
+if (hb && hb.t < tm){ pts.push([hb.x, hb.y]); return { pts:pts, blocked:true }; }
+var q = [p[0] + tm*d[0], p[1] + tm*d[1]]; pts.push(q);
+if (Math.abs(q[1]) > S.D/2){ return { pts:pts, miss:true }; }
+var n = [-1, mirrorSlope(q[1])], nm = Math.hypot(n[0], n[1]); n = [n[0]/nm, n[1]/nm];
+var dd = d[0]*n[0] + d[1]*n[1], r = [d[0] - 2*dd*n[0], d[1] - 2*dd*n[1]];
+/* the unfolded focal plane (for the spot size), then the flat */
+var tf = (V() - S.fo - q[0])/r[0], yfu = q[1] + tf*r[1];
+var hd = segHit(q, r, A, B);
+if (!hd){ var e = [q[0] + r[0]*900, q[1] + r[1]*900]; pts.push(e); return { pts:pts, yf:yfu, lost:true }; }
+pts.push([hd.x, hd.y]);
+var nd = [0.7071, 0.7071], d2 = r[0]*nd[0] + r[1]*nd[1], r2 = [r[0] - 2*d2*nd[0], r[1] - 2*d2*nd[1]];
+/* up to the eyepiece (a horizontal lens above the flat) */
+var yfoc = (V() - S.fo - xd)*-1 + 0, yE = (xd - (V() - S.fo)) + S.fe + S.dz;     /* the focus is (xd - (V - f)) above the axis */
+var te = (yE - hd.y)/r2[1], pe = [hd.x + te*r2[0], yE]; pts.push(pe);
+var u = pe[0] - xd, sl = r2[0]/r2[1] - u/S.fe; pts.push([pe[0] + sl*3.5*S.fe, yE + 3.5*S.fe]);
+return { pts:pts, yf:yfu, s2:sl };
+}
+/* how big a blur the optics themselves make, in arcseconds (from the spread of an on-axis star's rays at the best focus) */
+function aberration(){
+var keep = S.ang; S.ang = 0; var out = { chrom:0, sph:0 };
+if (S.tab !== 1 && S.lens === 'simple'){ out.chrom = (S.D/2)*Math.abs(COLS[2].k - COLS[0].k)/2/S.fo/AS; }
+if (S.tab === 1 && S.mirror === 'sphere'){
+var ys = []; for (var i=1; i<=20; i++){ var r = traceM(S.D/2*i/20.5); if (r.yf !== undefined) ys.push(Math.abs(r.yf)); }
+/* the smallest blur circle is about a quarter of the spread at the paraxial focus */
+out.sph = 0.25*Math.max.apply(null, ys.concat([0]))/S.fo/AS; }
+S.ang = keep; return out;
+}
+function diff(){ return 1.22*LAMBDA/S.D/AS; }                      /* arcsec */
+function exitPupil(){ return S.D/M(); }
+function defocusBlur(){ return exitPupil()*Math.abs(S.dz)/(S.fe*S.fe)/DEG; }   /* apparent blur, degrees */
+/* ══════════ drawing helpers ══════════ */
+function pal(){ if (th.hc) return { bg:'#000', tube:'#555', tubeE:'#fff', glass:'rgba(120,220,255,0.5)', glassE:'#9fe8ff', mirror:'#9fe8ff', ray:'#ffff00', txt:'#fff', muted:'#ddd', sky:'#000' };
+var p = th.lm ? { bg:'#eef2f6', tube:'#8a929c', tubeE:'#4a525c', txt:'#1d232a', muted:'#556070', sky:'#0b1020' } : { bg:'#0d1318', tube:'#3a4048', tubeE:'#6a7480', txt:'#dbe5ec', muted:'#7a8a98', sky:'#03050c' };
+p.glass = 'rgba(150,215,240,0.35)'; p.glassE = '#8fd3ef'; p.mirror = '#bfe6ff'; p.ray = th.cb ? '#e69f00' : '#ffe066'; return p; }
+function line(g, pts, col, lw, alpha){ g.strokeStyle = col; g.lineWidth = lw || 1.2; g.globalAlpha = alpha || 0.9; g.beginPath(); pts.forEach(function(q, i){ if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke(); g.globalAlpha = 1; }
+function lensShape(g, x, h, t, col, edge){ g.fillStyle = col; g.strokeStyle = edge; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, -h); g.quadraticCurveTo(x + t, 0, x, h); g.quadraticCurveTo(x - t, 0, x, -h); g.closePath(); g.fill(); g.stroke(); }
+/* ══════════ the side view ══════════ */
+function drawSide01(){
+var p = pal(), g = SD.g, W = SD.W, H = SD.H; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+var L = S.tab === 0 ? S.fo + S.fe*4.5 + 140 : V() + 120, sc = (W - 60)/L, ox = 30 + 120*sc, oy = H/2 + (S.tab === 1 ? 30 : 0);
+if (S.tab === 0){ sc = Math.min(sc, (H - 70)/(S.D + 30)); }
+else sc = Math.min(sc, (H - 40)/(2*tubeR() + (xDiag() - (V() - S.fo)) + S.fe*2.5 + 40)) ;
+g.save(); g.translate(ox, oy); g.scale(sc, sc);
+var lw = 1/sc;
+if (S.tab === 0){
+/* the tube, the objective, the eyepiece */
+var Rt = S.D/2 + 8, xe = S.fo + S.fe + S.dz;
+g.fillStyle = p.tube; g.fillRect(-10, -Rt, S.fo + 10 - 30, 2*Rt); g.fillRect(S.fo - 40, -Rt*0.45, xe - S.fo + 40 + 10, 2*Rt*0.45);
+g.strokeStyle = p.tubeE; g.lineWidth = 1.5*lw; g.strokeRect(-10, -Rt, S.fo - 20, 2*Rt);
+lensShape(g, 0, S.D/2, S.D*0.12, p.glass, p.glassE); lensShape(g, xe, Math.min(S.D*0.35, S.fe*1.2), Math.max(3, S.fe*0.35), p.glass, p.glassE);
+/* the rays: one colour, or red / green / blue for a simple lens */
+var cols = S.lens === 'simple' && S.colors ? COLS : [COLS[1]];
+for (var i=0; i<S.n; i++){ var y0 = (S.n === 1 ? 0 : -S.D/2*0.92 + S.D*0.92*i/(S.n - 1));
+cols.forEach(function(c){ var r = traceR(y0, c.k); g.lineWidth = 1.1*lw; line(g, r.pts, cols.length > 1 ? c.c : p.ray, 1.1*lw, 0.85); }); }
+/* the focal plane */
+g.setLineDash([6*lw, 5*lw]); g.strokeStyle = p.muted; g.lineWidth = lw; g.beginPath(); g.moveTo(S.fo, -Rt); g.lineTo(S.fo, Rt); g.stroke(); g.setLineDash([]);
+g.restore();
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center';
+g.fillText('objective lens, f\u2092 = ' + S.fo + ' mm', ox, oy - (S.D/2 + 16)*sc); g.fillText('focal plane', ox + S.fo*sc, oy + (S.D/2 + 22)*sc); g.fillText('eyepiece, f\u2091 = ' + S.fe + ' mm', ox + xe*sc, oy - (S.D*0.4 + 12)*sc);
+g.textAlign = 'left'; g.fillText('starlight', 6, 16); g.textAlign = 'right'; g.fillText('to eye \u2192', W - 6, oy + 18);
+} else {
+var Rt2 = tubeR(), xd = xDiag(), hD = diagHalf(), up = xd - (V() - S.fo), yE = up + S.fe + S.dz;
+/* the tube (open at the left), the eyepiece holder, the mirror, the flat */
+g.fillStyle = p.tube; g.fillRect(-40, -Rt2, V() + 52, 2*Rt2); g.fillRect(xd - S.fe*0.9, -Rt2 - (yE - Rt2) - 6, S.fe*1.8, yE - Rt2 + 6);
+g.strokeStyle = p.tubeE; g.lineWidth = 1.5*lw; g.strokeRect(-40, -Rt2, V() + 52, 2*Rt2);
+g.strokeStyle = p.mirror; g.lineWidth = 4*lw; g.beginPath(); for (var y=-S.D/2; y<=S.D/2 + 1e-6; y+=S.D/40){ var mx = mirrorX(y); if (y === -S.D/2) g.moveTo(mx, -y); else g.lineTo(mx, -y); } g.stroke();
+g.strokeStyle = '#ffffff'; g.lineWidth = 6*lw; g.beginPath(); g.moveTo(xd - hD*0.7071, -hD*0.7071); g.lineTo(xd + hD*0.7071, hD*0.7071); g.stroke(); g.strokeStyle = p.mirror; g.lineWidth = 3.5*lw; g.stroke();
+g.save(); g.translate(xd, -yE); g.rotate(-Math.PI/2); lensShape(g, 0, Math.min(S.fe*1.1, 30), Math.max(3, S.fe*0.35), p.glass, p.glassE); g.restore();
+for (var j=0; j<S.n; j++){ var y1 = (S.n === 1 ? 0 : -S.D/2*0.96 + S.D*0.96*j/(S.n - 1)), r2 = traceM(y1);
+line(g, r2.pts.map(function(q){ return [q[0], -q[1]]; }), p.ray, 1.1*lw, r2.blocked ? 0.45 : 0.85); }
+g.setLineDash([6*lw, 5*lw]); g.strokeStyle = p.muted; g.lineWidth = lw; g.beginPath(); g.moveTo(xd - 20, -up); g.lineTo(xd + 20, -up); g.stroke(); g.setLineDash([]);
+g.restore();
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center';
+g.textAlign = 'right'; g.fillText((S.mirror === 'para' ? 'parabolic' : 'spherical') + ' mirror, f = ' + S.fo + ' mm', Math.min(W - 6, ox + V()*sc + 10), oy + Rt2*sc + 16); g.textAlign = 'center'; g.fillText('flat mirror', ox + xd*sc + 6, oy + diagHalf()*0.7071*sc + 16);
+g.fillText('eyepiece \u2191 to eye', ox + xd*sc, oy - (yE + 18)*sc); g.textAlign = 'left'; g.fillText('starlight', 6, 16);
+}
+}
+function drawSide(){ if (S.schem) drawSchematic(); else if (S.tab < 2) drawSide01(); else drawSideTrain(); }
+function concave(g, x, h, t, col, edge){ g.fillStyle = col; g.strokeStyle = edge; g.beginPath(); g.moveTo(x - t, -h); g.lineTo(x + t, -h); g.quadraticCurveTo(x + t*0.1, 0, x + t, h); g.lineTo(x - t, h); g.quadraticCurveTo(x - t*0.1, 0, x - t, -h); g.closePath(); g.fill(); g.stroke(); }
+/* the Galilean telescope and the monocular, to scale */
+function drawSideTrain(){
+var p = pal(), g = SD.g, W = SD.W, H = SD.H; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+var L = train(), last = L[L.length - 1], len = last.x + 3.5*S.fe + 130, sc = Math.min((W - 60)/len, (H - 90)/(S.D + 30)), ox = 30 + 120*sc, oy = H/2;
+var Rt = S.D/2 + 6;
+g.save(); g.translate(ox, oy); g.scale(sc, sc); var lw = 1/sc;
+g.fillStyle = p.tube; g.fillRect(-10, -Rt, last.x + 10, 2*Rt); g.strokeStyle = p.tubeE; g.lineWidth = 1.5*lw; g.strokeRect(-10, -Rt, last.x + 10, 2*Rt);
+var cols = S.lens === 'simple' && S.colors ? COLS : [COLS[1]];
+for (var i=0; i<S.n; i++){ var y0 = (S.n === 1 ? 0 : -S.D/2*0.92 + S.D*0.92*i/(S.n - 1)); cols.forEach(function(c){ var r = traceT(y0, c.k); line(g, r.pts.map(function(q){ return [q[0], -q[1]]; }), cols.length > 1 ? c.c : p.ray, 1.1*lw, 0.85); }); }
+g.lineWidth = 1.5*lw;
+L.forEach(function(e, k){ var h = k === 0 ? S.D/2 : Math.min(Rt*0.92, Math.max(6, Math.abs(e.f)*0.9)); if (e.f > 0) lensShape(g, e.x, h, Math.max(1.5, h*0.22), p.glass, p.glassE); else concave(g, e.x, h, Math.max(2, h*0.28), p.glass, p.glassE); });
+g.setLineDash([6*lw, 5*lw]); g.strokeStyle = p.muted; g.lineWidth = lw;
+[S.fo].concat(S.tab === 3 ? [S.fo + 4*S.fr] : []).forEach(function(x){ g.beginPath(); g.moveTo(x, -Rt); g.lineTo(x, Rt); g.stroke(); }); g.setLineDash([]);
+g.restore();
+function T(x, up, t, row){ g.fillText(t, ox + x*sc, up ? oy - Rt*sc - 8 - (row ? 14*row : 0) : oy + Rt*sc + 16 + (row ? 14*row : 0)); }
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center';
+T(0, true, 'objective, f\u2092 = ' + S.fo + ' mm');
+if (S.tab === 2){ T(last.x, false, 'diverging eyepiece, f\u2091 = \u2212' + S.fe + ' mm'); g.fillStyle = p.muted; T(S.fo, true, 'focus never reached'); }
+else { T(S.fo, false, 'first image (upside down)'); T(S.fo + 2*S.fr, true, 'erecting lens, f\u1D63 = ' + S.fr + ' mm'); T(S.fo + 4*S.fr, false, 'second image (upright)'); T(last.x, true, 'eyepiece, f\u2091 = ' + S.fe + ' mm', 1); }
+g.textAlign = 'left'; g.fillText('light from far away', 6, 16); g.textAlign = 'right'; g.fillText('to eye \u2192', W - 6, oy + 18);
+}
+/* ══════════ the textbook diagrams: not to scale, angles exaggerated ══════════ */
+function drawSchematic(){
+var p = pal(), g = SD.g, W = SD.W, H = SD.H; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+var a = (S.tab === 1 ? 2.5 : 9)*DEG, ta = Math.tan(a), AX = S.tab === 1 ? 92 : 128,   /* the Newtonian's beam nearly on axis, as in Figure 27.6.3: at 9 degrees it would miss the small flat */ cR = p.ray, cC = th.cb ? '#56b4e9' : '#5ad1ff';
+function Yp(y){ return AX + y; }        /* y is measured downward from the axis, in px */
+g.strokeStyle = p.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(8, AX); g.lineTo(W - 8, AX); g.stroke();
+function seg(x1, y1, x2, y2, col, lw, dash){ g.strokeStyle = col; g.lineWidth = lw || 1.4; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, Yp(y1)); g.lineTo(x2, Yp(y2)); g.stroke(); g.setLineDash([]); }
+function lensV(x, h, neg){ g.save(); g.translate(x, AX); g.lineWidth = 1.5; if (neg) concave(g, 0, h, h*0.12, p.glass, p.glassE); else lensShape(g, 0, h, h*0.16, p.glass, p.glassE); g.restore(); }
+function imgArrow(x, h, col, label, below){ g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 4; g.beginPath(); g.moveTo(x, AX); g.lineTo(x, Yp(h)); g.stroke(); var d = h > 0 ? 1 : -1;
+g.beginPath(); g.moveTo(x, Yp(h) + d*2); g.lineTo(x - 6, Yp(h) - d*8); g.lineTo(x + 6, Yp(h) - d*8); g.closePath(); g.fill();
+g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(label, x, Yp(h) + (h > 0 ? 16 : -8)); }
+function arcAt(x, ang, r, label, col){ g.strokeStyle = col; g.lineWidth = 1.2; g.beginPath(); g.arc(x, AX, r, 0, ang, ang < 0); g.stroke(); g.fillStyle = col; g.font = 'italic bold 13px system-ui, serif'; g.textAlign = 'left'; g.fillText(label, x + r + 3, AX + (ang > 0 ? 12 : -4)); }
+function span(x1, x2, y, label){ g.strokeStyle = p.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(x1, y); g.lineTo(x2, y); g.moveTo(x1, y - 4); g.lineTo(x1, y + 4); g.moveTo(x2, y - 4); g.lineTo(x2, y + 4); g.stroke();
+g.fillStyle = p.txt; g.font = 'italic 12px system-ui, serif'; g.textAlign = 'center'; g.fillText(label, (x1 + x2)/2, y - 4); }
+function eyeAt(x, y){ g.fillStyle = '#fff'; g.strokeStyle = '#334'; g.lineWidth = 1; g.beginPath(); g.ellipse(x, Yp(y), 13, 8, 0, 0, 2*Math.PI); g.fill(); g.stroke(); g.fillStyle = '#334'; g.beginPath(); g.arc(x - 5, Yp(y), 3.5, 0, 2*Math.PI); g.fill(); }
+function pupil(x, virt){ g.strokeStyle = cC; g.lineWidth = 1.5; g.setLineDash(virt ? [3, 3] : []); g.beginPath(); g.ellipse(x, AX, 4, 16, 0, 0, 2*Math.PI); g.stroke(); g.setLineDash([]); g.fillStyle = cC; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(virt ? 'exit pupil (virtual)' : 'exit pupil', x, AX + 32); }
+/* rays through a train of thin lenses: [x, f] in px; y measured downward */
+function train2(els, y0, sl, x0, xEnd){ var pts = [[x0, y0 - sl*(els[0][0] - x0)]], y = y0, x = els[0][0]; pts.push([x, y]); sl = sl - y/els[0][1];
+for (var i=1; i<els.length; i++){ y += sl*(els[i][0] - x); x = els[i][0]; pts.push([x, y]); sl = sl - y/els[i][1]; } pts.push([xEnd, y + sl*(xEnd - x)]); return { pts:pts, s:sl }; }
+function drawRay(r, col, lw){ g.strokeStyle = col; g.lineWidth = lw || 1.3; g.beginPath(); r.pts.forEach(function(q, i){ if (i) g.lineTo(q[0], Yp(q[1])); else g.moveTo(q[0], Yp(q[1])); }); g.stroke(); }
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText(S.tab === 1 ? 'parallel light from a distant star' : 'parallel light from the top of a distant object', 8, H - 6);
+g.fillStyle = p.muted; g.textAlign = 'right'; g.fillText('textbook diagram: not to scale, angles exaggerated', W - 8, H - 6);
+var heights = [-80, -40, 0, 40, 80];
+if (S.tab === 0){
+/* Kepler (cf. Figure III.6 and III.7): objective, image at the common focal plane, eyepiece, parallel light out */
+var X1 = 150, fo = 360, fe = 100, F = X1 + fo, X2 = F + fe, els = [[X1, fo], [X2, fe]], hI = fo*ta;
+heights.forEach(function(h){ drawRay(train2(els, h, ta, 10, 770), cR); });
+lensV(X1, 98); lensV(X2, 104); imgArrow(F, hI, p.txt, 'image (upside down)');
+seg(10, -ta*(X1 - 10), X1, 0, cC, 2.2); seg(X1, 0, F, hI, cC, 2.2);
+var tb = hI/fe; seg(F, hI, X2, 0, cC, 2.2); seg(X2, 0, 775, -tb*(775 - X2), cC, 2.2);
+arcAt(X1, a, 44, '\u03B1', cC); arcAt(X2, -Math.atan(tb), 34, '\u03B2', cC);
+span(X1, F, AX - 108, 'f\u2092'); span(F, X2, AX - 108, 'f\u2091');
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('objective (object glass)', X1, AX + 120); g.fillText('eyepiece', X2, AX + 124); g.fillText('F\u2092 = F\u2091', F, AX - 6);
+var q = fe*(fo + fe)/fo; pupil(X2 + q); eyeAt(X2 + q + 14, 0);
+} else if (S.tab === 2){
+/* Galileo (cf. Figure 27.6.1a): the diverging eyepiece before the focus; parallel light out, on the same side: upright */
+var X1g = 150, fog = 420, feg = 150, Fg = X1g + fog, X2g = Fg - feg, elsg = [[X1g, fog], [X2g, -feg]], hIg = fog*ta;
+heights.forEach(function(h){ var r = train2(elsg, h, ta, 10, 760); drawRay(r, cR); var q0 = r.pts[2]; seg(q0[0], q0[1], Fg, hIg, cR, 1, [4, 4]); seg(q0[0], q0[1], q0[0] - 140, q0[1] - r.s*140, p.muted, 0.8, [2, 4]); });
+lensV(X1g, 98); lensV(X2g, 80, true);
+g.fillStyle = p.muted; g.beginPath(); g.arc(Fg, Yp(hIg), 3, 0, 2*Math.PI); g.fill(); g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('where the objective would focus', Fg, Yp(hIg) + 16);
+var tbg = hIg/feg; seg(10, -ta*(X1g - 10), X1g, 0, cC, 2.2); seg(X2g, 0, 770, tbg*(770 - X2g), cC, 2.2);
+arcAt(X1g, a, 44, '\u03B1', cC); arcAt(X2g, Math.atan(tbg), 34, '\u03B2', cC);
+span(X1g, Fg, AX - 108, 'f\u2092'); span(X2g, Fg, AX - 88, '|f\u2091|');
+g.fillStyle = p.txt; g.textAlign = 'center'; g.fillText('objective', X1g, AX + 120); g.fillText('diverging eyepiece', X2g, AX + 102);
+g.textAlign = 'right'; g.fillText('upright: the light leaves on the same side it came in', W - 8, AX + 156);
+var qg = -feg*(fog - feg)/fog; pupil(X2g + qg, true); eyeAt(X2g + 30, 8);
+} else if (S.tab === 3){
+/* monocular (cf. Figure 27.6.2): objective, first image, erecting lens, second image, eyepiece */
+var X1m = 60, fom = 210, frm = 80, fem = 70, I1 = X1m + fom, XR = I1 + 2*frm, I2 = XR + 2*frm, X3 = I2 + fem, elsm = [[X1m, fom], [XR, frm], [X3, fem]], h1 = fom*ta;
+heights.forEach(function(h){ drawRay(train2(elsm, h, ta, 6, 775), cR); });
+lensV(X1m, 98); lensV(XR, 104); lensV(X3, 74);
+imgArrow(I1, h1, p.txt, 'first image (upside down)'); imgArrow(I2, -h1, p.txt, 'second image (upright)');
+var tbm = h1/fem; seg(I2, -h1, X3, 0, cC, 2.2); seg(X3, 0, 775, tbm*(775 - X3), cC, 2.2); arcAt(X3, Math.atan(tbm), 26, '\u03B2', cC);
+seg(6, -ta*(X1m - 6), X1m, 0, cC, 2.2); seg(X1m, 0, I1, h1, cC, 2.2); arcAt(X1m, a, 40, '\u03B1', cC);
+span(X1m, I1, AX - 108, 'f\u2092'); span(I1, XR, AX - 108, '2f\u1D63'); span(XR, I2, AX - 108, '2f\u1D63'); span(I2, X3, AX - 108, 'f\u2091');
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('objective', X1m, AX + 120); g.fillText('erecting lens', XR, AX + 124); g.fillText('eyepiece', X3, AX + 100);
+} else {
+/* Newton (cf. Figure 27.6.3): parallel light, a concave mirror, a flat mirror folding the focus down to the eyepiece */
+var XM = 650, f = 380, xd = 380, up = xd - (XM - f), fe2 = 60, yF = up, yE = yF + fe2;
+function mX(y){ return XM - y*y/(4*f); }
+var A = [xd - 30, 30], B = [xd + 30, -30];   /* the flat: from lower left to upper right (screen y down) */
+g.strokeStyle = p.mirror; g.lineWidth = 4; g.beginPath(); for (var yy = -95; yy <= 95; yy += 5){ if (yy === -95) g.moveTo(mX(yy), Yp(yy)); else g.lineTo(mX(yy), Yp(yy)); } g.stroke();
+g.lineWidth = 5; g.beginPath(); g.moveTo(A[0], Yp(A[1])); g.lineTo(B[0], Yp(B[1])); g.stroke();
+heights.concat([-60, 60]).forEach(function(h){
+var d = [1, ta], x0 = 10, y0 = h - ta*(XM - 10), pt = [x0, y0];
+/* to the mirror (bisection on the parabola) */
+var lo = 0, hi = 1200; for (var it=0; it<50; it++){ var mid = (lo + hi)/2; if (x0 + mid*d[0] < mX(y0 + mid*d[1])) lo = mid; else hi = mid; }
+var q = [x0 + lo*d[0], y0 + lo*d[1]];
+/* blocked by the back of the flat? */
+function hitFlat(o, dd){ var ex = B[0] - A[0], ey = B[1] - A[1], den = dd[0]*ey - dd[1]*ex; if (Math.abs(den) < 1e-9) return null; var t = ((A[0] - o[0])*ey - (A[1] - o[1])*ex)/den, u = ((A[0] - o[0])*dd[1] - (A[1] - o[1])*dd[0])/den; return t > 1e-6 && u >= 0 && u <= 1 ? [o[0] + t*dd[0], o[1] + t*dd[1]] : null; }
+var hb = hitFlat(pt, d); if (hb && hb[0] < q[0]){ seg(pt[0], pt[1], hb[0], hb[1], p.muted, 1); return; }
+seg(pt[0], pt[1], q[0], q[1], cR);
+var sl = -q[1]/(2*f), n = [-1, sl], nl = Math.hypot(n[0], n[1]); n = [n[0]/nl, n[1]/nl]; var dn = d[0]*n[0] + d[1]*n[1], r = [d[0] - 2*dn*n[0], d[1] - 2*dn*n[1]];
+var hf = hitFlat(q, r); if (!hf){ seg(q[0], q[1], q[0] + r[0]*500, q[1] + r[1]*500, cR, 0.8); return; }
+seg(q[0], q[1], hf[0], hf[1], cR);
+var nf = [0.7071, 0.7071], d2 = r[0]*nf[0] + r[1]*nf[1], r2 = [r[0] - 2*d2*nf[0], r[1] - 2*d2*nf[1]];
+var te = (yE - hf[1])/r2[1], pe = [hf[0] + te*r2[0], yE]; seg(hf[0], hf[1], pe[0], pe[1], cR);
+var sx = r2[0]/r2[1] - (pe[0] - xd)/fe2; seg(pe[0], yE, pe[0] + sx*(H - 30 - AX - yE), H - 30 - AX, cR); });
+g.save(); g.translate(xd, Yp(yE)); g.rotate(-Math.PI/2); lensShape(g, 0, 34, 6, p.glass, p.glassE); g.restore();
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center';
+g.fillText('concave mirror (objective)', XM - 10, AX - 104); g.fillText('flat mirror', xd + 58, AX - 30); g.fillText('eyepiece (lens)', xd + 80, Yp(yE) + 4); g.fillText('to eye \u2193', xd + 46, H - 34);
+g.strokeStyle = p.muted; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(xd - 40, Yp(yF)); g.lineTo(xd + 40, Yp(yF)); g.stroke(); g.setLineDash([]); g.fillStyle = p.muted; g.textAlign = 'right'; g.fillText('focal plane', xd - 44, Yp(yF) + 4);
+g.textAlign = 'left'; g.fillText('mirror to flat + flat to focus = f', 12, AX + 120);
+}
+}
+/* ══════════ the eyepiece close-up (paraxial; the reflector's is shown turned to horizontal) ══════════ */
+function drawEyepiece(){
+var p = pal(), g = EY.g, W = EY.W, H = EY.H; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+var fe = S.fe, t = Math.tan(S.ang*DEG), half = S.D/2, cy = H/2;
+if (S.tab === 2){
+/* Galilean: the converging beam heads for a focus behind the eyepiece; the diverging lens makes it parallel first */
+var sc = (W - 40)/(3.2*fe), x0 = 20 + 1.6*fe*sc, yI = -S.fo*t, vs = Math.min(sc, (H*0.34)/Math.max(Math.abs(yI) + fe*0.3, fe*0.4));
+function Xg(x){ return x0 + x*sc; } function Yg(y){ return cy - y*vs; }
+var xe = -fe + S.dz, hL = Math.min(fe*0.6, 30);
+g.save(); g.translate(Xg(xe), cy); g.scale(1, vs/sc); g.lineWidth = 1.5; concave(g, 0, hL*sc, Math.max(4, hL*0.3*sc), p.glass, p.glassE); g.restore();
+for (var i=0; i<5; i++){ var fr = -1 + i/2, sIn = -fr*half/S.fo + yI/S.fo, yL = yI + sIn*(xe - 0), sOut = sIn + yL/fe;
+line(g, [[Xg(-1.6*fe), Yg(yI + sIn*(-1.6*fe))], [Xg(xe), Yg(yL)], [Xg(xe + 1.5*fe), Yg(yL + sOut*1.5*fe)]], p.ray, 1.3, 0.9);
+g.setLineDash([3, 4]); line(g, [[Xg(xe), Yg(yL)], [Xg(0), Yg(yI)]], p.muted, 1, 0.8); g.setLineDash([]); }
+g.fillStyle = p.muted; g.beginPath(); g.arc(Xg(0), Yg(yI), 3, 0, 2*Math.PI); g.fill();
+g.fillStyle = '#fff'; g.strokeStyle = '#334'; g.beginPath(); g.ellipse(Xg(xe) + 30, cy, 14, 9, 0, 0, 2*Math.PI); g.fill(); g.stroke(); g.fillStyle = '#334'; g.beginPath(); g.arc(Xg(xe) + 24, cy, 4, 0, 2*Math.PI); g.fill();
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left';
+g.fillText('diverging eyepiece', Xg(xe) - 40, Yg(-hL) + 16); g.fillText('focus never reached', Xg(0) - 20, Yg(yI) - 8);
+var thg = Math.atan(S.fo*t/fe)/DEG; g.fillText('leaves at ' + thg.toFixed(1) + '\u00B0, on the same side: upright', 8, H - 10);
+g.textAlign = 'right'; g.fillText('the eye goes right up to the lens', W - 6, 14);
+return;
+}
+var sc2 = (W - 40)/(5.2*fe), x02 = 20 + 1.0*fe*sc2, sgn = S.tab === 3 ? 1 : -1, yI2 = sgn*S.fo*t;   /* the image at the eyepiece's focal plane (upright in a monocular) */
+var vs2 = Math.min(sc2, (H*0.36)/Math.max(Math.abs(yI2) + fe*0.6, fe*0.8));
+function X(x){ return x02 + x*sc2; } function Y(y){ return cy - y*vs2; }
+var xe2 = fe + S.dz, ye_h = Math.min(fe*1.1, 30);
+g.strokeStyle = p.muted; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(X(0), Y(ye_h*1.2)); g.lineTo(X(0), Y(-ye_h*1.2)); g.stroke(); g.setLineDash([]);
+g.save(); g.translate(X(xe2), cy); g.scale(1, vs2/sc2); lensShape(g, 0, ye_h*sc2, Math.max(4, fe*0.35*sc2), p.glass, p.glassE); g.restore();
+for (var j=0; j<5; j++){ var f2 = -1 + j/2, sIn2 = -f2*half/S.fo + yI2/S.fo, yA = yI2 - sIn2*fe, yE2 = yI2 + sIn2*xe2, sOut2 = sIn2 - yE2/fe;
+line(g, [[X(-fe), Y(yA)], [X(0), Y(yI2)], [X(xe2), Y(yE2)], [X(xe2 + 3.6*fe), Y(yE2 + sOut2*3.6*fe)]], p.ray, 1.3, 0.9); }
+g.fillStyle = p.ray; g.beginPath(); g.arc(X(0), Y(yI2), 3, 0, 2*Math.PI); g.fill();
+var xp = xe2 + eyeRelief(); g.fillStyle = '#fff'; g.strokeStyle = '#334'; g.beginPath(); g.ellipse(X(xp) + 18, cy, 14, 9, 0, 0, 2*Math.PI); g.fill(); g.stroke(); g.fillStyle = '#334'; g.beginPath(); g.arc(X(xp) + 12, cy, 4, 0, 2*Math.PI); g.fill();
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left';
+g.fillText(S.tab === 3 ? 'second image (upright)' : 'image (focal plane)', X(0) + 4, Y(ye_h*1.2) - 4); g.fillText('eyepiece', X(xe2) + 6, Y(-ye_h*1.1) + 14);
+g.textAlign = 'center'; g.fillText('eye relief ' + eyeRelief().toFixed(1) + ' mm', X(xp) + 18, cy - 16); g.textAlign = 'left';
+var thp = Math.atan(S.fo*t/fe)/DEG; g.fillText('leaves at ' + thp.toFixed(1) + '\u00B0 (light arrives at ' + S.ang.toFixed(2) + '\u00B0)', 8, H - 10);
+if (S.tab === 1){ g.textAlign = 'right'; g.fillText('turned to horizontal', W - 6, 14); }
+if (Math.abs(S.dz) > 0.05){ g.fillStyle = '#ff9a3c'; g.textAlign = 'right'; g.fillText('out of focus: the beam is not parallel', W - 6, H - 10); }
+}
+/* ══════════ what you see ══════════ */
+var NATIVE = (typeof CanvasRenderingContext2D !== 'undefined') && ('filter' in CanvasRenderingContext2D.prototype);
+function blurred(g, b, fn){ if (b < 0.4){ fn(); return; } if (NATIVE){ g.save(); g.filter = 'blur(' + b.toFixed(1) + 'px)'; fn(); g.restore(); return; }
+var rings = [0.35, 0.7, 1.05, 1.4]; g.save(); g.globalAlpha = 0.07; fn(); for (var r=0; r<4; r++) for (var i=0; i<10; i++){ var an = (i + 0.5*r)*Math.PI/5; g.save(); g.translate(rings[r]*b*Math.cos(an), rings[r]*b*Math.sin(an)); fn(); g.restore(); } g.restore(); }
+function rnd(seed){ var s = seed; return function(){ s = (s*16807) % 2147483647; return (s - 1)/2147483646; }; }
+var SBLUR = 0;   /* the blur, in px, for drawing stars as spots of that size */
+var OBJ = { tree:{ name:'a tree with a bird in it, 600 m away', size:4125 }, moon:{ name:'the Moon', size:0.52*3600 }, jupiter:{ name:'Jupiter', size:45 }, saturn:{ name:'Saturn', size:18 }, double:{ name:'a double star 2.5\u2033 apart', size:2.5 } };
+function drawObject(g, cx, cy, pxPerAs, bright){
+/* the object, centred at (cx, cy), with pxPerAs pixels per arcsecond of the sky */
+var o = S.obj;
+if (o === 'tree'){ /* a 12 m tree 600 m away (1.15 degrees); a robin, 25 cm, on a branch near the top */
+var u = pxPerAs*4125/12;
+g.fillStyle = 'rgba(96,140,70,' + bright + ')'; g.fillRect(cx - 20*u, cy + 6*u, 40*u, 30*u);
+g.fillStyle = 'rgba(110,78,48,' + bright + ')'; g.fillRect(cx - 0.35*u, cy - 1.5*u, 0.7*u, 7.5*u);
+g.strokeStyle = 'rgba(110,78,48,' + bright + ')'; g.lineWidth = Math.max(1, 0.25*u); g.beginPath(); g.moveTo(cx, cy - 2.5*u); g.lineTo(cx + 2.6*u, cy - 4.6*u); g.stroke();
+g.fillStyle = 'rgba(50,120,60,' + bright + ')'; [[0, -3.2, 2.6], [-1.6, -2.2, 1.8], [1.5, -2.0, 1.7], [0.6, -4.6, 1.6]].forEach(function(c){ g.beginPath(); g.arc(cx + c[0]*u, cy + c[1]*u, c[2]*u, 0, 2*Math.PI); g.fill(); });
+var bx = cx + 2.7*u, by = cy - 4.85*u; g.fillStyle = 'rgba(120,70,40,' + bright + ')'; g.beginPath(); g.ellipse(bx, by, 0.14*u, 0.09*u, -0.3, 0, 2*Math.PI); g.fill();
+g.fillStyle = 'rgba(214,80,40,' + bright + ')'; g.beginPath(); g.arc(bx + 0.07*u, by + 0.02*u, 0.06*u, 0, 2*Math.PI); g.fill();
+g.fillStyle = 'rgba(80,50,30,' + bright + ')'; g.beginPath(); g.arc(bx + 0.13*u, by - 0.07*u, 0.05*u, 0, 2*Math.PI); g.fill(); }
+if (o === 'moon'){ var R = 0.26*3600*pxPerAs, r = rnd(7); var gr = g.createRadialGradient(cx - R*0.3, cy - R*0.3, R*0.1, cx, cy, R); gr.addColorStop(0, 'rgba(240,238,228,' + bright + ')'); gr.addColorStop(1, 'rgba(170,168,160,' + bright + ')');
+g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R, 0, 2*Math.PI); g.fill();
+g.fillStyle = 'rgba(110,110,105,' + 0.55*bright + ')'; for (var i=0; i<26; i++){ var a = r()*2*Math.PI, d = Math.sqrt(r())*0.85*R, s = R*(0.04 + 0.12*r()); g.beginPath(); g.arc(cx + d*Math.cos(a), cy + d*Math.sin(a), s, 0, 2*Math.PI); g.fill(); } }
+if (o === 'jupiter'){ var R2 = 22.5*pxPerAs; g.fillStyle = 'rgba(232,206,170,' + bright + ')'; g.beginPath(); g.ellipse(cx, cy, R2, R2*0.94, 0, 0, 2*Math.PI); g.fill();
+g.save(); g.beginPath(); g.ellipse(cx, cy, R2, R2*0.94, 0, 0, 2*Math.PI); g.clip(); g.fillStyle = 'rgba(160,110,80,' + 0.7*bright + ')'; [-0.35, 0.25].forEach(function(b){ g.fillRect(cx - R2, cy + b*R2, 2*R2, R2*0.14); }); g.restore();
+[[-180, 0], [-95, 0], [70, 0], [260, 0]].forEach(function(m){ g.fillStyle = 'rgba(255,255,240,' + bright + ')'; g.beginPath(); g.arc(cx + m[0]*pxPerAs, cy, Math.max(1, 0.6*pxPerAs), 0, 2*Math.PI); g.fill(); }); }
+if (o === 'saturn'){ var R3 = 9*pxPerAs; g.strokeStyle = 'rgba(225,205,160,' + bright + ')'; g.lineWidth = Math.max(1, 2.4*pxPerAs); g.beginPath(); g.ellipse(cx, cy, 21*pxPerAs, 6*pxPerAs, -0.15, 0, 2*Math.PI); g.stroke();
+g.fillStyle = 'rgba(236,214,166,' + bright + ')'; g.beginPath(); g.ellipse(cx, cy, R3, R3*0.9, -0.15, 0, 2*Math.PI); g.fill(); }
+if (o === 'double'){ /* stars are points: each is drawn as a soft spot the size of the blur, so close pairs merge when the blur is wider than their separation */
+var rs = Math.max(1.3, SBLUR*1.25);
+[[-1.25, 1], [1.25, 0.75]].forEach(function(st){ var x = cx + st[0]*pxPerAs, a = Math.min(1, bright*st[1]*1.3), gr = g.createRadialGradient(x, cy, 0, x, cy, rs);
+gr.addColorStop(0, 'rgba(255,248,230,' + a + ')'); gr.addColorStop(0.45, 'rgba(255,248,230,' + 0.55*a + ')'); gr.addColorStop(1, 'rgba(255,248,230,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, cy, rs, 0, 2*Math.PI); g.fill(); }); }
+}
+function drawSky(){
+var p = pal(), g = SK.g, W = SK.W, H = SK.H; g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+var R = Math.min(W/4 - 12, H/2 - 24), c1 = [W/4, H/2 - 6], c2 = [3*W/4, H/2 - 6], k = R/25;   /* px per apparent degree: the naked-eye circle spans 50 degrees */
+var ab = aberration(), m = M();
+/* the blur: diffraction, seeing and the optics' own aberrations add (in quadrature), magnified; plus defocus in the eyepiece */
+var blurAs = Math.sqrt(diff()*diff() + SEEING*SEEING + ab.chrom*ab.chrom + ab.sph*ab.sph), blurPx = blurAs*m/3600*k + defocusBlur()*k;
+var ratio = Math.min(1, Math.pow(exitPupil()/PUPIL, 2)), bright = Math.min(1, 0.3 + 0.7*Math.sqrt(ratio));   /* perceived: the true surface brightness is the ratio */
+[[c1, 'naked eye'], [c2, '\u00D7' + m.toFixed(0) + (upright() ? ', upright' : ', upside down')]].forEach(function(q, i){
+var c = q[0], Rr = i === 0 ? R : R*Math.min(1, AF()/50); g.save(); g.beginPath(); g.arc(c[0], c[1], Rr, 0, 2*Math.PI); g.clip(); g.fillStyle = S.obj === 'tree' ? (th.hc ? '#003355' : '#8fc0e8') : p.sky; g.fillRect(c[0] - R, c[1] - R, 2*R, 2*R);
+var rs = rnd(3); for (var s=0; s<(S.obj === 'tree' ? 0 : 40); s++){ g.fillStyle = 'rgba(255,255,255,' + (0.3 + 0.6*rs()) + ')'; g.fillRect(c[0] - R + rs()*2*R, c[1] - R + rs()*2*R, 1.2, 1.2); }
+if (i === 0){ drawObject(g, c[0], c[1], k/3600, 1); }
+else {
+/* magnified M times and turned upside down; coloured fringes for chromatic aberration */
+g.translate(c[0], c[1]); if (!upright()) g.rotate(Math.PI); scope(g, m*k/3600, blurPx, bright, ab, R);
+}
+g.restore(); g.strokeStyle = p.muted; g.lineWidth = 1.5; g.beginPath(); g.arc(c[0], c[1], Rr, 0, 2*Math.PI); g.stroke();
+g.fillStyle = p.txt; g.font = '11px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(q[1], c[0], H - 6);
+if (i === 1){
+/* a small object: show the centre of the field enlarged, so its details (and their blur) can be seen */
+var half = ({ tree:2062, moon:0.26*3600, saturn:21, jupiter:160, double:2.5 })[S.obj]*m*k/3600, bird = S.obj === 'tree';
+if (half < 0.3*R || (bird && half < 1.6*R)){ var Ri = 0.46*R, zx = c[0] + R*0.58, zy = c[1] - R*0.52, z = Math.max(2, Math.round(0.75*Ri/Math.max(half, 0.3)));
+g.save(); g.beginPath(); g.arc(zx, zy, Ri, 0, 2*Math.PI); g.clip(); g.fillStyle = p.sky; g.fillRect(zx - Ri, zy - Ri, 2*Ri, 2*Ri);
+if (bird){ var um = m*k/3600*4125/12; z = Math.max(2, Math.round(Ri/Math.max(1.0*um, 0.05))); }   /* about 1 m of the tree fills the inset */
+g.fillStyle = bird ? '#8fc0e8' : p.sky; g.fillRect(zx - Ri, zy - Ri, 2*Ri, 2*Ri);
+g.translate(zx, zy); if (!upright()) g.rotate(Math.PI); if (bird){ var bu = m*k/3600*4125/12*z; g.translate(-2.7*bu*(upright() ? 1 : 1), 4.85*bu); } scope(g, m*k/3600*z, blurPx*z, bright, ab, Ri); g.restore();
+g.strokeStyle = '#e8a020'; g.lineWidth = 1.5; g.beginPath(); g.arc(zx, zy, Ri, 0, 2*Math.PI); g.stroke();
+g.strokeStyle = 'rgba(232,160,32,0.6)'; g.beginPath(); if (bird){ var u2 = m*k/3600*4125/12, sg = upright() ? 1 : -1; g.arc(c[0] + sg*2.7*u2, c[1] - sg*4.85*u2, Math.max(4, Ri/z*1.2), 0, 2*Math.PI); } else g.arc(c[0], c[1], Math.max(3, half*1.3), 0, 2*Math.PI); g.stroke();
+g.fillStyle = '#e8a020'; g.font = 'bold 10px system-ui, sans-serif'; g.fillText((bird ? 'the bird \u00D7' : 'centre \u00D7') + z, zx, zy + Ri + 11); }
+}
+});
+}
+/* the view through the eyepiece at a scale of pps pixels per arcsecond of sky (already centred and turned upside down) */
+function scope(g, pps, blurPx, bright, ab, Rclip){
+var m = M();
+if (ab.chrom > 0.5 && S.obj !== 'moon'){ g.save(); g.globalCompositeOperation = 'lighter'; blurred(g, blurPx*1.8, function(){ g.globalAlpha = 0.35; drawObject(g, 0, 0, pps*1.03, bright); }); g.restore(); }
+SBLUR = blurPx*0.55; if (S.obj === 'double') drawObject(g, 0, 0, pps, bright); else blurred(g, blurPx*0.55, function(){ drawObject(g, 0, 0, pps, bright); }); SBLUR = 0;
+if (ab.chrom > 0.5){ g.strokeStyle = 'rgba(160,90,255,0.5)'; g.lineWidth = Math.max(1, ab.chrom*pps); var Ro = (S.obj === 'moon' ? 0.26*3600 : OBJ[S.obj].size/2)*pps; if (Ro < Rclip*1.5){ g.beginPath(); g.arc(0, 0, Ro + g.lineWidth/2, 0, 2*Math.PI); g.stroke(); } }
+}
+/* ══════════ readout and narration ══════════ */
+function fmtAs(a){ return a >= 60 ? (a/60).toFixed(1) + '\u2032' : a.toFixed(a < 10 ? 2 : 1) + '\u2033'; }
+function readout(){
+var m = M(), ab = aberration(), ep = exitPupil(), q = eyeRelief();
+var cells = [['MAGNIFICATION f\u2092/f\u2091', m.toFixed(1) + '\u00D7 (' + (upright() ? 'upright' : 'upside down') + ')'], ['TRUE FIELD OF VIEW', (AF()/m).toFixed(2) + '\u00B0'],
+['EXIT PUPIL D/M', ep.toFixed(2) + ' mm' + (ep > PUPIL ? ' (> eye: light wasted)' : (ep < 0.7 ? ' (dim)' : ''))], ['EYE RELIEF', q < 0 ? 'virtual, ' + (-q).toFixed(0) + ' mm inside' : q.toFixed(1) + ' mm'],
+['FOCAL RATIO', 'f/' + (S.fo/S.D).toFixed(1)], ['LIGHT GATHERED', ((S.D/PUPIL)*(S.D/PUPIL)).toFixed(0) + '\u00D7 the eye'], ['RESOLVING POWER 1.22\u03BB/D', fmtAs(diff())],
+['LENGTH', tubeLength().toFixed(0) + ' mm'], ['USEFUL UP TO', '\u2248 ' + (2*S.D).toFixed(0) + '\u00D7' + (m > 2*S.D ? ' (now beyond it)' : '')]];
+if (S.tab === 1) cells.push(['MIRROR BLUR', S.mirror === 'sphere' ? fmtAs(ab.sph) + ' (spherical)' : 'none (parabolic)']);
+else cells.push(['COLOUR BLUR', S.lens === 'simple' ? fmtAs(ab.chrom) + ' (chromatic)' : 'none (achromat)']);
+if (S.tab === 3) cells.unshift(['SPECIFICATION', m.toFixed(0) + ' \u00D7 ' + S.D.toFixed(0)]);
+el('tsRead').innerHTML = cells.map(function(c){ return '<div><div class="ts_flabel">' + c[0] + '</div><div class="ts_fvalue">' + c[1] + '</div></div>'; }).join('');
+equations();
+}
+/* the textbook equations, with the numbers set in the simulation */
+function equations(){
+var fo = S.fo, fe = S.fe, D = S.D, m = M(), ep = exitPupil(), t = Math.tan(S.ang*DEG), q = eyeRelief(), rows = [], ex = '';
+function E(txt, ref){ rows.push('<div class="ts_eq1">' + txt + (ref ? ' <span class="ts_eqn">' + ref + '</span>' : '') + '</div>'); }
+var meas = '';
+if (S.ang > 0.01){ var sOut = S.tab === 1 ? (traceM(10).s2 || 0) : traceT(0, 1).s; meas = ' &nbsp;(from the ray trace: tan&theta;\u2032/tan&theta; = ' + (Math.abs(sOut)/t).toFixed(2) + ')'; }
+var Fo = 'f<sub>o</sub>', Fe = 'f<sub>e</sub>';
+E('A distant object forms its image at the focal plane: 1/<i>d<sub>i</sub></i> = 1/' + Fo + ' &minus; 1/&infin;, so <i>d<sub>i</sub></i> = ' + Fo + ' = <b>' + fo + ' mm</b>', '(27.6.1&ndash;2)');
+E('Size of that image: <i>h<sub>i</sub></i> = ' + Fo + ' tan&theta; = ' + fo + ' mm &times; tan ' + S.ang.toFixed(2) + '&deg; = <b>' + (fo*t).toFixed(2) + ' mm</b>', '(Fig. III.6)');
+if (S.tab === 0 || S.tab === 1){
+if (S.tab === 1) E('A concave mirror of radius <i>R</i> has ' + Fo + ' = <i>R</i>/2: here <i>R</i> = <b>' + 2*fo + ' mm</b>');
+E('Angular magnification: <i>M</i> = &theta;\u2032/&theta; = &minus;' + Fo + '/' + Fe + ' = &minus;' + fo + '/' + fe + ' = <b>&minus;' + m.toFixed(1) + '</b> (the minus sign: upside down)' + meas, '(27.6.3)');
+if (S.tab === 0) E('Distance between the lenses: ' + Fo + ' + ' + Fe + ' = ' + fo + ' + ' + fe + ' = <b>' + (fo + fe) + ' mm</b>', '(Fig. III.8)');
+else E('Mirror to flat + flat to focus = ' + Fo + ' = ' + fo + ' mm; the tube is about <b>' + tubeLength().toFixed(0) + ' mm</b> long');
+E('Eye relief: <i>q</i> = ' + Fe + '(' + Fo + ' + ' + Fe + ')/' + Fo + ' = ' + fe + ' &times; ' + (fo + fe) + '/' + fo + ' = <b>' + q.toFixed(1) + ' mm</b> behind the eyepiece', '(3.5.2)');
+}
+if (S.tab === 2){
+E('The eyepiece diverges: ' + Fe + ' = <b>&minus;' + fe + ' mm</b>. Angular magnification: <i>M</i> = &minus;' + Fo + '/' + Fe + ' = &minus;' + fo + '/(&minus;' + fe + ') = <b>+' + m.toFixed(1) + '</b> (plus: upright)' + meas, '(27.6.3)');
+E('Distance between the lenses: ' + Fo + ' + ' + Fe + ' = ' + fo + ' + (&minus;' + fe + ') = <b>' + (fo - fe) + ' mm</b>: shorter than the objective\u2019s focal length');
+E('Exit pupil: <i>q</i> = ' + Fe + '(' + Fo + ' + ' + Fe + ')/' + Fo + ' = (&minus;' + fe + ') &times; ' + (fo - fe) + '/' + fo + ' = <b>' + q.toFixed(1) + ' mm</b>: negative, so it is virtual, inside the tube, and the field of view is narrow', '(3.5.2)');
+}
+if (S.tab === 3){
+E('The erecting lens, 2f<sub>r</sub> = ' + 2*S.fr + ' mm from the first image, forms a second image 2f<sub>r</sub> beyond it: magnification &minus;1 (same size, turned over)');
+E('Angular magnification: <i>M</i> = (&minus;' + Fo + '/' + Fe + ')(&minus;1) = (&minus;' + fo + '/' + fe + ')(&minus;1) = <b>+' + m.toFixed(1) + '</b> (plus: upright)' + meas, '(27.6.3)');
+E('Length: ' + Fo + ' + 4f<sub>r</sub> + ' + Fe + ' = ' + fo + ' + ' + 4*S.fr + ' + ' + fe + ' = <b>' + tubeLength().toFixed(0) + ' mm</b>');
+E('Eye relief (the exit pupil, found by tracing the ray through the centre of the objective): <b>' + q.toFixed(1) + ' mm</b> behind the eyepiece');
+}
+E('Exit pupil diameter: <i>D</i>/|<i>M</i>| = ' + D + '/' + m.toFixed(1) + ' = <b>' + ep.toFixed(2) + ' mm</b> (the eye\u2019s pupil: about 7 mm at night, 4 mm by day)', '(3.5.2 and after)');
+if (S.tab === 3) E('So this is a <b>' + m.toFixed(0) + ' &times; ' + D + '</b> monocular, in the notation of binoculars: magnification &times; aperture in mm');
+E('Resolving power: &theta;<sub>R</sub> = 1.22&lambda;/<i>D</i> = 1.22 &times; 550 nm / ' + D + ' mm = <b>' + fmtAs(diff()) + '</b>');
+E('Light gathered compared with the eye: (<i>D</i> / 7 mm)<sup>2</sup> = (' + D + '/7)<sup>2</sup> = <b>' + ((D/7)*(D/7)).toFixed(0) + '</b>');
+if (S.tab === 0) ex = '<div class="ts_ex"><b>Exercise 3.5.1</b> (first reading): an eyepiece that magnifies 8 times has ' + Fe + ' = 250 mm / 8 = 31.25 mm; for <i>M</i> = 200, ' + Fo + ' = 200 &times; 31.25 = 6250 mm, so the lenses are 6250 + 31.25 = 6281.25 mm = 628.125 cm apart. <button type="button" class="ts_btn" id="tsEx">Set it up</button></div>';
+el('tsEqs').innerHTML = '<h4>The equations, with your numbers</h4>' + rows.join('') + ex;
+var b = el('tsEx'); if (b) b.addEventListener('click', function(){ S.fe = 31.25; S.fo = 6250; S.dz = 0; buildCtl(); draw(); narrate('Exercise 3.5.1: an eyepiece of focal length 31.25 millimetres, which magnifies 8 times as a magnifying glass, and an objective of focal length 6250 millimetres give a magnification of 200. The lenses are 6250 plus 31.25 = 6281.25 millimetres, or 628.125 centimetres, apart.'); });
+}
+function summary(){
+var m = M(), ab = aberration(), s, name = ['A refractor (Kepler\u2019s design)', 'A Newtonian reflector', 'A Galilean telescope', 'A ' + m.toFixed(0) + ' by ' + S.D + ' monocular'][S.tab];
+s = name + ': ' + (S.tab === 1 ? 'a ' + S.D + ' millimetre ' + (S.mirror === 'para' ? 'parabolic' : 'spherical') + ' mirror' : 'a ' + S.D + ' millimetre objective lens') + ' of focal length ' + S.fo + ' millimetres, with a' + (S.tab === 2 ? ' diverging' : '') + ' ' + S.fe + ' millimetre eyepiece' + (S.tab === 3 ? ' and a ' + S.fr + ' millimetre erecting lens' : '') + ', magnifies ' + m.toFixed(0) + ' times. ';
+s += OBJ[S.obj].name.charAt(0).toUpperCase() + OBJ[S.obj].name.slice(1) + ' appears ' + m.toFixed(0) + ' times larger, and ' + (upright() ? 'the right way up' : 'upside down') + '. ';
+if (S.tab === 2) s += 'Its field of view is narrow: the exit pupil is virtual, inside the tube. ';
+if (S.tab !== 1 && S.lens === 'simple') s += 'The simple lens brings blue light to a focus closer than red: coloured fringes, about ' + said(ab.chrom) + '. ';
+if (S.tab === 1 && S.mirror === 'sphere') s += 'The spherical mirror focuses the edge rays short of the centre ones: spherical aberration, about ' + said(ab.sph) + '. ';
+if (m > 2*S.D) s += 'This is more than the useful magnification: the image only gets bigger and blurrier. ';
+if (Math.abs(S.dz) > 0.05) s += 'The eyepiece is out of focus. ';
+return s;
+}
+function narrate(t){ if (!th.nr) return; el('tsNarBar').textContent = t; }
+var nt = null; function later(key){ clearTimeout(nt); nt = setTimeout(function(){ narrate(key ? sliderMsg(key) : summary()); }, 400); }
+/* what each slider changes, in words (read once the slider stops moving) */
+function said(a){ /* arcseconds, in words */ return a >= 60 ? (a/60).toFixed(1) + ' minutes of arc' : a.toFixed(a < 10 ? 2 : 1) + ' seconds of arc'; }
+function mm(v, d){ var t = v.toFixed(d); return t + (+t === 1 ? ' millimetre' : ' millimetres'); }
+function sliderMsg(key){
+var m = M(), ep = exitPupil(), t = Math.tan(S.ang*DEG), Mtxt = 'The magnification is ' + m.toFixed(0) + ' times. ';
+if (key === 'D'){
+var lg = (S.D/PUPIL)*(S.D/PUPIL), s = 'Aperture ' + S.D + ' millimetres. It gathers ' + lg.toFixed(0) + ' times more light than the eye, and can resolve details down to ' + said(diff()) + (diff() < SEEING ? ', finer than the atmosphere usually allows (about ' + SEEING + ' seconds of arc)' : '') + '. ';
+s += 'The exit pupil is ' + mm(ep, 1) + (ep > PUPIL ? ', wider than the eye\u2019s pupil, so some light is wasted' : (ep < 0.7 ? ', so the view is dim' : '')) + '. Useful magnification goes up to about ' + (2*S.D).toFixed(0) + ' times' + (m > 2*S.D ? '; the present ' + m.toFixed(0) + ' times is beyond it' : '') + '. ';
+if (S.obj === 'double'){ var lim = Math.sqrt(diff()*diff() + SEEING*SEEING); s += 'The double star, 2.5 seconds apart, ' + (lim < 2.5 ? 'is split into two.' : 'blurs into one, since the blur is wider than the separation.'); }
+return s; }
+if (key === 'ang'){
+var yi = S.fo*t, thp = Math.atan(S.fo*t/S.fe)/DEG;
+return S.ang < 0.01 ? 'The star is straight ahead, on the axis: its image forms at the centre of the focal plane, and the light leaves the eyepiece along the axis.' :
+ 'The starlight arrives ' + S.ang.toFixed(2) + ' degrees off the axis. Its image forms ' + mm(yi, 1) + ' from the centre of the focal plane, on the opposite side, and the light leaves the eyepiece ' + thp.toFixed(1) + ' degrees off the axis. That is the magnification at work: the tangent of the leaving angle is ' + m.toFixed(0) + ' times the tangent of the arriving one' + (thp < 15 ? ', so for small angles like these the light leaves about ' + m.toFixed(0) + ' times steeper.' : '.') + (yi > S.fe*0.9 ? ' This is near the edge of the eyepiece\u2019s field.' : ''); }
+if (key === 'n'){
+if (S.tab !== 1) return S.n + (S.n === 1 ? ' ray, through the centre of the lens.' : ' rays, spread evenly across the ' + S.D + '-millimetre lens.') + (S.lens === 'simple' && S.colors ? ' Each is drawn in red, green and blue, which the simple lens focuses at slightly different distances.' : '');
+var blocked = 0, missed = 0; for (var i=0; i<S.n; i++){ var y = (S.n === 1 ? 0 : -S.D/2*0.96 + S.D*0.96*i/(S.n - 1)), r = traceM(y); if (r.blocked) blocked++; else if (r.lost || r.miss) missed++; }
+return S.n + (S.n === 1 ? ' ray, along the centre of the tube.' : ' rays, spread evenly across the ' + S.D + '-millimetre mirror.') + (blocked ? ' ' + blocked + ' of them ' + (blocked === 1 ? 'is' : 'are') + ' blocked by the back of the flat mirror: the central obstruction.' : ' None is blocked by the flat mirror.') + (missed ? ' ' + missed + (missed === 1 ? ' misses' : ' miss') + ' the flat on the way back' + (S.ang > 0.2 ? ': the star is ' + S.ang.toFixed(2) + ' degrees off the axis, so its light is focused to one side, partly past the small flat. This loss of light toward the edge of the field is called vignetting.' : '.') : ''); }
+if (key === 'fo') return (S.tab === 1 ? 'Mirror' : 'Objective lens') + ' focal length ' + S.fo + ' millimetres, focal ratio f/' + (S.fo/S.D).toFixed(1) + '. ' + Mtxt + 'The true field of view is ' + (AF()/m).toFixed(2) + ' degrees.' + (S.tab === 1 && S.mirror === 'sphere' ? ' The spherical mirror blurs by ' + said(aberration().sph) + '.' : '');
+if (key === 'fr') return 'Erecting lens focal length ' + S.fr + ' millimetres. It sits ' + 2*S.fr + ' millimetres after the first image and forms an upright second image ' + 2*S.fr + ' millimetres beyond itself, the same size. It does not change the magnification, but the monocular is now ' + tubeLength().toFixed(0) + ' millimetres long.';
+if (key === 'fe') return (S.tab === 2 ? 'Diverging eyepiece, focal length minus ' : 'Eyepiece focal length ') + S.fe + ' millimetres. ' + Mtxt + 'A shorter eyepiece magnifies more. The exit pupil is ' + mm(ep, 1) + (ep < 0.7 ? ': the view is getting dim.' : '.') + (m > 2*S.D ? ' This is beyond the useful magnification of about ' + (2*S.D).toFixed(0) + ' times.' : '');
+if (key === 'dz') return Math.abs(S.dz) < 0.05 ? 'The eyepiece is in focus: the light leaves it as a parallel beam, and the view is sharp.' : 'The eyepiece is ' + mm(Math.abs(S.dz), 1) + ' ' + (S.dz > 0 ? 'too far from' : 'too close to') + ' the focal plane: the light no longer leaves as a parallel beam, so the view is blurred by about ' + (defocusBlur()*60).toFixed(0) + ' minutes of arc.';
+return summary();
+}
+function draw(){ drawSide(); drawEyepiece(); drawSky(); readout(); el('tsLab').textContent = TABS[S.tab]; }
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="ts_crow"><div class="ts_cname"><b>' + label + '</b><span class="ts_cval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function buildCtl(){
+var Rg = RANGE[S.tab];
+var b = '<label>Looking at <select id="tsObj"><option value="tree">a tree with a bird (600 m)</option><option value="moon">the Moon</option><option value="jupiter">Jupiter</option><option value="saturn">Saturn</option><option value="double">a double star (2.5\u2033)</option></select></label>' +
+(S.tab === 1 ? '<label>Mirror <select id="tsMir"><option value="para">parabolic</option><option value="sphere">spherical</option></select></label>' :
+'<label>Objective <select id="tsLens"><option value="simple">a simple lens</option><option value="achro">an achromatic doublet</option></select></label><label><input type="checkbox" id="tsCol"' + (S.colors ? ' checked' : '') + '> red, green and blue rays</label>') +
+'<label title="the equations, with your numbers"><input type="checkbox" id="tsEqOn"' + (S.eqs ? ' checked' : '') + ' aria-label="math: show the equations, with your numbers"> math</label>' +
+'<label title="a textbook diagram, not to scale, angles exaggerated"><input type="checkbox" id="tsSch"' + (S.schem ? ' checked' : '') + ' aria-label="diagram: show a textbook diagram instead of the drawing to scale"> diagram</label>' +
+(S.tab === 2 ? '<button type="button" class="ts_btn" data-pr="galileo">Galileo\u2019s telescope (20\u00D7)</button><button type="button" class="ts_btn" data-pr="opera">Opera glasses (3\u00D7)</button>' : '') +
+(S.tab === 3 ? '<button type="button" class="ts_btn" data-pr="m842">8 \u00D7 42</button><button type="button" class="ts_btn" data-pr="m1050">10 \u00D7 50</button><button type="button" class="ts_btn" data-pr="m1225">12 \u00D7 25</button>' : '') +
+'<button type="button" class="ts_btn" id="tsFocus">Focus the eyepiece</button><button type="button" class="ts_btn" id="tsDsc">Describe</button>';
+var c = row('tsFo', S.tab === 1 ? 'mirror focal length f\u2092' : 'objective focal length f\u2092', Rg.fo[0], Rg.fo[1], Rg.fo[2], S.fo, S.fo + ' mm') + row('tsD', 'aperture D', Rg.D[0], Rg.D[1], Rg.D[2], S.D, S.D + ' mm') +
+row('tsFe', S.tab === 2 ? 'eyepiece focal length (diverging) |f\u2091|' : 'eyepiece focal length f\u2091', Rg.fe[0], Rg.fe[1], Rg.fe[2], S.fe, S.fe + ' mm') +
+(S.tab === 3 ? row('tsFr', 'erecting lens focal length f\u1D63', 15, 60, 1, S.fr, S.fr + ' mm') : '') +
+row('tsAng', S.obj === 'tree' ? 'angle of the incoming light' : 'angle of the starlight', 0, 3, 0.05, S.ang, S.ang.toFixed(2) + '\u00B0') +
+row('tsDz', 'eyepiece focus (mm from correct)', -3, 3, 0.1, S.dz, S.dz.toFixed(1) + ' mm') + row('tsN', 'number of rays', 1, 15, 2, S.n, String(S.n));
+el('tsBtns').innerHTML = b; el('tsCtl').innerHTML = c; el('tsEqs').style.display = S.eqs ? '' : 'none'; el('tsObj').value = S.obj; if (el('tsLens')) el('tsLens').value = S.lens; if (el('tsMir')) el('tsMir').value = S.mirror;
+function on(id, ev, fn){ var e = el(id + ''); if (e) e.addEventListener(ev, fn); }
+on('tsObj', 'change', function(){ S.obj = this.value; buildCtl(); schedule(); later(); }); on('tsLens', 'change', function(){ S.lens = this.value; schedule(); later(); }); on('tsMir', 'change', function(){ S.mirror = this.value; schedule(); later(); });
+on('tsCol', 'change', function(){ S.colors = this.checked; schedule(); }); on('tsFocus', 'click', function(){ S.dz = 0; buildCtl(); schedule(); later(); }); on('tsDsc', 'click', describe);
+on('tsEqOn', 'change', function(){ S.eqs = this.checked; el('tsEqs').style.display = S.eqs ? '' : 'none'; narrate(S.eqs ? 'The equations, with your numbers, are shown below the readout.' : 'The equations are hidden.'); });
+on('tsSch', 'change', function(){ S.schem = this.checked; schedule(); narrate(S.schem ? 'The textbook diagram: not to scale, with the angles greatly exaggerated, as in most textbooks. ' + ['A parallel beam from the top of a distant object comes in at the angle alpha, the objective forms an upside-down image at its focal plane, which is also the eyepiece\u2019s focal plane, and parallel light leaves the eyepiece at the larger angle beta.', 'Parallel light falls on the concave mirror, which reflects it toward a focus; a flat mirror folds it down to the eyepiece.', 'The diverging eyepiece catches the converging beam before it can focus and sends it on as parallel light, at the larger angle beta but on the same side: the image is upright.', 'The objective forms an upside-down first image; the erecting lens forms an upright second image the same size; the eyepiece sends parallel light to the eye at the larger angle beta.'][S.tab] : 'The side view, drawn to scale.'); });
+[].forEach.call(el('tsBtns').querySelectorAll('button[data-pr]'), function(x){ x.addEventListener('click', function(){ var P = { galileo:{ fo:980, fe:50, D:26 }, opera:{ fo:150, fe:50, D:30 }, m842:{ fo:160, fe:20, D:42, fr:30 }, m1050:{ fo:200, fe:20, D:50, fr:30 }, m1225:{ fo:120, fe:10, D:25, fr:25 } }[x.getAttribute('data-pr')];
+for (var k in P) S[k] = P[k]; S.dz = 0; buildCtl(); draw(); narrate(summary() + ' Exit pupil ' + exitPupil().toFixed(1) + ' millimetres.'); }); });
+[['tsFo', 'fo', function(v){ return v + ' mm'; }], ['tsD', 'D', function(v){ return v + ' mm'; }], ['tsFe', 'fe', function(v){ return v + ' mm'; }], ['tsFr', 'fr', function(v){ return v + ' mm'; }], ['tsAng', 'ang', function(v){ return (+v).toFixed(2) + '\u00B0'; }], ['tsDz', 'dz', function(v){ return (+v).toFixed(1) + ' mm'; }], ['tsN', 'n', function(v){ return String(v); }]].forEach(function(q){
+on(q[0], 'input', function(){ S[q[1]] = +this.value; el(q[0] + 'v').textContent = q[2](S[q[1]]); schedule(); later(q[1]); }); });
+}
+function tab(i){
+/* each kind of telescope keeps its own settings */
+CFG[S.tab] = { fo:S.fo, D:S.D, fe:S.fe, fr:S.fr, lens:S.lens, obj:S.obj };
+S.tab = i; var c = CFG[i]; for (var k in c) S[k] = c[k]; S.dz = 0;
+for (var j=0; j<4; j++) el('tsT' + j + '').setAttribute('aria-selected', j === i ? 'true' : 'false'); buildCtl(); draw(); narrate(summary());
+}
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','tsBtnHC'],['lm','tsBtnLM'],['cb','tsBtnCB'],['nr','tsBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('ts_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('tsBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('tsNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--ts-bg','--ts-panel','--ts-border','--ts-text','--ts-muted','--ts-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+draw();
+}
+function describe(){
+var what = ['The side view shows a refractor drawn to scale: parallel light enters at the left, the objective lens brings it to a focus at the focal plane, and the small eyepiece at the right sends it on to the eye. ',
+'The side view shows a Newtonian reflector drawn to scale: light enters the open end at the left, the concave mirror at the right reflects it back toward a focus, and a small flat mirror sends it up out of the tube to the eyepiece. ',
+'The side view shows a Galilean telescope drawn to scale: a converging objective at the left and, before its focus, a small diverging eyepiece; the light leaves parallel, on the same side it came in, so the image is upright. ',
+'The side view shows a monocular drawn to scale: the objective forms an upside-down image, an erecting lens forms an upright copy of it, and the eyepiece sends the light on to the eye. '][S.tab];
+narrate((S.schem ? 'The textbook diagram, not to scale and with exaggerated angles, of the same telescope. ' : '') + what + 'Below, a close-up of the eyepiece, the view with the naked eye and through the telescope, and the equations with your numbers. ' + summary());
+}
+function toggleDesc(){
+var b = el('tsDescBtn'), d = el('tsDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* boot */
+buildCtl(); draw(); narrate('Ready. ' + summary());
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc, set:function(k, v){ S[k] = v; buildCtl(); draw(); },
+_state:function(){ return { S:JSON.parse(JSON.stringify(S)), M:M(), ab:aberration(), diff:diff(), ep:exitPupil(), q:eyeRelief(), L:tubeLength() }; }, _traceT:traceT, _traceR:traceR, _traceM:traceM, _xd:xDiag, _V:V };
+})();
+</script>
+</main>
+</body>
+</html>

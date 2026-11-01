@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Oscillations: Resonance of a Spring Driven Vertically</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, refraction, refraction, Snell's law, apparent depth, image, Fermat's principle, total internal reflection, critical angle, Snell's window, pool, distortion, lesson, scientific">
+<meta name="description" content="Interactive simulation of resonance: a mass on a spring whose stand is driven at a chosen frequency; transient, steady amplitude, resonance curve and phase lag.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="drRoot" class="dr_root" role="region" aria-label="Resonance: a spring and mass driven by an oscillating stand">
+<div class="dr_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="dr_a11ybtn" id="drBtnHC" onclick="drSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="dr_a11ybtn" id="drBtnLM" onclick="drSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="dr_a11ybtn" id="drBtnCB" onclick="drSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="dr_a11ybtn dr_a11yon" id="drBtnNR" onclick="drSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="dr_header"><p class="dr_h1">Resonance: Shaking a Spring Vertically</p><p class="dr_sub">a motor moves the stand back and forth; find the frequency where the mass responds most</p></div>
+<div class="dr_diag"><div class="dr_dlabel"><b>THE APPARATUS</b><span id="drHint"></span></div><canvas id="drApp" width="780" height="330" role="img" aria-label="A motor and crank move the stand; the spring connects the stand to the mass. The stand's motion is small; the mass's can be large." aria-describedby="drStatus"></canvas></div>
+<div class="dr_bbar"><button type="button" class="dr_btn dr_btnon" id="drPlay">&#10073;&#10073; Pause</button><button type="button" class="dr_btn" id="drStep">Step &#8539; s &#9656;</button><button type="button" class="dr_btn" id="drReset">Start from rest</button><label>speed <input type="range" id="drSpd" min="0.1" max="5" step="0.05" value="1" style="width:110px"> <span id="drSpdV">1.00&times;</span></label></div>
+<div class="dr_diag"><div class="dr_dlabel"><b>AGAINST TIME: THE STAND AND THE MASS</b><span>the last 12 s</span></div><canvas id="drTime" width="780" height="210" role="img" aria-label="The displacement of the stand and of the mass against time, over the last 12 seconds."></canvas></div>
+<div class="dr_status" id="drStatus" role="status" aria-live="polite"></div>
+<div class="dr_bbar"><button type="button" class="dr_btn dr_rec" id="drRec">&#8853; Record the amplitude</button><button type="button" class="dr_btn" id="drUndo">Delete the last point</button><button type="button" class="dr_btn" id="drClr">Clear the points</button><label><input type="checkbox" id="drTheo"> show the theory curves</label></div>
+<div class="dr_row2">
+<div class="dr_diag"><div class="dr_dlabel"><b>RESONANCE CURVE</b><span>steady amplitude against frequency</span></div><canvas id="drRes" width="380" height="270" role="img" aria-label="The steady amplitude of the mass against the drive frequency: your recorded points, and optionally the theory curve."></canvas></div>
+<div class="dr_diag"><div class="dr_dlabel"><b>HOW FAR THE MASS LAGS BEHIND</b><span>phase lag against frequency</span></div><canvas id="drPh" width="380" height="270" role="img" aria-label="How far the mass's motion lags behind the stand's, in degrees, against the drive frequency."></canvas></div>
+</div>
+<div class="dr_panels"><div class="dr_panel"><div class="dr_ptitle">The drive</div><div class="dr_pbody" id="drCtlD"></div></div>
+<div class="dr_panel"><div class="dr_ptitle">The spring and the mass</div><div class="dr_pbody" id="drCtlS"></div></div></div>
+<div class="dr_panels"><div class="dr_panel"><div class="dr_ptitle">Readout</div><div class="dr_pbody" id="drRead"></div></div>
+<div class="dr_panel"><div class="dr_ptitle">Recorded points</div><div class="dr_pbody"><div class="dr_tblwrap"><table class="dr_tbl"><thead><tr><th>#</th><th>f (Hz)</th><th>amplitude (cm)</th><th>lag (&deg;)</th></tr></thead><tbody id="drTbl"></tbody></table></div></div></div></div>
+<div class="dr_eqs" id="drEq"></div>
+<div id="drNar" class="dr_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="dr_descwrap">
+<button type="button" class="dr_descbtn" id="drDescBtn" aria-expanded="false" aria-controls="drDesc" onclick="drSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="dr_desc" id="drDesc" role="region" aria-labelledby="drDescBtn" style="display:none">
+<p>A mass `m` hangs on a spring of stiffness `k`, with some damping. Left alone it oscillates at its natural frequency</p>
+<p class="dr_eq">`f_0 = 1/(2 pi) sqrt(k/m)`,</p>
+<p>and the oscillation dies away. Here a motor moves the stand (the top of the spring) back and forth with a small amplitude `A_d` at a frequency `f` you choose. The spring pulls the mass according to the stretch between the stand and the mass: `m ddot x = -k (x - x_"stand") - b dot x`, with the damping `beta = b // 2m`.</p>
+<p>At first the motion is irregular: the mass's own oscillation (dying away) mixes with the motion the drive forces on it. This is the transient. After a while only the forced motion is left, at the drive's frequency, with a steady amplitude</p>
+<p class="dr_eq">`X = (omega_0^2 A_d) / sqrt((omega_0^2 - omega^2)^2 + (2 beta omega)^2)`.</p>
+<p>Driven slowly, the mass simply follows the stand (`X ~~ A_d`). Driven fast, it hardly moves. Driven near its natural frequency, each push arrives at the right moment and adds to the motion: the amplitude grows until the damping removes as much energy as the drive supplies. This is resonance; the smaller the damping, the taller and narrower the peak. The mass also lags behind the stand: by almost nothing at low frequency, a quarter cycle (90&deg;) at resonance, and almost half a cycle (180&deg;) at high frequency.</p>
+<p>Record the steady amplitude at many frequencies to build the resonance curve; then compare with the theory curves. For the vertical spring, gravity only shifts the equilibrium position (by mg/k): it changes neither the natural frequency nor the resonance.</p>
+</div></div>
+</div><!-- #drRoot -->
+<style>
+#drRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#drRoot * { box-sizing:border-box; }
+#drRoot.dr_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#drRoot.dr_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#drRoot .dr_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#drRoot .dr_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#drRoot .dr_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#drRoot .dr_header { text-align:center; }
+#drRoot .dr_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#drRoot .dr_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#drRoot .dr_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#drRoot .dr_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#drRoot .dr_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#drRoot .dr_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#drRoot .dr_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#drRoot .dr_dlabel b { color:var(--c-accent); }
+#drRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#drRoot .dr_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#drRoot .dr_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#drRoot .dr_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#drRoot .dr_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#drRoot .dr_btn:hover { border-color:var(--c-accent); }
+#drRoot .dr_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#drRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#drRoot .dr_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#drRoot .dr_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#drRoot .dr_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#drRoot .dr_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#drRoot .dr_ctrl { display:flex; flex-direction:column; gap:3px; }
+#drRoot .dr_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#drRoot .dr_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#drRoot .dr_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#drRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#drRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#drRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#drRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#drRoot .dr_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#drRoot .dr_rkey { color:var(--c-dim); }
+#drRoot .dr_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#drRoot .dr_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#drRoot .dr_eqs b { color:var(--c-val); }
+#drRoot .dr_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#drRoot .dr_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#drRoot .dr_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#drRoot .dr_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#drRoot .dr_desc p { margin:0 0 9px; }
+#drRoot .dr_eq { text-align:center; font-size:1rem; }
+#drRoot button:focus-visible, #drRoot input:focus-visible, #drRoot select:focus-visible, #drRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #drRoot .dr_row2, #drRoot .dr_panels { grid-template-columns:minmax(0,1fr); } #drRoot .dr_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #drRoot input[type=range] { height:8px; } #drRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #drRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #drRoot .dr_a11ybtn { min-height:40px; } #drRoot input[type=checkbox] { width:22px; height:22px; } }
+#drRoot .dr_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; }
+#drRoot .dr_rec { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#drRoot .dr_tblwrap { max-height:220px; overflow:auto; }
+#drRoot .dr_tbl { width:100%; border-collapse:collapse; font-family:monospace; font-size:.76rem; }
+#drRoot .dr_tbl th, #drRoot .dr_tbl td { padding:3px 6px; border-bottom:1px solid var(--c-bd); text-align:right; color:var(--c-text); }
+.dr_qwrap { width:100%; max-width:860px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.dr_qwrap li { margin:0 0 12px 0; line-height:1.45; }
+</style>
+<!-- ════════ SIMULATION ════════
+The stand: x_s = A_d sin(omega t). The mass, from its equilibrium: x'' = -(k/m)(x - x_s) - 2 beta x', integrated by RK4 (steps of 2 ms).
+The steady amplitude of each drive cycle is the largest |x| in it; the lag, from the times of the stand's and the mass's highest points.
+No dollar signs or backticks in the code.
+-->
+<script>
+var drSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('drRoot'), DPR = window.devicePixelRatio || 1, VERT = true;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CA = hi('drApp'), CT = hi('drTime'), CR = hi('drRes'), CPh = hi('drPh');
+var th = { hc:false, lm:false, cb:false, nr:true };
+var P = { k:10, m:1, beta:0.1, Ad:1.0, f:0.30, fmax:1.5 };
+P.fmax = Math.max(1, Math.ceil(3*Math.sqrt(P.k/P.m)/(2*Math.PI)*2)/2); P.f = Math.round(0.6*Math.sqrt(P.k/P.m)/(2*Math.PI)*1000)/1000;   /* the range, and the start, from the natural frequency */
+var S = { t:0, th:0, th0:0, x:0, v:0, play:true, spd:1, hist:[], cyc:[], cur:null, rec:[], theo:false, changedAt:0 };
+function w0(){ return Math.sqrt(P.k/P.m); } function f0(){ return w0()/(2*Math.PI); } function wd(){ return 2*Math.PI*P.f; }
+function standAt(th){ return P.Ad*Math.sin(th); }   /* the stand follows the drive's phase th, which grows at omega: a change of frequency is smooth */
+function stand(){ return standAt(S.th); }
+function Xth(f){ var w = 2*Math.PI*f, a = w0()*w0(); return a*P.Ad/Math.sqrt(Math.pow(a - w*w, 2) + Math.pow(2*P.beta*w, 2)); }
+function lagTh(f){ var w = 2*Math.PI*f; return Math.atan2(2*P.beta*w, w0()*w0() - w*w)*180/Math.PI; }
+function pal(){ var p = { bg:'#f4f7fa', text:'#1d2a36', dim:'#5b6876', grid:'rgba(0,0,0,0.1)', mass:'#c0392b', stand:'#5b6876', spring:'#1f5fd6', theo:'#1f5fd6', pt:'#c2185b', ok:'#12805a', warn:'#c47f17', metal:'#9aa3ad' };
+  if (th.cb){ p.mass = '#d55e00'; p.spring = '#0072b2'; p.theo = '#0072b2'; p.pt = '#cc79a7'; p.ok = '#009e73'; p.warn = '#e69f00'; }
+  if (th.hc){ p.bg = '#000'; p.text = '#fff'; p.dim = '#ddd'; p.grid = 'rgba(255,255,255,0.25)'; p.mass = '#ff5555'; p.stand = '#ddd'; p.spring = '#55aaff'; p.theo = '#55aaff'; p.pt = '#ff66ff'; p.ok = '#00ff88'; p.warn = '#ffcc00'; p.metal = '#888'; }
+  return p; }
+function Tx(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function f2(v, k){ return (+v).toFixed(k === undefined ? 2 : k); }
+function narrate(m){ if (!th.nr) return; el('drNar').textContent = m; }
+function rrow(k, v){ return '<div class="dr_rrow"><span class="dr_rkey">' + k + '</span><span class="dr_rval">' + v + '</span></div>'; }
+/* ══════════ the motion ══════════ */
+function acc(th, x, v){ return -(P.k/P.m)*(x - standAt(th)) - 2*P.beta*v; }
+function advance(T){ var h = 0.002;
+  var w = wd(); while (T > 1e-12){ var dt = Math.min(h, T), th = S.th, x = S.x, v = S.v;
+    var k1x = v, k1v = acc(th, x, v), k2x = v + 0.5*dt*k1v, k2v = acc(th + w*dt/2, x + 0.5*dt*k1x, v + 0.5*dt*k1v), k3x = v + 0.5*dt*k2v, k3v = acc(th + w*dt/2, x + 0.5*dt*k2x, v + 0.5*dt*k2v), k4x = v + dt*k3v, k4v = acc(th + w*dt, x + dt*k3x, v + dt*k3v);
+    S.x = x + dt*(k1x + 2*k2x + 2*k3x + k4x)/6; S.v = v + dt*(k1v + 2*k2v + 2*k3v + k4v)/6; S.t += dt; S.th = th + w*dt; T -= dt; track(); } }
+function track(){ /* each drive cycle: the largest |x|, and when the mass was highest; the stand is highest a quarter cycle into each cycle */
+  var n = Math.floor((S.th - S.th0)/(2*Math.PI));
+  if (!S.cur || S.cur.n !== n){ if (S.cur && S.cur.n >= 0) S.cyc.push({ A:S.cur.max, lag:S.cur.lag, t:S.t }); if (S.cyc.length > 12) S.cyc.shift(); S.cur = { n:n, max:0, lag:null }; }
+  if (S.x > S.cur.max){ S.cur.max = S.x; var d = ((S.th - Math.PI/2)/(2*Math.PI)) % 1; if (d < 0) d += 1; S.cur.lag = d*360; }   /* the stand is highest at th = pi/2: how far past that the mass peaks */
+  var last = S.hist.length ? S.hist[S.hist.length - 1][0] : -1; if (S.t - last >= 0.02){ S.hist.push([S.t, S.x, stand()]); while (S.hist.length && S.hist[0][0] < S.t - 12) S.hist.shift(); } }
+function steady(){ /* three cycles in a row with the same amplitude (within 1.5 %) */ var c = S.cyc, n = c.length; if (n < 3) return null; var a = c[n - 1].A, b = c[n - 2].A, d = c[n - 3].A, m = Math.max(a, b, d);
+  if (m < 1e-6 || S.t - S.changedAt < 5/P.beta) return null;   /* the transient fades as exp(-beta t): after 5/beta, under 1 % is left */
+  if ((m - Math.min(a, b, d))/m < 0.005) return { A:(a + b + d)/3, lag:c[n - 1].lag }; return null; }
+function changed(){ S.changedAt = S.t; S.th0 = S.th; S.cyc = []; S.cur = null; }
+/* ══════════ drawing ══════════ */
+var XS = 4;   /* px per cm */
+function spring(g, x1, y1, x2, y2, col, coils){ var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L, nx = -uy, ny = ux, n = coils*2, end = 12;
+  g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 + ux*end, y1 + uy*end);
+  for (var i=1; i<n; i++){ var f = end + (L - 2*end)*i/n, s = (i % 2 ? 1 : -1)*10; g.lineTo(x1 + ux*f + nx*s, y1 + uy*f + ny*s); } g.lineTo(x2 - ux*end, y2 - uy*end); g.lineTo(x2, y2); g.stroke(); }
+function motor(g, cx, cy, p){ /* a wheel with a crank pin turning at the drive frequency */ var a = S.th;
+  g.fillStyle = th.hc ? '#333' : '#d7dbe0'; g.beginPath(); g.arc(cx, cy, 24, 0, 2*Math.PI); g.fill(); g.strokeStyle = p.stand; g.lineWidth = 2; g.stroke();
+  for (var i=0; i<4; i++){ var b = a + i*Math.PI/2; seg(g, cx, cy, cx + 20*Math.cos(b), cy + 20*Math.sin(b), p.stand, 1); }
+  g.fillStyle = p.text; g.beginPath(); g.arc(cx, cy, 4, 0, 2*Math.PI); g.fill(); return a; }
+function drawApp(){
+  var g = CA.g, W = CA.W, H = CA.H, p = pal(), xs = stand(S.t);
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  if (!VERT){
+    var y = 120, sx0 = 170, mx0 = 470, sxp = sx0 + xs*XS, mxp = mx0 + S.x*XS;
+    g.fillStyle = th.hc ? '#444' : '#b8a888'; g.fillRect(0, y + 40, W, 14);
+    var a = motor(g, 62, y, p), pin = { x:62 + 16*Math.sin(a), y:y - 16*Math.cos(a) }; seg(g, pin.x, pin.y, sxp - 6, y, p.stand, 3); g.fillStyle = p.text; g.beginPath(); g.arc(pin.x, pin.y, 4, 0, 2*Math.PI); g.fill();
+    Tx(g, 'motor', 62, y + 56, p.dim, 'center', '11px Arial');
+    g.fillStyle = th.hc ? '#777' : '#4d545b'; g.fillRect(sxp - 6, y - 50, 14, 90); g.fillRect(sxp - 16, y + 34, 34, 6); Tx(g, 'stand', sxp, y - 62, p.text, 'center', 'bold 11px Arial');
+    seg(g, sx0, y + 58, sx0, y + 66, p.dim, 1); Tx(g, '\u00B1' + f2(P.Ad, 1) + ' cm', sx0, y + 74, p.dim, 'center', '10px Arial');
+    spring(g, sxp + 8, y, mxp - 30, y, p.spring, 9);
+    var ms = 34 + 14*Math.sqrt(P.m); g.fillStyle = p.mass; g.fillRect(mxp - 30, y - ms/2, ms, ms); Tx(g, f2(P.m, 1) + ' kg', mxp - 30 + ms/2, y, '#fff', 'center', 'bold 11px Arial');
+    seg(g, mx0, y - 60, mx0, y + 40, p.dim, 1, [3, 3]); Tx(g, 'equilibrium', mx0, y - 68, p.dim, 'center', '10px Arial');
+    for (var c=-30; c<=30; c+=10){ var xx = mx0 + c*XS; seg(g, xx, y + 54, xx, y + 62, p.dim, 1); Tx(g, String(c), xx, y + 72, p.dim, 'center', '10px Arial'); } Tx(g, 'cm', mx0 + 30*XS + 16, y + 72, p.dim, 'left', '10px Arial');
+  } else {
+    var cx = 200, yb = 70, sy = yb + xs*XS*(-1), my0 = 230, myp = my0 - S.x*XS;   /* up is positive */
+    var a2 = motor(g, cx - 120, 40, p), pin2 = { x:cx - 120 + 16*Math.cos(a2), y:40 - 16*Math.sin(a2) }; seg(g, pin2.x, pin2.y, cx - 60, sy, p.stand, 3); g.fillStyle = p.text; g.beginPath(); g.arc(pin2.x, pin2.y, 4, 0, 2*Math.PI); g.fill();
+    Tx(g, 'motor', cx - 120, 76, p.dim, 'center', '11px Arial');
+    g.fillStyle = th.hc ? '#777' : '#4d545b'; g.fillRect(cx - 60, sy - 7, 120, 14); Tx(g, 'stand (moves \u00B1' + f2(P.Ad, 1) + ' cm)', cx + 66, sy, p.text, 'left', 'bold 11px Arial');
+    spring(g, cx, sy + 7, cx, myp - 22, p.spring, 9);
+    var ms2 = 34 + 14*Math.sqrt(P.m); g.fillStyle = p.mass; g.fillRect(cx - ms2/2, myp - 22, ms2, ms2); Tx(g, f2(P.m, 1) + ' kg', cx, myp - 22 + ms2/2, '#fff', 'center', 'bold 11px Arial');
+    seg(g, cx - 70, my0, cx + 70, my0, p.dim, 1, [3, 3]); Tx(g, 'equilibrium', cx - 74, my0, p.dim, 'right', '10px Arial');
+    for (var c2=-30; c2<=30; c2+=10){ var yy = my0 - c2*XS; seg(g, cx + 90, yy, cx + 98, yy, p.dim, 1); Tx(g, String(c2), cx + 104, yy, p.dim, 'left', '10px Arial'); } Tx(g, 'cm', cx + 104, my0 - 34*XS, p.dim, 'left', '10px Arial');
+    /* the numbers, beside it */
+    var st = steady(), X0 = 420; Tx(g, 'drive: ' + f2(P.f, 3) + ' Hz', X0, 60, p.text, 'left', 'bold 15px Arial'); Tx(g, 'natural: ' + f2(f0(), 3) + ' Hz', X0, 86, p.dim, 'left', '14px Arial');
+    Tx(g, 'f / f\u2080 = ' + f2(P.f/f0(), 2), X0, 112, p.dim, 'left', '14px Arial');
+    Tx(g, st ? 'steady amplitude ' + f2(st.A, 1) + ' cm' : 'settling\u2026', X0, 150, st ? p.ok : p.warn, 'left', 'bold 15px Arial'); if (st) Tx(g, '= ' + f2(st.A/P.Ad, 1) + ' \u00D7 the stand\u2019s', X0, 174, p.ok, 'left', '13px Arial');
+  }
+  el('drHint').textContent = 'the stand moves \u00B1' + f2(P.Ad, 1) + ' cm at ' + f2(P.f, 3) + ' Hz';
+}
+function drawTime(){
+  var g = CT.g, W = CT.W, H = CT.H, p = pal(), X0 = 50, X1 = W - 12, ym = H/2, top = Math.max(5, P.Ad*1.5, Math.max.apply(null, S.hist.map(function(q){ return Math.abs(q[1]); }).concat([1]))*1.1), ky = (H/2 - 14)/top;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); seg(g, X0, ym, X1, ym, p.grid, 1);
+  function X(t){ return X1 - (S.t - t)/12*(X1 - X0); }
+  for (var s=Math.ceil(S.t - 12); s<=S.t; s++){ seg(g, X(s), 8, X(s), H - 8, p.grid, 1); }
+  [[2, p.stand, 1.5], [1, p.mass, 2.4]].forEach(function(q){ g.strokeStyle = q[1]; g.lineWidth = q[2]; g.beginPath(); S.hist.forEach(function(h, i){ var x = X(h[0]), y = ym - ky*h[q[0]]; if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke(); });
+  Tx(g, '+' + f2(top, 0) + ' cm', X0 - 4, 14, p.dim, 'right', '10px Arial'); Tx(g, '\u2212' + f2(top, 0) + ' cm', X0 - 4, H - 14, p.dim, 'right', '10px Arial');
+  Tx(g, 'mass', X0 + 6, 14, p.mass, 'left', 'bold 11px Arial'); Tx(g, 'stand', X0 + 50, 14, p.stand, 'left', 'bold 11px Arial'); Tx(g, 'now', X1 - 2, H - 6, p.dim, 'right', '10px Arial');
+}
+function axes(g, W, H, p, X0, X1, Y0, Y1, ymax, ylab, ystep){ seg(g, X0, Y0, X1, Y0, p.text, 1); seg(g, X0, Y0, X0, Y1, p.text, 1);
+  for (var f=0; f<=P.fmax + 1e-9; f+=P.fmax <= 1.5 ? 0.25 : 0.5){ var x = X0 + f/P.fmax*(X1 - X0); seg(g, x, Y0, x, Y1, p.grid, 1); Tx(g, f2(f, 2), x, Y0 + 11, p.dim, 'center', '10px Arial'); }
+  for (var v=0; v<=ymax + 1e-9; v+=ystep){ var y = Y0 - v/ymax*(Y0 - Y1); seg(g, X0, y, X1, y, p.grid, 1); Tx(g, f2(v, 0), X0 - 4, y, p.dim, 'right', '10px Arial'); }
+  Tx(g, 'drive frequency (Hz)', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial'); g.save(); g.translate(11, (Y0 + Y1)/2); g.rotate(-Math.PI/2); Tx(g, ylab, 0, 0, p.text, 'center', '11px Arial'); g.restore(); }
+function same(r){ return Math.abs(r.k - P.k) < 1e-9 && Math.abs(r.m - P.m) < 1e-9 && Math.abs(r.beta - P.beta) < 1e-9 && Math.abs(r.Ad - P.Ad) < 1e-9; }
+function niceMax(v){ var e = Math.pow(10, Math.floor(Math.log(v)/Math.LN10)), f = v/e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10)*e; }
+function drawRes(){
+  var g = CR.g, W = CR.W, H = CR.H, p = pal(), X0 = 40, X1 = W - 12, Y0 = H - 30, Y1 = 14, peak = Xth(f0()*Math.sqrt(Math.max(0.01, 1 - 2*Math.pow(P.beta/w0(), 2))));
+  var ymax = niceMax(Math.max(P.Ad*2, S.rec.reduce(function(a, r){ return Math.max(a, r.A); }, 0), S.theo ? peak : 0)*1.1), st = ymax/5;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); axes(g, W, H, p, X0, X1, Y0, Y1, ymax, 'amplitude of the mass (cm)', st);
+  function X(f){ return X0 + f/P.fmax*(X1 - X0); } function Y(a){ return Y0 - Math.min(a, ymax)/ymax*(Y0 - Y1); }
+  if (S.theo){ g.strokeStyle = p.theo; g.lineWidth = 2; g.setLineDash([6, 4]); g.beginPath(); for (var i=0; i<=300; i++){ var f = 0.001 + P.fmax*i/300; if (i) g.lineTo(X(f), Y(Xth(f))); else g.moveTo(X(f), Y(Xth(f))); } g.stroke(); g.setLineDash([]); }
+  seg(g, X(f0()), Y0, X(f0()), Y1, p.ok, 1, [2, 3]); Tx(g, 'f\u2080', X(f0()) + 3, Y1 + 6, p.ok, 'left', 'bold 11px Arial');
+  seg(g, X0, Y(P.Ad), X1, Y(P.Ad), p.stand, 1, [4, 4]); Tx(g, 'the stand\u2019s amplitude', X1, Y(P.Ad) - 7, p.stand, 'right', '9px Arial');
+  S.rec.forEach(function(r){ var ok = same(r); g.fillStyle = ok ? p.pt : 'rgba(150,150,150,0.5)'; g.beginPath(); g.arc(X(r.f), Y(r.A), ok ? 4.5 : 3, 0, 2*Math.PI); g.fill(); });
+  seg(g, X(P.f), Y0, X(P.f), Y1, p.mass, 1.5); var s = steady(); if (s){ g.strokeStyle = p.mass; g.lineWidth = 2; g.beginPath(); g.arc(X(P.f), Y(s.A), 6, 0, 2*Math.PI); g.stroke(); }
+}
+function drawPh(){
+  var g = CPh.g, W = CPh.W, H = CPh.H, p = pal(), X0 = 40, X1 = W - 12, Y0 = H - 30, Y1 = 14;
+  g.fillStyle = th.hc ? '#000' : '#fff'; g.fillRect(0, 0, W, H); axes(g, W, H, p, X0, X1, Y0, Y1, 180, 'the mass lags the stand by (\u00B0)', 45);
+  function X(f){ return X0 + f/P.fmax*(X1 - X0); } function Y(a){ return Y0 - a/180*(Y0 - Y1); }
+  if (S.theo){ g.strokeStyle = p.theo; g.lineWidth = 2; g.setLineDash([6, 4]); g.beginPath(); for (var i=0; i<=300; i++){ var f = 0.001 + P.fmax*i/300; if (i) g.lineTo(X(f), Y(lagTh(f))); else g.moveTo(X(f), Y(lagTh(f))); } g.stroke(); g.setLineDash([]); }
+  seg(g, X(f0()), Y0, X(f0()), Y1, p.ok, 1, [2, 3]); seg(g, X0, Y(90), X1, Y(90), p.grid, 1.5);
+  S.rec.forEach(function(r){ if (r.lag === null) return; var ok = same(r); g.fillStyle = ok ? p.pt : 'rgba(150,150,150,0.5)'; g.beginPath(); g.arc(X(r.f), Y(r.lag), ok ? 4.5 : 3, 0, 2*Math.PI); g.fill(); });
+  seg(g, X(P.f), Y0, X(P.f), Y1, p.mass, 1.5); var s = steady(); if (s && s.lag !== null){ g.strokeStyle = p.mass; g.lineWidth = 2; g.beginPath(); g.arc(X(P.f), Y(s.lag), 6, 0, 2*Math.PI); g.stroke(); }
+}
+function info(){ var s = steady(), p = pal(), Q = w0()/(2*P.beta);
+  el('drStatus').innerHTML = s ? '<span style="color:' + p.ok + '">\u25CF Steady: the mass swings with amplitude <b>' + f2(s.A, 2) + ' cm</b>, ' + f2(s.A/P.Ad, 2) + ' times the stand\u2019s, lagging ' + f2(s.lag, 0) + '\u00B0 behind it. Record it.</span>' : '<span style="color:' + p.warn + '">\u25CF Settling: the mass\u2019s own oscillation is still dying away (the transient). Wait for a steady amplitude' + (S.t - S.changedAt < 5/P.beta ? ' (at least ' + f2(5/P.beta - (S.t - S.changedAt), 0) + ' s more: the transient lasts about 5/\u03B2)' : '') + '.</span>';
+  el('drRead').innerHTML = rrow('natural frequency f\u2080 = (1/2\u03C0)\u221A(k/m)', f2(f0(), 3) + ' Hz (period ' + f2(1/f0(), 2) + ' s)') + rrow('drive frequency f', f2(P.f, 3) + ' Hz: f/f\u2080 = ' + f2(P.f/f0(), 3)) + rrow('damping \u03B2', f2(P.beta, 3) + ' s\u207B\u00B9 (Q = \u03C9\u2080/2\u03B2 = ' + f2(Q, 1) + ')')
+    + rrow('time since the last change', f2(S.t - S.changedAt, 1) + ' s (the transient lasts several times 1/\u03B2 = ' + f2(1/P.beta, 1) + ' s)') + rrow('steady amplitude', s ? f2(s.A, 2) + ' cm' : 'not yet steady') + (S.theo ? rrow('theory: amplitude, lag', f2(Xth(P.f), 2) + ' cm, ' + f2(lagTh(P.f), 0) + '\u00B0') : '');
+  el('drEq').innerHTML = 'Natural frequency <b>f\u2080 = (1/2\u03C0)\u221A(k/m) = ' + f2(f0(), 3) + ' Hz</b>. Steady amplitude <b>X = \u03C9\u2080\u00B2A<sub>d</sub> / \u221A((\u03C9\u2080\u00B2 \u2212 \u03C9\u00B2)\u00B2 + (2\u03B2\u03C9)\u00B2)</b>: largest near f\u2080, about Q = ' + f2(Q, 1) + ' times the stand\u2019s amplitude.';
+}
+function table(){ el('drTbl').innerHTML = S.rec.map(function(r, i){ return '<tr' + (same(r) ? '' : ' style="opacity:.5"') + '><td>' + (i + 1) + '</td><td>' + f2(r.f, 3) + '</td><td>' + f2(r.A, 2) + '</td><td>' + (r.lag === null ? '\u2014' : f2(r.lag, 0)) + '</td></tr>'; }).join('') || '<tr><td colspan="4">none yet</td></tr>'; }
+function draw(){ drawApp(); drawTime(); drawRes(); drawPh(); info(); }
+/* ══════════ controls ══════════ */
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function row(id, label, min, max, step, val, txt){ return '<div class="dr_ctrl"><div class="dr_ctrlhdr"><label class="dr_ctrlname" for="' + id + '">' + label + '</label><span class="dr_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function setF(v){ P.f = Math.max(0.02, Math.min(P.fmax, Math.round(v*1000)/1000)); el('drF').value = P.f; el('drFv').textContent = f2(P.f, 3) + ' Hz'; changed(); draw(); later('f'); }
+function build(){
+  el('drCtlD').innerHTML = row('drF', 'drive frequency f', 0.02, P.fmax, 0.005, P.f, f2(P.f, 3) + ' Hz') + '<div class="dr_ctrl"><span class="dr_ctrlname">fine tuning</span><div><button type="button" class="dr_btn" id="drFm">\u2212 0.005 Hz</button> <button type="button" class="dr_btn" id="drFp">+ 0.005 Hz</button></div></div>'
+    + row('drAd', 'amplitude of the stand A<sub>d</sub>', 0.2, 3, 0.1, P.Ad, f2(P.Ad, 1) + ' cm');
+  el('drCtlS').innerHTML = row('drK', 'spring stiffness k', 2, 40, 0.5, P.k, f2(P.k, 1) + ' N/m') + row('drM', 'mass m', 0.2, 5, 0.05, P.m, f2(P.m, 2) + ' kg') + row('drB', 'damping \u03B2', 0.02, 1.5, 0.01, P.beta, f2(P.beta, 2) + ' s\u207B\u00B9');
+  on('drF', 'input', function(){ setF(+this.value); }); on('drFm', 'click', function(){ setF(P.f - 0.005); }); on('drFp', 'click', function(){ setF(P.f + 0.005); });
+  [['drAd', 'Ad', 1, ' cm'], ['drK', 'k', 1, ' N/m'], ['drM', 'm', 2, ' kg'], ['drB', 'beta', 2, ' s\u207B\u00B9']].forEach(function(q){ on(q[0], 'input', function(){ P[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(P[q[1]], q[2]) + q[3]; changed(); table(); draw(); later(q[1]); }); });
+}
+var lt = null; function later(k){ clearTimeout(lt); lt = setTimeout(function(){ var r = P.f/f0();
+  narrate((k === 'f' ? 'Drive frequency ' + f2(P.f, 3) + ' Hz, ' + f2(r, 2) + ' times the natural frequency. ' : 'The natural frequency is now ' + f2(f0(), 3) + ' hertz. ') + (r < 0.7 ? 'Well below resonance: once settled, the mass will follow the stand, moving with it.' : r > 1.4 ? 'Well above resonance: the stand shakes too fast for the mass, which will hardly move, opposite to the stand.' : Math.abs(r - 1) < 0.05 ? 'Right at resonance: each push arrives in step with the motion, and the amplitude will build up.' : 'Near resonance: watch the amplitude build up.') + ' Wait for the motion to become steady.'); }, 500); }
+function record(){ var s = steady(); if (!s){ narrate('Not steady yet: wait until the amplitude stops changing, then record.'); return; }
+  S.rec.push({ f:P.f, A:s.A, lag:s.lag, k:P.k, m:P.m, beta:P.beta, Ad:P.Ad }); table(); draw();
+  narrate('Recorded: at ' + f2(P.f, 3) + ' hertz, a steady amplitude of ' + f2(s.A, 2) + ' cm, lagging ' + f2(s.lag, 0) + ' degrees. ' + S.rec.length + ' point' + (S.rec.length > 1 ? 's' : '') + ' so far.'); }
+on('drRec', 'click', record); on('drUndo', 'click', function(){ S.rec.pop(); table(); draw(); }); on('drClr', 'click', function(){ S.rec = []; table(); draw(); narrate('Points cleared.'); });
+on('drTheo', 'change', function(){ S.theo = this.checked; draw(); narrate(S.theo ? 'The dashed curves are the theory for these settings. The peak is near the natural frequency, about ' + f2(w0()/(2*P.beta), 1) + ' times the stand\u2019s amplitude; the lag passes 90 degrees there.' : 'Theory curves hidden.'); });
+on('drPlay', 'click', function(){ S.play = !S.play; el('drPlay').innerHTML = S.play ? '\u2759\u2759 Pause' : '\u25B6 Play'; });
+on('drStep', 'click', function(){ S.play = false; el('drPlay').innerHTML = '\u25B6 Play'; advance(0.125); draw(); narrate('t = ' + f2(S.t, 2) + ' s: the stand is at ' + f2(stand(), 2) + ' cm, the mass at ' + f2(S.x, 2) + ' cm.'); });
+on('drReset', 'click', function(){ S.x = 0; S.v = 0; S.hist = []; changed(); draw(); narrate('The mass starts from rest again: watch the transient.'); });
+on('drSpd', 'input', function(){ S.spd = +this.value; el('drSpdV').textContent = f2(S.spd, 2) + '\u00D7'; });
+var last = 0; function loop(t){ var dt = Math.min(0.05, (t - (last || t))/1000); last = t; if (S.play) advance(dt*S.spd); draw(); requestAnimationFrame(loop); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('dr_hc', th.hc); ROOT.classList.toggle('dr_lm', th.lm);
+  [['hc', 'drBtnHC'], ['lm', 'drBtnLM'], ['cb', 'drBtnCB'], ['nr', 'drBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('dr_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('drBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('drNar').style.display = th.nr ? '' : 'none'; draw(); }
+function toggleDesc(){ var b = el('drDescBtn'), d = el('drDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+build(); table(); draw(); narrate('Ready. The natural frequency is ' + f2(f0(), 3) + ' hertz; the stand is driven at ' + f2(P.f, 3) + ' hertz. Change the drive frequency, wait for a steady motion, and record the amplitude. Where is it largest?'); requestAnimationFrame(loop);
+return { theme:theme, toggleDesc:toggleDesc, setF:setF, record:record, _P:P, _adv:function(T){ advance(T); draw(); }, _steady:steady, _Xth:Xth, _lag:lagTh, _f0:f0, _S:S };
+})();
+</script>
+<div class="dr_qwrap">
+<hr>
+<ol type="a">
+<p>The spring has `k = 10\ "N/m"`, the mass is `m = 1\ "kg"`, and the damping is `beta = 0.1\ "s"^-1`.</p>
+<li>Calculate the natural frequency of the spring and mass.<br />`f_0 =\ ` _____ ` "Hz"`</li>
+<li>Set the drive frequency to about half of `f_0`. Wait until the motion is steady. How does the mass's amplitude compare with the stand's? Do they move together or opposite?</li>
+<li>Now set the drive frequency to about twice `f_0`. Describe the steady motion of the mass compared with the stand's.</li>
+<li>Record the steady amplitude for at least 10 drive frequencies, more of them near the peak. At which frequency is the amplitude largest?<br />`f_"peak" =\ ` _____ ` "Hz"`</li>
+<li>How does that frequency compare with `f_0`? What is the largest amplitude, and how many times larger is it than the stand's?</li>
+<li>Tick "show the theory curves". Then double the damping, and describe how the peak changes (its height and its width).</li>
+<li>At the peak, by how many degrees does the mass lag behind the stand?</li>
+</ol>
+</div>
+</main>
+</body>
+</html>

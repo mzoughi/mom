@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Measurement: Reading a Graduated Cylinder</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, measurement, graduated cylinder, meniscus, reading a scale, uncertainty, lesson, scientific">
+<meta name="description" content="Interactive graduated cylinder: move a pointer to the bottom of the meniscus and read the liquid level, with a magnifier and accessibility options.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="gcRoot" class="gc_root gc_m0" role="region" aria-label="Graduated cylinder reading simulator: move the pointer line to the bottom of the meniscus and read the liquid level from the scale">
+<div class="gc_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="gc_a11ybtn" id="gcBtnHC" onclick="gcSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="gc_a11ybtn" id="gcBtnLM" onclick="gcSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="gc_a11ybtn" id="gcBtnCB" onclick="gcSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="gc_a11ybtn gc_a11yon" id="gcBtnNR" onclick="gcSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="gc_header"><p class="gc_h1">Reading a Graduated Cylinder</p><p class="gc_sub">line the pointer up with the bottom of the meniscus &middot; then read the scale</p></div>
+<div class="gc_diag"><div class="gc_dlabel"><b>THE CYLINDER</b><span id="gcHint"></span></div>
+<canvas id="gcCv" width="780" height="470" tabindex="0" role="img" aria-label="A graduated cylinder partly filled with liquid, with a scale in milliliters, a red pointer line and a purple ring that moves it, and a magnified view around the pointer. Drag the ring or the magnified view, or use the arrow keys, to move the pointer." aria-describedby="gcStatus"></canvas></div>
+<div class="gc_status" id="gcStatus"></div>
+<div class="gc_bbar">
+<div class="gc_ctrl"><div class="gc_ctrlhdr"><label class="gc_ctrlname" for="gcSl">pointer level</label><span class="gc_sval" id="gcSlv">15.0 ml</span></div>
+<input type="range" id="gcSl" min="0" max="30" step="0.1" value="15" aria-valuetext="15.0 milliliters"></div>
+<div class="gc_brow">
+<button type="button" class="gc_btn" id="gcDn1" aria-label="Lower the pointer by 1 milliliter">&minus;1</button>
+<button type="button" class="gc_btn" id="gcDn" aria-label="Lower the pointer by 0.1 milliliter">&minus;0.1</button>
+<button type="button" class="gc_btn" id="gcUp" aria-label="Raise the pointer by 0.1 milliliter">+0.1</button>
+<button type="button" class="gc_btn" id="gcUp1" aria-label="Raise the pointer by 1 milliliter">+1</button>
+</div>
+</div>
+<div class="gc_bbar">
+<label><input type="checkbox" id="gcMag" checked> magnifier</label>
+<label><input type="checkbox" id="gcNum" checked> number at the ring</label>
+<button type="button" class="gc_btn" id="gcChk">Where is the pointer?</button>
+<button type="button" class="gc_btn" id="gcDsc">Describe</button>
+<button type="button" class="gc_btn gc_kick gc_gh" id="gcNew">New cylinder</button>
+<button type="button" class="gc_btn gc_gh" id="gcRev">Reveal the level</button>
+</div>
+<div class="gc_read" id="gcRead" aria-label="Readout"></div>
+<div class="gc_eqs">Read at eye level. For a liquid that wets the glass, such as water, read the level at the <b>bottom of the curved surface</b> (the meniscus). Estimate between the smallest marks.</div>
+<div id="gcNar" class="gc_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="gc_descwrap">
+<button type="button" class="gc_descbtn" id="gcDescBtn" aria-expanded="false" aria-controls="gcDesc" onclick="gcSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="gc_desc" id="gcDesc" role="region" aria-labelledby="gcDescBtn" style="display:none">
+<p>A graduated cylinder is drawn upright, partly filled with a liquid. Its scale is in milliliters (ml), from 0 at the bottom to 30 at the top, with numbers at the larger marks. The surface of the liquid is not flat: it curves down in the middle, forming a <b>meniscus</b>.</p>
+<p>A red pointer line runs across the cylinder. Move it with the purple ring beside the cylinder, the slider, the buttons, or the arrow keys when the drawing has the focus (up and down: 0.1 ml; Page Up and Page Down: 1 ml). On a touch screen, drag the ring, or drag inside the magnified view for fine steps. The magnified view, on the right, shows the scale and the meniscus around the pointer enlarged.</p>
+<p>Line the pointer up with the bottom of the meniscus, then read the liquid level from the scale, estimating between the marks. The button &ldquo;Where is the pointer?&rdquo; tells you whether the pointer is above, below, or at the bottom of the meniscus, for those who cannot see the drawing.</p>
+</div></div>
+</div><!-- #gcRoot -->
+<style>
+#gcRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#gcRoot.gc_m1 { max-width:440px; padding:10px 8px 14px; gap:8px; }
+#gcRoot * { box-sizing:border-box; }
+#gcRoot.gc_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#gcRoot.gc_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#gcRoot .gc_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#gcRoot .gc_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#gcRoot .gc_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#gcRoot .gc_header { text-align:center; }
+#gcRoot .gc_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#gcRoot .gc_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#gcRoot .gc_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#gcRoot .gc_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#gcRoot .gc_dlabel b { color:var(--c-accent); }
+#gcRoot canvas { display:block; width:100%; height:auto; touch-action:none; cursor:ns-resize; }
+#gcRoot .gc_bbar { display:flex; flex-wrap:wrap; gap:8px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#gcRoot .gc_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#gcRoot .gc_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#gcRoot .gc_btn:hover { border-color:var(--c-accent); }
+#gcRoot .gc_kick { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#gcRoot .gc_ctrl { display:flex; flex-direction:column; gap:3px; flex:1 1 260px; min-width:0; }
+#gcRoot .gc_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#gcRoot .gc_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#gcRoot .gc_sval { font-family:monospace; font-size:.8rem; color:var(--c-val); white-space:nowrap; }
+#gcRoot .gc_brow { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+#gcRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); margin:8px 0; }
+#gcRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#gcRoot input[type=range]::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#gcRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#gcRoot .gc_read { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:6px 10px; background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; padding:8px 12px; }
+#gcRoot .gc_flabel { font-family:monospace; font-size:.62rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#gcRoot .gc_fvalue { font-family:monospace; font-size:.9rem; color:var(--c-val); font-variant-numeric:tabular-nums; }
+#gcRoot .gc_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-size:.8rem; color:var(--c-dim); line-height:1.5; }
+#gcRoot .gc_eqs b { color:var(--c-val); }
+#gcRoot .gc_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#gcRoot .gc_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#gcRoot .gc_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#gcRoot .gc_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#gcRoot .gc_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#gcRoot .gc_desc p { margin:0 0 9px; }
+#gcRoot .gc_hide { display:none !important; }
+#gcRoot button:focus-visible, #gcRoot input:focus-visible, #gcRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+#gcRoot.gc_m1 .gc_btn, #gcRoot.gc_m1 .gc_a11ybtn { min-height:44px; font-size:.78rem; }
+#gcRoot.gc_m1 .gc_brow { width:100%; flex-wrap:nowrap; }
+#gcRoot.gc_m1 .gc_brow .gc_btn { flex:1 1 0; min-width:0; padding:7px 4px; font-size:.9rem; }
+#gcRoot.gc_m1 input[type=range] { height:8px; }
+#gcRoot.gc_m1 input[type=range]::-webkit-slider-thumb { width:28px; height:28px; }
+#gcRoot.gc_m1 input[type=range]::-moz-range-thumb { width:26px; height:26px; }
+#gcRoot.gc_m1 input[type=checkbox] { width:22px; height:22px; }
+#gcRoot.gc_m1 .gc_status, #gcRoot.gc_m1 .gc_narbar { font-size:.95rem; }
+@media (pointer:coarse) { #gcRoot input[type=range] { height:8px; } #gcRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #gcRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #gcRoot .gc_a11ybtn, #gcRoot .gc_btn { min-height:44px; } #gcRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+CFG holds the instructor-editable values. FILL_LEVEL is the true liquid level, the value the student must find.
+Pointer: set by the ring (drag), the slider, the buttons, the arrow keys, or by dragging inside the magnifier
+(relative, fine steps). The drawing is repeated, enlarged, inside the magnifier.
+-->
+<script>
+var gcSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var CFG = {
+  SCALE_MIN: 0,          /* bottom of the printed scale, in ml */
+  SCALE_MAX: 30,         /* top of the printed scale, in ml */
+  MAJOR_STEP: 5,         /* numbered marks every this many ml */
+  MINOR_STEP: 1,         /* smallest printed division, in ml */
+  FILL_LEVEL: Math.round((3 + Math.random()*24)*10)/10,  /* TRUE liquid level (the value the student is trying to find) */
+  PRECISION: 0.1,        /* pointer step, in ml */
+  SHOW_HALF_TICKS: 1     /* 0/1: add a shorter mark halfway between the smallest divisions */
+};
+var MOB = 0, GH = 1;
+var ROOT = el('gcRoot'), cv = el('gcCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+/* geometry */
+var G = MOB ? { x0:96, x1:176, top:44, bot:H - 34, track:232, hit:26, mag:{ x:262, w:W - 270, h:230, z:2.6, cx:150 } }
+            : { x0:150, x1:250, top:46, bot:H - 34, track:330, hit:16, mag:{ x:420, w:W - 440, h:H - 60, z:2.6, cx:212 } };
+var PXML = (G.bot - G.top)/(CFG.SCALE_MAX - CFG.SCALE_MIN);
+var U = { level:(CFG.SCALE_MIN + CFG.SCALE_MAX)/2, mag:true, num:true, rev:false };
+var th = { hc:false, lm:false, cb:false, nr:true };
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function lvY(v){ return G.bot - (v - CFG.SCALE_MIN)*PXML; }
+function yLv(y){ return CFG.SCALE_MIN + (G.bot - y)/PXML; }
+function setLevel(v, quiet){ U.level = Math.round(clamp(v, CFG.SCALE_MIN, CFG.SCALE_MAX)/CFG.PRECISION)*CFG.PRECISION; sync(); if (!quiet) later(); }
+function sync(){ var s = el('gcSl'), t = U.level.toFixed(1); if (Math.abs(+s.value - U.level) > 1e-3) s.value = t; s.setAttribute('aria-valuetext', t + ' milliliters'); el('gcSlv').textContent = t + ' ml'; info(); draw(); }
+/* ══════════ colours ══════════ */
+function pal(){ var cb = th.cb, hc = th.hc, lm = th.lm;
+  return { bg:hc ? '#000' : (lm ? '#ffffff' : '#0d1118'), glass:hc ? '#ffffff' : (lm ? '#333' : '#c9d3df'), tick:hc ? '#ffffff' : (lm ? '#000' : '#e8eef4'),
+    liq:hc ? 'rgba(80,160,255,0.45)' : (lm ? '#cfe8f5' : 'rgba(110,180,230,0.32)'), men:hc ? '#7fc4ff' : (lm ? '#5a95b8' : '#8fd0ff'),
+    ptr:hc ? '#ffff00' : (cb ? '#e69f00' : '#ff3b30'), ring:hc ? '#00ffff' : (cb ? '#56b4e9' : (lm ? '#8a2a8a' : '#d070e0')), magbd:hc ? '#ffffff' : (lm ? '#9aa3ae' : '#525c66'), txt:hc ? '#fff' : (lm ? '#1d232a' : '#e8eef4') }; }
+/* ══════════ drawing ══════════ */
+function drawCyl(p, inMag){
+  var my = lvY(CFG.FILL_LEVEL), dip = 9, cx = (G.x0 + G.x1)/2, v, y;
+  g.beginPath(); g.moveTo(G.x0, G.bot); g.lineTo(G.x0, my - dip); g.quadraticCurveTo(cx, my + dip, G.x1, my - dip); g.lineTo(G.x1, G.bot); g.closePath(); g.fillStyle = p.liq; g.fill();
+  g.beginPath(); g.moveTo(G.x0, my - dip); g.quadraticCurveTo(cx, my + dip, G.x1, my - dip); g.lineWidth = 1.4; g.strokeStyle = p.men; g.stroke();
+  g.lineWidth = 1.8; g.strokeStyle = p.glass; g.strokeRect(G.x0, G.top - 12, G.x1 - G.x0, G.bot - G.top + 12);
+  g.strokeStyle = p.tick; g.fillStyle = p.tick; g.font = (MOB ? '15px' : '14px') + ' Arial, sans-serif'; g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (v = CFG.SCALE_MIN; v <= CFG.SCALE_MAX + 1e-9; v += CFG.MINOR_STEP){ y = lvY(v); var maj = Math.round(v) % CFG.MAJOR_STEP === 0, L = maj ? 22 : 12;
+    g.beginPath(); g.moveTo(G.x1, y); g.lineTo(G.x1 - L, y); g.lineWidth = maj ? 1.6 : 1; g.stroke();
+    if (maj && Math.round(v) !== CFG.SCALE_MIN) g.fillText(String(Math.round(v)), G.x1 - L - 6, y); }
+  if (CFG.SHOW_HALF_TICKS) for (v = CFG.SCALE_MIN + CFG.MINOR_STEP/2; v < CFG.SCALE_MAX; v += CFG.MINOR_STEP){ y = lvY(v); g.beginPath(); g.moveTo(G.x1, y); g.lineTo(G.x1 - 7, y); g.lineWidth = 0.8; g.stroke(); }
+  y = lvY(U.level);
+  g.beginPath(); g.moveTo(G.x0 - 8, y); g.lineTo(inMag ? G.x1 + 30 : G.track, y); g.lineWidth = inMag ? 0.9 : 1.6; g.strokeStyle = p.ptr; g.stroke(); }
+function drawTrack(p){
+  var y = lvY(U.level), yy;
+  g.strokeStyle = p.ring; g.lineWidth = 2; g.beginPath(); g.moveTo(G.track, G.top - 12); g.lineTo(G.track, G.bot + 14); g.stroke();
+  g.lineWidth = 1; for (yy = G.top - 12; yy <= G.bot + 14; yy += 18){ g.beginPath(); g.moveTo(G.track - 5, yy); g.lineTo(G.track + 5, yy); g.stroke(); }
+  g.lineWidth = 3; g.beginPath(); g.arc(G.track, y, MOB ? 12 : 9, 0, 2*Math.PI); g.stroke();
+  if (U.num){ g.font = 'bold 15px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.lineWidth = 3; g.strokeStyle = p.bg; g.strokeText(U.level.toFixed(1), G.track, y - 18); g.fillStyle = p.ring; g.fillText(U.level.toFixed(1), G.track, y - 18); } }
+function magBox(){ var m = G.mag, cy = clamp(lvY(U.level), G.top + m.h/2 - 20, G.bot - m.h/2 + 20); return { x:m.x, y:MOB ? cy - m.h/2 : 30, w:m.w, h:MOB ? m.h : m.h, cy:MOB ? cy : 30 + m.h/2 }; }
+function drawMag(p){
+  if (!U.mag) return; var b = magBox(), m = G.mag, py = lvY(U.level);
+  g.save(); g.beginPath(); g.rect(b.x, b.y, b.w, b.h); g.clip(); g.fillStyle = p.bg; g.fillRect(b.x, b.y, b.w, b.h);
+  g.translate(b.x + b.w/2 - m.z*(MOB ? G.x1 - 20 : m.cx), b.cy - m.z*py); g.scale(m.z, m.z); drawCyl(p, true); g.restore();
+  g.strokeStyle = p.magbd; g.lineWidth = 2; g.strokeRect(b.x, b.y, b.w, b.h);
+  g.font = '12px Arial, sans-serif'; g.fillStyle = p.txt; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText('magnifier \u00D7' + m.z, b.x + 6, b.y + 5); }
+function draw(){ var p = pal(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H); drawCyl(p, false); drawTrack(p); drawMag(p);
+  el('gcHint').textContent = MOB ? 'drag the ring or the magnifier' : 'drag the ring \u00B7 or drag inside the magnifier for fine steps \u00B7 arrow keys'; }
+/* ══════════ readout and narration ══════════ */
+function relation(){ var d = U.level - CFG.FILL_LEVEL;
+  return Math.abs(d) < 0.05 ? 'lined up with the bottom of the meniscus' : Math.abs(d) < 0.25 ? (d > 0 ? 'just above' : 'just below') + ' the bottom of the meniscus' : (d > 0 ? 'above' : 'below') + ' the bottom of the meniscus'; }
+function info(){
+  var c = [['POINTER AT', U.level.toFixed(1) + ' ml']];
+  if (GH) c.push(['TRUE LEVEL', U.rev ? CFG.FILL_LEVEL.toFixed(1) + ' ml' : 'hidden']);
+  el('gcRead').innerHTML = c.map(function(q){ return '<div><div class="gc_flabel">' + q[0] + '</div><div class="gc_fvalue">' + q[1] + '</div></div>'; }).join('');
+  el('gcStatus').textContent = 'Move the red pointer to the bottom of the meniscus, then read the level from the scale. The pointer is at ' + U.level.toFixed(1) + ' ml.'; }
+function narrate(m){ if (!th.nr) return; el('gcNar').textContent = m; }
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ narrate('Pointer at ' + U.level.toFixed(1) + ' ml.'); }, 700); }
+function check(){ narrate('The pointer is at ' + U.level.toFixed(1) + ' ml: it is ' + relation() + '.'); }
+function describe(){ narrate('A graduated cylinder, scale 0 to 30 ml, with numbers every 5 ml. The liquid surface curves down in the middle. The red pointer line is at ' + U.level.toFixed(1) + ' ml, ' + relation() + '.' + (U.mag ? ' A magnified view shows the region around the pointer.' : '')); }
+/* ══════════ input ══════════ */
+var drag = null;
+function pt(e){ var r = cv.getBoundingClientRect(); return { x:(e.clientX - r.left)*W/r.width, y:(e.clientY - r.top)*H/r.height }; }
+cv.addEventListener('pointerdown', function(e){ var q = pt(e), b = magBox();
+  if (U.mag && q.x >= b.x && q.x <= b.x + b.w && q.y >= b.y && q.y <= b.y + b.h) drag = { mode:'mag', y:q.y, l:U.level };
+  else if (Math.abs(q.x - G.track) <= G.hit + 12 || (q.x >= G.x0 - 30 && q.x <= G.track)) { drag = { mode:'abs' }; setLevel(yLv(q.y), true); }
+  else return;
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {} e.preventDefault(); });
+cv.addEventListener('pointermove', function(e){ if (!drag) return; var q = pt(e);
+  if (drag.mode === 'mag') setLevel(drag.l - (q.y - drag.y)/(PXML*G.mag.z), true); else setLevel(yLv(q.y), true); });
+function up(){ if (drag){ drag = null; narrate('Pointer set to ' + U.level.toFixed(1) + ' ml. Check whether it lines up with the bottom of the meniscus.'); } }
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+cv.addEventListener('keydown', function(e){ var k = e.key, d = 0;
+  if (k === 'ArrowUp' || k === 'ArrowRight') d = 0.1; else if (k === 'ArrowDown' || k === 'ArrowLeft') d = -0.1; else if (k === 'PageUp') d = 1; else if (k === 'PageDown') d = -1;
+  else if (k === 'Home'){ setLevel(CFG.SCALE_MIN); e.preventDefault(); return; } else if (k === 'End'){ setLevel(CFG.SCALE_MAX); e.preventDefault(); return; } else return;
+  setLevel(U.level + d); e.preventDefault(); });
+function on(id, ev, fn){ var x = el(id); if (x) x.addEventListener(ev, fn); }
+on('gcSl', 'input', function(){ setLevel(+this.value); });
+on('gcUp', 'click', function(){ setLevel(U.level + 0.1); }); on('gcDn', 'click', function(){ setLevel(U.level - 0.1); });
+on('gcUp1', 'click', function(){ setLevel(U.level + 1); }); on('gcDn1', 'click', function(){ setLevel(U.level - 1); });
+on('gcMag', 'change', function(){ U.mag = this.checked; draw(); }); on('gcNum', 'change', function(){ U.num = this.checked; draw(); });
+on('gcChk', 'click', check); on('gcDsc', 'click', describe);
+on('gcNew', 'click', function(){ CFG.FILL_LEVEL = newLevel(); U.rev = false; setLevel(15, true); narrate('A new cylinder, with a different amount of liquid. Find its level.'); });
+on('gcRev', 'click', function(){ U.rev = !U.rev; info(); narrate(U.rev ? 'The true level is ' + CFG.FILL_LEVEL.toFixed(1) + ' ml; your pointer is at ' + U.level.toFixed(1) + ' ml.' : 'True level hidden.'); });
+function newLevel(){ return Math.round((3 + Math.random()*24)*10)/10; }
+[].forEach.call(ROOT.querySelectorAll('.gc_gh'), function(x){ x.classList.toggle('gc_hide', !GH); });
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('gc_hc', th.hc); ROOT.classList.toggle('gc_lm', th.lm);
+  [['hc', 'gcBtnHC'], ['lm', 'gcBtnLM'], ['cb', 'gcBtnCB'], ['nr', 'gcBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('gc_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('gcBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('gcNar').style.display = th.nr ? '' : 'none'; draw(); }
+function toggleDesc(){ var b = el('gcDescBtn'), d = el('gcDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION'; }
+setLevel(U.level, true);
+narrate('Graduated cylinder reading. Drag the purple ring, or use the slider, the buttons or the arrow keys, to move the red pointer to the bottom of the meniscus, then read the liquid level from the scale.');
+return { theme:theme, toggleDesc:toggleDesc, setLevel:setLevel, _U:U, _C:CFG };
+})();
+</script>
+
+</main>
+</body>
+</html>

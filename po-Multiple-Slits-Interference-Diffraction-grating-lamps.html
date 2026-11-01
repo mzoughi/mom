@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Physical Optics: Grating Spectroscope: Spectral Lamps</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, diffraction, interference, single slit, double slit, multiple slits, diffraction grating, wavelength, fringes, intensity, lesson, scientific">
+<meta name="description" content="Grating Spectroscope: Spectral Lamps -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobp17" class="mob_wrap">
+<!--hr&gt;<h2>Light Interference</h2><hr>
+<hr>
+<div id="canvasesdiv" class="tbar"><H3>Diffraction Grating</H3>&lt;/div-->
+<div id="snellRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y" id="snellA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn" id="snBtnHC" onclick="snellA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn" id="snBtnLM" onclick="snellA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn sn_a11yon" id="snBtnNR" onclick="snellA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<hr><h2>Light Interference</h2><hr>
+<hr>
+<div id="canvasesdiv" class="tbar"><H3>Grating Spectroscope: Spectral Lamps</H3></div>
+<div class="mcontent">
+<canvas id="cv" width="820" height="450"></canvas>
+</div>
+<div class="face_wrap"><div class="face_lbl">The screen seen face-on (turned on its side): the same pattern, enlarged</div><canvas id="cvFace" width="820" height="240" role="img" aria-label="The pattern on the screen seen face-on, with the intensity graph below it."></canvas><div class="mk_bar"><label for="mkSl"><b>Marker</b></label><input type="range" id="mkSl" min="-1000" max="1000" value="250" step="1" aria-label="marker position on the screen, from -10 to +10 cm"><span class="mk_opts">read as <label><input type="radio" name="mkU" value="y" checked> y</label> <label><input type="radio" name="mkU" value="t"> angle &theta;</label> &nbsp;<label><input type="checkbox" id="mkOn" checked> show</label></span><div class="mk_val" id="mkVal" aria-live="polite"></div></div></div>
+<style>.face_wrap { width:100%; margin-top:6px; }
+.face_lbl { font-family:Calibri, Arial, sans-serif; font-size:.82rem; color:#555; padding:2px 4px; }
+.face_wrap canvas { display:block; width:100%; height:auto; border:1px solid #bbb; }
+.mk_bar { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:6px 8px; background:#eef6ff; border:1px solid #b7cde0; border-top:none; font-family:Calibri, Arial, sans-serif; font-size:.9rem; color:#1d232a; }
+.mk_bar input[type=range] { flex:1 1 220px; min-width:0; accent-color:#0a84ff; }
+.mk_bar label { display:inline-flex; align-items:center; gap:3px; cursor:pointer; }
+.mk_val { flex:1 1 100%; font-family:monospace; font-size:.92rem; color:#0b4f8a; font-weight:bold; }
+@media (pointer:coarse) {
+.mk_bar input[type=range] { height:28px; }
+.mk_bar input[type=radio], .mk_bar input[type=checkbox] { width:20px; height:20px; }
+}</style>
+
+<!-- Narration bar -->
+<div id="snNarBar" class="sn_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="sbbar sbbar-pink">
+<div class="left">Screen</div>
+<div class="centerL">
+`L=\ `<input class="zslider" type="range" id="LValue" min="0.15" max="0.5" value="0.15" step="0.05"
+oninput="grating2.showL(this.value)" onchange="grating2.showL(this.value)">
+<span class="txtDPL"><span id="initialLValue">0.15</span> m</span>
+</div>
+<div class="centerR">
+Grating
+</div>
+<div class="right">`d =\ `<input class="zslider" type="range" id="dValue" min="1000" max="3000" value="1500" step="50"
+         oninput="grating2.showd(this.value)" onchange="grating2.showd(this.value)">
+<span class="txtDPL"><span id="initialdValue">1500</span> nm</span></div>
+</div>
+<div class="bbar bbar-blue">
+<div class="left" style="padding-top:8px;">Display Mode</div>
+<div class="centerL" style="text-align:left; padding:8px;">
+<label class="cb-label">
+<input type="checkbox" id="cbColourAdd" onchange="grating2.toggleColourAdd()" checked>
+<span class="cb-swatch" style="background:linear-gradient(to right,#e83030,#20c020,#3060e8);border:1px solid #999;"></span>
+Colour Addition
+</label>
+<p style="font-size:11px; color:#555; margin-top:4px; line-height:1.4;">
+When on, overlapping fringes<br>blend additively (as real light).
+</p>
+</div>
+<div class="centerR">Light Sources</div>
+<div class="right" style="text-align:left; padding-left:8px;">
+<label class="cb-label" style="font-weight:bold">Source <select id="lampSel" onchange="grating2.setLamp(this.value)" style="font-size:1rem; max-width:100%;"><option value="filters">Colour filters (as in the original)</option><option value="Hg" selected>Mercury</option><option value="H">Hydrogen</option><option value="He">Helium</option><option value="Ne">Neon</option><option value="Na">Sodium</option><option value="Cd">Cadmium</option><option value="Kr">Krypton</option><option value="Ar">Argon</option><option value="Xe">Xenon</option><option value="Li">Lithium</option><option value="HeNe">Helium-neon laser</option><option value="G532">Green laser pointer</option><option value="R650">Red laser pointer</option><option value="W">White light (continuous)</option></select></label>
+<div id="filterBox" style="display:none">
+<label class="cb-label"><input type="checkbox" id="cbWhite"  onchange="grating2.toggleColor('white')"  checked> <span class="cb-swatch" style="background:#fff;border:1px solid #999;"></span> White</label>
+<label class="cb-label"><input type="checkbox" id="cbRed"    onchange="grating2.toggleColor('red')">    <span class="cb-swatch" style="background:#e83030;"></span> Red (650 nm)</label>
+<label class="cb-label"><input type="checkbox" id="cbYellow" onchange="grating2.toggleColor('yellow')"> <span class="cb-swatch" style="background:#e8d020;"></span> Yellow (580 nm)</label>
+<label class="cb-label"><input type="checkbox" id="cbGreen"  onchange="grating2.toggleColor('green')">  <span class="cb-swatch" style="background:#20c020;"></span> Green (520 nm)</label>
+<label class="cb-label"><input type="checkbox" id="cbCyan"   onchange="grating2.toggleColor('cyan')">   <span class="cb-swatch" style="background:#20c8c8;"></span> Cyan (490 nm)</label>
+<label class="cb-label"><input type="checkbox" id="cbBlue"   onchange="grating2.toggleColor('blue')">   <span class="cb-swatch" style="background:#3060e8;"></span> Blue (450 nm)</label>
+<label class="cb-label"><input type="checkbox" id="cbViolet" onchange="grating2.toggleColor('violet')"> <span class="cb-swatch" style="background:#8020c0;"></span> Violet (400 nm)</label>
+</div>
+</div>
+</div>
+<hr>
+<!--hr&gt;<p>&nbsp;</p>
+<p>This simulation uses also a grating. The only difference from the previous one is that you test a light source made up of two or three wavelengths. While keeping the "Red" light checked, check also the "Green" light check box.</p>
+<ol type="a">
+<li>What is the color of the light emanating from the light source?</li>
+<li>What is the color of the central maximum emerging out of the grating?</li>
+<li>What is the color of the light emanating from the light source what all three colors are checked</li>
+<li>With white light, increase d to 3000 nm. What happens to the visible spectrum?</li>
+&lt;/ol-->
+<ol type="a">
+<li>With white light selected, observe the diffraction pattern. What do you notice about the central maximum (n=0) compared to the higher orders?</li>
+<li>Compare the positions of red and violet in the first order. Which colour is diffracted more?</li>
+<li>Which color light resulted in the first principal maximum closest to the central maximum?</li>
+<li>Select only red and yellow. What happens at the central maximum? </li>
+<li>Select only red and yellow. What happens at the higher orders?</li>
+<li>Revert back to white light, which order maximum resulted in the largest separation of the colors?</li>
+</ol>
+</div><!-- #snellRoot -->
+<style>:where(#mobp17) * { margin: 0; box-sizing: border-box; }
+:where(#mobp17) div { width: 823px; margin: 0; }
+#snellRoot { --sn-toolbar-bg: #222; }
+#snellRoot .sn_a11y {
+display: flex; gap: 6px; padding: 6px 8px;
+background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 823px;
+}
+#snellRoot .sn_a11ybtn {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+}
+#snellRoot .sn_a11ybtn:hover { border-color: #00e8d0; color: #00e8d0; }
+#snellRoot .sn_a11yon { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#snellRoot .sn_narbar {
+width: 823px; min-height: 28px; padding: 5px 10px;
+background: #ffefc0; border-left: 4px solid #e0b040;
+font-size: .88rem; color: #333; font-style: italic;
+}
+.slider { width: 195px; height: 14px; display: inline-block; }
+.zslider { width: 145px; height: 14px; display: inline-block; }
+.txtDPL { background-color: blue; color: yellow; margin-left: 10px; padding-top: 2px;
+display: inline-block; font-size: 14px; text-align: center; height: 20px; width: 58px; }
+.tbar { padding: 4px; height: 50px; background-color: #f90; text-align: center; }
+.mcontent { height: 452px; }
+.sbbar { height: 45px; text-align: center; display: flex; }
+.sbbar .left { width: 110px; padding: 5px; }
+.sbbar .centerL { width: 302px; padding: 5px; }
+.sbbar .centerR { width: 110px; padding: 5px; }
+.sbbar .right { width: 302px; padding: 5px; }
+.sbbar-pink { background-color: #fce4ec; }
+.bbar { height: 160px; text-align: center; display: flex; }
+.bbar .left { width: 110px; padding: 5px; }
+.bbar .centerL { width: 302px; padding: 5px; }
+.bbar .centerR { width: 110px; padding: 5px; }
+.bbar .right { width: 302px; padding: 5px; }
+.bbar-blue { background-color: #e3f2fd; }
+/* Colour checkbox labels */
+.cb-label {
+display: block; font-size: 13px; line-height: 1.6; cursor: pointer;
+white-space: nowrap;
+}
+.cb-swatch {
+display: inline-block; width: 12px; height: 12px;
+border-radius: 2px; vertical-align: middle; margin-right: 3px;
+}
+.flex { min-height: 100px; background-color: #fec; padding: 4px; }</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var snellA11y = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, nr: true };
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('cv');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('snNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR', states.nr); }
+}
+function applyToolbar() {
+if (ROOT) ROOT.style.setProperty('--sn-toolbar-bg', (states.hc || states.lm) ? '#111' : '#222');
+}
+function apply() {
+if (!ROOT) return;
+applyCanvas(); applyNarBar(); applyToolbar();
+styleBtn('snBtnHC', states.hc);
+styleBtn('snBtnLM', states.lm);
+}
+return {
+init: function() { ROOT = document.getElementById('snellRoot'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+if (typeof grating2 !== 'undefined') grating2.reset();
+},
+isNarOn: function() { return states.nr; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('snNarBar');
+if (!nb) return;
+nb.innerHTML = msg;
+if (window.MathJax) {
+if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+}
+},
+getBg:   function() { return states.hc ? '#111' : '#ffd'; },
+getAxis: function() { return states.hc ? '#fff' : '#000'; }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var grating2 = function() {
+var canvas = document.getElementById("cv");
+var ctx    = canvas.getContext("2d");
+var index  = -1, runFlag = 1;
+var d = 1500;  /* grating spacing nm */
+var L = 0.15;  /* screen distance m */
+var colourAdd = true; /* colour addition mode */
+/* ════════ spectral lamps: visible lines (nm, NIST), typical relative brightness ════════ */
+var LAMP = 'Hg';
+var LAMPS = {
+'Hg':{ name:'Mercury', lines:[[404.66,0.45],[407.78,0.15],[435.83,0.9],[491.6,0.08],[546.07,1],[576.96,0.45],[579.07,0.45],[623.44,0.05],[690.75,0.05]] },
+'H':{ name:'Hydrogen', lines:[[656.28,1],[486.13,0.6],[434.05,0.35],[410.17,0.2]] },
+'He':{ name:'Helium', lines:[[667.82,0.4],[587.56,1],[501.57,0.35],[492.19,0.2],[471.31,0.25],[447.15,0.55],[438.79,0.1],[402.62,0.15]] },
+'Ne':{ name:'Neon', lines:[[534.11,0.08],[540.06,0.15],[585.25,0.6],[588.19,0.35],[594.48,0.45],[597.55,0.25],[603,0.3],[607.43,0.4],[609.62,0.45],[614.31,0.55],[616.36,0.3],[621.73,0.3],[626.65,0.45],[630.48,0.3],[633.44,0.45],[638.3,0.55],[640.22,1],[650.65,0.6],[653.29,0.3],[659.9,0.35],[667.83,0.4],[671.7,0.3],[692.95,0.4]] },
+'Na':{ name:'Sodium', lines:[[588.995,1],[589.592,0.9],[568.27,0.08],[568.82,0.12],[615.42,0.08],[616.08,0.1],[498.28,0.05]] },
+'Cd':{ name:'Cadmium', lines:[[441.46,0.2],[467.82,0.45],[479.99,0.6],[508.58,1],[643.85,0.85]] },
+'Kr':{ name:'Krypton', lines:[[427.4,0.4],[431.96,0.35],[436.26,0.3],[446.37,0.3],[450.24,0.25],[473.9,0.15],[557.03,0.9],[587.09,1],[645.63,0.2]] },
+'Ar':{ name:'Argon', lines:[[415.86,0.25],[419.83,0.15],[420.07,0.25],[425.94,0.2],[427.22,0.15],[430.01,0.2],[451.07,0.15],[549.59,0.15],[555.87,0.1],[560.67,0.12],[603.21,0.15],[641.63,0.12],[667.73,0.25],[675.28,0.3],[696.54,1]] },
+'Xe':{ name:'Xenon', lines:[[450.1,0.4],[452.47,0.2],[462.43,0.5],[467.12,0.6],[473.42,0.3],[480.7,0.3],[482.97,0.25],[492.32,0.3],[529.22,0.15],[533.93,0.25],[541.92,0.3]] },
+'Li':{ name:'Lithium', lines:[[670.79,1],[610.36,0.3],[460.29,0.1],[413.26,0.05]] },
+'HeNe':{ name:'Helium-neon laser', lines:[[632.8,1]] },
+'G532':{ name:'Green laser pointer', lines:[[532,1]] },
+'R650':{ name:'Red laser pointer', lines:[[650,1]] },
+'W':{ name:'White light (continuous)', lines:[[400,0.5],[404,0.5],[408,0.5],[412,0.5],[416,0.5],[420,0.5],[424,0.5],[428,0.5],[432,0.5],[436,0.5],[440,0.5],[444,0.5],[448,0.5],[452,0.5],[456,0.5],[460,0.5],[464,0.5],[468,0.5],[472,0.5],[476,0.5],[480,0.5],[484,0.5],[488,0.5],[492,0.5],[496,0.5],[500,0.5],[504,0.5],[508,0.5],[512,0.5],[516,0.5],[520,0.5],[524,0.5],[528,0.5],[532,0.5],[536,0.5],[540,0.5],[544,0.5],[548,0.5],[552,0.5],[556,0.5],[560,0.5],[564,0.5],[568,0.5],[572,0.5],[576,0.5],[580,0.5],[584,0.5],[588,0.5],[592,0.5],[596,0.5],[600,0.5],[604,0.5],[608,0.5],[612,0.5],[616,0.5],[620,0.5],[624,0.5],[628,0.5],[632,0.5],[636,0.5],[640,0.5],[644,0.5],[648,0.5],[652,0.5],[656,0.5],[660,0.5],[664,0.5],[668,0.5],[672,0.5],[676,0.5],[680,0.5],[684,0.5],[688,0.5],[692,0.5],[696,0.5],[700,0.5]] }
+};
+
+/* All 6 wavelengths + white */
+var COLOURS = {
+red:    { wl: 0.650, id: 'cbRed'    },
+yellow: { wl: 0.580, id: 'cbYellow' },
+green:  { wl: 0.520, id: 'cbGreen'  },
+cyan:   { wl: 0.490, id: 'cbCyan'   },
+blue:   { wl: 0.450, id: 'cbBlue'   },
+violet: { wl: 0.400, id: 'cbViolet' }
+};
+var COLOUR_KEYS = ['red','yellow','green','cyan','blue','violet'];
+function _activeWavelengths() {
+if (LAMP !== 'filters') return LAMPS[LAMP].lines.map(function(q){ return { wl:q[0]/1000, name:LAMPS[LAMP].name + ' ' + q[0].toFixed(1) + ' nm', I:q[1] }; });
+/* Return array of {wl, name} for checked colours */
+var white = document.getElementById('cbWhite');
+if (white && white.checked) {
+return COLOUR_KEYS.map(function(k){ return {wl: COLOURS[k].wl, name: k}; });
+}
+var out = [];
+COLOUR_KEYS.forEach(function(k) {
+var el = document.getElementById(COLOURS[k].id);
+if (el && el.checked) out.push({wl: COLOURS[k].wl, name: k});
+});
+return out;
+}
+function toggleColor(which) {
+if (which === 'white') {
+var wb = document.getElementById('cbWhite');
+if (wb && wb.checked) {
+/* White just turned on -- uncheck all individual colours */
+COLOUR_KEYS.forEach(function(k){
+var el = document.getElementById(COLOURS[k].id);
+if (el) el.checked = false;
+});
+}
+} else {
+/* Individual colour toggled -- uncheck white */
+var wb = document.getElementById('cbWhite');
+if (wb) wb.checked = false;
+}
+reset();
+_narrate(_colourMsg());
+}
+function _colourMsg() {
+if (LAMP !== 'filters'){ var lp = LAMPS[LAMP], br = lp.lines.slice().sort(function(p, q){ return q[1] - p[1]; }).slice(0, 4); return lp.name + ': ' + lp.lines.length + ' visible line' + (lp.lines.length === 1 ? '' : 's') + '. ' + (LAMP === 'W' ? 'A continuous spectrum, from 400 to 700 nanometres.' : 'Brightest: ' + br.map(function(q){ var s1 = q[0]/d; return q[0].toFixed(1) + ' nm, first order at ' + (s1 < 0.9999 ? (100*L*s1/Math.sqrt(1 - s1*s1)).toFixed(2) + ' cm' : 'beyond 90 degrees'); }).join('; ') + '.') + ' Move the marker onto a line to measure its wavelength.'; }
+var active = _activeWavelengths();
+if (active.length === 0) return 'No light sources selected.';
+var white = document.getElementById('cbWhite');
+if (white && white.checked) {
+return 'White light: all wavelengths active. Central maximum (n=0) is white. '
++ 'Higher orders show full spectrum -- red (650 nm) outermost, violet (400 nm) innermost.';
+}
+var names = active.map(function(a){ return a.name + ' (' + (a.wl*1000).toFixed(0) + ' nm)'; });
+var msg = names.join(', ') + ' selected. ';
+active.forEach(function(a) {
+var lambdaNm = a.wl * 1000;
+var nMax = Math.floor(d / lambdaNm);
+var s1 = lambdaNm/d, y1_cm = (s1 < 0.9999 ? 100*L*s1/Math.sqrt(1 - s1*s1) : Infinity).toFixed(1);
+msg += a.name + ': n<sub>max</sub>=' + nMax + ', order-1 at &plusmn;' + y1_cm + ' cm. ';
+});
+return msg;
+}
+function showd(v) {
+document.getElementById("initialdValue").innerHTML = v;
+d = Number(v); reset();
+_narrate(_colourMsg());
+}
+function showL(v) {
+document.getElementById("initialLValue").innerHTML = v;
+L = Number(v); reset();
+_narrate(_colourMsg());
+}
+function _narrate(msg) { snellA11y.narrate(msg); }
+function reset() { index = -1; runFlag = 1; drawMotion(); }
+function setLamp(v){ LAMP = v; var fb = document.getElementById('filterBox'); if (fb) fb.style.display = (v === 'filters') ? '' : 'none'; reset(); _narrate(_colourMsg()); }
+/* ── Colour utilities ── */
+function toHex(z) {
+if (z<0)z=0; if(z>1)z=1;
+var n=Math.floor(256*z),hex=n.toString(16);
+if(hex.length<2)hex="0"+hex; if(hex.length>2)hex="ff"; return hex;
+}
+function rgb(lam, relInt) {
+if(relInt===undefined)relInt=1;
+var r1=0,g1=0,b1=0;
+if      (lam>=380&&lam<440){r1=(440-lam)/60;g1=0;b1=1;}
+else if (lam<490)           {r1=0;g1=(lam-440)/50;b1=1;}
+else if (lam<510)           {r1=0;g1=1;b1=(510-lam)/20;}
+else if (lam<580)           {r1=(lam-510)/70;g1=1;b1=0;}
+else if (lam<645)           {r1=1;g1=(645-lam)/65;b1=0;}
+else if (lam<=780)          {r1=1;g1=0;b1=0;}
+var f=0;
+if      (lam>=380&&lam<420)f=0.3+0.7*(lam-380)/40;
+else if (lam<700)          f=1;
+else if (lam<=780)         f=0.3+0.7*(780-lam)/80;
+var g=0.8;
+return "#"+toHex(relInt*Math.pow(f*r1,g))
++toHex(relInt*Math.pow(f*g1,g))
++toHex(relInt*Math.pow(f*b1,g));
+}
+function rgb2(lam,relInt){ return rgb(lam,Math.pow(relInt,1/3)); }
+/* Additive mix of all active wavelengths → single CSS colour */
+function _isWhiteSelected() {
+var wb = document.getElementById('cbWhite');
+return LAMP === 'filters' && wb && wb.checked;
+}
+function _mixedColour(active, relInt) {
+if (active.length === 0) return '#888';
+if (active.length === 1) return rgb2(active[0].wl * 1000, relInt);
+/* White checkbox = all wavelengths = white */
+if (_isWhiteSelected()) {
+var v = Math.round(relInt * 255); var h = v.toString(16);
+if (h.length < 2) h = '0'+h;
+return '#'+h+h+h;
+}
+/* Sum linear RGB, normalise */
+var R=0, G=0, B=0;
+active.forEach(function(a) {
+var hex = rgb(a.wl * 1000, relInt);
+R += parseInt(hex.slice(1,3),16)/255;
+G += parseInt(hex.slice(3,5),16)/255;
+B += parseInt(hex.slice(5,7),16)/255;
+});
+var mx = Math.max(R,G,B,1);
+R=Math.min(R/mx,1); G=Math.min(G/mx,1); B=Math.min(B/mx,1);
+function hx(v){var s=Math.round(v*255).toString(16);return s.length<2?'0'+s:s;}
+return '#'+hx(R)+hx(G)+hx(B);
+}
+function drawDot(cx, cy, r, col, glowCol, noWhiteCore) {
+/* Radial glow with optional white core */
+var grad = ctx.createRadialGradient(cx,cy,0,cx,cy,r*3);
+grad.addColorStop(0,   col);
+grad.addColorStop(0.5, col);
+grad.addColorStop(1,   'rgba(0,0,0,0)');
+ctx.beginPath(); ctx.arc(cx,cy,r*3,0,2*Math.PI);
+ctx.fillStyle=grad; ctx.fill();
+if (!noWhiteCore) {
+ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI);
+ctx.fillStyle='#ffffff'; ctx.fill();
+}
+}
+function drawMotion() { var i0 = index; drawMotion0(); if (index !== i0) sideMarker(); faceMarker(drawFace()); mkUpdate(false); }
+
+/* ════════ the screen seen face-on: the side view's screen column, laid out as a wide band, with the intensity graph ════════ */
+var SCR = null;
+function drawFace(){
+var fc = document.getElementById('cvFace'); if (!fc || !SCR) return null;
+var HASI = false, showI = false;
+var FW = 820, FH = showI ? 240 : 128, dpr = window.devicePixelRatio || 1;
+if (fc.width !== Math.round(FW*dpr) || fc.height !== Math.round(FH*dpr)){ fc.width = Math.round(FW*dpr); fc.height = Math.round(FH*dpr); }
+var g = fc.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+var bg = snellA11y.getBg(), ax = snellA11y.getAxis();
+g.fillStyle = bg; g.fillRect(0, 0, FW, FH);
+var X0 = 40, X1 = FW - 62, BT = 8, BB = 92;   /* the band: y from -10 cm (left) to +10 cm (right) */
+function X(ycm){ return X0 + (ycm + 10)/20*(X1 - X0); }
+/* read the side view's screen, one pixel column down its middle, at the canvas's real resolution */
+var sc = canvas.width/820, top = Math.round(SCR.top*sc), n = Math.round((SCR.bot - SCR.top)*sc);
+var col = ctx.getImageData(Math.round(SCR.x*sc), top, 1, n).data;
+var bw = Math.round((X1 - X0)*dpr), bh = Math.round((BB - BT)*dpr), img = g.createImageData(bw, bh);
+for (var k=0; k<bw; k++){
+var ycm = -10 + 20*k/(bw - 1), row = Math.min(n - 1, Math.max(0, Math.round((SCR.cy - ycm*20 - SCR.top)*sc - 0.5)));
+var r = col[4*row], gg = col[4*row + 1], b = col[4*row + 2];
+for (var j=0; j<bh; j++){ var q = 4*(j*bw + k); img.data[q] = r; img.data[q + 1] = gg; img.data[q + 2] = b; img.data[q + 3] = 255; }
+}
+g.putImageData(img, Math.round(X0*dpr), Math.round(BT*dpr));
+if (HASI){   /* the slit sims: the band straight from the intensity (the side view's strip compresses the brightness strongly, for its narrow strip) */
+for (var k2=0; k2<=X1 - X0; k2++){ var yc = -10 + 20*k2/(X1 - X0), ym = yc*0.01, I1 = computeI(ym/Math.sqrt(ym*ym + L*L)); g.fillStyle = rgb(lambda, Math.sqrt(Math.max(0, I1)));   /* sqrt(I): dark fringes dark, faint maxima still visible */ g.fillRect(X0 + k2, BT, 1.6, BB - BT); }
+}
+g.strokeStyle = ax; g.lineWidth = 1; g.strokeRect(X0, BT, X1 - X0, BB - BT);
+/* the y axis, in cm, as on the side view */
+g.font = '12px Calibri, Arial, sans-serif'; g.fillStyle = ax; g.textAlign = 'center'; g.textBaseline = 'top';
+for (var ic=-10; ic<=10; ic++){ var x = X(ic); g.beginPath(); g.moveTo(x, BB); g.lineTo(x, BB + (ic % 2 === 0 ? 6 : 3)); g.stroke(); if (ic % 2 === 0) g.fillText(String(ic), x, BB + 7); }
+g.textAlign = 'left'; g.fillText('y (cm)', X1 + 14, BB + 7);
+if (!showI) return { X0:X0, X1:X1, top:BT, bot:BB };
+/* the intensity graph: computeI, with the same magnification as the side view's curve */
+var GT = 130, GB = 222;
+g.strokeStyle = 'rgba(128,128,128,0.35)';
+for (var ic2=-10; ic2<=10; ic2++){ var x2 = X(ic2); g.beginPath(); g.moveTo(x2, GT); g.lineTo(x2, GB); g.stroke(); }
+for (var f=0; f<=4; f++){ var yy = GB - f*(GB - GT)/4; g.beginPath(); g.moveTo(X0, yy); g.lineTo(X1, yy); g.stroke(); }
+g.strokeStyle = ax; g.beginPath(); g.moveTo(X0, GT - 4); g.lineTo(X0, GB); g.lineTo(X1, GB); g.stroke();
+g.fillStyle = ax; g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = '13px Calibri, Arial, sans-serif';
+g.fillText('I' + (scaleGraph > 1 ? '  (\u00D7' + scaleGraph + ')' : ''), X0 + 4, GT + 2);
+g.save(); g.beginPath(); g.rect(X0, GT - 6, X1 - X0, GB - GT + 6); g.clip();
+g.strokeStyle = rgb2(lambda, 0.9); g.lineWidth = snellA11y.isThick() ? 4 : 2; g.beginPath();
+for (var px2=0; px2<=X1 - X0; px2++){
+var y_cm = -10 + 20*px2/(X1 - X0), y_m = y_cm*0.01, sinT = y_m/Math.sqrt(y_m*y_m + L*L), I0 = computeI(sinT)*scaleGraph;
+var yy2 = GB - Math.min(I0, 1.06)*(GB - GT); if (px2) g.lineTo(X0 + px2, yy2); else g.moveTo(X0, yy2); }
+g.stroke(); g.restore();
+g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText('y (cm)', (X0 + X1)/2, GB + 4);
+return { X0:X0, X1:X1, top:BT, bot:GB };
+}
+
+/* ════════ the marker: a line across the screen views, read as y or as the angle ════════ */
+var MK = { y:2.5, unit:'y', on:true }, mkT = null;
+function mkText(){
+var ym = MK.y/100, th = Math.atan2(ym, L), sn = Math.sin(th), t;
+t = MK.unit === 'y' ? 'y = ' + MK.y.toFixed(2) + ' cm' : '\u03B8 = ' + (th*180/Math.PI).toFixed(2) + '\u00B0  (sin \u03B8 = ' + sn.toFixed(4) + ')';
+if (typeof computeI === 'function' && !true) t += '   \u00B7   I/I\u2080 = ' + computeI(sn).toFixed(3);
+if (true) t += '   \u00B7   if a first-order line: \u03BB = d sin \u03B8 = ' + Math.abs(d*sn).toFixed(1) + ' nm; second order: ' + Math.abs(d*sn/2).toFixed(1) + ' nm';
+return t;
+}
+function mkUpdate(say){ var v = document.getElementById('mkVal'); if (v) v.textContent = MK.on ? mkText() : 'Marker hidden.'; if (say){ clearTimeout(mkT); mkT = setTimeout(function(){ _narrate('Marker: ' + mkText().split('   \u00B7   ').join('. ') + '.'); }, 500); } }
+(function(){
+var sl = document.getElementById('mkSl'); if (!sl) return;
+sl.addEventListener('input', function(){ MK.y = this.value/100; mkUpdate(true); reset(); });
+[].forEach.call(document.getElementsByName('mkU'), function(r){ r.addEventListener('change', function(){ MK.unit = this.value; mkUpdate(true); }); });
+document.getElementById('mkOn').addEventListener('change', function(){ MK.on = this.checked; mkUpdate(false); reset(); });
+})();
+function sideMarker(){
+/* on the side view: a dashed line from the slits to the marked point, the angle at the slits, and a tick beside the screen */
+if (!SCR || !MK.on) return;
+var yS = SCR.cy - MK.y*20, x0 = SCR.sx + 9, x1 = SCR.l - 3, th = Math.atan2(SCR.cy - yS, x1 - x0);
+ctx.save(); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+ctx.beginPath(); ctx.moveTo(x0, SCR.cy); ctx.lineTo(x1, yS); ctx.stroke(); ctx.setLineDash([2, 4]); ctx.lineWidth = 1;
+ctx.beginPath(); ctx.moveTo(x0, SCR.cy); ctx.lineTo(x1, SCR.cy); ctx.stroke(); ctx.setLineDash([]);
+ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x0, SCR.cy, 60, -th, 0, th < 0); ctx.stroke();
+ctx.fillStyle = '#0a84ff'; ctx.font = 'bold 14px Calibri, Arial, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('\u03B8', x0 + 66, SCR.cy - (yS < SCR.cy ? 10 : -10));
+ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(SCR.l - 16, yS); ctx.lineTo(SCR.l - 1, yS); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(SCR.l - 1, yS); ctx.lineTo(SCR.l - 8, yS - 5); ctx.lineTo(SCR.l - 8, yS + 5); ctx.closePath(); ctx.fill();
+ctx.restore();
+}
+function faceMarker(lay){
+if (!MK.on || !lay) return;
+var fc = document.getElementById('cvFace'), g = fc.getContext('2d'), x = lay.X0 + (MK.y + 10)/20*(lay.X1 - lay.X0);
+g.save(); g.strokeStyle = '#ffffff'; g.lineWidth = 4; g.beginPath(); g.moveTo(x, lay.top); g.lineTo(x, lay.bot); g.stroke();
+g.strokeStyle = '#0a84ff'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, lay.top); g.lineTo(x, lay.bot); g.stroke();
+g.fillStyle = '#0a84ff'; g.beginPath(); g.moveTo(x, 7); g.lineTo(x - 6, 0); g.lineTo(x + 6, 0); g.closePath(); g.fill(); g.restore();
+}
+function drawMotion0() {
+if (index>=400) runFlag=0;
+if (runFlag!==1) return;
+ctx.clearRect(0,0,canvas.width,canvas.height);
+index++;
+var bgCol   = snellA11y.getBg();
+var axisCol = snellA11y.getAxis();
+var CY    = 225, PX_CM = 20;
+var Y_TOP = CY - 10*PX_CM, Y_BOT = CY + 10*PX_CM;
+var slitX = 80;
+var scrL  = slitX + 16 + Math.round((L - 0.15) * 350) + 460;
+var scrW  = 35; SCR = { x: scrL + scrW/2, l: scrL, sx: slitX, top: Y_TOP, bot: Y_BOT, cy: CY };
+var axisX = scrL + scrW + 5;
+var scrCX = scrL + scrW/2;
+ctx.fillStyle=bgCol;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+/* ── Grating slide ── */
+var gratingTop = CY - 35, gratingBot = CY + 35, gratingH = gratingBot - gratingTop;
+ctx.fillStyle='black';
+ctx.fillRect(slitX-8, Y_TOP, 16, Y_BOT - Y_TOP);
+var numLines = Math.round(40 - (d-1000)/2000*28);
+/* Grating rulings: single mixed colour of all active wavelengths */
+var active = _activeWavelengths();
+var rulingCol = active.length > 0 ? _mixedColour(active, 0.6) : '#444';
+ctx.strokeStyle = rulingCol; ctx.lineWidth = 0.8;
+for (var li=0; li<numLines; li++) {
+var ly = gratingTop + li * gratingH / (numLines - 1);
+ctx.beginPath(); ctx.moveTo(slitX-8,ly); ctx.lineTo(slitX+8,ly); ctx.stroke();
+}
+/* ── Incoming rays -- single mixed colour ── */
+var mixedRayCol = active.length > 0 ? _mixedColour(active, 0.75) : '#888';
+var rayYs = [-30,-15,0,15,30];
+for (var ri=0; ri<rayYs.length; ri++) {
+var ry = CY + rayYs[ri];
+arrow(10, ry, slitX-10, ry, 1, mixedRayCol);
+}
+/* ── L arrow ── */
+ctx.strokeStyle='blue'; ctx.fillStyle='blue';
+ctx.font='13pt Calibri'; ctx.textAlign='left';
+ctx.fillText('L = '+L.toFixed(2)+' m', slitX+10, 13);
+arrow(slitX+10, 22, scrL-2, 22, 2, 'blue');
+/* ── Screen ── */
+ctx.fillStyle='black';
+ctx.fillRect(scrL, Y_TOP, scrW, Y_BOT-Y_TOP);
+/* ── Collect ALL dot positions including n=0 ── */
+var dots = []; /* {iy, wlNm, n} */
+var orderLabels = {};
+active.forEach(function(a) {
+var lambdaNm = a.wl * 1000;
+var nMax     = Math.floor(d / lambdaNm);
+/* n=0 always included */
+dots.push({iy: CY, wlNm: lambdaNm, n: 0, I: (a.I === undefined ? 1 : a.I)});
+for (var n = -nMax; n <= nMax; n++) {
+if (n === 0) continue;
+var sT = lambdaNm*n/d; if (Math.abs(sT) >= 0.9999) continue; var y_cm = 100*L*sT/Math.sqrt(1 - sT*sT);   /* exact: y = L tan(arcsin(n lambda/d)) */
+if (Math.abs(y_cm) > 10.5) continue;
+var iy = CY - y_cm * PX_CM;
+dots.push({iy: iy, wlNm: lambdaNm, n: n, I: (a.I === undefined ? 1 : a.I)});
+if (!orderLabels[n]) orderLabels[n] = iy;
+}
+});
+orderLabels[0] = CY;
+if ((!colourAdd && LAMP === 'filters') || active.length <= 1) {
+/* ── Normal mode: draw each dot with white core ── */
+/* Draw n=0 once (avoid overdrawing): compute mixed colour */
+if (active.length === 1) {
+drawDot(scrCX, CY, 4, rgb2(active[0].wl*1000, 1.0), rgb2(active[0].wl*1000, 0.5), false);
+} else if (active.length > 1) {
+/* multiple colours → white glow with white core */
+var wGrad = ctx.createRadialGradient(scrCX,CY,0,scrCX,CY,12);
+wGrad.addColorStop(0,  'rgba(255,255,255,1.0)');
+wGrad.addColorStop(0.5,'rgba(255,255,255,0.5)');
+wGrad.addColorStop(1,  'rgba(0,0,0,0)');
+ctx.beginPath(); ctx.arc(scrCX,CY,12,0,2*Math.PI);
+ctx.fillStyle=wGrad; ctx.fill();
+ctx.beginPath(); ctx.arc(scrCX,CY,4,0,2*Math.PI);
+ctx.fillStyle='#ffffff'; ctx.fill();
+}
+/* Draw all n≠0 dots */
+dots.forEach(function(dot) {
+if (dot.n === 0) return;
+drawDot(scrCX, dot.iy, 4, rgb2(dot.wlNm, 1.0), rgb2(dot.wlNm, 0.5), false);
+});
+} else {
+/* ── Colour-addition mode: per-pixel additive RGB blend ── */
+/* ALL dots (including n=0 for every wavelength) go through the
+same Gaussian loop -- zero order gets proper additive mixing
+and looks identical in style to the higher orders.            */
+var glowR  = (LAMP !== 'filters') ? 4 : 12;
+function hx(v){var s=Math.round(v*255).toString(16);return s.length<2?'0'+s:s;}
+for (var piy = Y_TOP; piy <= Y_BOT; piy++) {
+var R=0, G=0, B=0;
+dots.forEach(function(dot) {
+var dy = piy - dot.iy;
+if (Math.abs(dy) > glowR) return;
+var intensity = (dot.I === undefined ? 1 : dot.I)*Math.exp(-(dy*dy) / (2*(glowR/2.5)*(glowR/2.5)));
+var hex = rgb(dot.wlNm, 1.0);
+R += intensity * parseInt(hex.slice(1,3),16)/255;
+G += intensity * parseInt(hex.slice(3,5),16)/255;
+B += intensity * parseInt(hex.slice(5,7),16)/255;
+});
+if (R===0 && G===0 && B===0) continue;
+/* Near n=0 (within glowR of centre): force equal channels → white */
+if (_isWhiteSelected() && Math.abs(piy - CY) <= glowR) {
+var avg=(R+G+B)/3; R=avg; G=avg; B=avg;
+}
+var mx = Math.max(R,G,B);
+if (mx > 1) { R/=mx; G/=mx; B/=mx; }
+ctx.strokeStyle = '#'+hx(R)+hx(G)+hx(B);
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(scrL, piy); ctx.lineTo(scrL+scrW, piy);
+ctx.stroke();
+}
+/* no white cores in colour-addition mode */
+}
+/* Also collect n=0 label */
+orderLabels[0] = CY;
+/* ── y-axis ticks ── */
+ctx.font='13pt Calibri'; ctx.fillStyle=axisCol;
+ctx.textAlign='left'; ctx.textBaseline='middle';
+for (var icm=-10; icm<=10; icm++) {
+var iy = CY - icm*PX_CM;
+ctx.strokeStyle=axisCol; ctx.lineWidth=1;
+ctx.beginPath(); ctx.moveTo(scrL+scrW,iy); ctx.lineTo(scrL+scrW+4,iy); ctx.stroke();
+if (icm%2===0) ctx.fillText(icm.toFixed(0), axisX, iy);
+}
+/* ── Order labels (left of screen) ── */
+ctx.font='11pt Calibri'; ctx.fillStyle=axisCol; ctx.textAlign='right';
+for (var key in orderLabels) {
+ctx.fillText('n='+key, scrL-4, orderLabels[key]);
+}
+/* ── y(cm) label rotated ── */
+ctx.save();
+ctx.translate(axisX+28, CY);
+ctx.rotate(-Math.PI/2);
+ctx.font='13pt Calibri'; ctx.textAlign='center'; ctx.fillStyle=axisCol;
+ctx.fillText('y (cm)', 0, 0);
+ctx.restore();
+/* ── Labels ── */
+ctx.font='14pt Calibri'; ctx.fillStyle=axisCol; ctx.textAlign='center';
+ctx.fillText('grating', slitX, Y_BOT+20);
+ctx.fillText('screen',  scrCX,  Y_BOT+20);
+}
+function arrow(x1,y1,x2,y2,w,col,txt,spc) {
+if(!w)w=1; if(!txt)txt=""; if(!spc)spc=5;
+if(!col)col=ctx.strokeStyle;
+ctx.fillStyle=col; ctx.strokeStyle=col;
+var dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+if(len===0)return;
+dx/=len; dy/=len;
+var s=2.5*w+7.5,xS=x2-s*dx,yS=y2-s*dy,h=0.5*w+3.5;
+var x1s=xS-h*dy,y1s=yS+h*dx,x2s=xS+h*dy,y2s=yS-h*dx;
+xS=x2-0.6*s*dx; yS=y2-0.6*s*dy;
+ctx.beginPath(); ctx.lineWidth=w;
+ctx.moveTo(x1,y1);
+if(len<5)ctx.lineTo(x2,y2); else ctx.lineTo(xS,yS);
+ctx.stroke();
+if(len<5)return;
+ctx.beginPath(); ctx.fillStyle=ctx.strokeStyle;
+ctx.moveTo(xS,yS); ctx.lineTo(x1s,y1s); ctx.lineTo(x2,y2); ctx.lineTo(x2s,y2s);
+ctx.closePath(); ctx.fill();
+var tspc=x2<=x1?-(3*spc):2*spc;
+ctx.fillText(txt,x2+tspc,y2+spc);
+}
+function toggleColourAdd() {
+var cb = document.getElementById('cbColourAdd');
+colourAdd = cb ? cb.checked : !colourAdd;
+reset();
+}
+return {
+setLamp:setLamp, reset, showd, showL, toggleColor, toggleColourAdd,
+redraw: function(){ reset(); }
+};
+};
+</script>
+<script>
+var grating2 = new grating2();
+snellA11y.init();
+window.setTimeout(function(){
+grating2.reset();
+grating2.setLamp('Hg');   /* the opening message describes the lamp */
+}, 0);
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation turns the diffraction grating into a spectroscope. Each gas-discharge lamp emits light only at certain wavelengths, the spectral lines of its atoms, and a grating sends each wavelength in its own direction,</p>
+<p class="mob_eq">`d sin theta = n lambda`,&nbsp;&nbsp; `n = 0, +-1, +-2, ...`</p>
+<p>so each line appears on the screen, in every order, at its own place. The lamps show their real visible lines (from 400 to 700 nm, from the NIST atomic spectra database), with a typical relative brightness; in a real tube the brightness depends on the pressure and the current. Hydrogen shows the four Balmer lines; neon its forest of red and orange lines; sodium its yellow doublet (589.0 and 589.6 nm, too close to separate here); mercury its violet, blue, green and yellow lines. Lasers give a single line, and white light a continuous spectrum. The zeroth order mixes all the lines: it has the lamp's own colour.</p>
+<p>To measure a wavelength, move the marker onto a line and read the angle: for a first-order line `lambda = d sin theta`, for a second-order line `lambda = (d sin theta)/2`. The readout does this arithmetic for both orders. Moving the screen farther away spreads the lines apart, so that close lines can be told apart.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobp17 { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (823 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:863px) {
+#mobp17 div, #mobp17 p, #mobp17 fieldset, #mobp17 form, #mobp17 section, #mobp17 ol, #mobp17 ul, #mobp17 table { max-width:100%; box-sizing:border-box; }
+#mobp17 canvas, #mobp17 img, #mobp17 svg { max-width:100%; height:auto !important; }
+#mobp17 input[type=range], #mobp17 select { max-width:100%; min-width:0; }
+#mobp17 .mk_bar, #mobp17 .mk_bar label, #mobp17 #snellRoot .sn_a11y, #mobp17 .sbbar, #mobp17 .bbar { flex-wrap:wrap; }
+#mobp17 .mk_bar > div, #mobp17 .mk_bar label > div, #mobp17 #snellRoot .sn_a11y > div, #mobp17 .sbbar > div, #mobp17 .bbar > div { min-width:min(100%, 260px); }
+#mobp17 div[style*="height"] { height:auto !important; }
+#mobp17 .tbar, #mobp17 .mcontent, #mobp17 .sbbar, #mobp17 .bbar { height:auto; min-height:0; }
+#mobp17 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:883px) {
+#mobp17 div, #mobp17 p, #mobp17 fieldset, #mobp17 form, #mobp17 section, #mobp17 ol, #mobp17 ul, #mobp17 table { max-width:100%; box-sizing:border-box; }
+#mobp17 canvas, #mobp17 img, #mobp17 svg { max-width:100%; height:auto !important; }
+#mobp17 input[type=range], #mobp17 select { max-width:100%; min-width:0; }
+#mobp17 .mk_bar, #mobp17 .mk_bar label, #mobp17 #snellRoot .sn_a11y, #mobp17 .sbbar, #mobp17 .bbar { flex-wrap:wrap; }
+#mobp17 .mk_bar > div, #mobp17 .mk_bar label > div, #mobp17 #snellRoot .sn_a11y > div, #mobp17 .sbbar > div, #mobp17 .bbar > div { min-width:min(100%, 260px); }
+#mobp17 div[style*="height"] { height:auto !important; }
+#mobp17 .tbar, #mobp17 .mcontent, #mobp17 .sbbar, #mobp17 .bbar { height:auto; min-height:0; }
+#mobp17 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobp17 button, #mobp17 input[type=button], #mobp17 input[type=submit], #mobp17 input[type=reset] { min-height:40px; }
+#mobp17 input[type=range] { height:28px; }
+#mobp17 input[type=checkbox], #mobp17 input[type=radio] { width:22px; height:22px; }
+#mobp17 select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobp17 .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobp17 .mob_a11ytop input[type=button], #mobp17 .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobp17 .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobp17 .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobp17 .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobp17 .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobp17 .mob_desc p { margin:0 0 9px 0; }
+#mobp17 .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobp17 -->
+</main>
+</body>
+</html>

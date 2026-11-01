@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Microscopes: the Magnifier, the Compound Microscope and its Objectives</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, microscope, microscope, compound microscope, magnifier, magnifying glass, objective, eyepiece, angular magnification, tube length, near point, numerical aperture, immersion oil, resolution, Rayleigh criterion, lab microscope, nosepiece, condenser, lesson, scientific">
+<meta name="description" content="Interactive simulation of the magnifying glass and the compound microscope: a lab microscope beside its ray diagram, the textbook equations with your numbers, numerical aperture, immersion and resolution.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="msRoot" class="ms_root" role="region" aria-label="Microscopes simulator">
+<div class="ms_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="ms_a11ybtn" id="msBtnHC" onclick="msSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="ms_a11ybtn" id="msBtnLM" onclick="msSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="ms_a11ybtn" id="msBtnCB" onclick="msSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="ms_a11ybtn ms_a11yon" id="msBtnNR" onclick="msSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="ms_tbar"><h3>Microscopes: the Magnifier, the Compound Microscope and its Objectives</h3></div>
+<div class="ms_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="ms_tab" id="msT0" aria-selected="false" onclick="msSim.tab(0)">Magnifier</button>
+<button type="button" role="tab" class="ms_tab" id="msT1" aria-selected="true" onclick="msSim.tab(1)">Compound</button>
+<button type="button" role="tab" class="ms_tab" id="msT2" aria-selected="false" onclick="msSim.tab(2)">Objectives</button>
+</div>
+<div class="ms_mcontent">
+<div class="ms_view" id="msLabBox" style="display:none">
+<div class="ms_vlabel">a lab microscope, with its optics drawn beside it · click the nosepiece to change the objective</div>
+<canvas id="msLabCv" width="780" height="470" role="img" aria-label="A compound microscope as it looks in the lab, with its parts named, and beside it the same optics as a ray diagram, aligned with it."></canvas>
+</div>
+<div class="ms_view" id="msSideBox">
+<div class="ms_vlabel" id="msLab"></div>
+<canvas id="msSide" width="780" height="310" role="img" aria-label="A side view of the instrument with rays traced through it."></canvas>
+</div>
+<div class="ms_row2">
+<div class="ms_view"><div class="ms_vlabel" id="msLab2"></div><canvas id="msClose" width="380" height="250" role="img" aria-label="A close-up of part of the instrument."></canvas></div>
+<div class="ms_view"><div class="ms_vlabel" id="msLab3"></div><canvas id="msView" width="380" height="250" role="img" aria-label="What you see: with the naked eye and through the instrument."></canvas></div>
+</div>
+<div class="ms_readout" id="msRead" aria-label="Readout"></div>
+<div class="ms_eqs" id="msEqs" role="region" aria-label="The equations, with your numbers"></div>
+</div>
+<div class="ms_bbar" id="msBtns"></div>
+<div class="ms_controls" id="msCtl"></div>
+<div id="msNarBar" class="ms_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="ms_descwrap">
+<button type="button" class="ms_descbtn" id="msDescBtn" aria-expanded="false" aria-controls="msDesc" onclick="msSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="ms_desc" id="msDesc" role="region" aria-labelledby="msDescBtn" style="display:none">
+<p>This simulation shows how magnifiers and microscopes make small things look bigger, and what limits the detail they can show.</p>
+<p><b>How big something looks</b> depends on the angle it takes up at the eye. Without help, the closest we can see an object clearly is the near point, about 25 cm away; so the most an object of height `h` can take up is `theta = h/(25 "cm")`. An instrument's angular magnification compares the angle its image takes up, `theta'`, with that: `M = theta'/theta`.</p>
+<p><b>1. The magnifier.</b> A converging lens with the object inside its focal length `f` forms an upright, virtual, enlarged image. With the eye close to the lens, the image takes up the same angle as the object seen from the lens, so `M = (25 "cm")/d_o`. With the object at the focal point the image is at infinity, seen with a relaxed eye: `M = (25 "cm")/f`. Bringing the object a little closer puts the image at the near point: `M = 1 + (25 "cm")/f`. A single lens is hard to use beyond about 5 times.</p>
+<p><b>2. The compound microscope</b> uses two converging lenses. The objective, of short focal length `f_o`, has the specimen just outside its focal point and forms a real, inverted, enlarged first image:</p>
+<p class="ms_eq">`1/d_i = 1/f_o - 1/d_o`,&nbsp;&nbsp; `m_o = -d_i/d_o`.</p>
+<p>The eyepiece, a magnifier of focal length `f_e`, a distance `L` from the objective, looks at that image, which is `d_o' = L - d_i` in front of it. It forms the final, virtual image at `1/d_i' = 1/f_e - 1/d_o'`, with `m_e = -d_i'/d_o'`. The overall linear magnification is the product, `m = m_o m_e`. How much bigger the specimen looks, with the eye at the eyepiece, compared with the specimen at 25 cm, is `M = |m_o| (25 "cm")/d_o'`. A microscope is focused by moving the whole tube (here, the specimen), keeping `L` fixed. Focused for a relaxed eye, the first image sits at the eyepiece's focal point, and</p>
+<p class="ms_eq">`M = -(L - f_o - f_e)/f_o * (25 "cm")/f_e`,</p>
+<p>where `L - f_o - f_e`, the distance between the objective's image-side focal point and the eyepiece's object-side focal point, is the tube length, standardized at 16 cm. The image is upside down.</p>
+<p><b>3. Objectives and resolution.</b> No matter how much a microscope magnifies, it cannot show detail finer than diffraction allows. The light-gathering power of an objective is its numerical aperture, `NA = n sin alpha`, where `alpha` is half the angle of the cone of light it accepts from the specimen and `n` the refractive index between them. Two points closer than about</p>
+<p class="ms_eq">`d = 0.61 lambda / NA`</p>
+<p>blur into one (the Rayleigh criterion). In air `NA` cannot exceed 1; and rays leaving the cover glass at steep angles are trapped by total internal reflection. Filling the gap with water or immersion oil (`n = 1.51`, close to that of glass) lets those rays into the objective: `NA` up to about 1.4, and resolution near 0.2 micrometres. Magnifying more than about 500 to 1000 times the `NA` only enlarges the blur.</p>
+</div>
+</div>
+</div><!-- #msRoot -->
+<style>
+#msRoot, #msRoot * { box-sizing:border-box; }
+#msRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --ms-bg:#0a0e12; --ms-panel:#0d1318; --ms-border:#1c262e; --ms-text:#c9d6de; --ms-muted:#5f7180; --ms-val:#8fe3b0; }
+#msRoot .ms_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#msRoot .ms_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#msRoot .ms_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#msRoot .ms_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#msRoot .ms_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#msRoot .ms_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#msRoot .ms_tabs { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; background:#2c3138; }
+#msRoot .ms_tab { flex:1 1 70px; padding:8px 10px; border:1px solid #525c66; background:#22262b; color:#c8d0d8; border-radius:4px; cursor:pointer; font-family:system-ui, sans-serif; font-size:.86rem; min-height:38px; }
+#msRoot .ms_tab[aria-selected="true"] { background:#e8a020; color:#1a1f24; border-color:#e8a020; font-weight:bold; }
+#msRoot .ms_mcontent { background:var(--ms-bg); color:var(--ms-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#msRoot .ms_view { border:1px solid var(--ms-border); border-radius:6px; overflow:hidden; background:var(--ms-panel); }
+#msRoot .ms_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+#msRoot .ms_vlabel { font-size:10px; color:var(--ms-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#msRoot canvas { display:block; width:100%; height:auto; }
+#msRoot .ms_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--ms-panel); border:1px solid var(--ms-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#msRoot .ms_flabel { font-size:10px; color:var(--ms-muted); letter-spacing:1px; }
+#msRoot .ms_fvalue { font-size:14px; color:var(--ms-val); font-variant-numeric:tabular-nums; }
+#msRoot .ms_eqs { background:var(--ms-panel); border:1px solid var(--ms-border); border-left:4px solid #e8a020; border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; font-size:.88rem; line-height:1.6; color:var(--ms-text); }
+#msRoot .ms_eqs h4 { margin:0 0 4px; font-size:.78rem; letter-spacing:1px; text-transform:uppercase; color:var(--ms-muted); font-weight:normal; }
+#msRoot .ms_eqs .ms_eqn { color:var(--ms-muted); font-size:.75rem; }
+#msRoot .ms_eqs b { color:var(--ms-val); }
+#msRoot .ms_eqs .ms_note { margin-top:6px; padding:6px 8px; background:rgba(232,160,32,.10); border-radius:4px; }
+#msRoot .ms_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#msRoot .ms_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#msRoot .ms_bbar label { display:flex; align-items:center; gap:6px; }
+#msRoot .ms_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#msRoot select { font-size:.84rem; padding:3px 4px; max-width:100%; }
+#msRoot .ms_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#msRoot .ms_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#msRoot .ms_cname { font-size:.86rem; display:flex; gap:8px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+#msRoot .ms_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#msRoot input[type=range] { width:100%; min-width:0; accent-color:#e8a020; }
+#msRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#msRoot .ms_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#msRoot .ms_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#msRoot .ms_descbtn[aria-expanded="true"] { background:#3a3220; }
+#msRoot .ms_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#msRoot .ms_desc p { margin:0 0 9px; }
+#msRoot .ms_eq { text-align:center; font-size:1rem; }
+@container (max-width:640px) { #msRoot .ms_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:660px) { #msRoot .ms_row2 { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:480px) { #msRoot .ms_tab { padding:8px 3px; font-size:.8rem; } #msRoot .ms_tabs { gap:3px; padding:6px 5px; } }
+@media (pointer:coarse) { #msRoot input[type=range] { height:28px; } #msRoot .ms_a11ybtn { min-height:40px; } #msRoot input[type=checkbox] { width:22px; height:22px; } #msRoot select { min-height:36px; font-size:16px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Units: mm. Thin lenses: 1/d_i = 1/f - 1/d_o, m = -d_i/d_o. Near point 250 mm. Magnifier: eye at the lens, M = 250/d_o.
+Compound: lens separation L fixed, focused by moving the specimen; first image d_i, eyepiece object d_o' = L - d_i, final image d_i'.
+M (how big it looks, eye at the eyepiece, against the specimen at 250 mm) = |m_o| 250/d_o'. Diffraction: d = 0.61 lambda/NA.
+The eye accommodates from infinity to 250 mm (0 to 4 dioptres); outside that the view is blurred. Immersion: n sin(theta) is
+conserved across the flat cover glass (n = 1.52); total internal reflection where n_glass sin(theta) > n_medium.
+No dollar signs or backticks in the code.
+-->
+<script>
+var msSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('msRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var SD = hi('msSide'), CL = hi('msClose'), VW = hi('msView'), LB = hi('msLabCv');
+var DEG = Math.PI/180, NEAR = 250, LAMBDA = 550e-6, NG = 1.52;
+var S = { tab:1, schem:false, eqs:true, lab:false, each:true, labObj:null, spec:'onion', dz:0,
+  mag:{ f:50, d:50 },
+  cmp:{ fo:6.0, fe:50, L:230, d:6.2, na:0.30 },
+  obj:{ kind:'40', medium:'air', lam:550, sep:0.6 } };
+var OBJS = { '4':{ name:'4\u00D7 / 0.10', na:0.10, n:1.0, wd:'17 mm', f:40 }, '10':{ name:'10\u00D7 / 0.25', na:0.25, n:1.0, wd:'10 mm', f:16 }, '40':{ name:'40\u00D7 / 0.65', na:0.65, n:1.0, wd:'0.6 mm', f:4 }, '60w':{ name:'60\u00D7 / 1.20 water', na:1.20, n:1.33, wd:'0.28 mm', f:3 }, '100':{ name:'100\u00D7 / 1.25 oil', na:1.25, n:1.515, wd:'0.13 mm', f:1.6 } };
+var MEDIA = { air:{ n:1.0, name:'air' }, water:{ n:1.33, name:'water' }, oil:{ n:1.515, name:'immersion oil' } };
+var th = { hc:false, lm:false, cb:false, nr:true };
+var LAB = [['a magnifying glass: side view, lengths to scale', 'how big it looks: the angle at the eye', 'what you see: naked eye at 25 cm, and through the magnifier'],
+['a compound microscope: side view, lengths to scale, heights exaggerated', 'close-up: the specimen and the objective', 'what you see: naked eye at 25 cm, and through the microscope'],
+['the objective and the cover glass (not to scale)', 'the cone of light accepted: numerical aperture', 'two points close together: resolved or not?']];
+/* ══════════ optics ══════════ */
+function img(f, d){ return Math.abs(d - f) < 1e-9 ? Infinity : 1/(1/f - 1/d); }
+function mag(){ var c = S.mag, di = img(c.f, c.d), M = NEAR/c.d; return { di:di, m:isFinite(di) ? -di/c.d : Infinity, M:M }; }
+function cmp(){
+var c = S.cmp, di = img(c.fo, c.d), mo = -di/c.d, doe = c.L - di, die = img(c.fe, doe), me = isFinite(die) ? -die/doe : Infinity, M = Math.abs(mo)*NEAR/doe;
+var Lt = c.L - c.fo - c.fe;
+return { di:di, mo:mo, doe:doe, die:die, me:me, m:mo*me, M:M, Lt:Lt, Minf:Lt/c.fo*NEAR/c.fe, a:c.d*Math.tan(Math.asin(Math.min(0.95, c.na))) };
+}
+/* the vergence the eye must cope with (dioptres): 0 for parallel light, 4 for an image 25 cm away; more, or light converging, blurs */
+function eyeError(di){ if (!isFinite(di)) return 0; if (di > 0) return 1000/di + 0.0; var A = 1000/(-di); return A > 4 ? A - 4 : 0; }
+function focusRelaxed(){ var c = S.cmp, di = c.L - c.fe; c.d = 1/(1/c.fo - 1/di); }
+function focusNear(){ var c = S.cmp, doe = 1/(1/c.fe + 1/NEAR), di = c.L - doe; c.d = 1/(1/c.fo - 1/di); }
+function objNA(){ var o = OBJS[S.obj.kind], sa = o.na/o.n; return MEDIA[S.obj.medium].n*sa; }   /* the objective's cone is fixed; the medium sets n */
+function resol(na){ return 0.61*(S.obj.lam*1e-6)/na; }       /* mm */
+/* ══════════ drawing helpers ══════════ */
+function pal(){ if (th.hc) return { bg:'#000', glass:'rgba(120,220,255,0.5)', glassE:'#9fe8ff', ray:'#ffff00', ray2:'#00ffff', txt:'#fff', muted:'#ddd', obj:'#ff6666', img:'#66ff66', tube:'#444' };
+var p = th.lm ? { bg:'#eef2f6', txt:'#1d232a', muted:'#556070', tube:'#a8b0b8' } : { bg:'#0d1318', txt:'#dbe5ec', muted:'#7a8a98', tube:'#2c333b' };
+p.glass = 'rgba(150,215,240,0.35)'; p.glassE = '#8fd3ef'; p.ray = th.cb ? '#e69f00' : '#ffe066'; p.ray2 = th.cb ? '#56b4e9' : '#5ad1ff'; p.obj = th.cb ? '#d55e00' : '#ff6a5a'; p.img = th.cb ? '#009e73' : '#3ad08f'; return p; }
+function lensAt(g, x, cy, h, t, p){ g.fillStyle = p.glass; g.strokeStyle = p.glassE; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, cy - h); g.quadraticCurveTo(x + t, cy, x, cy + h); g.quadraticCurveTo(x - t, cy, x, cy - h); g.closePath(); g.fill(); g.stroke(); }
+function arrowV(g, x, y0, y1, col, lw, dash){ g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw || 3; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke(); g.setLineDash([]);
+var d = y1 > y0 ? 1 : -1; if (Math.abs(y1 - y0) > 4){ g.beginPath(); g.moveTo(x, y1); g.lineTo(x - 5, y1 - d*9); g.lineTo(x + 5, y1 - d*9); g.closePath(); g.fill(); } }
+function seg(g, x1, y1, x2, y2, col, lw, dash, alpha){ g.strokeStyle = col; g.lineWidth = lw || 1.3; g.globalAlpha = alpha || 0.9; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; }
+function dot(g, x, y, col, lab){ g.fillStyle = col; g.beginPath(); g.arc(x, y, 3.2, 0, 2*Math.PI); g.fill(); if (lab){ g.font = 'italic 11px system-ui, serif'; g.textAlign = 'center'; g.fillText(lab, x, y - 7); } }
+function T(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '11px system-ui, sans-serif'; g.textAlign = al || 'center'; g.fillText(t, x, y); }
+function eye(g, x, y){ g.fillStyle = '#fff'; g.strokeStyle = '#334'; g.lineWidth = 1; g.beginPath(); g.ellipse(x, y, 13, 8, 0, 0, 2*Math.PI); g.fill(); g.stroke(); g.fillStyle = '#334'; g.beginPath(); g.arc(x - 5, y, 3.5, 0, 2*Math.PI); g.fill(); }
+function clear(c){ var p = pal(); c.g.fillStyle = p.bg; c.g.fillRect(0, 0, c.W, c.H); return p; }
+/* ══════════ 1. the magnifier ══════════ */
+function drawMagSide(){
+var p = clear(SD), g = SD.g, W = SD.W, H = SD.H, c = S.mag, R = mag();
+if (S.schem) return magDiagram(p);
+var xmin = -Math.max(NEAR*0.0 + c.d*1.3, c.f*1.4) - 20, xmax = 60, vi = R.di < 0 && R.di > -NEAR*1.6 ? R.di : null;
+if (vi !== null) xmin = Math.min(xmin, vi*1.08 - 10);
+var sx = (W - 40)/(xmax - xmin), X = function(x){ return 20 + (x - xmin)*sx; }, h = 8, a = Math.min(c.f*0.5, 22);
+var hImg = R.di < 0 ? h*R.m : 0, ymax = Math.max(a*1.15, Math.abs(hImg)*1.1, h*1.6), sy = (H/2 - 34)/ymax, cy = H/2 + 8, Y = function(y){ return cy - y*sy; };
+seg(g, 10, cy, W - 10, cy, p.muted, 1);
+lensAt(g, X(0), cy, a*sy, Math.max(6, a*sy*0.18), p);
+dot(g, X(-c.f), cy, p.txt, 'F'); dot(g, X(c.f), cy, p.txt, 'F');
+arrowV(g, X(-c.d), cy, Y(h), p.obj, 3); T(g, 'object', X(-c.d), Y(h) - 8, p.obj);
+/* rays from the tip: parallel (then through F), through the centre, and a fan */
+var tips = [h, 0, -a*0.7, a*0.7];
+tips.forEach(function(yl, k){ var s0 = (yl - h)/c.d; if (k === 0) s0 = 0; var y0 = k === 0 ? h : yl; var s1 = s0 - y0/c.f;
+seg(g, X(-c.d), Y(h), X(0), Y(y0), k < 2 ? p.ray2 : p.ray, k < 2 ? 1.8 : 1.2);
+seg(g, X(0), Y(y0), X(xmax), Y(y0 + s1*xmax), k < 2 ? p.ray2 : p.ray, k < 2 ? 1.8 : 1.2);
+if (R.di < 0 && vi !== null) seg(g, X(0), Y(y0), X(vi), Y(y0 + s1*vi), p.muted, 1, [4, 4]); });
+if (vi !== null){ arrowV(g, X(vi), cy, Y(hImg), p.img, 2.5, [6, 4]); T(g, 'virtual image (upright)', X(vi), Y(hImg) - 8, p.img); }
+else T(g, !isFinite(R.di) ? 'object at F: the image is at infinity (parallel light, a relaxed eye)' : (R.di > 0 ? 'the object is beyond F: a real image forms behind the eye' : 'the image is ' + (-R.di/10).toFixed(0) + ' cm away (off the drawing)'), W/2, 18, p.img);
+eye(g, X(12), cy); T(g, 'eye', X(12), cy + 22, p.txt);
+T(g, 'f = ' + c.f + ' mm', X(0), Y(a) - 6, p.txt);
+}
+function magDiagram(p){
+/* textbook diagram: object inside F, virtual upright image (angles exaggerated) */
+var g = SD.g, W = SD.W, H = SD.H, cy = 190, XL = 520, f = 170, d = 110, h = 45, di = 1/(1/f - 1/d), hI = -h*di/d;
+seg(g, 10, cy, W - 10, cy, p.muted, 1); lensAt(g, XL, cy, 110, 18, p);
+dot(g, XL - f, cy, p.txt, 'F'); dot(g, XL + f, cy, p.txt, 'F');
+arrowV(g, XL - d, cy, cy - h, p.obj, 3); T(g, 'object', XL - d, cy - h - 8, p.obj);
+arrowV(g, XL + di, cy, cy - hI, p.img, 3, [6, 4]); T(g, 'image (virtual, upright, larger)', XL + di, cy - hI - 8, p.img);
+/* the parallel ray (through F after the lens) and the ray through the centre, with their back-extensions */
+var s1 = h/f; seg(g, XL - d, cy - h, XL, cy - h, p.ray2, 2); seg(g, XL, cy - h, W - 20, cy - h + s1*(W - 20 - XL), p.ray2, 2); seg(g, XL, cy - h, XL + di, cy - hI, p.muted, 1, [4, 4]);
+var s2 = h/d; seg(g, XL - d, cy - h, W - 20, cy - h + s2*(W - 20 - XL + d), p.ray2, 2); seg(g, XL - d, cy - h, XL + di, cy - hI, p.muted, 1, [4, 4]);
+eye(g, XL + 60, cy + 4);
+T(g, 'd\u2092', (XL - d + XL)/2, cy + 18, p.txt, 'center', 'italic 12px system-ui, serif'); T(g, 'd\u1D62 (negative: same side as the object)', (XL + di + XL)/2, cy + 34, p.txt, 'center', 'italic 12px system-ui, serif');
+T(g, 'textbook diagram: not to scale', W - 8, H - 6, p.muted, 'right');
+}
+function drawMagClose(){
+/* the angle the object takes up: at the near point without help; through the magnifier */
+var p = clear(CL), g = CL.g, W = CL.W, H = CL.H, c = S.mag, R = mag(), h = 5;
+var y1 = 70, y2 = 185, ex = W - 40, sx = (W - 80)/NEAR;
+function row(y, dist, ang, lab, colA){ seg(g, 30, y, ex, y, p.muted, 1); var ox = ex - dist*sx, oh = Math.min(48, h*sx*2.5);
+arrowV(g, ox, y, y - oh, p.obj, 3); seg(g, ex, y, ox, y - oh, colA, 1.6); var th0 = Math.atan(oh/(ex - ox));
+g.strokeStyle = colA; g.lineWidth = 1.2; g.beginPath(); g.arc(ex, y, 30, Math.PI, Math.PI + th0); g.stroke(); eye(g, ex + 14, y); T(g, lab, 34, y - 54, p.txt, 'left'); return th0; }
+var a0 = row(y1, NEAR, 0, 'naked eye: the object at the near point, 25 cm', p.ray);
+/* through the lens: the image takes up the angle the object does from the lens */
+var dist2 = c.d; seg(g, 30, y2, ex, y2, p.muted, 1); lensAt(g, ex - 6, y2, 34, 6, p);
+var oh2 = Math.min(48, h*sx*2.5), ox2 = ex - dist2*sx; arrowV(g, ox2, y2, y2 - oh2, p.obj, 3); seg(g, ex, y2, ox2, y2 - oh2, p.ray2, 1.6);
+var t2 = Math.atan(oh2/(ex - ox2)); g.strokeStyle = p.ray2; g.lineWidth = 1.2; g.beginPath(); g.arc(ex, y2, 30, Math.PI, Math.PI + t2); g.stroke(); eye(g, ex + 14, y2);
+T(g, 'through the magnifier: the object ' + (c.d/10).toFixed(1) + ' cm away', 34, y2 - 54, p.txt, 'left');
+T(g, '\u03B8', ex - 40, y1 - 6, p.ray, 'center', 'italic bold 13px system-ui, serif'); T(g, '\u03B8\u2032', ex - 40, y2 - 8, p.ray2, 'center', 'italic bold 13px system-ui, serif');
+T(g, 'M = \u03B8\u2032/\u03B8 = 25 cm / d\u2092 = ' + R.M.toFixed(1) + '\u00D7', W/2, H - 10, p.txt);
+}
+/* ══════════ 2. the compound microscope ══════════ */
+function drawCmpSide(){
+var p = clear(SD), g = SD.g, W = SD.W, H = SD.H, c = S.cmp, R = cmp();
+if (S.schem) return cmpDiagram(p);
+var re = Math.min(12, Math.max(4, c.fe*0.3)), hh = 0.6*re/Math.max(1, Math.abs(R.mo));   /* the eyepiece's radius; the specimen's height, so that its first image lies well inside the eyepiece (the field of view) */
+var xmin = -c.d - 18, xmax = c.L + 45, sx = (W - 40)/(xmax - xmin), X = function(x){ return 20 + (x - xmin)*sx; };
+var hi1 = R.mo*hh, ymax = Math.max(R.a*1.15, Math.min(Math.abs(hi1), 40)*1.15, re*1.15, 2), sy = (H/2 - 34)/ymax, cy = H/2 + 6, Y = function(y){ return cy - y*sy; };
+g.fillStyle = p.tube; g.fillRect(X(0), cy - re*1.3*sy, X(c.L) - X(0), 2*re*1.3*sy);
+seg(g, 8, cy, W - 8, cy, p.muted, 1);
+lensAt(g, X(0), cy, Math.max(6, R.a*sy), 5, p); lensAt(g, X(c.L), cy, re*sy, 7, p);
+dot(g, X(-c.fo), cy, p.txt, 'F\u2092'); dot(g, X(c.fo), cy, p.txt, 'F\u2092'); dot(g, X(c.L - c.fe), cy, p.txt, 'F\u2091'); dot(g, X(c.L + c.fe), cy, p.txt, 'F\u2091');
+arrowV(g, X(-c.d), cy, Y(hh), p.obj, 3); T(g, 'h', X(-c.d) - 8, Y(hh), p.obj, 'right', 'italic 12px system-ui, serif');
+/* a fan of rays from the specimen's tip, across the objective */
+var fin = R.die < 0 && c.L + R.die > xmin ? c.L + R.die : null;
+for (var i=0; i<7; i++){ var yl = -R.a + 2*R.a*i/6, s0 = (yl - hh)/c.d, s1 = s0 - yl/c.fo, ye = yl + s1*c.L, col = i === 3 ? p.ray2 : p.ray;
+seg(g, X(-c.d), Y(hh), X(0), Y(yl), col, 1.2);
+if (Math.abs(ye) <= re){ seg(g, X(0), Y(yl), X(c.L), Y(ye), col, 1.2); var s2 = s1 - ye/c.fe; seg(g, X(c.L), Y(ye), X(xmax), Y(ye + s2*(xmax - c.L)), col, 1.2);
+if (R.die < 0) seg(g, X(c.L), Y(ye), X(fin !== null ? fin : xmin), Y(ye + s2*((fin !== null ? fin : xmin) - c.L)), p.muted, 0.8, [3, 4], 0.6); }
+else seg(g, X(0), Y(yl), X(c.L), Y(ye), col, 0.8, [], 0.35); }
+if (R.di > 0 && R.di < xmax){ arrowV(g, X(R.di), cy, Y(Math.max(-ymax, Math.min(ymax, hi1))), p.img, 3); T(g, 'first image', X(R.di), Y(Math.max(-ymax, Math.min(ymax, hi1))) + (hi1 < 0 ? 14 : -6), p.img); }
+eye(g, X(c.L) + 22, cy);
+if (fin !== null){ var hf = Math.max(-ymax, Math.min(ymax, hi1*R.me)); arrowV(g, X(fin), cy, Y(hf), p.img, 2, [6, 4]); T(g, 'final image (virtual)', X(fin), Y(hf) + 14, p.img); }
+else if (R.die < 0) T(g, '\u2190 final image ' + (-R.die).toFixed(0) + ' mm in front of the eyepiece (off the drawing)', 22, 16, p.img, 'left');
+else T(g, isFinite(R.die) ? 'the final image is real, behind the eye: out of focus' : 'final image at infinity: parallel light for a relaxed eye', 22, 16, p.img, 'left');
+T(g, 'objective, f\u2092 = ' + c.fo + ' mm', X(0), cy + R.a*sy + 16, p.txt); T(g, 'eyepiece, f\u2091 = ' + c.fe + ' mm', X(c.L) - 6, cy - re*1.3*sy - 6, p.txt, 'right');
+T(g, 'L = ' + c.L + ' mm between the lenses \u00B7 heights \u00D7' + (sy/sx).toFixed(1), W - 8, H - 6, p.muted, 'right');
+}
+function cmpDiagram(p){
+/* textbook diagram (cf. Figures 10.15.1 and 27.5.2): object just outside F_o, first image inside F_e, large virtual final image */
+var g = SD.g, W = SD.W, H = SD.H, cy = 70, XO = 230, fo = 50, d = 64, XE = 545, fe = 115, h = 12;
+var di = 1/(1/fo - 1/d), hi1 = -h*di/d, doe = XE - (XO + di), die = 1/(1/fe - 1/doe), hf = hi1*(-die/doe), XF = XE + die;
+seg(g, 8, cy, W - 8, cy, p.muted, 1); lensAt(g, XO, cy, 46, 9, p); lensAt(g, XE, cy, 62, 12, p);
+[[XO - fo, 'F\u2092'], [XO + fo, 'F\u2092'], [XE - fe, 'F\u2091'], [XE + fe, 'F\u2091']].forEach(function(q){ dot(g, q[0], cy, p.txt, q[1]); });
+arrowV(g, XO - d, cy, cy - h, p.obj, 3); T(g, 'h', XO - d - 8, cy - 4, p.obj, 'right', 'italic 12px system-ui, serif'); T(g, 'object', XO - d - 4, cy + 18, p.obj);
+arrowV(g, XO + di, cy, cy - hi1, p.img, 3); T(g, 'h\u1D62', XO + di + 10, cy - hi1 + 4, p.img, 'left', 'italic 12px system-ui, serif'); T(g, 'first image', XO + di, cy - hi1 + 16, p.img);
+arrowV(g, XF, cy, Math.min(H - 16, cy - hf), p.img, 2.5, [6, 4]); T(g, 'h\u1D62\u2032  final image', XF + 8, Math.min(H - 26, cy - hf) + 10, p.img, 'left');
+/* rays from the object's tip: parallel, through F_o, through the centre */
+var tipX = XO - d, tipY = cy - h, imX = XO + di, imY = cy - hi1;
+['parallel', 'through F', 'centre'].forEach(function(q, k){
+var ylens = k === 0 ? tipY : (k === 2 ? cy : cy + (tipY - cy)*(XO - (XO - fo))/(tipX - (XO - fo)));
+seg(g, tipX, tipY, XO, ylens, p.ray2, 1.6); seg(g, XO, ylens, imX, imY, p.ray2, 1.6);
+/* on to the eyepiece and out; dashed back to the final image */
+var sl = (imY - ylens)/(imX - XO), ye = imY + sl*(XE - imX), s2 = sl - (ye - cy)/fe; seg(g, imX, imY, XE, ye, p.ray2, 1.6); seg(g, XE, ye, W - 30, ye + s2*(W - 30 - XE), p.ray2, 1.6); seg(g, XE, ye, XF, cy - hf, p.muted, 0.9, [4, 4]); });
+eye(g, W - 22, cy - 6);
+function sp(x1, x2, y, t){ g.strokeStyle = p.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(x1, y); g.lineTo(x2, y); g.moveTo(x1, y - 4); g.lineTo(x1, y + 4); g.moveTo(x2, y - 4); g.lineTo(x2, y + 4); g.stroke(); T(g, t, (x1 + x2)/2, y - 4, p.txt, 'center', 'italic 12px system-ui, serif'); }
+sp(XO - d, XO, 22, 'd\u2092'); sp(XO, XO + di, 22, 'd\u1D62'); sp(XO + di, XE, 22, 'd\u2092\u2032'); sp(XF, XE, H - 8, 'd\u1D62\u2032');
+T(g, 'objective', XO, cy + 62, p.txt); T(g, 'eyepiece', XE, cy + 78, p.txt); T(g, 'textbook diagram: not to scale', W - 8, 40, p.muted, 'right');
+}
+function drawCmpClose(){
+/* the specimen just outside the objective's focal point, and the cone of light the objective accepts */
+var p = clear(CL), g = CL.g, W = CL.W, H = CL.H, c = S.cmp, R = cmp(), cy = H/2 + 10;
+var span = c.d*2.6, sx = (W - 40)/span, X = function(x){ return 30 + (x + c.d*1.3)*sx; }, sy = Math.min(sx, (H/2 - 30)/Math.max(R.a*1.2, 0.8)), Y = function(y){ return cy - y*sy; };
+seg(g, 8, cy, W - 8, cy, p.muted, 1); lensAt(g, X(0), cy, R.a*sy, 6, p); dot(g, X(-c.fo), cy, p.txt, 'F\u2092'); dot(g, X(c.fo), cy, p.txt, 'F\u2092');
+for (var i=0; i<7; i++){ var yl = -R.a + 2*R.a*i/6, s0 = yl/c.d, s1 = s0 - yl/c.fo; seg(g, X(-c.d), cy, X(0), Y(yl), i === 3 ? p.ray2 : p.ray, 1.3); seg(g, X(0), Y(yl), X(c.d*1.3), Y(yl + s1*c.d*1.3), i === 3 ? p.ray2 : p.ray, 1.3); }
+dot(g, X(-c.d), cy, p.obj); T(g, 'specimen', X(-c.d), cy + 18, p.obj);
+var al = Math.atan(R.a/c.d); g.strokeStyle = p.ray2; g.lineWidth = 1.2; g.beginPath(); g.arc(X(-c.d), cy, 26, -al*sy/sx, 0); g.stroke(); T(g, '\u03B1', X(-c.d) + 32, cy - 6, p.ray2, 'left', 'italic bold 13px system-ui, serif');
+T(g, 'd\u2092 = ' + c.d.toFixed(2) + ' mm (' + (c.d > c.fo ? 'just outside F\u2092' : 'inside F\u2092: no real image!') + ')', 10, 16, c.d > c.fo ? p.txt : p.obj, 'left');
+T(g, 'NA = sin \u03B1 = ' + c.na.toFixed(2), 10, H - 10, p.txt, 'left'); T(g, 'not to scale with the side view', W - 8, H - 10, p.muted, 'right');
+}
+/* ══════════ the lab microscope ══════════ */
+var ORDER = ['4', '10', '40', '100'], BAND = { '4':'#d33', '10':'#e8c020', '40':'#4aa8e8', '100':'#f2f2f2' }, GAP = { '4':34, '10':22, '40':8, '100':3 }, LEN = { '4':26, '10':34, '40':44, '100':52 };
+var ENGR = { '4':['4/0.10', '160/\u2013'], '10':['10/0.25', '160/\u2013'], '40':['40/0.65', '160/0.17'], '100':['100/1.25 oil', '160/0.17'] };
+function useObjective(k){ var o = OBJS[k]; S.cmp = { fo:o.f, fe:25, L:160 + o.f + 25, d:o.f*1.1, na:Math.min(0.95, o.na) }; focusRelaxed(); S.labObj = k; }
+var LABGEO = {};
+function drawLab(){
+var g = LB.g, W = LB.W, H = LB.H, p = clear(LB), c = S.cmp, C = cmp(), k = S.labObj, MX = 250;
+var metal = th.hc ? '#bbb' : (th.lm ? '#c9ced4' : '#d8dde2'), dark = th.hc ? '#555' : '#3a4048', black = '#1b1e22';
+/* the stage moves with the focus: up when the specimen comes closer to the objective */
+var dF = 1/(1/c.fo - 1/(c.L - c.fe)), off = Math.max(-26, Math.min(26, (c.d - dF)/c.fo*90)), ySt = 300 + off;
+var kk = k || '40', gap = GAP[kk], tipY = 300 - 4 - gap, len = LEN[kk], topO = tipY - len, yNose = topO - 8, yEye = 56;
+/* the light: from the lamp up through the condenser, the specimen, the objective, the tube and the eyepiece */
+g.fillStyle = 'rgba(255,224,102,0.16)'; g.beginPath(); g.moveTo(MX - 10, 420); g.lineTo(MX + 10, 420); g.lineTo(MX + 6, ySt + 30); g.lineTo(MX + 2, ySt - 2); g.lineTo(MX + 14, tipY); g.lineTo(MX + 12, yEye); g.lineTo(MX - 12, yEye); g.lineTo(MX - 14, tipY); g.lineTo(MX - 2, ySt - 2); g.lineTo(MX - 6, ySt + 30); g.closePath(); g.fill();
+/* base, lamp, arm */
+g.fillStyle = metal; g.beginPath(); g.moveTo(130, 455); g.lineTo(380, 455); g.quadraticCurveTo(392, 455, 392, 440); g.lineTo(392, 425); g.lineTo(118, 425); g.lineTo(118, 440); g.quadraticCurveTo(118, 455, 130, 455); g.fill();
+var lg = g.createRadialGradient(MX, 420, 2, MX, 420, 26); lg.addColorStop(0, 'rgba(255,240,170,1)'); lg.addColorStop(1, 'rgba(255,220,100,0)'); g.fillStyle = lg; g.beginPath(); g.arc(MX, 420, 26, 0, 2*Math.PI); g.fill();
+g.fillStyle = metal; g.beginPath(); g.moveTo(330, 425); g.lineTo(372, 425); g.quadraticCurveTo(392, 300, 362, 150); g.quadraticCurveTo(350, 100, 300, 88); g.lineTo(MX + 18, 96); g.lineTo(MX + 18, 122); g.lineTo(300, 122); g.quadraticCurveTo(332, 135, 338, 200); g.quadraticCurveTo(345, 300, 330, 425); g.fill();
+g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 1; g.stroke();
+/* condenser and its iris lever, under the stage */
+g.fillStyle = dark; g.fillRect(MX - 24, ySt + 12, 48, 22); g.fillStyle = metal; g.fillRect(MX - 30, ySt + 34, 60, 6); g.strokeStyle = metal; g.lineWidth = 3; g.beginPath(); g.moveTo(MX + 24, ySt + 22); g.lineTo(MX + 44, ySt + 26); g.stroke();
+/* the stage, the slide and its clips, the specimen */
+g.fillStyle = black; g.fillRect(MX - 110, ySt, 250, 12); g.fillStyle = dark; g.fillRect(MX + 110, ySt + 12, 34, 16);
+g.fillStyle = 'rgba(190,225,245,0.75)'; g.fillRect(MX - 75, ySt - 5, 150, 5); g.fillStyle = 'rgba(210,120,140,0.95)'; g.fillRect(MX - 10, ySt - 7, 20, 2);
+g.strokeStyle = metal; g.lineWidth = 3; [MX - 95, MX + 60].forEach(function(x){ g.beginPath(); g.moveTo(x, ySt - 2); g.lineTo(x + 30, ySt - 7); g.stroke(); });
+/* focus knobs: coarse and fine, turned by the focus */
+var rot = (c.d - dF)/c.fo*6;
+[[356, 330, 24], [356, 330, 12]].forEach(function(q, n){ g.fillStyle = n ? metal : dark; g.beginPath(); g.arc(q[0], q[1], q[2], 0, 2*Math.PI); g.fill(); g.strokeStyle = n ? dark : metal; g.lineWidth = 2; g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[0] + q[2]*0.9*Math.cos(rot*(n ? 8 : 1)), q[1] + q[2]*0.9*Math.sin(rot*(n ? 8 : 1))); g.stroke(); });
+/* the body tube, the eyepiece, the eye */
+g.fillStyle = metal; g.fillRect(MX - 18, 96, 36, yNose - 96 - 4); g.fillStyle = dark; g.fillRect(MX - 12, yEye, 24, 42); g.fillStyle = black; g.fillRect(MX - 14, yEye - 6, 28, 8);
+g.fillStyle = '#fff'; g.font = 'bold 10px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('10\u00D7', MX, yEye + 26);
+g.fillStyle = '#fff'; g.strokeStyle = '#334'; g.lineWidth = 1; g.beginPath(); g.ellipse(MX, yEye - 24, 14, 8, 0, 0, 2*Math.PI); g.fill(); g.stroke(); g.fillStyle = '#334'; g.beginPath(); g.arc(MX, yEye - 21, 3.5, 0, 2*Math.PI); g.fill();
+/* the revolving nosepiece and its four objectives: the one in use points straight down */
+g.fillStyle = dark; g.beginPath(); g.ellipse(MX, yNose, 62, 13, 0, 0, 2*Math.PI); g.fill(); g.fillStyle = metal; g.beginPath(); g.ellipse(MX, yNose - 3, 56, 10, 0, 0, 2*Math.PI); g.fill();
+var idx = ORDER.indexOf(kk);
+[-2, -1, 1].forEach(function(dv){ var kq = ORDER[(idx + dv + 4) % 4], ang = dv*0.55, l2 = LEN[kq]*0.8, x0 = MX + dv*30, y0 = yNose + 6;
+g.save(); g.translate(x0, y0); g.rotate(-ang); g.globalAlpha = dv === -2 ? 0.45 : 0.85; g.fillStyle = metal; g.fillRect(-9, 0, 18, l2); g.fillStyle = BAND[kq]; g.fillRect(-9, l2*0.55, 18, 4); g.restore(); });
+g.fillStyle = metal; g.fillRect(MX - 11, yNose + 6, 22, len - 14); g.fillStyle = dark; g.fillRect(MX - 7, tipY - 10, 14, 10); g.fillStyle = BAND[kk]; g.fillRect(MX - 11, yNose + 6 + (len - 14)*0.5, 22, 4);
+if (kk === '100'){ g.fillStyle = '#111'; g.fillRect(MX - 11, yNose + 6 + (len - 14)*0.5 + 6, 22, 2); g.fillStyle = 'rgba(230,200,90,0.7)'; g.fillRect(MX - 6, tipY, 12, ySt - 5 - tipY); }
+LABGEO = { MX:MX, yNose:yNose };
+/* engravings, as on a real objective */
+g.fillStyle = p.txt; g.font = '10px ui-monospace, monospace'; g.textAlign = 'left';
+g.fillText(k ? ENGR[k][0] : 'custom', MX + 16, yNose + 18); g.fillText(k ? ENGR[k][1] : '', MX + 16, yNose + 30);
+/* names of the parts */
+var names = [['eyepiece (ocular), 10\u00D7', yEye + 18, MX - 12], ['body tube', 150, MX - 18], ['revolving nosepiece', yNose, MX - 60], ['objective', (yNose + tipY)/2 + 6, MX - 11], ['slide on the stage', ySt - 3, MX - 75], ['condenser and iris', ySt + 22, MX - 24], ['lamp (illuminator)', 420, MX - 18], ['base', 445, 130]];
+names.forEach(function(q){ g.strokeStyle = p.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(128, q[1]); g.lineTo(q[2], q[1]); g.stroke(); T(g, q[0], 124, q[1] + 4, p.txt, 'right', '10px system-ui, sans-serif'); });
+[['arm', 380, 190], ['coarse and fine focus', 388, 360]].forEach(function(q){ T(g, q[0], q[1], q[2], p.txt, 'left'); });
+/* ── the same optics, as a ray diagram, aligned with the instrument ── */
+var AX = 548, yObj = tipY, ySp = ySt - 6, ok = c.d > c.fo && C.doe > 0;
+var frac = Math.max(0.05, Math.min(0.95, C.di/c.L)), yImg = yObj - frac*(yObj - yEye), dpx = ySp - yObj, dipx = yObj - yImg, fpx = 1/(1/dpx + 1/dipx), doepx = yImg - yEye, fepx = doepx*c.fe/C.doe;
+g.strokeStyle = p.muted; g.lineWidth = 1; g.setLineDash([2, 4]); g.beginPath(); g.moveTo(AX, 30); g.lineTo(AX, ySp + 30); g.stroke(); g.setLineDash([]);
+g.save(); g.translate(AX, yObj); g.rotate(Math.PI/2); lensAt(g, 0, 0, 20, 6, p); g.restore();
+g.save(); g.translate(AX, yEye); g.rotate(Math.PI/2); lensAt(g, 0, 0, 30, 8, p); g.restore();
+/* rays from a point of the specimen, slightly off axis, to the first image (inverted) and out through the eyepiece */
+var hI = -15, hS = -hI*dpx/dipx, x0s = AX + hS;   /* a specimen point small enough for a first image 15 px from the axis */
+for (var i=0; i<5; i++){ var xl = AX - 18 + 9*i, sl = (xl - x0s)/dpx, xi = AX + hI;
+seg(g, x0s, ySp, xl, yObj, i === 2 ? p.ray2 : p.ray, 1.2);
+if (!ok){ seg(g, xl, yObj, xl + (xl - x0s)/dpx*(yObj - yEye), yEye, p.ray, 0.8, [], 0.4); continue; }
+seg(g, xl, yObj, xi, yImg, i === 2 ? p.ray2 : p.ray, 1.2);
+var s2 = (xi - xl)/(yImg - yObj)*(-1)*(-1), xe = xi + (xi - xl)/(yObj - yImg)*(yImg - yEye);
+if (Math.abs(xe - AX) < 30){ seg(g, xi, yImg, xe, yEye, i === 2 ? p.ray2 : p.ray, 1.2); var dxdy = (xe - xi)/(yImg - yEye), out = dxdy - (xe - AX)/fepx; seg(g, xe, yEye, xe + out*28, yEye - 28, i === 2 ? p.ray2 : p.ray, 1.2); } }
+g.fillStyle = p.obj; g.beginPath(); g.arc(x0s, ySp, 3, 0, 2*Math.PI); g.fill(); if (ok){ g.strokeStyle = p.img; g.fillStyle = p.img; g.lineWidth = 3; g.beginPath(); g.moveTo(AX, yImg); g.lineTo(AX + hI, yImg); g.stroke(); g.beginPath(); g.moveTo(AX + hI - 2, yImg); g.lineTo(AX + hI + 6, yImg - 4); g.lineTo(AX + hI + 6, yImg + 4); g.closePath(); g.fill(); }
+/* connectors: each part of the instrument to its place in the diagram */
+var links = [[MX + 14, yEye + 10, AX - 34, yEye, 'eyepiece lens, f\u2091 = ' + c.fe + ' mm', 0], [MX + 18, ok ? yImg : 160, AX - 18, ok ? yImg : 160, ok ? 'first image, ' + f1(C.di, 0) + ' mm up the tube' : 'no first image', 0], [MX + 11, tipY - 6, AX - 22, yObj, 'objective lens, f\u2092 = ' + f1(c.fo, 1) + ' mm', -6], [MX + 75, ySt - 3, AX - 4, ySp, 'specimen, ' + f1(c.d, 2) + ' mm below it', 12]];
+links.forEach(function(q){ g.strokeStyle = 'rgba(232,160,32,0.55)'; g.lineWidth = 1; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[2], q[3]); g.stroke(); g.setLineDash([]); T(g, q[4], AX + 38, q[3] + 4 + q[5], p.txt, 'left'); });
+/* the magnification, as the engravings give it and as computed */
+var mo = k ? +ENGR[k][0].split('/')[0] : null;
+T(g, k ? 'engraved: ' + mo + '\u00D7 objective \u00D7 10\u00D7 eyepiece = ' + (mo*10) + '\u00D7' : 'objective and eyepiece of your choice', W - 10, H - 26, p.txt, 'right');
+T(g, 'as focused now, it looks ' + f1(C.M, 0) + '\u00D7 bigger \u00B7 L = ' + c.L + ' mm, tube length ' + f1(C.Lt, 0) + ' mm', W - 10, H - 10, p.muted, 'right');
+}
+function labSay(){ var k = S.labObj, C = cmp(); return 'A compound microscope as it looks in the lab. From the bottom: the base with its lamp; the condenser, which gathers the light onto the specimen; the slide on the stage; the objective in use' + (k ? ', engraved ' + ENGR[k][0] + ', on the revolving nosepiece' : '') + '; the body tube, where the first image forms, ' + f1(C.di, 0) + ' millimetres above the objective; and the eyepiece at the top. Beside it, the same optics as a ray diagram, aligned with the instrument. ' + (k ? 'The engravings give ' + ENGR[k][0].split('/')[0] + ' times 10, ' + (+ENGR[k][0].split('/')[0]*10) + ' times. ' : '') + 'Click the nosepiece to change the objective; the focus slider moves the stage.'; }
+LB.c.addEventListener('click', function(e){
+var r = LB.c.getBoundingClientRect(), x = (e.clientX - r.left)*LB.W/r.width, y = (e.clientY - r.top)*LB.H/r.height;
+if (Math.abs(x - LABGEO.MX) < 80 && y > LABGEO.yNose - 24 && y < LABGEO.yNose + 70){ var i = ORDER.indexOf(S.labObj || '100'); useObjective(ORDER[(i + 1) % 4]); buildCtl(); draw(); var o = OBJS[S.labObj];
+narrate('The nosepiece turns to the ' + o.name + ' objective. It magnifies ' + S.labObj + ' times; with the 10 times eyepiece, ' + (+S.labObj*10) + ' times in all. ' + (S.labObj === '100' ? 'It needs a drop of immersion oil between it and the slide. ' : '') + 'It resolves details down to ' + f1(0.61*0.55/S.cmp.na, 2) + ' micrometres.'); }
+});
+/* ══════════ what you see ══════════ */
+var NATIVE = (typeof CanvasRenderingContext2D !== 'undefined') && ('filter' in CanvasRenderingContext2D.prototype);
+function blurred(g, b, fn){ if (b < 0.4){ fn(); return; } if (NATIVE){ g.save(); g.filter = 'blur(' + b.toFixed(1) + 'px)'; fn(); g.restore(); return; }
+var rings = [0.35, 0.7, 1.05, 1.4]; g.save(); g.globalAlpha = 0.07; fn(); for (var r=0; r<4; r++) for (var i=0; i<10; i++){ var an = (i + 0.5*r)*Math.PI/5; g.save(); g.translate(rings[r]*b*Math.cos(an), rings[r]*b*Math.sin(an)); fn(); g.restore(); } g.restore(); }
+function rnd(seed){ var s = seed; return function(){ s = (s*16807) % 2147483647; return (s - 1)/2147483646; }; }
+var SPECS = { letter:{ name:'a printed letter e (1.5 mm)' }, hair:{ name:'a human hair (70 \u00B5m wide)' }, onion:{ name:'onion skin cells (about 0.3 mm long)' }, blood:{ name:'red blood cells (7.5 \u00B5m across)' } };
+function drawSpec(g, pxmm, Rv){
+/* the specimen, centred, at pxmm pixels per millimetre; Rv = radius of the visible field in px */
+var sp = S.spec, half = Rv/pxmm;      /* mm visible from the centre */
+if (sp === 'letter'){ g.fillStyle = '#f7f3e8'; g.fillRect(-Rv, -Rv, 2*Rv, 2*Rv); g.fillStyle = '#1a1a1a'; g.font = 'bold ' + (2.1*pxmm).toFixed(1) + 'px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('e', 0, 0); g.textBaseline = 'alphabetic';
+var r = rnd(5); if (pxmm > 60){ g.fillStyle = 'rgba(120,110,90,0.25)'; for (var i=0; i<220; i++){ g.fillRect((r() - 0.5)*2*Rv, (r() - 0.5)*2*Rv, Math.max(1, 0.01*pxmm), Math.max(1, 0.03*pxmm)); } } }
+if (sp === 'hair'){ g.fillStyle = '#eef2f5'; g.fillRect(-Rv, -Rv, 2*Rv, 2*Rv); g.save(); g.rotate(-0.5); var w = 0.07*pxmm; g.fillStyle = '#5a3a22'; g.fillRect(-3*Rv, -w/2, 6*Rv, w);
+if (pxmm > 400){ g.strokeStyle = 'rgba(30,18,10,0.55)'; g.lineWidth = Math.max(0.6, 0.0015*pxmm); var step = 0.008*pxmm; for (var x = -2*Rv; x < 2*Rv; x += step){ g.beginPath(); g.arc(x, 0, w/2, -0.6, 0.6); g.stroke(); } } g.restore(); }
+if (sp === 'onion'){ g.fillStyle = '#efe6c2'; g.fillRect(-Rv, -Rv, 2*Rv, 2*Rv); var cw = 0.30*pxmm, ch = 0.065*pxmm, nr = Math.ceil(Rv/ch) + 1, nc = Math.ceil(Rv/cw) + 1;
+if (nr*nc*4 > 4000){ g.fillStyle = 'rgba(150,130,60,0.25)'; g.fillRect(-Rv, -Rv, 2*Rv, 2*Rv); return; }
+var r2 = rnd(11); g.strokeStyle = 'rgba(120,96,40,0.9)'; g.lineWidth = Math.max(0.6, 0.004*pxmm);
+for (var j=-nr; j<=nr; j++){ var off = (j % 2) ? cw/2 : 0; for (var k=-nc; k<=nc; k++){ var x0 = k*cw + off - cw/2, y0 = j*ch - ch/2; g.strokeRect(x0, y0, cw, ch);
+if (ch > 4){ g.fillStyle = 'rgba(140,90,40,0.75)'; g.beginPath(); g.ellipse(x0 + cw*(0.3 + 0.4*r2()), y0 + ch*(0.35 + 0.3*r2()), ch*0.16, ch*0.13, 0, 0, 2*Math.PI); g.fill(); } } } }
+if (sp === 'blood'){ g.fillStyle = '#f4ece6'; g.fillRect(-Rv, -Rv, 2*Rv, 2*Rv); var rc = 0.00375*pxmm, area = (2*half)*(2*half), n = Math.min(1500, Math.round(area/(0.012*0.012))), r3 = rnd(17);
+for (var q=0; q<n; q++){ var x = (r3() - 0.5)*2*Rv, y = (r3() - 0.5)*2*Rv; if (rc < 0.6){ g.fillStyle = 'rgba(190,60,60,0.5)'; g.fillRect(x, y, 1, 1); continue; }
+var gr = g.createRadialGradient(x, y, rc*0.15, x, y, rc); gr.addColorStop(0, 'rgba(235,150,150,0.9)'); gr.addColorStop(0.55, 'rgba(205,70,70,0.95)'); gr.addColorStop(1, 'rgba(170,40,40,0.9)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, rc, 0, 2*Math.PI); g.fill(); } }
+}
+function drawView(){
+var p = clear(VW), g = VW.g, W = VW.W, H = VW.H;
+if (S.tab === 2) return drawTwoPoints(p);
+var R = Math.min(W/4 - 12, H/2 - 24), c1 = [W/4, H/2 - 6], c2 = [3*W/4, H/2 - 6];
+var field = S.tab === 0 ? 8 : 40, k = 2*R/field;                /* px per degree of apparent angle: the circles span 8 or 40 degrees */
+var pxmm0 = k*(1/NEAR)/DEG, M, inv, blurPx;
+if (S.tab === 0){ var Rm = mag(); M = Rm.M; inv = false; blurPx = 0.002*eyeError(Rm.di)/DEG*k; }
+else { var Rc = cmp(); M = Rc.M; inv = true; blurPx = (0.61*LAMBDA/S.cmp.na)*M/NEAR/DEG*k + 0.002*eyeError(Rc.die)/DEG*k; if (S.cmp.d <= S.cmp.fo || Rc.doe <= 0) blurPx = 40; }
+[[c1, 'naked eye, at 25 cm'], [c2, (S.tab === 0 ? 'magnifier' : 'microscope') + ', \u00D7' + M.toFixed(0) + (inv ? ', upside down' : ', upright')]].forEach(function(q, i){
+var c = q[0]; g.save(); g.beginPath(); g.arc(c[0], c[1], R, 0, 2*Math.PI); g.clip(); g.translate(c[0], c[1]);
+if (i === 0) drawSpec(g, pxmm0, R); else { if (inv) g.rotate(Math.PI); blurred(g, blurPx, function(){ drawSpec(g, pxmm0*M, R); }); }
+g.restore(); g.strokeStyle = p.muted; g.lineWidth = 1.5; g.beginPath(); g.arc(c[0], c[1], R, 0, 2*Math.PI); g.stroke(); T(g, q[1], c[0], H - 6, p.txt);
+});
+T(g, 'each circle spans ' + field + '\u00B0 of your view', W/2, 13, p.muted);
+if (blurPx > 2.5) T(g, 'blurred: ' + (S.tab === 1 && blurPx >= 40 ? 'no proper image' : 'out of focus or beyond the resolution'), 3*W/4, 26, '#ff9a3c');
+}
+/* ══════════ 3. objectives: numerical aperture and immersion ══════════ */
+function drawObjSide(){
+var p = clear(SD), g = SD.g, W = SD.W, H = SD.H, o = OBJS[S.obj.kind], nm = MEDIA[S.obj.medium].n, sa = o.na/o.n, alpha = Math.asin(Math.min(0.999, sa));
+var sx0 = W/2, yS = 250, yCG = 222, yM = 150, lensR = 130;
+/* slide, specimen, cover glass, the medium, the objective's front lens */
+g.fillStyle = 'rgba(160,200,230,0.25)'; g.fillRect(40, yS, W - 80, 40); g.fillStyle = 'rgba(160,200,230,0.32)'; g.fillRect(40, yCG, W - 80, yS - yCG);
+g.fillStyle = S.obj.medium === 'air' ? 'rgba(0,0,0,0)' : (S.obj.medium === 'water' ? 'rgba(90,160,230,0.22)' : 'rgba(230,200,90,0.22)'); g.fillRect(sx0 - 230, yM, 460, yCG - yM);
+g.fillStyle = p.tube; g.fillRect(sx0 - 200, 10, 400, yM - 60);
+g.fillStyle = p.glass; g.strokeStyle = p.glassE; g.lineWidth = 1.5; g.beginPath(); g.moveTo(sx0 - 170, yM - 50); g.quadraticCurveTo(sx0, yM + 6, sx0 + 170, yM - 50); g.lineTo(sx0 + 170, yM - 52); g.lineTo(sx0 - 170, yM - 52); g.closePath(); g.fill(); g.stroke();
+T(g, 'objective ' + o.name, sx0, 30, p.txt); T(g, 'cover glass (n = 1.52)', 46, yCG + 18, p.txt, 'left'); T(g, 'slide', 46, yS + 22, p.txt, 'left'); T(g, MEDIA[S.obj.medium].name + ' (n = ' + nm + ')', sx0 + 236, (yM + yCG)/2 + 4, p.txt, 'left');
+/* rays from the specimen at angles in the glass: refract (n sin theta conserved) or are totally reflected */
+var lost = 0, inn = 0;
+for (var dg = -84; dg <= 84; dg += 6){
+var tg = dg*DEG, sinm = NG*Math.sin(tg)/nm, x0 = sx0, y0 = yS, x1 = x0 + Math.tan(tg)*(yS - yCG);
+if (Math.abs(x1 - sx0) > W*0.6) continue;
+if (Math.abs(sinm) >= 1){ seg(g, x0, y0, x1, yCG, p.obj, 1.2); var x2 = x1 + Math.tan(tg)*(yS - yCG); seg(g, x1, yCG, x2, yS, p.obj, 1.2, [3, 3], 0.7); lost++; continue; }
+var tm = Math.asin(sinm), x3 = x1 + Math.tan(tm)*(yCG - yM);
+var accept = Math.abs(tm) <= alpha + 1e-6;
+seg(g, x0, y0, x1, yCG, accept ? p.ray : p.muted, 1.3); seg(g, x1, yCG, x3, yM, accept ? p.ray : p.muted, 1.3, [], accept ? 0.95 : 0.5);
+if (accept){ seg(g, x3, yM, x3 + Math.tan(tm)*20, yM - 20, p.ray, 1.3); inn++; }
+}
+dot(g, sx0, yS, p.obj); T(g, 'specimen', sx0, yS + 16, p.obj);
+T(g, inn + ' of the drawn rays enter the objective' + (lost ? '; ' + lost + ' are trapped by total internal reflection (red)' : ''), W - 8, H - 6, p.muted, 'right');
+}
+function drawObjClose(){
+/* the acceptance cone (cf. Figure 27.5.3a): NA = n sin alpha */
+var p = clear(CL), g = CL.g, W = CL.W, H = CL.H, o = OBJS[S.obj.kind], nm = MEDIA[S.obj.medium].n, sa = o.na/o.n, alpha = Math.asin(Math.min(0.999, sa)), na = objNA();
+var Px = 60, cy = H/2, Lx = 260, hL = Math.tan(alpha)*(Lx - Px);
+seg(g, 20, cy, W - 20, cy, p.muted, 1, [5, 4]); var hh = Math.min(hL, H/2 - 14); lensAt(g, Lx, cy, hh + 8, 20, p);
+seg(g, Px, cy, Lx, cy - Math.min(hL, hh), p.ray2, 1.8); seg(g, Px, cy, Lx, cy + Math.min(hL, hh), p.ray2, 1.8);
+g.strokeStyle = p.ray2; g.lineWidth = 1.2; g.beginPath(); g.arc(Px, cy, 44, -alpha, 0); g.stroke(); T(g, '\u03B1 = ' + (alpha/DEG).toFixed(1) + '\u00B0', Px + 50, cy - 10, p.ray2, 'left');
+dot(g, Px, cy, p.obj); T(g, 'P', Px - 8, cy - 8, p.obj);
+T(g, 'NA = n sin \u03B1 = ' + nm + ' \u00D7 ' + Math.sin(alpha).toFixed(3) + ' = ' + na.toFixed(2), 10, 18, p.txt, 'left');
+T(g, 'acceptance angle \u03B8 = 2\u03B1 = ' + (2*alpha/DEG).toFixed(0) + '\u00B0', 10, H - 10, p.txt, 'left');
+}
+function drawTwoPoints(p){
+/* two point sources a distance s apart, each imaged as an Airy pattern of radius d = 0.61 lambda / NA */
+var g = VW.g, W = VW.W, H = VW.H, na = objNA(), d = resol(na)*1000, s = S.obj.sep;   /* micrometres */
+var scale = 70/Math.max(d, 0.25), cx = W/2, cy = 80;
+function airy(r){ if (r < 1e-6) return 1; var x = 3.8317*r/d, j = 0, t = x/2, term = t;   /* J1 by its series, enough terms for x < 12 */
+for (var k=0; k<30; k++){ j += term; term *= -t*t/((k + 1)*(k + 2)); } var a = 2*j/x; return a*a; }
+var img = g.createImageData(Math.round((W - 20)*DPR), Math.round(120*DPR));
+for (var py=0; py<img.height; py++) for (var px=0; px<img.width; px++){ var xu = (px/DPR - (cx - 10))/scale, yu = (py/DPR - 60)/scale;
+var I = airy(Math.hypot(xu - s/2, yu)) + airy(Math.hypot(xu + s/2, yu)), v = Math.min(255, Math.round(255*Math.pow(Math.min(1, I), 0.6))), q = 4*(py*img.width + px);
+img.data[q] = v; img.data[q + 1] = v; img.data[q + 2] = Math.min(255, v + 20); img.data[q + 3] = 255; }
+g.putImageData(img, 10*DPR, 20*DPR);
+/* the intensity along the line joining them */
+var y0 = 208, hgt = 64; g.strokeStyle = p.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(10, y0); g.lineTo(W - 10, y0); g.stroke();
+g.strokeStyle = p.ray; g.lineWidth = 2; g.beginPath(); var mx = 0, mid = airy(s/2)*2;
+for (var x = 10; x <= W - 10; x++){ var u = (x - cx)/scale, I2 = airy(Math.abs(u - s/2)) + airy(Math.abs(u + s/2)); mx = Math.max(mx, I2); var yy = y0 - hgt*I2/2;   /* scaled by the largest possible sum, so nothing is clipped */ if (x === 10) g.moveTo(x, yy); else g.lineTo(x, yy); } g.stroke();
+if (S.each){
+/* each source on its own: an Airy curve centred on it; their sum is the solid curve */
+[[s/2, th.cb ? '#56b4e9' : '#5ad1ff', 'source 1'], [-s/2, th.cb ? '#cc79a7' : '#ff7ad9', 'source 2']].forEach(function(q, n){
+g.strokeStyle = q[1]; g.lineWidth = 1.6; g.setLineDash([5, 3]); g.beginPath();
+for (var x2 = 10; x2 <= W - 10; x2++){ var u2 = (x2 - cx)/scale, I3 = airy(Math.abs(u2 - q[0])), y2 = y0 - hgt*I3/2; if (x2 === 10) g.moveTo(x2, y2); else g.lineTo(x2, y2); } g.stroke(); g.setLineDash([]);
+var px0 = cx + q[0]*scale; g.fillStyle = q[1]; g.beginPath(); g.arc(px0, y0, 3, 0, 2*Math.PI); g.fill();
+T(g, q[2], n ? 16 : W - 16, y0 - hgt*0.6 + 12*n, q[1], n ? 'left' : 'right'); });
+/* where each one's first dark ring falls: at the Rayleigh limit it lies on the other's peak */
+[[s/2 + d, s/2 - d], [-s/2 + d, -s/2 - d]].forEach(function(q, n){ q.forEach(function(u3){ var xx = cx + u3*scale; if (xx < 10 || xx > W - 10) return; g.strokeStyle = n ? (th.cb ? '#cc79a7' : '#ff7ad9') : (th.cb ? '#56b4e9' : '#5ad1ff'); g.globalAlpha = 0.45; g.lineWidth = 1; g.beginPath(); g.moveTo(xx, y0); g.lineTo(xx, y0 + 6); g.stroke(); g.globalAlpha = 1; }); });
+T(g, 'dashed: each source alone \u00B7 solid: their sum, what you see', W/2, y0 + 29, p.muted);
+}
+var dip = 1 - mid/mx, atLim = Math.abs(s - d) < 0.03*d, ok = s >= d || atLim;
+T(g, 's = ' + s.toFixed(2) + ' \u00B5m, d = 0.61\u03BB/NA = ' + d.toFixed(2) + ' \u00B5m: ' + (atLim ? 'just resolved' : (ok ? 'resolved' : 'not resolved')), W/2, 14, ok ? p.img : p.obj);
+T(g, 'brightness along the line (dip in the middle: ' + (100*Math.max(0, dip)).toFixed(0) + ' %)', W/2, y0 + 16, p.muted);
+if (S.each && atLim) T(g, 'at the Rayleigh limit: each peak sits on the other\u2019s first dark ring', W/2, y0 - hgt - 6, p.img);
+}
+/* ══════════ readout, equations, narration ══════════ */
+function f1(v, n){ return (+v).toFixed(n === undefined ? 1 : n); }
+function cell(a){ return a.map(function(c){ return '<div><div class="ms_flabel">' + c[0] + '</div><div class="ms_fvalue">' + c[1] + '</div></div>'; }).join(''); }
+function readout(){
+var cells = [];
+if (S.tab === 0){ var R = mag(); cells = [['ANGULAR MAGNIFICATION 25 cm/d\u2092', f1(R.M) + '\u00D7 (upright)'], ['IMAGE', R.di < 0 ? 'virtual, ' + f1(-R.di/10) + ' cm away' : (isFinite(R.di) ? 'real, behind the eye' : 'at infinity')], ['RANGE', f1(NEAR/S.mag.f) + '\u00D7 (relaxed) to ' + f1(1 + NEAR/S.mag.f) + '\u00D7 (near point)'], ['EYE', eyeError(R.di) > 0.05 ? 'cannot focus' : 'in focus']]; }
+if (S.tab === 1){ var C = cmp(); cells = [['HOW MUCH BIGGER IT LOOKS', f1(C.M, 0) + '\u00D7 (upside down)'], ['OBJECTIVE m\u2092', f1(C.mo, 2)], ['EYEPIECE m\u2091', isFinite(C.me) ? f1(C.me, 2) : '\u221E (image at infinity)'], ['FINAL IMAGE', C.die < 0 ? 'virtual, ' + f1(-C.die, 0) + ' mm away' : (isFinite(C.die) ? 'real, behind the eye' : 'at infinity')],
+['TUBE LENGTH L\u2212f\u2092\u2212f\u2091', f1(C.Lt, 0) + ' mm'], ['RESOLUTION 0.61\u03BB/NA', f1(0.61*LAMBDA/S.cmp.na*1000, 2) + ' \u00B5m'], ['FIELD OF VIEW', f1(NEAR*Math.tan(20*DEG)*2/C.M, 2) + ' mm across'], ['EYE', eyeError(C.die) > 0.05 ? 'cannot focus' : 'in focus']]; }
+if (S.tab === 2){ var na = objNA(), o = OBJS[S.obj.kind]; cells = [['OBJECTIVE', o.name], ['NUMERICAL APERTURE', f1(na, 2) + (S.obj.medium !== (o.n === 1 ? 'air' : (o.n === 1.33 ? 'water' : 'oil')) ? ' (designed for ' + f1(o.na, 2) + ')' : '')], ['RESOLUTION 0.61\u03BB/NA', f1(resol(na)*1000, 3) + ' \u00B5m'], ['f-NUMBER \u2248 1/(2NA)', 'f/' + f1(1/(2*na), 2)], ['WORKING DISTANCE', o.wd], ['USEFUL MAGNIFICATION', '\u2248 ' + f1(500*na, 0) + '\u2013' + f1(1000*na, 0) + '\u00D7']]; }
+el('msRead').innerHTML = cell(cells); equations();
+}
+function E(rows, t, ref){ rows.push('<div>' + t + (ref ? ' <span class="ms_eqn">' + ref + '</span>' : '') + '</div>'); }
+function equations(){
+var rows = [], note = '';
+if (S.tab === 0){ var c = S.mag, R = mag();
+E(rows, 'Thin lens: 1/<i>d<sub>i</sub></i> = 1/<i>f</i> &minus; 1/<i>d<sub>o</sub></i> = 1/' + c.f + ' &minus; 1/' + f1(c.d) + ' &rArr; <i>d<sub>i</sub></i> = <b>' + (isFinite(R.di) ? f1(R.di) + ' mm' : '&infin;') + '</b>' + (R.di < 0 ? ' (negative: a virtual image on the object\u2019s side)' : ''));
+E(rows, 'Image size: <i>m</i> = &minus;<i>d<sub>i</sub></i>/<i>d<sub>o</sub></i> = <b>' + (isFinite(R.m) ? f1(R.m, 2) : '&infin;') + '</b>');
+E(rows, 'How big it looks, eye at the lens: <i>M</i> = &theta;\u2032/&theta; = 25 cm / <i>d<sub>o</sub></i> = 250/' + f1(c.d) + ' = <b>' + f1(R.M, 2) + '&times;</b>');
+E(rows, 'Object at F (relaxed eye): <i>M</i> = 25 cm / <i>f</i> = <b>' + f1(NEAR/c.f, 2) + '&times;</b>; image at the near point: <i>M</i> = 1 + 25 cm / <i>f</i> = <b>' + f1(1 + NEAR/c.f, 2) + '&times;</b>'); }
+if (S.tab === 1){ var cc = S.cmp, C = cmp(), fo = cc.fo, fe = cc.fe;
+E(rows, 'Objective: 1/<i>d<sub>i</sub></i> = 1/<i>f<sub>o</sub></i> &minus; 1/<i>d<sub>o</sub></i> = 1/' + f1(fo, 2) + ' &minus; 1/' + f1(cc.d, 2) + ' &rArr; <i>d<sub>i</sub></i> = <b>' + f1(C.di) + ' mm</b>', '(27.5.3&ndash;5)');
+E(rows, 'Its magnification: <i>m<sub>o</sub></i> = &minus;<i>d<sub>i</sub></i>/<i>d<sub>o</sub></i> = &minus;' + f1(C.di) + '/' + f1(cc.d, 2) + ' = <b>' + f1(C.mo, 2) + '</b>', '(27.5.6)');
+E(rows, 'The first image is <i>d<sub>o</sub></i>\u2032 = <i>L</i> &minus; <i>d<sub>i</sub></i> = ' + cc.L + ' &minus; ' + f1(C.di) + ' = <b>' + f1(C.doe) + ' mm</b> in front of the eyepiece' + (C.doe < fe ? ', inside its focal length' : ''));
+E(rows, 'Eyepiece: 1/<i>d<sub>i</sub></i>\u2032 = 1/<i>f<sub>e</sub></i> &minus; 1/<i>d<sub>o</sub></i>\u2032 = 1/' + f1(fe) + ' &minus; 1/' + f1(C.doe) + ' &rArr; <i>d<sub>i</sub></i>\u2032 = <b>' + (isFinite(C.die) ? f1(C.die, 0) + ' mm' : '&infin;') + '</b>', '(27.5.8&ndash;9)');
+E(rows, 'Its magnification: <i>m<sub>e</sub></i> = &minus;<i>d<sub>i</sub></i>\u2032/<i>d<sub>o</sub></i>\u2032 = <b>' + (isFinite(C.me) ? f1(C.me, 2) : '&infin;') + '</b>; overall (linear) <i>m</i> = <i>m<sub>o</sub></i><i>m<sub>e</sub></i> = <b>' + (isFinite(C.m) ? f1(C.m, 0) : '&infin;') + '</b>', '(27.5.10&ndash;11)');
+E(rows, 'How much bigger it looks, eye at the eyepiece, against the specimen at 25 cm: <i>M</i> = |<i>m<sub>o</sub></i>| &times; 250 mm / <i>d<sub>o</sub></i>\u2032 = <b>' + f1(C.M, 0) + '&times;</b>');
+E(rows, 'Focused for a relaxed eye (first image at F<sub>e</sub>): <i>M</i> = &minus;(<i>L</i> &minus; <i>f<sub>o</sub></i> &minus; <i>f<sub>e</sub></i>)/<i>f<sub>o</sub></i> &times; 25 cm/<i>f<sub>e</sub></i> = &minus;' + f1(C.Lt, 0) + '/' + f1(fo, 2) + ' &times; 250/' + f1(fe) + ' = <b>&minus;' + f1(C.Minf, 0) + '</b>', '(3.6.3; with <i>L</i> &minus; <i>f<sub>o</sub></i> &minus; <i>f<sub>e</sub></i> = 16 cm, 10.15.3)');
+E(rows, 'Resolution: <i>d</i> = 0.61&lambda;/NA = 0.61 &times; 550 nm / ' + f1(cc.na, 2) + ' = <b>' + f1(0.61*0.55/cc.na, 2) + ' &micro;m</b>');
+note = '<div class="ms_note">Why three magnifications? <i>m</i> = ' + (isFinite(C.m) ? f1(C.m, 0) : '&infin;') + ' compares the final image\u2019s <i>height</i> with the specimen\u2019s; but that image is ' + (C.die < 0 ? f1(-C.die, 0) + ' mm' : 'far') + ' away, not 25 cm, so it looks ' + f1(C.M, 0) + ' times bigger. Focus for a relaxed eye and it looks ' + f1(C.Minf, 0) + ' times bigger. <button type="button" class="ms_btn" id="msEx">Example 27.5.1</button></div>'; }
+if (S.tab === 2){ var o = OBJS[S.obj.kind], nm = MEDIA[S.obj.medium].n, sa = o.na/o.n, na = objNA();
+E(rows, 'Numerical aperture: NA = <i>n</i> sin &alpha; = ' + nm + ' &times; ' + f1(sa, 3) + ' = <b>' + f1(na, 2) + '</b>', '(27.5.12)');
+E(rows, 'f-number: <i>f</i>/# = <i>f</i>/<i>D</i> &asymp; 1/(2NA) = <b>' + f1(1/(2*na), 2) + '</b>', '(27.5.13)');
+E(rows, 'Resolution (Rayleigh): <i>d</i> = 0.61&lambda;/NA = 0.61 &times; ' + S.obj.lam + ' nm / ' + f1(na, 2) + ' = <b>' + f1(resol(na)*1e6, 0) + ' nm</b>');
+E(rows, 'In the cover glass, a ray at angle &theta; escapes into the ' + MEDIA[S.obj.medium].name + ' only if 1.52 sin &theta; &lt; ' + nm + ': up to &theta; = <b>' + (nm >= NG ? '90' : f1(Math.asin(nm/NG)/DEG, 1)) + '&deg;</b>' + (nm >= NG ? ' (no total internal reflection)' : ' (beyond it, total internal reflection)')); }
+el('msEqs').innerHTML = '<h4>The equations, with your numbers</h4>' + rows.join('') + note;
+var b = el('msEx'); if (b) b.addEventListener('click', function(){ S.cmp = { fo:6.0, fe:50, L:230, d:6.2, na:0.30 }; S.labObj = null; buildCtl(); draw(); narrate('Example 27.5.1: a 6.00 millimetre objective and a 50.0 millimetre eyepiece, 23.0 centimetres apart, with the specimen 6.20 millimetres from the objective. The first image forms 186 millimetres behind the objective, magnified minus 30. It is 44 millimetres in front of the eyepiece, which forms a virtual image 367 millimetres away, magnified 8.33 times: overall, minus 250. With the eye at the eyepiece the specimen looks about 170 times bigger.'); });
+}
+function summary(){
+if (S.tab === 0){ var R = mag(); return 'A magnifying glass of focal length ' + S.mag.f + ' millimetres, with the object ' + f1(S.mag.d) + ' millimetres away. ' + (R.di < 0 ? 'It forms an upright virtual image ' + f1(-R.di/10) + ' centimetres away; the object looks ' + f1(R.M) + ' times bigger than at 25 centimetres.' : (isFinite(R.di) ? 'The object is beyond the focal point: the lens forms a real image behind your eye, so you cannot see it clearly.' : 'The object is at the focal point: parallel light, an image at infinity, ' + f1(R.M) + ' times bigger.')) + (eyeError(R.di) > 0.05 && R.di < 0 ? ' The image is closer than 25 centimetres: too close to focus on.' : ''); }
+if (S.tab === 1){ var C = cmp(); if (S.cmp.d <= S.cmp.fo) return 'The specimen is inside the objective\u2019s focal length: no real first image forms, and nothing can be seen. Move it slightly farther away.';
+return 'A compound microscope: the objective forms an upside-down first image ' + f1(C.di, 0) + ' millimetres behind it, ' + f1(-C.mo) + ' times larger. The eyepiece magnifies it again; the specimen looks ' + f1(C.M, 0) + ' times bigger than at 25 centimetres, and upside down. ' + (eyeError(C.die) > 0.05 ? 'But the final image is out of the eye\u2019s range: it is blurred. ' : '') + 'Details finer than ' + f1(0.61*0.55/S.cmp.na, 2) + ' micrometres are blurred by diffraction.'; }
+var na = objNA(), d = resol(na)*1000;
+return 'The ' + OBJS[S.obj.kind].name + ' objective, with ' + MEDIA[S.obj.medium].name + ' between it and the cover glass, has a numerical aperture of ' + f1(na, 2) + ': it resolves details down to ' + f1(d, 2) + ' micrometres. The two points, ' + f1(S.obj.sep, 2) + ' micrometres apart, are ' + (Math.abs(S.obj.sep - d) < 0.03*d ? 'just resolved: at the Rayleigh limit, the peak of each falls on the first dark ring of the other, and the brightness dips by about a quarter between them.' : (S.obj.sep >= d ? 'resolved.' : 'not resolved: they blur into one.'));
+}
+function narrate(t){ if (!th.nr) return; el('msNarBar').textContent = t; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); }, 400); }
+function draw(){
+var labOn = S.tab === 1 && S.lab; el('msLabBox').style.display = labOn ? '' : 'none'; el('msSideBox').style.display = labOn ? 'none' : '';
+if (S.tab === 0){ drawMagSide(); drawMagClose(); } else if (S.tab === 1){ if (labOn) drawLab(); else drawCmpSide(); drawCmpClose(); } else { drawObjSide(); drawObjClose(); }
+drawView(); readout(); el('msEqs').style.display = S.eqs ? '' : 'none';
+el('msLab').textContent = S.schem && S.tab < 2 ? 'textbook diagram (not to scale)' : LAB[S.tab][0]; el('msLab2').textContent = LAB[S.tab][1]; el('msLab3').textContent = LAB[S.tab][2];
+}
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="ms_crow"><div class="ms_cname"><b>' + label + '</b><span class="ms_cval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function buildCtl(){
+var b = '', c = '';
+if (S.tab < 2) b += '<label>Looking at <select id="msSpec"><option value="letter">a printed letter e (1.5 mm)</option><option value="hair">a human hair (70 \u00B5m)</option><option value="onion">onion skin cells (0.3 mm)</option><option value="blood">red blood cells (7.5 \u00B5m)</option></select></label>';
+if (S.tab === 1) b += '<label title="a lab microscope, with its optics drawn beside it"><input type="checkbox" id="msLabOn"' + (S.lab ? ' checked' : '') + ' aria-label="lab: show the microscope as it looks in the lab"> lab</label>';
+b += '<label title="the equations, with your numbers"><input type="checkbox" id="msEqOn"' + (S.eqs ? ' checked' : '') + ' aria-label="math: show the equations, with your numbers"> math</label>';
+if (S.tab < 2) b += '<label title="a textbook diagram, not to scale"><input type="checkbox" id="msSch"' + (S.schem ? ' checked' : '') + ' aria-label="diagram: show a textbook diagram instead of the drawing to scale"> diagram</label>';
+if (S.tab === 0){ b += '<button type="button" class="ms_btn" data-f="relax">Object at F (relaxed eye)</button><button type="button" class="ms_btn" data-f="near">Image at the near point</button>';
+c = row('msF', 'focal length of the lens f', 25, 150, 1, S.mag.f, S.mag.f + ' mm') + row('msD', 'object distance d\u2092', 10, 200, 0.5, S.mag.d, f1(S.mag.d) + ' mm'); }
+if (S.tab === 1){ b += '<button type="button" class="ms_btn" data-f="relax">Focus (relaxed eye)</button><button type="button" class="ms_btn" data-f="near">Focus (image at 25 cm)</button><button type="button" class="ms_btn" data-p="ex">Example 27.5.1</button><button type="button" class="ms_btn" data-p="4">4\u00D7 objective</button><button type="button" class="ms_btn" data-p="10">10\u00D7 objective</button><button type="button" class="ms_btn" data-p="40">40\u00D7 objective</button><button type="button" class="ms_btn" data-p="100">100\u00D7 oil</button>';
+c = row('msFo', 'objective focal length f\u2092', 1.5, 40, 0.1, S.cmp.fo, f1(S.cmp.fo) + ' mm') + row('msFe', 'eyepiece focal length f\u2091', 10, 60, 0.5, S.cmp.fe, f1(S.cmp.fe) + ' mm') + row('msL', 'distance between the lenses L', 120, 300, 1, S.cmp.L, S.cmp.L + ' mm') +
+row('msDo', 'specimen distance d\u2092 (focus)', +(S.cmp.fo*0.9).toFixed(2), +(S.cmp.fo*1.6).toFixed(2), 0.01, S.cmp.d, f1(S.cmp.d, 2) + ' mm') + row('msNa', 'numerical aperture of the objective', 0.05, 0.95, 0.01, S.cmp.na, f1(S.cmp.na, 2)); }
+if (S.tab === 2) b += '<label><input type="checkbox" id="msEach"' + (S.each ? ' checked' : '') + '> each source</label>';
+if (S.tab === 2){ b += '<label>Objective <select id="msObj">' + Object.keys(OBJS).map(function(k){ return '<option value="' + k + '">' + OBJS[k].name + '</option>'; }).join('') + '</select></label><label>Between it and the cover glass <select id="msMed"><option value="air">air</option><option value="water">water</option><option value="oil">immersion oil</option></select></label>';
+c = row('msLam', 'wavelength \u03BB', 400, 700, 10, S.obj.lam, S.obj.lam + ' nm') + row('msSep', 'separation of the two points', 0.1, 3, 0.01, S.obj.sep, f1(S.obj.sep, 2) + ' \u00B5m'); }
+b += '<button type="button" class="ms_btn" id="msDsc">Describe</button>';
+el('msBtns').innerHTML = b; el('msCtl').innerHTML = c;
+if (el('msSpec')) el('msSpec').value = S.spec; if (el('msObj')) el('msObj').value = S.obj.kind; if (el('msMed')) el('msMed').value = S.obj.medium;
+function on(id, ev, fn){ var e = el(id + ''); if (e) e.addEventListener(ev, fn); }
+on('msSpec', 'change', function(){ S.spec = this.value; schedule(); narrate('Looking at ' + SPECS[S.spec].name + '. ' + summary()); });
+on('msEqOn', 'change', function(){ S.eqs = this.checked; schedule(); narrate(S.eqs ? 'The equations, with your numbers, are shown below the readout.' : 'The equations are hidden.'); });
+on('msSch', 'change', function(){ S.schem = this.checked; schedule(); narrate(S.schem ? (S.tab === 0 ? 'The textbook diagram of a magnifying glass: the object inside the focal point; the rays leaving the lens seem to come from a larger, upright, virtual image on the same side.' : 'The textbook diagram of a compound microscope: the object just outside the objective\u2019s focal point, the first image, larger and upside down, just inside the eyepiece\u2019s focal point, and the final image, larger still, virtual and upside down.') : 'The side view, lengths drawn to scale.'); });
+on('msObj', 'change', function(){ S.obj.kind = this.value; var o = OBJS[S.obj.kind]; S.obj.medium = o.n === 1 ? 'air' : (o.n === 1.33 ? 'water' : 'oil'); buildCtl(); schedule(); later(); });
+on('msMed', 'change', function(){ S.obj.medium = this.value; schedule(); var lostT = MEDIA[S.obj.medium].n < NG ? ' Rays leaving the cover glass at more than ' + f1(Math.asin(MEDIA[S.obj.medium].n/NG)/DEG, 0) + ' degrees are trapped by total internal reflection.' : ' Immersion oil matches the glass, so no rays are trapped.'; narrate(summary() + lostT); });
+on('msDsc', 'click', describe);
+on('msEach', 'change', function(){ S.each = this.checked; schedule(); narrate(S.each ? 'Each source\u2019s own diffraction pattern is drawn dashed, in its own colour; the solid curve, their sum, is what you see. Two points are just resolved, by the Rayleigh criterion, when the peak of one falls on the first dark ring of the other.' : 'Only the total brightness is shown.'); });
+on('msLabOn', 'change', function(){ S.lab = this.checked; schedule(); narrate(S.lab ? labSay() : 'The side view, lengths drawn to scale.'); });
+[].forEach.call(el('msBtns').querySelectorAll('button[data-f]'), function(x){ x.addEventListener('click', function(){ var f = x.getAttribute('data-f');
+if (S.tab === 0){ S.mag.d = f === 'relax' ? S.mag.f : S.mag.f*NEAR/(NEAR + S.mag.f); } else { if (f === 'relax') focusRelaxed(); else focusNear(); }
+buildCtl(); draw(); narrate((f === 'relax' ? 'Focused for a relaxed eye: the image is at infinity. ' : 'Focused with the image at the near point, 25 centimetres away. ') + summary()); }); });
+[].forEach.call(el('msBtns').querySelectorAll('button[data-p]'), function(x){ x.addEventListener('click', function(){ var k = x.getAttribute('data-p');
+if (k === 'ex'){ S.cmp = { fo:6.0, fe:50, L:230, d:6.2, na:0.30 }; S.labObj = null; } else useObjective(k);
+buildCtl(); draw(); narrate((k === 'ex' ? 'Example 27.5.1. ' : 'A standard ' + k + ' times objective with a 10 times eyepiece and a 160 millimetre tube length, focused for a relaxed eye. ') + summary()); }); });
+var map = [['msF', S.mag, 'f', ' mm', 0], ['msD', S.mag, 'd', ' mm', 1], ['msFo', S.cmp, 'fo', ' mm', 1], ['msFe', S.cmp, 'fe', ' mm', 1], ['msL', S.cmp, 'L', ' mm', 0], ['msDo', S.cmp, 'd', ' mm', 2], ['msNa', S.cmp, 'na', '', 2], ['msLam', S.obj, 'lam', ' nm', 0], ['msSep', S.obj, 'sep', ' \u00B5m', 2]];
+map.forEach(function(q){ on(q[0], 'input', function(){ q[1][q[2]] = +this.value; el(q[0] + 'v').textContent = (+this.value).toFixed(q[4]) + q[3]; if (q[0] === 'msFo'){ var r = el('msDo'); if (r){ r.min = (S.cmp.fo*0.9).toFixed(2); r.max = (S.cmp.fo*1.6).toFixed(2); } } schedule(); later(); }); });
+}
+function tab(i){ S.tab = i; for (var k=0; k<3; k++) el('msT' + k + '').setAttribute('aria-selected', k === i ? 'true' : 'false'); if (i === 0 && S.spec === 'onion') S.spec = 'letter'; if (i === 1 && S.spec === 'letter') S.spec = 'onion'; buildCtl(); draw(); narrate(summary()); }
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','msBtnHC'],['lm','msBtnLM'],['cb','msBtnCB'],['nr','msBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('ms_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('msBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('msNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--ms-bg','--ms-panel','--ms-border','--ms-text','--ms-muted','--ms-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+draw();
+}
+function describe(){ narrate(['The side view shows a magnifying glass, the object, and the rays; below, how big the object looks with and without the lens, and what you see. ', 'The side view shows a compound microscope: the specimen at the left, the small objective lens, the first image, and the eyepiece at the right, with the eye behind it. Below, a close-up of the specimen and the objective, and what you see. ', 'The side view shows the tip of an objective above a cover glass, with the rays leaving the specimen; below, the cone of light the objective accepts, and two points close together as the objective images them. '][S.tab] + summary()); }
+function toggleDesc(){
+var b = el('msDescBtn'), d = el('msDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* boot */
+buildCtl(); draw(); narrate('Ready. ' + summary());
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc, set:function(grp, k, v){ (grp ? S[grp] : S)[k] = v; buildCtl(); draw(); },
+_state:function(){ return { S:JSON.parse(JSON.stringify(S)), mag:mag(), cmp:cmp(), na:objNA(), d:resol(objNA()) }; }, focusRelaxed:function(){ focusRelaxed(); buildCtl(); draw(); } };
+})();
+</script>
+</main>
+</body>
+</html>

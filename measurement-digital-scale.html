@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations - Measurements: Digital Mass Scale</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,scale, mass, container, tare,uncertainty, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<p>The diagram below shows a reading of a digital scale.</p>
+<hr>
+<!--
+============================================================
+DIGITAL SCALE WIDGET (MOM-compatible)  v4 - accessibility
+============================================================
+Adds the same accessibility features used in the triple-beam balance:
+* NARRATION bar (visible & ARIA live region) explains every action
+* LIGHT MODE  (inverts SVG colors via CSS filter for users who
+prefer dark backgrounds)
+* HIGH CONTRAST (forces black background, white text/segments)
+* FONT SIZE cycling (NORMAL / LARGE / XL)
+Plus standard ARIA / semantic markup:
+* region role around the whole widget
+* toolbar role around the a11y toggles
+* group roles around control rows
+* fieldset/legend for the precision radio group
+* descriptive aria-labels on every button
+* SVG has role="img" with aria-label describing current state
+* hidden ARIA-live region speaks the LCD reading & state on every
+change (works even when narration bar is turned off)
+* focus is preserved across re-renders so keyboard users do not
+lose their place
+Template variables:
+0916 : MOM instance id
+$color : ON-segment colour ('#222' for LCD, '#c33' for red LED, ...)
+$bg    : LCD background ('#a8b89a' classic, '#1a1a1a' LED black)
+============================================================
+-->
+<div id="dsS_root0916" style="display:inline-block"></div>
+<script>
+(function(){
+var thisq  = '0916';
+var color  = "red";
+var bg     = '#a8b89a';
+var rootId = 'dsS_root0916';
+var stateKey = 'scaleStateS_' + thisq;
+if (!window[stateKey]) {
+var sn = (Math.random() < 0.5) ? -1 : 1;
+var mg = 0.01 + Math.random() * 0.49;
+window[stateKey] = {
+bias: sn * mg, samples: [], containerMass: 0, hasContainer: false,
+tareOffset: 0, precision: 0.01,
+a11y: { lightMode:false, narration:true, highContrast:false, fontSize:'normal' },
+lastNarration: '',
+hasShownIntro: false
+};
+}
+var state = window[stateKey];
+/* ========== SEGMENT MAP & GEOMETRY ========== */
+var segMap = {
+'0':{a:1,b:1,c:1,d:1,e:1,f:1,g:0}, '1':{a:0,b:1,c:1,d:0,e:0,f:0,g:0},
+'2':{a:1,b:1,c:0,d:1,e:1,f:0,g:1}, '3':{a:1,b:1,c:1,d:1,e:0,f:0,g:1},
+'4':{a:0,b:1,c:1,d:0,e:0,f:1,g:1}, '5':{a:1,b:0,c:1,d:1,e:0,f:1,g:1},
+'6':{a:1,b:0,c:1,d:1,e:1,f:1,g:1}, '7':{a:1,b:1,c:1,d:0,e:0,f:0,g:0},
+'8':{a:1,b:1,c:1,d:1,e:1,f:1,g:1}, '9':{a:1,b:1,c:1,d:1,e:0,f:1,g:1},
+' ':{a:0,b:0,c:0,d:0,e:0,f:0,g:0},
+'O':{a:1,b:1,c:1,d:1,e:1,f:1,g:0}, 'L':{a:0,b:0,c:0,d:1,e:1,f:1,g:0}
+};
+var hSegPts = function(cx, cy, SL, ST){
+var hl = SL/2, ht = ST/2;
+return (cx-hl+ht)+','+cy+' '+(cx-hl)+','+(cy-ht)+' '+(cx+hl-ht)+','+(cy-ht)+' '+(cx+hl)+','+cy+' '+(cx+hl-ht)+','+(cy+ht)+' '+(cx-hl)+','+(cy+ht);
+};
+var vSegPts = function(cx, cy, SL, ST){
+var hl = SL/2, ht = ST/2;
+return cx+','+(cy-hl+ht)+' '+(cx-ht)+','+(cy-hl)+' '+(cx-ht)+','+(cy+hl-ht)+' '+cx+','+(cy+hl)+' '+(cx+ht)+','+(cy+hl-ht)+' '+(cx+ht)+','+(cy-hl+ht);
+};
+var parseScale = function(v, prec){
+var sign = (v < 0) ? '-' : '';
+var mag = Math.abs(v);
+var dp, maxMag;
+if (prec === 0.1) { dp = 1; maxMag = 9999.9; }
+else              { dp = 2; maxMag = 999.99; }
+if (mag > maxMag + 0.5*prec) return { overflow:true, sign:sign };
+var scaled = Math.round(mag * Math.pow(10, dp));
+var digits = String(scaled);
+while (digits.length < 5) digits = '0' + digits;
+if (digits.length > 5) return { overflow:true, sign:sign };
+return { overflow:false, sign:sign, digits:digits, dp:dp };
+};
+/* Build seg7 with given on-color (so HC mode can override to white) */
+var buildSeg7Custom = function(parsed, onCol){
+var DW = 28, DH = 50, SL = 16, ST = 5;
+var offOp = (onCol === '#fff') ? 0.18 : 0.08;
+var signW = 14, padX = 8, padY = 6;
+var totW = padX*2 + signW + 5*DW;
+var totH = padY*2 + DH;
+var cx = DW/2;
+var yTop = 6, yMid = DH/2, yBot = DH - 6;
+var xL = 5, xR = DW - 5;
+var yVT = (yTop+yMid)/2, yVB = (yMid+yBot)/2;
+var signCX = padX + signW/2, signCY = padY + DH/2;
+var signOn = (parsed.sign === '-');
+var signHL = 6, signHT = 2;
+var out = '';
+var signPts = (signCX-signHL+signHT)+','+signCY+' '+(signCX-signHL)+','+(signCY-signHT)+' '+(signCX+signHL-signHT)+','+(signCY-signHT)+' '+(signCX+signHL)+','+signCY+' '+(signCX+signHL-signHT)+','+(signCY+signHT)+' '+(signCX-signHL)+','+(signCY+signHT);
+out += '<polygon points="'+signPts+'" fill="'+onCol+'" opacity="'+(signOn?1:offOp)+'"/>';
+var emit = function(xOff, segs, dot){
+var frag = '<g transform="translate('+xOff+','+padY+') skewX(-4)">';
+var poly = function(pts, on){ return '<polygon points="'+pts+'" fill="'+onCol+'" opacity="'+(on?1:offOp)+'"/>'; };
+frag += poly(hSegPts(cx,yTop,SL,ST), segs.a);
+frag += poly(vSegPts(xR,yVT,SL,ST), segs.b);
+frag += poly(vSegPts(xR,yVB,SL,ST), segs.c);
+frag += poly(hSegPts(cx,yBot,SL,ST), segs.d);
+frag += poly(vSegPts(xL,yVB,SL,ST), segs.e);
+frag += poly(vSegPts(xL,yVT,SL,ST), segs.f);
+frag += poly(hSegPts(cx,yMid,SL,ST), segs.g);
+frag += '<circle cx="'+(DW-3)+'" cy="'+(yBot+3)+'" r="1.8" fill="'+onCol+'" opacity="'+(dot?1:offOp)+'"/>';
+frag += '</g>';
+return frag;
+};
+if (parsed.overflow) {
+var ch = [' ', ' ', ' ', 'O', 'L'];
+for (var i = 0; i < 5; i++) out += emit(padX + signW + i*DW, segMap[ch[i]], false);
+} else {
+for (var i = 0; i < 5; i++) {
+var c = parsed.digits.charAt(i);
+var sg = segMap[c] || segMap[' '];
+var dot = (parsed.dp > 0) && (i === (4 - parsed.dp));
+out += emit(padX + signW + i*DW, sg, dot);
+}
+}
+return { svg: out, w: totW, h: totH };
+};
+var computeReading = function(){
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+if (state.hasContainer) totalMass += state.containerMass;
+var raw = totalMass + state.bias;
+var displayed = raw - state.tareOffset;
+var rounded = Math.round(displayed / state.precision) * state.precision;
+if (Math.abs(rounded) < state.precision/2) rounded = 0;
+return rounded;
+};
+var readingToSpoken = function(reading){
+var parsed = parseScale(reading, state.precision);
+if (parsed.overflow) return 'Overload, value out of range';
+var dp = (state.precision === 0.1) ? 1 : 2;
+var sign = (reading < 0) ? 'minus ' : '';
+return sign + Math.abs(reading).toFixed(dp) + ' grams';
+};
+var narrate = function(msg){ state.lastNarration = msg; };
+var buildPlatterAndLoad = function(svgW){
+var CX = svgW / 2;
+var PLATS_Y = 60, PLATS_THICK = 5;
+var PLATS_HALFS_W = svgW/2 - 35;
+var STEMS_TOP = PLATS_Y + PLATS_THICK;
+var STEMS_BOT = STEMS_TOP + 12;
+var STEMS_HALFS_W = 28;
+var out = '';
+out += '<rect x="'+(CX-PLATS_HALFS_W)+'" y="'+PLATS_Y+'" width="'+(PLATS_HALFS_W*2)+'" height="'+PLATS_THICK+'" fill="#c9c9c9" stroke="#666" stroke-width="1"/>';
+out += '<rect x="'+(CX-STEMS_HALFS_W)+'" y="'+STEMS_TOP+'" width="'+(STEMS_HALFS_W*2)+'" height="'+(STEMS_BOT-STEMS_TOP)+'" fill="#bcbcbc" stroke="#666" stroke-width="0.8"/>';
+var stackBottom = PLATS_Y;
+if (state.hasContainer) {
+var cW = 90, cH = 30, wallT = 5;
+var cLeft = CX - cW/2, cRight = CX + cW/2;
+var cTop = stackBottom - cH, cBot = stackBottom;
+var iLeft = cLeft + wallT, iRight = cRight - wallT;
+var iBot = cBot - wallT;
+out += '<polygon points="'+
+cLeft+','+cTop+' '+ cLeft+','+cBot+' '+
+cRight+','+cBot+' '+ cRight+','+cTop+' '+
+iRight+','+cTop+' '+ iRight+','+iBot+' '+
+iLeft+','+iBot+' '+ iLeft+','+cTop+
+'" fill="#5a8db8" stroke="#2a4a6a" stroke-width="1"/>';
+stackBottom = iBot;
+}
+var sH = 11, maxStack = 8;
+var startIdx = Math.max(0, state.samples.length - maxStack);
+var stackY = stackBottom;
+for (var i = startIdx; i < state.samples.length; i++) {
+var m = state.samples[i];
+var wid = Math.min(82, 28 + Math.sqrt(m) * 4);
+if (state.hasContainer) wid = Math.min(wid, 78);
+var sx = CX - wid/2;
+var sy = stackY - sH;
+out += '<rect x="'+sx.toFixed(1)+'" y="'+sy.toFixed(1)+'" width="'+wid.toFixed(1)+'" height="'+sH+'" rx="2" fill="#EF9F27" stroke="#854F0B" stroke-width="0.8"/>';
+stackY = sy;
+}
+if (state.samples.length > maxStack) {
+out += '<text x="'+CX+'" y="'+(stackY-5)+'" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff" font-family="Arial,sans-serif">+'+(state.samples.length - maxStack)+' more</text>';
+}
+return out;
+};
+/* Style helpers for the a11y toolbar buttons */
+var a11yBtnStyle = function(active){
+var bgC   = active ? 'rgba(0,232,208,.12)' : '#2a2e3a';
+var brdr  = active ? '#00e8d0' : '#404a60';
+var col   = active ? '#00e8d0' : '#7a8aaa';
+return 'padding:4px 10px;font-size:10px;font-family:monospace;'+
+'letter-spacing:.06em;border-radius:3px;cursor:pointer;'+
+'background:'+bgC+';border:1px solid '+brdr+';color:'+col+';';
+};
+/* Save & restore focus across re-render */
+var captureFocusId = function(){
+var ae = document.activeElement;
+if (!ae || !ae.id) return null;
+if (ae.id.indexOf('_'+thisq) === -1) return null;
+return ae.id;
+};
+var restoreFocus = function(id){
+if (!id) return;
+var el = document.getElementById(id);
+if (el && typeof el.focus === 'function') {
+try { el.focus({ preventScroll: true }); } catch(e) { el.focus(); }
+}
+};
+var render = function(){
+var focusId = captureFocusId();
+var reading = computeReading();
+var parsed = parseScale(reading, state.precision);
+var hasTare = (Math.abs(state.tareOffset) > 1e-6);
+var spokenReading = readingToSpoken(reading);
+var precLabel = (state.precision === 0.1) ? '0.1 g' : '0.01 g';
+/* HC overrides */
+var hc          = state.a11y.highContrast;
+var caseColor   = hc ? '#000' : '#e8c41a';
+var caseStroke  = hc ? '#fff' : '#222';
+var lcdBg       = hc ? '#000' : bg;
+var lcdSegColor = hc ? '#fff' : color;
+var plateBg     = hc ? '#000' : '#bcbcbc';
+var plateText   = hc ? '#fff' : '#333';
+var plateStroke = hc ? '#fff' : '#666';
+var seg7 = buildSeg7Custom(parsed, lcdSegColor);
+var html = '';
+html += '<div role="region" aria-label="Digital balance simulation" id="dsS_wrapS_'+thisq+'" style="display:inline-block;font-family:Arial,sans-serif">';
+/* A11Y TOOLBAR */
+html += '<div role="toolbar" aria-label="Display options" '+
+'style="display:flex;gap:6px;padding:6px 8px;background:#222;flex-wrap:wrap;width:380px;box-sizing:border-box;border-radius:6px 6px 0 0">';
+html += '<button type="button" id="dsS_btnS_lmS_'+thisq+'" onclick="dsToggleA11yS_'+thisq+'(\'lightMode\')" '+
+'aria-pressed="'+state.a11y.lightMode+'" style="'+a11yBtnStyle(state.a11y.lightMode)+'">'+
+'LIGHT MODE'+(state.a11y.lightMode?': ON':'')+'</button>';
+html += '<button type="button" id="dsS_btnS_nrS_'+thisq+'" onclick="dsToggleA11yS_'+thisq+'(\'narration\')" '+
+'aria-pressed="'+state.a11y.narration+'" style="'+a11yBtnStyle(state.a11y.narration)+'">'+
+'NARRATION: '+(state.a11y.narration?'ON':'OFF')+'</button>';
+html += '<button type="button" id="dsS_btnS_hcS_'+thisq+'" onclick="dsToggleA11yS_'+thisq+'(\'highContrast\')" '+
+'aria-pressed="'+state.a11y.highContrast+'" style="'+a11yBtnStyle(state.a11y.highContrast)+'">'+
+'HIGH CONTRAST'+(state.a11y.highContrast?': ON':'')+'</button>';
+var fsLabels = { 'normal':'NORMAL', 'large':'LARGE', 'xl':'XL' };
+html += '<button type="button" id="dsS_btnS_fsS_'+thisq+'" onclick="dsCycleFontS_'+thisq+'()" '+
+'aria-label="Font size: '+fsLabels[state.a11y.fontSize]+'. Click to cycle." '+
+'style="'+a11yBtnStyle(state.a11y.fontSize !== 'normal')+'">'+
+'FONT: '+fsLabels[state.a11y.fontSize]+'</button>';
+html += '</div>';
+/* NARRATION BAR (visible) */
+var narStyle = state.a11y.narration ?
+'display:block;width:380px;padding:6px 10px;background:#ffefc0;border-left:4px solid #e0b040;font-size:13px;color:#333;font-style:italic;box-sizing:border-box;min-height:20px' :
+'display:none';
+html += '<div id="dsS_narrateS_'+thisq+'" role="status" aria-live="polite" aria-atomic="true" style="'+narStyle+'">';
+html += state.lastNarration || '&nbsp;';
+html += '</div>';
+/* HIDDEN ARIA-LIVE FOR LCD READING (always announces, even if narration bar is off) */
+html += '<div aria-live="polite" aria-atomic="true" '+
+'style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">';
+html += 'Reading: '+spokenReading+'. '+(hasTare?'Tare active. ':'')+'Precision '+precLabel+'.';
+html += '</div>';
+/* SVG */
+var svgW = 380, svgH = 360;
+var svgWrapStyle = state.a11y.lightMode ?
+'filter:invert(1) hue-rotate(180deg) brightness(0.95);display:block' : 'display:block';
+var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+svgW+' '+svgH+'" '+
+'width="'+svgW+'" height="'+svgH+'" '+
+'role="img" aria-label="Digital balance: '+spokenReading+
+(hasTare?', tare active':'')+', '+
+(state.hasContainer ? 'container on platter, ' : '')+
+state.samples.length+' sample'+(state.samples.length===1?'':'s')+
+' on platter">';
+s += '<title>Digital balance reading '+spokenReading+'</title>';
+s += buildPlatterAndLoad(svgW);
+var caseY = 80, caseH = 270;
+s += '<rect x="6" y="'+caseY+'" width="'+(svgW-12)+'" height="'+caseH+'" rx="14" fill="'+caseColor+'" stroke="'+caseStroke+'" stroke-width="3"/>';
+s += '<rect x="16" y="'+(caseY+10)+'" width="'+(svgW-32)+'" height="'+(caseH-20)+'" rx="9" fill="none" stroke="'+caseStroke+'" stroke-width="1"/>';
+var lcdX = 30, lcdY = caseY + 25, lcdW = svgW - 60, lcdH = 100;
+s += '<rect x="'+lcdX+'" y="'+lcdY+'" width="'+lcdW+'" height="'+lcdH+'" rx="6" fill="#fff" stroke="'+caseStroke+'" stroke-width="2"/>';
+s += '<rect x="'+(lcdX+8)+'" y="'+(lcdY+8)+'" width="'+(lcdW-16)+'" height="'+(lcdH-16)+'" rx="3" fill="'+lcdBg+'" stroke="#444" stroke-width="0.5"/>';
+var segX = lcdX + (lcdW - seg7.w)/2 - 10;
+var segY = lcdY + (lcdH - seg7.h)/2;
+s += '<g transform="translate('+segX+','+segY+')" aria-hidden="true">'+seg7.svg+'</g>';
+s += '<text x="'+(lcdX+lcdW-22)+'" y="'+(lcdY+lcdH/2+8)+'" text-anchor="middle" font-size="22" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="0.85">g</text>';
+s += '<text x="'+(lcdX+18)+'" y="'+(lcdY+22)+'" font-size="9" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="'+(hasTare?1:0.15)+'">TARE</text>';
+s += '<text x="'+(lcdX+18)+'" y="'+(lcdY+lcdH-12)+'" font-size="9" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="1">\u25BA STABLE</text>';
+s += '<text x="'+(lcdX+lcdW-18)+'" y="'+(lcdY+lcdH-12)+'" text-anchor="end" font-size="9" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="0.85">'+precLabel+'</text>';
+var stripY = lcdY + lcdH + 18;
+var stripH = 35;
+s += '<rect x="'+lcdX+'" y="'+stripY+'" width="'+lcdW+'" height="'+stripH+'" rx="3" fill="'+plateBg+'" stroke="'+plateStroke+'" stroke-width="1"/>';
+s += '<text x="'+(lcdX+lcdW/2)+'" y="'+(stripY+stripH/2+5)+'" text-anchor="middle" font-size="13" font-weight="bold" font-family="Arial,sans-serif" fill="'+plateText+'" letter-spacing="2">DIGITAL BALANCE</text>';
+s += '</svg>';
+html += '<div style="'+svgWrapStyle+'">'+s+'</div>';
+/* CONTROL PANEL */
+var fsScale = 1.0;
+if (state.a11y.fontSize === 'large') fsScale = 1.18;
+if (state.a11y.fontSize === 'xl')    fsScale = 1.36;
+var ctrlFontSize = Math.round(11 * fsScale);
+var btnFontSize  = Math.round(11 * fsScale);
+var ctrlBg = hc ? '#000' : '#222';
+var ctrlText = hc ? '#fff' : '#eee';
+var btnCommon = 'padding:6px 10px;border:'+(hc?'1px solid #fff':'none')+';border-radius:3px;cursor:pointer;font-size:'+btnFontSize+'px;font-weight:bold;color:#fff';
+var ctrl = '';
+ctrl += '<div style="width:380px;background:'+ctrlBg+';color:'+ctrlText+';padding:8px;border-radius:0 0 6px 6px;font-size:'+ctrlFontSize+'px;box-sizing:border-box">';
+/* Platter controls */
+ctrl += '<div role="group" aria-label="Platter controls" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">';
+ctrl += '<button type="button" id="dsS_addmassS_'+thisq+'" onclick="scaleAddSampleS_'+thisq+'()" '+
+'aria-label="Add a random mass to the platter" '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#0c5')+'">Add mass</button>';
+if (state.hasContainer) {
+ctrl += '<button type="button" id="dsS_contS_'+thisq+'" onclick="scaleRemoveContainerS_'+thisq+'()" '+
+'aria-label="Remove container from the platter" '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#888')+';font-weight:normal">Remove container</button>';
+} else {
+ctrl += '<button type="button" id="dsS_contS_'+thisq+'" onclick="scaleAddContainerS_'+thisq+'()" '+
+'aria-label="Add a random container to the platter" '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#258')+';font-weight:normal">Add container</button>';
+}
+ctrl += '<button type="button" id="dsS_clearS_'+thisq+'" onclick="scaleClearAllS_'+thisq+'()" '+
+'aria-label="Clear all samples and container from the platter. Keeps tare and bias." '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#a33')+';font-weight:normal">Clear platter</button>';
+ctrl += '</div>';
+/* Calibration controls */
+ctrl += '<div role="group" aria-label="Calibration controls" style="display:flex;gap:6px;margin-bottom:6px">';
+ctrl += '<button type="button" id="dsS_tareS_'+thisq+'" onclick="scaleTareS_'+thisq+'()" '+
+'aria-label="Tare. Capture current reading as the new zero." '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#048')+'">TARE / Zero</button>';
+ctrl += '<button type="button" id="dsS_resetS_'+thisq+'" onclick="scaleResetS_'+thisq+'()" '+
+'aria-label="Full reset. Generate a new random bias and clear the platter and tare." '+
+'style="'+btnCommon+';background:'+(hc?'#000':'#444')+';border:1px solid '+(hc?'#fff':'#888')+';font-weight:normal">Full reset</button>';
+ctrl += '</div>';
+/* Precision (fieldset/legend) */
+ctrl += '<fieldset style="border:none;padding:0;margin:0;display:flex;align-items:center;gap:8px;color:'+ctrlText+';font-size:'+ctrlFontSize+'px">';
+ctrl += '<legend style="font-weight:bold;float:left;padding:0 4px 0 0">Precision:</legend>';
+ctrl += '<label style="cursor:pointer"><input type="radio" name="precS_'+thisq+'" id="dsS_prec01S_'+thisq+'" value="0.1" '+(state.precision===0.1?'checked':'')+' onclick="scaleSetPrecS_'+thisq+'(0.1)" aria-label="Precision 0.1 grams"> 0.1 g</label>';
+ctrl += '<label style="cursor:pointer"><input type="radio" name="precS_'+thisq+'" id="dsS_prec001S_'+thisq+'" value="0.01" '+(state.precision===0.01?'checked':'')+' onclick="scaleSetPrecS_'+thisq+'(0.01)" aria-label="Precision 0.01 grams"> 0.01 g</label>';
+var sampleCount = state.samples.length;
+var statusText = (sampleCount === 0 && !state.hasContainer) ? 'platter empty' :
+(sampleCount + ' sample' + (sampleCount===1?'':'s') + (state.hasContainer ? ' + container' : ''));
+ctrl += '<span style="margin-left:auto;color:'+(hc?'#fff':'#9c9')+';font-style:italic" aria-hidden="true">'+statusText+'</span>';
+ctrl += '</fieldset>';
+ctrl += '</div>';
+html += ctrl;
+html += '</div>';
+document.getElementById(rootId).innerHTML = html;
+restoreFocus(focusId);
+};
+/* HANDLERS */
+window['scaleAddSampleS_'+thisq] = function(){
+var m = Math.round((0.5 + Math.random() * 499.5) * 100) / 100;
+//var m = $masst0;
+state.samples.push(m);
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+if (state.hasContainer) totalMass += state.containerMass;
+var disp = totalMass + state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Added '+m.toFixed(2)+' grams to the platter. New reading: '+readingToSpoken(rounded)+'.');
+render();
+};
+window['scaleAddContainerS_'+thisq] = function(){
+state.containerMass = Math.round((30 + Math.random() * 170) * 100) / 100;
+//state.containerMass = $massC;
+state.hasContainer = true;
+var totalMass = state.containerMass;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+var disp = totalMass + state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Container of '+state.containerMass.toFixed(2)+' grams placed on the platter. '+
+'New reading: '+readingToSpoken(rounded)+'. '+
+'You may want to tare to cancel the container weight.');
+render();
+};
+window['scaleRemoveContainerS_'+thisq] = function(){
+state.hasContainer = false;
+state.containerMass = 0;
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+var disp = totalMass + state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Container removed. New reading: '+readingToSpoken(rounded)+'.');
+render();
+};
+window['scaleClearAllS_'+thisq] = function(){
+state.samples = [];
+state.hasContainer = false;
+state.containerMass = 0;
+var disp = state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Platter cleared. Tare and bias preserved. Reading: '+readingToSpoken(rounded)+'.');
+render();
+};
+window['scaleTareS_'+thisq] = function(){
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+if (state.hasContainer) totalMass += state.containerMass;
+state.tareOffset = totalMass + state.bias;
+narrate('Tared. Display now reads zero. Anything added next will register from this baseline.');
+render();
+};
+window['scaleResetS_'+thisq] = function(){
+var sn = (Math.random() < 0.5) ? -1 : 1;
+var mg = 0.01 + Math.random() * 0.49;
+state.bias = sn * mg;
+state.samples = [];
+state.hasContainer = false;
+state.containerMass = 0;
+state.tareOffset = 0;
+narrate('Balance reset. New random bias of '+(sn>0?'positive ':'negative ')+
+mg.toFixed(2)+' grams introduced. Tare the balance before weighing.');
+render();
+};
+window['scaleSetPrecS_'+thisq] = function(p){
+state.precision = p;
+narrate('Precision set to '+(p===0.1?'0.1':'0.01')+' grams. Current reading: '+
+readingToSpoken(computeReading())+'.');
+render();
+};
+window['dsToggleA11yS_'+thisq] = function(key){
+state.a11y[key] = !state.a11y[key];
+if (key === 'narration' && state.a11y.narration) {
+narrate('Narration on. Current reading: '+readingToSpoken(computeReading())+'.');
+}
+if (key === 'highContrast' && state.a11y.narration) {
+narrate('High contrast '+(state.a11y.highContrast?'on':'off')+'.');
+}
+render();
+};
+window['dsCycleFontS_'+thisq] = function(){
+var order = ['normal','large','xl'];
+var idx = order.indexOf(state.a11y.fontSize);
+state.a11y.fontSize = order[(idx+1) % order.length];
+if (state.a11y.narration) narrate('Font size: '+state.a11y.fontSize+'.');
+render();
+};
+if (!state.hasShownIntro) {
+state.hasShownIntro = true;
+state.lastNarration = 'Digital balance ready. The display shows '+
+readingToSpoken(computeReading())+
+' even though the platter is empty. This is the balance bias. '+
+'Press TARE before weighing.';
+}
+render();
+})();                  
+</script>
+<hr>
+<p>Press the TARE/Zero button, then add the container. What is the mass of the container?</p>
+<p>Add the provided mass to the container and provide the result shown.</p>
+<p>Susbstract the mass of the container `M_C` from the total mass `M_T` and provide the mass of the provided block.</p>
+<p>Clear the platter, add back the container, press the TARE/Zero button, then add the mass and provide the reading for the mass.</p>
+<hr>
+<hr>
+<p>The diagram below shows a second reading of a digital scale of a second mass.</p>
+<!--
+============================================================
+============================================================
+-->
+<div id="ds_root0916" style="display:inline-block"></div>
+<script>
+(function(){
+var thisq  = '0916';
+var color  = "red";
+var bg     = '#a8b89a';
+var rootId = 'ds_root0916';
+var stateKey = 'scaleState_' + thisq;
+if (!window[stateKey]) {
+var sn = (Math.random() < 0.5) ? -1 : 1;
+var mg = 0.01 + Math.random() * 0.49;
+window[stateKey] = {
+bias: sn * mg, samples: [], containerMass: 0, hasContainer: false,
+tareOffset: 0, precision: 0.01,
+a11y: { lightMode:false, narration:true, highContrast:false, fontSize:'normal' },
+lastNarration: '',
+hasShownIntro: false
+};
+}
+var state = window[stateKey];
+/* ========== SEGMENT MAP & GEOMETRY ========== */
+var segMap = {
+'0':{a:1,b:1,c:1,d:1,e:1,f:1,g:0}, '1':{a:0,b:1,c:1,d:0,e:0,f:0,g:0},
+'2':{a:1,b:1,c:0,d:1,e:1,f:0,g:1}, '3':{a:1,b:1,c:1,d:1,e:0,f:0,g:1},
+'4':{a:0,b:1,c:1,d:0,e:0,f:1,g:1}, '5':{a:1,b:0,c:1,d:1,e:0,f:1,g:1},
+'6':{a:1,b:0,c:1,d:1,e:1,f:1,g:1}, '7':{a:1,b:1,c:1,d:0,e:0,f:0,g:0},
+'8':{a:1,b:1,c:1,d:1,e:1,f:1,g:1}, '9':{a:1,b:1,c:1,d:1,e:0,f:1,g:1},
+' ':{a:0,b:0,c:0,d:0,e:0,f:0,g:0},
+'O':{a:1,b:1,c:1,d:1,e:1,f:1,g:0}, 'L':{a:0,b:0,c:0,d:1,e:1,f:1,g:0}
+};
+var hSegPts = function(cx, cy, SL, ST){
+var hl = SL/2, ht = ST/2;
+return (cx-hl+ht)+','+cy+' '+(cx-hl)+','+(cy-ht)+' '+(cx+hl-ht)+','+(cy-ht)+' '+(cx+hl)+','+cy+' '+(cx+hl-ht)+','+(cy+ht)+' '+(cx-hl)+','+(cy+ht);
+};
+var vSegPts = function(cx, cy, SL, ST){
+var hl = SL/2, ht = ST/2;
+return cx+','+(cy-hl+ht)+' '+(cx-ht)+','+(cy-hl)+' '+(cx-ht)+','+(cy+hl-ht)+' '+cx+','+(cy+hl)+' '+(cx+ht)+','+(cy+hl-ht)+' '+(cx+ht)+','+(cy-hl+ht);
+};
+var parseScale = function(v, prec){
+var sign = (v < 0) ? '-' : '';
+var mag = Math.abs(v);
+var dp, maxMag;
+if (prec === 0.1) { dp = 1; maxMag = 9999.9; }
+else              { dp = 2; maxMag = 999.99; }
+if (mag > maxMag + 0.5*prec) return { overflow:true, sign:sign };
+var scaled = Math.round(mag * Math.pow(10, dp));
+var digits = String(scaled);
+while (digits.length < 5) digits = '0' + digits;
+if (digits.length > 5) return { overflow:true, sign:sign };
+return { overflow:false, sign:sign, digits:digits, dp:dp };
+};
+/* Build seg7 with given on-color (so HC mode can override to white) */
+var buildSeg7Custom = function(parsed, onCol){
+var DW = 28, DH = 50, SL = 16, ST = 5;
+var offOp = (onCol === '#fff') ? 0.18 : 0.08;
+var signW = 14, padX = 8, padY = 6;
+var totW = padX*2 + signW + 5*DW;
+var totH = padY*2 + DH;
+var cx = DW/2;
+var yTop = 6, yMid = DH/2, yBot = DH - 6;
+var xL = 5, xR = DW - 5;
+var yVT = (yTop+yMid)/2, yVB = (yMid+yBot)/2;
+var signCX = padX + signW/2, signCY = padY + DH/2;
+var signOn = (parsed.sign === '-');
+var signHL = 6, signHT = 2;
+var out = '';
+var signPts = (signCX-signHL+signHT)+','+signCY+' '+(signCX-signHL)+','+(signCY-signHT)+' '+(signCX+signHL-signHT)+','+(signCY-signHT)+' '+(signCX+signHL)+','+signCY+' '+(signCX+signHL-signHT)+','+(signCY+signHT)+' '+(signCX-signHL)+','+(signCY+signHT);
+out += '<polygon points="'+signPts+'" fill="'+onCol+'" opacity="'+(signOn?1:offOp)+'"/>';
+var emit = function(xOff, segs, dot){
+var frag = '<g transform="translate('+xOff+','+padY+') skewX(-4)">';
+var poly = function(pts, on){ return '<polygon points="'+pts+'" fill="'+onCol+'" opacity="'+(on?1:offOp)+'"/>'; };
+frag += poly(hSegPts(cx,yTop,SL,ST), segs.a);
+frag += poly(vSegPts(xR,yVT,SL,ST), segs.b);
+frag += poly(vSegPts(xR,yVB,SL,ST), segs.c);
+frag += poly(hSegPts(cx,yBot,SL,ST), segs.d);
+frag += poly(vSegPts(xL,yVB,SL,ST), segs.e);
+frag += poly(vSegPts(xL,yVT,SL,ST), segs.f);
+frag += poly(hSegPts(cx,yMid,SL,ST), segs.g);
+frag += '<circle cx="'+(DW-3)+'" cy="'+(yBot+3)+'" r="1.8" fill="'+onCol+'" opacity="'+(dot?1:offOp)+'"/>';
+frag += '</g>';
+return frag;
+};
+if (parsed.overflow) {
+var ch = [' ', ' ', ' ', 'O', 'L'];
+for (var i = 0; i < 5; i++) out += emit(padX + signW + i*DW, segMap[ch[i]], false);
+} else {
+for (var i = 0; i < 5; i++) {
+var c = parsed.digits.charAt(i);
+var sg = segMap[c] || segMap[' '];
+var dot = (parsed.dp > 0) && (i === (4 - parsed.dp));
+out += emit(padX + signW + i*DW, sg, dot);
+}
+}
+return { svg: out, w: totW, h: totH };
+};
+var computeReading = function(){
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+if (state.hasContainer) totalMass += state.containerMass;
+var raw = totalMass + state.bias;
+var displayed = raw - state.tareOffset;
+var rounded = Math.round(displayed / state.precision) * state.precision;
+if (Math.abs(rounded) < state.precision/2) rounded = 0;
+return rounded;
+};
+var readingToSpoken = function(reading){
+var parsed = parseScale(reading, state.precision);
+if (parsed.overflow) return 'Overload, value out of range';
+var dp = (state.precision === 0.1) ? 1 : 2;
+var sign = (reading < 0) ? 'minus ' : '';
+return sign + Math.abs(reading).toFixed(dp) + ' grams';
+};
+var narrate = function(msg){ state.lastNarration = msg; };
+var buildPlatterAndLoad = function(svgW){
+var CX = svgW / 2;
+var PLAT_Y = 60, PLAT_THICK = 5;
+var PLAT_HALF_W = svgW/2 - 35;
+var STEM_TOP = PLAT_Y + PLAT_THICK;
+var STEM_BOT = STEM_TOP + 12;
+var STEM_HALF_W = 28;
+var out = '';
+out += '<rect x="'+(CX-PLAT_HALF_W)+'" y="'+PLAT_Y+'" width="'+(PLAT_HALF_W*2)+'" height="'+PLAT_THICK+'" fill="#c9c9c9" stroke="#666" stroke-width="1"/>';
+out += '<rect x="'+(CX-STEM_HALF_W)+'" y="'+STEM_TOP+'" width="'+(STEM_HALF_W*2)+'" height="'+(STEM_BOT-STEM_TOP)+'" fill="#bcbcbc" stroke="#666" stroke-width="0.8"/>';
+var stackBottom = PLAT_Y;
+if (state.hasContainer) {
+var cW = 90, cH = 30, wallT = 5;
+var cLeft = CX - cW/2, cRight = CX + cW/2;
+var cTop = stackBottom - cH, cBot = stackBottom;
+var iLeft = cLeft + wallT, iRight = cRight - wallT;
+var iBot = cBot - wallT;
+out += '<polygon points="'+
+cLeft+','+cTop+' '+ cLeft+','+cBot+' '+
+cRight+','+cBot+' '+ cRight+','+cTop+' '+
+iRight+','+cTop+' '+ iRight+','+iBot+' '+
+iLeft+','+iBot+' '+ iLeft+','+cTop+
+'" fill="#5a8db8" stroke="#2a4a6a" stroke-width="1"/>';
+stackBottom = iBot;
+}
+var sH = 11, maxStack = 8;
+var startIdx = Math.max(0, state.samples.length - maxStack);
+var stackY = stackBottom;
+for (var i = startIdx; i < state.samples.length; i++) {
+var m = state.samples[i];
+var wid = Math.min(82, 28 + Math.sqrt(m) * 4);
+if (state.hasContainer) wid = Math.min(wid, 78);
+var sx = CX - wid/2;
+var sy = stackY - sH;
+out += '<rect x="'+sx.toFixed(1)+'" y="'+sy.toFixed(1)+'" width="'+wid.toFixed(1)+'" height="'+sH+'" rx="2" fill="#EF9F27" stroke="#854F0B" stroke-width="0.8"/>';
+stackY = sy;
+}
+if (state.samples.length > maxStack) {
+out += '<text x="'+CX+'" y="'+(stackY-5)+'" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff" font-family="Arial,sans-serif">+'+(state.samples.length - maxStack)+' more</text>';
+}
+return out;
+};
+/* Style helpers for the a11y toolbar buttons */
+var a11yBtnStyle = function(active){
+var bgC   = active ? 'rgba(0,232,208,.12)' : '#2a2e3a';
+var brdr  = active ? '#00e8d0' : '#404a60';
+var col   = active ? '#00e8d0' : '#7a8aaa';
+return 'padding:4px 10px;font-size:10px;font-family:monospace;'+
+'letter-spacing:.06em;border-radius:3px;cursor:pointer;'+
+'background:'+bgC+';border:1px solid '+brdr+';color:'+col+';';
+};
+/* Save & restore focus across re-render */
+var captureFocusId = function(){
+var ae = document.activeElement;
+if (!ae || !ae.id) return null;
+if (ae.id.indexOf('_'+thisq) === -1) return null;
+return ae.id;
+};
+var restoreFocus = function(id){
+if (!id) return;
+var el = document.getElementById(id);
+if (el && typeof el.focus === 'function') {
+try { el.focus({ preventScroll: true }); } catch(e) { el.focus(); }
+}
+};
+var render = function(){
+var focusId = captureFocusId();
+var reading = computeReading();
+var parsed = parseScale(reading, state.precision);
+var hasTare = (Math.abs(state.tareOffset) > 1e-6);
+var spokenReading = readingToSpoken(reading);
+var precLabel = (state.precision === 0.1) ? '0.1 g' : '0.01 g';
+/* HC overrides */
+var hc          = state.a11y.highContrast;
+var caseColor   = hc ? '#000' : '#e8c41a';
+var caseStroke  = hc ? '#fff' : '#222';
+var lcdBg       = hc ? '#000' : bg;
+var lcdSegColor = hc ? '#fff' : color;
+var plateBg     = hc ? '#000' : '#bcbcbc';
+var plateText   = hc ? '#fff' : '#333';
+var plateStroke = hc ? '#fff' : '#666';
+var seg7 = buildSeg7Custom(parsed, lcdSegColor);
+var html = '';
+html += '<div role="region" aria-label="Digital balance simulation" id="ds_wrap_'+thisq+'" style="display:inline-block;font-family:Arial,sans-serif">';
+/* A11Y TOOLBAR */
+html += '<div role="toolbar" aria-label="Display options" '+
+'style="display:flex;gap:6px;padding:6px 8px;background:#222;flex-wrap:wrap;width:380px;box-sizing:border-box;border-radius:6px 6px 0 0">';
+html += '<button type="button" id="ds_btn_lm_'+thisq+'" onclick="dsToggleA11y_'+thisq+'(\'lightMode\')" '+
+'aria-pressed="'+state.a11y.lightMode+'" style="'+a11yBtnStyle(state.a11y.lightMode)+'">'+
+'LIGHT MODE'+(state.a11y.lightMode?': ON':'')+'</button>';
+html += '<button type="button" id="ds_btn_nr_'+thisq+'" onclick="dsToggleA11y_'+thisq+'(\'narration\')" '+
+'aria-pressed="'+state.a11y.narration+'" style="'+a11yBtnStyle(state.a11y.narration)+'">'+
+'NARRATION: '+(state.a11y.narration?'ON':'OFF')+'</button>';
+html += '<button type="button" id="ds_btn_hc_'+thisq+'" onclick="dsToggleA11y_'+thisq+'(\'highContrast\')" '+
+'aria-pressed="'+state.a11y.highContrast+'" style="'+a11yBtnStyle(state.a11y.highContrast)+'">'+
+'HIGH CONTRAST'+(state.a11y.highContrast?': ON':'')+'</button>';
+var fsLabels = { 'normal':'NORMAL', 'large':'LARGE', 'xl':'XL' };
+html += '<button type="button" id="ds_btn_fs_'+thisq+'" onclick="dsCycleFont_'+thisq+'()" '+
+'aria-label="Font size: '+fsLabels[state.a11y.fontSize]+'. Click to cycle." '+
+'style="'+a11yBtnStyle(state.a11y.fontSize !== 'normal')+'">'+
+'FONT: '+fsLabels[state.a11y.fontSize]+'</button>';
+html += '</div>';
+/* NARRATION BAR (visible) */
+var narStyle = state.a11y.narration ?
+'display:block;width:380px;padding:6px 10px;background:#ffefc0;border-left:4px solid #e0b040;font-size:13px;color:#333;font-style:italic;box-sizing:border-box;min-height:20px' :
+'display:none';
+html += '<div id="ds_narrate_'+thisq+'" role="status" aria-live="polite" aria-atomic="true" style="'+narStyle+'">';
+html += state.lastNarration || '&nbsp;';
+html += '</div>';
+/* HIDDEN ARIA-LIVE FOR LCD READING (always announces, even if narration bar is off) */
+html += '<div aria-live="polite" aria-atomic="true" '+
+'style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">';
+html += 'Reading: '+spokenReading+'. '+(hasTare?'Tare active. ':'')+'Precision '+precLabel+'.';
+html += '</div>';
+/* SVG */
+var svgW = 380, svgH = 360;
+var svgWrapStyle = state.a11y.lightMode ?
+'filter:invert(1) hue-rotate(180deg) brightness(0.95);display:block' : 'display:block';
+var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+svgW+' '+svgH+'" '+
+'width="'+svgW+'" height="'+svgH+'" '+
+'role="img" aria-label="Digital balance: '+spokenReading+
+(hasTare?', tare active':'')+', '+
+(state.hasContainer ? 'container on platter, ' : '')+
+state.samples.length+' sample'+(state.samples.length===1?'':'s')+
+' on platter">';
+s += '<title>Digital balance reading '+spokenReading+'</title>';
+s += buildPlatterAndLoad(svgW);
+var caseY = 80, caseH = 270;
+s += '<rect x="6" y="'+caseY+'" width="'+(svgW-12)+'" height="'+caseH+'" rx="14" fill="'+caseColor+'" stroke="'+caseStroke+'" stroke-width="3"/>';
+s += '<rect x="16" y="'+(caseY+10)+'" width="'+(svgW-32)+'" height="'+(caseH-20)+'" rx="9" fill="none" stroke="'+caseStroke+'" stroke-width="1"/>';
+var lcdX = 30, lcdY = caseY + 25, lcdW = svgW - 60, lcdH = 100;
+s += '<rect x="'+lcdX+'" y="'+lcdY+'" width="'+lcdW+'" height="'+lcdH+'" rx="6" fill="#fff" stroke="'+caseStroke+'" stroke-width="2"/>';
+s += '<rect x="'+(lcdX+8)+'" y="'+(lcdY+8)+'" width="'+(lcdW-16)+'" height="'+(lcdH-16)+'" rx="3" fill="'+lcdBg+'" stroke="#444" stroke-width="0.5"/>';
+var segX = lcdX + (lcdW - seg7.w)/2 - 10;
+var segY = lcdY + (lcdH - seg7.h)/2;
+s += '<g transform="translate('+segX+','+segY+')" aria-hidden="true">'+seg7.svg+'</g>';
+s += '<text x="'+(lcdX+lcdW-22)+'" y="'+(lcdY+lcdH/2+8)+'" text-anchor="middle" font-size="22" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="0.85">g</text>';
+s += '<text x="'+(lcdX+18)+'" y="'+(lcdY+22)+'" font-size="9" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="'+(hasTare?1:0.15)+'">TARE</text>';
+s += '<text x="'+(lcdX+18)+'" y="'+(lcdY+lcdH-12)+'" font-size="9" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="1">\u25BA STABLE</text>';
+s += '<text x="'+(lcdX+lcdW-18)+'" y="'+(lcdY+lcdH-12)+'" text-anchor="end" font-size="9" font-weight="bold" font-family="Arial,sans-serif" fill="'+lcdSegColor+'" opacity="0.85">'+precLabel+'</text>';
+var stripY = lcdY + lcdH + 18;
+var stripH = 35;
+s += '<rect x="'+lcdX+'" y="'+stripY+'" width="'+lcdW+'" height="'+stripH+'" rx="3" fill="'+plateBg+'" stroke="'+plateStroke+'" stroke-width="1"/>';
+s += '<text x="'+(lcdX+lcdW/2)+'" y="'+(stripY+stripH/2+5)+'" text-anchor="middle" font-size="13" font-weight="bold" font-family="Arial,sans-serif" fill="'+plateText+'" letter-spacing="2">DIGITAL BALANCE</text>';
+s += '</svg>';
+html += '<div style="'+svgWrapStyle+'">'+s+'</div>';
+/* CONTROL PANEL */
+var fsScale = 1.0;
+if (state.a11y.fontSize === 'large') fsScale = 1.18;
+if (state.a11y.fontSize === 'xl')    fsScale = 1.36;
+var ctrlFontSize = Math.round(11 * fsScale);
+var btnFontSize  = Math.round(11 * fsScale);
+var ctrlBg = hc ? '#000' : '#222';
+var ctrlText = hc ? '#fff' : '#eee';
+var btnCommon = 'padding:6px 10px;border:'+(hc?'1px solid #fff':'none')+';border-radius:3px;cursor:pointer;font-size:'+btnFontSize+'px;font-weight:bold;color:#fff';
+var ctrl = '';
+ctrl += '<div style="width:380px;background:'+ctrlBg+';color:'+ctrlText+';padding:8px;border-radius:0 0 6px 6px;font-size:'+ctrlFontSize+'px;box-sizing:border-box">';
+/* Platter controls */
+ctrl += '<div role="group" aria-label="Platter controls" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">';
+ctrl += '<button type="button" id="ds_addmass_'+thisq+'" onclick="scaleAddSample_'+thisq+'()" '+
+'aria-label="Add a random mass to the platter" '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#0c5')+'">Add mass</button>';
+if (state.hasContainer) {
+ctrl += '<button type="button" id="ds_cont_'+thisq+'" onclick="scaleRemoveContainer_'+thisq+'()" '+
+'aria-label="Remove container from the platter" '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#888')+';font-weight:normal">Remove container</button>';
+} else {
+ctrl += '<button type="button" id="ds_cont_'+thisq+'" onclick="scaleAddContainer_'+thisq+'()" '+
+'aria-label="Add a random container to the platter" '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#258')+';font-weight:normal">Add container</button>';
+}
+ctrl += '<button type="button" id="ds_clear_'+thisq+'" onclick="scaleClearAll_'+thisq+'()" '+
+'aria-label="Clear all samples and container from the platter. Keeps tare and bias." '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#a33')+';font-weight:normal">Clear platter</button>';
+ctrl += '</div>';
+/* Calibration controls */
+ctrl += '<div role="group" aria-label="Calibration controls" style="display:flex;gap:6px;margin-bottom:6px">';
+ctrl += '<button type="button" id="ds_tare_'+thisq+'" onclick="scaleTare_'+thisq+'()" '+
+'aria-label="Tare. Capture current reading as the new zero." '+
+'style="flex:1;'+btnCommon+';background:'+(hc?'#000':'#048')+'">TARE / Zero</button>';
+ctrl += '<button type="button" id="ds_reset_'+thisq+'" onclick="scaleReset_'+thisq+'()" '+
+'aria-label="Full reset. Generate a new random bias and clear the platter and tare." '+
+'style="'+btnCommon+';background:'+(hc?'#000':'#444')+';border:1px solid '+(hc?'#fff':'#888')+';font-weight:normal">Full reset</button>';
+ctrl += '</div>';
+/* Precision (fieldset/legend) */
+ctrl += '<fieldset style="border:none;padding:0;margin:0;display:flex;align-items:center;gap:8px;color:'+ctrlText+';font-size:'+ctrlFontSize+'px">';
+ctrl += '<legend style="font-weight:bold;float:left;padding:0 4px 0 0">Precision:</legend>';
+ctrl += '<label style="cursor:pointer"><input type="radio" name="prec_'+thisq+'" id="ds_prec01_'+thisq+'" value="0.1" '+(state.precision===0.1?'checked':'')+' onclick="scaleSetPrec_'+thisq+'(0.1)" aria-label="Precision 0.1 grams"> 0.1 g</label>';
+ctrl += '<label style="cursor:pointer"><input type="radio" name="prec_'+thisq+'" id="ds_prec001_'+thisq+'" value="0.01" '+(state.precision===0.01?'checked':'')+' onclick="scaleSetPrec_'+thisq+'(0.01)" aria-label="Precision 0.01 grams"> 0.01 g</label>';
+var sampleCount = state.samples.length;
+var statusText = (sampleCount === 0 && !state.hasContainer) ? 'platter empty' :
+(sampleCount + ' sample' + (sampleCount===1?'':'s') + (state.hasContainer ? ' + container' : ''));
+ctrl += '<span style="margin-left:auto;color:'+(hc?'#fff':'#9c9')+';font-style:italic" aria-hidden="true">'+statusText+'</span>';
+ctrl += '</fieldset>';
+ctrl += '</div>';
+html += ctrl;
+html += '</div>';
+document.getElementById(rootId).innerHTML = html;
+restoreFocus(focusId);
+};
+/* HANDLERS */
+window['scaleAddSample_'+thisq] = function(){
+var m = Math.round((0.5 + Math.random() * 499.5) * 100) / 100;
+state.samples.push(m);
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+if (state.hasContainer) totalMass += state.containerMass;
+var disp = totalMass + state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Added '+m.toFixed(2)+' grams to the platter. New reading: '+readingToSpoken(rounded)+'.');
+render();
+};
+window['scaleAddContainer_'+thisq] = function(){
+state.containerMass = Math.round((30 + Math.random() * 170) * 100) / 100;
+state.hasContainer = true;
+var totalMass = state.containerMass;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+var disp = totalMass + state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Container of '+state.containerMass.toFixed(2)+' grams placed on the platter. '+
+'New reading: '+readingToSpoken(rounded)+'. '+
+'You may want to tare to cancel the container weight.');
+render();
+};
+window['scaleRemoveContainer_'+thisq] = function(){
+state.hasContainer = false;
+state.containerMass = 0;
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+var disp = totalMass + state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Container removed. New reading: '+readingToSpoken(rounded)+'.');
+render();
+};
+window['scaleClearAll_'+thisq] = function(){
+state.samples = [];
+state.hasContainer = false;
+state.containerMass = 0;
+var disp = state.bias - state.tareOffset;
+var rounded = Math.round(disp/state.precision)*state.precision;
+narrate('Platter cleared. Tare and bias preserved. Reading: '+readingToSpoken(rounded)+'.');
+render();
+};
+window['scaleTare_'+thisq] = function(){
+var totalMass = 0;
+for (var i = 0; i < state.samples.length; i++) totalMass += state.samples[i];
+if (state.hasContainer) totalMass += state.containerMass;
+state.tareOffset = totalMass + state.bias;
+narrate('Tared. Display now reads zero. Anything added next will register from this baseline.');
+render();
+};
+window['scaleReset_'+thisq] = function(){
+var sn = (Math.random() < 0.5) ? -1 : 1;
+var mg = 0.01 + Math.random() * 0.49;
+state.bias = sn * mg;
+state.samples = [];
+state.hasContainer = false;
+state.containerMass = 0;
+state.tareOffset = 0;
+narrate('Balance reset. New random bias of '+(sn>0?'positive ':'negative ')+
+mg.toFixed(2)+' grams introduced. Tare the balance before weighing.');
+render();
+};
+window['scaleSetPrec_'+thisq] = function(p){
+state.precision = p;
+narrate('Precision set to '+(p===0.1?'0.1':'0.01')+' grams. Current reading: '+
+readingToSpoken(computeReading())+'.');
+render();
+};
+window['dsToggleA11y_'+thisq] = function(key){
+state.a11y[key] = !state.a11y[key];
+if (key === 'narration' && state.a11y.narration) {
+narrate('Narration on. Current reading: '+readingToSpoken(computeReading())+'.');
+}
+if (key === 'highContrast' && state.a11y.narration) {
+narrate('High contrast '+(state.a11y.highContrast?'on':'off')+'.');
+}
+render();
+};
+window['dsCycleFont_'+thisq] = function(){
+var order = ['normal','large','xl'];
+var idx = order.indexOf(state.a11y.fontSize);
+state.a11y.fontSize = order[(idx+1) % order.length];
+if (state.a11y.narration) narrate('Font size: '+state.a11y.fontSize+'.');
+render();
+};
+if (!state.hasShownIntro) {
+state.hasShownIntro = true;
+state.lastNarration = 'Digital balance ready. The display shows '+
+readingToSpoken(computeReading())+
+' even though the platter is empty. This is the balance bias. '+
+'Press TARE before weighing.';
+}
+render();
+})();
+</script>
+<p>What is the second mass?</p>
+
+</body></html>

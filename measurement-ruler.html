@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Measurement: Ruler Measurement</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, measurement, uncertainty, ruler, measurement, uncertainty, smallest division, parallax, error propagation, area, lesson, scientific">
+<meta name="description" content="Interactive ruler simulation: measure disks, rings, a rectangle and a box with four kinds of rulers, and estimate and propagate the uncertainties.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<hr><hr>
+<div id="rulRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="rul_a11y" id="rulA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="rul_a11ybtn" id="rulBtnLM" onclick="rulA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rul_a11ybtn rul_a11yon" id="rulBtnNR" onclick="rulA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="rul_header">
+<p class="rul_h1">Ruler Measurement</p>
+<p class="rul_sub">Four rulers, six objects -- measure them and estimate the uncertainty</p>
+</div>
+<div id="rulNarBar" class="rul_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- ── Canvas ── -->
+<div class="rul_diag">
+<div class="rul_diaglabel"><b>RULER MEASUREMENT</b><span class="rul_diagnote">drag the red dot (or use the sliders) &middot; zoom in to read the fine scales</span></div>
+<div class="rul_cvwrap">
+<canvas id="rcv" width="700" height="480" style="border:1px solid black;display:block;">
+<span style="color:red;">This browser does not support HTML5 canvas.</span>
+</canvas>
+</div>
+<div class="rul_zoombar" role="group" aria-label="Zoom">
+<span class="rul_zlbl">Zoom</span>
+<button type="button" class="rul_zbtn" data-z="1" aria-pressed="true" onclick="rulZoom.set(1)">1&times;</button>
+<button type="button" class="rul_zbtn" data-z="2" aria-pressed="false" onclick="rulZoom.set(2)">2&times;</button>
+<button type="button" class="rul_zbtn" data-z="3" aria-pressed="false" onclick="rulZoom.set(3)">3&times;</button>
+</div>
+</div>
+<!-- ── Object selector ── -->
+<div class="rul_ctrl rul_ctrl_green">
+<span class="rul_ctrlabel">Select Object:</span>
+<label class="rul_radlbl"><input type="radio" name="rulObj" value="disk" id="rulDisk" checked onchange="rulSim.setObj('disk')"> Disk 1</label>
+<label class="rul_radlbl"><input type="radio" name="rulObj" value="disk2" id="rulDisk2" onchange="rulSim.setObj('disk2')"> Disk 2</label>
+<label class="rul_radlbl"><input type="radio" name="rulObj" value="ring" id="rulRing" onchange="rulSim.setObj('ring')"> Ring</label>
+<label class="rul_radlbl"><input type="radio" name="rulObj" value="ring2" id="rulRing2" onchange="rulSim.setObj('ring2')"> Ring 2</label>
+<label class="rul_radlbl"><input type="radio" name="rulObj" value="rect" id="rulRect" onchange="rulSim.setObj('rect')"> Rectangle</label>
+<label class="rul_radlbl"><input type="radio" name="rulObj" value="box" id="rulBox" onchange="rulSim.setObj('box')"> Box</label>
+</div>
+<!-- ── Ruler selector ── -->
+<div class="rul_ctrl rul_ctrl_tan">
+<span class="rul_ctrlabel">Select Ruler:</span>
+<select id="rulRulerSel" class="rul_select" onchange="rulSim.setRuler(this.value)" aria-label="Select ruler style">
+<option value="ruler1">Ruler 1 -- transparent, flush scale</option>
+<option value="ruler2">Ruler 2 -- opaque, flush scale</option>
+<option value="ruler3">Ruler 3 -- transparent, offset scale</option>
+<option value="ruler4">Ruler 4 -- opaque, offset scale</option>
+</select>
+</div>
+<!-- ── Position/angle sliders (keyboard-accessible alternative to dragging) ── -->
+<div class="rul_ctrl rul_ctrl_blue">
+<span class="rul_ctrlabel">▶ X:</span>
+<input type="range" id="rulSliderX" class="rul_slider" min="0" max="700" step="1" value="60" oninput="rulSim.setX(+this.value)" aria-label="Ruler horizontal position in pixels">
+<span class="rul_rdout" id="rulXReadout">60</span>
+<span class="rul_ctrlabel">Y:</span>
+<input type="range" id="rulSliderY" class="rul_slider" min="0" max="480" step="1" value="70" oninput="rulSim.setY(+this.value)" aria-label="Ruler vertical position in pixels">
+<span class="rul_rdout" id="rulYReadout">70</span>
+<span class="rul_ctrlabel">Angle:</span>
+<input type="range" id="rulSliderA" class="rul_slider" min="0" max="360" step="1" value="0" oninput="rulSim.setAngle(+this.value)" aria-label="Ruler rotation angle in degrees">
+<span class="rul_rdout" id="rulAReadout">0&deg;</span>
+</div>
+<!-- ── Info panel ── -->
+<div class="rul_info" id="rulNoSim">
+<div class="rul_infotitle">Ruler Measurement</div>
+<div class="rul_infotext">
+Drag the <strong>red dot</strong> to move the ruler (or use the X/Y sliders). Drag the <strong>blue dot</strong> (inside the small ring) to rotate it (or use the Angle slider).
+Line the ruler's scale up with the object to measure it, then read the value where the object's edge lines up with the scale.
+Disk&nbsp;2 and Ring&nbsp;2 hide the true center point.
+</div>
+</div>
+<style>
+/* ── Root scoping ── */
+#rulRoot { display:block;
+width:702px;
+font-family:Calibri,Arial,sans-serif;
+font-size:10pt;
+}
+#rulRoot * { box-sizing:border-box;
+margin:0;
+}
+/* ── Accessibility toolbar ── */
+#rulRoot .rul_a11y { display:flex;
+gap:6px;
+padding:6px 8px;
+background:#222;
+flex-wrap:wrap;
+width:702px;
+}
+#rulRoot .rul_a11ybtn { padding:4px 10px;
+font-size:.72rem;
+font-family:monospace;
+letter-spacing:.06em;
+border-radius:3px;
+cursor:pointer;
+background:#2a2e3a;
+border:1px solid #404a60;
+color:#7a8aaa;
+}
+#rulRoot .rul_a11ybtn:hover { border-color:#00e8d0;
+color:#00e8d0;
+}
+#rulRoot .rul_a11yon { background:rgba(0,232,208,.12);
+border-color:#00e8d0;
+color:#00e8d0;
+}
+#rulRoot .rul_narbar { width:702px;
+min-height:26px;
+padding:4px 10px;
+background:#ffefc0;
+border-left:4px solid #e0b040;
+font-size:.88rem;
+color:#333;
+font-style:italic;
+}
+/* ── Control rows ── */
+#rulRoot .rul_ctrl { display:flex;
+align-items:center;
+gap:10px;
+width:702px;
+padding:7px 10px;
+flex-wrap:wrap;
+}
+#rulRoot .rul_ctrl_green { background:#99ff33;
+}
+#rulRoot .rul_ctrl_tan { background:#ffefc0;
+border-top:1px solid #e0c07a;
+}
+#rulRoot .rul_ctrl_blue { background:#cce8ff;
+border-top:1px solid #90c0e0;
+}
+#rulRoot .rul_select { font-size:13px;
+padding:3px 6px;
+border-radius:3px;
+cursor:pointer;
+}
+#rulRoot .rul_slider { width:130px;
+height:16px;
+cursor:pointer;
+}
+#rulRoot .rul_rdout { background:#00c;
+color:#ff0;
+font-family:monospace;
+font-size:13px;
+padding:2px 8px;
+border-radius:3px;
+white-space:nowrap;
+min-width:46px;
+text-align:right;
+}
+#rulRoot .rul_ctrlabel { font-weight:bold;
+font-size:13px;
+white-space:nowrap;
+}
+#rulRoot .rul_radlbl { font-size:13px;
+cursor:pointer;
+display:flex;
+align-items:center;
+gap:4px;
+}
+/* ── Info panel ── */
+#rulRoot .rul_info { width:702px;
+background:#ffff00;
+border:1px solid #000;
+border-top:none;
+padding:6px 10px 4px;
+}
+#rulRoot .rul_infotitle { font-weight:bold;
+font-size:large;
+margin-bottom:2px;
+}
+#rulRoot .rul_infotext { font-size:10pt;
+margin-bottom:3px;
+}
+#rulRoot .rul_copyright { font-size:9pt;
+}
+</style>
+<style>
+/* ════════ Hall effect template layer: mobile friendly, scoped to #rulRoot ════════ */
+#rulRoot {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+width:100% !important; max-width:780px; margin:0 auto 10px; box-sizing:border-box; position:relative;
+display:flex; flex-direction:column; gap:10px; padding:14px 10px 18px; border-radius:6px;
+font-family:Arial, sans-serif; color:var(--tp-text); background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+}
+#rulRoot.rul_lmode {
+--tp-chassis:#e9edf1; --tp-panel:#ffffff; --tp-panel-hi:#f1f4f7; --tp-panel-lo:#f4f6f9;
+--tp-border:#c3cad3; --tp-border-hi:#9aa3ae; --tp-text:#1d232a; --tp-dim:#556070;
+--tp-accent:#a8620a; --tp-green:#12805a; --tp-val:#8a4a00;
+--tp-focus:#a8620a; --tp-nar-bg:#ffefc0; --tp-nar-border:#e0b040; --tp-nar-text:#333333; background-image:none;
+}
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#rulRoot :not(mjx-container):not(mjx-container *), #rulRoot :not(mjx-container):not(mjx-container *)::before, #rulRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; }
+#rulRoot input:focus-visible, #rulRoot button:focus-visible, #rulRoot select:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+/* display options */
+#rulRoot .rul_a11y { width:auto !important; background:none; padding:0; justify-content:center; }
+#rulRoot .rul_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-dim); }
+#rulRoot .rul_a11ybtn:hover { border-color:var(--tp-accent); color:var(--tp-accent); }
+#rulRoot .rul_a11yon { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* header */
+#rulRoot .rul_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#rulRoot .rul_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent); text-align:center; }
+#rulRoot .rul_sub { font-size:.7rem; color:var(--tp-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* narration */
+#rulRoot .rul_narbar { width:auto !important; min-height:28px; padding:6px 12px; background:var(--tp-nar-bg); border:none; border-left:4px solid var(--tp-nar-border); font-size:.82rem; color:var(--tp-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* the instrument: canvas in a frame that scrolls sideways when zoomed */
+#rulRoot .rul_diag { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#rulRoot .rul_diaglabel { background:var(--tp-panel-lo); border-bottom:1px solid var(--tp-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--tp-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#rulRoot .rul_diaglabel b { color:var(--tp-accent); }
+#rulRoot .rul_diagnote { text-transform:none; letter-spacing:.02em; }
+#rulRoot .rul_cvwrap { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; background:#ffffff; }
+#rulRoot canvas { display:block; width:100%; max-width:700px; height:auto; margin:0 auto; border:none !important; }
+#rulRoot .rul_zoombar { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; padding:8px 10px; background:var(--tp-panel-lo); border-top:1px solid var(--tp-border); }
+#rulRoot .rul_zlbl { font-family:monospace; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--tp-dim); }
+#rulRoot .rul_zbtn { padding:6px 14px; font-family:monospace; font-size:.74rem; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-text); border-radius:3px; }
+#rulRoot .rul_zbtn[aria-pressed="true"] { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* control rows become panels (their colors become a stripe) */
+#rulRoot .rul_ctrl { width:auto !important; background:var(--tp-panel) !important; border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:6px; padding:9px 12px; gap:8px 12px; color:var(--tp-text); }
+#rulRoot .rul_ctrl_green { border-left-color:#7ccf3a; }
+#rulRoot .rul_ctrl_blue { border-left-color:#6fb3e8; }
+#rulRoot .rul_ctrl_tan { border-left-color:#d2a96a; }
+/* the ruler's X / Y / Angle row: one label, slider and value per line */
+#rulRoot .rul_ctrl_blue { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; }
+#rulRoot .rul_ctrlabel { color:var(--tp-dim); font-size:.74rem; font-weight:700; }
+#rulRoot .rul_radlbl { color:var(--tp-text); font-size:.8rem; }
+#rulRoot input[type=radio] { accent-color:var(--tp-accent); }
+#rulRoot .rul_slider { flex:1 1 140px; min-width:0 !important; width:auto !important; accent-color:var(--tp-accent); }
+#rulRoot .rul_rdout { background:var(--tp-panel-lo) !important; color:var(--tp-val) !important; border:1px solid var(--tp-border); font-family:monospace; font-size:.8rem; }
+#rulRoot select { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.78rem; max-width:100%; }
+/* information panel */
+#rulRoot .rul_info { width:auto !important; background:var(--tp-panel) !important; border:1px solid var(--tp-border) !important; border-radius:6px; padding:9px 12px; color:var(--tp-text); }
+#rulRoot .rul_infotitle { color:var(--tp-accent); font-size:.8rem; font-family:monospace; letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; }
+#rulRoot .rul_infotext { font-size:.8rem; line-height:1.5; color:var(--tp-text); }
+#rulRoot .rul_copyright { font-size:.7rem; color:var(--tp-dim); margin-top:4px; }
+/* SIM description (toggle) */
+#rulRoot .rul_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#rulRoot .rul_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-accent); color:var(--tp-accent); border-radius:3px; font-weight:bold; }
+#rulRoot .rul_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#rulRoot .rul_desc { width:100%; background:var(--tp-panel); border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:4px; padding:12px 16px; color:var(--tp-text); font-size:.86rem; line-height:1.55; }
+#rulRoot .rul_desc p { margin:0 0 9px 0; }
+#rulRoot .rul_desc p:last-child { margin-bottom:0; }
+#rulRoot .rul_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.rul_qwrap { width:100%; max-width:780px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.rul_qwrap li { margin:0 0 10px 0; line-height:1.5; }
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#rulRoot input[type=range] { height:28px; }
+#rulRoot input[type=radio] { width:20px; height:20px; }
+#rulRoot .rul_a11ybtn, #rulRoot .rul_zbtn, #rulRoot .rul_descbtn { min-height:40px; }
+#rulRoot select { min-height:36px; font-size:16px; }
+#rulRoot .rul_ctrl { gap:10px 14px; }
+}
+@media (max-width:560px) {
+#rulRoot { padding:10px 6px 14px; }
+}
+</style>
+<!-- ── Accessibility controller ── -->
+<script>
+var rulA11y = (function(){
+var states={lm:false,nr:true};
+function styleBtn(id,on){
+var b=document.getElementById(id);
+if(!b)return;
+b.classList.toggle('rul_a11yon', on);
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function apply(){
+var RT=document.getElementById('rulRoot'); if(RT) RT.classList.toggle('rul_lmode', states.lm);
+var cv=document.getElementById('rcv');
+if(cv)cv.style.filter=states.lm?'invert(1) hue-rotate(180deg) brightness(0.9)':'';
+var nb=document.getElementById('rulNarBar');
+if(nb)nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('rulBtnNR');
+if(btn){btn.textContent='NARRATION:'+(states.nr?'ON':'OFF');
+styleBtn('rulBtnNR',states.nr);
+}
+styleBtn('rulBtnLM',states.lm);
+}
+return {
+init:function(){apply();
+},
+toggle:function(k){states[k]=!states[k];
+apply();
+},
+narrate:function(msg){if(!states.nr)return;
+var nb=document.getElementById('rulNarBar');
+if(!nb)return;
+nb.innerHTML=msg;
+}
+};
+})();
+</script>
+<!-- ── Simulation ── -->
+<script>
+var rulSim = (function(){
+// ══════════════════════════════════════════════════════════════════════
+// CONFIGURATION - instructor-editable values (prefixed for template substitution)
+//
+// All shape dimensions are in the same units as the ruler (labelled "cm").
+// ══════════════════════════════════════════════════════════════════════
+var CFG = {
+// Disk: measures DIAMETER = 2 * R_DISK
+R_DISK: 2.35,
+// Ring (annulus/washer): measures OUTER diameter = 2*R_RING_OUTER and
+// INNER diameter = 2*R_RING_INNER
+R_RING_OUTER: 2.75,
+R_RING_INNER: 1.6,
+// Disk: measures DIAMETER = 2 * R_DISK
+R_DISK2: 1.85,
+// Ring (annulus/washer): measures OUTER diameter = 2*R_RING_OUTER and
+// INNER diameter = 2*R_RING_INNER
+R_RING_OUTER2: 2.15,
+R_RING_INNER2: 1.15,
+// Rectangle: measures WIDTH x HEIGHT
+W_RECT: 6.4,
+H_RECT: 2.8,
+// Box (hollow rectangular frame): OUTER width/height and WALL thickness.
+// Inner opening = (W_BOX_OUTER - 2*WALL_BOX) x (H_BOX_OUTER - 2*WALL_BOX)
+W_BOX_OUTER: 8.2,
+H_BOX_OUTER: 5.4,
+WALL_BOX: 0.9,
+// Ruler physical length, in the same units as the shapes above
+RULER_LENGTH_UNITS: 12.5
+};
+// Shape choices - Disk/Ring show the true center point; Disk 2/Ring 2 hide it.
+var SHAPES = {
+disk:  {kind:'disk', showCenter:true,  label:'Disk'},
+disk2: {kind:'disk', showCenter:false, label:'Disk 2'},
+ring:  {kind:'ring', showCenter:true,  label:'Ring'},
+ring2: {kind:'ring', showCenter:false, label:'Ring 2'},
+rect:  {kind:'rect', label:'Rectangle'},
+box:   {kind:'box',  label:'Box'}
+};
+// Ruler style choices: transparent/opaque x flush/offset scale.
+// vOffsetPx: for the offset rulers, the tick marks stop this many pixels short
+// of the ruler's actual usable (bottom) edge, leaving a blank gap - mimicking
+// real rulers where the graduations are recessed from the edge. Combined with
+// the horizontal offset, this makes precise alignment (and so the reading)
+// genuinely harder to judge, which is the point of these two rulers.
+var RULERS = {
+ruler1: {opaque:false, offsetUnits:0,   vOffsetPx:0,  fillColor:'#fdfdfa', label:'Ruler 1'},
+ruler2: {opaque:true,  offsetUnits:0,   vOffsetPx:0,  fillColor:'#ffefc0', label:'Ruler 2'},
+ruler3: {opaque:false, offsetUnits:0.4, vOffsetPx:10, fillColor:'#fdfdfa', label:'Ruler 3'},
+ruler4: {opaque:true,  offsetUnits:0.4, vOffsetPx:10, fillColor:'#ffefc0', label:'Ruler 4'}
+};
+// ── Canvas / geometry constants ──────────────────────────────────────
+var canvas, ctx, width=700, height=480;
+var PX = 45; // pixels per unit ("cm")
+var shapeCx = 300, shapeCy = 250; // fixed center point of whatever shape is shown
+var rulerLen = CFG.RULER_LENGTH_UNITS*PX; // physical ruler length in px
+var stripH = 70; // ruler strip height in px
+var maxUnits = Math.ceil(rulerLen/PX)+1;
+// ── State ──────────────────────────────────────────────────────────
+var pos = {x:60, y:70}; // red dot (ruler's physical left edge), global coords
+var angle = 0; // ruler rotation, radians
+var handleLocal = {x:70, y:-20}; // blue dot's fixed offset in the ruler's local frame
+var dragMode = 0; // 0 none, 1 translating (red), 2 rotating (blue)
+var curObj = 'disk';
+var curRuler = 'ruler1';
+var HIT_R = 13;
+// ── Coordinate helpers ─────────────────────────────────────────────
+function localToGlobal(lx,ly){
+var c=Math.cos(angle), s=Math.sin(angle);
+return {x: pos.x + lx*c - ly*s, y: pos.y + lx*s + ly*c};
+}
+function handleGlobal(){
+return localToGlobal(handleLocal.x, handleLocal.y);
+}
+function dist(a,b){
+var dx=a.x-b.x, dy=a.y-b.y;
+return Math.sqrt(dx*dx+dy*dy);
+}
+// ── Object / ruler selection ───────────────────────────────────────
+function setObj(which){
+curObj=which;
+rulA11y.narrate('Measuring the '+SHAPES[which].label+'. Drag the red dot to move the ruler, and the blue dot to rotate it.');
+}
+function setRuler(which){
+curRuler=which;
+rulA11y.narrate('Switched to '+RULERS[which].label+'.');
+}
+// ── Drawing: shapes ────────────────────────────────────────────────
+var SHAPE_FILL = '#cfe8f5';
+var SHAPE_STROKE = '#333';
+var HOLE_FILL = '#ffffff';
+function drawCenterDot(cx,cy,show){
+if(!show) return;
+ctx.beginPath();
+ctx.arc(cx,cy,2.5,0,2*Math.PI);
+ctx.fillStyle='#000';
+ctx.fill();
+}
+function drawDisk(showCenter){
+var r = CFG.R_DISK*PX;
+if(showCenter){r = CFG.R_DISK2*PX;}
+ctx.beginPath();
+ctx.arc(shapeCx,shapeCy,r,0,2*Math.PI);
+ctx.fillStyle=SHAPE_FILL;
+ctx.fill();
+ctx.lineWidth=1.5;
+ctx.strokeStyle=SHAPE_STROKE;
+ctx.stroke();
+drawCenterDot(shapeCx,shapeCy,showCenter);
+}
+function drawRing(showCenter){
+var ro = CFG.R_RING_OUTER*PX, ri = CFG.R_RING_INNER*PX;
+if(showCenter){ro = CFG.R_RING_OUTER2*PX;ri = CFG.R_RING_INNER2*PX;}
+ctx.beginPath();
+ctx.arc(shapeCx,shapeCy,ro,0,2*Math.PI);
+ctx.fillStyle=SHAPE_FILL;
+ctx.fill();
+ctx.lineWidth=1.5;
+ctx.strokeStyle=SHAPE_STROKE;
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(shapeCx,shapeCy,ri,0,2*Math.PI);
+ctx.fillStyle=HOLE_FILL;
+ctx.fill();
+ctx.strokeStyle=SHAPE_STROKE;
+ctx.stroke();
+drawCenterDot(shapeCx,shapeCy,showCenter);
+}
+function drawRect(){
+var w=CFG.W_RECT*PX, h=CFG.H_RECT*PX;
+var x=shapeCx-w/2, y=shapeCy-h/2;
+ctx.fillStyle=SHAPE_FILL;
+ctx.fillRect(x,y,w,h);
+ctx.lineWidth=1.5;
+ctx.strokeStyle=SHAPE_STROKE;
+ctx.strokeRect(x,y,w,h);
+}
+function drawBox(){
+var ow=CFG.W_BOX_OUTER*PX, oh=CFG.H_BOX_OUTER*PX, t=CFG.WALL_BOX*PX;
+var x=shapeCx-ow/2, y=shapeCy-oh/2;
+ctx.fillStyle=SHAPE_FILL;
+ctx.fillRect(x,y,ow,oh);
+ctx.lineWidth=1.5;
+ctx.strokeStyle=SHAPE_STROKE;
+ctx.strokeRect(x,y,ow,oh);
+var iw=ow-2*t, ih=oh-2*t;
+if(iw>0 && ih>0){
+ctx.fillStyle=HOLE_FILL;
+ctx.fillRect(shapeCx-iw/2, shapeCy-ih/2, iw, ih);
+ctx.strokeRect(shapeCx-iw/2, shapeCy-ih/2, iw, ih);
+}
+}
+function drawShape(){
+var s = SHAPES[curObj];
+if(s.kind==='disk') drawDisk(s.showCenter);
+else if(s.kind==='ring') drawRing(s.showCenter);
+else if(s.kind==='rect') drawRect();
+else if(s.kind==='box') drawBox();
+}
+// ── Drawing: ruler ─────────────────────────────────────────────────
+function drawRuler(){
+var R = RULERS[curRuler];
+ctx.save();
+ctx.translate(pos.x,pos.y);
+ctx.rotate(angle);
+// body
+ctx.beginPath();
+ctx.rect(0,0,rulerLen,stripH);
+if(R.opaque){
+ctx.fillStyle=R.fillColor;
+ctx.fill();
+}
+ctx.lineWidth=1.5;
+ctx.strokeStyle='#000';
+ctx.stroke();
+// ticks + numbers
+var offsetPx = R.offsetUnits*PX;
+var baseY = stripH - R.vOffsetPx; // tick baseline - recessed from the true edge for offset rulers
+ctx.font='13px Calibri';
+ctx.fillStyle='#000';
+ctx.textAlign='center';
+for(var n=0;n<=maxUnits;n++){
+var tx = offsetPx + n*PX;
+if(tx>rulerLen) break;
+ctx.beginPath();
+ctx.moveTo(tx, baseY);
+ctx.lineTo(tx, baseY-26);
+ctx.lineWidth=1.3;
+ctx.stroke();
+// skip the "0" label when the scale is flush with the edge (it would sit
+// right on the border line); show it normally when the scale is offset.
+if(!(n===0 && R.offsetUnits===0)){
+ctx.fillText(String(n), tx, baseY-32);
+}
+// minor ticks (0.1 resolution) up to the next major
+for(var m=1;m<10;m++){
+var mx = tx + m*(PX/10);
+if(mx>rulerLen) break;
+var tickLen = (m===5)?16:9;
+ctx.beginPath();
+ctx.moveTo(mx, baseY);
+ctx.lineTo(mx, baseY-tickLen);
+ctx.lineWidth=1;
+ctx.stroke();
+}
+}
+ctx.restore();
+}
+// ── Drawing: handles ───────────────────────────────────────────────
+function drawHandles(){
+// red translate handle
+ctx.beginPath();
+ctx.arc(pos.x,pos.y,6,0,2*Math.PI);
+ctx.fillStyle='red';
+ctx.fill();
+ctx.lineWidth=1;
+ctx.strokeStyle='#800';
+ctx.stroke();
+// blue rotate handle, with a ring around it
+var h = handleGlobal();
+ctx.beginPath();
+ctx.arc(h.x,h.y,10,0,2*Math.PI);
+ctx.lineWidth=1.5;
+ctx.strokeStyle='#0000cc';
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(h.x,h.y,5,0,2*Math.PI);
+ctx.fillStyle='blue';
+ctx.fill();
+}
+// ── Main paint ─────────────────────────────────────────────────────
+function paint(){
+ctx.clearRect(0,0,width,height);
+ctx.fillStyle='#ffffff';
+ctx.fillRect(0,0,width,height);
+drawShape();
+drawRuler();
+drawHandles();
+}
+// ── Accessible slider controls (X / Y / Angle) ────────────────────
+function syncSliders(){
+var sx=document.getElementById('rulSliderX');
+var sy=document.getElementById('rulSliderY');
+var sa=document.getElementById('rulSliderA');
+var rx=document.getElementById('rulXReadout');
+var ry=document.getElementById('rulYReadout');
+var ra=document.getElementById('rulAReadout');
+var deg = ((angle*180/Math.PI)%360+360)%360;
+if(sx) sx.value=Math.round(pos.x);
+if(sy) sy.value=Math.round(pos.y);
+if(sa) sa.value=Math.round(deg);
+if(rx) rx.textContent=Math.round(pos.x);
+if(ry) ry.textContent=Math.round(pos.y);
+if(ra) ra.textContent=Math.round(deg)+'\u00b0';
+}
+function setX(px){
+pos.x=Math.max(0,Math.min(width,px));
+syncSliders();
+}
+function setY(px){
+pos.y=Math.max(0,Math.min(height,px));
+syncSliders();
+}
+function setAngle(deg){
+angle=deg*Math.PI/180;
+syncSliders();
+}
+// ── Interaction ────────────────────────────────────────────────────
+/* fingers are less precise than a mouse: on touch the handles grab from about 12 screen pixels further out */
+var TOUCH_SLOP=0;
+function canvasPoint(clientX,clientY){
+var r=canvas.getBoundingClientRect();
+return {x:(clientX-r.left)*width/r.width, y:(clientY-r.top)*height/r.height};
+}
+function reactionDown(clientX,clientY){
+var p=canvasPoint(clientX,clientY);
+var h=handleGlobal();
+if(dist(p,h)<=HIT_R+TOUCH_SLOP){ dragMode=2; return; }
+if(dist(p,pos)<=HIT_R+TOUCH_SLOP){ dragMode=1; return; }
+dragMode=0;
+}
+function reactionMove(clientX,clientY){
+if(dragMode===0) return;
+var p=canvasPoint(clientX,clientY);
+if(dragMode===1){
+pos.x=Math.max(0,Math.min(width,p.x));
+pos.y=Math.max(0,Math.min(height,p.y));
+} else if(dragMode===2){
+var dx=p.x-pos.x, dy=p.y-pos.y;
+var targetAngle=Math.atan2(dy,dx);
+var localAngle=Math.atan2(handleLocal.y,handleLocal.x);
+angle=targetAngle-localAngle;
+}
+syncSliders();
+}
+function reactionUp(){
+if(dragMode!==0){
+rulA11y.narrate('Ruler '+(dragMode===1?'moved':'rotated')+'. Line the scale up with the object edges to read the measurement.');
+}
+dragMode=0;
+}
+// ── Boot ───────────────────────────────────────────────────────────
+function start(){
+canvas=document.getElementById('rcv');
+ctx=canvas.getContext('2d');
+canvas.style.cursor='default';
+canvas.onmousedown=function(e){TOUCH_SLOP=0; reactionDown(e.clientX,e.clientY);};
+canvas.onmousemove=function(e){
+if(dragMode!==0){reactionMove(e.clientX,e.clientY);}
+var p=canvasPoint(e.clientX,e.clientY);
+var h=handleGlobal();
+canvas.style.cursor=(dist(p,h)<=HIT_R||dist(p,pos)<=HIT_R||dragMode!==0)?'pointer':'default';
+};
+canvas.onmouseup=function(){reactionUp();};
+canvas.onmouseleave=function(){reactionUp();};
+canvas.ontouchstart=function(e){var o=e.changedTouches[0]; TOUCH_SLOP=12*width/canvas.getBoundingClientRect().width; reactionDown(o.clientX,o.clientY); if(dragMode!==0)e.preventDefault();};
+canvas.ontouchmove=function(e){if(dragMode===0)return; var o=e.changedTouches[0]; reactionMove(o.clientX,o.clientY); e.preventDefault();};
+canvas.ontouchend=function(){reactionUp();};
+setInterval(paint,40);
+setObj('disk');
+syncSliders();
+rulA11y.narrate('Ruler measurement simulation. Select an object and ruler style using the controls, then drag the red dot (or use the X/Y sliders) to move the ruler and the blue dot (or the Angle slider) to rotate it.');
+}
+window.setTimeout(start,0);
+return {setObj:setObj, setRuler:setRuler, setX:setX, setY:setY, setAngle:setAngle};
+})();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="rul_descwrap">
+<button type="button" class="rul_descbtn" id="rulDescBtn" aria-expanded="false" aria-controls="rulDesc" onclick="rulDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="rul_desc" id="rulDesc" role="region" aria-labelledby="rulDescBtn" style="display:none">
+<p>This simulation shows how to measure with a ruler, and how the design of the ruler affects the measurement. Four rulers are available: transparent or opaque, with the scale starting flush at the edge or offset from it. Objects to measure include two disks, two rings, a rectangle and a box with a hollow center.</p>
+<p>Drag the red dot (or use the X and Y sliders) to move the ruler, and the blue dot (or the angle slider) to rotate it. Line the scale up with the object and read the scale where the object's edges meet it. With a transparent ruler both edges can be seen through the ruler; with an opaque one the ruler has to be placed beside the object. With an offset scale the zero of the scale is not at the end of the ruler, so the end cannot be used as the starting point. Disk 2 and Ring 2 do not show their center, which makes finding the diameter harder.</p>
+<p>In the best case the uncertainty of one reading is half of the smallest division of the ruler. A length found from two independent readings (one at each edge) has the uncertainty</p>
+<p class="rul_eq">`Delta D = sqrt(2) xx 1/2 xx "smallest division"`.</p>
+<p>When lengths are multiplied, as for the area `A = W xx H` of the box, the relative uncertainties combine:</p>
+<p class="rul_eq">`(Delta A)/A = sqrt( ((Delta W)/W)^2 + ((Delta H)/H)^2 )`.</p>
+<p>This simulation is useful for practicing measurements with a ruler, choosing a good measuring technique, and estimating and propagating uncertainties.</p>
+</div>
+</div>
+<script>
+function rulDesc(){
+var b = document.getElementById('rulDescBtn'), d = document.getElementById('rulDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<script>
+var rulZoom = (function(){
+var cv = document.getElementById('rcv'), wrap = cv.parentNode, W = 700, H = 480, z = 1;
+function fit(){
+var base = Math.min(wrap.clientWidth || W, W), cssW = base*z, dpr = window.devicePixelRatio || 1, s = Math.max(1, dpr*cssW/W);
+var cx = wrap.scrollWidth > wrap.clientWidth ? (wrap.scrollLeft + wrap.clientWidth/2)/wrap.scrollWidth : 0.5;
+cv.style.maxWidth = 'none'; cv.style.width = cssW + 'px';
+cv.width = Math.round(W*s); cv.height = Math.round(H*s);
+cv.getContext('2d').setTransform(cv.width/W, 0, 0, cv.height/H, 0, 0);
+wrap.scrollLeft = Math.max(0, cx*wrap.scrollWidth - wrap.clientWidth/2);
+var bs = wrap.parentNode.querySelectorAll('.rul_zbtn');
+for (var i=0; i<bs.length; i++) bs[i].setAttribute('aria-pressed', (+bs[i].getAttribute('data-z') === z) ? 'true' : 'false');
+}
+function set(f){ z = f; fit(); }
+window.addEventListener('resize', fit);
+window.setTimeout(fit, 80);   /* after the simulation has started and read its canvas size */
+return { set:set };
+})();
+</script>
+</div><!-- #rulRoot -->
+<div class="rul_qwrap">
+
+<hr>
+<ol type="a"><hr>
+<p style=color:blue><span style=font-weight:bold>Reminder:</span> in the best case scenario, the uncertainty in making one reading with a ruler is equal to "<span style=color:green;font-style:italic>half the smallest division of that ruler</span>", and that when the measurement depends on two independent readings, the uncertainty is then <span style=color:green;>`sqrt(2)\ xx`</span> "<span style=color:green;font-style:italic>half the smallest division of that ruler</span>".</p><p style=color:blue>The uncertainty in the best case scenario is the minimum value that one can choose. Normally, the scientists chooses larger values.</p><hr>
+<li>Provide the uncertainty `DeltaD` involved when using Ruler 1 for measuring `D` the diameter of Disk 1:<br> _____ cm</li>
+<li>Provide the uncertainty involved when using Ruler 2 for measuring `D` the diameter of Disk 1:<br> _____ cm</li>
+<li>Provide the uncertainty involved when using Ruler 3 for measuring `D` the diameter of Disk 1:<br> _____ cm</li>
+<li>Provide the uncertainty involved when using Ruler 4 for measuring `D` the diameter of Disk 1:<br> _____ cm</li>
+<hr>
+<li>Provide the uncertainty involved when using Ruler 1 for measuring `D` the diameter of Disk 2:<br> _____ cm</li>
+<li>Provide the uncertainty involved when using Ruler 2 for measuring `D` the diameter of Disk 2:<br> _____ cm</li>
+<li>Provide the uncertainty involved when using Ruler 3 for measuring `D` the diameter of Disk 2:<br> _____ cm</li>
+<li>Provide the uncertainty involved when using Ruler 4 for measuring `D` the diameter of Disk 2:<br> _____ cm</li>
+<hr>
+<p style=color:blue>The goal now is to find the area of the cyan region of the Box Using Ruler 1.</p><hr>
+<li>Provide the outer width of the Box:<br>`W_o =` _____ &plusmn; _____ cm</li>
+<li>Provide the outer height of the Box:<br>`H_o =` _____ &plusmn; _____ cm</li>
+<li>Provide the inner width of the Box:<br>`W_i =` _____ &plusmn; _____ cm</li>
+<li>Provide the inner height of the Box:<br>`H_i =` _____ &plusmn; _____ cm</li>
+<hr><p>Let us now find the areas!</p><hr>
+<li>Find the outer area of the Box:<br>`A_o = W_o xx H_o =` _____ &plusmn; _____ cm<sup>2</sup></li>
+<li>Find the inner area of the Box:<br>`A_i = W_i xx H_i =` _____ &plusmn; _____ cm<sup>2</sup></li>
+<hr><p>Now, let us find the area of the cyan region!</p><hr>
+<li>Find the area of the cyan region of the Box:<br>`A_c = A_o - A_i =` _____ &plusmn; _____ cm<sup>2</sup></li>
+</div>
+</main>
+</body>
+</html>

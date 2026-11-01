@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Momentum: Two-Ball Collisions: Elastic and Inelastic</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, momentum, collisions, collision, elastic collision, inelastic collision, momentum conservation, kinetic energy, coefficient of restitution, centre of mass, billiards, impulse, lesson, scientific">
+<meta name="description" content="Interactive simulation of two-ball collisions on a billiard table: elastic and inelastic, head-on and glancing, with momentum and kinetic energy before and after.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="clRoot" class="cl_root" role="region" aria-label="Two-ball collisions simulator">
+<div class="cl_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="cl_a11ybtn" id="clBtnHC" onclick="clSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="cl_a11ybtn" id="clBtnLM" onclick="clSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="cl_a11ybtn" id="clBtnCB" onclick="clSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="cl_a11ybtn cl_a11yon" id="clBtnNR" onclick="clSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="cl_tbar"><h3>Two-Ball Collisions: Elastic and Inelastic</h3></div>
+<div class="cl_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="cl_tab" id="clT0" aria-selected="true" onclick="clSim.tab(0)">1. Elastic collisions</button>
+<button type="button" role="tab" class="cl_tab" id="clT1" aria-selected="false" onclick="clSim.tab(1)">2. Inelastic collisions</button>
+</div>
+<div class="cl_mcontent">
+<div class="cl_view">
+<div class="cl_vlabel" id="clLab"></div>
+<canvas id="clCv" width="780" height="420" role="img" aria-label="A billiard table seen from above with two balls colliding, their velocities, and a diagram of their momenta before and after."></canvas>
+</div>
+<div class="cl_readout" id="clRead" aria-label="Readout"></div>
+</div>
+<div class="cl_bbar" id="clBtns"></div>
+<div class="cl_controls" id="clCtl"></div>
+<div id="clNarBar" class="cl_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="cl_descwrap">
+<button type="button" class="cl_descbtn" id="clDescBtn" aria-expanded="false" aria-controls="clDesc" onclick="clSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="cl_desc" id="clDesc" role="region" aria-labelledby="clDescBtn" style="display:none">
+<p>This simulation shows two balls colliding on a frictionless table, treated as point particles that do not spin. During the collision each ball pushes the other with an equal and opposite force (Newton's third law), along the line joining their centres. So whatever momentum one ball gains, the other loses: the total momentum of the two balls is conserved,</p>
+<p class="cl_eq">`m_1 vec v_1 + m_2 vec v_2 = m_1 vec v_1' + m_2 vec v_2'`.</p>
+<p>Momentum is a vector: both its components are conserved, which the diagram of momentum arrows shows. The centre of mass, `vec v_(cm) = (m_1 vec v_1 + m_2 vec v_2)/(m_1 + m_2)`, moves straight on at constant velocity, collision or not.</p>
+<p><b>Elastic collisions</b> also conserve kinetic energy, `1/2 m_1 v_1^2 + 1/2 m_2 v_2^2`. In a head-on elastic collision between equal masses the balls simply exchange velocities: a moving ball stops dead and the one it hits moves off at its speed. In a glancing elastic collision between equal masses, with one ball at rest, the two balls always move off at right angles to each other.</p>
+<p><b>Inelastic collisions</b> turn some kinetic energy into heat, sound and deformation. How much is set by the coefficient of restitution `e`, the ratio of the speeds at which the balls separate and approach along the line of impact: `e = 1` is elastic, `e = 0` means they do not bounce apart along that line. In a perfectly inelastic collision the balls stick together and move off with the velocity of the centre of mass,</p>
+<p class="cl_eq">`vec v' = (m_1 vec v_1 + m_2 vec v_2)/(m_1 + m_2)`,</p>
+<p>which loses the most kinetic energy that momentum conservation allows; when a ball of mass `m_1` hits one of mass `m_2` at rest, a fraction `m_2/(m_1 + m_2)` of the kinetic energy is lost.</p>
+<p>In the simulation, the impulse along the line of impact `hat n` is `J = -(1 + e) (vec v_"rel" * hat n)/(1/m_1 + 1/m_2)`; the impact parameter `b` (0 for head-on) sets how far off-centre the balls meet. The run stops when a ball reaches a cushion, since a cushion would change the momentum.</p>
+</div>
+</div>
+</div><!-- #clRoot -->
+<style>
+#clRoot, #clRoot * { box-sizing:border-box; }
+#clRoot { container-type:inline-size; width:100%; max-width:820px; margin:0 auto 10px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f4f6f8;
+  --cl-bg:#0a0e12; --cl-panel:#0d1318; --cl-border:#1c262e; --cl-text:#c9d6de; --cl-muted:#5f7180; --cl-val:#8fe3b0; }
+#clRoot .cl_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; justify-content:center; }
+#clRoot .cl_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#clRoot .cl_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#clRoot .cl_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#clRoot .cl_tbar { padding:4px 8px; min-height:35px; background:#f90; text-align:center; }
+#clRoot .cl_tbar h3 { margin:0; line-height:1.3; padding:4px 0; font-size:1rem; color:#1a1f24; font-family:system-ui, sans-serif; }
+#clRoot .cl_tabs { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; background:#2c3138; }
+#clRoot .cl_tab { flex:1 1 200px; padding:8px 10px; border:1px solid #525c66; background:#22262b; color:#c8d0d8; border-radius:4px; cursor:pointer; font-family:system-ui, sans-serif; font-size:.86rem; min-height:38px; }
+#clRoot .cl_tab[aria-selected="true"] { background:#e8a020; color:#1a1f24; border-color:#e8a020; font-weight:bold; }
+#clRoot .cl_mcontent { background:var(--cl-bg); color:var(--cl-text); padding:10px; display:flex; flex-direction:column; gap:8px; }
+#clRoot .cl_view { border:1px solid var(--cl-border); border-radius:6px; overflow:hidden; background:var(--cl-panel); }
+#clRoot .cl_vlabel { font-size:10px; color:var(--cl-muted); letter-spacing:1px; padding:4px 8px; font-family:system-ui, sans-serif; text-transform:uppercase; }
+#clRoot canvas { display:block; width:100%; height:auto; }
+#clRoot .cl_readout { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--cl-panel); border:1px solid var(--cl-border); border-radius:8px; padding:8px 12px; font-family:system-ui, sans-serif; }
+#clRoot .cl_flabel { font-size:10px; color:var(--cl-muted); letter-spacing:1px; }
+#clRoot .cl_fvalue { font-size:14px; color:var(--cl-val); font-variant-numeric:tabular-nums; }
+#clRoot .cl_narbar { min-height:28px; padding:5px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.85rem; color:#333; font-style:italic; font-family:system-ui, sans-serif; }
+#clRoot .cl_bbar { background:#df9; padding:8px 10px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center; font-size:.85rem; color:#222; font-family:system-ui, sans-serif; }
+#clRoot .cl_bbar label { display:flex; align-items:center; gap:6px; }
+#clRoot .cl_btn { padding:6px 12px; border:1px solid #6a8f2a; background:#f6ffe8; color:#223; border-radius:4px; cursor:pointer; font-size:.82rem; min-height:36px; }
+#clRoot .cl_go { font-weight:bold; border-color:#0a7a5a; background:#e2fff3; }
+#clRoot .cl_controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:6px; padding:8px 10px; background:#e3f2fd; font-family:system-ui, sans-serif; }
+#clRoot .cl_crow { background:#fff; border:1px solid #b7cde0; border-left:5px solid #e8a020; border-radius:6px; padding:6px 10px; color:#222; display:flex; flex-direction:column; gap:2px; }
+#clRoot .cl_cname { font-size:.86rem; display:flex; gap:8px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+#clRoot .cl_cval { font-family:monospace; color:#8a4a00; font-weight:bold; }
+#clRoot input[type=range] { width:100%; min-width:0; accent-color:#e8a020; }
+#clRoot input[type=checkbox] { accent-color:#e8a020; width:16px; height:16px; }
+#clRoot .cl_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; font-family:system-ui, sans-serif; }
+#clRoot .cl_descbtn { padding:8px 18px; font-family:monospace; font-size:.76rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#clRoot .cl_descbtn[aria-expanded="true"] { background:#3a3220; }
+#clRoot .cl_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#clRoot .cl_desc p { margin:0 0 9px; }
+#clRoot .cl_eq { text-align:center; font-size:1rem; }
+@media (pointer:coarse) { #clRoot input[type=range] { height:28px; } #clRoot .cl_a11ybtn { min-height:40px; } #clRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Table 2.54 m x 1.27 m, no friction; balls of radius 2.86 cm (masses chosen), no spin. They are set up to touch at the
+centre of the table at t = TC, with impact parameter b (perpendicular offset / contact distance) along their relative
+velocity. Contact: an impulse along the line of centres n, J = -(1 + e)(v_rel . n)/(1/m1 + 1/m2); e = 1 (elastic) or
+0 <= e < 1; "stick together" moves both with the centre-of-mass velocity. The run stops when a ball reaches a cushion.
+No dollar signs or backticks in the code.
+-->
+<script>
+var clSim = (function(){
+function el(id){ return document.getElementById(id); }
+var ROOT = el('clRoot'), cv = el('clCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var TW = 2.54, TH = 1.27, BR = 0.0286, D = 2*BR, DEG = Math.PI/180, TC = 2.5;
+var S = { tab:0, run:true, ghosts:true, trail:true, cm:true, m1:0.17, m2:0.17, v1:0.3, v2:0, d2:180, b:0.5, e:0.6, stick:false };
+var th = { hc:false, lm:false, cb:false, nr:true };
+var TABS = ['elastic: momentum and kinetic energy are both conserved', 'inelastic: momentum is conserved, some kinetic energy is lost'];
+/* ══════════ motion ══════════ */
+var B = null, ghosts = [], trail = [[], []], tGhost = 0, simT = 0, hit = null, before = null, stopped = false, stuck = false;
+function eff(){ return S.tab === 0 ? 1 : (S.stick ? 0 : S.e); }
+function setup(){
+/* velocities, then positions such that the balls touch at the centre of the table at t = TC */
+var v1 = [S.v1, 0], a2 = S.d2*DEG, v2 = [S.v2*Math.cos(a2), S.v2*Math.sin(a2)], vr = [v1[0] - v2[0], v1[1] - v2[1]], L = Math.hypot(vr[0], vr[1]) || 1;
+var u = [vr[0]/L, vr[1]/L], w = [-u[1], u[0]], bb = Math.max(-0.98, Math.min(0.98, S.b));
+var r2c = [TW/2, TH/2], r1c = [r2c[0] + D*(-Math.sqrt(1 - bb*bb)*u[0] + bb*w[0]), r2c[1] + D*(-Math.sqrt(1 - bb*bb)*u[1] + bb*w[1])];
+B = [{ x:r1c[0] - v1[0]*TC, y:r1c[1] - v1[1]*TC, vx:v1[0], vy:v1[1], m:S.m1 }, { x:r2c[0] - v2[0]*TC, y:r2c[1] - v2[1]*TC, vx:v2[0], vy:v2[1], m:S.m2 }];
+ghosts = []; trail = [[], []]; tGhost = 0; simT = 0; hit = null; stopped = false; stuck = false; before = totals();
+}
+function totals(){ var px = 0, py = 0, K = 0; B.forEach(function(b){ px += b.m*b.vx; py += b.m*b.vy; K += 0.5*b.m*(b.vx*b.vx + b.vy*b.vy); });
+var M = S.m1 + S.m2; return { px:px, py:py, K:K, v:B.map(function(b){ return [b.vx, b.vy]; }), cm:[(B[0].m*B[0].x + B[1].m*B[1].x)/M, (B[0].m*B[0].y + B[1].m*B[1].y)/M] }; }
+function collide(){
+var a = B[0], c = B[1], nx = c.x - a.x, ny = c.y - a.y, d = Math.hypot(nx, ny); nx /= d; ny /= d;
+var vrel = (a.vx - c.vx)*nx + (a.vy - c.vy)*ny; if (vrel <= 0) return false;            /* only when approaching */
+if (S.tab === 1 && S.stick){
+var M = a.m + c.m, vx = (a.m*a.vx + c.m*c.vx)/M, vy = (a.m*a.vy + c.m*c.vy)/M; a.vx = c.vx = vx; a.vy = c.vy = vy; stuck = true;
+} else {
+var J = (1 + eff())*vrel/(1/a.m + 1/c.m);
+a.vx -= J*nx/a.m; a.vy -= J*ny/a.m; c.vx += J*nx/c.m; c.vy += J*ny/c.m;
+}
+hit = { t:simT, x:(a.x + c.x)/2, y:(a.y + c.y)/2, n:[nx, ny] };
+return true;
+}
+function step(dt){
+if (stopped) return;
+simT += dt;
+B.forEach(function(b){ b.x += b.vx*dt; b.y += b.vy*dt; });
+if (!hit && Math.hypot(B[1].x - B[0].x, B[1].y - B[0].y) <= D + 1e-9) collide();
+/* stop at a cushion, once the collision is over (or if they would miss entirely) */
+var out = B.some(function(b){ return b.x < BR || b.x > TW - BR || b.y < BR || b.y > TH - BR; });
+if (out && (hit || simT > TC + 0.5)){ stopped = true; B.forEach(function(b){ b.x = Math.max(BR, Math.min(TW - BR, b.x)); b.y = Math.max(BR, Math.min(TH - BR, b.y)); }); later(); }
+}
+/* ══════════ drawing ══════════ */
+function pal(){
+if (th.hc) return { bg:'#000', felt:'#003300', cush:'#666', wood:'#444', b1:'#ffffff', b2:'#ffdd00', v:'#00ffff', p1:'#ffffff', p2:'#ffdd00', P:'#ff66ff', cm:'#ff4040', txt:'#fff', muted:'#ddd' };
+var p = th.lm ? { bg:'#eef2f6', txt:'#1d232a', muted:'#556070' } : { bg:'#0d1318', txt:'#dbe5ec', muted:'#7a8a98' };
+p.felt = '#1f7a45'; p.cush = '#145a32'; p.wood = '#6b3f1f'; p.b1 = '#fbfbf4'; p.b2 = th.cb ? '#e69f00' : '#e8c020';
+p.v = th.cb ? '#56b4e9' : '#4fc3ff'; p.p1 = '#fbfbf4'; p.p2 = p.b2; p.P = th.cb ? '#cc79a7' : '#ff7ad9'; p.cm = th.cb ? '#d55e00' : '#ff5a4a';
+return p;
+}
+var TX0 = 60, TY0 = 50, TSC = (780 - 120)/TW;
+function X(x){ return TX0 + x*TSC; } function Y(y){ return TY0 + (TH - y)*TSC; }
+function arrow(x1, y1, x2, y2, col, lw, label){
+var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); if (L < 2) return;
+g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw || 2.5; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+var a = Math.atan2(dy, dx), h = Math.min(11, 4 + L*0.25); g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - h*Math.cos(a - 0.4), y2 - h*Math.sin(a - 0.4)); g.lineTo(x2 - h*Math.cos(a + 0.4), y2 - h*Math.sin(a + 0.4)); g.closePath(); g.fill();
+if (label){ g.font = 'bold 12px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(label, x2 + 13*Math.cos(a), y2 + 13*Math.sin(a) + 4); }
+}
+function ball(x, y, col, alpha, label){
+var r = Math.max(7, BR*TSC); g.save(); g.globalAlpha = alpha;
+var gr = g.createRadialGradient(x - r*0.35, y - r*0.35, r*0.1, x, y, r); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, col); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 2*Math.PI); g.fill();
+if (label && alpha > 0.9){ g.fillStyle = '#222'; g.font = 'bold 10px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(label, x, y + 3.5); }
+g.restore();
+}
+function draw(){
+var p = pal(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+g.fillStyle = p.wood; g.fillRect(TX0 - 34, TY0 - 34, TW*TSC + 68, TH*TSC + 68); g.fillStyle = p.cush; g.fillRect(TX0 - 14, TY0 - 14, TW*TSC + 28, TH*TSC + 28);
+g.fillStyle = p.felt; g.fillRect(TX0, TY0, TW*TSC, TH*TSC);
+g.fillStyle = '#0a0a0a'; [[0, 0], [TW/2, 0], [TW, 0], [0, TH], [TW/2, TH], [TW, TH]].forEach(function(q){ g.beginPath(); g.arc(X(q[0]), Y(q[1]), 15, 0, 2*Math.PI); g.fill(); });
+momentumInset(p);   /* drawn first, so the balls pass over it */
+var cols = [p.b1, p.b2];
+if (S.trail) trail.forEach(function(tr, i){ if (tr.length < 2) return; g.strokeStyle = cols[i]; g.globalAlpha = 0.5; g.lineWidth = 1.5; g.beginPath(); tr.forEach(function(q, k){ if (k) g.lineTo(X(q[0]), Y(q[1])); else g.moveTo(X(q[0]), Y(q[1])); }); g.stroke(); g.globalAlpha = 1; });
+if (S.ghosts) ghosts.forEach(function(q, k){ var a = 0.15 + 0.3*k/Math.max(1, ghosts.length); ball(X(q[0]), Y(q[1]), cols[0], a); ball(X(q[2]), Y(q[3]), cols[1], a); if (S.cm){ g.fillStyle = p.cm; g.globalAlpha = a + 0.2; g.beginPath(); g.arc(X(q[4]), Y(q[5]), 3, 0, 2*Math.PI); g.fill(); g.globalAlpha = 1; } });
+if (hit){ g.strokeStyle = 'rgba(255,255,255,0.35)'; g.setLineDash([4, 4]); g.lineWidth = 1; g.beginPath(); g.moveTo(X(hit.x - hit.n[0]*0.25), Y(hit.y - hit.n[1]*0.25)); g.lineTo(X(hit.x + hit.n[0]*0.25), Y(hit.y + hit.n[1]*0.25)); g.stroke(); g.setLineDash([]);
+g.fillStyle = 'rgba(255,255,255,0.6)'; g.font = '10px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('line of impact', X(hit.x + hit.n[0]*0.25) + 4, Y(hit.y + hit.n[1]*0.25)); }
+B.forEach(function(b, i){ ball(X(b.x), Y(b.y), cols[i], 1, String(i + 1)); arrow(X(b.x), Y(b.y), X(b.x) + b.vx*200, Y(b.y) - b.vy*200, p.v, 2.5, 'v' + (i + 1)); });
+if (S.cm){ var c = totals().cm; g.fillStyle = p.cm; g.beginPath(); g.arc(X(c[0]), Y(c[1]), 4.5, 0, 2*Math.PI); g.fill(); g.font = '10px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('CM', X(c[0]) + 6, Y(c[1]) - 6); }
+}
+/* the momentum diagram: p1 + p2 = P, head to tail, before and after */
+function momentumInset(p){
+var x0 = TX0 + TW*TSC - 300, y0 = TY0 + 8, w = 292, h = 118, sc = 60/Math.max(1e-6, Math.max(Math.hypot(before.px, before.py), S.m1*S.v1, S.m2*S.v2, 0.02)), now = totals();
+g.fillStyle = 'rgba(0,0,0,0.32)'; g.fillRect(x0, y0, w, h); g.strokeStyle = 'rgba(255,255,255,0.3)'; g.strokeRect(x0, y0, w, h);
+g.fillStyle = '#fff'; g.font = 'bold 11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('momentum: p\u2081 + p\u2082 = P', x0 + 8, y0 + 14);
+[[before, 'before', x0 + 30], [hit ? now : null, 'after', x0 + 170]].forEach(function(q){
+g.fillStyle = '#ccc'; g.font = '10px system-ui, sans-serif'; g.fillText(q[1], q[2] - 22, y0 + 32);
+if (!q[0]) { g.fillText('(not yet)', q[2] + 10, y0 + 70); return; }
+var t = q[0], ox = q[2], oy = y0 + 75, p1 = [S.m1*t.v[0][0], S.m1*t.v[0][1]], p2 = [S.m2*t.v[1][0], S.m2*t.v[1][1]];
+arrow(ox, oy, ox + p1[0]*sc, oy - p1[1]*sc, p.p1, 2, ''); arrow(ox + p1[0]*sc, oy - p1[1]*sc, ox + (p1[0] + p2[0])*sc, oy - (p1[1] + p2[1])*sc, p.p2, 2, '');
+arrow(ox, oy, ox + (p1[0] + p2[0])*sc, oy - (p1[1] + p2[1])*sc, p.P, 1.5, 'P');
+});
+}
+/* ══════════ readout, narration ══════════ */
+function f3(v){ return (Math.abs(v) < 5e-5 ? 0 : v).toFixed(3); }
+function readout(){
+var a = before, b = totals(), cells = [['P BEFORE', '(' + f3(a.px) + ', ' + f3(a.py) + ') kg\u00B7m/s'], ['KE BEFORE', (a.K*1000).toFixed(2) + ' mJ']];
+if (hit){ var s1 = Math.hypot(B[0].vx, B[0].vy), s2 = Math.hypot(B[1].vx, B[1].vy), d1 = Math.atan2(B[0].vy, B[0].vx)/DEG, d2 = Math.atan2(B[1].vy, B[1].vx)/DEG, sep = Math.abs(((d1 - d2 + 540) % 360) - 180);
+cells.push(['P AFTER', '(' + f3(b.px) + ', ' + f3(b.py) + ') kg\u00B7m/s']); cells.push(['KE AFTER', (b.K*1000).toFixed(2) + ' mJ']);
+cells.push(['KE LOST', ((a.K - b.K)*1000).toFixed(2) + ' mJ (' + (100*(a.K - b.K)/a.K).toFixed(1) + ' %)']);
+cells.push(['BALL 1 AFTER', s1 < 1e-4 ? 'at rest' : s1.toFixed(3) + ' m/s at ' + d1.toFixed(1) + '\u00B0']); cells.push(['BALL 2 AFTER', s2 < 1e-4 ? 'at rest' : s2.toFixed(3) + ' m/s at ' + d2.toFixed(1) + '\u00B0']);
+if (s1 > 1e-4 && s2 > 1e-4 && !stuck) cells.push(['ANGLE BETWEEN THEM', sep.toFixed(1) + '\u00B0']); }
+else cells.push(['COLLISION', 'in ' + Math.max(0, TC - simT).toFixed(1) + ' s']);
+cells.push(['e', S.tab === 0 ? '1 (elastic)' : (S.stick ? '0, stuck together' : S.e.toFixed(2))]);
+el('clRead').innerHTML = cells.map(function(c){ return '<div><div class="cl_flabel">' + c[0] + '</div><div class="cl_fvalue">' + c[1] + '</div></div>'; }).join('');
+}
+function summary(){
+if (!hit) return 'Ball 1 (' + S.m1.toFixed(2) + ' kg, ' + S.v1.toFixed(2) + ' m/s) heads for ball 2 (' + S.m2.toFixed(2) + ' kg, ' + (S.v2 ? S.v2.toFixed(2) + ' m/s' : 'at rest') + '), ' + (Math.abs(S.b) < 0.02 ? 'head on.' : 'off-centre (impact parameter ' + S.b.toFixed(2) + ').') + ' Total momentum: (' + f3(before.px) + ', ' + f3(before.py) + ') kilogram metres per second.';
+var b = totals(), lost = 100*(before.K - b.K)/before.K;
+var s = 'After the collision the total momentum is (' + f3(b.px) + ', ' + f3(b.py) + '), the same as before. ';
+s += S.tab === 0 ? 'The kinetic energy is unchanged too: an elastic collision. ' : (stuck ? 'The balls stick together and move with the centre of mass; ' + lost.toFixed(0) + ' percent of the kinetic energy is lost. ' : lost.toFixed(0) + ' percent of the kinetic energy is lost (e = ' + S.e.toFixed(2) + '). ');
+var s1 = Math.hypot(B[0].vx, B[0].vy), s2 = Math.hypot(B[1].vx, B[1].vy);
+if (S.tab === 0 && Math.abs(S.m1 - S.m2) < 1e-6 && S.v2 === 0 && s1 > 1e-4 && s2 > 1e-4) s += 'With equal masses and ball 2 at rest, they move off at right angles. ';
+if (s1 < 1e-4) s += 'Ball 1 stopped dead and passed all its momentum to ball 2. ';
+return s;
+}
+function narrate(m){ if (!th.nr) return; el('clNarBar').textContent = m; }
+var nt = null; function later(){ clearTimeout(nt); nt = setTimeout(function(){ narrate(summary()); readout(); }, 300); }
+/* ══════════ the loop ══════════ */
+var last = 0, rt = 0, wasHit = false;
+function frame(t){
+var dt = last ? Math.min(0.05, (t - last)/1000) : 0; last = t;
+if (S.run && B && !stopped){
+var n = 20, h = dt/n; for (var i=0; i<n; i++) step(h);
+tGhost += dt; if (tGhost >= 0.25){ tGhost = 0; var c = totals().cm; ghosts.push([B[0].x, B[0].y, B[1].x, B[1].y, c[0], c[1]]); if (ghosts.length > 50) ghosts.shift(); }
+B.forEach(function(b, i){ trail[i].push([b.x, b.y]); if (trail[i].length > 800) trail[i].shift(); });
+if (hit && !wasHit){ wasHit = true; later(); }
+}
+draw(); if (t - rt > 200){ rt = t; readout(); }
+requestAnimationFrame(frame);
+}
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="cl_crow"><div class="cl_cname"><b>' + label + '</b><span class="cl_cval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+var PRESETS = {
+headon:{ m1:0.17, m2:0.17, v1:0.3, v2:0, d2:180, b:0, txt:'Head-on, equal masses' },
+glance:{ m1:0.17, m2:0.17, v1:0.3, v2:0, d2:180, b:0.5, txt:'Glancing, equal masses' },
+heavy:{ m1:0.40, m2:0.10, v1:0.3, v2:0, d2:180, b:0, txt:'Heavy hits light' },
+light:{ m1:0.10, m2:0.40, v1:0.3, v2:0, d2:180, b:0, txt:'Light hits heavy' },
+meet:{ m1:0.17, m2:0.17, v1:0.3, v2:0.3, d2:180, b:0, txt:'Head-on, both moving' } };
+function buildCtl(){
+var b = '<button type="button" class="cl_btn cl_go" id="clRun">' + (S.run ? '&#10074;&#10074; Pause' : '&#9654; Run') + '</button><button type="button" class="cl_btn" id="clRst">Start over</button>' +
+Object.keys(PRESETS).map(function(k){ return '<button type="button" class="cl_btn" data-p="' + k + '">' + PRESETS[k].txt + '</button>'; }).join('') +
+(S.tab === 1 ? '<label><input type="checkbox" id="clStick"' + (S.stick ? ' checked' : '') + '> stick together</label>' : '') +
+'<label><input type="checkbox" id="clGh"' + (S.ghosts ? ' checked' : '') + '> ghost images</label><label><input type="checkbox" id="clTr"' + (S.trail ? ' checked' : '') + '> paths</label><label><input type="checkbox" id="clCm"' + (S.cm ? ' checked' : '') + '> centre of mass</label>' +
+'<button type="button" class="cl_btn" id="clDsc">Describe</button>';
+var c = row('clM1', 'mass of ball 1', 0.05, 0.5, 0.01, S.m1, S.m1.toFixed(2) + ' kg') + row('clM2', 'mass of ball 2', 0.05, 0.5, 0.01, S.m2, S.m2.toFixed(2) + ' kg') +
+row('clV1', 'speed of ball 1', 0.05, 0.6, 0.01, S.v1, S.v1.toFixed(2) + ' m/s') + row('clV2', 'speed of ball 2', 0, 0.6, 0.01, S.v2, S.v2.toFixed(2) + ' m/s') +
+row('clD2', 'direction of ball 2', -180, 180, 5, S.d2, S.d2 + '\u00B0') + row('clB', 'impact parameter b (0 = head-on)', -0.95, 0.95, 0.05, S.b, S.b.toFixed(2)) +
+(S.tab === 1 ? row('clE', 'coefficient of restitution e', 0, 0.95, 0.05, S.e, S.e.toFixed(2)) : '');
+el('clBtns').innerHTML = b; el('clCtl').innerHTML = c;
+function on(id, ev, fn){ var e = el(id + ''); if (e) e.addEventListener(ev, fn); }
+on('clRun', 'click', function(){ S.run = !S.run; buildCtl(); }); on('clRst', 'click', restart);
+[].forEach.call(el('clBtns').querySelectorAll('button[data-p]'), function(x){ x.addEventListener('click', function(){ var P = PRESETS[x.getAttribute('data-p')]; for (var k in P) if (k !== 'txt') S[k] = P[k]; buildCtl(); restart(); }); });
+on('clStick', 'change', function(){ S.stick = this.checked; restart(); });
+on('clGh', 'change', function(){ S.ghosts = this.checked; }); on('clTr', 'change', function(){ S.trail = this.checked; }); on('clCm', 'change', function(){ S.cm = this.checked; }); on('clDsc', 'click', describe);
+[['clM1', 'm1', ' kg', 2], ['clM2', 'm2', ' kg', 2], ['clV1', 'v1', ' m/s', 2], ['clV2', 'v2', ' m/s', 2], ['clD2', 'd2', '\u00B0', 0], ['clB', 'b', '', 2], ['clE', 'e', '', 2]].forEach(function(q){
+on(q[0], 'input', function(){ S[q[1]] = +this.value; var t = el(q[0] + 'v'); if (t) t.textContent = S[q[1]].toFixed(q[3]) + q[2]; restart(); }); });
+}
+function restart(){ setup(); wasHit = false; S.run = true; var rb = el('clRun'); if (rb) rb.innerHTML = '&#10074;&#10074; Pause'; readout(); later(); }
+function tab(i){ S.tab = i; for (var k=0; k<2; k++) el('clT' + k + '').setAttribute('aria-selected', k === i ? 'true' : 'false'); el('clLab').textContent = TABS[i]; buildCtl(); restart(); }
+function theme(k){
+th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+[['hc','clBtnHC'],['lm','clBtnLM'],['cb','clBtnCB'],['nr','clBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('cl_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+el('clBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('clNarBar').style.display = th.nr ? 'block' : 'none';
+var ui = th.hc ? ['#000','#000','#fff','#fff','#e0e0e0','#ffff00'] : (th.lm ? ['#f4f6f8','#ffffff','#ccd6dd','#1a1f24','#556070','#1a5f3a'] : ['#0a0e12','#0d1318','#1c262e','#c9d6de','#5f7180','#8fe3b0']);
+['--cl-bg','--cl-panel','--cl-border','--cl-text','--cl-muted','--cl-val'].forEach(function(v, i){ ROOT.style.setProperty(v, ui[i]); });
+}
+function describe(){ narrate('A billiard table seen from above. Ball 1 (white) and ball 2 (yellow) with their velocity arrows; the red dot is their centre of mass. The box at the top right shows their momenta, added head to tail, before and after the collision. ' + summary()); }
+function toggleDesc(){
+var b = el('clDescBtn'), d = el('clDesc'), open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+/* boot */
+el('clLab').textContent = TABS[0]; buildCtl(); setup(); readout(); narrate('Ready. ' + summary()); requestAnimationFrame(frame);
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc,
+set:function(k, v){ S[k] = v; buildCtl(); restart(); }, preset:function(n){ var P = PRESETS[n]; for (var k in P) if (k !== 'txt') S[k] = P[k]; buildCtl(); restart(); },
+_run:function(sec){ S.run = false; var n = Math.round(sec*2000); for (var i=0; i<n; i++) step(1/2000); var t = totals(); return { before:before, after:t, hit:!!hit, stuck:stuck, stopped:stopped, v:t.v }; } };
+})();
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equivalent Resistance Tutorial</title>
+</head>
+<body>
+<hr>
+<!-- Equivalent Resistance Tutor: 10 resistors, 1 battery (10V), 3 stages.
+Stage 1 = full network. Stage 2 = R4 shorted. Stage 3 = R1 open (capacitor).
+Stages chained via the ctStageComplete event.
+CSS/JS hosted on GitHub Pages. -->
+<div id="ctRoot820"></div>
+<div id="ct2Root820" style="display:none"></div>
+<div id="ct3Root820" style="display:none"></div>
+<script>window.ctThisq = '820';</script>
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/req-eq-st1.css">
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/req-eq-st2.css">
+<link rel="stylesheet" href="https://mzoughi.github.io/mom/req-eq-st3.css">
+<script src="https://mzoughi.github.io/mom/req-eq-st1.js"></script>
+<script src="https://mzoughi.github.io/mom/req-eq-st2.js"></script>
+<script src="https://mzoughi.github.io/mom/req-eq-st3.js"></script>
+<script>
+  document.addEventListener('ctStageComplete', function(e){
+    if (e.detail.thisq !== window.ctThisq) return;
+    var nextId = ['ct2Root','ct3Root'][e.detail.stage-1];
+    if (nextId) {
+      var el = document.getElementById(nextId + window.ctThisq);
+      if (el) {
+        el.style.display = 'block';
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    }
+  });
+</script>
+<hr> <div>Complete just the first stage of the simulation tutorial (until you get just one resistor with the battery), then take a snapshot of the result, and paste it here:
+</div>
+
+</body>
+</html>

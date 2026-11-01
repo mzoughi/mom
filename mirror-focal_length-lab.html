@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Focal Length of Mirrors and Lenses</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, mirror, lens, focal length, radius of curvature, sagitta, caliper, depth gauge, lensmaker equation, concave, convex, plano-convex, plano-concave, refractive index, lesson, scientific">
+<meta name="description" content="Virtual lab: measure the width and depth of randomly generated mirrors and lenses with a caliper and depth gauge, find the radius of curvature and the focal length, and check with a ray diagram.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="focroot" class="foc_root" role="region" aria-label="Focal length of mirrors and lenses: measuring lab">
+<!-- Accessibility toolbar -->
+<div class="foc_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="foc_a11ybtn" id="focBtnHC" onclick="focA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="foc_a11ybtn" id="focBtnLM" onclick="focA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="foc_a11ybtn" id="focBtnNR" onclick="focA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="foc_header">
+<p class="foc_h1">Focal Length Lab -- Mirrors and Lenses</p>
+<p class="foc_sub">Measure the width w and the depth d of the curved face, find R, then the focal length</p>
+</div>
+<!-- Instrument grid -->
+<div class="foc_instrument">
+<!-- Left column -->
+<div class="foc_leftcol">
+<div class="foc_diagpanel">
+<div class="foc_diaglabel"><b>MEASURING BENCH</b><span class="foc_diagnote" id="focDiagNote">drag an item from the kit onto the bench, then drag the caliper jaws and the depth-gauge probe</span></div>
+<div class="foc_mcontent">
+<svg id="focScene" class="foc_scene" viewBox="0 0 623 440" role="img" aria-label="Measuring bench. A wooden kit tray at the top holds a concave mirror, a convex mirror, a plano-convex lens and a plano-concave lens. The selected item sits on a pedestal, seen from the side with its curved face up. A digital caliper below measures its width w, and a straight bar with a sliding depth probe above measures the depth d of the curved face. Use the Tools panel sliders for keyboard control."></svg>
+</div>
+<div class="foc_statusbar" id="focStatus" role="status" aria-live="polite">Pick an item from the kit.</div>
+<div class="foc_runbar">
+<button type="button" class="foc_runbtn foc_runbtn_primary" onclick="focalSim.newKit()">🎲 New random kit</button>
+<button type="button" class="foc_runbtn" onclick="focalSim.handout()">Handout values</button>
+<button type="button" class="foc_runbtn foc_warn" onclick="focalSim.resetTools()">Reset tools</button>
+</div>
+</div>
+<!-- Ray check -->
+<div class="foc_panel" role="region" aria-labelledby="focRayHd">
+<div class="foc_paneltitle foc_titleflex"><span id="focRayHd">Optical bench check -- parallel light</span><span id="focRayNote">schematic, not to scale vertically</span></div>
+<div class="foc_raywrap">
+<svg id="focRays" class="foc_scene" viewBox="0 0 623 190" role="img" aria-label="Ray diagram: parallel light meets the selected item and is focused (or appears to diverge from) the focal point. Your focal point is marked from the value you enter; the true focal point appears after Reveal."></svg>
+</div>
+</div>
+<!-- Readout -->
+<div class="foc_panel" role="region" aria-labelledby="focReadHd">
+<div class="foc_paneltitle" id="focReadHd">Readout</div>
+<div class="foc_rinner foc_rgrid">
+<div class="foc_rrow"><span class="foc_rkey">Item</span><span class="foc_rval" id="focROItem">--</span></div>
+<div class="foc_rrow"><span class="foc_rkey">Material</span><span class="foc_rval" id="focROMat">--</span></div>
+<div class="foc_rrow"><span class="foc_rkey">Caliper</span><span class="foc_rval foc_hi" id="focROCal">--</span></div>
+<div class="foc_rrow"><span class="foc_rkey">Depth gauge</span><span class="foc_rval foc_hi" id="focRODep">--</span></div>
+<div class="foc_rrow"><span class="foc_rkey">Probe from left edge</span><span class="foc_rval" id="focROPx">--</span></div>
+<div class="foc_rrow"><span class="foc_rkey">Medium n<sub>m</sub></span><span class="foc_rval" id="focROMed">1.000 (air)</span></div>
+</div>
+</div>
+</div><!-- left column -->
+<!-- Right column -->
+<div class="foc_rightcol">
+<!-- Kit -->
+<div class="foc_panel" role="group" aria-labelledby="focKitHd">
+<div class="foc_paneltitle" id="focKitHd">Optics Kit</div>
+<div class="foc_panelbody">
+<div class="foc_kitbtns">
+<button type="button" class="foc_kitbtn" id="focKit0" onclick="focalSim.pick(0)" aria-pressed="false">Concave mirror</button>
+<button type="button" class="foc_kitbtn" id="focKit1" onclick="focalSim.pick(1)" aria-pressed="false">Convex mirror</button>
+<button type="button" class="foc_kitbtn" id="focKit2" onclick="focalSim.pick(2)" aria-pressed="false">Plano-convex lens</button>
+<button type="button" class="foc_kitbtn" id="focKit3" onclick="focalSim.pick(3)" aria-pressed="false">Plano-concave lens</button>
+</div>
+<span class="foc_ctrlname" id="focMedLbl">Surrounding medium (lenses)</span>
+<div class="foc_radios" role="radiogroup" aria-labelledby="focMedLbl">
+<label class="foc_radio"><input type="radio" name="focMed" value="1.000" checked onchange="focalSim.medium(this.value)"> Air 1.000</label>
+<label class="foc_radio"><input type="radio" name="focMed" value="1.333" onchange="focalSim.medium(this.value)"> Water 1.333</label>
+</div>
+</div>
+</div>
+<!-- Tools -->
+<div class="foc_panel" role="group" aria-labelledby="focToolHd">
+<div class="foc_paneltitle" id="focToolHd">Tools (fine control)</div>
+<div class="foc_panelbody">
+<div class="foc_ctrlhdr"><label for="focSlJL" class="foc_ctrlname">Caliper left jaw</label><span class="foc_sval" id="focVJL">--</span></div>
+<input type="range" id="focSlJL" min="-14.6" max="-5" step="0.01" value="-14.6" aria-label="Caliper left jaw position in centimetres from the bench centre" oninput="focalSim.slider('jawL', this.value)">
+<div class="foc_ctrlhdr"><label for="focSlJR" class="foc_ctrlname">Caliper right jaw</label><span class="foc_sval" id="focVJR">--</span></div>
+<input type="range" id="focSlJR" min="5" max="14.6" step="0.01" value="14.6" aria-label="Caliper right jaw position in centimetres from the bench centre" oninput="focalSim.slider('jawR', this.value)">
+<div class="foc_ctrlhdr"><label for="focSlPX" class="foc_ctrlname">Probe position</label><span class="foc_sval" id="focVPX">--</span></div>
+<input type="range" id="focSlPX" min="-10" max="10" step="0.01" value="-6" aria-label="Depth probe position along the bar in centimetres from the centre" oninput="focalSim.slider('px', this.value)">
+<div class="foc_ctrlhdr"><label for="focSlPD" class="foc_ctrlname">Probe depth</label><span class="foc_sval" id="focVPD">--</span></div>
+<input type="range" id="focSlPD" min="0" max="4" step="0.01" value="0" aria-label="Depth probe extension below the bar in centimetres" oninput="focalSim.slider('pd', this.value)">
+</div>
+</div>
+<!-- Results -->
+<div class="foc_panel" role="group" aria-labelledby="focResHd">
+<div class="foc_paneltitle" id="focResHd">Your Results</div>
+<div class="foc_panelbody">
+<div class="foc_inrow"><label for="focInW">w</label><input type="text" inputmode="decimal" id="focInW" class="foc_in" autocomplete="off" oninput="focalSim.typed()"><span>cm</span><span class="foc_mark" id="focMkW"></span></div>
+<div class="foc_inrow"><label for="focInD">d</label><input type="text" inputmode="decimal" id="focInD" class="foc_in" autocomplete="off" oninput="focalSim.typed()"><span>cm</span><span class="foc_mark" id="focMkD"></span></div>
+<div class="foc_inrow"><label for="focInR">R</label><input type="text" inputmode="decimal" id="focInR" class="foc_in" autocomplete="off" oninput="focalSim.typed()"><span>cm</span><span class="foc_mark" id="focMkR"></span></div>
+<div class="foc_inrow"><label for="focInF">f</label><input type="text" inputmode="decimal" id="focInF" class="foc_in" autocomplete="off" oninput="focalSim.typed()"><span>cm</span><span class="foc_mark" id="focMkF"></span></div>
+<div class="foc_btnpair">
+<button type="button" class="foc_actbtn foc_checkbtn" onclick="focalSim.check()">✓ Check</button>
+<button type="button" class="foc_actbtn" onclick="focalSim.reveal()">👁 Reveal</button>
+</div>
+<div class="foc_feedback" id="focFeedback" role="status" aria-live="polite">Enter f with its sign: + converging, − diverging.</div>
+</div>
+</div>
+<!-- Show -->
+<div class="foc_panel" role="group" aria-labelledby="focShowHd">
+<div class="foc_paneltitle" id="focShowHd">Show</div>
+<div class="foc_panelbody">
+<label class="foc_check"><input type="checkbox" id="focCbCon" onchange="focalSim.show('construct', this.checked)"> Circle construction (w/2, d, R)</label>
+<label class="foc_check"><input type="checkbox" id="focCbMag" checked onchange="focalSim.show('loupe', this.checked)"> Magnifier at the probe tip</label>
+</div>
+</div>
+</div><!-- right column -->
+<!-- Formula strip -->
+<div class="foc_formulastrip">
+<span class="foc_formulatxt">Circle: (R &minus; d)&sup2; + (w/2)&sup2; = R&sup2; &rArr; R = [(w/2)&sup2; + d&sup2;] / (2d) &nbsp;|&nbsp; Mirror: f = R/2 (concave +, convex &minus;) &nbsp;|&nbsp; Lens: 1/f = [(n<sub>L</sub> &minus; n<sub>m</sub>)/n<sub>m</sub>] &middot; (1/R<sub>1</sub> &minus; 1/R<sub>2</sub>), flat side R = &infin; &rArr; f = &plusmn; n<sub>m</sub>R / (n<sub>L</sub> &minus; n<sub>m</sub>) &nbsp;|&nbsp; Concave face: measure d at the centre &middot; convex face: rest the bar on top and measure d at the edge</span>
+</div>
+</div><!-- instrument -->
+<div id="focNarBar" class="foc_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<style>
+/* ════════ All simulator rules scoped to #focroot (DC motor / generator / falling magnet template) ════════
+ Theme colours are CSS variables. The accessibility controller overrides them with
+ inline style.setProperty() on the root, so no class names are toggled from JavaScript. */
+#focroot {
+--foc-chassis:#1a1c1f; --foc-panel:#22262b; --foc-panel-hi:#2c3138; --foc-panel-lo:#14161a;
+--foc-border:#3a4048; --foc-border-hi:#525c66; --foc-text:#c8d0d8; --foc-dim:#8a94a3; --foc-bright:#e8eef5;
+--foc-accent:#e8a020; --foc-green:#3ad08f; --foc-val:#ffdd66; --foc-danger:#e0605a;
+--foc-focus:#e8a020; --foc-nar-bg:#2a2410; --foc-nar-border:#e0b040; --foc-nar-text:#f0e2b8;
+--foc-grid:rgba(255,255,255,0.015);
+--foc-north:#cc2828; --foc-south:#2860cc; --foc-plot1:#ff5050; --foc-plot2:#00e8d0;
+--foc-cyan:#00e8d0; --foc-magenta:#e040a0; --foc-copper:#c8783c;
+background:var(--foc-chassis);
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, var(--foc-grid) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, var(--foc-grid) 40px);
+font-family:Arial, sans-serif; color:var(--foc-text);
+display:flex; flex-direction:column; align-items:center;
+padding:16px 10px 20px; gap:12px; box-sizing:border-box;
+width:100%; max-width:860px; margin:0 auto 10px; border-radius:6px; position:relative;
+}
+#focroot *, #focroot *::before, #focroot *::after { box-sizing:border-box; margin:0; padding:0; }
+#focroot input:focus-visible, #focroot button:focus-visible { outline:2px solid var(--foc-focus); outline-offset:2px; }
+#focroot .foc_sronly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+/* toolbar */
+#focroot .foc_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; width:100%; }
+#focroot .foc_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--foc-panel-hi); border:1px solid var(--foc-border-hi); color:var(--foc-dim); }
+#focroot .foc_a11ybtn:hover { border-color:var(--foc-accent); color:var(--foc-accent); }
+/* header */
+#focroot .foc_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#focroot .foc_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--foc-accent); text-align:center; }
+#focroot .foc_sub { font-size:.7rem; color:var(--foc-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* grid */
+#focroot .foc_instrument { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px; width:100%; }
+#focroot .foc_leftcol { display:flex; flex-direction:column; gap:12px; min-width:0; }
+#focroot .foc_diagpanel { background:var(--foc-panel); border:1px solid var(--foc-border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#focroot .foc_diaglabel { background:var(--foc-panel-lo); border-bottom:1px solid var(--foc-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--foc-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#focroot .foc_diaglabel b { color:var(--foc-accent); }
+#focroot .foc_diagnote { text-transform:none; letter-spacing:.02em; }
+/* scene and scope canvases scale with the panel */
+#focroot .foc_scene { display:block; width:100%; max-width:623px; height:auto; margin:0 auto; }
+#focroot .foc_statusbar { background:var(--foc-panel-lo); border-top:1px solid var(--foc-border); padding:7px 12px; font-size:.74rem; color:var(--foc-text); min-height:30px; line-height:1.45; }
+#focroot .foc_whatlabel { font-family:monospace; font-size:.6rem; letter-spacing:.12em; color:var(--foc-accent); font-weight:bold; margin-right:6px; }
+#focroot .foc_runbar { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; padding:8px 10px; background:var(--foc-panel-lo); border-top:1px solid var(--foc-border); }
+#focroot .foc_runbtn { padding:8px 4px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--foc-panel-hi); border:1px solid var(--foc-border-hi); color:var(--foc-text); border-radius:3px; text-transform:uppercase; }
+#focroot .foc_runbtn:hover { border-color:var(--foc-accent); }
+#focroot .foc_runbtn_primary { font-weight:bold; border-color:var(--foc-accent); color:var(--foc-accent); }
+#focroot .foc_warn { color:var(--foc-danger); border-color:var(--foc-danger); }
+/* right column */
+#focroot .foc_rightcol { display:flex; flex-direction:column; gap:12px; width:250px; }
+#focroot .foc_panel { background:var(--foc-panel); border:1px solid var(--foc-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+#focroot .foc_paneltitle { background:var(--foc-panel-lo); border-bottom:1px solid var(--foc-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--foc-dim); }
+#focroot .foc_panelbody { padding:9px 12px; display:flex; flex-direction:column; gap:7px; }
+#focroot .foc_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; }
+#focroot .foc_ctrlname { font-size:.7rem; font-weight:600; letter-spacing:.04em; color:var(--foc-dim); text-transform:uppercase; }
+#focroot .foc_sval { font-family:monospace; font-size:.74rem; color:var(--foc-val); text-align:right; }
+#focroot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; outline:none; cursor:pointer; background:var(--foc-panel-lo); border:1px solid var(--foc-border); }
+#focroot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--foc-accent); border:2px solid var(--foc-panel); cursor:pointer; }
+#focroot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--foc-accent); border:2px solid var(--foc-panel); cursor:pointer; }
+#focroot .foc_note { font-size:.64rem; color:var(--foc-dim); line-height:1.35; }
+#focroot .foc_flipbtn, #focroot .foc_logbtn { padding:6px 4px; font-family:monospace; font-size:.7rem; letter-spacing:.03em; cursor:pointer; background:var(--foc-panel-hi); border:1px solid var(--foc-border-hi); color:var(--foc-text); border-radius:3px; }
+#focroot .foc_flipbtn:hover, #focroot .foc_logbtn:hover { border-color:var(--foc-accent); color:var(--foc-accent); }
+#focroot .foc_addbtn { border-color:var(--foc-green); color:var(--foc-green); font-weight:bold; }
+#focroot .foc_btnpair { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+#focroot .foc_state { font-family:monospace; font-size:.7rem; color:var(--foc-val); }
+#focroot .foc_center { text-align:center; }
+#focroot .foc_hint { font-size:.66rem; color:var(--foc-dim); line-height:1.4; padding:0 4px; }
+/* readout */
+#focroot .foc_rinner { padding:8px 10px; }
+#focroot .foc_rgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+#focroot .foc_rrow { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 7px; background:var(--foc-panel-lo); border:1px solid var(--foc-border); border-radius:3px; }
+#focroot .foc_rkey { font-family:monospace; font-size:.66rem; color:var(--foc-dim); letter-spacing:.02em; white-space:nowrap; }
+#focroot .foc_rval { font-family:monospace; font-size:.74rem; text-align:right; color:var(--foc-text); }
+#focroot .foc_hi { color:var(--foc-val); font-weight:bold; }
+/* formula strip, narration */
+#focroot .foc_formulastrip { grid-column:1 / 3; background:var(--foc-panel-lo); border:1px solid var(--foc-border); border-radius:4px; padding:7px 14px; }
+#focroot .foc_formulatxt { font-family:monospace; font-size:.66rem; color:var(--foc-dim); letter-spacing:.04em; line-height:1.6; }
+#focroot .foc_narbar { width:100%; min-height:28px; padding:6px 12px; background:var(--foc-nar-bg); border-left:4px solid var(--foc-nar-border); font-size:.82rem; color:var(--foc-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* focal-length lab additions */
+#focroot .foc_mcontent, #focroot .foc_raywrap { background:#0d1016; }
+#focroot #focScene { touch-action:none; -webkit-user-select:none; user-select:none; }
+#focroot .foc_titleflex { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#focroot .foc_runbtn { text-transform:none; }
+#focroot .foc_kitbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+#focroot .foc_kitbtn { padding:6px 3px; font-family:monospace; font-size:.64rem; cursor:pointer; background:var(--foc-panel-hi); border:1px solid var(--foc-border-hi); color:var(--foc-text); border-radius:3px; line-height:1.2; }
+#focroot .foc_kitbtn:hover { border-color:var(--foc-accent); color:var(--foc-accent); }
+#focroot .foc_radios { display:flex; gap:12px; flex-wrap:wrap; }
+#focroot .foc_radio, #focroot .foc_check { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.76rem; color:var(--foc-text); }
+#focroot .foc_radio input, #focroot .foc_check input { accent-color:var(--foc-accent); cursor:pointer; }
+#focroot .foc_inrow { display:grid; grid-template-columns:18px 1fr 24px 18px; align-items:center; gap:6px; font-family:monospace; font-size:.78rem; }
+#focroot .foc_inrow label { font-weight:bold; font-style:italic; color:var(--foc-accent); font-family:Georgia, serif; font-size:.95rem; }
+#focroot .foc_in { width:100%; padding:5px 6px; font-family:monospace; font-size:.85rem; background:var(--foc-panel-lo); color:var(--foc-bright); border:1px solid var(--foc-border-hi); border-radius:3px; }
+#focroot .foc_in:focus { outline:2px solid var(--foc-focus); outline-offset:1px; }
+#focroot .foc_mark { font-weight:bold; text-align:center; font-size:.9rem; }
+#focroot .foc_actbtn { padding:7px 4px; font-family:monospace; font-size:.72rem; cursor:pointer; background:var(--foc-panel-hi); border:1px solid var(--foc-border-hi); color:var(--foc-text); border-radius:3px; }
+#focroot .foc_actbtn:hover { border-color:var(--foc-accent); color:var(--foc-accent); }
+#focroot .foc_checkbtn { border-color:var(--foc-green); color:var(--foc-green); font-weight:bold; }
+#focroot .foc_feedback { font-size:.7rem; line-height:1.45; color:var(--foc-text); background:var(--foc-panel-lo); border:1px solid var(--foc-border); border-radius:3px; padding:6px 8px; min-height:30px; }
+#focroot .foc_feedback b { color:var(--foc-val); }
+@media (pointer:coarse) {
+#focroot .foc_kitbtn, #focroot .foc_actbtn { min-height:40px; }
+#focroot .foc_in { font-size:16px; }
+}
+/* narrow screens: stack the columns */
+@media (max-width:820px) {
+#focroot .foc_instrument { grid-template-columns:minmax(0,1fr); }
+#focroot .foc_rightcol { width:auto; }
+#focroot .foc_formulastrip { grid-column:auto; }
+}
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#focroot input[type=range] { height:8px; }
+#focroot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; }
+#focroot input[type=range]::-moz-range-thumb { width:24px; height:24px; }
+#focroot .foc_runbtn, #focroot .foc_a11ybtn, #focroot .foc_flipbtn, #focroot .foc_logbtn, #focroot .foc_gpbtn { min-height:40px; }
+#focroot .foc_panelbody { gap:12px; }
+}
+@media (max-width:560px) {
+#focroot { padding:10px 6px 14px; }
+#focroot .foc_rgrid { grid-template-columns:1fr; }
+}
+</style>
+
+<script>
+/* ════════════════════════════════════════════════
+Accessibility controller
+Themes are applied by overriding CSS custom properties on the root
+(style.setProperty) -- no class names are toggled from JavaScript.
+════════════════════════════════════════════════ */
+var focA11y = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, nr: true };
+var THEMES = {
+hc: {
+'--foc-chassis':'#000000','--foc-panel':'#000000','--foc-panel-hi':'#111111','--foc-panel-lo':'#000000',
+'--foc-border':'#ffffff','--foc-border-hi':'#ffffff','--foc-text':'#ffffff','--foc-dim':'#e0e0e0','--foc-bright':'#ffffff',
+'--foc-accent':'#ffd700','--foc-green':'#00ff88','--foc-val':'#ffff00','--foc-danger':'#ff5050',
+'--foc-focus':'#ffff00','--foc-nar-bg':'#000000','--foc-nar-border':'#ffd700','--foc-nar-text':'#ffffff',
+'--foc-grid':'transparent','--foc-north':'#ff3b3b','--foc-south':'#4da6ff','--foc-plot1':'#ffff00','--foc-plot2':'#00ffee',
+'--foc-cyan':'#00ffee','--foc-copper':'#ffb060'
+},
+lm: {
+'--foc-chassis':'#e9edf1','--foc-panel':'#ffffff','--foc-panel-hi':'#f1f4f7','--foc-panel-lo':'#f4f6f9',
+'--foc-border':'#c3cad3','--foc-border-hi':'#9aa3ae','--foc-text':'#1d232a','--foc-dim':'#556070','--foc-bright':'#000000',
+'--foc-accent':'#a8620a','--foc-green':'#12805a','--foc-val':'#8a4a00','--foc-danger':'#b02020',
+'--foc-focus':'#a8620a','--foc-nar-bg':'#ffefc0','--foc-nar-border':'#e0b040','--foc-nar-text':'#333333',
+'--foc-grid':'transparent'
+}
+};
+function applyAll() {
+if (!ROOT) return;
+var k, p;
+for (k in THEMES) for (p in THEMES[k]) ROOT.style.removeProperty(p);
+['hc','lm'].forEach(function(t){
+if (!states[t]) return;
+for (p in THEMES[t]) ROOT.style.setProperty(p, THEMES[t][p]);
+});
+}
+function styleBtn(id, active) {
+var btn = document.getElementById(id);
+if (!btn) return;
+btn.style.background  = active ? 'rgba(58,208,143,0.14)' : '';
+btn.style.borderColor = active ? 'var(--foc-green)' : '';
+btn.style.color       = active ? 'var(--foc-green)' : '';
+btn.style.fontWeight  = active ? 'bold' : '';
+btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function apply() {
+if (!ROOT) return;
+applyAll();
+/* Light mode: the bench scene and the ray diagram are inverted to a light look */
+var lmFilter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.92)' : '';
+['focScene','focRays'].forEach(function(id){
+var cv = document.getElementById(id); if (cv) cv.style.filter = lmFilter;
+});
+styleBtn('focBtnHC', states.hc);
+styleBtn('focBtnLM', states.lm);
+var nb = document.getElementById('focNarBar');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('focBtnNR');
+if (btn) btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF');
+styleBtn('focBtnNR', states.nr);
+if (typeof focalSim !== 'undefined' && focalSim.draw) focalSim.draw();
+}
+return {
+init: function() { ROOT = document.getElementById('focroot'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) { states.lm = false; }
+if (k === 'lm' && states.lm) { states.hc = false; }
+apply();
+},
+isNarOn: function() { return states.nr; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('focNarBar');
+if (nb) nb.innerHTML = msg;
+},
+col: function(prop, def) {
+if (!ROOT) return def;
+var v = getComputedStyle(ROOT).getPropertyValue(prop);
+return (v && v.trim()) || def;
+}
+};
+})();
+</script>
+<script>
+var focalSim = (function(){
+/* =================================================================
+ FOCAL LENGTH LAB (MOM-compatible)
+ GEOMETRY  The curved face of each item is part of a circle. With the
+ width w of the face and its depth (sagitta) d:
+ (R − d)² + (w/2)² = R²  ⇒  R = [(w/2)² + d²] / (2d)
+ MIRRORS   f = R/2, + for concave (converging), − for convex.
+ LENSES    1/f = [(n_L − n_m)/n_m]·(1/R1 − 1/R2); one face is flat (R = ∞):
+ plano-convex f = + n_m R/(n_L − n_m), plano-concave f = − n_m R/(n_L − n_m).
+ TOOLS     Digital caliper (jaws stop at the edges) for w; a straight bar
+ resting on the highest points of the face with a sliding depth probe
+ (probe stops at the surface) for d. Concave face: largest reading at
+ the centre. Convex face: bar rests on the apex, largest reading at the edge.
+================================================================= */
+// ---- Scene constants ----
+var W = 623, H = 440;
+var CX = 311;            // bench centre (px)
+var SC = 16;             // px per cm on the bench
+var Y_BOT = 300;         // piece bottom (px)
+var BENCH_Y = 346;       // bench top (px)
+var CAL_Y = 364;         // caliper beam top (px)
+var JAW_LIM = 14.6;      // caliper jaws travel ±14.6 cm from the centre
+var PD_MAX = 4;          // probe travel (cm)
+var LX = 565, LY = 150, LR = 44, LZ = 4;   // magnifier
+var TRAY_Y = 6, TRAY_H = 92;
+var TYPES = [
+{ key:'ccm', name:'Concave mirror',     kind:'mirror', surface:'concave', pre:'M' },
+{ key:'cvm', name:'Convex mirror',      kind:'mirror', surface:'convex',  pre:'M' },
+{ key:'pcx', name:'Plano-convex lens',  kind:'lens',   surface:'convex',  pre:'L' },
+{ key:'pcc', name:'Plano-concave lens', kind:'lens',   surface:'concave', pre:'L' }
+];
+var GLASSES = [
+{ n:1.49, name:'acrylic' }, { n:1.50, name:'glass' }, { n:1.52, name:'crown glass' },
+{ n:1.58, name:'polycarbonate' }, { n:1.62, name:'flint glass' }
+];
+// ---- State ----
+var kit = [];
+var cur = -1;
+var nm = 1.000;
+var aL = -JAW_LIM, aR = JAW_LIM, px = 0, pd = 0;
+var showConstruct = false, showLoupe = true;
+var drag = null;
+var ghost = null;           // {k, x, y} while pulling an item from the tray
+var saidContactW = false, saidContactD = false;
+// ---- Helpers ----
+function g(id){ return document.getElementById(id + ''); }
+function setText(id, v){ var e = g(id); if(e) e.textContent = v; }
+function setHTML(id, v){ var e = g(id); if(e) e.innerHTML = v; }
+function rnd(a, b){ return a + Math.random()*(b - a); }
+function r2(x){ return Math.round(x*100)/100; }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function col(p, d){ return focA11y.col(p, d); }
+function narrate(m){ focA11y.narrate(m); }
+function fmt(x, n){ return (x >= 0 ? '' : '−') + Math.abs(x).toFixed(n === undefined ? 2 : n); }
+// ---- Kit generation ----
+function makeItem(t, w, d, glass){
+var T = TYPES[t];
+var R = (w*w/4 + d*d) / (2*d);
+return {
+t: t, name: T.name, kind: T.kind, surface: T.surface,
+code: T.pre + '-' + Math.floor(rnd(10, 99)),
+w: w, d: d, R: R,
+nL: T.kind === 'lens' ? glass.n : null,
+mat: T.kind === 'lens' ? glass.name + ', n_L = ' + glass.n.toFixed(2) : 'front-silvered glass',
+te: T.kind === 'mirror' ? 1.2 : 0.45,
+inputs: { w:'', d:'', r:'', f:'' },
+marks: { w:'', d:'', r:'', f:'' },
+feedback: '',
+revealed: false
+};
+}
+function randomKit(){
+kit = [];
+for(var t = 0; t < 4; t++){
+var w = r2(rnd(12, 27));
+var d = r2(rnd(0.7, Math.min(2.8, w/8)));
+kit.push(makeItem(t, w, d, GLASSES[Math.floor(rnd(0, GLASSES.length))]));
+}
+}
+function handoutKit(){
+kit = [];
+for(var t = 0; t < 4; t++) kit.push(makeItem(t, 25.00, 1.50, { n:1.50, name:'glass' }));
+}
+function item(){ return cur >= 0 ? kit[cur] : null; }
+// ---- Physics ----
+function sag(it, x){ var R = it.R; x = Math.min(Math.abs(x), it.w/2); return R - Math.sqrt(R*R - x*x); }
+function surfH(it, x){ return it.surface === 'concave' ? it.te + sag(it, x) : it.te + it.d - sag(it, x); }
+function topH(it){ return it.te + it.d; }                       // the bar rests at this height
+function gap(it, x){ return topH(it) - surfH(it, x); }          // probe travel to the surface
+function trueF(it){
+if(it.kind === 'mirror') return (it.surface === 'concave' ? 1 : -1) * it.R/2;
+return (it.surface === 'convex' ? 1 : -1) * nm * it.R / (it.nL - nm);
+}
+function fFromR(it, R){
+if(it.kind === 'mirror') return (it.surface === 'concave' ? 1 : -1) * R/2;
+return (it.surface === 'convex' ? 1 : -1) * nm * R / (it.nL - nm);
+}
+function calReading(){ return aR - aL; }
+function calContact(){ var it = item(); return it && aL >= -it.w/2 - 1e-9 && aR <= it.w/2 + 1e-9; }
+function probeContact(){ var it = item(); return it && pd >= gap(it, px) - 1e-9; }
+// ---- Coordinates ----
+function xOf(x){ return CX + x*SC; }
+function yOf(h){ return Y_BOT - h*SC; }
+// ---- Drawing helpers ----
+function steelGrad(id, vertical){
+return '<linearGradient id="'+id+'" x1="0" y1="0" x2="'+(vertical?0:1)+'" y2="'+(vertical?1:0)+'"><stop offset="0" stop-color="#5d6670"/><stop offset="0.45" stop-color="#d4dbe2"/><stop offset="1" stop-color="#4a525b"/></linearGradient>';
+}
+function surfacePath(it, sc, x0, y0, exagg){
+// curved top surface from left to right as "x,y" points; sc px per cm, optional depth exaggeration
+var n = 48, pts = [];
+for(var i = 0; i <= n; i++){
+var x = -it.w/2 + it.w*i/n;
+var h = it.te + (surfH(it, x) - it.te) * (exagg || 1);
+pts.push((x0 + x*sc).toFixed(1) + ',' + (y0 - h*sc).toFixed(1));
+}
+return pts;
+}
+function pieceSvg(it, sc, x0, y0, exagg, idp){
+// side profile of the item: flat bottom at y0, curved face on top
+var pts = surfacePath(it, sc, x0, y0, exagg);
+var xl = x0 - it.w/2*sc, xr = x0 + it.w/2*sc;
+var d = 'M '+xl.toFixed(1)+' '+y0+' L '+pts.join(' L ')+' L '+xr.toFixed(1)+' '+y0+' Z';
+var s = '';
+if(it.kind === 'lens'){
+s += '<path d="'+d+'" fill="url(#'+idp+'Glass)" stroke="#bfefff" stroke-width="1"/>';
+s += '<polyline points="'+pts.join(' ')+'" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.6"/>';
+} else {
+s += '<path d="'+d+'" fill="url(#'+idp+'Back)" stroke="#2a2f36" stroke-width="1"/>';
+s += '<polyline points="'+pts.join(' ')+'" fill="none" stroke="url(#'+idp+'Silver)" stroke-width="'+(sc > 4 ? 3 : 2)+'"/>';
+}
+return s;
+}
+function defsSvg(){
+var s = '<defs>';
+s += steelGrad('focSteelH', false) + steelGrad('focSteelV', true);
+s += '<linearGradient id="focWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a32"/><stop offset="1" stop-color="#5c3a1e"/></linearGradient>';
+s += '<linearGradient id="focBench" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4f57"/><stop offset="0.06" stop-color="#2f343b"/><stop offset="1" stop-color="#1c1f24"/></linearGradient>';
+s += '<linearGradient id="focWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#141922"/><stop offset="1" stop-color="#0b0e14"/></linearGradient>';
+['focP','focT'].forEach(function(p){
+s += '<linearGradient id="'+p+'Glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bff4ff" stop-opacity="0.55"/><stop offset="1" stop-color="#5ec8e0" stop-opacity="0.35"/></linearGradient>';
+s += '<linearGradient id="'+p+'Back" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6470"/><stop offset="1" stop-color="#2d333b"/></linearGradient>';
+s += '<linearGradient id="'+p+'Silver" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9aa3ae"/><stop offset="0.5" stop-color="#ffffff"/><stop offset="1" stop-color="#9aa3ae"/></linearGradient>';
+});
+s += '<clipPath id="focLoupeClip"><circle cx="'+LX+'" cy="'+LY+'" r="'+LR+'"/></clipPath>';
+s += '</defs>';
+return s;
+}
+// ---- Tray (optics kit) ----
+function traySvg(){
+var s = '';
+s += '<rect x="8" y="'+TRAY_Y+'" width="'+(W-16)+'" height="'+TRAY_H+'" rx="6" fill="url(#focWood)" stroke="#2a1a0c" stroke-width="1.5"/>';
+s += '<text x="18" y="'+(TRAY_Y+14)+'" fill="#f1d9b5" font-family="monospace" font-size="10" font-weight="bold" letter-spacing="2">OPTICS KIT</text>';
+var cw = (W - 40) / 4;
+for(var k = 0; k < 4; k++){
+var x = 20 + k*cw, y = TRAY_Y + 20, w = cw - 8, h = TRAY_H - 26;
+var on = (k === cur);
+s += '<g data-drag="tray'+k+'" style="cursor:grab">';
+s += '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="#1f3a2a" stroke="'+(on ? '#e8a020' : '#0f1f16')+'" stroke-width="'+(on ? 2 : 1.5)+'"/>';
+if(kit[k]){
+var it = kit[k], icx = x + w/2, icy = y + 40, isc = (w - 30)/it.w;
+if(on || (ghost && ghost.k === k)){
+s += '<text x="'+icx+'" y="'+(icy-8)+'" text-anchor="middle" fill="#7fa58c" font-family="monospace" font-size="9">on the bench</text>';
+} else {
+s += pieceSvg(it, isc, icx, icy, 2.2, 'focT');
+}
+s += '<text x="'+icx+'" y="'+(y+h-6)+'" text-anchor="middle" fill="#e6edf3" font-family="Arial" font-size="9.5">'+it.name+' · '+it.code+'</text>';
+}
+s += '</g>';
+}
+return s;
+}
+// ---- Depth gauge parts (also reused inside the magnifier) ----
+function gaugeParts(it, forLoupe){
+var s = '';
+var yBar = yOf(topH(it));
+var bx0 = xOf(-(it.w/2 + 1.5)), bx1 = xOf(it.w/2 + 1.5);
+s += '<rect x="'+bx0+'" y="'+(yBar-8)+'" width="'+(bx1-bx0)+'" height="8" fill="url(#focSteelV)" stroke="#2a2f36" stroke-width="0.6"/>';
+var xp = xOf(px), tipY = yBar + pd*SC;
+var contact = probeContact();
+s += '<line x1="'+xp+'" y1="'+(yBar-8)+'" x2="'+xp+'" y2="'+tipY+'" stroke="#c9d2db" stroke-width="'+(forLoupe ? 0.8 : 2)+'"/>';
+s += '<circle cx="'+xp+'" cy="'+tipY+'" r="'+(forLoupe ? 0.7 : 2.2)+'" fill="'+(contact ? '#3cff9a' : '#ffd166')+'"/>';
+return s;
+}
+function benchSvg(){
+var it = item();
+var s = '';
+// bench surface plate
+s += '<rect x="0" y="'+BENCH_Y+'" width="'+W+'" height="'+(H-BENCH_Y)+'" fill="url(#focBench)"/>';
+s += '<line x1="0" y1="'+(BENCH_Y+0.5)+'" x2="'+W+'" y2="'+(BENCH_Y+0.5)+'" stroke="rgba(255,255,255,0.18)"/>';
+if(!it){
+s += '<rect x="'+(CX-70)+'" y="'+(Y_BOT+4)+'" width="140" height="'+(BENCH_Y-Y_BOT-4)+'" fill="#3a414a" opacity="0.6"/>';
+s += '<text x="'+CX+'" y="'+(Y_BOT-60)+'" text-anchor="middle" fill="#8a94a3" font-family="monospace" font-size="12">drag an item from the kit to here</text>';
+s += '<text x="'+CX+'" y="'+(Y_BOT-40)+'" text-anchor="middle" fill="#8a94a3" font-family="monospace" font-size="20">⬇</text>';
+return s;
+}
+// pedestal
+var pw = Math.min(it.w*SC*0.45, 140);
+s += '<rect x="'+(CX-pw/2)+'" y="'+Y_BOT+'" width="'+pw+'" height="'+(BENCH_Y-Y_BOT)+'" fill="#3a414a" stroke="#22272d"/>';
+s += '<rect x="'+(CX-pw/2)+'" y="'+Y_BOT+'" width="'+pw+'" height="4" fill="#1a1a1a"/>';
+// the piece
+s += pieceSvg(it, SC, CX, Y_BOT, 1, 'focP');
+s += '<text x="'+CX+'" y="'+(BENCH_Y-8)+'" text-anchor="middle" fill="#e6edf3" font-family="Arial" font-size="10">'+it.name+' '+it.code+'</text>';
+if(showConstruct) s += constructSvg(it);
+// depth gauge: bar + carriage + plunger
+s += gaugeParts(it, false);
+var yBar = yOf(topH(it)), xp = xOf(px);
+var bodyTop = yBar - 52, bodyH = 44;
+var knobY = bodyTop - PD_MAX*SC - 8 + pd*SC;
+s += '<g data-drag="pd" style="cursor:ns-resize">';
+s += '<line x1="'+xp+'" y1="'+(knobY+6)+'" x2="'+xp+'" y2="'+bodyTop+'" stroke="#c9d2db" stroke-width="2"/>';
+s += '<rect x="'+(xp-11)+'" y="'+(knobY-6)+'" width="22" height="12" rx="4" fill="#e8a020" stroke="#7a4a00"/>';
+s += '<rect x="'+(xp-14)+'" y="'+(knobY-12)+'" width="28" height="24" fill="transparent"/>';
+s += '</g>';
+s += '<g data-drag="px" style="cursor:ew-resize">';
+s += '<rect x="'+(xp-26)+'" y="'+bodyTop+'" width="52" height="'+bodyH+'" rx="4" fill="#1c232c" stroke="#c9a86a" stroke-width="1.5"/>';
+s += '<rect x="'+(xp-21)+'" y="'+(bodyTop+6)+'" width="42" height="16" rx="2" fill="#0a1a12"/>';
+s += '<text x="'+xp+'" y="'+(bodyTop+18)+'" text-anchor="middle" fill="#3cff9a" font-family="monospace" font-size="10" font-weight="bold">'+pd.toFixed(2)+'</text>';
+s += '<text x="'+xp+'" y="'+(bodyTop+36)+'" text-anchor="middle" fill="#c9a86a" font-family="monospace" font-size="8">DEPTH cm</text>';
+s += '</g>';
+if(probeContact()){
+s += '<text x="'+(xp+30)+'" y="'+(yBar+pd*SC+4)+'" fill="#3cff9a" font-family="monospace" font-size="9">contact</text>';
+}
+// caliper: beam, fixed left jaw, sliding right jaw with LCD
+var xL = xOf(aL), xR = xOf(aR);
+var jawTop = Y_BOT - Math.min(8, topH(it)*SC*0.5);
+var calOk = calContact();
+s += '<rect x="'+(xL-14)+'" y="'+CAL_Y+'" width="'+(xR-xL+90)+'" height="14" fill="url(#focSteelV)" stroke="#2a2f36" stroke-width="0.6"/>';
+for(var t = 0; t*SC < xR - xL + 80; t += 0.5){
+var tx = xL + t*SC, big = (t % 1 === 0);
+s += '<line x1="'+tx+'" y1="'+CAL_Y+'" x2="'+tx+'" y2="'+(CAL_Y + (big ? 6 : 3))+'" stroke="#2a2f36" stroke-width="0.7"/>';
+}
+s += '<g data-drag="jawL" style="cursor:ew-resize">';
+s += '<path d="M '+(xL-14)+' '+(CAL_Y+14)+' L '+(xL-14)+' '+(jawTop+6)+' L '+(xL-4)+' '+jawTop+' L '+xL+' '+jawTop+' L '+xL+' '+CAL_Y+' Z" fill="url(#focSteelH)" stroke="'+(calOk ? '#3cff9a' : '#2a2f36')+'" stroke-width="1"/>';
+s += '<rect x="'+(xL-30)+'" y="'+(CAL_Y-4)+'" width="34" height="26" fill="transparent"/>';
+s += '</g>';
+s += '<g data-drag="jawR" style="cursor:ew-resize">';
+s += '<path d="M '+xR+' '+CAL_Y+' L '+xR+' '+jawTop+' L '+(xR+4)+' '+jawTop+' L '+(xR+14)+' '+(jawTop+6)+' L '+(xR+14)+' '+CAL_Y+' Z" fill="url(#focSteelH)" stroke="'+(calOk ? '#3cff9a' : '#2a2f36')+'" stroke-width="1"/>';
+s += '<rect x="'+(xR-2)+'" y="'+(CAL_Y-8)+'" width="76" height="32" rx="4" fill="#1c232c" stroke="#c9a86a" stroke-width="1.5"/>';
+s += '<rect x="'+(xR+16)+'" y="'+(CAL_Y-3)+'" width="52" height="16" rx="2" fill="#0a1a12"/>';
+s += '<text x="'+(xR+42)+'" y="'+(CAL_Y+9)+'" text-anchor="middle" fill="#3cff9a" font-family="monospace" font-size="10" font-weight="bold">'+calReading().toFixed(2)+'</text>';
+s += '<text x="'+(xR+42)+'" y="'+(CAL_Y+21)+'" text-anchor="middle" fill="#c9a86a" font-family="monospace" font-size="7">CALIPER cm</text>';
+s += '</g>';
+// magnifier at the probe tip
+if(showLoupe){
+var tipX = xp, tipY = yBar + pd*SC;
+s += '<line x1="'+tipX+'" y1="'+tipY+'" x2="'+(LX - LR*0.7)+'" y2="'+(LY + LR*0.7)+'" stroke="rgba(232,160,32,0.35)" stroke-width="1" stroke-dasharray="3 3"/>';
+s += '<g clip-path="url(#focLoupeClip)">';
+s += '<rect x="'+(LX-LR)+'" y="'+(LY-LR)+'" width="'+(2*LR)+'" height="'+(2*LR)+'" fill="#10141b"/>';
+s += '<g transform="translate('+LX+' '+LY+') scale('+LZ+') translate('+(-tipX)+' '+(-tipY)+')">';
+s += pieceSvg(it, SC, CX, Y_BOT, 1, 'focP');
+s += gaugeParts(it, true);
+s += '</g></g>';
+s += '<circle cx="'+LX+'" cy="'+LY+'" r="'+LR+'" fill="none" stroke="#c9a86a" stroke-width="3"/>';
+s += '<text x="'+LX+'" y="'+(LY+LR+12)+'" text-anchor="middle" fill="#c9a86a" font-family="monospace" font-size="9">probe tip ×'+LZ+'</text>';
+}
+return s;
+}
+// ---- Circle construction overlay (as in the handout figure) ----
+function constructSvg(it){
+var s = '';
+var chordH = it.surface === 'concave' ? topH(it) : it.te;     // chord joins the two edges of the face
+var yC = yOf(chordH), yS = yOf(surfH(it, 0));
+var xl = xOf(-it.w/2), xr = xOf(it.w/2);
+s += '<line x1="'+xl+'" y1="'+yC+'" x2="'+xr+'" y2="'+yC+'" stroke="#c77dff" stroke-width="1.5" stroke-dasharray="5 3"/>';
+s += '<text x="'+((xl+CX)/2)+'" y="'+(yC + (it.surface === 'concave' ? -5 : 13))+'" text-anchor="middle" fill="#c77dff" font-family="Arial" font-size="11" font-style="italic">w/2</text>';
+s += '<text x="'+((xr+CX)/2)+'" y="'+(yC + (it.surface === 'concave' ? -5 : 13))+'" text-anchor="middle" fill="#c77dff" font-family="Arial" font-size="11" font-style="italic">w/2</text>';
+s += '<line x1="'+CX+'" y1="'+yC+'" x2="'+CX+'" y2="'+yS+'" stroke="#ff5a5a" stroke-width="2"/>';
+s += '<text x="'+(CX+5)+'" y="'+((yC+yS)/2+4)+'" fill="#ff5a5a" font-family="Arial" font-size="11" font-style="italic">d</text>';
+// arc continued beyond the piece and the direction to the centre of curvature
+var up = it.surface === 'concave' ? -1 : 1;                    // centre is above a concave face, below a convex one
+var pts = [];
+for(var i = 0; i <= 40; i++){
+var x = -(it.w/2 + 3) + (it.w + 6)*i/40;
+if(Math.abs(x) >= it.R) continue;
+var sg = it.R - Math.sqrt(it.R*it.R - x*x);
+var h = it.surface === 'concave' ? it.te + sg : it.te + it.d - sg;
+pts.push(xOf(x).toFixed(1)+','+yOf(h).toFixed(1));
+}
+s += '<polyline points="'+pts.join(' ')+'" fill="none" stroke="#3ad08f" stroke-width="1" stroke-dasharray="4 4" opacity="0.8"/>';
+var y2 = up < 0 ? 128 : BENCH_Y + 2;
+s += '<line x1="'+(CX-40)+'" y1="'+yS+'" x2="'+(CX-40)+'" y2="'+y2+'" stroke="#3ad08f" stroke-width="1.2" stroke-dasharray="6 3"/>';
+s += '<polygon points="'+(CX-40)+','+(y2+up*2)+' '+(CX-44)+','+(y2-up*7)+' '+(CX-36)+','+(y2-up*7)+'" fill="#3ad08f"/>';
+var lab = 'to the centre of curvature: R' + (it.revealed ? ' = ' + it.R.toFixed(1) + ' cm' : ' = ?');
+s += '<text x="'+(CX-46)+'" y="'+(up < 0 ? 140 : yS + 30)+'" text-anchor="end" fill="#3ad08f" font-family="Arial" font-size="10">'+lab+'</text>';
+return s;
+}
+// ---- Ghost while pulling an item from the tray ----
+function ghostSvg(){
+if(!ghost || !kit[ghost.k]) return '';
+var it = kit[ghost.k];
+return '<g opacity="0.85">' + pieceSvg(it, 110/it.w, ghost.x, ghost.y + 10, 2.2, 'focT') + '</g>';
+}
+function drawScene(){
+var s = defsSvg();
+s += '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#focWall)"/>';
+s += traySvg();
+s += benchSvg();
+s += ghostSvg();
+var sc = g('focScene'); if(sc) sc.innerHTML = s;
+}
+// ---- Ray diagram ----
+function parseNum(v){
+if(v === undefined || v === null) return NaN;
+v = String(v).replace(/\u2212/g, '-').replace(',', '.').trim();
+if(v === '' || !/^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(v)) return NaN;
+return parseFloat(v);
+}
+function drawRays(){
+var RW = 623, RH = 190, AY = 95;
+var s = '<rect x="0" y="0" width="'+RW+'" height="'+RH+'" fill="#0d1016"/>';
+s += '<line x1="6" y1="'+AY+'" x2="'+(RW-6)+'" y2="'+AY+'" stroke="#48536a" stroke-width="1" stroke-dasharray="6 4"/>';
+var it = item();
+if(!it){
+s += '<text x="'+(RW/2)+'" y="'+(AY-12)+'" text-anchor="middle" fill="#8a94a3" font-family="monospace" font-size="12">pick an item -- your focal point will be drawn from the f you enter</text>';
+var el = g('focRays'); if(el) el.innerHTML = s; return;
+}
+var fS = parseNum(it.inputs.f), fT = trueF(it);
+var haveS = isFinite(fS) && fS !== 0, haveT = it.revealed;
+var ref = haveT ? fT : (haveS ? fS : null);
+var span = { lens: 420, dlens: 400, cmir: 440, vmir: 380 };
+var mirror = it.kind === 'mirror', conv = (it.surface === 'concave') === mirror;   // concave mirror or convex lens converge
+var ex, avail;
+if(!mirror && conv){ ex = 140; avail = span.lens; }
+else if(!mirror){ ex = 450; avail = span.dlens; }
+else if(conv){ ex = 540; avail = span.cmir; }
+else { ex = 200; avail = span.vmir; }
+var fMax = Math.max(haveS ? Math.abs(fS) : 0, haveT ? Math.abs(fT) : 0, 1);
+var s1 = avail / fMax;
+// element
+var eh = 70;
+if(mirror){
+var bulge = conv ? 10 : -10;     // concave faces the light (bows away from it)
+s += '<path d="M '+(ex - (conv ? 0 : 0))+' '+(AY-eh)+' Q '+(ex + bulge)+' '+AY+' '+ex+' '+(AY+eh)+'" fill="none" stroke="#e6edf3" stroke-width="3"/>';
+for(var hs = -eh + 6; hs < eh; hs += 10) s += '<line x1="'+(ex + bulge*(1 - hs*hs/(eh*eh)) + 2)+'" y1="'+(AY+hs)+'" x2="'+(ex + bulge*(1 - hs*hs/(eh*eh)) + 8)+'" y2="'+(AY+hs-6)+'" stroke="#8a94a3" stroke-width="1"/>';
+} else {
+var bw = conv ? 12 : 4, bc = conv ? 10 : -8;
+s += '<path d="M '+(ex-bw)+' '+(AY-eh)+' Q '+(ex-bw-bc*2)+' '+AY+' '+(ex-bw)+' '+(AY+eh)+' L '+(ex+4)+' '+(AY+eh)+' L '+(ex+4)+' '+(AY-eh)+' Z" fill="rgba(94,200,224,0.35)" stroke="#bfefff" stroke-width="1.2"/>';
+}
+var rayCol = '#ff6b6b';
+var hts = [-54, -36, -18, 18, 36, 54];
+function fx(f){ return mirror ? ex - f*s1 : ex + f*s1; }
+// rays (towards the reference focal point if one is known)
+hts.forEach(function(h){
+var y = AY + h;
+var x0 = 8;
+s += '<line x1="'+x0+'" y1="'+y+'" x2="'+ex+'" y2="'+y+'" stroke="'+rayCol+'" stroke-width="1.3"/>';
+if(ref === null) return;
+var F = fx(ref);
+if(!mirror){
+if(ref > 0){
+var xe = Math.min(RW - 6, F + (F - ex)*0.35);
+var ye = y + (AY - y) * (xe - ex)/(F - ex);
+s += '<line x1="'+ex+'" y1="'+y+'" x2="'+xe+'" y2="'+ye+'" stroke="'+rayCol+'" stroke-width="1.3"/>';
+} else {
+var xe2 = RW - 6, ye2 = y + (y - AY) * (xe2 - ex)/(ex - F);
+s += '<line x1="'+ex+'" y1="'+y+'" x2="'+xe2+'" y2="'+ye2+'" stroke="'+rayCol+'" stroke-width="1.3"/>';
+s += '<line x1="'+ex+'" y1="'+y+'" x2="'+F+'" y2="'+AY+'" stroke="'+rayCol+'" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>';
+}
+} else {
+if(ref > 0){
+var xe3 = Math.max(6, F - (ex - F)*0.35);
+var ye3 = y + (AY - y) * (ex - xe3)/(ex - F);
+s += '<line x1="'+ex+'" y1="'+y+'" x2="'+xe3+'" y2="'+ye3+'" stroke="'+rayCol+'" stroke-width="1.3" opacity="0.85"/>';
+} else {
+var xe4 = 6, ye4 = y + (y - AY) * (ex - xe4)/(F - ex);
+s += '<line x1="'+ex+'" y1="'+y+'" x2="'+xe4+'" y2="'+ye4+'" stroke="'+rayCol+'" stroke-width="1.3" opacity="0.85"/>';
+s += '<line x1="'+ex+'" y1="'+y+'" x2="'+F+'" y2="'+AY+'" stroke="'+rayCol+'" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>';
+}
+}
+});
+function marker(f, colr, label, below){
+var x = fx(f);
+if(x < 4 || x > RW - 4) return '';
+var t = '<line x1="'+x+'" y1="'+(AY-8)+'" x2="'+x+'" y2="'+(AY+8)+'" stroke="'+colr+'" stroke-width="2"/>';
+t += '<circle cx="'+x+'" cy="'+AY+'" r="3.5" fill="'+colr+'"/>';
+t += '<text x="'+x+'" y="'+(below ? AY+82 : AY-78)+'" text-anchor="middle" fill="'+colr+'" font-family="monospace" font-size="10">'+label+'</text>';
+t += '<line x1="'+x+'" y1="'+(below ? AY+10 : AY-10)+'" x2="'+x+'" y2="'+(below ? AY+70 : AY-70)+'" stroke="'+colr+'" stroke-width="0.8" stroke-dasharray="2 3"/>';
+return t;
+}
+if(haveS) s += marker(fS, '#ffd166', 'your F: f = '+fmt(fS, 1)+' cm', false);
+if(haveT) s += marker(fT, '#3cff9a', 'true F: f = '+fmt(fT, 1)+' cm', true);
+var who = mirror ? 'light reflects from the ' + it.name.toLowerCase() : 'light passes through the ' + it.name.toLowerCase();
+s += '<text x="'+(RW-10)+'" y="'+(RH-8)+'" text-anchor="end" fill="#8a94a3" font-family="monospace" font-size="10">'+who+(ref === null ? ' -- enter f to see where it focuses' : '')+'</text>';
+var el2 = g('focRays'); if(el2) el2.innerHTML = s;
+}
+// ---- Readouts, sliders, status ----
+function syncSliders(){
+var it = item();
+function setSl(id, mn, mx, v){ var e = g(id); if(!e) return; e.min = mn; e.max = mx; e.value = v; e.disabled = !it; }
+if(it){
+setSl('focSlJL', -JAW_LIM, (-it.w/2).toFixed(2), aL.toFixed(2));
+setSl('focSlJR', (it.w/2).toFixed(2), JAW_LIM, aR.toFixed(2));
+setSl('focSlPX', (-it.w/2).toFixed(2), (it.w/2).toFixed(2), px.toFixed(2));
+setSl('focSlPD', 0, PD_MAX, pd.toFixed(2));
+setText('focVJL', fmt(aL) + ' cm'); setText('focVJR', fmt(aR) + ' cm');
+setText('focVPX', fmt(px) + ' cm'); setText('focVPD', pd.toFixed(2) + ' cm');
+} else {
+['focSlJL','focSlJR','focSlPX','focSlPD'].forEach(function(id){ var e = g(id); if(e) e.disabled = true; });
+['focVJL','focVJR','focVPX','focVPD'].forEach(function(id){ setText(id, '--'); });
+}
+}
+function renderReadout(){
+var it = item();
+setText('focROItem', it ? it.name + ' ' + it.code : '--');
+setText('focROMat', it ? it.mat : '--');
+setText('focROCal', it ? calReading().toFixed(2) + ' cm' + (calContact() ? ' ✓ closed' : ' (open)') : '--');
+setText('focRODep', it ? pd.toFixed(2) + ' cm' + (probeContact() ? ' ✓ contact' : '') : '--');
+setText('focROPx', it ? (px + it.w/2).toFixed(2) + ' cm' : '--');
+setText('focROMed', nm.toFixed(3) + (nm > 1.1 ? ' (water)' : ' (air)'));
+for(var k = 0; k < 4; k++){
+var b = g('focKit' + k);
+if(!b) continue;
+var on = (k === cur);
+b.setAttribute('aria-pressed', on ? 'true' : 'false');
+b.style.background  = on ? 'rgba(232,160,32,0.16)' : '';
+b.style.borderColor = on ? 'var(--foc-accent)' : '';
+b.style.color       = on ? 'var(--foc-accent)' : '';
+b.style.fontWeight  = on ? 'bold' : '';
+}
+}
+function updateStatus(){
+var it = item(), msg;
+if(!it) msg = 'Step 1 -- drag an item from the kit onto the bench (or use the Optics Kit buttons).';
+else if(!calContact()) msg = 'Step 2 -- close the caliper jaws on both edges of the ' + it.name.toLowerCase() + ' to read w.';
+else if(Math.abs(pd - it.d) > 0.005) msg = 'Step 3 -- slide the depth probe along the bar and lower it until it touches. Find where the reading is largest: that is d.';
+else msg = 'Step 4 -- record w and d, compute R = [(w/2)² + d²]/(2d), then f. Press Check.';
+setText('focStatus', msg);
+}
+function draw(){
+drawScene();
+drawRays();
+renderReadout();
+syncSliders();
+updateStatus();
+}
+// ---- Results ----
+function saveInputs(){
+var it = item(); if(!it) return;
+['W','D','R','F'].forEach(function(k){ var e = g('focIn' + k); if(e) it.inputs[k.toLowerCase()] = e.value; });
+}
+function loadInputs(){
+var it = item();
+['W','D','R','F'].forEach(function(k){
+var e = g('focIn' + k); if(e){ e.value = it ? it.inputs[k.toLowerCase()] : ''; e.disabled = !it; }
+var m = g('focMk' + k); if(m) m.innerHTML = it ? it.marks[k.toLowerCase()] : '';
+});
+setHTML('focFeedback', it && it.feedback ? it.feedback : 'Enter f with its sign: + converging, − diverging.');
+}
+function mark(ok){ return ok ? '<span style="color:var(--foc-green)">✓</span>' : '<span style="color:var(--foc-danger)">✗</span>'; }
+function near(a, b, rel){ return Math.abs(a - b) <= rel * Math.abs(b); }
+function check(){
+var it = item();
+if(!it){ narrate('Pick an item first.'); return; }
+saveInputs();
+var w = parseNum(it.inputs.w), d = parseNum(it.inputs.d), R = parseNum(it.inputs.r), f = parseNum(it.inputs.f);
+var tips = [], nOk = 0;
+// w
+var okW = isFinite(w) && Math.abs(w - it.w) <= 0.05;
+if(!isFinite(w)) tips.push('<b>w</b>: enter the caliper reading with the jaws closed on both edges.');
+else if(!okW) tips.push('<b>w</b>: '+w+' cm does not match the caliper. Close both jaws until they stop (they turn green).');
+// d
+var okD = isFinite(d) && Math.abs(d - it.d) <= 0.02;
+if(!isFinite(d)) tips.push('<b>d</b>: enter the largest depth-gauge reading.');
+else if(!okD){
+if(d < it.d) tips.push('<b>d</b>: too small. ' + (it.surface === 'concave' ? 'On a concave face the depth is largest at the centre (w/2 from the left edge).' : 'On a convex face the bar rests on the top, so the gap is largest at the edge.'));
+else tips.push('<b>d</b>: too large -- re-read the depth gauge at the point of contact.');
+}
+// R, judged against the student's own w and d when those are usable
+var wU = isFinite(w) ? w : it.w, dU = isFinite(d) && d > 0 ? d : it.d;
+var Rs = (wU*wU/4 + dU*dU)/(2*dU);
+var okR = isFinite(R) && near(R, Rs, 0.01);
+if(!isFinite(R)) tips.push('<b>R</b>: use R = [(w/2)² + d²]/(2d).');
+else if(!okR){
+var Rw = (wU*wU + dU*dU)/(2*dU);
+if(near(R, Rw, 0.02)) tips.push('<b>R</b>: it looks like you used w instead of w/2.');
+else if(near(R, wU*wU/(8*dU), 0.005) && !near(Rs, wU*wU/(8*dU), 0.01)) tips.push('<b>R</b>: close -- don\'t drop the d² term.');
+else tips.push('<b>R</b>: from your w and d, R should be about '+Rs.toFixed(1)+' cm. Check R = [(w/2)² + d²]/(2d).');
+}
+// f, judged against the student's R when it is reasonable
+var Ruse = okR ? R : Rs;
+var fs = fFromR(it, Ruse);
+var okF = isFinite(f) && near(f, fs, 0.01);
+if(!isFinite(f)) tips.push('<b>f</b>: enter the focal length with its sign.');
+else if(!okF){
+if(near(-f, fs, 0.01)) tips.push('<b>f</b>: right size, wrong sign. ' + (fs > 0 ? 'This item converges light: f is positive.' : 'This item diverges light: f is negative.'));
+else if(it.kind === 'mirror' && near(Math.abs(f), Ruse, 0.02)) tips.push('<b>f</b>: for a mirror f = R/2, not R.');
+else if(it.kind === 'lens' && nm > 1.1 && near(Math.abs(f), Ruse/(it.nL - 1), 0.02)) tips.push('<b>f</b>: the lens is in water -- use n_m = 1.333.');
+else if(it.kind === 'lens' && nm > 1.1 && near(Math.abs(f), Ruse/(it.nL - nm), 0.02)) tips.push('<b>f</b>: almost -- in water, 1/f has the factor (n_L − n_m)/n_m, so f = n_m R/(n_L − n_m).');
+else if(it.kind === 'lens' && near(Math.abs(f), Ruse/2, 0.02)) tips.push('<b>f</b>: R/2 is the mirror formula. For this lens use 1/f = [(n_L − n_m)/n_m]·(1/R₁ − 1/R₂) with the flat side R = ∞.');
+else tips.push('<b>f</b>: from your R, f should be about '+fmt(fs, 1)+' cm.');
+}
+it.marks = { w: mark(okW), d: mark(okD), r: mark(okR), f: mark(okF) };
+nOk = [okW, okD, okR, okF].filter(Boolean).length;
+var head = nOk === 4 ? '<b>All four correct ✓</b> Your F matches the ray diagram. Try another item or a new random kit.' : '<b>' + nOk + ' of 4 correct.</b> ';
+it.feedback = head + (tips.length ? '<br>' + tips.join('<br>') : '');
+loadInputs();
+drawRays();
+narrate(nOk === 4 ? 'All four values are correct for the ' + it.name.toLowerCase() + '. f = ' + fmt(f, 1) + ' cm.' : nOk + ' of 4 values correct. See the hints under Your Results.');
+}
+function reveal(){
+var it = item();
+if(!it){ narrate('Pick an item first.'); return; }
+saveInputs();
+it.revealed = true;
+it.feedback = '<b>True values</b> for ' + it.name + ' ' + it.code + ': w = ' + it.w.toFixed(2) + ' cm, d = ' + it.d.toFixed(2) + ' cm, R = ' + it.R.toFixed(2) + ' cm, f = ' + fmt(trueF(it), 2) + ' cm' + (it.kind === 'lens' ? ' (n_L = ' + it.nL.toFixed(2) + ', n_m = ' + nm.toFixed(3) + ')' : '') + '.';
+loadInputs();
+draw();
+narrate('True values revealed: R = ' + it.R.toFixed(2) + ' cm, f = ' + fmt(trueF(it), 2) + ' cm.');
+}
+function typed(){ saveInputs(); drawRays(); }
+// ---- Tools ----
+function resetTools(quiet){
+var it = item();
+aL = -JAW_LIM; aR = JAW_LIM; pd = 0;
+px = it ? -it.w/2 + 0.8 : 0;
+saidContactW = false; saidContactD = false;
+draw();
+if(!quiet) narrate('Tools reset: caliper open, probe raised.');
+}
+function setTool(which, v){
+var it = item(); if(!it) return;
+if(which === 'jawL') aL = clamp(v, -JAW_LIM, -it.w/2);
+if(which === 'jawR') aR = clamp(v, it.w/2, JAW_LIM);
+if(which === 'px'){ px = clamp(v, -it.w/2, it.w/2); pd = Math.min(pd, gap(it, px)); }
+if(which === 'pd') pd = clamp(v, 0, Math.min(PD_MAX, gap(it, px)));
+if(calContact() && !saidContactW){ saidContactW = true; narrate('Both caliper jaws touch the edges. Caliper reads ' + calReading().toFixed(2) + ' cm.'); }
+if(!calContact()) saidContactW = false;
+if(probeContact() && pd > 0.005 && !saidContactD){ saidContactD = true; narrate('Probe touching the surface ' + (px + it.w/2).toFixed(2) + ' cm from the left edge. Depth reads ' + pd.toFixed(2) + ' cm.'); }
+if(!probeContact()) saidContactD = false;
+draw();
+}
+function slider(which, v){ setTool(which, parseFloat(v)); }
+// ---- Picking items ----
+function pick(k){
+saveInputs();
+cur = k;
+resetTools(true);
+loadInputs();
+draw();
+var it = item();
+narrate('The ' + it.name.toLowerCase() + ' ' + it.code + ' is on the bench, curved face up' + (it.kind === 'lens' ? ', made of ' + it.mat : '') + '. Close the caliper on its edges to measure w, then use the depth probe to measure d.');
+}
+function newKit(){
+saveInputs();
+randomKit();
+var k = cur; cur = -1;
+if(k >= 0) pick(k); else { loadInputs(); draw(); }
+narrate('New random kit: every item has new dimensions' + (k >= 0 ? '. The ' + kit[k].name.toLowerCase() + ' is back on the bench with its tools reset.' : '.'));
+}
+function handout(){
+saveInputs();
+handoutKit();
+setMedium(1.000, true);
+var k = cur; cur = -1;
+if(k >= 0) pick(k); else { loadInputs(); draw(); }
+narrate('Handout values loaded: w = 25.00 cm, d = 1.50 cm for every item, lenses with n_L = 1.50, in air.');
+}
+function setMedium(v, quiet){
+nm = parseFloat(v);
+var rs = document.querySelectorAll('input[name="focMed"]');
+Array.prototype.forEach.call(rs, function(r){ r.checked = Math.abs(parseFloat(r.value) - nm) < 1e-6; });
+kit.forEach(function(it){ if(it.kind === 'lens'){ it.marks = { w:'', d:'', r:'', f:'' }; it.feedback = it.revealed ? '' : it.feedback; } });
+loadInputs();
+draw();
+if(!quiet) narrate('Surrounding medium set to ' + (nm > 1.1 ? 'water' : 'air') + ', n_m = ' + nm.toFixed(3) + '. Mirror focal lengths do not change; lens focal lengths do.');
+}
+function show(which, on){
+if(which === 'construct') showConstruct = on;
+if(which === 'loupe') showLoupe = on;
+drawScene();
+}
+// ---- Pointer dragging on the scene ----
+function svgPt(e){
+var svg = g('focScene');
+var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function onDown(e){
+var t = e.target && e.target.closest ? e.target.closest('[data-drag]') : null;
+if(!t) return;
+var kind = t.getAttribute('data-drag'), p = svgPt(e);
+var it = item();
+drag = { kind: kind, x0: p.x, y0: p.y, aL0: aL, aR0: aR, px0: px, pd0: pd, moved: false };
+if(kind.indexOf('tray') === 0){
+var k = parseInt(kind.slice(4), 10);
+if(k === cur){ drag = null; return; }
+drag.k = k;
+}
+else if(!it){ drag = null; return; }
+var svg = g('focScene');
+if(svg.setPointerCapture) { try { svg.setPointerCapture(e.pointerId); } catch(err){} }
+e.preventDefault();
+}
+function onMove(e){
+if(!drag) return;
+var p = svgPt(e), dx = p.x - drag.x0, dy = p.y - drag.y0;
+if(Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+if(drag.k !== undefined){
+if(drag.moved){ ghost = { k: drag.k, x: p.x, y: p.y }; drawScene(); }
+return;
+}
+if(drag.kind === 'jawL') setTool('jawL', drag.aL0 + dx/SC);
+if(drag.kind === 'jawR') setTool('jawR', drag.aR0 + dx/SC);
+if(drag.kind === 'px')   setTool('px',   drag.px0 + dx/SC);
+if(drag.kind === 'pd')   setTool('pd',   drag.pd0 + dy/SC);
+e.preventDefault();
+}
+function onUp(e){
+if(!drag) return;
+if(drag.k !== undefined){
+var p = svgPt(e);
+var dropped = !drag.moved || p.y > TRAY_Y + TRAY_H;   // a tap also picks the item
+ghost = null;
+if(dropped) pick(drag.k); else drawScene();
+}
+drag = null;
+}
+// ---- Init ----
+window.setTimeout(function(){
+randomKit();
+var svg = g('focScene');
+if(svg){
+svg.addEventListener('pointerdown', onDown);
+svg.addEventListener('pointermove', onMove);
+svg.addEventListener('pointerup', onUp);
+svg.addEventListener('pointercancel', function(){ drag = null; ghost = null; drawScene(); });
+}
+loadInputs();
+draw();
+narrate('Focal length lab loaded with a random kit. Drag an item from the kit onto the bench (or tap it), measure w with the caliper and d with the depth probe, then work out R and f.');
+}, 0);
+return {
+draw: draw, pick: pick, newKit: newKit, handout: handout, resetTools: function(){ resetTools(false); },
+slider: slider, medium: function(v){ setMedium(v, false); }, show: show,
+check: check, reveal: reveal, typed: typed
+};
+})();
+focA11y.init();
+</script>
+</div><!-- #focroot -->
+</main>
+</body>
+</html>

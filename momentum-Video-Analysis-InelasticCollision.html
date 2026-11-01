@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  // Configure MathJax to load the AsciiMath input component
+  window.MathJax = {
+    loader: { load: ['input/asciimath', 'output/chtml'] }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations - Video Analysis - Momentum - Inelastic Colision</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,video, analysis,motion,momentum,center,mass, collision, inelastic,elastic,lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+</head>
+<body style=margin:25px>
+<hr><div class="vidtrack-wrap">
+<style>
+.vidtrack-wrap {
+font-family: Arial, Helvetica, sans-serif;
+font-size: 14px;
+max-width: 900px;
+border: 1px solid #ccc;
+padding: 14px;
+border-radius: 6px;
+background: #fafafa;
+}
+.vidtrack-wrap h3 { margin: 0 0 6px 0; }
+.vidtrack-wrap h4 { margin: 16px 0 6px 0; }
+.vidtrack-wrap .vt-note {
+background: #eef6ff; border: 1px solid #bcdcff; padding: 8px 10px;
+border-radius: 4px; margin-bottom: 10px; color: #234;
+}
+.vidtrack-wrap .vt-row { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.vidtrack-wrap .vt-toolbar { background: #22262e; padding: 6px 8px; border-radius: 4px; margin-bottom: 10px; }
+.vidtrack-wrap .vt-toolbar .vt-btn { font-size: 11px; padding: 5px 9px; }
+.vidtrack-wrap .vt-btn {
+background: rgb(51,102,153); color: white; border: none; border-radius: 4px;
+padding: 7px 12px; cursor: pointer; font-size: 13px;
+}
+.vidtrack-wrap .vt-btn:hover { background: rgb(71,122,173); }
+.vidtrack-wrap .vt-btn:disabled { background: #aaa; cursor: not-allowed; }
+.vidtrack-wrap .vt-btn[aria-pressed="true"] { background: #0a6; }
+.vidtrack-wrap .vt-status {
+min-height: 20px; padding: 6px 10px; background: #fff8dc; border: 1px solid #e0d090;
+border-radius: 4px; margin: 8px 0; color: #553c00;
+}
+.vidtrack-wrap .vt-canvas-wrap { position: relative; }
+.vidtrack-wrap .vt-canvas {
+max-width: 100%; height: auto; border: 1px solid #888; cursor: crosshair; background: #000; display: block;
+}
+.vidtrack-wrap .vt-table-wrap { max-height: 220px; overflow: auto; border: 1px solid #ccc; }
+.vidtrack-wrap table.vt-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.vidtrack-wrap table.vt-table th, .vidtrack-wrap table.vt-table td {
+border: 1px solid #ddd; padding: 4px 8px; text-align: right; white-space: nowrap;
+}
+.vidtrack-wrap table.vt-table th { background: rgb(51,102,153); color: white; position: sticky; top: 0; }
+.vidtrack-wrap .vt-chartwrap { border: 1px solid #ccc; background: #fff; margin-bottom: 6px; }
+.vidtrack-wrap .vt-fitstats { font-family: monospace; font-size: 12px; background: #fff; border: 1px solid #ddd; padding: 6px 8px; border-radius: 4px; }
+.vidtrack-wrap label { white-space: nowrap; }
+.vidtrack-wrap input[type=number], .vidtrack-wrap input[type=text], .vidtrack-wrap select {
+padding: 3px 5px; border: 1px solid #bbb; border-radius: 3px;
+}
+.vidtrack-wrap.vt-fs-large { font-size: 17px; }
+.vidtrack-wrap.vt-fs-xl { font-size: 20px; }
+.vidtrack-wrap.vt-hc { background: #000; color: #fff; border-color: #fff; }
+.vidtrack-wrap.vt-hc .vt-note { background: #111; color: #7fdcff; border-color: #7fdcff; }
+.vidtrack-wrap.vt-hc .vt-status { background: #000; color: #7fff9f; border: 1px solid #7fff9f; }
+.vidtrack-wrap.vt-hc .vt-canvas { border: 3px solid #fff; }
+.vidtrack-wrap.vt-hc .vt-btn { background: #fff; color: #000; border: 2px solid #fff; }
+.vidtrack-wrap.vt-hc .vt-btn:hover { background: #ccc; }
+.vidtrack-wrap.vt-hc .vt-btn[aria-pressed="true"] { background: #7fff9f; }
+.vidtrack-wrap.vt-hc .vt-btn:disabled { background: #555; color: #ccc; }
+.vidtrack-wrap.vt-hc table.vt-table th { background: #000; color: #7fdcff; border-color: #7fdcff; }
+.vidtrack-wrap.vt-hc table.vt-table td { border-color: #555; color: #fff; }
+.vidtrack-wrap.vt-hc .vt-table-wrap { border-color: #7fdcff; }
+.vidtrack-wrap.vt-hc .vt-fitstats { background: #000; color: #fff; border-color: #7fdcff; }
+</style>
+<div class="vt-toolbar" role="toolbar" aria-label="Display options">
+<button type="button" class="vt-btn vt-cbtoggle" aria-pressed="false">Colorblind-friendly colors: Off</button>
+<button type="button" class="vt-btn vt-hctoggle" aria-pressed="false">High contrast: Off</button>
+<button type="button" class="vt-btn vt-fonttoggle">Font size: Normal</button>
+</div>
+<h3>Video Motion Tracker</h3>
+<div class="vt-note">This question uses a shared video provided with the assignment -- everyone analyzes the same clip, so there's nothing to upload. Workflow: (1) set the scale, (2) set the origin and axis direction, (3) click on the object frame-by-frame to mark its position. Your tracked points are yours alone; only the video itself is shared.</div>
+<div class="vt-row">
+<span class="vt-filename">No video loaded yet.</span>
+</div>
+<div class="vt-row">
+<label>Frame step (s): <input type="number" class="vt-framestep" value="0.0333" step="any" min="0.001" style="width:70px"></label>
+<button type="button" class="vt-btn vt-rewind" disabled>&#9198; Rewind</button>
+<button type="button" class="vt-btn vt-play" disabled>Play</button>
+<button type="button" class="vt-btn vt-prev10" disabled>&#9198;&#9664; -10</button>
+<button type="button" class="vt-btn vt-prev" disabled>&#9664; Prev</button>
+<button type="button" class="vt-btn vt-next" disabled>Next &#9654;</button>
+<button type="button" class="vt-btn vt-next10" disabled>+10 &#9654;&#9197;</button>
+<span class="vt-time">t = 0.000 s</span>
+</div>
+<div class="vt-row">
+<label>Jump to frame #: <input type="number" class="vt-jumpframe" value="0" step="1" style="width:70px"></label>
+<button type="button" class="vt-btn vt-jumpgo" disabled>Go</button>
+<span class="vt-note" style="margin:0;padding:4px 8px;display:inline-block">Frame # = time &divide; frame step, so it shifts if you change the frame step above.</span>
+</div>
+<div class="vt-row">
+<button type="button" class="vt-btn vt-set-scale" disabled>1) Set Scale</button>
+<span class="vt-scale-status">not set</span>
+<label>Unit: <input type="text" class="vt-unit" value="m" style="width:36px"></label>
+</div>
+<div class="vt-row">
+<button type="button" class="vt-btn vt-set-axes" disabled>2) Set Origin &amp; Axis</button>
+<span class="vt-axes-status">not set</span>
+<label>Angle (&deg;): <input type="number" class="vt-angle" value="0" step="0.1" style="width:60px"></label>
+</div>
+<div class="vt-row">
+<label>Points per frame:
+<select class="vt-numpoints" disabled>
+<option value="1" selected>1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+</select>
+</label>
+<span class="vt-note" style="margin:0;padding:4px 8px;display:inline-block">Track several objects per frame (e.g. two colliding carts). You'll click once per point, in order, before the frame advances.</span>
+</div>
+<div class="vt-row vt-mass-row" style="display:none">
+<label>Mass unit: <input type="text" class="vt-massunit" value="kg" style="width:44px"></label>
+<label class="vt-mass-wrap0">Mass 1: <input type="number" class="vt-mass0" value="1" step="any" min="0" style="width:60px"></label>
+<label class="vt-mass-wrap1">Mass 2: <input type="number" class="vt-mass1" value="1" step="any" min="0" style="width:60px"></label>
+<label class="vt-mass-wrap2">Mass 3: <input type="number" class="vt-mass2" value="1" step="any" min="0" style="width:60px"></label>
+<label class="vt-mass-wrap3">Mass 4: <input type="number" class="vt-mass3" value="1" step="any" min="0" style="width:60px"></label>
+<label><input type="checkbox" class="vt-showcom" checked> Show center of mass in table</label>
+</div>
+<div class="vt-row">
+<button type="button" class="vt-btn vt-mark" disabled>3) Mark Point(s) (click on video)</button>
+<button type="button" class="vt-btn vt-undo" disabled>Undo Last</button>
+<button type="button" class="vt-btn vt-reset" disabled>Reset Data</button>
+<label><input type="checkbox" class="vt-autoadvance" checked> Auto-advance frame after marking</label>
+</div>
+<div class="vt-row">
+<label><input type="checkbox" class="vt-show-scale" checked> Show scale calibration</label>
+<label><input type="checkbox" class="vt-show-axes" checked> Show coordinate axes</label>
+<label class="vt-showcomvideo-wrap" style="display:none"><input type="checkbox" class="vt-showcomvideo" checked> Show center of mass in video</label>
+<label><input type="checkbox" class="vt-limitvisible"> Show only last 3 tracked points</label>
+</div>
+<div class="vt-status" role="status" aria-live="polite">Load a video to begin.</div>
+<div class="vt-canvas-wrap">
+<video class="vt-video" style="display:none" playsinline></video>
+<canvas class="vt-canvas" tabindex="0" width="640" height="360"></canvas>
+</div>
+<h4>Data</h4>
+<div class="vt-table-wrap">
+<table class="vt-table">
+<thead class="vt-thead"></thead>
+<tbody class="vt-tbody"></tbody>
+</table>
+</div>
+<div class="vt-row"><button type="button" class="vt-btn vt-export" disabled>Export CSV</button></div>
+<h4>Graph</h4>
+<div class="vt-row">
+<label>Point:
+<select class="vt-pointsel">
+<option value="0">1</option>
+</select>
+</label>
+<label>X axis:
+<select class="vt-xvar">
+<option value="t">t</option>
+<option value="x">x</option>
+<option value="y">y</option>
+<option value="vx">vx</option>
+<option value="vy">vy</option>
+</select>
+</label>
+<label>Y axis:
+<select class="vt-yvar">
+<option value="x">x</option>
+<option value="t">t</option>
+<option value="y">y</option>
+<option value="vx">vx</option>
+<option value="vy">vy</option>
+</select>
+</label>
+<label><input type="checkbox" class="vt-fit"> Show linear fit</label>
+<label><input type="checkbox" class="vt-avgstd"> Show average &amp; std dev (of Y)</label>
+</div>
+<div class="vt-chartwrap"></div>
+<div class="vt-fitstats"></div>
+<div class="vt-avgstats"></div>
+<!-- ============================================================
+Send-to-answer-box buttons (MOM grading hookup).
+Each block below is self-contained: to disable one for a
+given question, just delete its whole <div class="vt-row">.
+All three respect the "Point" selector above.
+============================================================ -->
+<!-- Sends the currently graphed (x,y) points as "x1,y1" per line -->
+<div class="vt-row vt-send-data-row">
+<button type="button" class="vt-btn vt-senddata">Send graphed data to answer box</button>
+</div>
+<!-- Sends the current linear fit as two values: slope, then its uncertainty -->
+<div class="vt-row vt-send-slope-row">
+<button type="button" class="vt-btn vt-sendslope">Send slope &amp; uncertainty to answer boxes</button>
+</div>
+<!-- Sends the average and standard deviation of the plotted Y-values -->
+<div class="vt-row vt-send-avg-row">
+<button type="button" class="vt-btn vt-sendavg">Send average &amp; std dev to answer boxes</button>
+</div>
+<script>
+(function() {
+var root = document.querySelector(".vidtrack-wrap:not([data-vt-init])");
+if (!root) return;
+root.setAttribute("data-vt-init", "1");
+try {
+function byClass(cls) { return root.querySelector('.' + cls); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+var video        = byClass('vt-video');
+var canvas       = byClass('vt-canvas');
+var ctx          = canvas.getContext('2d');
+var canvasWrap   = byClass('vt-canvas-wrap');
+var filenameSpan = byClass('vt-filename');
+var frameStepIn  = byClass('vt-framestep');
+var rewindBtn    = byClass('vt-rewind');
+var playBtn      = byClass('vt-play');
+var prevBtn      = byClass('vt-prev');
+var nextBtn      = byClass('vt-next');
+var prev10Btn    = byClass('vt-prev10');
+var next10Btn    = byClass('vt-next10');
+var jumpInput    = byClass('vt-jumpframe');
+var jumpBtn      = byClass('vt-jumpgo');
+var timeSpan     = byClass('vt-time');
+var setScaleBtn  = byClass('vt-set-scale');
+var scaleStatus  = byClass('vt-scale-status');
+var unitInput    = byClass('vt-unit');
+var setAxesBtn   = byClass('vt-set-axes');
+var axesStatus   = byClass('vt-axes-status');
+var angleInput   = byClass('vt-angle');
+var numPointsSel = byClass('vt-numpoints');
+var massRow      = byClass('vt-mass-row');
+var massUnitInput = byClass('vt-massunit');
+var massInputs   = [byClass('vt-mass0'), byClass('vt-mass1'), byClass('vt-mass2'), byClass('vt-mass3')];
+var massWraps    = [byClass('vt-mass-wrap0'), byClass('vt-mass-wrap1'), byClass('vt-mass-wrap2'), byClass('vt-mass-wrap3')];
+var showComChk   = byClass('vt-showcom');
+var markBtn      = byClass('vt-mark');
+var undoBtn      = byClass('vt-undo');
+var resetBtn     = byClass('vt-reset');
+var autoAdvChk   = byClass('vt-autoadvance');
+var showScaleChk = byClass('vt-show-scale');
+var showAxesChk  = byClass('vt-show-axes');
+var showComVideoWrap = byClass('vt-showcomvideo-wrap');
+var showComVideoChk  = byClass('vt-showcomvideo');
+var limitVisibleChk  = byClass('vt-limitvisible');
+var statusDiv    = byClass('vt-status');
+var theadEl      = byClass('vt-thead');
+var tableBody    = byClass('vt-tbody');
+var exportBtn    = byClass('vt-export');
+var pointSel     = byClass('vt-pointsel');
+var xVarSel      = byClass('vt-xvar');
+var yVarSel      = byClass('vt-yvar');
+var fitChk       = byClass('vt-fit');
+var avgStdChk    = byClass('vt-avgstd');
+var chartWrap    = byClass('vt-chartwrap');
+var fitStatsDiv  = byClass('vt-fitstats');
+var avgStatsDiv  = byClass('vt-avgstats');
+var cbBtn        = byClass('vt-cbtoggle');
+var hcBtn        = byClass('vt-hctoggle');
+var fontBtn      = byClass('vt-fonttoggle');
+var sendDataBtn  = byClass('vt-senddata');
+var sendSlopeBtn = byClass('vt-sendslope');
+var sendAvgBtn   = byClass('vt-sendavg');
+var state = {
+scale: null, origin: null, axisAngle: 0,
+scaleP1: null, scaleP2: null,
+numPoints: 1,
+frames: [],      // committed frames: [{ rawT, t, pts: [{px,py,X,Y,vx,vy}, ...] }]
+pending: [],      // points marked so far for the current (not-yet-committed) frame
+pendingRawT: null,
+mode: 'idle'
+};
+var a11y = { colorblind: false, highContrast: false, fontSize: 'normal' };
+function palette() {
+return a11y.colorblind ? {
+axisX: '#0072B2', axisY: '#E69F00', scale: '#CC79A7',
+origin: '#F0E442', dataPoint: '#0072B2', fitLine: '#D55E00', meanLine: '#CC79A7',
+trackColors: ['#009E73', '#E69F00', '#56B4E9', '#CC79A7']
+} : {
+axisX: '#e41a1c', axisY: '#33a02c', scale: '#ff00ff',
+origin: '#ffeb3b', dataPoint: '#3366cc', fitLine: '#cc3355', meanLine: '#8856a7',
+trackColors: ['#00e5ff', '#ff8c00', '#ff2fd0', '#aaff00']
+};
+}
+function setStatus(msg) { statusDiv.textContent = msg; }
+// ---------- Accessibility toolbar ----------
+cbBtn.addEventListener('click', function() {
+a11y.colorblind = !a11y.colorblind;
+cbBtn.textContent = 'Colorblind-friendly colors: ' + (a11y.colorblind ? 'On' : 'Off');
+cbBtn.setAttribute('aria-pressed', String(a11y.colorblind));
+drawFrame();
+renderGraph();
+});
+hcBtn.addEventListener('click', function() {
+a11y.highContrast = !a11y.highContrast;
+root.classList.toggle('vt-hc', a11y.highContrast);
+hcBtn.textContent = 'High contrast: ' + (a11y.highContrast ? 'On' : 'Off');
+hcBtn.setAttribute('aria-pressed', String(a11y.highContrast));
+});
+fontBtn.addEventListener('click', function() {
+var order = ['normal', 'large', 'xl'];
+var idx = order.indexOf(a11y.fontSize);
+a11y.fontSize = order[(idx + 1) % order.length];
+root.classList.remove('vt-fs-large', 'vt-fs-xl');
+if (a11y.fontSize === 'large') root.classList.add('vt-fs-large');
+if (a11y.fontSize === 'xl') root.classList.add('vt-fs-xl');
+var labels = { normal: 'Normal', large: 'Large', xl: 'XL' };
+fontBtn.textContent = 'Font size: ' + labels[a11y.fontSize];
+});
+function enableControls() {
+playBtn.disabled = prevBtn.disabled = nextBtn.disabled = rewindBtn.disabled = false;
+prev10Btn.disabled = next10Btn.disabled = jumpBtn.disabled = false;
+setScaleBtn.disabled = setAxesBtn.disabled = false;
+undoBtn.disabled = resetBtn.disabled = false;
+numPointsSel.disabled = false;
+}
+function rebuildPointSelector() {
+var opts = '';
+for (var k = 0; k < state.numPoints; k++) opts += '<option value="' + k + '">' + (k + 1) + '</option>';
+if (state.numPoints > 1) opts += '<option value="com">COM (center of mass)</option>';
+var prev = pointSel.value;
+pointSel.innerHTML = opts;
+var stillValid = false;
+for (var i = 0; i < pointSel.options.length; i++) if (pointSel.options[i].value === prev) stillValid = true;
+if (stillValid) pointSel.value = prev;
+}
+function rebuildTableHeader() {
+var row = '<tr><th>#</th><th>t (s)</th>';
+for (var k = 0; k < state.numPoints; k++) {
+var n = k + 1;
+row += '<th>x' + n + '</th><th>y' + n + '</th><th>vx' + n + '</th><th>vy' + n + '</th>';
+}
+if (state.numPoints > 1 && showComChk.checked) {
+row += '<th>x_com</th><th>y_com</th><th>vx_com</th><th>vy_com</th>';
+}
+row += '</tr>';
+theadEl.innerHTML = row;
+}
+function updateMassVisibility() {
+massRow.style.display = state.numPoints > 1 ? '' : 'none';
+for (var k = 0; k < massWraps.length; k++) massWraps[k].style.display = k < state.numPoints ? '' : 'none';
+showComVideoWrap.style.display = state.numPoints > 1 ? '' : 'none';
+}
+rebuildPointSelector();
+rebuildTableHeader();
+updateMassVisibility();
+numPointsSel.addEventListener('change', function() {
+var newNum = parseInt(numPointsSel.value, 10);
+var hasData = state.frames.length > 0 || state.pending.length > 0;
+if (hasData) {
+var ok = window.confirm('Changing "points per frame" will clear your existing tracked data. Continue?');
+if (!ok) { numPointsSel.value = String(state.numPoints); return; }
+state.frames = [];
+state.pending = [];
+state.pendingRawT = null;
+}
+state.numPoints = newNum;
+rebuildPointSelector();
+rebuildTableHeader();
+updateMassVisibility();
+recompute();
+render();
+drawFrame();
+setStatus('Now tracking ' + newNum + ' point' + (newNum > 1 ? 's' : '') + ' per frame.');
+});
+// ---------- Masses / center of mass controls ----------
+function getMasses() {
+var masses = [];
+for (var k = 0; k < state.numPoints; k++) masses.push(parseFloat(massInputs[k].value));
+return masses;
+}
+function massesValid(masses) {
+if (masses.length === 0) return false;
+for (var i = 0; i < masses.length; i++) if (isNaN(masses[i]) || !(masses[i] > 0)) return false;
+return true;
+}
+massInputs.forEach(function(inp) {
+inp.addEventListener('change', function() { recompute(); render(); drawFrame(); });
+});
+showComChk.addEventListener('change', function() { rebuildTableHeader(); render(); });
+var VIDEO_ERROR_MESSAGE_PREFIX = 'The shared video failed to load';
+var VIDEO_ERROR_MESSAGE_SUFFIX = ' Check that VIDEO_URL is correct, served over https, and that the host allows this video to be embedded elsewhere.';
+// ---------- Shared video: loaded automatically from a fixed URL ----------
+// EDIT THIS per question to point at the video everyone should analyze.
+// Must be served over https:// (MOM pages are https, and browsers block
+// https pages from loading plain http media - "mixed content").
+var VIDEO_URL = 'https://mzoughi.github.io/SIMS/vids/G3ICollision.MP4';
+function loadSharedVideo() {
+try {
+filenameSpan.textContent = VIDEO_URL;
+video.src = VIDEO_URL;
+state.frames = [];
+state.pending = [];
+state.pendingRawT = null;
+state.scale = null;
+state.origin = null;
+state.axisAngle = 0;
+state.scaleP1 = state.scaleP2 = null;
+scaleStatus.textContent = 'not set';
+axesStatus.textContent = 'not set';
+markBtn.disabled = true;
+exportBtn.disabled = true;
+setStatus('Loading shared video...');
+} catch (loadErr) {
+setStatus('Error while loading the shared video: ' + (loadErr && loadErr.message ? loadErr.message : loadErr));
+if (window.console && console.error) console.error('Video Tracker loadSharedVideo error:', loadErr);
+}
+}
+video.addEventListener('error', function() {
+var err = video.error;
+var codeMap = {1:'MEDIA_ERR_ABORTED',2:'MEDIA_ERR_NETWORK',3:'MEDIA_ERR_DECODE',4:'MEDIA_ERR_SRC_NOT_SUPPORTED'};
+var codeTxt = err ? (codeMap[err.code] || ('code ' + err.code)) : 'unknown';
+setStatus(VIDEO_ERROR_MESSAGE_PREFIX + ' (' + codeTxt + ').' + VIDEO_ERROR_MESSAGE_SUFFIX);
+});
+video.addEventListener('loadedmetadata', function() {
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+enableControls();
+drawFrame();
+setStatus('Video loaded (' + video.videoWidth + '\u00D7' + video.videoHeight + ', ' + video.duration.toFixed(1) + ' s). Set the scale, then set the origin and axis.');
+});
+// ---------- Frame drawing ----------
+function frameIndexForTime(t) {
+var fs = parseFloat(frameStepIn.value || '0.0333');
+if (!fs || isNaN(fs)) return null;
+return Math.round(t / fs);
+}
+function drawFrame() {
+if (video.readyState >= 2) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+drawOverlays();
+var fi = frameIndexForTime(video.currentTime);
+timeSpan.textContent = 't = ' + video.currentTime.toFixed(3) + ' s (frame ' + (fi === null ? '\u2014' : fi) + ')';
+}
+function drawOverlays() {
+var pal = palette();
+ctx.save();
+if (showScaleChk.checked && state.scaleP1) {
+ctx.fillStyle = pal.scale;
+ctx.beginPath(); ctx.arc(state.scaleP1.x, state.scaleP1.y, 4, 0, 7); ctx.fill();
+}
+if (showScaleChk.checked && state.scaleP2) {
+ctx.fillStyle = pal.scale;
+ctx.beginPath(); ctx.arc(state.scaleP2.x, state.scaleP2.y, 4, 0, 7); ctx.fill();
+ctx.strokeStyle = pal.scale; ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(state.scaleP1.x, state.scaleP1.y); ctx.lineTo(state.scaleP2.x, state.scaleP2.y); ctx.stroke();
+}
+if (showAxesChk.checked && state.origin) {
+var ox = state.origin.x, oy = state.origin.y, theta = state.axisAngle;
+var len = Math.max(canvas.width, canvas.height) * 1.5;
+var dxp = Math.cos(theta), dyp = -Math.sin(theta);
+ctx.strokeStyle = pal.axisX; ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(ox - dxp * len, oy - dyp * len); ctx.lineTo(ox + dxp * len, oy + dyp * len); ctx.stroke();
+var a2 = theta + Math.PI / 2;
+var dxp2 = Math.cos(a2), dyp2 = -Math.sin(a2);
+ctx.strokeStyle = pal.axisY;
+ctx.beginPath(); ctx.moveTo(ox - dxp2 * len, oy - dyp2 * len); ctx.lineTo(ox + dxp2 * len, oy + dyp2 * len); ctx.stroke();
+ctx.fillStyle = pal.origin;
+ctx.beginPath(); ctx.arc(ox, oy, 5, 0, 7); ctx.fill();
+}
+ctx.font = '13px sans-serif';
+// Committed points, colored and labeled by frame number, one color per point slot.
+// With "Show only last 3" on, older points are skipped here but stay fully intact
+// in the data/table/graph - this toggle only affects what's drawn on the video.
+var startIdx = limitVisibleChk.checked ? Math.max(0, state.frames.length - 3) : 0;
+for (var fi = startIdx; fi < state.frames.length; fi++) {
+var f = state.frames[fi];
+f.pts.forEach(function(pt, k) {
+ctx.fillStyle = pal.trackColors[k % pal.trackColors.length];
+ctx.beginPath(); ctx.arc(pt.px, pt.py, 4, 0, 7); ctx.fill();
+ctx.fillStyle = '#fff';
+ctx.fillText(String(fi + 1), pt.px + 6, pt.py - 6);
+});
+}
+// Points marked so far for the frame currently in progress: drawn as open rings
+// (same color per slot) so it's visually clear they haven't been committed yet.
+// Always shown regardless of the "last 3" limit, since you're actively placing these.
+state.pending.forEach(function(pt, k) {
+ctx.strokeStyle = pal.trackColors[k % pal.trackColors.length];
+ctx.lineWidth = 2;
+ctx.beginPath(); ctx.arc(pt.px, pt.py, 6, 0, 7); ctx.stroke();
+});
+// Center of mass marker (a small cross), one per visible frame that has a valid COM.
+if (state.numPoints > 1 && showComVideoChk.checked) {
+ctx.strokeStyle = pal.meanLine; ctx.lineWidth = 2;
+for (var fi2 = startIdx; fi2 < state.frames.length; fi2++) {
+var f2 = state.frames[fi2];
+if (!f2.com) continue;
+var r = 6, x = f2.com.px, y = f2.com.py;
+ctx.beginPath();
+ctx.moveTo(x - r, y); ctx.lineTo(x + r, y);
+ctx.moveTo(x, y - r); ctx.lineTo(x, y + r);
+ctx.stroke();
+}
+}
+ctx.restore();
+}
+// ---------- Playback / frame stepping ----------
+function seekToTime(t) {
+if (!video.duration) return;
+video.pause();
+playBtn.textContent = 'Play';
+t = Math.max(0, Math.min(video.duration, t));
+video.currentTime = t;
+}
+function stepFrame(delta) { seekToTime(video.currentTime + delta); }
+video.addEventListener('seeked', drawFrame);
+playBtn.addEventListener('click', function() {
+if (video.paused) {
+video.play();
+playBtn.textContent = 'Pause';
+requestAnimationFrame(playLoop);
+} else {
+video.pause();
+playBtn.textContent = 'Play';
+}
+});
+video.addEventListener('pause', function() { playBtn.textContent = 'Play'; });
+function playLoop() {
+drawFrame();
+if (!video.paused && !video.ended) requestAnimationFrame(playLoop);
+}
+prevBtn.addEventListener('click', function() { stepFrame(-parseFloat(frameStepIn.value || '0.0333')); });
+nextBtn.addEventListener('click', function() { stepFrame(parseFloat(frameStepIn.value || '0.0333')); });
+prev10Btn.addEventListener('click', function() { stepFrame(-10 * parseFloat(frameStepIn.value || '0.0333')); });
+next10Btn.addEventListener('click', function() { stepFrame(10 * parseFloat(frameStepIn.value || '0.0333')); });
+rewindBtn.addEventListener('click', function() {
+video.pause();
+playBtn.textContent = 'Play';
+video.currentTime = 0;
+});
+jumpBtn.addEventListener('click', function() {
+var fs = parseFloat(frameStepIn.value || '0.0333');
+var n = parseInt(jumpInput.value, 10);
+if (isNaN(n) || !fs || isNaN(fs)) { setStatus('Enter a valid frame number.'); return; }
+seekToTime(n * fs);
+});
+showScaleChk.addEventListener('change', drawFrame);
+showAxesChk.addEventListener('change', drawFrame);
+showComVideoChk.addEventListener('change', drawFrame);
+limitVisibleChk.addEventListener('change', drawFrame);
+// ---------- Canvas coordinate mapping ----------
+function getPixelFromEvent(e) {
+var rect = canvas.getBoundingClientRect();
+var sx = canvas.width / rect.width;
+var sy = canvas.height / rect.height;
+return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
+}
+loadSharedVideo();
+// ---------- Calibration ----------
+setScaleBtn.addEventListener('click', function() {
+state.mode = 'scale1';
+state.scaleP1 = state.scaleP2 = null;
+setStatus('Click the FIRST point of your reference distance on the video.');
+});
+setAxesBtn.addEventListener('click', function() {
+state.mode = 'origin';
+setStatus('Click the ORIGIN point (where x = y = 0).');
+});
+angleInput.addEventListener('change', function() {
+var deg = parseFloat(angleInput.value);
+if (!isNaN(deg)) {
+state.axisAngle = deg * Math.PI / 180;
+if (state.frames.length > 0 || state.pending.length > 0) {
+recalcAllPoints();
+setStatus('Axis angle updated \u2014 recalculated tracked data.');
+}
+drawFrame();
+}
+});
+markBtn.addEventListener('click', function() {
+state.mode = 'track';
+setStatus(state.pending.length > 0
+? ('Click point ' + (state.pending.length + 1) + ' of ' + state.numPoints + ' for this frame.')
+: 'Click on the object in the current frame to mark its position.');
+});
+canvas.addEventListener('click', function(e) {
+var p = getPixelFromEvent(e);
+if (state.mode === 'scale1') {
+state.scaleP1 = p;
+state.mode = 'scale2';
+setStatus('Click the SECOND point of your reference distance.');
+drawFrame();
+} else if (state.mode === 'scale2') {
+state.scaleP2 = p;
+var dpix = Math.hypot(p.x - state.scaleP1.x, p.y - state.scaleP1.y);
+var real = parseFloat(window.prompt('Enter the real-world distance between the two points, in ' + (unitInput.value || 'units') + ':'));
+if (real && real > 0 && dpix > 0) {
+state.scale = real / dpix;
+scaleStatus.textContent = state.scale.toFixed(5) + ' ' + unitInput.value + '/px';
+if (state.frames.length > 0 || state.pending.length > 0) {
+recalcAllPoints();
+setStatus('Scale updated \u2014 recalculated tracked data.');
+} else {
+setStatus('Scale set.');
+}
+} else {
+setStatus('Scale not set (invalid distance entered).');
+state.scaleP1 = state.scaleP2 = null;
+}
+state.mode = 'idle';
+updateMarkAvailability();
+drawFrame();
+} else if (state.mode === 'origin') {
+state.origin = p;
+state.mode = 'axisdir';
+setStatus('Click a point in the direction you want as the POSITIVE x-axis.');
+drawFrame();
+} else if (state.mode === 'axisdir') {
+var dx = p.x - state.origin.x, dy = -(p.y - state.origin.y);
+state.axisAngle = Math.atan2(dy, dx);
+angleInput.value = (state.axisAngle * 180 / Math.PI).toFixed(2);
+axesStatus.textContent = 'set (angle ' + angleInput.value + '\u00B0)';
+if (state.frames.length > 0 || state.pending.length > 0) {
+recalcAllPoints();
+setStatus('Origin and axis updated \u2014 recalculated tracked data.');
+} else {
+setStatus('Origin and axis set.');
+}
+state.mode = 'idle';
+updateMarkAvailability();
+drawFrame();
+} else if (state.mode === 'track') {
+markPoint(p);
+}
+});
+function updateMarkAvailability() { markBtn.disabled = !(state.scale && state.origin); }
+function pixelToWorld(px, py) {
+var dx = px - state.origin.x, dy = -(py - state.origin.y);
+var th = state.axisAngle;
+var xr = dx * Math.cos(th) + dy * Math.sin(th);
+var yr = -dx * Math.sin(th) + dy * Math.cos(th);
+return { X: xr * state.scale, Y: yr * state.scale };
+}
+function computeCOM(frame, masses) {
+// Because the pixel-to-world conversion (scale + rotation about the origin) is linear,
+// the mass-weighted average works out the same whether you take it in pixel space or
+// world space. Taking it in pixel space first means we get a pixel position too, which
+// we can use to draw a COM marker on the video, and then convert that single averaged
+// point to world coordinates the normal way.
+var sumM = 0, sumPx = 0, sumPy = 0;
+for (var k = 0; k < masses.length; k++) {
+var pt = frame.pts[k];
+if (!pt) return null;
+sumM += masses[k];
+sumPx += masses[k] * pt.px;
+sumPy += masses[k] * pt.py;
+}
+if (!(sumM > 0)) return null;
+var cpx = sumPx / sumM, cpy = sumPy / sumM;
+var w = pixelToWorld(cpx, cpy);
+return { px: cpx, py: cpy, X: w.X, Y: w.Y };
+}
+function recalcAllPoints() {
+// Every tracked point already stores its raw pixel position (px, py), so
+// re-deriving world coordinates after a scale/origin/axis change is just
+// re-running the same conversion with the current calibration.
+if (!state.scale || !state.origin) return;
+state.frames.forEach(function(f) {
+f.pts.forEach(function(pt) {
+var w = pixelToWorld(pt.px, pt.py);
+pt.X = w.X; pt.Y = w.Y;
+});
+});
+state.pending.forEach(function(pt) {
+var w = pixelToWorld(pt.px, pt.py);
+pt.X = w.X; pt.Y = w.Y;
+});
+recompute();
+render();
+}
+function markPoint(p) {
+if (!state.scale || !state.origin) { setStatus('Set scale and axes first.'); return; }
+var w = pixelToWorld(p.x, p.y);
+if (state.pending.length === 0) state.pendingRawT = video.currentTime;
+state.pending.push({ px: p.x, py: p.y, X: w.X, Y: w.Y });
+if (state.pending.length < state.numPoints) {
+setStatus('Click point ' + (state.pending.length + 1) + ' of ' + state.numPoints + ' for this frame.');
+drawFrame();
+return;
+}
+// All points for this frame are marked: commit it.
+state.frames.push({ rawT: state.pendingRawT, pts: state.pending });
+state.pending = [];
+state.pendingRawT = null;
+recompute();
+render();
+setStatus('Marked frame ' + state.frames.length + ' (' + state.numPoints + ' point' + (state.numPoints > 1 ? 's' : '') + ').');
+if (autoAdvChk.checked) stepFrame(parseFloat(frameStepIn.value || '0.0333'));
+else drawFrame();
+}
+undoBtn.addEventListener('click', function() {
+if (state.pending.length > 0) {
+state.pending.pop();
+if (state.pending.length === 0) state.pendingRawT = null;
+setStatus('Removed last point from the current (incomplete) frame.');
+} else if (state.frames.length > 0) {
+state.frames.pop();
+setStatus('Removed last frame.');
+}
+recompute(); render(); drawFrame();
+});
+resetBtn.addEventListener('click', function() {
+state.frames = [];
+state.pending = [];
+state.pendingRawT = null;
+recompute(); render(); drawFrame();
+setStatus('Data reset.');
+});
+// ---------- Derived quantities ----------
+function recompute() {
+state.frames.sort(function(a, b) { return a.rawT - b.rawT; });
+var n = state.frames.length;
+var t0 = n > 0 ? state.frames[0].rawT : 0;
+state.frames.forEach(function(f) { f.t = f.rawT - t0; });
+// Velocity is computed independently along each point slot's own sequence
+// (point 1's trajectory never mixes with point 2's, etc).
+for (var k = 0; k < state.numPoints; k++) {
+var havePrev = false, prevT = 0, prevX = 0, prevY = 0;
+for (var i = 0; i < n; i++) {
+var pt = state.frames[i].pts[k];
+if (!pt) continue;
+if (!havePrev) {
+pt.vx = null; pt.vy = null;
+} else {
+var dt = state.frames[i].t - prevT;
+if (!dt) { pt.vx = null; pt.vy = null; }
+else { pt.vx = (pt.X - prevX) / dt; pt.vy = (pt.Y - prevY) / dt; }
+}
+prevT = state.frames[i].t; prevX = pt.X; prevY = pt.Y; havePrev = true;
+}
+}
+// Center of mass (only meaningful with 2+ tracked points and valid masses).
+if (state.numPoints > 1) {
+var masses = getMasses();
+var okMasses = massesValid(masses);
+var havePrevCom = false, prevComT = 0, prevComX = 0, prevComY = 0;
+for (var j = 0; j < n; j++) {
+var f = state.frames[j];
+f.com = okMasses ? computeCOM(f, masses) : null;
+if (!f.com) continue;
+if (!havePrevCom) {
+f.com.vx = null; f.com.vy = null;
+} else {
+var cdt = f.t - prevComT;
+if (!cdt) { f.com.vx = null; f.com.vy = null; }
+else { f.com.vx = (f.com.X - prevComX) / cdt; f.com.vy = (f.com.Y - prevComY) / cdt; }
+}
+prevComT = f.t; prevComX = f.com.X; prevComY = f.com.Y; havePrevCom = true;
+}
+} else {
+state.frames.forEach(function(f) { f.com = null; });
+}
+}
+// ---------- Rendering: table, graph, export ----------
+function fmt(v) { return (v === null || v === undefined || isNaN(v)) ? '\u2014' : v.toFixed(4); }
+function render() {
+tableBody.innerHTML = '';
+var showCom = state.numPoints > 1 && showComChk.checked;
+state.frames.forEach(function(f, i) {
+var html = '<td>' + (i + 1) + '</td><td>' + f.t.toFixed(3) + '</td>';
+f.pts.forEach(function(pt) {
+html += '<td>' + pt.X.toFixed(4) + '</td><td>' + pt.Y.toFixed(4) + '</td><td>' + fmt(pt.vx) + '</td><td>' + fmt(pt.vy) + '</td>';
+});
+if (showCom) {
+if (f.com) {
+html += '<td>' + f.com.X.toFixed(4) + '</td><td>' + f.com.Y.toFixed(4) + '</td><td>' + fmt(f.com.vx) + '</td><td>' + fmt(f.com.vy) + '</td>';
+} else {
+html += '<td>\u2014</td><td>\u2014</td><td>\u2014</td><td>\u2014</td>';
+}
+}
+var tr = document.createElement('tr');
+tr.innerHTML = html;
+tableBody.appendChild(tr);
+});
+exportBtn.disabled = state.frames.length === 0;
+renderGraph();
+}
+// ---------- Configurable graph with optional linear fit (SVG) ----------
+var VAR_LABEL = { t: 't', x: 'x', y: 'y', vx: 'vx', vy: 'vy' };
+function getUnit(varName) {
+if (varName === 't') return 's';
+if (varName === 'x' || varName === 'y') return unitInput.value || 'unit';
+return (unitInput.value || 'unit') + '/s'; // vx, vy
+}
+function getValue(frame, varName, k) {
+if (varName === 't') return frame.t;
+var pt = (k === 'com') ? frame.com : frame.pts[k];
+if (!pt) return null;
+if (varName === 'x') return pt.X;
+if (varName === 'y') return pt.Y;
+if (varName === 'vx') return pt.vx;
+if (varName === 'vy') return pt.vy;
+return null;
+}
+function linearFit(xs, ys) {
+var n = xs.length;
+if (n < 2) return null;
+var xbar = xs.reduce(function(a,b){return a+b;}, 0) / n;
+var ybar = ys.reduce(function(a,b){return a+b;}, 0) / n;
+var Sxx = 0, Sxy = 0;
+for (var i = 0; i < n; i++) { Sxx += (xs[i]-xbar)*(xs[i]-xbar); Sxy += (xs[i]-xbar)*(ys[i]-ybar); }
+if (Sxx === 0) return null;
+var slope = Sxy / Sxx;
+var intercept = ybar - slope * xbar;
+var seSlope = null, seIntercept = null;
+if (n > 2) {
+var sse = 0;
+for (var j = 0; j < n; j++) { var e = ys[j] - (intercept + slope*xs[j]); sse += e*e; }
+var s2 = sse / (n - 2);
+seSlope = Math.sqrt(s2 / Sxx);
+seIntercept = Math.sqrt(s2 * (1/n + (xbar*xbar)/Sxx));
+}
+return { slope: slope, intercept: intercept, seSlope: seSlope, seIntercept: seIntercept, n: n };
+}
+function avgStd(ys) {
+var n = ys.length;
+if (n < 2) return null;
+var mean = ys.reduce(function(a,b){return a+b;}, 0) / n;
+var sse = 0;
+for (var i = 0; i < n; i++) { var d = ys[i] - mean; sse += d*d; }
+var std = Math.sqrt(sse / (n - 1)); // sample standard deviation
+return { mean: mean, std: std, n: n };
+}
+function niceStep(range) {
+var raw = range / 5;
+var pow = Math.pow(10, Math.floor(Math.log(raw) / Math.log(10)));
+var frac = raw / pow;
+var nice = (frac < 1.5) ? 1 : (frac < 3) ? 2 : (frac < 7) ? 5 : 10;
+return nice * pow;
+}
+function renderScatterSVG(points, xLabel, yLabel, fit, avg, colors, width, height) {
+var W = width || 760, H = height || 320;
+var marginL = 60, marginR = 20, marginT = 24, marginB = 44;
+var plotW = W - marginL - marginR, plotH = H - marginT - marginB;
+var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H +
+'" style="background:#fff;display:block;max-width:' + W + 'px" role="img" aria-label="Scatter plot of ' +
+esc(yLabel) + ' versus ' + esc(xLabel) + '">';
+if (points.length < 1) {
+s += '<rect x="' + marginL + '" y="' + marginT + '" width="' + plotW + '" height="' + plotH + '" fill="#f5f5f5" stroke="#ccc"/>';
+s += '<text x="' + (W/2) + '" y="' + (H/2) + '" text-anchor="middle" font-size="13" fill="#888" font-style="italic">No data yet for this combination of axes.</text>';
+s += '</svg>';
+return s;
+}
+var xs = points.map(function(p){return p.x;});
+var ys = points.map(function(p){return p.y;});
+var xMin = Math.min.apply(null, xs), xMax = Math.max.apply(null, xs);
+var yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
+var xPad = (xMax - xMin) * 0.08; if (xPad === 0) xPad = Math.abs(xMax) * 0.1 || 1;
+var yPad = (yMax - yMin) * 0.12; if (yPad === 0) yPad = Math.abs(yMax) * 0.1 || 1;
+var x0 = xMin - xPad, x1 = xMax + xPad, y0 = yMin - yPad, y1 = yMax + yPad;
+var xToPx = function(x){ return marginL + ((x - x0) / (x1 - x0)) * plotW; };
+var yToPx = function(y){ return marginT + plotH - ((y - y0) / (y1 - y0)) * plotH; };
+s += '<rect x="' + marginL + '" y="' + marginT + '" width="' + plotW + '" height="' + plotH + '" fill="#fff" stroke="#666" stroke-width="1"/>';
+var xStep = niceStep(x1 - x0), yStep = niceStep(y1 - y0);
+var xStart = Math.ceil(x0 / xStep) * xStep, yStart = Math.ceil(y0 / yStep) * yStep;
+for (var xv = xStart; xv <= x1 + 1e-9; xv += xStep) {
+var xp = xToPx(xv);
+s += '<line x1="' + xp + '" y1="' + (marginT+plotH) + '" x2="' + xp + '" y2="' + (marginT+plotH+4) + '" stroke="#666" stroke-width="0.8"/>';
+s += '<line x1="' + xp + '" y1="' + marginT + '" x2="' + xp + '" y2="' + (marginT+plotH) + '" stroke="#e2e2e2" stroke-width="0.5"/>';
+s += '<text x="' + xp + '" y="' + (marginT+plotH+16) + '" text-anchor="middle" font-size="9" fill="#333">' + xv.toPrecision(3) + '</text>';
+}
+for (var yv = yStart; yv <= y1 + 1e-9; yv += yStep) {
+var yp = yToPx(yv);
+s += '<line x1="' + (marginL-4) + '" y1="' + yp + '" x2="' + marginL + '" y2="' + yp + '" stroke="#666" stroke-width="0.8"/>';
+s += '<line x1="' + marginL + '" y1="' + yp + '" x2="' + (marginL+plotW) + '" y2="' + yp + '" stroke="#e2e2e2" stroke-width="0.5"/>';
+s += '<text x="' + (marginL-6) + '" y="' + (yp+3) + '" text-anchor="end" font-size="9" fill="#333">' + yv.toPrecision(3) + '</text>';
+}
+if (fit) {
+s += '<line x1="' + xToPx(x0) + '" y1="' + yToPx(fit.intercept+fit.slope*x0) + '" x2="' + xToPx(x1) + '" y2="' + yToPx(fit.intercept+fit.slope*x1) +
+'" stroke="' + colors.fitLine + '" stroke-width="1.8" stroke-dasharray="5,3" opacity="0.9"/>';
+var slopeTxt = 'slope = ' + fit.slope.toPrecision(4) + (fit.seSlope !== null ? ' \u00B1 ' + fit.seSlope.toPrecision(2) : ' (need \u2265 3 pts for \u00B1)');
+var intTxt = 'intercept = ' + fit.intercept.toPrecision(4) + (fit.seIntercept !== null ? ' \u00B1 ' + fit.seIntercept.toPrecision(2) : ' (need \u2265 3 pts for \u00B1)');
+s += '<text x="' + (marginL+6) + '" y="' + (marginT+14) + '" font-size="10" fill="' + colors.fitLine + '" font-weight="bold">' + esc(slopeTxt) + '</text>';
+s += '<text x="' + (marginL+6) + '" y="' + (marginT+26) + '" font-size="10" fill="' + colors.fitLine + '">' + esc(intTxt) + '</text>';
+}
+if (avg) {
+var meanY = yToPx(avg.mean);
+s += '<line x1="' + marginL + '" y1="' + meanY + '" x2="' + (marginL+plotW) + '" y2="' + meanY +
+'" stroke="' + colors.meanLine + '" stroke-width="1.8" stroke-dasharray="2,3" opacity="0.9"/>';
+var avgTxt = 'mean = ' + avg.mean.toPrecision(4) + ' \u00B1 ' + avg.std.toPrecision(3) + ' (n=' + avg.n + ')';
+var avgTextY = fit ? marginT + 40 : marginT + 14;
+s += '<text x="' + (marginL+6) + '" y="' + avgTextY + '" font-size="10" fill="' + colors.meanLine + '" font-weight="bold">' + esc(avgTxt) + '</text>';
+}
+points.forEach(function(p) {
+s += '<circle cx="' + xToPx(p.x) + '" cy="' + yToPx(p.y) + '" r="3.5" fill="' + colors.dataPoint + '" stroke="#222" stroke-width="0.6"/>';
+});
+s += '<text x="' + (marginL+plotW/2) + '" y="' + (H-8) + '" text-anchor="middle" font-size="11" fill="#222" font-weight="bold">' + esc(xLabel) + '</text>';
+s += '<text x="14" y="' + (marginT+plotH/2) + '" text-anchor="middle" font-size="11" fill="#222" font-weight="bold" transform="rotate(-90 14 ' + (marginT+plotH/2) + ')">' + esc(yLabel) + '</text>';
+s += '</svg>';
+return s;
+}
+function currentPointSel() { return pointSel.value; } // '0'..'3', or 'com'
+function resolvePointIndex(sel) { return sel === 'com' ? 'com' : parseInt(sel, 10); }
+function pointLabel(k) { return k === 'com' ? 'COM' : ('point ' + (k + 1)); }
+function collectXY(xVar, yVar, k) {
+var xs = [], ys = [];
+state.frames.forEach(function(f) {
+var xv = getValue(f, xVar, k), yv = getValue(f, yVar, k);
+if (xv !== null && xv !== undefined && !isNaN(xv) && yv !== null && yv !== undefined && !isNaN(yv)) {
+xs.push(xv); ys.push(yv);
+}
+});
+return { xs: xs, ys: ys };
+}
+function renderGraph() {
+var xVar = xVarSel.value, yVar = yVarSel.value, k = resolvePointIndex(currentPointSel());
+var xy = collectXY(xVar, yVar, k);
+var xs = xy.xs, ys = xy.ys;
+var xUnit = getUnit(xVar), yUnit = getUnit(yVar);
+var ptTag = state.numPoints > 1 ? ' (' + pointLabel(k) + ')' : '';
+var xLabel = VAR_LABEL[xVar] + ptTag + ' (' + xUnit + ')';
+var yLabel = VAR_LABEL[yVar] + ptTag + ' (' + yUnit + ')';
+var pal = palette();
+var points = xs.map(function(x, i){ return { x: x, y: ys[i] }; });
+var fit = null;
+if (fitChk.checked) fit = linearFit(xs, ys);
+var avg = null;
+if (avgStdChk.checked) avg = avgStd(ys);
+chartWrap.innerHTML = renderScatterSVG(points, xLabel, yLabel, fit, avg, pal);
+if (!fitChk.checked) {
+fitStatsDiv.textContent = '';
+} else if (!fit) {
+fitStatsDiv.textContent = xs.length < 2 ? 'Need at least 2 points for a fit.' : 'Cannot fit (no spread in x values).';
+} else {
+var slopeUnit = yUnit + '/' + xUnit;
+fitStatsDiv.textContent = 'slope = ' + fit.slope.toPrecision(4) +
+(fit.seSlope !== null ? ' \u00B1 ' + fit.seSlope.toPrecision(2) : ' (\u00B1 n/a, need \u2265 3 points)') +
+' ' + slopeUnit + '    intercept = ' + fit.intercept.toPrecision(4) +
+(fit.seIntercept !== null ? ' \u00B1 ' + fit.seIntercept.toPrecision(2) : ' (\u00B1 n/a, need \u2265 3 points)') +
+' ' + yUnit;
+}
+if (!avgStdChk.checked) {
+avgStatsDiv.textContent = '';
+} else if (!avg) {
+avgStatsDiv.textContent = 'Need at least 2 points for an average and standard deviation.';
+} else {
+avgStatsDiv.textContent = 'average(' + VAR_LABEL[yVar] + ptTag + ') = ' + avg.mean.toPrecision(4) + ' \u00B1 ' + avg.std.toPrecision(3) +
+' ' + yUnit + ' (sample std dev, n=' + avg.n + ')';
+}
+}
+pointSel.addEventListener('change', renderGraph);
+xVarSel.addEventListener('change', renderGraph);
+yVarSel.addEventListener('change', renderGraph);
+fitChk.addEventListener('change', renderGraph);
+avgStdChk.addEventListener('change', renderGraph);
+exportBtn.addEventListener('click', function() {
+var header = ['#', 't_s'];
+for (var k = 0; k < state.numPoints; k++) {
+var n = k + 1;
+header.push('x'+n, 'y'+n, 'vx'+n, 'vy'+n);
+}
+if (state.numPoints > 1) header.push('x_com', 'y_com', 'vx_com', 'vy_com');
+var lines = [header.join(',')];
+state.frames.forEach(function(f, i) {
+var row = [i + 1, f.t];
+f.pts.forEach(function(pt) {
+row.push(pt.X, pt.Y, pt.vx === null ? '' : pt.vx, pt.vy === null ? '' : pt.vy);
+});
+if (state.numPoints > 1) {
+if (f.com) row.push(f.com.X, f.com.Y, f.com.vx === null ? '' : f.com.vx, f.com.vy === null ? '' : f.com.vy);
+else row.push('', '', '', '');
+}
+lines.push(row.join(','));
+});
+var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+var url = URL.createObjectURL(blob);
+var a = document.createElement('a');
+a.href = url; a.download = 'video_tracker_data.csv';
+document.body.appendChild(a); a.click(); document.body.removeChild(a);
+URL.revokeObjectURL(url);
+});
+// ---------- Send data to MOM answer boxes ----------
+// MOM answer box ids follow the pattern 'qn' + <this question's instance id> + <3-digit answer number>.
+// EDIT THESE per question to point at the blanks you want filled. All three buttons act on
+// whichever point is currently selected in the "Point" dropdown above the graph.
+var DATA_ANSWER_NUM  = '001'; // receives the graphed (x,y) points
+var SLOPE_ANSWER_NUM = '002'; // receives the slope
+var SLOPE_UNC_ANSWER_NUM = '003'; // receives the slope's uncertainty
+var AVG_ANSWER_NUM     = '004'; // receives the average of the plotted Y-values
+var AVG_UNC_ANSWER_NUM = '005'; // receives its standard deviation
+function getAnswerBox(num) {
+// '$thisq' is kept as its own isolated string literal (ending right at the closing quote)
+// so MOM's server-side substitution can't merge it with the following digits into an
+// unrecognized longer variable name.
+var id = 'qn$thisq' + num;
+return document.getElementById(id);
+}
+sendDataBtn.addEventListener('click', function() {
+try {
+var k = resolvePointIndex(currentPointSel());
+var xy = collectXY(xVarSel.value, yVarSel.value, k);
+var lines = [];
+for (var i = 0; i < xy.xs.length; i++) lines.push(xy.xs[i].toPrecision(6) + ',' + xy.ys[i].toPrecision(6));
+if (lines.length === 0) { setStatus('No graphed data to send yet.'); return; }
+var box = getAnswerBox(DATA_ANSWER_NUM);
+if (!box) { setStatus('Could not find answer box ' + DATA_ANSWER_NUM + ' on this page.'); return; }
+box.value = lines.join('\n');
+setStatus('Sent ' + lines.length + ' data point(s) for ' + pointLabel(k) + ' to answer box ' + DATA_ANSWER_NUM + '.');
+} catch (sendErr) {
+setStatus('Error sending data: ' + (sendErr && sendErr.message ? sendErr.message : sendErr));
+}
+});
+sendSlopeBtn.addEventListener('click', function() {
+try {
+if (!fitChk.checked) { setStatus('Turn on "Show linear fit" first.'); return; }
+var k = resolvePointIndex(currentPointSel());
+var xy = collectXY(xVarSel.value, yVarSel.value, k);
+var fit = linearFit(xy.xs, xy.ys);
+if (!fit) { setStatus('Not enough data for a fit yet.'); return; }
+if (fit.seSlope === null) { setStatus('Need at least 3 points to get a slope uncertainty.'); return; }
+var box = getAnswerBox(SLOPE_ANSWER_NUM);
+var uncBox = getAnswerBox(SLOPE_UNC_ANSWER_NUM);
+if (!box) { setStatus('Could not find answer box ' + SLOPE_ANSWER_NUM + ' on this page.'); return; }
+if (!uncBox) { setStatus('Could not find answer box ' + SLOPE_UNC_ANSWER_NUM + ' on this page.'); return; }
+box.value = fit.slope.toPrecision(6);
+uncBox.value = fit.seSlope.toPrecision(6);
+setStatus('Sent slope (' + pointLabel(k) + ') to answer box ' + SLOPE_ANSWER_NUM + ' and its uncertainty to answer box ' + SLOPE_UNC_ANSWER_NUM + '.');
+} catch (sendErr) {
+setStatus('Error sending slope: ' + (sendErr && sendErr.message ? sendErr.message : sendErr));
+}
+});
+sendAvgBtn.addEventListener('click', function() {
+try {
+if (!avgStdChk.checked) { setStatus('Turn on "Show average & std dev" first.'); return; }
+var k = resolvePointIndex(currentPointSel());
+var xy = collectXY(xVarSel.value, yVarSel.value, k);
+var avg = avgStd(xy.ys);
+if (!avg) { setStatus('Need at least 2 points for an average and standard deviation.'); return; }
+var box = getAnswerBox(AVG_ANSWER_NUM);
+var uncBox = getAnswerBox(AVG_UNC_ANSWER_NUM);
+if (!box) { setStatus('Could not find answer box ' + AVG_ANSWER_NUM + ' on this page.'); return; }
+if (!uncBox) { setStatus('Could not find answer box ' + AVG_UNC_ANSWER_NUM + ' on this page.'); return; }
+box.value = avg.mean.toPrecision(6);
+uncBox.value = avg.std.toPrecision(6);
+setStatus('Sent average (' + pointLabel(k) + ') to answer box ' + AVG_ANSWER_NUM + ' and its std dev to answer box ' + AVG_UNC_ANSWER_NUM + '.');
+} catch (sendErr) {
+setStatus('Error sending average: ' + (sendErr && sendErr.message ? sendErr.message : sendErr));
+}
+});
+render();
+} catch (setupErr) {
+var setupMsg = 'Video Tracker failed to start: ' + (setupErr && setupErr.message ? setupErr.message : setupErr);
+var setupErrDiv = document.createElement('div');
+setupErrDiv.style.cssText = 'background:#fee;border:2px solid #c00;color:#900;padding:10px;margin-bottom:10px;font-family:monospace;font-size:12px;white-space:pre-wrap;border-radius:4px;';
+setupErrDiv.textContent = setupMsg;
+root.insertBefore(setupErrDiv, root.firstChild);
+if (window.console && console.error) console.error('Video Tracker setup error:', setupErr);
+}
+})();
+</script>
+</div>
+<hr>$hintlink[0]<hr>
+$css
+<ol class="paren-lower">
+<li>Move to frame 43.</li>
+<li>Use as a scale:<ol class="paren-roman">
+<li>the length of the red cart as 0.24 m</li>
+<li>its mass with the attachment as 1.0 kg</li>
+<li>the mass of the green cart at 0.5 kg.</li>
+</ol>
+</li>
+<li>Choose two points per frame and add their masses.</li>
+<li>You can track both carts at the same time (maintain the order).</li>
+<li>You can then view their position and velocity data as well as the data for the center of mass.</li>
+</ol>
+<hr>
+This Box is not used right now:<br>
+<hr>
+This Box is where graphed data can be entered and submitted:<br>
+<hr>
+This Box is where the slope of the graphed data can be entered and submitted. It needs to abide by the precision and significan figure requirements provided at the pull down menu at the top of the page:<br>
+`"slope"\=`
+<hr>
+This Box is where the average of the graphed data can be entered and submitted. It needs to abide by the precision and significan figure requirements provided at the pull down menu at the top of the page:<br>
+`"y average"\=`
+<hr>
+
+</body>
+</html>

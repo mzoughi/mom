@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Rotation: The Foucault Pendulum</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, rotation, Foucault pendulum, Earth rotation, latitude, pendulum, period, 3D, museum, lesson, scientific">
+<meta name="description" content="Interactive 3D Foucault pendulum, as seen in museums: a long pendulum knocks down a ring of pins as the Earth turns underneath it. Change the latitude, the cable length and the speed of the Earth, and view it from the museum or from space.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="fpRoot" class="fp_root" role="region" aria-label="Foucault pendulum simulator: a long pendulum over a ring of pins; the swing slowly turns because the Earth turns underneath it">
+<div class="fp_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="fp_a11ybtn" id="fpBtnHC" onclick="fpSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="fp_a11ybtn" id="fpBtnLM" onclick="fpSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="fp_a11ybtn" id="fpBtnCB" onclick="fpSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="fp_a11ybtn fp_a11yon" id="fpBtnNR" onclick="fpSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="fp_header"><p class="fp_h1">The Foucault Pendulum</p><p class="fp_sub">the swing keeps its direction in space &middot; the floor turns underneath it with the Earth</p></div>
+<div class="fp_tabs" role="tablist" aria-label="Point of view">
+<button type="button" role="tab" class="fp_tab" id="fpT0" aria-selected="true" onclick="fpSim.tab(0)">1. In the museum (turning with the Earth)</button>
+<button type="button" role="tab" class="fp_tab" id="fpT1" aria-selected="false" onclick="fpSim.tab(1)">2. Seen from space (not turning)</button>
+</div>
+<div class="fp_diag"><div class="fp_dlabel"><b id="fpLab">THE PENDULUM</b><span id="fpHint"></span></div>
+<canvas id="fpCv" width="780" height="470" tabindex="0" role="img" aria-label="A heavy brass bob on a long cable swings over a round pit with a compass rose and a ring of red pins. Drag, or use the arrow keys, to turn the view; space plays or pauses." aria-describedby="fpStatus"></canvas></div>
+<div class="fp_status" id="fpStatus"></div>
+<div class="fp_bbar">
+<button type="button" class="fp_btn fp_btnon" id="fpPlay">&#10073;&#10073; Pause</button>
+<button type="button" class="fp_btn fp_kick" id="fpStart">&#8635; Start the swing again</button>
+<button type="button" class="fp_btn" id="fpPins">Stand the pins up</button>
+<label for="fpN">Earth sped up <input type="range" id="fpN" min="0" max="3" step="0.01" value="2.3" style="width:110px"> <span id="fpNv"></span></label>
+</div>
+<div class="fp_bbar">
+<label><input type="checkbox" id="fpTr" checked> trace on the floor</label>
+<label><input type="checkbox" id="fpGl" checked> Earth inset</label>
+<button type="button" class="fp_btn" id="fpVStd">Standard view</button>
+<button type="button" class="fp_btn" id="fpVTop">From above</button>
+<button type="button" class="fp_btn" id="fpVSide">From the side</button>
+<button type="button" class="fp_btn" id="fpDsc">Describe</button>
+</div>
+<div class="fp_read" id="fpRead" aria-label="Readout"></div>
+<div class="fp_panels"><div class="fp_panel"><div class="fp_ptitle">Where on Earth</div><div class="fp_pbody" id="fpCtlL"></div></div>
+<div class="fp_panel"><div class="fp_ptitle">The pendulum</div><div class="fp_pbody" id="fpCtlP"></div></div></div>
+<div class="fp_eqs" id="fpEq"></div>
+<div id="fpNar" class="fp_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="fp_descwrap">
+<button type="button" class="fp_descbtn" id="fpDescBtn" aria-expanded="false" aria-controls="fpDesc" onclick="fpSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="fp_desc" id="fpDesc" role="region" aria-labelledby="fpDescBtn" style="display:none">
+<p>A Foucault pendulum is a heavy bob hanging from a very long cable, free to swing in any direction. It is set swinging back and forth along a straight line. Over the hours, the direction of the swing slowly turns: in museums, it knocks down, one by one, the pins set up in a ring around it. In 1851 L&eacute;on Foucault used it in the Panth&eacute;on in Paris to show that the Earth turns.</p>
+<p><b>Why the swing turns.</b> The only forces on the bob are its weight and the pull of the cable. Both lie in the plane of the swing, so nothing pushes the bob out of that plane: seen from space, the swing keeps its direction. It is the floor, carried by the turning Earth, that turns underneath it. Tab 2 shows this.</p>
+<p><b>At the North Pole</b> the floor simply turns once a day (once every 23 h 56 min, a sidereal day), counterclockwise seen from above. In the museum, the swing then appears to turn the other way, clockwise, once a day: 15&deg; per hour.</p>
+<p><b>At other latitudes</b> only part of the Earth&rsquo;s turning is a turning of the floor about the local vertical. The Earth&rsquo;s rotation, `vec Omega`, points along its axis; at latitude `phi` its part along the local vertical is `Omega sin phi`. The swing turns at this rate:</p>
+<p class="fp_eq">`Omega_(swing) = Omega sin phi`,&nbsp;&nbsp; `T_(turn) = (23.93 h)/(sin phi)`.</p>
+<p>In Atlanta (latitude 33.7&deg; N) the swing turns 8.4&deg; per hour, once around in about 43 hours. In Paris, 11.3&deg; per hour. At the equator, `sin phi = 0`: the swing does not turn at all. In the Southern Hemisphere it turns counterclockwise.</p>
+<p><b>The swing itself.</b> The period of one back-and-forth swing is that of any simple pendulum,</p>
+<p class="fp_eq">`T = 2 pi sqrt(L/g)`,</p>
+<p>about 9 s for a 20 m cable. It does not depend on the latitude. The long cable makes the swing slow and lets it go on for hours; in museums, a small magnetic push at the top or bottom makes up for the air drag. The SIM leaves out air drag.</p>
+<p><b>Speeding up the Earth.</b> In real time the turning is too slow to watch, so the SIM can make the Earth turn faster than it really does, while the pendulum swings at its real pace. The readout gives the real Earth time that corresponds. Each end of the swing comes back to the ring of pins once per full swing, and the pins are 10&deg; apart. If the swing turned more than that between two visits, it would skip pins, as a real pendulum on a fast-turning planet would. So the SIM limits the speed-up to keep the turn per swing below 7&deg;, and says so on screen when it does. With a large speed-up the path on the floor shows small points at the ends of each swing: the bob was released from rest in the turning room, so it carries a little sideways motion. A real Foucault pendulum does the same, but the effect is far too small to see.</p>
+</div></div>
+</div><!-- #fpRoot -->
+<style>
+#fpRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#fpRoot * { box-sizing:border-box; }
+#fpRoot.fp_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#fpRoot.fp_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#fpRoot .fp_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#fpRoot .fp_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#fpRoot .fp_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#fpRoot .fp_header { text-align:center; }
+#fpRoot .fp_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#fpRoot .fp_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#fpRoot .fp_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#fpRoot .fp_tab { flex:1 1 220px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#fpRoot .fp_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#fpRoot .fp_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#fpRoot .fp_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#fpRoot .fp_dlabel b { color:var(--c-accent); }
+#fpRoot canvas { display:block; width:100%; height:auto; touch-action:none; cursor:grab; }
+#fpRoot .fp_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#fpRoot .fp_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#fpRoot .fp_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#fpRoot .fp_btn:hover { border-color:var(--c-accent); }
+#fpRoot .fp_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#fpRoot .fp_kick { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#fpRoot .fp_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#fpRoot .fp_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#fpRoot .fp_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#fpRoot .fp_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#fpRoot .fp_ctrl { display:flex; flex-direction:column; gap:3px; }
+#fpRoot .fp_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#fpRoot .fp_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#fpRoot .fp_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#fpRoot .fp_brow { display:flex; flex-wrap:wrap; gap:5px; }
+#fpRoot .fp_note { margin:0; font-size:.74rem; color:var(--c-dim); line-height:1.4; }
+#fpRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#fpRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#fpRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#fpRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#fpRoot .fp_read { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:6px 10px; background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; padding:8px 12px; }
+#fpRoot .fp_flabel { font-family:monospace; font-size:.62rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#fpRoot .fp_fvalue { font-family:monospace; font-size:.9rem; color:var(--c-val); font-variant-numeric:tabular-nums; }
+#fpRoot .fp_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#fpRoot .fp_eqs b { color:var(--c-val); }
+#fpRoot .fp_status { width:100%; padding:8px 12px; border-radius:4px; background:var(--c-panel); border:1px solid var(--c-bd); font-size:.86rem; line-height:1.4; color:var(--c-text); }
+#fpRoot .fp_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#fpRoot .fp_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#fpRoot .fp_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#fpRoot .fp_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#fpRoot .fp_desc p { margin:0 0 9px; }
+#fpRoot .fp_eq { text-align:center; font-size:1rem; }
+#fpRoot button:focus-visible, #fpRoot input:focus-visible, #fpRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #fpRoot .fp_panels { grid-template-columns:minmax(0,1fr); } #fpRoot .fp_tab { font-size:.66rem; padding:8px 3px; } }
+@media (pointer:coarse) { #fpRoot input[type=range] { height:8px; } #fpRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #fpRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #fpRoot .fp_a11ybtn { min-height:40px; } #fpRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<!-- ════════ SIMULATION ════════
+Floor frame: x east, n north (drawn as -z), y up. The bob's horizontal position (x, n) obeys, in the turning room,
+  x'' = -w0^2 x + 2 Wz n',   n'' = -w0^2 n - 2 Wz x',   w0^2 = g/L,  Wz = N * Omega * sin(latitude),
+the Coriolis terms of the turning Earth (centrifugal terms are absorbed in g). N is the speed-up of the Earth.
+N is limited so that the swing turns at most TURNMAX per full swing: each end of the swing visits the ring of pins
+once per full swing, and the pins are 360/NPIN degrees apart; a larger turn would skip pins.
+The swing itself runs in real time; the Earth time shown is N times the time elapsed. RK4 steps.
+Tab 2 draws the room turned by the angle Wz t about the vertical: then the swing plane stays (nearly) fixed.
+No dollar signs or backticks in the code.
+-->
+<script>
+var fpSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('fpRoot'), cv = el('fpCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var DEG = Math.PI/180, TAU = 2*Math.PI, GA = 9.81, OMEGA = TAU/86164.1;
+var NPIN = 36, BOBH = 0.45, PITR = 3.3, TURNMAX = 7*DEG;
+/* ══════════ vectors ══════════ */
+function add(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; } function sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function mul(a, k){ return [a[0]*k, a[1]*k, a[2]*k]; } function dot(a, b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function cross(a, b){ return [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]; }
+function len(a){ return Math.sqrt(dot(a, a)); } function nrm(a){ var l = len(a) || 1; return [a[0]/l, a[1]/l, a[2]/l]; }
+function perp(a){ var t = Math.abs(a[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]; return nrm(cross(a, t)); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function f(v, k){ return (Math.abs(v) < 0.5*Math.pow(10, -k) ? 0 : v).toFixed(k); }
+/* ══════════ state ══════════ */
+var PRM = { lat:33.75, L:20, A:2.6, az:0, Nexp:2.3 };
+var PLACES = [['North Pole', 90], ['Paris (Panth\u00E9on)', 48.85], ['Atlanta', 33.75], ['Equator', 0], ['Sydney', -33.87], ['South Pole', -90]];
+var U = { tab:0, play:true, yaw:-30, pitch:28, trace:true, globe:true, touched:{} };
+var th = { hc:false, lm:false, cb:false, nr:true };
+var S;
+function w0(){ return Math.sqrt(GA/PRM.L); }
+function Nset(){ return Math.round(Math.pow(10, PRM.Nexp)); }                     /* the speed-up asked for */
+function Nmax(){ var s = Math.abs(Math.sin(PRM.lat*DEG)); return s < 1e-6 ? Infinity : Math.max(1, Math.floor(TURNMAX/(OMEGA*s*TAU/w0()))); }
+function Nf(){ return Math.min(Nset(), Nmax()); }                                    /* the speed-up used */
+function Wz(){ return Nf()*OMEGA*Math.sin(PRM.lat*DEG); }
+function restart(keepPins){
+  var a = PRM.az*DEG;   /* release direction, measured from north toward east */
+  S = { x:PRM.A*Math.sin(a), n:PRM.A*Math.cos(a), vx:0, vn:0, t:0, te:0, trace:[], pins:keepPins && S ? S.pins : null, knocked:keepPins && S ? S.knocked : 0, beta:0 };
+  if (!S.pins) standPins(); }
+function standPins(){ S.pins = []; var rp = PRM.A - 0.12; for (var i=0; i<NPIN; i++){ var a = TAU*i/NPIN; S.pins.push({ a:a, x:rp*Math.sin(a), n:rp*Math.cos(a), down:0, dir:[0, 0] }); } S.knocked = 0; }
+function deriv(st, wz, w2){ return [st[2], st[3], -w2*st[0] + 2*wz*st[3], -w2*st[1] - 2*wz*st[2]]; }
+function step(dt){
+  var wz = Wz(), w2 = w0()*w0(), y = [S.x, S.n, S.vx, S.vn], k1 = deriv(y, wz, w2), i;
+  var y2 = y.map(function(v, j){ return v + k1[j]*dt/2; }), k2 = deriv(y2, wz, w2);
+  var y3 = y.map(function(v, j){ return v + k2[j]*dt/2; }), k3 = deriv(y3, wz, w2);
+  var y4 = y.map(function(v, j){ return v + k3[j]*dt; }), k4 = deriv(y4, wz, w2);
+  for (i=0; i<4; i++) y[i] += dt/6*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i]);
+  S.x = y[0]; S.n = y[1]; S.vx = y[2]; S.vn = y[3]; S.t += dt; S.te += dt*Nf(); S.beta += wz*dt;
+  S.pins.forEach(function(p){ if (p.down) return; var dx = S.x - p.x, dn = S.n - p.n; if (dx*dx + dn*dn < 0.04){ var v = Math.hypot(S.vx, S.vn) || 1; p.down = 1e-3; p.dir = [S.vx/v, S.vn/v]; S.knocked++; pinEvent(p); } });
+  S.pins.forEach(function(p){ if (p.down && p.down < 1) p.down = Math.min(1, p.down + dt*3); }); }
+var lastPin = 0;
+function pinEvent(p){ if (S.knocked === 1 || S.knocked % 6 === 0 || S.te - lastPin > 3*3600) narrate('Pin knocked down: number ' + S.knocked + ', on the ' + compass(p.a) + ' side. Real Earth time so far: ' + hm(S.te) + '.'); lastPin = S.te; }
+function compass(a){ var d = ((a/DEG) % 360 + 360) % 360, N = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west']; return N[Math.round(d/45) % 8]; }
+function hm(s){ var h = Math.floor(s/3600), m = Math.floor((s - 3600*h)/60); return h + ' h ' + (m < 10 ? '0' : '') + m + ' min'; }
+function swingAngle(){ var a = Math.atan2(S.x, S.n)/DEG; if (Math.hypot(S.x, S.n) < 0.3*PRM.A) return null; return ((a % 180) + 180) % 180; }
+/* ══════════ 3D renderer (as in the gyroscope SIM) ══════════ */
+var polys = [], cam = {};
+function setCam(){ var a = U.yaw*DEG, e = U.pitch*DEG; cam = { ca:Math.cos(a), sa:Math.sin(a), ce:Math.cos(e), se:Math.sin(e), s:76, D:16, T:[0, 0.9, 0] }; }
+function view(p){ var x0 = p[0] - cam.T[0], y0 = p[1] - cam.T[1], z0 = p[2] - cam.T[2], x1 = x0*cam.ca + z0*cam.sa, z1 = -x0*cam.sa + z0*cam.ca; return [x1, y0*cam.ce - z1*cam.se, y0*cam.se + z1*cam.ce]; }
+function proj(v){ var f2 = cam.D/Math.max(0.5, cam.D - v[2]); return [W/2 + v[0]*cam.s*f2, H*0.6 - v[1]*cam.s*f2]; }
+function scr(p){ return proj(view(p)); }
+function poly(pts, col){ polys.push({ p:pts, c:col }); }
+var LIGHT = nrm([-0.35, 0.7, 0.62]), HALF = nrm(add(LIGHT, [0, 0, 1]));
+function flush(){
+  var list = polys.map(function(q){ var v = q.p.map(view), z = 0; v.forEach(function(t){ z += t[2]; }); return { v:v, z:z/v.length, c:q.c }; });
+  list.sort(function(A, B){ return A.z - B.z; });
+  list.forEach(function(q){
+    var n = q.v.length > 2 ? nrm(cross(sub(q.v[1], q.v[0]), sub(q.v[2], q.v[0]))) : [0, 0, 1]; if (n[2] < 0) n = mul(n, -1);
+    var k = 0.36 + 0.64*Math.max(0, dot(n, LIGHT)), spec = Math.pow(Math.max(0, dot(n, HALF)), 30)*0.45;
+    var r = Math.min(255, Math.round(q.c[0]*k + 255*spec)), gg = Math.min(255, Math.round(q.c[1]*k + 255*spec)), b = Math.min(255, Math.round(q.c[2]*k + 255*spec));
+    g.fillStyle = 'rgb(' + r + ',' + gg + ',' + b + ')'; g.strokeStyle = g.fillStyle; g.lineWidth = 0.6;
+    g.beginPath(); q.v.forEach(function(t, i){ var s2 = proj(t); if (i) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); g.closePath(); g.fill(); g.stroke(); });
+  polys = []; }
+function ball(c, r, col, nu, nv){ nu = nu || 12; nv = nv || 6;
+  for (var j=0; j<nv; j++) for (var i=0; i<nu; i++){ var u0 = TAU*i/nu, u1 = TAU*(i + 1)/nu, v0 = Math.PI*j/nv, v1 = Math.PI*(j + 1)/nv;
+    poly([sp(c, r, u0, v0), sp(c, r, u1, v0), sp(c, r, u1, v1), sp(c, r, u0, v1)], col); } }
+function sp(c, r, u, v){ return [c[0] + r*Math.sin(v)*Math.cos(u), c[1] + r*Math.cos(v), c[2] + r*Math.sin(v)*Math.sin(u)]; }
+function tube(p0, p1, r, col, n){ var ax = nrm(sub(p1, p0)), u = perp(ax), v = cross(ax, u); n = n || 8;
+  function Rp(p, a){ return add(p, add(mul(u, r*Math.cos(a)), mul(v, r*Math.sin(a)))); }
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n; poly([Rp(p0, a0), Rp(p0, a1), Rp(p1, a1), Rp(p1, a0)], col); } }
+function cone(b, tip, r, col, n){ var ax = nrm(sub(tip, b)), u = perp(ax), v = cross(ax, u); n = n || 12;
+  for (var i=0; i<n; i++){ var a0 = TAU*i/n, a1 = TAU*(i + 1)/n, q0 = add(b, add(mul(u, r*Math.cos(a0)), mul(v, r*Math.sin(a0)))), q1 = add(b, add(mul(u, r*Math.cos(a1)), mul(v, r*Math.sin(a1)))); poly([q0, q1, tip], col); } }
+/* ══════════ colours ══════════ */
+function pal(){ var cb = th.cb, hc = th.hc, lm = th.lm;
+  return { bg:hc ? '#000' : (lm ? '#e8ecf1' : '#0d1016'), floor:hc ? [20, 20, 20] : (lm ? [214, 205, 188] : [92, 84, 72]), pit:hc ? [0, 0, 0] : (lm ? [190, 180, 160] : [64, 58, 50]),
+    brass:[214, 170, 70], cable:[60, 60, 64], pin:cb ? [0, 114, 178] : [205, 40, 40], pinTop:[240, 240, 240], txt:hc ? '#fff' : (lm ? '#1d232a' : '#e8eef4'), dim:hc ? '#ddd' : (lm ? '#556070' : '#9aa4b2'),
+    rose:hc ? 'rgba(255,255,255,0.8)' : (lm ? 'rgba(60,50,30,0.55)' : 'rgba(235,220,190,0.45)'), trace:cb ? 'rgba(230,159,0,0.85)' : 'rgba(255,215,64,0.85)', plane:cb ? '#56b4e9' : '#3ad08f', north:cb ? '#d55e00' : '#ff5a4a' }; }
+function R(p){ if (!U.tab) return p; var c = Math.cos(S.beta), s = Math.sin(S.beta); return [p[0]*c + p[2]*s, p[1], -p[0]*s + p[2]*c]; }
+function F(x, n, y){ return R([x, y || 0, -n]); }
+function line3(a, b){ var A = scr(a), B = scr(b); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke(); }
+function label(x, y, t, col, size){ g.font = 'bold ' + (size || 13) + 'px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 3.5; g.strokeStyle = th.lm ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y); }
+function drawRoom(p){
+  var k, n = 64, out = [], inn = [];
+  for (k=0; k<n; k++){ var a = TAU*k/n; out.push(F(5.2*Math.sin(a), 5.2*Math.cos(a), -0.02)); inn.push(F(PITR*Math.sin(a), PITR*Math.cos(a), 0)); }
+  for (k=0; k<n; k++){ var j = (k + 1) % n; poly([out[k], out[j], add(inn[j], [0, -0.02, 0]), add(inn[k], [0, -0.02, 0])], p.floor); }
+  for (k=0; k<n; k++){ var j2 = (k + 1) % n; poly([F(0, 0, 0), inn[j2], inn[k]], p.pit); }
+  flush();
+  g.strokeStyle = p.rose; g.lineWidth = 1;
+  for (k=0; k<72; k++){ var a2 = TAU*k/72, r1 = k % 6 === 0 ? 2.75 : 2.95; line3(F(r1*Math.sin(a2), r1*Math.cos(a2)), F(3.15*Math.sin(a2), 3.15*Math.cos(a2))); }
+  g.beginPath(); for (k=0; k<=72; k++){ var a3 = TAU*k/72, q = scr(F(3.15*Math.sin(a3), 3.15*Math.cos(a3))); if (k) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); } g.stroke();
+  line3(F(0, -2.6), F(0, 2.6)); line3(F(-2.6, 0), F(2.6, 0));
+  [['N', 0], ['E', 90], ['S', 180], ['W', 270]].forEach(function(q){ var a4 = q[1]*DEG, s2 = scr(F(3.6*Math.sin(a4), 3.6*Math.cos(a4))); label(s2[0], s2[1], q[0], q[0] === 'N' ? p.north : p.txt, 15); });
+  if (U.trace && S.trace.length > 1){ g.strokeStyle = p.trace; g.lineWidth = 1.5; g.beginPath(); S.trace.forEach(function(q, i){ var s3 = scr(F(q[0], q[1], 0.005)); if (i) g.lineTo(s3[0], s3[1]); else g.moveTo(s3[0], s3[1]); }); g.stroke(); }
+  if (U.tab){ var a0 = PRM.az*DEG; g.strokeStyle = p.plane; g.lineWidth = 2.5; g.setLineDash([8, 6]); var A1 = scr([-3.4*Math.sin(a0), 0.01, 3.4*Math.cos(a0)]), B1 = scr([3.4*Math.sin(a0), 0.01, -3.4*Math.cos(a0)]); g.beginPath(); g.moveTo(A1[0], A1[1]); g.lineTo(B1[0], B1[1]); g.stroke(); g.setLineDash([]); } }
+function drawPins(p){
+  S.pins.forEach(function(q){ var base = F(q.x, q.n, 0), h = 0.32;
+    if (!q.down){ tube(base, F(q.x, q.n, h), 0.035, p.pin, 7); ball(F(q.x, q.n, h + 0.03), 0.04, p.pinTop, 6, 3); }
+    else { var ang = q.down*Math.PI/2, tip = F(q.x + q.dir[0]*h*Math.sin(ang), q.n + q.dir[1]*h*Math.sin(ang), 0.035 + h*Math.cos(ang)); tube(add(base, [0, 0.035, 0]), tip, 0.035, p.pin, 7); } }); }
+function bobPos(){ var r2 = S.x*S.x + S.n*S.n, L = PRM.L; return F(S.x, S.n, BOBH + L - Math.sqrt(Math.max(0, L*L - r2))); }
+function drawBob(p){
+  var c = bobPos(), top = F(0, 0, BOBH + PRM.L), dir = nrm(sub(top, c));
+  tube(add(c, mul(dir, 0.2)), add(c, mul(dir, 9)), 0.018, p.cable, 6);
+  ball(c, 0.26, p.brass, 16, 8);
+  cone(add(c, [0, -0.2, 0]), add(c, mul(dir, -0.4)), 0.09, p.brass, 12); }
+function arrowL(x1, y1, x2, y2, col, w){ var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); if (L < 2) return; var ux = dx/L, uy = dy/L, hl = 9, hw = 5;
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2 - ux*hl*0.8, y2 - uy*hl*0.8); g.stroke();
+  g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - ux*hl - uy*hw, y2 - uy*hl + ux*hw); g.lineTo(x2 - ux*hl + uy*hw, y2 - uy*hl - ux*hw); g.closePath(); g.fill(); }
+function drawGlobe(p){
+  if (!U.globe) return; var gx = 676, gy = 92, r = 54, ph = PRM.lat*DEG;
+  g.fillStyle = th.lm ? 'rgba(255,255,255,0.85)' : 'rgba(10,14,22,0.8)'; g.fillRect(gx - 98, gy - 80, 196, 176);
+  var gr = g.createRadialGradient(gx - 18, gy - 18, 6, gx, gy, r); gr.addColorStop(0, '#3f86e0'); gr.addColorStop(1, '#123a7a'); g.fillStyle = gr; g.beginPath(); g.arc(gx, gy, r, 0, TAU); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1; g.beginPath(); g.moveTo(gx - r, gy); g.lineTo(gx + r, gy); g.stroke();
+  g.strokeStyle = '#ffdd66'; g.beginPath(); g.ellipse(gx, gy - r*Math.sin(ph), r*Math.cos(ph), Math.max(1, r*Math.cos(ph)*0.18), 0, 0, TAU); g.stroke();
+  var px = gx + r*Math.cos(ph), py = gy - r*Math.sin(ph);
+  arrowL(gx, gy + r + 6, gx, gy - r - 22, p.txt, 2.5); label(gx + 12, gy - r - 18, '\u03A9', p.txt, 14);
+  var ux = Math.cos(ph), uy = -Math.sin(ph), L1 = 34*Math.abs(Math.sin(ph)), sg = Math.sin(ph) >= 0 ? 1 : -1;
+  if (L1 > 2) arrowL(px, py, px + ux*L1*sg, py + uy*L1*sg, p.plane, 3);
+  g.fillStyle = p.north; g.beginPath(); g.arc(px, py, 5, 0, TAU); g.fill();
+  label(gx, gy + r + 20, 'latitude ' + f(Math.abs(PRM.lat), 1) + '\u00B0 ' + (PRM.lat >= 0 ? 'N' : 'S'), p.txt, 11);
+  g.font = '11px Arial, sans-serif'; g.fillStyle = p.plane; g.textAlign = 'center'; g.fillText('green: \u03A9 sin\u03C6 (local vertical)', gx, gy + r + 34); }
+function draw(){
+  var p = pal(); setCam(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  drawRoom(p); drawPins(p); drawBob(p); flush(); drawGlobe(p);
+  label(110, 22, 'Earth time ' + hm(S.te), p.txt, 15);
+  if (U.tab) label(390, H - 16, 'seen from space: the room turns, the dashed line keeps its direction', p.dim, 11);
+  el('fpHint').textContent = 'swing in real time \u00B7 Earth sped up \u00D7' + Nf() + ' \u00B7 drag to turn the view'; }
+/* ══════════ readout ══════════ */
+function info(){
+  var s = Math.sin(PRM.lat*DEG), Tturn = Math.abs(s) > 1e-6 ? 23.934/Math.abs(s) : Infinity, rate = 15.041*s, sw = swingAngle(), st;
+  var perSwing = Math.abs(Wz())*TAU/w0()/DEG;
+  var cells = [['LATITUDE', f(Math.abs(PRM.lat), 2) + '\u00B0 ' + (PRM.lat >= 0 ? 'N' : 'S') + ' \u00B7 sin\u03C6 = ' + f(s, 3)], ['SWING PERIOD T = 2\u03C0\u221A(L/g)', f(TAU/w0(), 2) + ' s'],
+    ['SWING TURNS', Math.abs(rate) < 0.005 ? 'not at all' : f(Math.abs(rate), 2) + '\u00B0 per hour, ' + (rate > 0 ? 'clockwise' : 'counterclockwise')], ['ONCE AROUND IN', isFinite(Tturn) ? f(Tturn, 1) + ' h (\u2248 ' + f(Tturn/24, 2) + ' days)' : 'never'],
+    ['REAL EARTH TIME', hm(S.te)], ['TURN PER SWING (SPED UP)', f(perSwing, 1) + '\u00B0 \u00B7 pins every ' + (360/NPIN) + '\u00B0'], ['SWING DIRECTION NOW', sw === null ? '\u2026' : f(sw, 0) + '\u00B0 from N\u2013S'], ['PINS DOWN', S.knocked + ' of ' + NPIN]];
+  el('fpRead').innerHTML = cells.map(function(c){ return '<div><div class="fp_flabel">' + c[0] + '</div><div class="fp_fvalue">' + c[1] + '</div></div>'; }).join('');
+  if (Math.abs(s) < 0.01) st = 'At the equator the floor does not turn about the vertical: the swing keeps its direction relative to the floor, and no pins fall (except those it starts on).';
+  else if (U.tab) st = 'Seen from space: the swing keeps its direction (dashed line); the room, carried by the Earth, turns ' + (s > 0 ? 'counterclockwise' : 'clockwise') + ' underneath it at \u03A9 sin\u03C6.';
+  else st = 'In the museum: the swing slowly turns ' + (s > 0 ? 'clockwise' : 'counterclockwise') + ' (seen from above), ' + f(Math.abs(rate), 1) + '\u00B0 per hour, knocking down the pins one by one.';
+  if (Nset() > Nmax()) st += ' The speed-up is held at \u00D7' + Nmax() + ' here: any faster and the swing would turn more than a pin spacing between two visits to the ring, and skip pins.';
+  el('fpStatus').textContent = st;
+  el('fpEq').innerHTML = 'Swing: <b>T = 2\u03C0\u221A(L/g)</b> = 2\u03C0\u221A(' + f(PRM.L, 0) + '/9.81) = ' + f(TAU/w0(), 2) + ' s. The Earth turns once per sidereal day, 23 h 56 min: <b>\u03A9</b> = 15.04\u00B0/h.<br>Turning of the swing: <b>\u03A9 sin\u03C6</b> = 15.04 \u00D7 ' + f(s, 3) + ' = ' + f(Math.abs(rate), 2) + '\u00B0/h; once around in <b>23.93 h / sin\u03C6</b> = ' + (isFinite(Tturn) ? f(Tturn, 1) + ' h' : '\u221E') + '.';
+  return st; }
+function narrate(m){ if (!th.nr) return; el('fpNar').textContent = m; }
+function describe(){ narrate('A brass bob with a pointed tip hangs from a long cable and swings over a round pit. A compass rose is painted on the floor, north in red, and ' + NPIN + ' red pins stand in a ring near the edge of the swing; ' + S.knocked + ' are down. ' + (U.trace ? 'A yellow line traces the path of the tip on the floor. ' : '') + (U.globe ? 'An inset shows the Earth, its rotation \u03A9 along its axis, and the part \u03A9 sin\u03C6 along the vertical at this latitude. ' : '') + info()); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="fp_ctrl"><div class="fp_ctrlhdr"><label class="fp_ctrlname" for="' + id + '">' + label + '</label><span class="fp_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+function latTxt(v){ return f(Math.abs(v), 2) + '\u00B0 ' + (v >= 0 ? 'N' : 'S'); }
+function build(){
+  el('fpCtlL').innerHTML = row('fpLat', 'latitude \u03C6', -90, 90, 0.25, PRM.lat, latTxt(PRM.lat))
+    + '<div class="fp_brow">' + PLACES.map(function(q, i){ return '<button type="button" class="fp_btn" data-pl="' + i + '">' + q[0] + '</button>'; }).join('') + '</div>'
+    + '<p class="fp_note">Changing the place restarts the swing. The pins stay as they are; press Stand the pins up to reset them.</p>';
+  el('fpCtlP').innerHTML = row('fpL', 'length of the cable L', 5, 67, 1, PRM.L, PRM.L + ' m') + row('fpA', 'amplitude (half the swing)', 1.5, 3.0, 0.1, PRM.A, PRM.A.toFixed(1) + ' m')
+    + row('fpAz', 'starting direction of the swing', 0, 175, 5, PRM.az, PRM.az + '\u00B0 from N\u2013S')
+    + '<p class="fp_note">The Panth\u00E9on pendulum in Paris has a 67 m cable. Changing the length or the amplitude restarts the swing and stands the pins up.</p>';
+  on('fpLat', 'input', function(){ PRM.lat = +this.value; el('fpLatv').textContent = latTxt(PRM.lat); restart(true); nTxt(); later(); });
+  [].forEach.call(el('fpCtlL').querySelectorAll('button[data-pl]'), function(b){ b.addEventListener('click', function(){ var q = PLACES[+b.getAttribute('data-pl')]; PRM.lat = q[1]; el('fpLat').value = q[1]; el('fpLatv').textContent = latTxt(q[1]); restart(true); nTxt();
+    narrate(q[0] + ': ' + info()); }); });
+  on('fpL', 'input', function(){ PRM.L = +this.value; el('fpLv').textContent = PRM.L + ' m'; restart(false); nTxt(); later(); });
+  on('fpA', 'input', function(){ PRM.A = +this.value; el('fpAv').textContent = PRM.A.toFixed(1) + ' m'; restart(false); later(); });
+  on('fpAz', 'input', function(){ PRM.az = +this.value; el('fpAzv').textContent = PRM.az + '\u00B0 from N\u2013S'; restart(true); later(); }); }
+function nTxt(){ var a = Nset(), m = Nmax(); el('fpNv').textContent = a > m ? '\u00D7' + a + ' \u2192 \u00D7' + m + ' here' : '\u00D7' + a; }
+var lt = null; function later(){ clearTimeout(lt); lt = setTimeout(function(){ narrate(info()); }, 900); }
+function setPlay(v){ U.play = v; el('fpPlay').innerHTML = v ? '\u2759\u2759 Pause' : '\u25B6 Play'; el('fpPlay').classList.toggle('fp_btnon', v); }
+on('fpPlay', 'click', function(){ setPlay(!U.play); });
+on('fpStart', 'click', function(){ restart(true); narrate('The bob is pulled to the side and released from rest. ' + info()); });
+on('fpPins', 'click', function(){ standPins(); narrate('All ' + NPIN + ' pins are standing again.'); });
+on('fpN', 'input', function(){ PRM.Nexp = +this.value; nTxt(); S.trace = []; later(); });
+on('fpTr', 'change', function(){ U.trace = this.checked; S.trace = []; }); on('fpGl', 'change', function(){ U.globe = this.checked; });
+on('fpVStd', 'click', function(){ U.yaw = -30; U.pitch = 28; }); on('fpVTop', 'click', function(){ U.yaw = 0; U.pitch = 88; }); on('fpVSide', 'click', function(){ U.yaw = 0; U.pitch = 6; });
+on('fpDsc', 'click', describe);
+var drag = null;
+cv.addEventListener('pointerdown', function(e){ drag = { x:e.clientX, y:e.clientY, yaw:U.yaw, pitch:U.pitch }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', function(e){ if (!drag) return; var r = cv.getBoundingClientRect(), k = W/r.width; U.yaw = drag.yaw + (e.clientX - drag.x)*k*0.45; U.pitch = clamp(drag.pitch + (e.clientY - drag.y)*k*0.35, 2, 89); });
+function endDrag(){ drag = null; cv.style.cursor = 'grab'; } cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('keydown', function(e){ var k = e.key;
+  if (k === 'ArrowLeft') U.yaw -= 5; else if (k === 'ArrowRight') U.yaw += 5; else if (k === 'ArrowUp') U.pitch = clamp(U.pitch + 5, 2, 89); else if (k === 'ArrowDown') U.pitch = clamp(U.pitch - 5, 2, 89);
+  else if (k === ' ') setPlay(!U.play); else return; e.preventDefault(); });
+function tab(i){ U.tab = i; for (var k=0; k<2; k++) el('fpT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false');
+  el('fpLab').textContent = i ? 'SEEN FROM SPACE: THE ROOM TURNS' : 'IN THE MUSEUM: THE ROOM TURNS WITH US';
+  narrate(i ? 'Seen from space, not turning with the Earth. The dashed green line is the starting direction of the swing: it stays put. The room, the compass rose and the pins turn underneath it.' : 'In the museum, turning with the Earth. The compass rose stays put, and the swing slowly turns.'); info(); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false;
+  ROOT.classList.toggle('fp_hc', th.hc); ROOT.classList.toggle('fp_lm', th.lm);
+  [['hc', 'fpBtnHC'], ['lm', 'fpBtnLM'], ['cb', 'fpBtnCB'], ['nr', 'fpBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('fp_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('fpBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('fpNar').style.display = th.nr ? '' : 'none'; }
+function toggleDesc(){ var b = el('fpDescBtn'), d = el('fpDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+/* ══════════ the loop ══════════ */
+var last = 0, tick = 0;
+function advance(T){ var n = Math.max(1, Math.ceil(T/0.004)), i; for (i=0; i<n; i++) step(T/n);
+  if (U.trace){ S.trace.push([S.x, S.n]); if (S.trace.length > 2500) S.trace.shift(); } }
+function loop(t){ var rdt = last ? Math.min(0.05, (t - last)/1000) : 0; last = t;
+  if (U.play && rdt > 0) advance(rdt);
+  draw(); if (++tick % 10 === 0) info();
+  requestAnimationFrame(loop); }
+build(); nTxt(); restart(false); tab(0); setPlay(true);
+narrate('Ready: a Foucault pendulum in Atlanta, latitude 33.75\u00B0 N. The swing turns clockwise by 8.4\u00B0 per hour. The Earth is sped up \u00D7' + Nf() + ' so you can watch the pins fall; drag the speed-up to 1 for real time.');
+requestAnimationFrame(loop);
+return { tab:tab, theme:theme, toggleDesc:toggleDesc, describe:describe, _S:function(){ return S; }, _P:PRM, _adv:function(T){ var n = Math.round(T/0.05); for (var i=0; i<n; i++) advance(0.05); }, _swing:swingAngle, _restart:restart, _U:U, _N:function(){ return [Nset(), Nmax(), Nf()]; } };
+})();
+</script>
+
+</main>
+</body>
+</html>

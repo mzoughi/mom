@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Tools: Image Analysis, Measuring Positions on an Image</title>
+<meta name="description" content="Load an image, set the x and y scales and units, record x and/or y positions, and find spacings such as the width of interference fringes; the values can be sent to answer boxes.">
+</head>
+<body style="margin:12px;font-family:Arial,Helvetica,sans-serif">
+<div class="imgan-wrap">
+<style>
+.imgan-wrap { font-family: Arial, Helvetica, sans-serif; font-size: 14px; max-width: 900px; border: 1px solid #ccc; padding: 14px; border-radius: 6px; background: #fafafa; color: #1d2a36; box-sizing: border-box; }
+.imgan-wrap * { box-sizing: border-box; }
+.imgan-wrap h3 { margin: 0 0 6px 0; } .imgan-wrap h4 { margin: 14px 0 6px 0; }
+.imgan-wrap .ga-note { background: #eef6ff; border: 1px solid #bcdcff; padding: 8px 10px; border-radius: 4px; margin-bottom: 10px; color: #234; }
+.imgan-wrap .ga-row { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.imgan-wrap .ga-toolbar { background: #22262e; color: #ddd; padding: 6px 8px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.imgan-wrap .ga-toolbar button { background: #333a45; color: #ddd; border: 1px solid #555; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 12px; }
+.imgan-wrap button { padding: 6px 10px; border: 1px solid #889; border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px; }
+.imgan-wrap button.ga-on { background: #ffe9a8; border-color: #c49a00; font-weight: bold; }
+.imgan-wrap button:disabled { opacity: .45; cursor: not-allowed; }
+.imgan-wrap input[type=number], .imgan-wrap input[type=text] { padding: 4px 6px; border: 1px solid #aab; border-radius: 3px; width: 90px; font-size: 13px; }
+.imgan-wrap .ga-units { width: 60px !important; }
+.imgan-wrap .ga-view { position: relative; border: 1px solid #99a; background: #2b2f36; max-height: 70vh; overflow: auto; border-radius: 4px; }
+.imgan-wrap .ga-canvas { display: block; cursor: crosshair; }
+.imgan-wrap .ga-drop { padding: 40px 10px; text-align: center; color: #bbc; }
+.imgan-wrap .ga-loupe { position: absolute; width: 150px; height: 150px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,.6); pointer-events: none; display: none; }
+.imgan-wrap .ga-panel { border: 1px solid #ccd; border-radius: 4px; padding: 8px 10px; background: #fff; margin: 8px 0; }
+.imgan-wrap .ga-status { margin: 8px 0; padding: 6px 10px; background: #fff8e0; border-left: 4px solid #e0b040; border-radius: 3px; min-height: 22px; }
+.imgan-wrap .ga-pix { font-family: monospace; font-size: 12px; color: #556; }
+.imgan-wrap table.ga-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.imgan-wrap table.ga-table th, .imgan-wrap table.ga-table td { border-bottom: 1px solid #dde; padding: 3px 6px; text-align: right; }
+.imgan-wrap .ga-tablewrap { max-height: 240px; overflow: auto; }
+.imgan-wrap .ga-del { padding: 0 6px; font-size: 12px; color: #a00; }
+.imgan-wrap.ga-hc { background: #000; color: #fff; } .imgan-wrap.ga-hc .ga-panel, .imgan-wrap.ga-hc .ga-status, .imgan-wrap.ga-hc .ga-note { background: #000; color: #fff; border-color: #fff; } .imgan-wrap.ga-hc button { background: #000; color: #ff0; border-color: #ff0; }
+.imgan-wrap.ga-big { font-size: 17px; } .imgan-wrap.ga-big button { font-size: 15px; }
+@media (max-width: 600px) { .imgan-wrap { padding: 8px; } .imgan-wrap .ga-row { gap: 6px; } .imgan-wrap button { padding: 8px 10px; } }
+</style>
+<div class="ga-toolbar"><button type="button" class="ga-cb">Colorblind-friendly colors: Off</button><button type="button" class="ga-hcb">High contrast: Off</button><button type="button" class="ga-font">Font size: Normal</button></div>
+<h3>Image Analysis: Measuring Positions on an Image</h3>
+<div class="ga-note">Load an image (a photo of interference fringes, a graph, &hellip;). Set the x scale and, if you need it, the y scale, by clicking two points of known value. Then record positions: x only, y only, or both. The table, the spacing and the buttons that send values to the answer boxes update as you go.</div>
+<div class="ga-row"><b>Image:</b><input type="file" class="ga-file" accept="image/*"><span class="ga-fname" style="color:#556"></span></div>
+<div class="ga-row"><b>View:</b><button type="button" class="ga-zfit">Fit</button><button type="button" class="ga-z1">1:1</button><button type="button" class="ga-zin">+ Zoom in</button><button type="button" class="ga-zout">&minus; Zoom out</button><label><input type="checkbox" class="ga-loupechk" checked> magnifier</label><span class="ga-pix">pixel: &mdash;</span></div>
+<div class="ga-view"><div class="ga-drop">Choose an image file above, or drop one here.</div><canvas class="ga-canvas" width="10" height="10" style="display:none"></canvas><canvas class="ga-loupe" width="150" height="150"></canvas></div>
+<div class="ga-status" role="status" aria-live="polite"></div>
+<div class="ga-panel">
+<h4 style="margin-top:0">1) The scales</h4>
+<div class="ga-row"><button type="button" class="ga-setx">Set the x scale</button><span>first point = <input type="number" class="ga-xv1" value="0" step="any"></span><span>second point = <input type="number" class="ga-xv2" value="10" step="any"></span><span>unit <input type="text" class="ga-xu ga-units" value="mm"></span><span class="ga-xstat">not set</span></div>
+<div class="ga-row"><label><input type="checkbox" class="ga-same"> y uses the same scale as x (square pixels; y positive upward)</label></div>
+<div class="ga-row ga-yrow"><button type="button" class="ga-sety">Set the y scale</button><span>first point = <input type="number" class="ga-yv1" value="0" step="any"></span><span>second point = <input type="number" class="ga-yv2" value="10" step="any"></span><span>unit <input type="text" class="ga-yu ga-units" value="mm"></span><span class="ga-ystat">not set</span></div>
+<div class="ga-row" style="font-size:12px;color:#556">To set a scale: press the button, then click two points whose values you know (two marks on a ruler, or two labelled ticks on a graph&rsquo;s axis), and type their values. Only the horizontal (for x) or vertical (for y) positions of the clicks count.</div>
+</div>
+<div class="ga-panel">
+<h4 style="margin-top:0">2) Record positions</h4>
+<div class="ga-row"><b>Record:</b><label><input type="radio" name="ga-mode" class="ga-mode" value="x" checked> x only</label><label><input type="radio" name="ga-mode" class="ga-mode" value="y"> y only</label><label><input type="radio" name="ga-mode" class="ga-mode" value="xy"> both x and y</label></div>
+<div class="ga-row"><button type="button" class="ga-mark">Start marking (click on the image)</button><button type="button" class="ga-undo">Undo last</button><button type="button" class="ga-clear">Clear the points</button><button type="button" class="ga-csv">Export CSV</button><label><input type="checkbox" class="ga-sort" checked> list in order of position</label></div>
+<div class="ga-tablewrap"><table class="ga-table"><thead><tr><th>n</th><th class="ga-thx">x</th><th class="ga-thy">y</th><th></th></tr></thead><tbody class="ga-tbody"></tbody></table></div>
+</div>
+<div class="ga-panel">
+<h4 style="margin-top:0">3) Spacing (for example, the width of fringes)</h4>
+<div class="ga-row"><b>Use:</b><label><input type="radio" name="ga-axis" class="ga-axis" value="x" checked> the x values</label><label><input type="radio" name="ga-axis" class="ga-axis" value="y"> the y values</label></div>
+<div class="ga-spacing"></div>
+</div>
+<div class="ga-panel">
+<h4 style="margin-top:0">4) Send to the answer boxes</h4>
+<div class="ga-row"><button type="button" class="ga-sendx">Send the x values</button><button type="button" class="ga-sendy">Send the y values</button><button type="button" class="ga-sends">Send the spacing &amp; its uncertainty</button><button type="button" class="ga-sendm">Send the mean difference &amp; its std dev</button></div>
+</div>
+<script>
+(function() {
+  var root = document.querySelector(".imgan-wrap:not([data-ga-init])");
+  if (!root) return;
+  root.setAttribute("data-ga-init", "1");
+  try {
+  /* ══════════ settings for the person who sets the question ══════════ */
+  var STORAGE_KEY = 'ga_data_';
+  var LOCKED = false, PRESET_X = null, PRESET_Y = null;
+  var X_ANSWER_NUM       = '000'; // receives the x values, one per line
+  var Y_ANSWER_NUM       = '001'; // receives the y values, one per line
+  var SPACING_ANSWER_NUM = '002'; // receives the spacing (the slope of position against n)
+  var SPACING_UNC_ANSWER_NUM = '003'; // receives its uncertainty
+  var MEANDIFF_ANSWER_NUM = '004'; // receives the mean difference between successive values
+  var MEANDIFF_SD_ANSWER_NUM = '005'; // receives its standard deviation
+  /* ══════════ the page ══════════ */
+  function byClass(c){ return root.querySelector('.' + c); }
+  function allClass(c){ return root.querySelectorAll('.' + c); }
+  var view = byClass('ga-view'), cv = byClass('ga-canvas'), g = cv.getContext('2d'), loupe = byClass('ga-loupe'), lg = loupe.getContext('2d'), drop = byClass('ga-drop'), statusEl = byClass('ga-status'), pixEl = byClass('ga-pix');
+  var img = null, zoom = 1, mode = null, refClicks = [], drag = null, hoverPt = null;
+  var st = { x:null, y:null, same:false, pts:[], next:1, rec:'x', axis:'x', cb:false };
+  function setStatus(t){ statusEl.textContent = t; }
+  function pal(){ return st.cb ? { x:'#0072b2', y:'#d55e00', both:'#cc79a7', ref:'#009e73', sel:'#e69f00' } : { x:'#e0103a', y:'#1f5fd6', both:'#c0179a', ref:'#14a05a', sel:'#f2b800' }; }
+  function f6(v){ return (+v).toPrecision(6); }
+  function fmt(v){ var a = Math.abs(v); return a !== 0 && (a < 1e-3 || a >= 1e5) ? v.toExponential(3) : String(parseFloat((+v).toPrecision(5))); }   /* no dollar signs: MOM substitutes them */
+  /* ══════════ the scales: a value from a pixel position, for each axis ══════════ */
+  function xOf(px){ return st.x ? st.x.v1 + (px - st.x.p1)*(st.x.v2 - st.x.v1)/(st.x.p2 - st.x.p1) : null; }
+  function yOf(py){ if (st.same && st.x){ var k = (st.x.v2 - st.x.v1)/(st.x.p2 - st.x.p1); return Math.abs(k)*((st.yref == null ? st.x.py : st.yref) - py); }   /* the same units per pixel, upward positive, from the first x reference */
+    return st.y ? st.y.v1 + (py - st.y.p1)*(st.y.v2 - st.y.v1)/(st.y.p2 - st.y.p1) : null; }
+  function yScaled(){ return !!(st.same ? st.x : st.y); }
+  function xUnit(){ return byClass('ga-xu').value || ''; } function yUnit(){ return st.same ? xUnit() : (byClass('ga-yu').value || ''); }
+  function scaleText(){ byClass('ga-xstat').textContent = st.x ? 'set: ' + fmt(Math.abs((st.x.v2 - st.x.v1)/(st.x.p2 - st.x.p1))) + ' ' + xUnit() + ' per pixel' + (LOCKED ? ' (given)' : '') : 'not set';
+    byClass('ga-ystat').textContent = st.same ? 'same as x' : (st.y ? 'set: ' + fmt(Math.abs((st.y.v2 - st.y.v1)/(st.y.p2 - st.y.p1))) + ' ' + yUnit() + ' per pixel' + (LOCKED ? ' (given)' : '') : 'not set');
+    byClass('ga-yrow').style.opacity = st.same ? 0.45 : 1; }
+  /* ══════════ loading ══════════ */
+  function useImage(im, name){ img = im; drop.style.display = 'none'; cv.style.display = 'block'; var back = restore(); fit(); recalc(); if (back && st.pts.length){ setStatus('Image loaded: ' + name + '. Your ' + st.pts.length + ' earlier point(s) were restored.'); return; } setStatus('Image loaded: ' + name + ' (' + im.naturalWidth + ' \u00D7 ' + im.naturalHeight + ' pixels). ' + (st.x ? 'The scale is set; choose what to record and press Start marking.' : 'Set the x scale (and the y scale if you need it).')); }
+  var fileName = null;
+  function IMG_KEY(){ return fileName; }
+  function loadFile(f){ if (!f) return; if (!/^image\//.test(f.type)){ setStatus('That is not an image file.'); return; } var rd = new FileReader();
+    rd.onload = function(){ var im = new Image(); im.onload = function(){ fileName = f.name; useImage(im, f.name); }; im.onerror = function(){ setStatus('The image could not be read.'); }; im.src = rd.result; }; rd.readAsDataURL(f); }
+  byClass('ga-file').addEventListener('change', function(){ loadFile(this.files[0]); });
+  view.addEventListener('dragover', function(e){ e.preventDefault(); }); view.addEventListener('drop', function(e){ e.preventDefault(); if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+  /* ══════════ drawing ══════════ */
+  function fit(){ if (!img) return; var w = view.clientWidth - 4; zoom = Math.min(1, w/img.naturalWidth); size(); }
+  function size(){ if (!img) return; cv.width = Math.round(img.naturalWidth*zoom); cv.height = Math.round(img.naturalHeight*zoom); draw(); }
+  function S(px, py){ return [px*zoom, py*zoom]; }
+  function draw(){ if (!img) return; var P = pal(); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
+    var W = cv.width, H = cv.height;
+    function vline(px, col, w, dash){ var x = px*zoom; g.strokeStyle = col; g.lineWidth = w; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); g.setLineDash([]); }
+    function hline(py, col, w, dash){ var y = py*zoom; g.strokeStyle = col; g.lineWidth = w; g.setLineDash(dash || []); g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); g.setLineDash([]); }
+    function lab(t, x, y, col){ g.font = 'bold 12px Arial'; var w = g.measureText(t).width; g.fillStyle = 'rgba(255,255,255,0.85)'; g.fillRect(x - 2, y - 11, w + 4, 14); g.fillStyle = col; g.fillText(t, x, y); }
+    /* the scale references */
+    if (st.x){ vline(st.x.p1, P.ref, 1.5, [6, 4]); vline(st.x.p2, P.ref, 1.5, [6, 4]); lab('x = ' + fmt(st.x.v1), st.x.p1*zoom + 4, 14, P.ref); lab('x = ' + fmt(st.x.v2), st.x.p2*zoom + 4, 14, P.ref); }
+    if (st.y && !st.same){ hline(st.y.p1, P.ref, 1.5, [6, 4]); hline(st.y.p2, P.ref, 1.5, [6, 4]); lab('y = ' + fmt(st.y.v1), 4, st.y.p1*zoom - 4, P.ref); lab('y = ' + fmt(st.y.v2), 4, st.y.p2*zoom - 4, P.ref); }
+    refClicks.forEach(function(q){ var s = S(q[0], q[1]); g.strokeStyle = P.ref; g.lineWidth = 2; g.beginPath(); g.arc(s[0], s[1], 6, 0, 2*Math.PI); g.stroke(); });
+    /* the recorded points: a line across for one coordinate, a cross for both */
+    st.pts.forEach(function(q, i){ var sel = drag && drag.i === i, col = sel ? P.sel : (q.m === 'x' ? P.x : q.m === 'y' ? P.y : P.both), s = S(q.px, q.py);
+      if (q.m === 'x') vline(q.px, col, 2); else if (q.m === 'y') hline(q.py, col, 2); else { g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(s[0] - 9, s[1]); g.lineTo(s[0] + 9, s[1]); g.moveTo(s[0], s[1] - 9); g.lineTo(s[0], s[1] + 9); g.stroke(); g.beginPath(); g.arc(s[0], s[1], 5, 0, 2*Math.PI); g.stroke(); }
+      lab(String(q.n), q.m === 'y' ? 6 + 26*((i % 3)) : s[0] + 4, q.m === 'x' ? H - 6 - 14*(i % 2) : s[1] - 8, col); }); }
+  function toImg(e){ var r = cv.getBoundingClientRect(); return [(e.clientX - r.left)*img.naturalWidth/r.width, (e.clientY - r.top)*img.naturalHeight/r.height]; }
+  function showLoupe(e, q){ if (!img || !byClass('ga-loupechk').checked){ loupe.style.display = 'none'; return; }
+    /* the visible part of the view (it scrolls when zoomed in); the magnifier goes beside the pointer, never over it, always fully visible */
+    var vr = view.getBoundingClientRect(), visL = view.scrollLeft, visT = view.scrollTop, visW = view.clientWidth, visH = view.clientHeight;
+    var L = Math.max(70, Math.min(150, visH - 8, Math.floor(visW/2) - 16)), gap = 18;
+    if (loupe.width !== L){ loupe.width = L; loupe.height = L; } loupe.style.width = L + 'px'; loupe.style.height = L + 'px';
+    var x = e.clientX - vr.left - view.clientLeft + visL, y = e.clientY - vr.top - view.clientTop + visT;
+    var lx = (x + gap + L <= visL + visW) ? x + gap : x - gap - L;   /* right of the pointer, or left of it */
+    lx = Math.max(visL + 2, Math.min(visL + visW - L - 2, lx));
+    var ly = Math.max(visT + 2, Math.min(visT + visH - L - 2, y - L/2));   /* centred on the pointer's height, kept inside */
+    if (lx < x + 6 && lx + L > x - 6 && ly < y + 6 && ly + L > y - 6){ ly = (y - gap - L >= visT + 2) ? y - gap - L : Math.min(visT + visH - L - 2, y + gap); }   /* never over the pointer */
+    loupe.style.left = lx + 'px'; loupe.style.top = ly + 'px'; loupe.style.display = 'block';
+    var M = 4, sz = L/M, c = L/2; lg.imageSmoothingEnabled = false; lg.fillStyle = '#000'; lg.fillRect(0, 0, L, L); lg.drawImage(img, q[0] - sz/2, q[1] - sz/2, sz, sz, 0, 0, L, L);
+    lg.strokeStyle = '#ff0'; lg.lineWidth = 1; lg.beginPath(); lg.moveTo(c, 0); lg.lineTo(c, L); lg.moveTo(0, c); lg.lineTo(L, c); lg.stroke(); }
+  /* ══════════ clicking: scale references, marking, dragging a point ══════════ */
+  function nearPoint(q){ var best = -1, bd = 12/zoom; st.pts.forEach(function(p, i){ var d = p.m === 'x' ? Math.abs(p.px - q[0]) : p.m === 'y' ? Math.abs(p.py - q[1]) : Math.hypot(p.px - q[0], p.py - q[1]); if (d < bd){ bd = d; best = i; } }); return best; }
+  cv.addEventListener('pointerdown', function(e){ if (!img) return; var q = toImg(e);
+    if (mode === 'setx' || mode === 'sety'){ refClicks.push(q); draw();
+      if (refClicks.length === 2){ var a = refClicks[0], b = refClicks[1];
+        if (mode === 'setx'){ if (Math.abs(b[0] - a[0]) < 3){ setStatus('The two points are too close horizontally. Try again: click two points far apart.'); refClicks = []; draw(); return; } st.x = { p1:a[0], p2:b[0], py:a[1], v1:+byClass('ga-xv1').value, v2:+byClass('ga-xv2').value }; }
+        else { if (Math.abs(b[1] - a[1]) < 3){ setStatus('The two points are too close vertically. Try again.'); refClicks = []; draw(); return; } st.y = { p1:a[1], p2:b[1], v1:+byClass('ga-yv1').value, v2:+byClass('ga-yv2').value }; }
+        refClicks = []; var was = mode; endMode(); recalc(); setStatus((was === 'setx' ? 'The x scale' : 'The y scale') + ' is set. You can change the two values above at any time: the points update.'); }
+      else setStatus('Now click the second reference point.');
+      e.preventDefault(); return; }
+    var k = nearPoint(q); if (k >= 0){ drag = { i:k }; try { cv.setPointerCapture(e.pointerId); } catch(err){} e.preventDefault(); draw(); return; }
+    if (mode === 'mark'){ var m = st.rec; if ((m !== 'y' && !st.x) || (m !== 'x' && !yScaled())){ setStatus('Set the ' + (m === 'y' ? 'y' : (m === 'x' ? 'x' : 'x and y')) + ' scale first.'); return; }
+      st.pts.push({ n:st.next++, px:q[0], py:q[1], m:m }); recalc(); setStatus('Point ' + (st.next - 1) + ' recorded. Drag a mark to adjust it.'); e.preventDefault(); } });
+  cv.addEventListener('pointermove', function(e){ if (!img) return; var q = toImg(e); pixEl.textContent = 'pixel: (' + q[0].toFixed(1) + ', ' + q[1].toFixed(1) + ')' + (st.x ? '  x = ' + fmt(xOf(q[0])) + ' ' + xUnit() : '') + (yScaled() ? '  y = ' + fmt(yOf(q[1])) + ' ' + yUnit() : ''); showLoupe(e, q);
+    if (drag){ var p = st.pts[drag.i]; p.px = q[0]; p.py = q[1]; recalc(); e.preventDefault(); } });
+  cv.addEventListener('pointerup', function(){ if (drag){ drag = null; save(); draw(); } });
+  cv.addEventListener('pointerleave', function(){ loupe.style.display = 'none'; });
+  function endMode(){ mode = null; ['ga-setx', 'ga-sety', 'ga-mark'].forEach(function(c){ byClass(c).classList.remove('ga-on'); }); byClass('ga-mark').textContent = 'Start marking (click on the image)'; }
+  function startMode(m){ if (!img){ setStatus('Load an image first.'); return; } if (mode === m){ endMode(); setStatus(''); return; } endMode(); mode = m; refClicks = []; draw();
+    byClass(m === 'setx' ? 'ga-setx' : m === 'sety' ? 'ga-sety' : 'ga-mark').classList.add('ga-on');
+    if (m === 'mark'){ byClass('ga-mark').textContent = 'Stop marking'; setStatus('Click on the image to record ' + (st.rec === 'x' ? 'x positions' : st.rec === 'y' ? 'y positions' : 'points (x and y)') + '. Drag a mark to adjust it.'); }
+    else setStatus('Click the first reference point for the ' + (m === 'setx' ? 'x' : 'y') + ' scale (its value: the "first point" box).'); }
+  /* ══════════ the table, the spacing, storage ══════════ */
+  function vals(axis){ var L = st.pts.filter(function(p){ return axis === 'x' ? p.m !== 'y' : p.m !== 'x'; }).map(function(p){ return axis === 'x' ? xOf(p.px) : yOf(p.py); }).filter(function(v){ return v !== null; });
+    return byClass('ga-sort').checked ? L.slice().sort(function(a, b){ return a - b; }) : L; }
+  function fitLine(ys){ var n = ys.length; if (n < 2) return null; var xs = ys.map(function(_, i){ return i + 1; }), mx = (n + 1)/2, my = ys.reduce(function(a, b){ return a + b; }, 0)/n, sxx = 0, sxy = 0;
+    for (var i=0; i<n; i++){ sxx += Math.pow(xs[i] - mx, 2); sxy += (xs[i] - mx)*(ys[i] - my); } var m = sxy/sxx, b = my - m*mx, ss = 0; for (var j=0; j<n; j++) ss += Math.pow(ys[j] - (m*xs[j] + b), 2);
+    return { m:m, b:b, sm:n > 2 ? Math.sqrt(ss/(n - 2)/sxx) : null }; }
+  function diffs(v){ var d = []; for (var i=1; i<v.length; i++) d.push(v[i] - v[i - 1]); return d; }
+  function meanSd(d){ var n = d.length; if (!n) return null; var m = d.reduce(function(a, b){ return a + b; }, 0)/n, s = 0; d.forEach(function(x){ s += (x - m)*(x - m); }); return { m:m, sd:n > 1 ? Math.sqrt(s/(n - 1)) : null, n:n }; }
+  function recalc(){ scaleText(); byClass('ga-thx').textContent = 'x (' + xUnit() + ')'; byClass('ga-thy').textContent = 'y (' + yUnit() + ')';
+    var rows = st.pts.map(function(p, i){ return { p:p, i:i, x:p.m !== 'y' ? xOf(p.px) : null, y:p.m !== 'x' ? yOf(p.py) : null }; });
+    if (byClass('ga-sort').checked){ var ax = st.axis; rows.sort(function(a, b){ var va = ax === 'x' ? a.x : a.y, vb = ax === 'x' ? b.x : b.y; if (va === null) return 1; if (vb === null) return -1; return va - vb; }); }
+    byClass('ga-tbody').innerHTML = rows.map(function(r){ return '<tr><td>' + r.p.n + '</td><td>' + (r.x === null ? '\u2014' : fmt(r.x)) + '</td><td>' + (r.y === null ? '\u2014' : fmt(r.y)) + '</td><td><button type="button" class="ga-del" data-i="' + r.i + '" title="delete this point">\u00D7</button></td></tr>'; }).join('') || '<tr><td colspan="4" style="text-align:center;color:#889">no points yet</td></tr>';
+    [].forEach.call(root.querySelectorAll('.ga-del'), function(b){ b.addEventListener('click', function(){ st.pts.splice(+b.getAttribute('data-i'), 1); recalc(); }); });
+    var v = vals(st.axis), u = st.axis === 'x' ? xUnit() : yUnit(), F = fitLine(v), D = meanSd(diffs(v)), h = '';
+    if (v.length < 2) h = 'Record at least two ' + st.axis + ' positions (for fringes: the centres of several successive bright or dark fringes).';
+    else { h = '<div>' + v.length + ' values, in order: ' + v.map(fmt).join(', ') + ' ' + u + '</div><div>successive differences: ' + diffs(v).map(fmt).join(', ') + ' ' + u + '</div>'
+      + '<div><b>mean difference = ' + fmt(D.m) + (D.sd !== null ? ' \u00B1 ' + fmt(D.sd) + ' (std dev)' : '') + ' ' + u + '</b></div>'
+      + '<div><b>spacing from the fit of position against n: ' + fmt(F.m) + (F.sm !== null ? ' \u00B1 ' + fmt(F.sm) : '') + ' ' + u + '</b> &nbsp;<span style="font-size:12px;color:#556">(the slope of a straight line through the points numbered 1, 2, 3, \u2026 in order; it uses all the points at once)</span></div>'; }
+    byClass('ga-spacing').innerHTML = h; draw(); save(); }
+  function save(){ if (!img) return;   /* nothing to save before an image is loaded (and the stored points must not be overwritten) */
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ x:st.x, y:st.y, same:st.same, yref:st.yref, pts:st.pts, next:st.next, rec:st.rec, axis:st.axis, xu:xUnit(), yu:byClass('ga-yu').value, xv:[byClass('ga-xv1').value, byClass('ga-xv2').value], yv:[byClass('ga-yv1').value, byClass('ga-yv2').value], img:IMG_KEY() })); } catch(err){} }
+  function restore(){ try { var d = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); if (!d || d.img !== IMG_KEY()) return false;
+      if (!LOCKED){ st.x = d.x; st.y = d.y; st.same = d.same; st.yref = d.yref; byClass('ga-xu').value = d.xu; byClass('ga-yu').value = d.yu; byClass('ga-xv1').value = d.xv[0]; byClass('ga-xv2').value = d.xv[1]; byClass('ga-yv1').value = d.yv[0]; byClass('ga-yv2').value = d.yv[1]; byClass('ga-same').checked = st.same; }
+      st.pts = d.pts || []; st.next = d.next || 1; st.rec = d.rec || 'x'; st.axis = d.axis || 'x'; [].forEach.call(allClass('ga-mode'), function(r){ r.checked = r.value === st.rec; }); [].forEach.call(allClass('ga-axis'), function(r){ r.checked = r.value === st.axis; }); return true; } catch(err){ return false; } }
+  /* ══════════ the answer boxes ══════════ */
+  function getAnswerBox(num) {
+    // '' is kept as its own isolated string literal (ending right at the closing quote)
+    // so MOM's server-side substitution can't merge it with the following digits.
+    var id = 'qn' + num;
+    return document.getElementById(id);
+  }
+  function send(num, text, what){ var box = getAnswerBox(num); if (!box){ setStatus('Could not find answer box ' + num + ' on this page.'); return; } box.value = text; try { box.dispatchEvent(new Event('input', { bubbles:true })); box.dispatchEvent(new Event('change', { bubbles:true })); } catch(err){} setStatus('Sent ' + what + ' to answer box ' + num + '.'); }
+  byClass('ga-sendx').addEventListener('click', function(){ var v = vals('x'); if (!v.length){ setStatus('No x values recorded yet.'); return; } send(X_ANSWER_NUM, v.map(f6).join('\n'), v.length + ' x value(s)'); });
+  byClass('ga-sendy').addEventListener('click', function(){ var v = vals('y'); if (!v.length){ setStatus('No y values recorded yet.'); return; } send(Y_ANSWER_NUM, v.map(f6).join('\n'), v.length + ' y value(s)'); });
+  byClass('ga-sends').addEventListener('click', function(){ var F = fitLine(vals(st.axis)); if (!F){ setStatus('Record at least two positions first.'); return; } send(SPACING_ANSWER_NUM, f6(F.m), 'the spacing'); if (F.sm !== null){ var b2 = getAnswerBox(SPACING_UNC_ANSWER_NUM); if (b2){ b2.value = f6(F.sm); setStatus('Sent the spacing (' + fmt(F.m) + ') and its uncertainty (' + fmt(F.sm) + ') to answer boxes ' + SPACING_ANSWER_NUM + ' and ' + SPACING_UNC_ANSWER_NUM + '.'); } } else setStatus('Sent the spacing. Its uncertainty needs at least three points.'); });
+  byClass('ga-sendm').addEventListener('click', function(){ var D = meanSd(diffs(vals(st.axis))); if (!D){ setStatus('Record at least two positions first.'); return; } send(MEANDIFF_ANSWER_NUM, f6(D.m), 'the mean difference'); if (D.sd !== null){ var b2 = getAnswerBox(MEANDIFF_SD_ANSWER_NUM); if (b2){ b2.value = f6(D.sd); setStatus('Sent the mean difference (' + fmt(D.m) + ') and its std dev (' + fmt(D.sd) + ') to answer boxes ' + MEANDIFF_ANSWER_NUM + ' and ' + MEANDIFF_SD_ANSWER_NUM + '.'); } } });
+  /* ══════════ the controls ══════════ */
+  byClass('ga-setx').addEventListener('click', function(){ if (LOCKED){ setStatus('The scale is given for this question.'); return; } startMode('setx'); });
+  byClass('ga-sety').addEventListener('click', function(){ if (LOCKED){ setStatus('The scale is given for this question.'); return; } if (st.same){ setStatus('Untick "y uses the same scale as x" to set a separate y scale.'); return; } startMode('sety'); });
+  byClass('ga-mark').addEventListener('click', function(){ startMode('mark'); });
+  byClass('ga-undo').addEventListener('click', function(){ if (st.pts.length){ st.pts.pop(); recalc(); setStatus('Last point removed.'); } });
+  byClass('ga-clear').addEventListener('click', function(){ if (st.pts.length && !confirm('Remove all the recorded points?')) return; st.pts = []; st.next = 1; recalc(); setStatus('Points cleared.'); });
+  byClass('ga-csv').addEventListener('click', function(){ if (!st.pts.length){ setStatus('No points to export.'); return; } var L = ['n,x (' + xUnit() + '),y (' + yUnit() + '),pixel x,pixel y'].concat(st.pts.map(function(p){ return p.n + ',' + (p.m !== 'y' ? f6(xOf(p.px)) : '') + ',' + (p.m !== 'x' ? f6(yOf(p.py)) : '') + ',' + p.px.toFixed(2) + ',' + p.py.toFixed(2); }));
+    var a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(L.join('\n')); a.download = 'image_positions.csv'; document.body.appendChild(a); a.click(); a.remove(); });
+  byClass('ga-same').addEventListener('change', function(){ if (LOCKED){ this.checked = st.same; return; } st.same = this.checked; if (st.same && st.x) st.yref = st.x.py; recalc(); });
+  [].forEach.call(allClass('ga-mode'), function(r){ r.addEventListener('change', function(){ st.rec = this.value; if (mode === 'mark'){ endMode(); startMode('mark'); } save(); }); });
+  [].forEach.call(allClass('ga-axis'), function(r){ r.addEventListener('change', function(){ st.axis = this.value; recalc(); }); });
+  ['ga-xv1', 'ga-xv2'].forEach(function(c, i){ byClass(c).addEventListener('input', function(){ if (st.x && !LOCKED){ st.x[i ? 'v2' : 'v1'] = +this.value; recalc(); } }); });
+  ['ga-yv1', 'ga-yv2'].forEach(function(c, i){ byClass(c).addEventListener('input', function(){ if (st.y && !LOCKED){ st.y[i ? 'v2' : 'v1'] = +this.value; recalc(); } }); });
+  ['ga-xu', 'ga-yu', 'ga-sort'].forEach(function(c){ byClass(c).addEventListener(c === 'ga-sort' ? 'change' : 'input', recalc); });
+  byClass('ga-zfit').addEventListener('click', fit); byClass('ga-z1').addEventListener('click', function(){ zoom = 1; size(); });
+  byClass('ga-zin').addEventListener('click', function(){ zoom = Math.min(8, zoom*1.5); size(); }); byClass('ga-zout').addEventListener('click', function(){ zoom = Math.max(0.05, zoom/1.5); size(); });
+  byClass('ga-cb').addEventListener('click', function(){ st.cb = !st.cb; this.textContent = 'Colorblind-friendly colors: ' + (st.cb ? 'On' : 'Off'); draw(); });
+  byClass('ga-hcb').addEventListener('click', function(){ var on = root.classList.toggle('ga-hc'); this.textContent = 'High contrast: ' + (on ? 'On' : 'Off'); });
+  byClass('ga-font').addEventListener('click', function(){ var on = root.classList.toggle('ga-big'); this.textContent = 'Font size: ' + (on ? 'Large' : 'Normal'); });
+  window.addEventListener('resize', function(){ if (img && zoom <= 1) fit(); });
+  /* the person setting the question can give the scale */
+  if (LOCKED || PRESET_X){ if (PRESET_X){ st.x = { p1:PRESET_X.p1[0], p2:PRESET_X.p2[0], py:PRESET_X.p1[1], v1:PRESET_X.v1, v2:PRESET_X.v2 }; byClass('ga-xv1').value = PRESET_X.v1; byClass('ga-xv2').value = PRESET_X.v2; byClass('ga-xu').value = PRESET_X.unit || ''; }
+    if (PRESET_Y === 'same'){ st.same = true; st.yref = st.x ? st.x.py : null; byClass('ga-same').checked = true; } else if (PRESET_Y){ st.y = { p1:PRESET_Y.p1[1], p2:PRESET_Y.p2[1], v1:PRESET_Y.v1, v2:PRESET_Y.v2 }; byClass('ga-yv1').value = PRESET_Y.v1; byClass('ga-yv2').value = PRESET_Y.v2; byClass('ga-yu').value = PRESET_Y.unit || ''; }
+    if (LOCKED){ [].forEach.call(root.querySelectorAll('.ga-xv1, .ga-xv2, .ga-yv1, .ga-yv2, .ga-xu, .ga-yu, .ga-same'), function(e){ e.disabled = true; }); byClass('ga-setx').disabled = true; byClass('ga-sety').disabled = true; } }
+  restore(); recalc(); setStatus('Load an image to begin.');
+  } catch (gaErr) { var s_ = root.querySelector('.ga-status'); if (s_) s_.textContent = 'Error: ' + (gaErr && gaErr.message ? gaErr.message : gaErr); if (window.console && console.error) console.error('Image analysis error:', gaErr); }
+})();
+</script>
+
+</div>
+<div style="max-width:900px;margin:14px 0;padding:10px 14px;border:1px dashed #889;border-radius:6px;background:#fff"><b>Answer boxes (demonstration).</b> <span style="font-size:13px;color:#445">In the MOM version these are the question&rsquo;s answer boxes; the &ldquo;Send&rdquo; buttons fill them, ready to be submitted. The box numbers are set at the top of the script.</span><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><label for="qn000" style="width:190px;font-size:13px">box 000: x values</label><textarea id="qn000" rows="3" style="flex:1;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><label for="qn001" style="width:190px;font-size:13px">box 001: y values</label><textarea id="qn001" rows="3" style="flex:1;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><label for="qn002" style="width:190px;font-size:13px">box 002: spacing</label><textarea id="qn002" rows="1" style="flex:1;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><label for="qn003" style="width:190px;font-size:13px">box 003: spacing uncertainty</label><textarea id="qn003" rows="1" style="flex:1;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><label for="qn004" style="width:190px;font-size:13px">box 004: mean difference</label><textarea id="qn004" rows="1" style="flex:1;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><label for="qn005" style="width:190px;font-size:13px">box 005: its std dev</label><textarea id="qn005" rows="1" style="flex:1;font-family:monospace;font-size:12px"></textarea></div></div>
+</body>
+</html>

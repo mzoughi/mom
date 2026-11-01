@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations- Optics: Single Slit</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn,optics, interference,diffraction, physical, slit, single,color,Wave,interference,frequency, lesson, scientific">
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<div id="snellRoot0920">
+<!-- ── Accessibility toolbar ── -->
+<div class="sn_a11y0920" id="snellA11yBar0920" role="toolbar" aria-label="Display options">
+<button type="button" class="sn_a11ybtn0920" id="snBtnHC0920" onclick="snellA11y0920.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="sn_a11ybtn0920" id="snBtnLM0920" onclick="snellA11y0920.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="sn_a11ybtn0920" id="snBtnCB0920" onclick="snellA11y0920.toggle('cb')" aria-pressed="false">THICK CURVES</button>
+<button type="button" class="sn_a11ybtn0920 sn_a11yon0920" id="snBtnNR0920" onclick="snellA11y0920.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<hr>
+<div id="canvasesdiv" class="tbar0920"><H3>2 Slits</H3></div>
+<div class="mcontent0920">
+<canvas id="cv0920" width="820" height="450"></canvas>
+</div>
+<div class="sbbar0920 sbbar-pink0920">
+<div class="left0920">Screen distance</div>
+<div class="centerL0920">
+`L=\ `<input class="slider0920" type="range" id="LValue0920" min="1" max="2" value="1.00" step="0.1"
+oninput="lightinterf20920.showL(this.value)" onchange="lightinterf20920.showL(this.value)">
+<span class="txtDPL0920"><span id="initialLValue0920">1.0</span> m</span>
+</div>
+<div class="centerR0920">
+<input type="checkbox" id="myCheck0920" onchange="lightinterf20920.reset();">
+<label for="myCheck0920"><span id="selectSoundL">Show Intensity Curve</span></label>
+</div>
+<div class="right0920">
+<input type="radio" id="scale10920" name="scale" value="1" onclick="lightinterf20920.changeScale(this.value)" checked/><label for="scale10920">x1</label>
+<input type="radio" id="scale20920" name="scale" value="2" onclick="lightinterf20920.changeScale(this.value)"/><label for="scale20920">x2</label>
+<input type="radio" id="scale40920" name="scale" value="4" onclick="lightinterf20920.changeScale(this.value)"/><label for="scale40920">x4</label>
+<input type="radio" id="scale80920" name="scale" value="8" onclick="lightinterf20920.changeScale(this.value)"/><label for="scale80920">x8</label>
+<input type="radio" id="scale160920" name="scale" value="16" onclick="lightinterf20920.changeScale(this.value)"/><label for="scale160920">x16</label>
+</div>
+</div>
+<!-- Narration bar -->
+<div id="snNarBar0920" class="sn_narbar0920" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="bbar0920 bbar-blue0920">
+<div class="left0920">Slits</div>
+<div class="centerL0920">
+`d =\ `<input class="slider0920" type="range" id="v2Value0920" min="20" max="72" value="36" step="1.0"
+oninput="lightinterf20920.showd(this.value)" onchange="lightinterf20920.showd(this.value)">
+<span class="txtDPL0920"><span id="initialdValue0920">36</span> &mu;m</span>
+<br>
+<input type="button" id="open10920" value="1 slit"    onclick="lightinterf20920.setOpening(1)">
+<input type="button" id="open3b0920" value="2 slits"  onclick="lightinterf20920.setOpening(3)">
+<br><span style="visibility:hidden">`a =\ `<input class="slider0920" type="range" id="v1Value0920" min="0.5" max="80" value="12" step="0.5"
+oninput="lightinterf20920.showa(this.value)" onchange="lightinterf20920.showa(this.value)">
+<span class="txtDPL0920"><span id="initialaValue0920">12</span> &mu;m</span></span>
+<p style="visibility:hidden">
+<input type="button" id="open20920" value="2 sources" onclick="lightinterf20920.setOpening(2)">
+<input type="button" id="open40920" value="3 slits"   onclick="lightinterf20920.setOpening(4)">
+<input type="button" id="open50920" value="4 slits"   onclick="lightinterf20920.setOpening(5)">
+</p>
+</div>
+<div class="centerR0920">Light Source</div>
+<div class="right0920">
+`lambda =\ `<input class="slider0920" type="range" id="CValue0920" min="0.4" max="0.65" value="0.65" step="0.01"
+ oninput="lightinterf20920.showC(this.value)" onchange="lightinterf20920.showC(this.value)">
+<span class="txtDPL0920"><span id="initialCValue0920">0.65</span> &mu;m</span>
+<p>
+<input type="button" id="color30920" value="Violet" onclick="lightinterf20920.setColor(0.4)">
+<input type="button" id="color20920" value="Green"  onclick="lightinterf20920.setColor(0.52)">
+<input type="button" id="color10920" value="Red"    onclick="lightinterf20920.setColor(0.65)">
+</p>
+</div>
+</div>
+<hr>
+<ol type="a">
+<li>Change the slit separation `d` and observe the light pattern on the screen. Which slit separation results in the narrowing of the interference fringes?<br /></li>
+<li>Use the intensity curve and the "1 slit" and "2 slits" buttons to compare the pattern due to one slit to the one due to 2. What do you conclude -- does the slit width `a` affect the pattern you see on the screen?<br /></li>
+<li>With the slit separation at the maximum possible value and the wavelength at `0.65\ mu"m"`, block one slit and use the intensity curve to get the approximate width of the central maximum.<br />One Slit: `Delta y_{"central maximum"}\ =\ `</li>
+<li>Keeping the same settings but unblocking the slit, estimate the width of the central maximum due to the double-slit pattern.<br />Two Slits Interference: `Delta y_{"central maximum"}\ =\ `</li>
+<li>Keeping the same settings, estimate the width of the 1st order bright fringe.<br />Two Slits: `Delta y_{"1st fringe"}\ =\ ``Delta x\ =\ `</li>
+</ol>
+</div><!-- #snellRoot0920 -->
+<style>
+* { margin: 0; box-sizing: border-box; }
+div { width: 823px; margin: 0; }
+#snellRoot0920 { --sn-toolbar-bg: #222; }
+#snellRoot0920 .sn_a11y0920 {
+display: flex; gap: 6px; padding: 6px 8px;
+background: var(--sn-toolbar-bg); flex-wrap: wrap; width: 823px;
+}
+#snellRoot0920 .sn_a11ybtn0920 {
+padding: 4px 10px; font-size: .72rem; font-family: monospace;
+letter-spacing: .06em; border-radius: 3px; cursor: pointer;
+background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa;
+transition: border-color .15s, color .15s;
+}
+#snellRoot0920 .sn_a11ybtn0920:hover { border-color: #00e8d0; color: #00e8d0; }
+#snellRoot0920 .sn_a11yon0920 { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#snellRoot0920 .sn_narbar0920 {
+width: 823px; min-height: 28px; padding: 5px 10px;
+background: #ffefc0; border-left: 4px solid #e0b040;
+font-size: .88rem; color: #333; font-style: italic;
+}
+.slider0920  { width: 155px; height: 14px; display: inline-block; }
+.zslider0920 { width: 145px; height: 14px; display: inline-block; }
+.txtDPL0920  { background-color: blue; color: yellow; margin-left: 10px; padding-top: 2px;
+display: inline-block; font-size: 14px; text-align: center; height: 20px; width: 58px; }
+.tbar0920    { padding: 2px; height: 30px; background-color: #f90; text-align: center; }
+.mcontent0920  { height: 452px; }
+.mcontent20920 { height: 192px; text-align: center; display: flex; }
+.sbbar0920 { height: 45px; text-align: center; display: flex; }
+.sbbar0920 .left0920    { width: 110px; padding: 5px; }
+.sbbar0920 .centerL0920 { width: 302px; padding: 5px; }
+.sbbar0920 .centerR0920 { width: 110px; padding: 5px; }
+.sbbar0920 .right0920   { width: 302px; padding: 5px; }
+.sbbar-pink0920 { background-color: #fce4ec; }
+.bbar0920 { height: 55px; text-align: center; display: flex; }
+.bbar0920 .left0920    { width: 110px; padding: 5px; }
+.bbar0920 .centerL0920 { width: 302px; padding: 5px; }
+.bbar0920 .centerR0920 { width: 110px; padding: 5px; }
+.bbar0920 .right0920   { width: 302px; padding: 5px; }
+.bbar-blue0920 { background-color: #e3f2fd; }
+.bbbar0920 { height: 45px; padding: 5px; text-align: left; display: flex; }
+.bbbar0920 .left0920  { width: 723px; padding: 5px; }
+.bbbar0920 .right0920 { width: 95px; padding: 5px; }
+.footer0920 { height: 60px; text-align: center; font-size: larger; display: flex; }
+.footer0920 .left0920   { width: 206px; padding: 2px; }
+.footer0920 .center0920 { width: 206px; padding: 4px; }
+.footer0920 .right0920  { width: 206px; padding: 4px; }
+.flex0920 { min-height: 100px; background-color: #fec; padding: 4px; }
+</style>
+<!-- ════════════════ ACCESSIBILITY CONTROLLER ════════════════ -->
+<script>
+var snellA11y0920 = (function(){
+var ROOT = null;
+var states = { hc: false, lm: false, cb: false, nr: true };
+/* cb here means "thick curves" for better visibility of intensity plot */
+function styleBtn(id, active) {
+var b = document.getElementById(id); if (!b) return;
+if (active) { b.style.background='rgba(0,232,208,.12)'; b.style.borderColor='#00e8d0'; b.style.color='#00e8d0'; }
+else        { b.style.background='#2a2e3a';             b.style.borderColor='#404a60'; b.style.color='#7a8aaa'; }
+b.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+function applyCanvas() {
+var cv = document.getElementById('cv0920');
+if (cv) cv.style.filter = states.lm ? 'invert(1) hue-rotate(180deg) brightness(0.9)' : '';
+}
+function applyNarBar() {
+var nb = document.getElementById('snNarBar0920');
+if (nb) nb.style.display = states.nr ? 'block' : 'none';
+var btn = document.getElementById('snBtnNR0920');
+if (btn) { btn.textContent = 'NARRATION: ' + (states.nr ? 'ON' : 'OFF'); styleBtn('snBtnNR0920', states.nr); }
+}
+function applyToolbar() {
+if (ROOT) ROOT.style.setProperty('--sn-toolbar-bg', (states.hc || states.lm) ? '#111' : '#222');
+}
+function apply() {
+if (!ROOT) return;
+applyCanvas(); applyNarBar(); applyToolbar();
+styleBtn('snBtnHC0920', states.hc);
+styleBtn('snBtnLM0920', states.lm);
+styleBtn('snBtnCB0920', states.cb);
+}
+return {
+init: function() { ROOT = document.getElementById('snellRoot0920'); apply(); },
+toggle: function(k) {
+states[k] = !states[k];
+if (k === 'hc' && states.hc) states.lm = false;
+if (k === 'lm' && states.lm) states.hc = false;
+apply();
+if (typeof lightinterf20920 !== 'undefined') lightinterf20920.reset();
+},
+isNarOn: function() { return states.nr; },
+narrate: function(msg) {
+if (!states.nr) return;
+var nb = document.getElementById('snNarBar0920');
+if (!nb) return;
+nb.innerHTML = msg;
+if (window.MathJax) {
+if (MathJax.typesetPromise) MathJax.typesetPromise([nb]);
+else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, nb]);
+}
+},
+/* Expose states for the sim to read */
+isHC:     function() { return states.hc; },
+isThick:  function() { return states.cb; },
+/* bg and graphBg colours driven by HC state */
+getBg:      function() { return states.hc ? '#111' : '#ffd'; },
+getGraphBg: function() { return states.hc ? '#112233' : '#eff'; },
+getAxis:    function() { return states.hc ? '#fff' : '#000'; }
+};
+})();
+</script>
+<!-- ════════════════ SIMULATION ════════════════ -->
+<script>
+var lightinterf2 = function() {
+var canvas = document.getElementById("cv0920");
+var ctx = canvas.getContext("2d");
+var index = -1;
+var xBase=50, yBase=200;
+var sWidth=600, sHeight=50, gHeight=160, slitTop=200;
+var sBase=100, sBase0=100, Lheight=yBase+slitTop-sBase0;
+var xInit=37, graphType=1;
+var graphTitle='Intensity as a function of position on screen';
+var yAxisTitle='Intensity', xAxisTitle='y (cm)', yNumDecimals=1;
+var yStart=yBase+120, plotColor='#ff00ff', radius=10;
+var maxTime=10.0, x1Init=0, x1=xBase+x1Init;
+var scenario=1, time=0.0, deltat=1/20.0;
+var a=12.0, d=36.0, L=1.0, N=2, openingType=3;
+var wavelength=0.65, lambda=wavelength*1000;
+var yIncrement=1;
+var redness,greenness,blueness,redString,greenString,blueString,colorString;
+var plotgraph=0, scaleGraph=1;
+var timer, runFlag=1;
+var px, py, axisValue, axisLabel;
+function _narrate(msg) { snellA11y0920.narrate(msg); }
+function _colourName(wl) {
+if (wl >= 0.62) return 'red';
+if (wl >= 0.59) return 'orange';
+if (wl >= 0.57) return 'yellow';
+if (wl >= 0.49) return 'green';
+if (wl >= 0.45) return 'blue';
+if (wl >= 0.38) return 'violet';
+return 'UV';
+}
+function _centralMaxWidth() {
+/* Δy_central = 2λL/a, λ and a in μm, L in m → result in m → ×100 for cm */
+return (2 * wavelength * L / a * 100).toFixed(2);
+}
+function _firstMinPos() {
+/* first minimum at y = λL/a */
+return (wavelength * L / a * 100).toFixed(2);
+}
+function showa(v) {
+document.getElementById("initialaValue0920").innerHTML = v;
+a = Number(v); reset();
+_narrate('Slit width a = ' + v + ' &mu;m. '
++ 'Single-slit envelope: central max &Delta;y &approx; ' + _centralMaxWidth() + ' cm. '
++ 'Missing orders where n = d/a = ' + (d/Number(v)).toFixed(1) + '.');
+}
+function showd(v) {
+document.getElementById("initialdValue0920").innerHTML = v;
+d = Number(v); reset();
+var fringeSpacing = (wavelength * L / d * 100).toFixed(2);
+_narrate('Slit separation d = ' + v + ' &mu;m. '
++ 'Fringe spacing &Delta;y &approx; &lambda;L/d = ' + fringeSpacing + ' cm.');
+}
+function showC(v) {
+document.getElementById("initialCValue0920").innerHTML = v;
+wavelength = Number(v); lambda = wavelength*1000; reset();
+_narrate('Wavelength &lambda; = ' + v + ' &mu;m (' + _colourName(Number(v)) + '). '
++ 'Central maximum &Delta;y &approx; ' + _centralMaxWidth() + ' cm.');
+}
+function showL(v) {
+document.getElementById("initialLValue0920").innerHTML = v;
+L = Number(v);
+sBase = sBase0 + (L-1)*sBase0;
+Lheight = yBase + slitTop - 2*sBase0 + sBase;
+reset();
+_narrate('Screen distance L = ' + v + ' m. '
++ 'Central maximum &Delta;y &approx; ' + _centralMaxWidth() + ' cm.');
+}
+function changeScale(v) {
+scaleGraph = Number(v); reset();
+_narrate('Zoom &times;' + v + '. Intensity curve ' + (plotgraph?'visible.':'hidden -- enable "Show Intensity Curve".'));
+}
+function setColor(color1) {
+wavelength = color1; lambda = wavelength*1000; reset();
+_narrate('Colour preset: &lambda; = ' + color1 + ' &mu;m (' + _colourName(color1) + ').');
+}
+function setOpening(o) { openingType = o; reset(); }
+function reset() {
+index=-1; time=0.0; x1=xBase+x1Init; runFlag=1;
+drawMotion();
+}
+/* initial draw deferred */
+function toHex(z) {
+if (z<0) z=0; if (z>1) z=1;
+var n=Math.floor(256*z);
+var hex=n.toString(16);
+if (hex.length<2) hex="0"+hex;
+if (hex.length>2) hex="ff";
+return hex;
+}
+function rgb(lambda,relInt) {
+if (relInt==undefined) relInt=1;
+var r1=0,g1=0,b1=0;
+if      (lambda>=380&&lambda<440){r1=(440-lambda)/60;g1=0;b1=1;}
+else if (lambda<490)             {r1=0;g1=(lambda-440)/50;b1=1;}
+else if (lambda<510)             {r1=0;g1=1;b1=(510-lambda)/20;}
+else if (lambda<580)             {r1=(lambda-510)/70;g1=1;b1=0;}
+else if (lambda<645)             {r1=1;g1=(645-lambda)/65;b1=0;}
+else if (lambda<=780)            {r1=1;g1=0;b1=0;}
+var f=0;
+if      (lambda>=380&&lambda<420) f=0.3+0.7*(lambda-380)/40;
+else if (lambda<700)              f=1;
+else if (lambda<=780)             f=0.3+0.7*(780-lambda)/80;
+var gamma=0.8;
+var r2=relInt*Math.pow(f*r1,gamma);
+var g2=relInt*Math.pow(f*g1,gamma);
+var b2=relInt*Math.pow(f*b1,gamma);
+return "#"+toHex(r2)+toHex(g2)+toHex(b2);
+}
+function rgb2(lambda,relInt) {
+var i=Math.pow(relInt,1/3);
+return rgb(lambda,i);
+}
+var c=rgb2(lambda,0);
+function amplitude(x) {
+if (x==0) return 1;
+var cc=Math.PI*a*Math.sin(x)/lambda;
+return Math.sin(cc)/cc;
+}
+function intensity(x) { var amp=amplitude(x); return amp*amp; }
+function drawMotion() {
+if (index>=400) runFlag=0;
+if (runFlag==1) {
+ctx.clearRect(0,0,canvas.width,canvas.height);
+index+=1;
+var myCheck = document.getElementById("myCheck0920");
+plotgraph = myCheck.checked ? 1 : 0;
+var bgCol      = snellA11y0920.getBg();
+var graphBgCol = snellA11y0920.getGraphBg();
+var axisCol    = snellA11y0920.getAxis();
+var curveWidth = snellA11y0920.isThick() ? 4 : 2;
+/* ── Layout constants ── */
+var CY    = 225;           /* canvas vertical centre = y=0 on screen */
+var PX_CM = 20;            /* pixels per cm on screen */
+var Y_TOP = CY - 10*PX_CM; /* y=25  (top of active area) */
+var Y_BOT = CY + 10*PX_CM; /* y=425 (bottom) */
+/* (5) Screen x-position moves with L: L=1→scrL=580, L=2→scrL=680 */
+var slitX  = 80;           /* x of slit slide -- (6) shifted left */
+var scrL   = slitX + 16 + Math.round((L-1)*100) + 500; /* screen left edge moves with L */
+var scrW   = 35;           /* width of screen strip */
+/* (1) Graph sits LEFT of screen, base touching screen */
+var graphW = 180;          /* width of graph (max I extent) */
+var graphL = scrL - graphW; /* graph LEFT edge = screen minus graph width */
+var axisX  = scrL + scrW + 5; /* y-axis tick mark x */
+/* ── Background ── */
+ctx.fillStyle = bgCol;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+/* ── Slit slide ── */
+var slitGapPx = Math.min(Math.max(a * 0.8, 4), 60);
+/* slit separation on slide: d μm → scale to pixels, cap for display */
+var dPx = Math.min(Math.max(d * 0.6, slitGapPx+4), 80);
+var lc = rgb2(lambda, 0.9);
+/* Determine slit positions based on openingType */
+var slitCentres = [0]; /* default: single slit at centre */
+if (openingType===3) { slitCentres = [-dPx/2, dPx/2]; }
+else if (openingType===4) { slitCentres = [-dPx, 0, dPx]; }
+else if (openingType===5) { slitCentres = [-1.5*dPx, -0.5*dPx, 0.5*dPx, 1.5*dPx]; }
+/* fill entire slide black, then punch out slit openings */
+ctx.fillStyle = "black";
+ctx.fillRect(slitX-8, Y_TOP, 16, Y_BOT-Y_TOP);
+ctx.fillStyle = lc;
+for (var si=0; si<slitCentres.length; si++) {
+var sc = CY + slitCentres[si];
+ctx.fillRect(slitX-8, sc-slitGapPx/2, 16, slitGapPx);
+}
+/* ── (6) Incoming rays -- shorter, 5 fixed rays ── */
+var rayCol = rgb2(lambda, 0.75);
+var rayYs  = [-30,-15,0,15,30];
+for (var ri=0; ri<rayYs.length; ri++) {
+var ry = CY + rayYs[ri];
+/* draw all 5, those in the gap use light colour (already lc), others same */
+ctx.strokeStyle = rayCol; ctx.fillStyle = rayCol;
+arrow(10, ry, slitX-10, ry, 1, rayCol);
+}
+/* ── (2)(3) L arrow: slit → left edge of screen; label leads the arrow ── */
+ctx.strokeStyle = 'blue'; ctx.fillStyle = 'blue';
+ctx.font='13pt Calibri'; ctx.textAlign='left';
+ctx.fillText('L = '+L.toFixed(1)+' m', slitX+10, 13);
+arrow(slitX+10, 22, scrL-2, 22, 2, 'blue');
+/* ── Graph background ── */
+if (plotgraph) {
+/* (3) graph background matches overall sim background */
+ctx.fillStyle = bgCol;
+ctx.fillRect(graphL, Y_TOP, graphW, Y_BOT-Y_TOP);
+drawGrid(graphL, graphW, Y_TOP, Y_BOT, PX_CM, axisCol);
+/* (1) I-axis arrow base at scrL, pointing LEFT */
+ctx.strokeStyle = axisCol; ctx.fillStyle = axisCol;
+arrow(scrL, Y_BOT+8, graphL-15, Y_BOT+8, 2, axisCol);
+ctx.font='20pt Calibri'; ctx.textAlign='right';
+ctx.fillText('I', graphL-18, Y_BOT+14);
+}
+/* ── Screen (black background first) ── */
+ctx.fillStyle = 'black';
+ctx.fillRect(scrL, Y_TOP, scrW, Y_BOT-Y_TOP);
+var curvePoints = [];
+for (var iy=Y_TOP; iy<=Y_BOT; iy++) {
+var y_cm = (CY - iy) / PX_CM;
+var y_m  = y_cm * 0.01;
+var sinT = y_m / Math.sqrt(y_m*y_m + L*L);
+var I0   = computeI(sinT);
+/* store xI for outline path -- drawn after loop */
+/* (4) no cap -- curve can extend beyond grid when scaled up */
+var xI_val = scrL - I0 * scaleGraph * graphW;
+curvePoints.push({x: xI_val, y: iy});
+/* (5) Screen: pad with black on edges for oval fringe look */
+var brightness = Math.pow(I0, 0.45);
+var glowBoost  = Math.exp(-y_cm*y_cm * 0.08);
+brightness = Math.min(brightness + 0.12*glowBoost, 1.0);
+ctx.lineWidth = 1;
+var padW = Math.round(scrW * 0.28); /* black padding width each side */
+/* black left pad */
+ctx.strokeStyle = 'black';
+ctx.beginPath(); ctx.moveTo(scrL, iy); ctx.lineTo(scrL+padW, iy); ctx.stroke();
+/* coloured middle -- width tapers with I for oval shape */
+var midW = scrW - 2*padW;
+var taper = Math.pow(I0, 0.18); /* gentle taper: bright→full width, dark→narrow */
+var halfLit = Math.max(taper * midW/2, 0.5);
+var midCx = scrL + scrW/2;
+ctx.strokeStyle = rgb2(lambda, brightness);
+ctx.beginPath(); ctx.moveTo(midCx-halfLit, iy); ctx.lineTo(midCx+halfLit, iy); ctx.stroke();
+/* black right pad */
+ctx.strokeStyle = 'black';
+ctx.beginPath(); ctx.moveTo(scrL+scrW-padW, iy); ctx.lineTo(scrL+scrW, iy); ctx.stroke();
+}
+/* ── (2) Draw intensity curve as outline only ── */
+if (plotgraph && typeof curvePoints !== 'undefined' && curvePoints.length > 1) {
+ctx.strokeStyle = rgb2(lambda, 0.9);
+ctx.lineWidth   = curveWidth;
+ctx.beginPath();
+/* left edge (base) -- top to bottom */
+ctx.moveTo(scrL, Y_TOP);
+/* trace curve left side */
+for (var ci=0; ci<curvePoints.length; ci++) {
+ctx.lineTo(curvePoints[ci].x, curvePoints[ci].y);
+}
+/* close back along scrL */
+ctx.lineTo(scrL, Y_BOT);
+ctx.stroke();
+}
+curvePoints = [];
+/* ── y-axis ticks and numbers (right of screen) ── */
+ctx.font='13pt Calibri'; ctx.fillStyle=axisCol;
+ctx.textAlign='left'; ctx.textBaseline='middle';
+for (var icm=-10; icm<=10; icm++) {
+var iy = CY - icm*PX_CM;
+ctx.strokeStyle=axisCol; ctx.lineWidth=1;
+ctx.beginPath();
+ctx.moveTo(scrL+scrW, iy); ctx.lineTo(scrL+scrW+4, iy); ctx.stroke();
+if (icm % 2 === 0) ctx.fillText(icm.toFixed(0), axisX, iy);
+}
+/* (1) y(cm) label rotated 90°, right of tick numbers */
+ctx.save();
+ctx.translate(axisX+28, CY);
+ctx.rotate(-Math.PI/2);
+ctx.font='13pt Calibri'; ctx.fillStyle=axisCol;
+ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText('y (cm)', 0, 0);
+ctx.restore();
+/* ── Labels ── */
+ctx.font='14pt Calibri'; ctx.fillStyle=axisCol; ctx.textAlign='center';
+ctx.fillText(openingType===2 ? 'sources' : 'slit(s)', slitX, Y_BOT+20);
+ctx.fillText('screen', scrL+scrW/2, Y_BOT+20);
+time=index/20.0;
+}
+}
+/* Compute physical intensity for a given sin(theta) value */
+function computeI(sinT) {
+if (openingType===1) {
+/* single slit */
+if (sinT===0) return 1.0;
+var beta = Math.PI * a * sinT / wavelength;
+var I = Math.sin(beta)*Math.sin(beta)/(beta*beta);
+return isFinite(I) ? I : 0;
+}
+if (openingType===2) {
+/* 2 coherent sources */
+return 0.5*(1+Math.cos(2*Math.PI*d*sinT/wavelength));
+}
+/* multi-slit: openingType 3=N2, 4=N3, 5=N4 */
+var Nv = openingType===3 ? 2 : openingType===4 ? 3 : 4;
+var beta  = (sinT===0) ? 0 : Math.PI*a*sinT/wavelength;
+var gamma = (sinT===0) ? 0 : Math.PI*d*sinT/wavelength;
+/* sinc term -- well behaved (beta=0 handled) */
+var I_sinc = (beta===0) ? 1 : Math.sin(beta)/beta; I_sinc*=I_sinc;
+/* N-slit interference term -- handle 0/0 at gamma = nπ via limit = Nv */
+var sinG = Math.sin(gamma);
+var I_N;
+if (Math.abs(sinG) < 1e-10) {
+I_N = 1.0;  /* limit of [sin(N*gamma)/sin(gamma)]^2/N^2 = 1 at gamma=nπ */
+} else {
+var ratio = Math.sin(Nv*gamma)/sinG;
+I_N = (ratio*ratio)/(Nv*Nv);
+}
+var v = I_sinc*I_N;
+return isFinite(v) ? v : 0;
+}
+function drawGrid(gL, gW, gT, gB, pxCm, axisCol) {
+ctx.strokeStyle='#555'; ctx.lineWidth=1;
+/* horizontal grid lines every 1 cm */
+for (var icm=-10; icm<=10; icm++) {
+var iy=225-icm*pxCm;
+ctx.beginPath(); ctx.moveTo(gL,iy); ctx.lineTo(gL+gW,iy); ctx.stroke();
+}
+/* vertical grid lines (I scale, 10 divisions) */
+for (var gi=0; gi<=10; gi++) {
+ctx.beginPath(); ctx.moveTo(gL+gi*gW/10,gT); ctx.lineTo(gL+gi*gW/10,gB); ctx.stroke();
+}
+}
+function arrow(x1,y1,x2,y2,w,col,txt,spc) {
+if(!w)w=1; if(!txt)txt=""; if(!spc)spc=5;
+if(!col)col=ctx.strokeStyle;
+ctx.fillStyle=col; ctx.strokeStyle=col;
+var dx=x2-x1,dy=y2-y1,length=Math.sqrt(dx*dx+dy*dy);
+if(length===0)return;
+dx/=length; dy/=length;
+var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;
+var h=0.5*w+3.5;
+var xSp1=xSp-h*dy,ySp1=ySp+h*dx,xSp2=xSp+h*dy,ySp2=ySp-h*dx;
+xSp=x2-0.6*s*dx; ySp=y2-0.6*s*dy;
+ctx.beginPath(); ctx.lineWidth=w;
+ctx.moveTo(x1,y1);
+if(length<5)ctx.lineTo(x2,y2); else ctx.lineTo(xSp,ySp);
+ctx.stroke();
+if(length<5)return;
+ctx.beginPath(); ctx.fillStyle=ctx.strokeStyle;
+ctx.moveTo(xSp,ySp); ctx.lineTo(xSp1,ySp1); ctx.lineTo(x2,y2); ctx.lineTo(xSp2,ySp2);
+ctx.closePath(); ctx.fill();
+var tspc=x2<=x1?-(3*spc):2*spc;
+ctx.fillText(txt,x2+tspc,y2+spc);
+}
+function arrowDraw(r,phi) {
+var xf=px+r*Math.cos(phi), yf=py-r*Math.sin(phi);
+arrow(px,py,xf,yf,3);
+}
+function runMotion() {
+drawMotion();
+if (runFlag==1) timer=window.setTimeout(runMotion,1000/60);
+}
+return {
+setColor, showC, setOpening, showd, showa, changeScale, showL, reset,
+redraw: function(){ reset(); }
+};
+};
+</script>
+<script>
+var lightinterf20920 = new lightinterf2();
+snellA11y0920.init();
+window.setTimeout(function(){
+lightinterf20920.reset();
+snellA11y0920.narrate('Two Slits ready. d=36 &mu;m, a=12 &mu;m, &lambda;=0.65 &mu;m (red), L=1 m. Fringe spacing &Delta;y &approx; &lambda;L/d = ' + (0.65*1/36*100).toFixed(2) + ' cm. Use "1 slit" / "2 slits" buttons to compare patterns.');
+}, 0);
+</script>
+</body>
+</html>

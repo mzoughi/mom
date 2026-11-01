@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Measurement: Micrometer</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, measurement, uncertainty, micrometer, screw gauge, measurement, precision, least count, uncertainty, thimble, sleeve, lesson, scientific">
+<meta name="description" content="Interactive micrometer simulation: practice reading the barrel and thimble scales and measure a disk and a rectangle to 0.01 mm.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mcRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="mc_a11y" id="mcA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="mc_a11ybtn" id="mcBtnLM" onclick="mcA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="mc_a11ybtn mc_a11yon" id="mcBtnNR" onclick="mcA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<!-- Header -->
+<div class="mc_header">
+<p class="mc_h1">Micrometer</p>
+<p class="mc_sub">A screw gauge reading to a hundredth of a millimeter</p>
+</div>
+<div id="mcNarBar" class="mc_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- ── Canvas ── -->
+<div class="mc_diag">
+<div class="mc_diaglabel"><b>MICROMETER</b><span class="mc_diagnote">drag the red dot (or use the sliders) &middot; zoom in to read the fine scales</span></div>
+<div class="mc_cvwrap">
+<canvas id="cv" width="650" height="280" style="border:1px solid #ccc;display:block;background:#fff;">
+<span style="color:red;">This browser does not support HTML5 canvas.</span>
+</canvas>
+</div>
+<div class="mc_zoombar" role="group" aria-label="Zoom">
+<span class="mc_zlbl">Zoom</span>
+<button type="button" class="mc_zbtn" data-z="1" aria-pressed="true" onclick="mcZoom.set(1)">1&times;</button>
+<button type="button" class="mc_zbtn" data-z="2" aria-pressed="false" onclick="mcZoom.set(2)">2&times;</button>
+<button type="button" class="mc_zbtn" data-z="3" aria-pressed="false" onclick="mcZoom.set(3)">3&times;</button>
+</div>
+</div>
+<!-- ── Object selector ── -->
+<div class="mc_ctrl mc_ctrl_green">
+<span class="mc_ctrlabel">Select Object:</span>
+<label class="mc_radlbl"><input type="radio" name="mcObj" value="noObject" id="mcNoObj" checked onchange="mcSim.setObj('noObject')"> No Object</label>
+<label class="mc_radlbl"><input type="radio" name="mcObj" value="disk"     id="mcDsk"           onchange="mcSim.setObj('disk')">     Disk</label>
+<label class="mc_radlbl"><input type="radio" name="mcObj" value="rect"     id="mcRect"          onchange="mcSim.setObj('rect')">     Rectangle</label>
+</div>
+<!-- ── Sleeve rotation slider ── -->
+<div class="mc_ctrl mc_ctrl_blue">
+<span class="mc_ctrlabel">&#9711; Sleeve:</span>
+<input type="range" id="mcSlider" class="mc_slider"
+min="0" max="25.00" value="25" step="0.01"
+oninput="mcSim.setMeas(+this.value)" onchange="mcSim.setMeas(+this.value)" aria-label="Micrometer measurement in millimetres">
+<span class="mc_rdout" id="mcRdout">25.00 mm</span>
+</div>
+<!-- ── Info panel ── -->
+<div class="mc_info">
+<div class="mc_infotitle">Micrometer</div>
+<div class="mc_infotext">
+The <strong>sleeve</strong> (linear) scale above the centre line reads whole millimetres; below the line reads half-millimetres.
+The <strong>barrel</strong> (thimble) scale reads 0.01&nbsp;mm per division (one full turn = 0.5&nbsp;mm).
+Reading = sleeve&nbsp;mm + half-mm (if visible) + barrel&nbsp;&times;&nbsp;0.01&nbsp;mm.
+Drag the <strong>red dot</strong> on the barrel or use the slider to rotate the sleeve.
+</div>
+<div class="mc_copyright">&copy;&nbsp;Taha Mzoughi 2015, adapted 2025</div>
+</div>
+<style>
+#mcRoot { display:block; width:652px; font-family:Calibri,Arial,sans-serif; font-size:10pt; }
+#mcRoot * { box-sizing:border-box; margin:0; }
+#mcRoot .mc_a11y { display:flex; gap:6px; padding:6px 8px; background:#222; flex-wrap:wrap; width:652px; }
+#mcRoot .mc_a11ybtn { padding:4px 10px; font-size:.72rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:#2a2e3a; border:1px solid #404a60; color:#7a8aaa; }
+#mcRoot .mc_a11ybtn:hover { border-color:#00e8d0; color:#00e8d0; }
+#mcRoot .mc_a11yon { background:rgba(0,232,208,.12); border-color:#00e8d0; color:#00e8d0; }
+#mcRoot .mc_narbar { width:652px; min-height:26px; padding:4px 10px; background:#ffefc0; border-left:4px solid #e0b040; font-size:.88rem; color:#333; font-style:italic; }
+#mcRoot .mc_ctrl { display:flex; align-items:center; gap:10px; width:652px; padding:7px 10px; flex-wrap:wrap; }
+#mcRoot .mc_ctrl_green { background:#99ff33; }
+#mcRoot .mc_ctrl_blue  { background:#cce8ff; border-top:1px solid #90c0e0; }
+#mcRoot .mc_ctrlabel { font-weight:bold; font-size:13px; white-space:nowrap; }
+#mcRoot .mc_radlbl { font-size:13px; cursor:pointer; display:flex; align-items:center; gap:4px; }
+#mcRoot .mc_slider { flex:1; min-width:220px; height:16px; cursor:pointer; }
+#mcRoot .mc_rdout { background:#00c; color:#ff0; font-family:monospace; font-size:13px; padding:2px 8px; border-radius:3px; white-space:nowrap; min-width:80px; text-align:right; }
+#mcRoot .mc_info { width:652px; background:#ffff00; border:1px solid #000; border-top:none; padding:6px 10px 4px; }
+#mcRoot .mc_infotitle { font-weight:bold; font-size:large; margin-bottom:2px; }
+#mcRoot .mc_infotext { font-size:10pt; margin-bottom:3px; }
+#mcRoot .mc_copyright { font-size:9pt; }
+</style>
+<style>
+/* ════════ Hall effect template layer: mobile friendly, scoped to #mcRoot ════════ */
+#mcRoot {
+--tp-chassis:#1a1c1f; --tp-panel:#22262b; --tp-panel-hi:#2c3138; --tp-panel-lo:#14161a;
+--tp-border:#3a4048; --tp-border-hi:#525c66; --tp-text:#c8d0d8; --tp-dim:#8a94a3;
+--tp-accent:#e8a020; --tp-green:#3ad08f; --tp-val:#ffdd66;
+--tp-focus:#e8a020; --tp-nar-bg:#2a2410; --tp-nar-border:#e0b040; --tp-nar-text:#f0e2b8;
+width:100% !important; max-width:780px; margin:0 auto 10px; box-sizing:border-box; position:relative;
+display:flex; flex-direction:column; gap:10px; padding:14px 10px 18px; border-radius:6px;
+font-family:Arial, sans-serif; color:var(--tp-text); background:var(--tp-chassis);
+background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+}
+#mcRoot.mc_lmode {
+--tp-chassis:#e9edf1; --tp-panel:#ffffff; --tp-panel-hi:#f1f4f7; --tp-panel-lo:#f4f6f9;
+--tp-border:#c3cad3; --tp-border-hi:#9aa3ae; --tp-text:#1d232a; --tp-dim:#556070;
+--tp-accent:#a8620a; --tp-green:#12805a; --tp-val:#8a4a00;
+--tp-focus:#a8620a; --tp-nar-bg:#ffefc0; --tp-nar-border:#e0b040; --tp-nar-text:#333333; background-image:none;
+}
+/* the reset leaves MathJax's own elements alone (it would zero the spacing its layout relies on) */
+#mcRoot :not(mjx-container):not(mjx-container *), #mcRoot :not(mjx-container):not(mjx-container *)::before, #mcRoot :not(mjx-container):not(mjx-container *)::after { box-sizing:border-box; margin:0; }
+#mcRoot input:focus-visible, #mcRoot button:focus-visible, #mcRoot select:focus-visible { outline:2px solid var(--tp-focus); outline-offset:2px; }
+/* display options */
+#mcRoot .mc_a11y { width:auto !important; background:none; padding:0; justify-content:center; }
+#mcRoot .mc_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-dim); }
+#mcRoot .mc_a11ybtn:hover { border-color:var(--tp-accent); color:var(--tp-accent); }
+#mcRoot .mc_a11yon { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* header */
+#mcRoot .mc_header { display:flex; flex-direction:column; align-items:center; gap:3px; }
+#mcRoot .mc_h1 { font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--tp-accent); text-align:center; }
+#mcRoot .mc_sub { font-size:.7rem; color:var(--tp-dim); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+/* narration */
+#mcRoot .mc_narbar { width:auto !important; min-height:28px; padding:6px 12px; background:var(--tp-nar-bg); border:none; border-left:4px solid var(--tp-nar-border); font-size:.82rem; color:var(--tp-nar-text); font-style:italic; line-height:1.45; border-radius:3px; }
+/* the instrument: canvas in a frame that scrolls sideways when zoomed */
+#mcRoot .mc_diag { background:var(--tp-panel); border:1px solid var(--tp-border); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#mcRoot .mc_diaglabel { background:var(--tp-panel-lo); border-bottom:1px solid var(--tp-border); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--tp-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#mcRoot .mc_diaglabel b { color:var(--tp-accent); }
+#mcRoot .mc_diagnote { text-transform:none; letter-spacing:.02em; }
+#mcRoot .mc_cvwrap { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; background:#ffffff; }
+#mcRoot canvas { display:block; width:100%; max-width:650px; height:auto; margin:0 auto; border:none !important; }
+#mcRoot .mc_zoombar { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; padding:8px 10px; background:var(--tp-panel-lo); border-top:1px solid var(--tp-border); }
+#mcRoot .mc_zlbl { font-family:monospace; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--tp-dim); }
+#mcRoot .mc_zbtn { padding:6px 14px; font-family:monospace; font-size:.74rem; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-border-hi); color:var(--tp-text); border-radius:3px; }
+#mcRoot .mc_zbtn[aria-pressed="true"] { background:rgba(58,208,143,.14); border-color:var(--tp-green); color:var(--tp-green); font-weight:bold; }
+/* control rows become panels (their colors become a stripe) */
+#mcRoot .mc_ctrl { width:auto !important; background:var(--tp-panel) !important; border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:6px; padding:9px 12px; gap:8px 12px; color:var(--tp-text); }
+#mcRoot .mc_ctrl_green { border-left-color:#7ccf3a; }
+#mcRoot .mc_ctrl_blue { border-left-color:#6fb3e8; }
+#mcRoot .mc_ctrl_tan { border-left-color:#d2a96a; }
+/* the ruler's X / Y / Angle row: one label, slider and value per line */
+#mcRoot .rul_ctrl_blue { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; }
+#mcRoot .mc_ctrlabel { color:var(--tp-dim); font-size:.74rem; font-weight:700; }
+#mcRoot .mc_radlbl { color:var(--tp-text); font-size:.8rem; }
+#mcRoot input[type=radio] { accent-color:var(--tp-accent); }
+#mcRoot .mc_slider { flex:1 1 140px; min-width:0 !important; width:auto !important; accent-color:var(--tp-accent); }
+#mcRoot .mc_rdout { background:var(--tp-panel-lo) !important; color:var(--tp-val) !important; border:1px solid var(--tp-border); font-family:monospace; font-size:.8rem; }
+#mcRoot select { background:var(--tp-panel-hi); color:var(--tp-text); border:1px solid var(--tp-border-hi); border-radius:3px; padding:4px 6px; font-size:.78rem; max-width:100%; }
+/* information panel */
+#mcRoot .mc_info { width:auto !important; background:var(--tp-panel) !important; border:1px solid var(--tp-border) !important; border-radius:6px; padding:9px 12px; color:var(--tp-text); }
+#mcRoot .mc_infotitle { color:var(--tp-accent); font-size:.8rem; font-family:monospace; letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; }
+#mcRoot .mc_infotext { font-size:.8rem; line-height:1.5; color:var(--tp-text); }
+#mcRoot .mc_copyright { font-size:.7rem; color:var(--tp-dim); margin-top:4px; }
+/* SIM description (toggle) */
+#mcRoot .mc_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#mcRoot .mc_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--tp-panel-hi); border:1px solid var(--tp-accent); color:var(--tp-accent); border-radius:3px; font-weight:bold; }
+#mcRoot .mc_descbtn[aria-expanded="true"] { background:rgba(232,160,32,.12); }
+#mcRoot .mc_desc { width:100%; background:var(--tp-panel); border:1px solid var(--tp-border); border-left:4px solid var(--tp-accent); border-radius:4px; padding:12px 16px; color:var(--tp-text); font-size:.86rem; line-height:1.55; }
+#mcRoot .mc_desc p { margin:0 0 9px 0; }
+#mcRoot .mc_desc p:last-child { margin-bottom:0; }
+#mcRoot .mc_eq { text-align:center; font-size:1rem; }
+/* questions (outside the instrument) */
+.mc_qwrap { width:100%; max-width:780px; margin:0 auto; padding:4px; box-sizing:border-box; }
+.mc_qwrap li { margin:0 0 10px 0; line-height:1.5; }
+/* phones and tablets: bigger touch targets */
+@media (pointer:coarse) {
+#mcRoot input[type=range] { height:28px; }
+#mcRoot input[type=radio] { width:20px; height:20px; }
+#mcRoot .mc_a11ybtn, #mcRoot .mc_zbtn, #mcRoot .mc_descbtn { min-height:40px; }
+#mcRoot select { min-height:36px; font-size:16px; }
+#mcRoot .mc_ctrl { gap:10px 14px; }
+}
+@media (max-width:560px) {
+#mcRoot { padding:10px 6px 14px; }
+}
+</style>
+<!-- ── Accessibility controller ── -->
+<script>
+var mcA11y = (function(){
+var states={lm:false,nr:true};
+function styleBtn(id,on){
+var b=document.getElementById(id);if(!b)return;
+b.classList.toggle('mc_a11yon', on);
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function apply(){
+var RT=document.getElementById('mcRoot'); if(RT) RT.classList.toggle('mc_lmode', states.lm);
+var cv=document.getElementById('cv');
+if(cv)cv.style.filter=states.lm?'invert(1) hue-rotate(180deg) brightness(0.85)':'';
+var nb=document.getElementById('mcNarBar');
+if(nb)nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('mcBtnNR');
+if(btn){btn.textContent='NARRATION:'+(states.nr?'ON':'OFF');styleBtn('mcBtnNR',states.nr);}
+styleBtn('mcBtnLM',states.lm);
+}
+return {
+init:function(){apply();},
+toggle:function(k){states[k]=!states[k];apply();},
+narrate:function(msg){if(!states.nr)return;var nb=document.getElementById('mcNarBar');if(!nb)return;nb.innerHTML=msg;}
+};
+})();
+</script>
+<!-- ── Simulation ── -->
+<script>
+var mcSim = (function(){
+/* ══ Layout — incorporating user's corrections ═══════════════════════
+CORRECT NAMING:
+ BARREL = fixed thin cylinder with LINEAR mm scale (doesn't move)
+ SLEEVE = moving thimble with rotary 0-50 scale (slides right as meas increases)
+At meas=0: sleeve flush against frame outer right, all barrel marks covered.
+At meas=N: sleeve moves N*PX_PER_MM right, uncovering N mm of barrel scale.
+Spindle tip = ANVIL_RIGHT + meas*PX_PER_MM (moves right as gap opens).
+CY = 75 (user adjusted: measurement axis in upper part of frame, gap below).
+═══════════════════════════════════════════════════════════════════════ */
+var CW=650, CH=280;
+/* Frame vertical layout (user-adjusted) */
+var FY         = 15;
+var CY         = 60 + FY;    /* = 75 */
+var GAP_TOP    = 95 + FY;    /* = 110 */
+var GAP_BOT    = 195 + FY;   /* = 210 */
+var FRAME_TOP  = 30 + FY;    /* = 45  */
+var FRAME_BOT  = 250 + FY;   /* = 265 */
+var Frame_x    = 269;        /* top inner right edge of C-frame */
+/* Frame x constants */
+var FRAME_GAP_LEFT    = 50;
+var FRAME_GAP_RIGHT   = 261;
+var FRAME_OUTER_RIGHT = 334;
+/* BARREL (fixed linear scale) */
+var BARREL_FIXED_LEFT  = FRAME_OUTER_RIGHT;   /* = 334, starts at frame outer right */
+var BARREL_R           = 22;   /* radius of barrel tube (sleeve slides over it) */
+/* Barrel must extend far enough right for sleeve at max travel:
+sleeve_left_max = 334 + 25*7 = 509; sleeve_right_max = 509+72 = 581;
+barrel must reach at least 581 so sleeve always overlaps it */
+var BARREL_TOTAL_W     = 25*7 + 72 + 30;  /* = 277px → barrel_right = 334+277 = 611 */
+/* SLEEVE (moving thimble, 0-50 rotary scale) */
+var SLEEVE_LEFT_ZERO = FRAME_OUTER_RIGHT;  /* sleeve flush with frame at meas=0 */
+var SLEEVE_W         = 72;   /* width of sleeve */
+var SLEEVE_R         = 29;   /* radius (half-height) of sleeve */
+/* Measurement */
+var PX_PER_MM  = 7;
+var ANVIL_RIGHT = 61;   /* Ospindle right face */
+/* Drag dot */
+var DOT_R=7, nr=-1, dragStartX=0, dragStartMeas=0, TOL=18;
+/* ── Derived positions ── */
+function spindleTipX(){  return ANVIL_RIGHT + meas*PX_PER_MM; }
+function sleeveLeft(){   return SLEEVE_LEFT_ZERO + meas*PX_PER_MM; }
+function sleeveRight(){  return sleeveLeft() + SLEEVE_W; }
+function dotX(){         return sleeveLeft() + Math.round(SLEEVE_W*0.5); }
+function dotY(){         return CY; }
+/* ── Reading ── */
+function mainMM(){    return Math.floor(meas); }
+function halfVis(){   return (meas%1.0)>=0.5; }
+function sleeveNum(){ return Math.round((meas%0.5)/0.01)%50; }
+function totalReading(){ return (mainMM()+(halfVis()?0.5:0)+sleeveNum()*0.01).toFixed(2); }
+/* ── State ── */
+var meas=25.00;
+var noObj=1, addDisk=0, addRect=0;
+var DISK_R_PX=22, RECT_W_PX=16, RECT_H_PX=40;
+var canvas, ctx;
+/* ── Object selector ── */
+function setObj(which){
+noObj=0; addDisk=0; addRect=0;
+if(which==='noObject'){
+noObj=1;
+meas=0; _syncSlider();
+mcA11y.narrate('No Object mode. Drag the red dot on the sleeve or use the slider to rotate and advance the sleeve, and practice reading the micrometer scale.');
+} else if(which==='disk'){
+addDisk=1;
+meas=25; _syncSlider();
+mcA11y.narrate('Disk placed between the jaws. The spindle is fully open. Drag the red dot LEFT or move the slider LEFT to close the spindle until it just touches the disk, then read the measurement.');
+} else if(which==='rect'){
+addRect=1;
+meas=25; _syncSlider();
+mcA11y.narrate('Rectangle placed between the jaws. The spindle is fully open. Drag the red dot LEFT or move the slider LEFT to close the spindle until it just contacts the rectangle, then read the measurement.');
+}
+}
+/* ── Set measurement ── */
+function setMeas(mm){
+mm=Math.max(0,Math.min(25,mm));
+/* floor at object size: spindle cannot close past object, but CAN open freely */
+if(addDisk){ mm=Math.max(Math.round(DISK_R_PX*2/PX_PER_MM*100)/100, mm); }
+if(addRect){ mm=Math.max(Math.round(RECT_W_PX/PX_PER_MM*100)/100,   mm); }
+meas=Math.round(mm*100)/100;
+_syncSlider();
+var msg='Measurement: <strong>'+totalReading()+' mm</strong>';
+if(noObj) msg+=' &mdash; barrel: '+mainMM()+(halfVis()?'.5':'.0')+' mm, sleeve: '+sleeveNum();
+mcA11y.narrate(msg);
+}
+function _syncSlider(){
+var sl=document.getElementById('mcSlider');
+var rd=document.getElementById('mcRdout');
+if(sl&&Math.abs(sl.value-meas)>0.005) sl.value=meas.toFixed(2);
+if(rd) rd.textContent=meas.toFixed(2)+' mm';
+}
+/* ── Drag ── */
+/* fingers are less precise than a mouse: on touch the handles grab from about 12 screen pixels further out */
+var TOUCH_SLOP=0;
+function reactionDown(x,y){
+var dx=x-dotX(), dy=y-dotY();
+if(Math.sqrt(dx*dx+dy*dy)<TOL+TOUCH_SLOP){ nr=1; dragStartX=x; dragStartMeas=meas; }
+}
+function reactionMove(x,y){
+if(nr===-1)return;
+canvas.style.cursor='ew-resize';
+setMeas(dragStartMeas+(x-dragStartX)/PX_PER_MM);
+}
+/* ══ DRAWING ══════════════════════════════════════════════════════════ */
+function paint(){
+ctx.clearRect(0,0,CW,CH);
+ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,CH);
+drawBarrel();      /* 1. fixed barrel tube (behind sleeve) */
+drawFrame();       /* 2. C-frame body */
+drawGapWhite();    /* 3. blank measurement gap */
+drawOspindle();    /* 4. fixed Ospindle pad */
+drawBarrelScale(); /* 5. barrel mm marks (only uncovered portion) */
+drawSpindle();     /* 6. spindle rod in gap */
+drawSleeve();      /* 7. moving sleeve (thimble) on top */
+if(addDisk) drawDisk();
+if(addRect) drawRect();
+if(noObj)   drawAnnotations();
+/* red drag dot on sleeve */
+ctx.beginPath(); ctx.arc(dotX(),dotY(),DOT_R,0,2*Math.PI);
+ctx.fillStyle='#dd0000'; ctx.fill();
+ctx.strokeStyle='#880000'; ctx.lineWidth=1.5; ctx.stroke();
+ctx.beginPath(); ctx.strokeStyle='#880000'; ctx.lineWidth=1;
+ctx.moveTo(dotX()-DOT_R,dotY()); ctx.lineTo(dotX()+DOT_R,dotY()); ctx.stroke();
+ctx.moveTo(dotX(),dotY()-DOT_R); ctx.lineTo(dotX(),dotY()+DOT_R); ctx.stroke();
+}
+/* ── Barrel (FIXED, thin tube, full length) ── */
+function drawBarrel(){
+ctx.fillStyle='#d8d8d8'; ctx.strokeStyle='#666'; ctx.lineWidth=1.2;
+ctx.fillRect(BARREL_FIXED_LEFT, CY-BARREL_R, BARREL_TOTAL_W, BARREL_R*2);
+ctx.strokeRect(BARREL_FIXED_LEFT, CY-BARREL_R, BARREL_TOTAL_W, BARREL_R*2);
+/* centre reference line */
+ctx.beginPath(); ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+ctx.moveTo(BARREL_FIXED_LEFT, CY);
+ctx.lineTo(BARREL_FIXED_LEFT+BARREL_TOTAL_W, CY); ctx.stroke();
+}
+/* ── C-frame body ── */
+function drawFrame(){
+ctx.fillStyle='#909090'; ctx.strokeStyle='#555'; ctx.lineWidth=1.5;
+ctx.beginPath();
+ctx.moveTo(Frame_x,           FRAME_TOP);
+ctx.lineTo(Frame_x,           GAP_TOP);
+ctx.lineTo(FRAME_GAP_RIGHT,   GAP_TOP);
+ctx.lineTo(FRAME_GAP_RIGHT,   GAP_BOT);
+ctx.lineTo(FRAME_GAP_LEFT,    GAP_BOT);
+ctx.lineTo(FRAME_GAP_LEFT,    FRAME_TOP);
+ctx.lineTo(0,                 FRAME_TOP);
+ctx.lineTo(0,                 FRAME_BOT);
+ctx.lineTo(FRAME_OUTER_RIGHT, FRAME_BOT);
+ctx.lineTo(FRAME_OUTER_RIGHT, GAP_TOP);
+ctx.lineTo(FRAME_OUTER_RIGHT-1, GAP_TOP);
+ctx.lineTo(FRAME_OUTER_RIGHT-1, FRAME_TOP);
+ctx.closePath();
+ctx.fill(); ctx.stroke();
+ctx.fillStyle='rgba(255,255,255,0.2)';
+ctx.fillRect(0, FRAME_TOP, FRAME_OUTER_RIGHT, 7);
+}
+/* ── White gap ── */
+function drawGapWhite(){
+ctx.fillStyle='#ffffff';
+ctx.fillRect(FRAME_GAP_LEFT, GAP_TOP,
+FRAME_GAP_RIGHT-FRAME_GAP_LEFT, GAP_BOT-GAP_TOP);
+}
+/* ── Ospindle pad ── */
+function drawOspindle(){
+ctx.fillStyle='#666'; ctx.strokeStyle='#333'; ctx.lineWidth=1;
+ctx.fillRect(FRAME_GAP_LEFT, CY-13, 11, 26);
+ctx.strokeRect(FRAME_GAP_LEFT, CY-13, 11, 26);
+}
+/* ── Barrel scale marks (only the uncovered portion left of sleeve) ── */
+function drawBarrelScale(){
+var visRight = sleeveLeft();   /* marks visible from BARREL_FIXED_LEFT to here */
+ctx.fillStyle='#000'; ctx.strokeStyle='#000';
+ctx.font='bold 9px Calibri,Arial';
+for(var i=0; i<=25; i++){
+var x = BARREL_FIXED_LEFT + i*PX_PER_MM;
+if(x >= visRight) break;   /* covered by sleeve */
+var isMaj=(i%5===0);
+var tickH=isMaj?12:6;
+ctx.lineWidth=isMaj?1.5:0.8;
+ctx.beginPath(); ctx.moveTo(x,CY); ctx.lineTo(x,CY-tickH); ctx.stroke();
+if(isMaj){
+ctx.textAlign='center'; ctx.textBaseline='bottom';
+ctx.fillText(i, x, CY-tickH-1);
+}
+}
+/* mm label (only if any marks visible) */
+if(visRight > BARREL_FIXED_LEFT+5){
+ctx.font='8px Calibri,Arial'; ctx.textAlign='left';
+ctx.fillText('mm', BARREL_FIXED_LEFT+2, CY-BARREL_R+9);
+}
+/* half-mm marks below centre line */
+ctx.strokeStyle='#000';
+for(var i=0; i<=25; i++){
+var x = BARREL_FIXED_LEFT + (i+0.5)*PX_PER_MM;
+if(x >= visRight) break;
+ctx.lineWidth=0.8;
+ctx.beginPath(); ctx.moveTo(x,CY); ctx.lineTo(x,CY+6); ctx.stroke();
+}
+}
+/* ── Spindle rod (visible in gap only) ── */
+function drawSpindle(){
+var sX=spindleTipX();
+if(sX>=FRAME_GAP_RIGHT) return;
+var rodW=FRAME_GAP_RIGHT-sX+8;
+if(rodW<=0) return;
+ctx.fillStyle='#b0b0b0'; ctx.strokeStyle='#666'; ctx.lineWidth=1;
+ctx.fillRect(sX, CY-7, rodW, 14);
+ctx.strokeRect(sX, CY-7, rodW, 14);
+var tipW=Math.min(5, rodW);
+ctx.fillStyle='#777';
+ctx.fillRect(sX, CY-8, tipW, 16);
+ctx.strokeRect(sX, CY-8, tipW, 16);
+}
+/* ── Sleeve (MOVING thimble, rotary 0-50 scale) ── */
+function drawSleeve(){
+var sL=sleeveLeft(), sR=sleeveRight();
+/* body */
+ctx.fillStyle='#c8c8c8'; ctx.strokeStyle='#555'; ctx.lineWidth=1.5;
+ctx.fillRect(sL, CY-SLEEVE_R, SLEEVE_W, SLEEVE_R*2);
+ctx.strokeRect(sL, CY-SLEEVE_R, SLEEVE_W, SLEEVE_R*2);
+/* left bevel face (where rotary scale is read) */
+ctx.fillStyle='#b8b8b8';
+ctx.fillRect(sL, CY-SLEEVE_R, 10, SLEEVE_R*2);
+ctx.strokeStyle='#666'; ctx.lineWidth=1;
+ctx.strokeRect(sL, CY-SLEEVE_R, 10, SLEEVE_R*2);
+/* knurling */
+ctx.strokeStyle='#aaa'; ctx.lineWidth=0.7;
+for(var k=-SLEEVE_R+3; k<SLEEVE_R; k+=4){
+ctx.beginPath();
+ctx.moveTo(sL+SLEEVE_W*0.38, CY+k);
+ctx.lineTo(sR-3, CY+k); ctx.stroke();
+}
+/* right cap */
+ctx.fillStyle='#aaa';
+ctx.fillRect(sR-5, CY-SLEEVE_R+3, 5, (SLEEVE_R-3)*2);
+ctx.strokeStyle='#555'; ctx.lineWidth=1;
+ctx.strokeRect(sR-5, CY-SLEEVE_R+3, 5, (SLEEVE_R-3)*2);
+/* ── Rotary scale on bevel face ── */
+var divH=(SLEEVE_R*2)/12.5;
+ctx.font='bold 8px Calibri,Arial';
+ctx.fillStyle='#000'; ctx.strokeStyle='#000';
+for(var d=-10; d<=10; d++){
+var lineNum=((sleeveNum()-d)%50+50)%50;
+var yPos=CY+d*divH;
+if(yPos<CY-SLEEVE_R+2||yPos>CY+SLEEVE_R-2) continue;
+var isMaj25=(lineNum===0||lineNum===25);
+var isMaj5=(lineNum%5===0);
+var tickLen=isMaj25?14:(isMaj5?10:6);
+ctx.lineWidth=isMaj25?1.5:0.8;
+ctx.beginPath(); ctx.moveTo(sL+1,yPos); ctx.lineTo(sL+1+tickLen,yPos); ctx.stroke();
+if(isMaj5){
+ctx.textAlign='left'; ctx.textBaseline='middle';
+ctx.fillText(lineNum, sL+tickLen+3, yPos);
+}
+}
+/* red datum line on barrel (reads against sleeve face) */
+ctx.beginPath(); ctx.strokeStyle='#c00'; ctx.lineWidth=2;
+ctx.moveTo(sL-1, CY); ctx.lineTo(sL+11, CY); ctx.stroke();
+/* 0.01mm label rotated at right end of sleeve */
+ctx.save();
+ctx.translate(sR+10, CY+28);
+ctx.rotate(-Math.PI/2);
+ctx.font='9px Calibri,Arial'; ctx.fillStyle='#444';
+ctx.textAlign='center'; ctx.textBaseline='middle';
+ctx.fillText('0.01 mm', 25, -25);
+ctx.restore();
+}
+/* ── Objects ── */
+function drawDisk(){
+ctx.beginPath(); ctx.arc(ANVIL_RIGHT+DISK_R_PX, CY, DISK_R_PX, 0, 2*Math.PI);
+ctx.fillStyle='#4488cc'; ctx.fill();
+ctx.strokeStyle='#224'; ctx.lineWidth=1.5; ctx.stroke();
+}
+function drawRect(){
+ctx.fillStyle='#44aa66';
+ctx.fillRect(ANVIL_RIGHT, CY-RECT_H_PX/2, RECT_W_PX, RECT_H_PX);
+ctx.strokeStyle='#224'; ctx.lineWidth=1.5;
+ctx.strokeRect(ANVIL_RIGHT, CY-RECT_H_PX/2, RECT_W_PX, RECT_H_PX);
+}
+/* ── Annotations (No Object mode) ── */
+function drawAnnotations(){
+var sL=sleeveLeft();
+ctx.font='10px Calibri,Arial';
+/* 1. Last visible barrel mm mark */
+var lastMM=mainMM();
+var markX=BARREL_FIXED_LEFT+lastMM*PX_PER_MM;
+if(markX < sL-2 && markX >= BARREL_FIXED_LEFT){
+drawArrow(markX, CY-20, markX, CY-2, '#c00');
+ctx.fillStyle='#c00'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+ctx.fillText(lastMM+'.0', markX, CY-21);
+}
+/* 2. Half-mm mark */
+if(halfVis()){
+var hX=BARREL_FIXED_LEFT+(lastMM+0.5)*PX_PER_MM;
+if(hX < sL-2){
+drawArrow(hX, CY+20, hX, CY+2, '#c00');
+ctx.fillStyle='#c00'; ctx.textAlign='center'; ctx.textBaseline='top';
+ctx.fillText('+0.5', hX, CY+21);
+}
+}
+/* 3. Sleeve reading arrow (at left face of sleeve = datum line) */
+var sNum=sleeveNum();
+drawArrow(sL-16, CY, sL+2, CY, '#c00');
+ctx.fillStyle='#c00'; ctx.textAlign='right'; ctx.textBaseline='middle';
+ctx.fillText(sNum+'\u00d70.01', sL-18, CY+15);
+/* 4. Total box above sleeve */
+var tx=sL+5, ty=CY-SLEEVE_R-30;
+ctx.fillStyle='rgba(255,255,200,0.95)';
+ctx.fillRect(tx, ty, 140, 22);
+ctx.strokeStyle='#c00'; ctx.lineWidth=1.5; ctx.strokeRect(tx, ty, 140, 22);
+ctx.fillStyle='#c00'; ctx.font='bold 11px Calibri,Arial';
+ctx.textAlign='left'; ctx.textBaseline='middle';
+ctx.fillText('Total = '+totalReading()+' mm', tx+5, ty+11);
+}
+function drawArrow(x1,y1,x2,y2,col){
+var dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+if(len<3)return; dx/=len; dy/=len;
+ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=1.5;
+ctx.moveTo(x1,y1); ctx.lineTo(x2-dx*7, y2-dy*7); ctx.stroke();
+ctx.beginPath(); ctx.fillStyle=col;
+ctx.moveTo(x2,y2);
+ctx.lineTo(x2-dx*7-dy*3.5, y2-dy*7+dx*3.5);
+ctx.lineTo(x2-dx*7+dy*3.5, y2-dy*7-dx*3.5);
+ctx.closePath(); ctx.fill();
+}
+/* ── Boot ── */
+function start(){
+canvas=document.getElementById('cv');
+ctx=canvas.getContext('2d');
+canvas.style.cursor='default';
+canvas.onmousedown=function(e){
+var r=canvas.getBoundingClientRect();
+TOUCH_SLOP=0; reactionDown((e.clientX-r.left)*CW/r.width, (e.clientY-r.top)*CH/r.height);
+};
+canvas.ontouchstart=function(e){
+var r=canvas.getBoundingClientRect(), o=e.changedTouches[0];
+TOUCH_SLOP=12*CW/r.width; reactionDown((o.clientX-r.left)*CW/r.width, (o.clientY-r.top)*CH/r.height);
+if(nr!==-1)e.preventDefault();
+};
+canvas.onmouseup=function(){nr=-1; canvas.style.cursor='default';};
+canvas.ontouchend=function(){nr=-1; canvas.style.cursor='default';};
+canvas.onmousemove=function(e){
+if(nr===-1)return;
+var r=canvas.getBoundingClientRect();
+reactionMove((e.clientX-r.left)*CW/r.width, (e.clientY-r.top)*CH/r.height);
+};
+canvas.ontouchmove=function(e){
+if(nr===-1)return;
+var r=canvas.getBoundingClientRect(), o=e.changedTouches[0];
+reactionMove((o.clientX-r.left)*CW/r.width, (o.clientY-r.top)*CH/r.height);
+e.preventDefault();
+};
+setInterval(paint, 40);
+mcA11y.narrate('Micrometer simulation. Barrel has the fixed mm scale; sleeve rotates and slides right to uncover barrel marks. Drag the red dot or use the slider.');
+}
+window.setTimeout(start, 0);
+return {setObj:setObj, setMeas:setMeas};
+})();
+</script>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mc_descwrap">
+<button type="button" class="mc_descbtn" id="mcDescBtn" aria-expanded="false" aria-controls="mcDesc" onclick="mcDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mc_desc" id="mcDesc" role="region" aria-labelledby="mcDescBtn" style="display:none">
+<p>This simulation shows a micrometer (screw gauge), an instrument for measuring small lengths such as the diameter of a wire or the thickness of a plate to a hundredth of a millimeter. The object is held between the fixed anvil and the spindle, which moves when the thimble is turned.</p>
+<p>The fixed barrel carries a linear scale: marks above the center line show whole millimeters and marks below it show the half millimeters. The rotating thimble carries a circular scale of 50 divisions. One full turn of the thimble moves the spindle by one half millimeter, so each division of the thimble corresponds to</p>
+<p class="mc_eq">`0.5" mm"/50 = 0.01" mm"`.</p>
+<p>The reading is the last mark uncovered on the barrel (whole and half millimeters) plus the thimble division that lines up with the center line, times 0.01 mm:</p>
+<p class="mc_eq">`"reading" = "barrel reading" + n xx 0.01" mm"`.</p>
+<p>Drag the red dot on the thimble, or use the slider, to open and close the micrometer. Choose no object to practice reading the scales, or a disk or a rectangle to measure. The smallest division sets the precision of a single reading; in the best case the uncertainty is half of it, `+- 0.005" mm"`.</p>
+<p>This simulation is useful for practicing the reading of a micrometer, understanding how a screw thread turns a small rotation into a precise linear distance, and estimating the uncertainty of a measurement.</p>
+</div>
+</div>
+<script>
+function mcDesc(){
+var b = document.getElementById('mcDescBtn'), d = document.getElementById('mcDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<script>
+var mcZoom = (function(){
+var cv = document.getElementById('cv'), wrap = cv.parentNode, W = 650, H = 280, z = 1;
+function fit(){
+var base = Math.min(wrap.clientWidth || W, W), cssW = base*z, dpr = window.devicePixelRatio || 1, s = Math.max(1, dpr*cssW/W);
+var cx = wrap.scrollWidth > wrap.clientWidth ? (wrap.scrollLeft + wrap.clientWidth/2)/wrap.scrollWidth : 0.5;
+cv.style.maxWidth = 'none'; cv.style.width = cssW + 'px';
+cv.width = Math.round(W*s); cv.height = Math.round(H*s);
+cv.getContext('2d').setTransform(cv.width/W, 0, 0, cv.height/H, 0, 0);
+wrap.scrollLeft = Math.max(0, cx*wrap.scrollWidth - wrap.clientWidth/2);
+var bs = wrap.parentNode.querySelectorAll('.mc_zbtn');
+for (var i=0; i<bs.length; i++) bs[i].setAttribute('aria-pressed', (+bs[i].getAttribute('data-z') === z) ? 'true' : 'false');
+}
+function set(f){ z = f; fit(); }
+window.addEventListener('resize', fit);
+window.setTimeout(fit, 80);   /* after the simulation has started and read its canvas size */
+return { set:set };
+})();
+</script>
+</div><!-- #mcRoot -->
+</main>
+</body>
+</html>

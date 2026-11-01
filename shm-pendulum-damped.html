@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Oscillations: SHM: the Damped Pendulum</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, simple harmonic motion, oscillation, period, frequency, pendulum, spring, damping, energy, data analysis, lesson, scientific">
+<meta name="description" content="SHM: the Damped Pendulum -- interactive physics simulation.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="mobs5930" class="mob_wrap">
+<div id="shmDPRoot">
+<!-- ── Accessibility toolbar ── -->
+<div class="shm_a11y" id="shmDPA11yBar" role="toolbar" aria-label="Display options">
+<button type="button" class="shm_a11ybtn" id="shmDPBtnHC" onclick="shmDPA11y.toggle('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="shm_a11ybtn" id="shmDPBtnLM" onclick="shmDPA11y.toggle('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="shm_a11ybtn shm_a11yon" id="shmDPBtnNR" onclick="shmDPA11y.toggle('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div id="shmDPNarBar" class="shm_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<hr><h2>Simple Harmonic Motion</h2><hr>
+<div class="tbar"><H3>SHM-Simple Damped Pendulum</H3></div>
+<div class="mcontent"><canvas id="cv" width="620" height="300"></canvas></div>
+<div class="bbar">
+<input type="button" class="butt" id="play" value="&#9654;" onclick="if(this.value=='&#9654;'){shmDPendulum.pl();this.value='&#9208;';}else{this.value='\u25b6';shmDPendulum.ps();}">
+<input type="button" class="butt" value="&#10073;&#9664;" onclick="shmDPendulum.stepBack();document.getElementById('play').value='&#9654;';">
+<input type="button" class="butt" value="&#9654;&#10073;" onclick="shmDPendulum.stepForward();document.getElementById('play').value='&#9654;';">
+<input type="button" class="butt" value="&#128472;" onclick="shmDPendulum.restart();document.getElementById('play').value='&#9654;';">
+<input type="button" class="butt" value="&#9202;" title="Start timer" onclick="shmDPendulum.startTimer();document.getElementById('play').value='&#9654;';">
+</div>
+<!-- Physics sliders -->
+<div class="footer footer-pink">
+<div class="left">Length</div>
+<div class="center">L:&nbsp;<input class="zslider" type="range" id="L" min="0.25" max="4.0" value="1.0" step="0.25" oninput="shmDPendulum.reactionL_a11y(this.value)" onchange="shmDPendulum.reactionL_a11y(this.value)">
+<span class="txtDPL"><span id="LValue">1.0</span> m</span></div>
+<div class="right">g:&nbsp;<select id="gvalue" onchange="shmDPendulum.reactiongvalue_a11y(this.value)">
+<option value="0">Outer Space (0)</option><option value="1.568">Moon (1.568)</option>
+<option value="3.626">Mercury (3.626)</option><option value="3.724">Mars (3.724)</option>
+<option value="8.624">Venus (8.624)</option><option value="9.114">Uranus (9.114)</option>
+<option value="9.8" selected>Earth (9.8)</option><option value="11.27">Saturn (11.27)</option>
+<option value="11.956">Neptune (11.956)</option><option value="25.872">Jupiter (25.872)</option>
+</select>&nbsp;m/s<sup>2</sup></div>
+</div>
+<div class="footer footer-green">
+<div class="left">Amplitude &amp; Damping</div>
+<div class="center">A:&nbsp;<input class="zslider" type="range" id="Amp" min="5" max="30" value="20" step="5"
+           oninput="shmDPendulum.reactionAmp_a11y(this.value)" onchange="shmDPendulum.reactionAmp_a11y(this.value)">
+<span class="txtDPL"><span id="AmpValue">20</span> &deg;</span></div>
+<div class="right">&beta;:&nbsp;<input oninput="shmDPendulum.reactiondcoef_a11y(this.value)" class="zslider" type="range" onchange="shmDPendulum.reactiondcoef_a11y(this.value)" id="dcoef" min="0" max="0.6" value="0.1" step="0.05">
+<span class="txtDPL"><span id="dcoefValue">0.10</span> s<sup>-1</sup></span></div>
+</div>
+<div class="footer footer-blue">
+<div class="left">Mass</div>
+<div class="center">M:&nbsp;<input class="zslider" type="range" id="Mass" min="0.25" max="4.0" value="1.0" step="0.25" oninput="shmDPendulum.reactionMass_a11y(this.value)" onchange="shmDPendulum.reactionMass_a11y(this.value)">
+<span class="txtDPL"><span id="MassValue">1.0</span> kg</span></div>
+<div class="right"></div>
+</div>
+<!-- Measurement sliders -->
+<div class="footer footer-meas">
+<span class="shm_measlbl">Measure:</span>
+<span class="shm_measgrp">
+<label class="shm_smlbl" for="slHrule">Bob y-pos:</label>
+<input type="range" id="slHrule" class="shm_mslider" min="10" max="280" value="120" step="1"
+ oninput="shmDPendulum.setHrule(+this.value)" onchange="shmDPendulum.setHrule(+this.value)">
+<span class="txtDPL shm_rdout" id="rdHrule">110 px</span>
+</span>
+<span class="shm_measgrp">
+<label class="shm_smlbl" for="slXaxis">&theta; (graph):</label>
+<input type="range" id="slXaxis" class="shm_mslider" min="-30" max="30" value="0" step="0.5"
+ oninput="shmDPendulum.setXaxis(+this.value)" onchange="shmDPendulum.setXaxis(+this.value)">
+<span class="txtDPL shm_rdout" id="rdXaxis">0.0 &deg;</span>
+</span>
+<span class="shm_measgrp">
+<label class="shm_smlbl" for="slYaxis">Time t:</label>
+<input type="range" id="slYaxis" class="shm_mslider" min="200" max="600" value="200" step="1"
+ oninput="shmDPendulum.setYaxis(+this.value)" onchange="shmDPendulum.setYaxis(+this.value)">
+<span class="txtDPL shm_rdout" id="rdYaxis">0.0 s</span>
+</span>
+<span class="shm_measgrp">
+<label class="shm_smlbl" for="slAangle">Angle &alpha;:</label>
+<input type="range" id="slAangle" class="shm_mslider" min="0" max="180" value="90" step="1"
+ oninput="shmDPendulum.setAangle(+this.value)" onchange="shmDPendulum.setAangle(+this.value)">
+<span class="txtDPL shm_rdout" id="rdAangle">90 &deg;</span>
+</span>
+</div>
+<style>#shmDPRoot * { box-sizing: border-box; margin: 0; }
+#shmDPRoot { display: block; width: 623px; font-family: Calibri, Arial, sans-serif; font-size: 10pt; }
+#shmDPRoot canvas { display: block; }
+#shmDPRoot .shm_a11y { display: flex; gap: 6px; padding: 6px 8px; background: #222; flex-wrap: wrap; width: 623px; }
+#shmDPRoot .shm_a11ybtn { padding: 4px 10px; font-size: .72rem; font-family: monospace; letter-spacing: .06em; border-radius: 3px; cursor: pointer; background: #2a2e3a; border: 1px solid #404a60; color: #7a8aaa; }
+#shmDPRoot .shm_a11ybtn:hover { border-color: #00e8d0; color: #00e8d0; }
+#shmDPRoot .shm_a11yon { background: rgba(0,232,208,.12); border-color: #00e8d0; color: #00e8d0; }
+#shmDPRoot .shm_narbar { width: 623px; min-height: 28px; padding: 5px 10px; background: #ffefc0; border-left: 4px solid #e0b040; font-size: .88rem; color: #333; font-style: italic; }
+#shmDPRoot div { width: 623px; }
+#shmDPRoot .butt { height: 26px; padding: 0 8px; cursor: pointer; }
+#shmDPRoot .zslider { width: 140px; height: 14px; display: inline-block; vertical-align: middle; }
+#shmDPRoot .txtDPL { background-color: blue; color: yellow; margin-left: 8px; padding-top: 2px; display: inline-block; font-size: 13px; text-align: center; height: 20px; width: 58px; vertical-align: middle; }
+#shmDPRoot .tbar { padding: 4px; height: 50px; background: #f90; text-align: center; }
+#shmDPRoot .mcontent { height: 302px; }
+#shmDPRoot .bbar { height: 50px; background: #df9; padding: 10px; text-align: center; }
+#shmDPRoot .footer { height: 55px; text-align: center; display: flex; align-items: center; }
+#shmDPRoot .footer .left { width: 80px;  padding: 2px; flex-shrink: 0; }
+#shmDPRoot .footer .center { width: 266px; padding: 4px; flex-shrink: 0; }
+#shmDPRoot .footer .right { width: 266px; padding: 4px; flex-shrink: 0; }
+#shmDPRoot .footer-pink { background: #fce4ec; }
+#shmDPRoot .footer-green { background: #e8f5e9; }
+#shmDPRoot .footer-blue { background: #e3f2fd; }
+#shmDPRoot .footer-meas { background: #fff8e1; border-top: 2px solid #f9a825; height: auto; min-height: 52px; flex-wrap: wrap; gap: 8px; padding: 6px 10px; align-items: center; }
+#shmDPRoot .shm_measlbl { font-weight: bold; font-size: 13px; color: #555; white-space: nowrap; width: auto !important; margin-right: 4px; }
+#shmDPRoot .shm_measgrp { display: inline-flex; align-items: center; gap: 4px; width: auto !important; }
+#shmDPRoot .shm_smlbl { font-size: 12px; color: #333; white-space: nowrap; }
+#shmDPRoot .shm_mslider { width: 110px; height: 14px; display: inline-block; vertical-align: middle; }
+#shmDPRoot .shm_rdout { width: 70px !important; font-size: 12px; }</style>
+<!-- ════════ Accessibility controller ════════ -->
+<script>
+var shmDPA11y = (function(){
+var ROOT=null, states={hc:false,lm:false,nr:true};
+function styleBtn(id,on){
+var b=document.getElementById(id);if(!b)return;
+if(on){b.style.background='rgba(0,232,208,.12)';b.style.borderColor='#00e8d0';b.style.color='#00e8d0';}
+else{b.style.background='#2a2e3a';b.style.borderColor='#404a60';b.style.color='#7a8aaa';}
+b.setAttribute('aria-pressed',on?'true':'false');
+}
+function apply(){
+if(!ROOT)return;
+var cv=document.getElementById('cv');
+if(cv)cv.style.filter=states.lm?'invert(1) hue-rotate(180deg) brightness(0.9)':'';
+var nb=document.getElementById('shmDPNarBar');
+if(nb)nb.style.display=states.nr?'block':'none';
+var btn=document.getElementById('shmDPBtnNR');
+if(btn){btn.textContent='NARRATION:'+(states.nr?'ON':'OFF');styleBtn('shmDPBtnNR',states.nr);}
+styleBtn('shmDPBtnHC',states.hc);styleBtn('shmDPBtnLM',states.lm);
+}
+return {
+init:function(){ROOT=document.getElementById('shmDPRoot');apply();},
+toggle:function(k){states[k]=!states[k];if(k==='hc'&&states.hc)states.lm=false;if(k==='lm'&&states.lm)states.hc=false;apply();},
+isHC:function(){return states.hc;},
+narrate:function(msg){if(!states.nr)return;var nb=document.getElementById('shmDPNarBar');if(!nb)return;nb.innerHTML=msg;if(window.MathJax){if(MathJax.typesetPromise)MathJax.typesetPromise([nb]);else if(MathJax.Hub)MathJax.Hub.Queue(['Typeset',MathJax.Hub,nb]);}}
+};
+})();
+</script>
+<!-- ════════ Simulation ════════ -->
+<script>
+var shmDPendulum = function() {
+var canvas,ctx,px,py,mx,my;
+var index=-1;
+var xBase=160,maxX=400,maxY=200,Daxis=15,xScale=4,yScale=2,yBase=60;
+var xAxisTitle="t (s)";
+var yAxisTitle="\u03b8 (\u00b0)"; /* θ (°) */
+var axisLabel='',axisValue=0;
+var xIncrement=1,xIncrementBase=1,xMin=0,xNumDecimals=1,maxXValue=2.0,_labelSkip=2;
+var yIncrement=6,yMax=30,yNumDecimals=0;
+var plotColor='#ff0000',radius=8;
+var mass=1.0,stringLength=1.0,gValue=9.8,dcoef=0.1;
+var thetaInit=20*Math.PI/180; /* 20 degrees default */
+var newTheta=thetaInit,equPos=0;
+var isPendulum=1;
+var timer,t=0,t0=0,drgStatus=0,_endNarrated=false;
+var varFont='12pt Calibri';
+var runFlag=1;
+/* omega is 0 in outer space -- guard everywhere */
+var omega=Math.sqrt(gValue/stringLength);
+var maxtime=Math.round(2*(Math.PI*2/omega)+0.5);
+xIncrement=Math.round((Math.PI*2/omega)+0.5);xIncrementBase=xIncrement;
+/* Canvas tools */
+var addHruleFlag=1,hrf=-1,hRule={x:20,y:120,w:100,c:"SeaGreen"};
+var arf=-1,aRule={angle:90,c:"#e05000"};
+var ARM_LEN=60,ARC_RADIUS=45;
+var addVruleFlag=1,vrf=-1,vRule={x:50,y:260,h:150,c:"Peru"};
+var xrf=-1,Xaxis={x:xBase+39,y:yBase-40+maxY/2};
+var yrf=-1,Yaxis={x:xBase+40,y:yBase-40+maxY};
+var tol1=0.25;
+/* pivot position on canvas */
+var PIVOT_X=80, PIVOT_Y=yBase-50; /* = 80, 10 */
+/* ── Sync sliders ↔ canvas tools ── */
+function _syncReadouts(){
+/* (a) hRule → px below pivot */
+var yBelowPivot=Math.round(hRule.y-PIVOT_Y);
+var rdH=document.getElementById('rdHrule');if(rdH)rdH.textContent=yBelowPivot+' px';
+var slH=document.getElementById('slHrule');if(slH){if(Math.abs(slH.value-hRule.y)>1)slH.value=hRule.y;}
+/* (b) Xaxis → θ in degrees */
+var deg=(36-0.3*Xaxis.y).toFixed(1);
+var rdX=document.getElementById('rdXaxis');if(rdX)rdX.textContent=deg+' \u00b0';
+var slX=document.getElementById('slXaxis');if(slX){if(Math.abs(slX.value-parseFloat(deg))>0.4)slX.value=parseFloat(deg);}
+/* (c) Yaxis → time s */
+var t_v=((Yaxis.x-(xBase+40))*xIncrement/200).toFixed(2);
+var rdY=document.getElementById('rdYaxis');if(rdY)rdY.textContent=t_v+' s';
+var slY=document.getElementById('slYaxis');if(slY){if(Math.abs(slY.value-Yaxis.x)>1)slY.value=Yaxis.x;}
+var rdA=document.getElementById('rdAangle');if(rdA)rdA.textContent=Math.round(aRule.angle)+' °';
+var slA=document.getElementById('slAangle');if(slA){if(Math.abs(slA.value-aRule.angle)>0.9)slA.value=aRule.angle;}
+}
+/* ── Public slider setters ── */
+function setHrule(py_val){
+hRule.y=Math.max(PIVOT_Y,Math.min(280,py_val));
+var yBP=Math.round(hRule.y-PIVOT_Y);
+_syncReadouts();if(!runFlag)drawMotion();
+shmDPA11y.narrate('Horizontal ruler: <strong>'+yBP+' px</strong> below pivot. Drag orange vertical line (vRule) to the bob x-position. Then angle &theta; = atan(x_px / y_px) &times; 180/&pi;.');
+}
+function setXaxis(deg){
+Xaxis.y=(36-deg)/0.3;
+Xaxis.y=Math.max(yBase-40,Math.min(yBase-40+maxY,Xaxis.y));
+_syncReadouts();if(!runFlag)drawMotion();
+shmDPA11y.narrate('Graph axis at &theta; = <strong>'+deg.toFixed(1)+'&deg;</strong>. Move to the graph peak to read the amplitude.');
+}
+function setYaxis(px_x){
+Yaxis.x=Math.max(xBase+40,Math.min(xBase+40+maxX,px_x));
+var t_v=((Yaxis.x-(xBase+40))*xIncrement/200).toFixed(2);
+_syncReadouts();if(!runFlag)drawMotion();
+shmDPA11y.narrate('Vertical axis at t = <strong>'+t_v+' s</strong>. Move to successive peaks to measure the period T.');
+}
+function setAangle(deg){
+aRule.angle=Math.max(0,Math.min(180,deg));
+_syncReadouts();if(!runFlag)drawMotion();
+shmDPA11y.narrate('Protractor arm: <strong>'+Math.round(deg)+'°</strong> from horizontal right. 90° = straight down (equilibrium). Pendulum angle from vertical = |arm angle − 90°|.');
+}
+function _T(){
+if(omega<=0)return '\u221e'; /* infinity symbol for outer space */
+return (2*Math.PI/omega).toFixed(3);
+}
+function _settingsNarrate(){
+shmDPA11y.narrate(
+'SHM Damped Pendulum &mdash; L='+stringLength+' m, g='+gValue+' m/s&sup2;, A='+Math.round(thetaInit*180/Math.PI)+'&deg;, m='+mass+' kg, &beta;='+dcoef.toFixed(2)+' s&sup-1;. '
++(omega>0?'&omega;='+omega.toFixed(3)+' rad/s. <strong>T&asymp;'+_T()+' s</strong>. ':'g=0 &rarr; no oscillation. ')
++'&theta;(t) = A e<sup>&minus;&beta;t</sup> cos(&omega;t). Amplitude decays as e<sup>&minus;&beta;t</sup>. T is barely affected by light damping. '
++'Use Measure sliders: (a) Bob y-pos &rarr; horizontal ruler below pivot; '
++'(b) &theta; (graph) &rarr; horizontal axis for amplitude; '
++'(c) Time t &rarr; vertical axis for period.'
+);
+}
+function start(){
+canvas=document.getElementById("cv");ctx=canvas.getContext("2d");
+ctx.clearRect(0,0,canvas.width,canvas.height);
+mx=canvas.width/2;my=canvas.height/2;
+index=0; /* pendulum starts at index=0 */
+ctx.fillStyle="#ffd";ctx.fillRect(0,0,canvas.width,canvas.height);
+xIncrement=xIncrementBase;
+drawGrid(maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40,20,10);
+drawPendulum();drawProtractor();iniTouch();
+if(addHruleFlag)addHrule(hRule.x,hRule.y,hRule.w,hRule.c,hRule);
+if(addVruleFlag)addVrule(vRule.x,vRule.y,vRule.h,vRule.c,vRule);
+addXaxis(Xaxis.x,Xaxis.y,maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+addYaxis(Yaxis.x,Yaxis.y,maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+_syncReadouts();
+}
+function drawMotion(){
+if(t>=5*maxtime||omega<=0){
+runFlag=0;document.getElementById('play').value='\u25b6';
+if(!_endNarrated){_endNarrated=true;
+ shmDPA11y.narrate('Animation complete. T&asymp;'+_T()+' s. A='+Math.round(thetaInit*180/Math.PI)+'&deg;, &beta;='+dcoef.toFixed(2)+' s⁻¹. Use Time slider for period, &theta; slider for amplitude.');}
+}
+if(runFlag==1){index+=1;}
+ctx.clearRect(0,0,canvas.width,canvas.height);
+mx=canvas.width/2;my=canvas.height/2;
+ctx.fillStyle="#ffd";ctx.fillRect(0,0,canvas.width,canvas.height);
+/* ── Dynamic time axis: reset then expand ── */
+xIncrement=xIncrementBase;
+drawGridNoLabels(maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+var _baseSpan=xIncrementBase*2;
+var _dynSpan=_baseSpan;
+while(index/100.0>=_dynSpan*0.90){_dynSpan+=_baseSpan;}
+xIncrement=(_dynSpan<12)?_dynSpan/2:Math.round(_dynSpan/2);
+xNumDecimals=(_dynSpan<12)?1:0;
+_labelSkip=(_dynSpan>36)?4:2;
+addGridLabels(maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+t=index/100.0;
+newTheta=thetaInit*Math.exp(-dcoef*t)*Math.cos(omega*t);
+ctx.strokeStyle=plotColor;ctx.lineWidth=2;ctx.beginPath();
+var gX0=xBase+40+(maxX/maxXValue)/100;
+var gY0=yBase-40+maxY/2-(maxY/(2*yMax))*thetaInit*Math.exp(-dcoef*(1/100.0))*Math.cos(omega*(1/100.0))*180.0/Math.PI;
+ctx.moveTo(gX0,gY0);
+for(var iv=1;iv<=index;iv++){
+var gX=xBase+40+iv*(maxX/maxXValue)/100;
+var gY=yBase-40+maxY/2-(maxY/(2*yMax))*thetaInit*Math.exp(-dcoef*(iv/100.0))*Math.cos(omega*(iv/100.0))*180.0/Math.PI;
+if(gX<(xBase+40+maxX))ctx.lineTo(gX,gY);
+}
+ctx.stroke();
+drawPendulum();
+drawProtractor();
+if(addHruleFlag)addHrule(hRule.x,hRule.y,hRule.w,hRule.c,hRule);
+if(addVruleFlag)addVrule(vRule.x,vRule.y,vRule.h,vRule.c,vRule);
+addXaxis(Xaxis.x,Xaxis.y,maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+addYaxis(Yaxis.x,Yaxis.y,maxY,maxX,maxY/10,maxX/20,xBase+40,yBase-40);
+if(runFlag==0&&t>0&&drgStatus==0)displayEnd(mx,2*my-30,mx,30,"yellow","blue","red");
+displayData(0,2*my-30,mx,30,"yellow","red","black");
+_syncReadouts();
+}
+function drawPendulum(){
+/* string */
+ctx.beginPath();ctx.lineWidth=1;ctx.strokeStyle='black';
+ctx.moveTo(PIVOT_X,PIVOT_Y);
+ctx.lineTo(PIVOT_X+50*stringLength*Math.sin(newTheta),yBase+50*stringLength*Math.cos(newTheta));
+ctx.stroke();
+/* pivot block */
+ctx.fillStyle='black';ctx.fillRect(60,yBase-70,40,20);
+equPos=PIVOT_X+50*stringLength;
+/* bob */
+var bx=PIVOT_X+50*stringLength*Math.sin(newTheta);
+var by=yBase+50*stringLength*Math.cos(newTheta);
+ctx.beginPath();ctx.arc(bx,by,radius,0,2*Math.PI,false);
+ctx.fillStyle='#000';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#000';ctx.stroke();
+/* crosshair on bob */
+ctx.beginPath();ctx.strokeStyle='darkgrey';ctx.lineWidth=1;
+ctx.moveTo(bx-radius,by);ctx.lineTo(bx+radius,by);ctx.stroke();
+ctx.moveTo(bx,by-radius);ctx.lineTo(bx,by+radius);ctx.stroke();
+ctx.strokeStyle='#000';
+}
+function drawProtractor(){
+var rad=aRule.angle*Math.PI/180;
+var tipX=PIVOT_X+ARM_LEN*Math.cos(rad);
+var tipY=PIVOT_Y+ARM_LEN*Math.sin(rad);
+/* guide arc 0..180 */
+ctx.beginPath();ctx.strokeStyle='rgba(180,80,0,0.3)';ctx.lineWidth=1.5;
+ctx.arc(PIVOT_X,PIVOT_Y,ARC_RADIUS,0,Math.PI,false);ctx.stroke();
+/* tick marks every 30 degrees */
+for(var td=0;td<=180;td+=30){
+var tr=td*Math.PI/180;
+var inner=ARC_RADIUS,outer=ARC_RADIUS+(td%90===0?10:6);
+ctx.beginPath();ctx.strokeStyle='rgba(180,80,0,0.55)';ctx.lineWidth=1;
+ctx.moveTo(PIVOT_X+inner*Math.cos(tr),PIVOT_Y+inner*Math.sin(tr));
+ctx.lineTo(PIVOT_X+outer*Math.cos(tr),PIVOT_Y+outer*Math.sin(tr));ctx.stroke();
+if(td===0||td===90||td===180){
+ctx.font='9pt Calibri';ctx.fillStyle='rgba(150,50,0,0.8)';
+ctx.textAlign='center';ctx.textBaseline='middle';
+var lx=PIVOT_X+(ARC_RADIUS+18)*Math.cos(tr);
+var ly=PIVOT_Y+(ARC_RADIUS+18)*Math.sin(tr);
+ctx.fillText(td+'°',lx,ly);
+}
+}
+/* arm line */
+ctx.beginPath();ctx.strokeStyle=aRule.c;ctx.lineWidth=2.5;
+ctx.moveTo(PIVOT_X,PIVOT_Y);ctx.lineTo(tipX,tipY);ctx.stroke();
+/* draggable tip dot -- same size as other widgets (r=4) */
+drawDot(tipX,tipY,4,aRule.c,aRule.c);
+/* angle label */
+ctx.font='10pt Calibri';ctx.fillStyle=aRule.c;
+ctx.textAlign=(aRule.angle<90)?'left':'right';
+ctx.textBaseline='middle';
+ctx.fillText('α='+Math.round(aRule.angle)+'°',tipX+(aRule.angle<90?10:-10),tipY);
+}
+/* ── A11y-aware parameter reactions ── */
+function _updateOmega(){
+omega=(gValue>0)?Math.sqrt(gValue/stringLength):0;
+if(omega>0){
+maxtime=Math.round(2*(Math.PI*2/omega)+0.5);
+xIncrement=Math.round((Math.PI*2/omega)+0.5);xIncrementBase=xIncrement;
+} else {
+maxtime=0;xIncrement=3;xIncrementBase=3; /* fallback for outer space */
+}
+}
+function reactionL_a11y(val){
+stringLength=parseFloat(val);document.getElementById('LValue').innerHTML=stringLength;
+_updateOmega();_endNarrated=false;restart();_settingsNarrate();
+}
+function reactionAmp_a11y(val){
+thetaInit=parseFloat(val)*Math.PI/180;
+document.getElementById('AmpValue').innerHTML=parseFloat(val);
+_endNarrated=false;restart();_settingsNarrate();
+}
+function reactionMass_a11y(val){
+mass=parseFloat(val);document.getElementById('MassValue').innerHTML=mass;
+radius=4+4*mass; /* bob size scales with mass visually */
+_endNarrated=false;restart();_settingsNarrate();
+}
+function reactiondcoef_a11y(val){
+dcoef=parseFloat(val);
+document.getElementById('dcoefValue').innerHTML=dcoef.toFixed(2);
+_endNarrated=false;restart();_settingsNarrate();
+}
+function reactiongvalue_a11y(val){
+gValue=parseFloat(val);_updateOmega();
+_endNarrated=false;restart();_settingsNarrate();
+}
+function pl(){window.clearTimeout(timer);runFlag=1;drgStatus=0;_endNarrated=false;if(omega<=0||t>=maxtime){restart();if(omega>0)runMotion();}else{runMotion();}}
+function ps(){window.clearTimeout(timer);runFlag=0;}
+function stepForward(){window.clearTimeout(timer);runFlag=1;drawMotion();}
+function stepBack(){window.clearTimeout(timer);index=Math.max(index-2,0);runFlag=1;drawMotion();}
+function restart(){window.clearTimeout(timer);index=0;newTheta=thetaInit;runFlag=1;t=0;t0=0;_endNarrated=false;document.getElementById("play").value=String.fromCodePoint(0x25B6);drawMotion();}
+function runMotion(){drawMotion();if(runFlag==1){timer=window.setTimeout(runMotion,1000/30);}}
+function startTimer(){window.clearTimeout(timer);t0=t;runFlag=1;drawMotion();shmDPA11y.narrate('Timer started at t='+t.toFixed(2)+' s. Press play, then pause after 5 oscillations.');}
+function displayData(x,y,w,h,fC,sC,tC){
+ctx.textBaseline='middle';ctx.fillStyle=fC;ctx.strokeStyle=sC;ctx.lineWidth=0;
+ctx.beginPath();ctx.rect(x,y,w,h);ctx.fill();ctx.stroke();
+ctx.font=varFont;ctx.fillStyle=tC;ctx.textAlign='left';
+ctx.fillText('t = '+t.toFixed(2)+' s',x+6,y+15);
+if(t0>0)ctx.fillText('- T = '+(t-t0).toFixed(2)+' s',w/4,y+15);
+}
+function displayEnd(x,y,w,h,fC,sC,tC){
+ctx.textBaseline='middle';ctx.fillStyle=fC;ctx.strokeStyle=sC;ctx.lineWidth=0;
+ctx.beginPath();ctx.rect(x,y,w,h);ctx.fill();ctx.stroke();
+ctx.font=varFont;ctx.fillStyle=tC;ctx.textAlign='left';
+ctx.fillText('Animation Ended! Press play to restart.',x+6,y+15);
+}
+/* ── Arrow (Fendt) ── */
+function arrow(x1,y1,x2,y2,w,col,txt,spc){if(!w)w=1;if(!txt)txt="";if(!spc)spc=5;if(!col)col=ctx.strokeStyle;ctx.fillStyle=col;ctx.strokeStyle=col;var dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return;dx/=len;dy/=len;var s=2.5*w+7.5,xSp=x2-s*dx,ySp=y2-s*dy;var hh=0.5*w+3.5,xSp1=xSp-hh*dy,ySp1=ySp+hh*dx,xSp2=xSp+hh*dy,ySp2=ySp-hh*dx;xSp=x2-0.6*s*dx;ySp=y2-0.6*s*dy;ctx.beginPath();ctx.lineWidth=w;ctx.moveTo(x1,y1);if(len<5)ctx.lineTo(x2,y2);else ctx.lineTo(xSp,ySp);ctx.stroke();if(len<5)return;ctx.beginPath();ctx.fillStyle=ctx.strokeStyle;ctx.moveTo(xSp,ySp);ctx.lineTo(xSp1,ySp1);ctx.lineTo(x2,y2);ctx.lineTo(xSp2,ySp2);ctx.closePath();ctx.fill();ctx.fillText(txt,x2+((x2<=x1)?-(3*spc):2*spc),y2+spc);}
+function arrowDraw(r,phi2){var xf=px+r*Math.cos(phi2),yf=py-r*Math.sin(phi2);arrow(px,py,xf,yf,3);}
+/* ── Grid & axes ── */
+function drawGrid(h,w,dh,dw,xB,yB,nX,nY){ctx.fillStyle="#eff";ctx.fillRect(xB,yB,maxX,maxY);ctx.strokeStyle='#999';ctx.lineWidth=2;addGrid(h,w,dh,dw,xB,yB);addGridLabels(h,w,dh,dw,xB,yB);}
+function drawGridNoLabels(h,w,dh,dw,xB,yB){ctx.fillStyle="#eff";ctx.fillRect(xB,yB,maxX,maxY);ctx.strokeStyle='#999';ctx.lineWidth=2;addGrid(h,w,dh,dw,xB,yB);}
+function addGrid(h,w,dh,dw,xB,yB){ctx.strokeStyle='black';ctx.lineWidth=0.3;var maxV=parseInt(w/dw),maxH=parseInt(h/dh);for(var i=0;i<=maxH;i++){ctx.beginPath();ctx.moveTo(xB,yB+dh*i);ctx.lineTo(xB+w,yB+dh*i);ctx.stroke();}for(var i=0;i<=maxV;i++){ctx.beginPath();ctx.moveTo(xB+dw*i,yB);ctx.lineTo(xB+dw*i,yB+h);ctx.stroke();}}
+function addGridLabels(h,w,dh,dw,xB,yB){ctx.strokeStyle='black';ctx.lineWidth=0.3;var maxV=parseInt(w/dw),maxH=parseInt(h/dh);ctx.font='14pt Calibri';ctx.fillStyle='black';ctx.textAlign='center';ctx.textBaseline='middle';for(var i=0;i<=maxV;i++){axisValue=xMin+xIncrement*i/10;maxXValue=axisValue;if(parseInt(i/_labelSkip)==i/_labelSkip)ctx.fillText((xNumDecimals===0?Math.round(axisValue):axisValue.toFixed(xNumDecimals)),xB+dw*i,yB+h+dw);}for(var i=0;i<=maxH;i++){axisValue=yMax-yIncrement*i;ctx.textAlign='right';if(i%2===1)ctx.fillText(axisValue.toFixed(yNumDecimals),xB-dw,yB+dh*i);   /* round values, with 0 labelled */}}
+function addHrule(px2,py2,w,col,obj){if(!col)col="SeaGreen";if(!obj)obj=hRule;ctx.strokeStyle=col;ctx.font=varFont;ctx.fillStyle=col;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px2,py2);ctx.lineTo(px2+w,py2);ctx.stroke();drawDot(px2,py2,4,col,col);ctx.textAlign='left';var yBP=Math.round(obj.y-PIVOT_Y);obj.txt='y='+yBP+' px';ctx.fillText(obj.txt,obj.x+5,obj.y+12);}
+function addVrule(px2,py2,h,col,obj){if(!col)col="Peru";if(!obj)obj=vRule;ctx.strokeStyle=col;ctx.font=varFont;ctx.fillStyle=col;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px2,py2);ctx.lineTo(px2,py2-h);ctx.stroke();drawDot(px2,py2,4,col,col);ctx.textAlign='left';var xFP=Math.round(obj.x-PIVOT_X);obj.txt='x='+xFP+' px';ctx.fillText(obj.txt,obj.x+5,obj.y-20);}
+function addXaxis(x,y,h,w,dh,dw,xB,yB){ctx.strokeStyle='green';px=x;py=y;var l=w+Daxis;var yD=(36-0.3*y).toFixed(1);arrowDraw(l,0);ctx.font='14pt Calibri';ctx.fillStyle='black';ctx.textAlign='left';ctx.fillText(xAxisTitle,x+l-40,y-20);ctx.font='11pt Calibri';ctx.fillStyle='red';ctx.fillText('\u03b8='+yD+'\u00b0',x+l-55,y+12);ctx.fillStyle='black';}
+function addYaxis(x,y,h,w,dh,dw,xB,yB){ctx.strokeStyle='green';px=x;py=y;var l=w+Daxis;var xD=((x-(xBase+40))*xIncrement/200).toFixed(2);arrowDraw(maxY+Daxis,Math.PI/2);ctx.font='14pt Calibri';ctx.fillStyle='black';ctx.textAlign='left';ctx.fillText(yAxisTitle,x+10,35);ctx.font='11pt Calibri';ctx.fillStyle='red';ctx.fillText('t='+xD+' s',x+5,y-10);ctx.fillStyle='black';}
+function drawDot(dx,dy,r,colS,colF){if(!colS)colS="#f00";if(!colF)colF="#0ff";ctx.strokeStyle=colS;ctx.lineWidth=1;ctx.beginPath();ctx.arc(dx,dy,r,0,2*Math.PI,true);ctx.fillStyle=colS;ctx.fill();ctx.stroke();}
+/* ── Touch / mouse drag ── */
+function iniTouch(){
+canvas.onmousedown=function(e){reactionDown(e.clientX,e.clientY);};
+canvas.ontouchstart=function(e){var o=e.changedTouches[0];reactionDown(o.clientX,o.clientY);if(hrf!=-1||vrf!=-1||xrf!=-1||yrf!=-1)e.preventDefault();};
+canvas.onmouseup=function(){hrf=-1;vrf=-1;xrf=-1;yrf=-1;arf=-1;canvas.style.cursor="default";};
+canvas.ontouchend=function(){hrf=-1;vrf=-1;xrf=-1;yrf=-1;arf=-1;canvas.style.cursor="default";};
+canvas.onmousemove=function(e){if(hrf==-1&&vrf==-1&&xrf==-1&&yrf==-1&&arf==-1)return;reactionMove(e.clientX,e.clientY);};
+canvas.ontouchmove=function(e){if(hrf==-1&&vrf==-1&&xrf==-1&&yrf==-1&&arf==-1)return;var o=e.changedTouches[0];reactionMove(o.clientX,o.clientY);e.preventDefault();};
+}
+function reactionDown(x,y){var r=canvas.getBoundingClientRect();x-=r.left;y-=r.top;canvas.style.cursor="pointer";checkIfHrule(x,y);checkIfVrule(x,y);checkIfXaxis(x,y);checkIfYaxis(x,y);checkIfAangle(x,y);}
+function checkIfAangle(x,y){
+var rad=aRule.angle*Math.PI/180;
+var tipX=PIVOT_X+ARM_LEN*Math.cos(rad);
+var tipY=PIVOT_Y+ARM_LEN*Math.sin(rad);
+/* hit-test the full arm segment, not just the tip */
+var dx=tipX-PIVOT_X,dy=tipY-PIVOT_Y;
+var lenSq=dx*dx+dy*dy;
+var t=lenSq>0?Math.max(0,Math.min(1,((x-PIVOT_X)*dx+(y-PIVOT_Y)*dy)/lenSq)):0;
+var nearX=PIVOT_X+t*dx,nearY=PIVOT_Y+t*dy;
+var dist=Math.sqrt((x-nearX)*(x-nearX)+(y-nearY)*(y-nearY));
+if(dist<10)arf=1;
+}
+function checkIfHrule(x,y){var by1=hRule.y*(1-0.5*tol1),ty1=hRule.y*(1+0.5*tol1),bx1=hRule.x*(1-0.5*tol1),tx1=hRule.x*(1+0.5*tol1);if(y>=by1&&y<=ty1&&x>=bx1&&x<=tx1)hrf=1;}
+function checkIfVrule(x,y){var bx1=vRule.x*(1-0.5*tol1),tx1=vRule.x*(1+0.5*tol1),by1=vRule.y*(1-0.5*tol1),ty1=vRule.y*(1+0.5*tol1);if(x>=bx1&&x<=tx1&&y>=by1&&y<=ty1)vrf=1;}
+function checkIfXaxis(x,y){var by1=Xaxis.y*(1-0.5*tol1),ty1=Xaxis.y*(1+0.5*tol1),bx1=Xaxis.x*(1-0.5*tol1),tx1=Xaxis.x*(1+0.5*tol1);if(y>=by1&&y<=ty1&&x>=bx1&&x<=tx1)xrf=1;}
+function checkIfYaxis(x,y){var by1=Yaxis.y*(1-0.5*tol1),ty1=Yaxis.y*(1+0.5*tol1),bx1=Yaxis.x*(1-0.5*tol1),tx1=Yaxis.x*(1+0.5*tol1);if(y>=by1&&y<=ty1&&x>=bx1&&x<=tx1)yrf=1;}
+function reactionMove(x,y){
+var r=canvas.getBoundingClientRect();x-=r.left;y-=r.top;
+if(hrf==-1&&vrf==-1&&xrf==-1&&yrf==-1&&arf==-1)return;canvas.style.cursor="pointer";
+if(hrf==1){hRule.y=Math.max(PIVOT_Y,Math.min(280,y));}
+else if(vrf==1){vRule.x=Math.max(20,Math.min(200,x));}
+else if(xrf==1){Xaxis.y=Math.max(yBase-40,Math.min(yBase-40+maxY,y));}
+else if(yrf==1){Yaxis.x=Math.max(xBase+40,Math.min(xBase+40+maxX,x));}
+else if(arf==1){
+/* compute angle from atan2, clamp 0..180 */
+var dx=x-PIVOT_X,dy=y-PIVOT_Y;
+var a=Math.atan2(dy,dx)*180/Math.PI;
+aRule.angle=Math.max(0,Math.min(180,a));
+}
+window.clearTimeout(timer);runFlag=0;drgStatus=1;
+drawMotion();_syncReadouts();
+}
+function newPath(color,thickness){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=thickness;}
+window.setTimeout(function(){start();_settingsNarrate();_endNarrated=false;},0);
+return {_dm:function(){ return { t:t, t0:t0, L:stringLength, g:gValue, A:thetaInit*180/Math.PI, m:mass, w:omega, beta:dcoef }; },restart,stepBack,stepForward,ps,pl,startTimer,
+setHrule,setXaxis,setYaxis,setAangle,
+reactionL_a11y,reactionAmp_a11y,reactionMass_a11y,reactiongvalue_a11y,reactiondcoef_a11y};
+};
+</script>
+<script>
+var shmDPendulum = new shmDPendulum();
+shmDPA11y.init();
+</script>
+</div><!-- #shmDPRoot -->
+<!-- ════════ DATA COLLECTION (record runs, graph any two quantities, fit, table, CSV) ════════ -->
+<div class="dm_box" id="dmBox" role="region" aria-label="Data collection">
+<div class="dm_hd">Data collection &mdash; set up a run and play it (time it with &#9202; if you like), then record it</div>
+<div class="dm_bar">
+<label>Y-axis: <select id="dmY"></select></label>
+<label>X-axis: <select id="dmX"></select></label>
+<label id="dmRunW">Run: <select id="dmRun"></select></label>
+</div>
+<div class="dm_hint" id="dmHint"></div>
+<canvas id="dmCv" width="660" height="300" role="img" aria-label="Data graph of the selected quantities" aria-describedby="dmRes"></canvas>
+<div class="dm_bar">
+<label><input type="checkbox" id="dmFit"> <b>Linear fit</b></label>
+<label><input type="checkbox" id="dmOrig"> through the origin (y = a&middot;x)</label>
+<label><input type="checkbox" id="dmAvg"> <b>Average &plusmn; std. dev.</b></label>
+</div>
+<div class="dm_res" id="dmRes" role="status" aria-live="polite" style="display:none"></div>
+<div class="dm_bar">
+<label>Oscillations timed N: <input type="number" id="dmN" min="1" max="50" step="1" value="5" class="dm_num"></label>
+<button type="button" class="dm_rec" id="dmRec">&#8853; Record this run</button>
+</div>
+<div class="dm_small" id="dmRecHint">Play the run. To time it, press &#9202; at a peak, let N oscillations pass, pause at a peak, enter N, and record. Without the timer, the period is measured from the recorded motion.</div>
+<div class="dm_hd2">Recorded runs</div>
+<p id="dmNo" class="dm_small">No runs recorded yet.</p>
+<div class="dm_tblwrap"><table id="dmTbl" class="dm_tbl" style="display:none" aria-label="Recorded runs"><thead id="dmTh"></thead><tbody id="dmTb"></tbody></table></div>
+<div class="dm_bar">
+<button type="button" class="dm_btn" id="dmCsv">Download CSV</button>
+<button type="button" class="dm_btn" id="dmCopy">Copy table</button>
+<button type="button" class="dm_btn" id="dmDel">Delete last run</button>
+<button type="button" class="dm_btn dm_warn" id="dmClr">Clear all data</button>
+</div>
+</div>
+<style>.dm_box { width:100%; box-sizing:border-box; background:#f4f8fb; border:1px solid #b7cde0; border-top:3px solid #5599cc; padding:8px 10px; margin-top:6px; font-family:Calibri, Arial, sans-serif; color:#1d232a; display:flex; flex-direction:column; gap:6px; }
+.dm_box * { box-sizing:border-box; }
+.dm_hd { font-weight:bold; font-size:.95rem; border-bottom:1px solid #9ab; padding-bottom:3px; }
+.dm_hd2 { font-weight:bold; font-size:.9rem; margin-top:4px; }
+.dm_bar { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:.85rem; }
+.dm_bar label { display:flex; align-items:center; gap:5px; }
+.dm_bar select { font-size:.82rem; padding:2px 3px; max-width:100%; }
+.dm_hint, .dm_small { font-size:.78rem; color:#4a5560; }
+.dm_box canvas { width:100%; height:auto; display:block; background:#fff; border:1px solid #c9d3dc; }
+.dm_res { font-size:.84rem; background:#fffbe8; border:1px solid #e0c060; border-radius:4px; padding:5px 8px; line-height:1.45; }
+.dm_rec { font-size:.86rem; padding:6px 14px; cursor:pointer; background:#8bc4f0; border:1px solid #5599cc; border-radius:3px; font-weight:bold; min-height:36px; }
+.dm_btn { font-size:.8rem; padding:5px 10px; cursor:pointer; background:#e6eef5; border:1px solid #8aa; border-radius:3px; min-height:34px; }
+.dm_warn { background:#f0b8b8; border-color:#cc6655; }
+.dm_num { width:4.2em; font-size:.85rem; padding:2px; }
+.dm_tblwrap { width:100%; overflow-x:auto; max-height:260px; overflow-y:auto; }
+.dm_tbl { border-collapse:collapse; font-size:.74rem; min-width:100%; }
+.dm_tbl th { background:#d4dde5; border:1px solid #889; padding:2px 5px; position:sticky; top:0; white-space:nowrap; }
+.dm_tbl td { border:1px solid #ccd; padding:2px 5px; text-align:center; white-space:nowrap; background:#fff; }
+@media (pointer:coarse) {
+.dm_bar select, .dm_num { min-height:34px; font-size:16px; }
+.dm_bar input[type=checkbox] { width:22px; height:22px; }
+}</style>
+<script>
+var shmDM = (function(){
+var C = ({
+file:'damped-pendulum-runs', pos:'th', defX:'beta',
+params:function(st){ return { L:st.L, g:st.g, A:st.A, m:st.m, beta:st.beta }; },
+sample:function(st, t){ var w = st.w, b = st.beta, e = Math.exp(-b*t), th = st.A*e*Math.cos(w*t), thd = st.A*e*(-b*Math.cos(w*t) - w*Math.sin(w*t)), r = Math.PI/180, KE = 0.5*st.m*Math.pow(st.L*thd*r, 2), PE = 0.5*st.m*st.g*st.L*Math.pow(th*r, 2); return { t:t, th:th, thd:thd, KE:KE, PE:PE, E:KE + PE }; },
+peakVal:function(v){ return Math.log(v); },
+timeQ:[['th', 'angle \u03B8 (\u00B0)'], ['lnpk', 'ln(peak \u03B8 / 1\u00B0), at each peak', true], ['thd', 'angular velocity d\u03B8/dt (\u00B0/s)'], ['KE', 'kinetic energy (J)'], ['PE', 'potential energy (J)'], ['E', 'total energy (J)']],
+runQ:[['beta', 'damping \u03B2 (1/s)', function(r){ return r.p.beta; }], ['bmeas', '\u03B2 from the peaks (1/s)', function(r){ return r.bmeas; }], ['L', 'length L (m)', function(r){ return r.p.L; }], ['sqrtL', '\u221AL (\u221Am)', function(r){ return Math.sqrt(r.p.L); }], ['g', 'g (m/s\u00B2)', function(r){ return r.p.g; }], ['A', 'amplitude A (\u00B0)', function(r){ return r.p.A; }], ['m', 'mass m (kg)', function(r){ return r.p.m; }], ['invL', '1/L (1/m)', function(r){ return 1/r.p.L; }], ['lnL', 'ln L (L in m)', function(r){ return Math.log(r.p.L); }], ['invsqrtg', '1/\u221Ag (s/\u221Am)', function(r){ return r.p.g > 0 ? 1/Math.sqrt(r.p.g) : null; }]],
+extra:function(r, pk){ /* fit ln(peak) against t: the slope is -beta */ var P = pk.filter(function(q){ return q.v > 0.05; }).map(function(q){ return [q.t, Math.log(q.v)]; }); r.npk = P.length;
+if (P.length >= 2){ var n = P.length, sx = 0, sy = 0, sxx = 0, sxy = 0; P.forEach(function(p){ sx += p[0]; sy += p[1]; sxx += p[0]*p[0]; sxy += p[0]*p[1]; }); r.bmeas = -(n*sxy - sx*sy)/(n*sxx - sx*sx); } else r.bmeas = null; },
+cols:[['Run', function(r){ return r.id; }, 0], ['L (m)', function(r){ return r.p.L; }, 2], ['g (m/s&sup2;)', function(r){ return r.p.g; }, 3], ['A (&deg;)', function(r){ return r.p.A; }, 0], ['m (kg)', function(r){ return r.p.m; }, 2], ['&beta; (1/s)', function(r){ return r.p.beta; }, 2], ['&Delta;t (s)', function(r){ return r.dt; }, 2], ['N', function(r){ return r.dt !== null ? r.N : null; }, 0], ['T timed (s)', function(r){ return r.Ttimer; }, 3], ['T motion (s)', function(r){ return r.Ttrace; }, 3], ['peaks', function(r){ return r.npk; }, 0], ['&beta; from peaks (1/s)', function(r){ return r.bmeas; }, 3]],
+interp:function(y, x, a, b, o){ var k = y + '|' + x;
+if (k === 'lnpk|t') return 'The peaks fall as e<sup>&minus;&beta;t</sup>: slope = &minus;&beta;, so <b>&beta; = ' + (-a).toFixed(3) + ' s<sup>&minus;1</sup></b>' + (o ? '' : ', and the first amplitude A = e<sup>' + b.toFixed(2) + '</sup> = ' + Math.exp(b).toFixed(1) + '&deg;');
+if (k === 'bmeas|beta') return 'A slope of 1 means the peaks give back the damping you set: slope = <b>' + a.toFixed(3) + '</b>';
+if (k === 'T|beta' && Math.abs(a) < 0.01) return 'The slope is (nearly) zero: <b>here the damping does not change the period</b>';
+if (k === 'T2|L') return 'Slope = 4&pi;&sup2;/g, so <b>g = 4&pi;&sup2;/slope = ' + (4*Math.PI*Math.PI/a).toFixed(3) + ' m/s&sup2;</b>';
+if (k === 'w2|invL') return '&omega;&sup2; = g/L: slope = <b>g = ' + a.toFixed(3) + ' m/s&sup2;</b>';
+return ''; },
+say:function(r){ return 'L = ' + r.p.L + ' metres, damping ' + r.p.beta + ' per second' + (r.bmeas !== null ? ', damping measured from ' + r.npk + ' peaks: ' + r.bmeas.toFixed(3) + ' per second' : '') + '.'; }
+});
+function el(id){ return document.getElementById(id + ''); }
+function ENG(){ return shmDPendulum; }
+function say(m){ try { shmDPA11y.narrate(m); } catch (e) {} }
+var cv = el('dmCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, DPR = window.devicePixelRatio || 1;
+cv.width = W*DPR; cv.height = H*DPR; g.scale(DPR, DPR);
+var runs = [], DT = 0.02, COLS = ['#d62728', '#1f77b4', '#2ca02c', '#ff7f0e', '#9467bd', '#8c564b', '#e377c2', '#17becf', '#bcbd22', '#555555'];
+/* ── the motion, from the engine's own formula ── */
+function state(){ return ENG()._dm(); }
+function trace(st, tEnd){ var out = [], n = Math.floor(tEnd/DT + 1e-6); for (var i=0; i<=n; i++) out.push(C.sample(st, i*DT)); return out; }
+function crossings(tr, key){ /* upward zero crossings, interpolated */ var c = []; for (var i=1; i<tr.length; i++){ var a = tr[i - 1][key], b = tr[i][key]; if (a < 0 && b >= 0) c.push(tr[i - 1].t + DT*(-a)/(b - a)); } return c; }
+function periodOf(tr, key){ var c = crossings(tr, key); return c.length >= 2 ? (c[c.length - 1] - c[0])/(c.length - 1) : null; }
+function peaks(tr, key){ var p = []; for (var i=1; i<tr.length - 1; i++){ var a = tr[i - 1][key], b = tr[i][key], d = tr[i + 1][key]; if (b > 0 && b >= a && b > d){ /* a parabola through the three points gives the peak between samples */ var den = a - 2*b + d, off = den !== 0 ? 0.5*(a - d)/den : 0; p.push({ t:tr[i].t + off*DT, v:b - 0.25*(a - d)*off }); } } return p; }
+/* ── per-run quantities: the parameters, and what the run measured ── */
+function Tbest(r){ return r.Ttimer !== null ? r.Ttimer : r.Ttrace; }
+var RQ = {};
+C.runQ.forEach(function(q){ RQ[q[0]] = { lbl:q[1], get:q[2] }; });
+RQ.Ttimer = { lbl:'period T, timed: \u0394t/N (s)', get:function(r){ return r.Ttimer; } };
+RQ.Ttrace = { lbl:'period T, from the motion (s)', get:function(r){ return r.Ttrace; } };
+RQ.T = { lbl:'period T (s)', get:function(r){ return Tbest(r); } };
+RQ.T2 = { lbl:'T\u00B2 (s\u00B2)', get:function(r){ var T = Tbest(r); return T === null ? null : T*T; } };
+RQ.f = { lbl:'frequency f = 1/T (Hz)', get:function(r){ var T = Tbest(r); return T ? 1/T : null; } };
+RQ.w = { lbl:'angular frequency \u03C9 = 2\u03C0/T (rad/s)', get:function(r){ var T = Tbest(r); return T ? 2*Math.PI/T : null; } };
+RQ.invT = { lbl:'1/T (1/s)', get:function(r){ var T = Tbest(r); return T ? 1/T : null; } };
+RQ.invT2 = { lbl:'1/T\u00B2 (1/s\u00B2)', get:function(r){ var T = Tbest(r); return T ? 1/(T*T) : null; } };
+RQ.w2 = { lbl:'\u03C9\u00B2 (rad\u00B2/s\u00B2)', get:function(r){ var T = Tbest(r); return T ? Math.pow(2*Math.PI/T, 2) : null; } };
+RQ.lnT = { lbl:'ln T (T in s)', get:function(r){ var T = Tbest(r); return T > 0 ? Math.log(T) : null; } };
+(C.runQ2 || []).forEach(function(q){ RQ[q[0]] = { lbl:q[1], get:q[2] }; });
+var TQ = {}; C.timeQ.forEach(function(q){ TQ[q[0]] = { lbl:q[1], peaks:!!q[2] }; });
+function makeRun(st, N){
+var tr = trace(st, st.t), r = { id:(runs.length ? runs[runs.length - 1].id : 0) + 1, p:C.params(st), tEnd:st.t, dt:st.t0 > 0 ? st.t - st.t0 : null, N:N, tr:tr };
+r.Ttimer = r.dt !== null && N > 0 ? r.dt/N : null; r.Ttrace = periodOf(tr, C.pos); if (C.extra) C.extra(r, peaks(tr, C.pos)); return r; }
+/* ── axis choices ── */
+var X = 't', Y = C.timeQ[0][0], RUN = 'cur';
+function opt(k, l){ return '<option value="' + k + '">' + l + '</option>'; }
+function fillSelects(){
+var xs = el('dmX'), ys = el('dmY'), rs = el('dmRun');
+var rq = Object.keys(RQ).map(function(k){ return opt(k, RQ[k].lbl); }).join(''), tq = Object.keys(TQ).map(function(k){ return opt(k, TQ[k].lbl); }).join('');
+xs.innerHTML = '<optgroup label="against time">' + opt('t', 'time t (s)') + '</optgroup><optgroup label="one point per recorded run">' + rq + '</optgroup>'; xs.value = X;
+ys.innerHTML = '<optgroup label="changes during a run (plotted against time)">' + tq + '</optgroup><optgroup label="one value per recorded run">' + rq + '</optgroup>'; ys.value = Y;
+rs.innerHTML = '<option value="cur">current (not recorded)</option>' + runs.map(function(r){ return '<option value="' + r.id + '">run ' + r.id + '</option>'; }).join('') + (runs.length ? '<option value="all">all recorded runs (overlay)</option>' : '');
+if (!rs.querySelector('option[value="' + RUN + '"]')) RUN = 'cur'; rs.value = RUN;
+el('dmRunW').style.display = X === 't' ? '' : 'none';
+}
+function firstRun(not){ var k = C.defX || Object.keys(RQ)[0]; if (k !== not) return k; return Object.keys(RQ).filter(function(q){ return q !== not; })[0]; }
+function setX(v){ var moved = ''; X = v;
+if (X === 't' && !TQ[Y]){ Y = Object.keys(TQ)[0]; moved = 'Y-axis switched to ' + TQ[Y].lbl + ', which changes during a run. '; }
+else if (X !== 't' && (TQ[Y] || Y === X)){ Y = X === 'T' ? 'T2' : 'T'; moved = 'Y-axis switched to ' + RQ[Y].lbl + '. '; }
+fillSelects(); draw(); say('X-axis: ' + (X === 't' ? 'time' : RQ[X].lbl) + '. ' + moved); }
+function setY(v){ var moved = ''; Y = v;
+if (TQ[Y] && X !== 't'){ X = 't'; moved = 'X-axis switched to time: this quantity changes during a run. '; }
+else if (RQ[Y] && (X === 't' || X === Y)){ X = firstRun(Y); moved = 'X-axis switched to ' + RQ[X].lbl + ': one point per recorded run. '; }
+fillSelects(); draw(); say('Y-axis: ' + (TQ[Y] ? TQ[Y].lbl : RQ[Y].lbl) + '. ' + moved + (RQ[Y] && !runs.length ? 'Record some runs to see the points.' : '')); }
+/* ── the graph ── */
+function series(){
+var out = [];
+if (X === 't'){
+var list = RUN === 'all' ? runs : (RUN === 'cur' ? [null] : runs.filter(function(r){ return String(r.id) === String(RUN); }));
+list.forEach(function(r, n){ var tr = r ? r.tr : (function(){ var st = state(); return trace(st, st.t); })(), col = r ? COLS[(r.id - 1) % COLS.length] : '#d62728', lbl = r ? 'run ' + r.id : 'current';
+if (TQ[Y].peaks){ var pk = peaks(tr, C.pos); out.push({ pts:pk.filter(function(q){ return q.v > 0; }).map(function(q){ return [q.t, C.peakVal(q.v)]; }), col:col, lbl:lbl, line:false }); }
+else out.push({ pts:tr.map(function(s){ return [s.t, s[Y]]; }), col:col, lbl:lbl, line:true }); });
+} else {
+var pts = []; runs.forEach(function(r){ var x = RQ[X].get(r), y = RQ[Y].get(r); if (x !== null && y !== null && isFinite(x) && isFinite(y)) pts.push([x, y, COLS[(r.id - 1) % COLS.length], r.id]); });
+out.push({ pts:pts, col:'#1f77b4', lbl:'runs', line:false, scatter:true });
+}
+return out;
+}
+function nice(lo, hi){ if (!(hi > lo)){ var c = isFinite(lo) ? lo : 0; lo = c - 1; hi = c + 1; } var span = hi - lo, st = Math.pow(10, Math.floor(Math.log(span/5)/Math.LN10)), m = span/5/st; st *= m < 1.5 ? 1 : (m < 3.5 ? 2 : 5); return { lo:Math.floor(lo/st)*st, hi:Math.ceil(hi/st)*st, st:st }; }
+function fmt(v, st){ var d = Math.max(0, -Math.floor(Math.log(st)/Math.LN10 + 1e-9)); return v.toFixed(Math.min(4, d)); }
+function draw(){
+var S = series(), all = [], fitOn = el('dmFit').checked, orig = el('dmOrig').checked, avgOn = el('dmAvg').checked;
+S.forEach(function(s){ all = all.concat(s.pts); });
+g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+var L = 62, R = W - 14, T = 14, B = H - 40;
+if (!all.length){ g.fillStyle = '#556'; g.font = '14px Calibri, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(X === 't' ? 'Play the simulation, or choose a recorded run' : 'Record some runs to plot one point per run', W/2, H/2); el('dmRes').style.display = 'none'; hint(); return; }
+var xs = all.map(function(p){ return p[0]; }), ys = all.map(function(p){ return p[1]; }), x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+if (orig && fitOn){ x0 = Math.min(0, x0); y0 = Math.min(0, y0); x1 = Math.max(0, x1); y1 = Math.max(0, y1); }
+if (X !== 't' && x1 - x0 < 1e-9){ x0 -= Math.abs(x0)*0.1 + 0.5; x1 += Math.abs(x1)*0.1 + 0.5; }
+if (y1 - y0 < 1e-9){ y0 -= Math.abs(y0)*0.1 + 0.5; y1 += Math.abs(y1)*0.1 + 0.5; }
+/* a margin, so that no point sits on the frame (kept at 0 when the fit goes through the origin) */
+var py = 0.06*(y1 - y0); y0 = (orig && fitOn && y0 === 0) ? 0 : y0 - py; y1 += py;
+if (X !== 't'){ var px = 0.06*(x1 - x0); x0 = (orig && fitOn && x0 === 0) ? 0 : x0 - px; x1 += px; }
+var nx = nice(x0, x1), ny = nice(y0, y1);
+function PX(x){ return L + (x - nx.lo)/(nx.hi - nx.lo)*(R - L); } function PY(y){ return B - (y - ny.lo)/(ny.hi - ny.lo)*(B - T); }
+g.strokeStyle = '#e3e8ee'; g.lineWidth = 1; g.font = '11px Calibri, Arial, sans-serif'; g.fillStyle = '#334';
+for (var v = nx.lo; v <= nx.hi + nx.st*0.01; v += nx.st){ var x = PX(v); g.beginPath(); g.moveTo(x, T); g.lineTo(x, B); g.stroke(); g.textAlign = 'center'; g.fillText(fmt(v, nx.st), x, B + 14); }
+for (var u = ny.lo; u <= ny.hi + ny.st*0.01; u += ny.st){ var y = PY(u); g.beginPath(); g.moveTo(L, y); g.lineTo(R, y); g.stroke(); g.textAlign = 'right'; g.fillText(fmt(u, ny.st), L - 5, y + 4); }
+g.strokeStyle = '#556'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(L, T); g.lineTo(L, B); g.lineTo(R, B); g.stroke();
+if (ny.lo < 0 && ny.hi > 0){ g.strokeStyle = '#99a'; g.beginPath(); g.moveTo(L, PY(0)); g.lineTo(R, PY(0)); g.stroke(); }
+g.fillStyle = '#223'; g.font = '12px Calibri, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(X === 't' ? 'time t (s)' : RQ[X].lbl, (L + R)/2, H - 8);
+g.save(); g.translate(14, (T + B)/2); g.rotate(-Math.PI/2); g.fillText(TQ[Y] ? TQ[Y].lbl : RQ[Y].lbl, 0, 0); g.restore();
+/* average +/- standard deviation */
+var res = [];
+if (avgOn && ys.length){ var n = ys.length, mean = ys.reduce(function(a, b){ return a + b; }, 0)/n, sd = n > 1 ? Math.sqrt(ys.reduce(function(a, b){ return a + (b - mean)*(b - mean); }, 0)/(n - 1)) : 0;
+g.fillStyle = 'rgba(255,190,60,0.22)'; g.fillRect(L, PY(mean + sd), R - L, PY(mean - sd) - PY(mean + sd)); g.strokeStyle = '#d08a00'; g.setLineDash([6, 4]); g.beginPath(); g.moveTo(L, PY(mean)); g.lineTo(R, PY(mean)); g.stroke(); g.setLineDash([]);
+res.push('<b>Average</b> of ' + n + ' value' + (n === 1 ? '' : 's') + ': ' + sig(mean) + ' &plusmn; ' + sig(sd) + ' (std. dev.)' + (n > 1 ? ', standard error ' + sig(sd/Math.sqrt(n)) : '')); }
+/* the data */
+S.forEach(function(s){ g.strokeStyle = s.col; g.fillStyle = s.col; g.lineWidth = 2;
+if (s.line){ g.beginPath(); s.pts.forEach(function(p, i){ var x = PX(p[0]), y = PY(p[1]); if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke(); }
+else s.pts.forEach(function(p){ g.fillStyle = p[2] || s.col; g.beginPath(); g.arc(PX(p[0]), PY(p[1]), 4.5, 0, 2*Math.PI); g.fill(); if (p[3] !== undefined){ g.fillStyle = '#334'; g.font = '10px Calibri, Arial, sans-serif'; g.textAlign = 'left'; g.fillText(String(p[3]), PX(p[0]) + 6, PY(p[1]) - 5); } }); });
+if (X === 't' && S.length > 1){ g.font = '11px Calibri, Arial, sans-serif'; g.textAlign = 'left'; S.forEach(function(s, i){ g.fillStyle = s.col; g.fillRect(R - 90, T + 4 + 14*i, 10, 10); g.fillStyle = '#223'; g.fillText(s.lbl, R - 76, T + 13 + 14*i); }); }
+/* least-squares straight line */
+if (fitOn && all.length >= 2){ var F = fit(all, orig); if (F){ g.strokeStyle = '#111'; g.lineWidth = 1.6; g.setLineDash([2, 0]); g.beginPath(); g.moveTo(PX(nx.lo), PY(F.a*nx.lo + F.b)); g.lineTo(PX(nx.hi), PY(F.a*nx.hi + F.b)); g.stroke();
+res.unshift('<b>Linear fit</b>: y = ' + sig(F.a) + '&middot;x' + (orig ? '' : (F.b >= 0 ? ' + ' : ' &minus; ') + sig(Math.abs(F.b))) + ', R&sup2; = ' + F.r2.toFixed(4) + ' (slope &plusmn; ' + sig(F.sa) + ')');
+var meaning = C.interp ? C.interp(Y, X, F.a, F.b, orig) : '';
+if (!meaning && X !== 't' && /^ln/.test(X) && /^ln/.test(Y)) meaning = 'On a log-log plot the slope is the power: <b>' + RQ[Y].lbl.replace(/^ln /, '').replace(/ \(.*/, '') + ' &prop; ' + RQ[X].lbl.replace(/^ln /, '').replace(/ \(.*/, '') + '<sup>' + F.a.toFixed(3) + '</sup></b>'; if (meaning) res.splice(1, 0, meaning); } }
+var box = el('dmRes'); if (res.length){ box.innerHTML = res.join('<br>'); box.style.display = ''; } else box.style.display = 'none';
+hint();
+}
+function fit(P, orig){ var n = P.length, sx = 0, sy = 0, sxx = 0, sxy = 0, syy = 0; P.forEach(function(p){ sx += p[0]; sy += p[1]; sxx += p[0]*p[0]; sxy += p[0]*p[1]; syy += p[1]*p[1]; });
+var a, b, d; if (orig){ if (sxx === 0) return null; a = sxy/sxx; b = 0; } else { d = n*sxx - sx*sx; if (Math.abs(d) < 1e-15) return null; a = (n*sxy - sx*sy)/d; b = (sy - a*sx)/n; }
+var ssr = 0, sst = 0, my = sy/n; P.forEach(function(p){ var e = p[1] - (a*p[0] + b); ssr += e*e; sst += (p[1] - my)*(p[1] - my); });
+var dof = Math.max(1, n - (orig ? 1 : 2)), sa = orig ? Math.sqrt(ssr/dof/sxx) : Math.sqrt(ssr/dof*n/d);
+return { a:a, b:b, r2:sst > 0 ? 1 - ssr/sst : 1, sa:isFinite(sa) ? sa : 0 }; }
+function sig(v){ if (v === null || !isFinite(v)) return '--'; var a = Math.abs(v); return a !== 0 && (a < 1e-3 || a >= 1e5) ? v.toExponential(3) : (+v.toPrecision(4)).toString(); }
+function hint(){ el('dmHint').textContent = X === 't' ? (TQ[Y].lbl + ' against time, ' + (RUN === 'all' ? 'all recorded runs' : (RUN === 'cur' ? 'the current run, as it plays' : 'run ' + RUN))) : (RQ[Y].lbl + ' against ' + RQ[X].lbl + ': one point per recorded run (' + runs.length + ')'); }
+/* ── the table ── */
+function table(){
+var th = el('dmTh'), tb = el('dmTb'), t = el('dmTbl'), no = el('dmNo');
+th.innerHTML = '<tr>' + C.cols.map(function(c){ return '<th>' + c[0] + '</th>'; }).join('') + '</tr>';
+tb.innerHTML = runs.map(function(r){ return '<tr>' + C.cols.map(function(c){ var v = c[1](r); return '<td>' + (v === null || v === undefined ? '--' : (typeof v === 'number' ? v.toFixed(c[2]) : v)) + '</td>'; }).join('') + '</tr>'; }).join('');
+t.style.display = runs.length ? '' : 'none'; no.style.display = runs.length ? 'none' : '';
+}
+var ENT = { '&Delta;':'\u0394', '&theta;':'\u03B8', '&beta;':'\u03B2', '&psi;':'\u03C8', '&deg;':'\u00B0', '&sup2;':'\u00B2', '&minus;':'-', '&pi;':'\u03C0', '&radic;':'\u221A' };
+function plain(h){ return h.replace(/<[^>]+>/g, '').replace(/&[A-Za-z0-9]+;/g, function(m){ return ENT[m] || ''; }); }
+function rows(sep){ var head = C.cols.map(function(c){ return plain(c[0]); });
+return [head.join(sep)].concat(runs.map(function(r){ return C.cols.map(function(c){ var v = c[1](r); return v === null || v === undefined ? '' : (typeof v === 'number' ? v.toFixed(c[2]) : v); }).join(sep); })).join('\n'); }
+function csv(){ if (!runs.length){ say('No runs recorded yet.'); return; } var b = new Blob(['\ufeff' + rows(',') + '\n'], { type:'text/csv;charset=utf-8' })   /* the byte-order mark lets spreadsheets read the Greek letters */, a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = C.file + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500); say('The table was saved as a CSV file.'); }
+function copy(){ if (!runs.length){ say('No runs recorded yet.'); return; } var txt = rows('\t');
+function fallback(){ var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); }
+if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).catch(fallback); else fallback(); say('The table was copied; paste it into a spreadsheet.'); }
+/* ── recording ── */
+function record(){
+var st = state(); if (!(st.t > 0.05)){ say('Play the simulation first: there is nothing to record yet.'); return; }
+var N = Math.max(1, Math.round(+el('dmN').value || 1)), r = makeRun(st, N); runs.push(r); RUN = String(r.id); fillSelects(); table(); draw();
+say('Run ' + r.id + ' recorded: ' + C.say(r) + (r.Ttimer !== null ? ' Timed: ' + r.dt.toFixed(2) + ' seconds for ' + N + ' oscillation' + (N === 1 ? '' : 's') + ', T = ' + r.Ttimer.toFixed(3) + ' seconds.' : '') + (r.Ttrace !== null ? ' Period from the motion: ' + r.Ttrace.toFixed(3) + ' seconds.' : ' The run was too short to measure a period.') + ' ' + runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' saved.');
+}
+el('dmRec').addEventListener('click', record);
+el('dmX').addEventListener('change', function(){ setX(this.value); });
+el('dmY').addEventListener('change', function(){ setY(this.value); });
+el('dmRun').addEventListener('change', function(){ RUN = this.value; draw(); });
+['dmFit', 'dmOrig', 'dmAvg'].forEach(function(k){ el(k).addEventListener('change', function(){ draw(); var r = el('dmRes'); if (r.style.display !== 'none') say(r.textContent); }); });
+el('dmCsv').addEventListener('click', csv); el('dmCopy').addEventListener('click', copy);
+el('dmDel').addEventListener('click', function(){ if (!runs.length) return; var r = runs.pop(); fillSelects(); table(); draw(); say('Run ' + r.id + ' deleted. ' + runs.length + ' left.'); });
+el('dmClr').addEventListener('click', function(){ if (!runs.length) return; if (window.confirm && !window.confirm('Delete all ' + runs.length + ' recorded runs?')) return; runs = []; RUN = 'cur'; fillSelects(); table(); draw(); say('All recorded runs deleted.'); });
+/* the current run's graph follows the animation */
+var lastT = -1; setInterval(function(){ if (X !== 't' || RUN !== 'cur') return; var t = state().t; if (t !== lastT){ lastT = t; draw(); } }, 250);
+fillSelects(); table(); draw();
+return { record:record, _runs:function(){ return runs; }, _fit:fit, _setAxes:function(x, y, run){ X = x; if (y) Y = y; if (run !== undefined) RUN = String(run); fillSelects(); draw(); }, _pickY:function(v){ setY(v); return [X, Y]; }, _pickX:function(v){ setX(v); return [X, Y]; } };
+})();
+</script>
+
+<hr><hr>
+<ol type="a">
+<p>Without changing any default parameters, press play. The damped pendulum will oscillate with decreasing amplitude, and a graph of &theta;(t) will be traced.</p>
+<li>Once the graph is complete, pause. Use the <strong>Time t</strong> slider to move the vertical axis to successive peaks and measure the period.<br />T =  _____ </li>
+<li>Change the amplitude and run again. Did the period change?</li>
+<li>Change g and run again. How did a decrease in g affect the period?</li>
+<li>Use the <strong>&theta; (graph)</strong> slider to move the horizontal axis to the first peak after the start and read its amplitude.<br />A =  _____ </li>
+<li>Drag the horizontal green line (<strong>Bob y-pos</strong> slider) and the orange vertical line to the bob at maximum displacement. Use the y and x readings with trigonometry to compute the angle. Does it agree with the graph?</li>
+<li>Increase L and run again. What happened to the period?</li>
+<li>Increase m and run again. What happened to the period?</li>
+<li>Increase &beta; (damping coefficient) and run again. What happens to the rate of decay of the oscillations? </li>
+<li>Does &beta; affect the period?</li>
+</ol>
+<!-- SIM description: a button below the sim toggles the description into view (math in AsciiMath, typeset when opened) -->
+<div class="mob_descwrap">
+<button type="button" class="mob_descbtn" id="mobDescBtn" aria-expanded="false" aria-controls="mobDesc" onclick="mobDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="mob_desc" id="mobDesc" role="region" aria-labelledby="mobDescBtn" style="display:none">
+<p>This simulation shows a damped pendulum: the swing slowly dies away. The angle follows</p>
+<p class="mob_eq">`theta(t) = A e^(-beta t) cos(omega t)`,&nbsp;&nbsp; `omega = sqrt(g/L)`,</p>
+<p>where `beta` (per second) is the damping coefficient. Each swing is smaller than the one before by the same factor, so the peaks fall exponentially: `ln theta_"peak" = ln A - beta t` is a straight line in time, with slope `-beta`. The energy is lost to friction, and falls as `e^(-2 beta t)`.</p>
+<p>The rulers, the protractor and the movable axes on the graph measure positions, angles, amplitudes and times; the &#9202; button starts a timer to measure the period.</p>
+<p><b>Data collection.</b> Below the simulation, record runs with different settings. Each run keeps its settings, its period (timed with the &#9202; button over N oscillations, and measured from the motion itself) and its whole motion. Plot any quantity against time, or any two quantities against each other with one point per run, fit a straight line (optionally through the origin), or average the points. The table can be saved as a CSV file or copied into a spreadsheet.</p>
+</div>
+</div>
+<script>
+function mobDesc(){
+var b = document.getElementById('mobDescBtn'), d = document.getElementById('mobDesc'); if (!b || !d) return;
+var open = (d.style.display === 'none');
+d.style.display = open ? 'block' : 'none';
+b.setAttribute('aria-expanded', open ? 'true' : 'false');
+b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); }
+}
+</script>
+<style>
+/* ════════ mobile layer: the sim adapts to the width it gets (a phone, or a column in MOM) ════════ */
+#mobs5930 { container-type:inline-size; width:100%; max-width:100%; box-sizing:border-box; }
+/* only when the sim is narrower than its design (660 px): nothing is wider than the sim, canvases scale down,
+   rows wrap, fixed heights relax, wide tables scroll inside the sim -- on a wide screen nothing changes */
+@container (max-width:700px) {
+#mobs5930 div, #mobs5930 p, #mobs5930 fieldset, #mobs5930 form, #mobs5930 section, #mobs5930 ol, #mobs5930 ul, #mobs5930 table { max-width:100%; box-sizing:border-box; }
+#mobs5930 canvas, #mobs5930 img, #mobs5930 svg { max-width:100%; height:auto !important; }
+#mobs5930 input[type=range], #mobs5930 select { max-width:100%; min-width:0; }
+#mobs5930 #shmDPRoot .shm_a11y, #mobs5930 #shmDPRoot .footer, #mobs5930 #shmDPRoot .shm_measgrp, #mobs5930 .dm_box, #mobs5930 .dm_bar, #mobs5930 .dm_bar label { flex-wrap:wrap; }
+#mobs5930 #shmDPRoot .shm_a11y > div, #mobs5930 #shmDPRoot .footer > div, #mobs5930 #shmDPRoot .shm_measgrp > div, #mobs5930 .dm_box > div, #mobs5930 .dm_bar > div, #mobs5930 .dm_bar label > div { min-width:min(100%, 260px); }
+#mobs5930 div[style*="height"] { height:auto !important; }
+#mobs5930 #shmDPRoot .butt, #mobs5930 #shmDPRoot .tbar, #mobs5930 #shmDPRoot .mcontent, #mobs5930 #shmDPRoot .bbar, #mobs5930 #shmDPRoot .footer { height:auto; min-height:0; }
+#mobs5930 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+@media (max-width:720px) {
+#mobs5930 div, #mobs5930 p, #mobs5930 fieldset, #mobs5930 form, #mobs5930 section, #mobs5930 ol, #mobs5930 ul, #mobs5930 table { max-width:100%; box-sizing:border-box; }
+#mobs5930 canvas, #mobs5930 img, #mobs5930 svg { max-width:100%; height:auto !important; }
+#mobs5930 input[type=range], #mobs5930 select { max-width:100%; min-width:0; }
+#mobs5930 #shmDPRoot .shm_a11y, #mobs5930 #shmDPRoot .footer, #mobs5930 #shmDPRoot .shm_measgrp, #mobs5930 .dm_box, #mobs5930 .dm_bar, #mobs5930 .dm_bar label { flex-wrap:wrap; }
+#mobs5930 #shmDPRoot .shm_a11y > div, #mobs5930 #shmDPRoot .footer > div, #mobs5930 #shmDPRoot .shm_measgrp > div, #mobs5930 .dm_box > div, #mobs5930 .dm_bar > div, #mobs5930 .dm_bar label > div { min-width:min(100%, 260px); }
+#mobs5930 div[style*="height"] { height:auto !important; }
+#mobs5930 #shmDPRoot .butt, #mobs5930 #shmDPRoot .tbar, #mobs5930 #shmDPRoot .mcontent, #mobs5930 #shmDPRoot .bbar, #mobs5930 #shmDPRoot .footer { height:auto; min-height:0; }
+#mobs5930 table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+/* touch screens: larger targets */
+@media (pointer:coarse) {
+#mobs5930 button, #mobs5930 input[type=button], #mobs5930 input[type=submit], #mobs5930 input[type=reset] { min-height:40px; }
+#mobs5930 input[type=range] { height:28px; }
+#mobs5930 input[type=checkbox], #mobs5930 input[type=radio] { width:22px; height:22px; }
+#mobs5930 select { min-height:36px; font-size:16px; }
+}
+/* display options moved to the top */
+#mobs5930 .mob_a11ytop { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:6px 4px 8px; width:auto; max-width:100%; height:auto; }
+#mobs5930 .mob_a11ytop input[type=button], #mobs5930 .mob_a11ytop button { padding:5px 12px; font-size:13px; border:1px solid #8a94a3; border-radius:4px; background:#f4f6f8; color:#1d232a; cursor:pointer; width:auto; height:auto; margin:0; }
+/* SIM description */
+#mobs5930 .mob_descwrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; margin:12px 0 6px; }
+#mobs5930 .mob_descbtn { padding:8px 18px; font-family:monospace; font-size:.8rem; letter-spacing:.08em; cursor:pointer; background:#2c3138; border:1px solid #e8a020; color:#e8a020; border-radius:3px; font-weight:bold; min-height:40px; }
+#mobs5930 .mob_descbtn[aria-expanded="true"] { background:#3a3220; }
+#mobs5930 .mob_desc { width:100%; max-width:860px; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid #e8a020; border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; text-align:left; }
+#mobs5930 .mob_desc p { margin:0 0 9px 0; }
+#mobs5930 .mob_eq { text-align:center; font-size:1rem; }
+</style>
+</div><!-- #mobs5930 -->
+</main>
+</body>
+</html>

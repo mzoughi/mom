@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" href=mzy.ico>
+<title>Unit Conversion Calculator</title>
+<meta name="description" content="HTML 5 app: Unit Conversion Calculator">
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics, mechanics, position, time, waves, amplitude, frequency, period, wavelength, temperature, time, speed, acceleration, units, convert, conversion">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+:root{
+--bg:#f5f7fa;
+--card:#ffffff;
+--border:#d7dce2;
+--ink:#1c242c;
+--muted:#5c6b78;
+--accent:#005a9c;
+--accent-dark:#00426f;
+--brass:#b8862f;
+--brass-dark:#93691f;
+--brass-tint:#fbf1de;
+--error:#a3241c;
+--error-tint:#fdecea;
+--radius:10px;
+}
+*{ box-sizing:border-box; }
+html,body{
+margin:0;
+padding:0;
+background:var(--bg);
+color:var(--ink);
+font-family:'Inter', 'Segoe UI', Arial, sans-serif;
+font-size:15px;
+}
+.page{
+max-width:640px;
+margin:0 auto;
+padding:28px 18px 56px;
+}
+.card{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:var(--radius);
+overflow:hidden;
+}
+header.app-header{
+display:flex;
+align-items:flex-start;
+justify-content:space-between;
+gap:12px;
+padding:22px 24px 18px;
+border-bottom:3px solid var(--brass);
+}
+header.app-header h1{
+font-family:'Spectral', serif;
+font-weight:600;
+font-size:26px;
+color:var(--accent-dark);
+margin:0 0 6px;
+letter-spacing:-0.01em;
+}
+header.app-header p{
+margin:0;
+color:var(--muted);
+font-size:13.5px;
+line-height:1.5;
+max-width:44ch;
+}
+#fsBtn{
+flex-shrink:0;
+width:34px;
+height:34px;
+border-radius:8px;
+border:1px solid var(--border);
+background:var(--bg);
+color:var(--muted);
+font-size:16px;
+cursor:pointer;
+line-height:1;
+}
+#fsBtn:hover{ color:var(--accent); border-color:var(--accent); }
+.body{
+padding:22px 24px 26px;
+}
+.field{
+margin-bottom:16px;
+}
+.field label{
+display:block;
+font-size:12px;
+font-weight:600;
+color:var(--muted);
+text-transform:uppercase;
+letter-spacing:0.04em;
+margin-bottom:6px;
+}
+select, input[type="number"]{
+width:100%;
+font-family:'Inter', sans-serif;
+font-size:15px;
+padding:11px 12px;
+border:1px solid var(--border);
+border-radius:8px;
+background:#fff;
+color:var(--ink);
+}
+select:focus, input:focus{
+outline:2px solid var(--accent);
+outline-offset:1px;
+}
+.unit-row{
+display:grid;
+grid-template-columns:1fr auto 1fr;
+gap:10px;
+align-items:end;
+}
+.swap-btn{
+width:40px;
+height:40px;
+border-radius:50%;
+border:1px solid var(--border);
+background:var(--bg);
+color:var(--accent);
+font-size:16px;
+cursor:pointer;
+align-self:center;
+margin-top:20px;
+}
+.swap-btn:hover{ background:var(--accent); color:#fff; border-color:var(--accent); }
+@media (max-width:460px){
+.unit-row{ grid-template-columns:1fr; }
+.swap-btn{ justify-self:center; margin-top:0; transform:rotate(90deg); }
+}
+.calc-btn{
+width:100%;
+padding:13px;
+margin-top:4px;
+background:var(--brass);
+color:#231a08;
+font-family:'Inter', sans-serif;
+font-weight:600;
+font-size:15px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+.calc-btn:hover{ background:var(--brass-dark); }
+.result{
+margin-top:20px;
+padding:18px 20px;
+background:var(--brass-tint);
+border:1px solid #ecd9ab;
+border-radius:8px;
+display:none;
+}
+.result.show{ display:block; }
+.result .eq{
+font-family:'IBM Plex Mono', monospace;
+font-size:20px;
+font-weight:600;
+color:var(--accent-dark);
+word-break:break-word;
+}
+.result .cat-note{
+margin-top:4px;
+font-size:12px;
+color:var(--muted);
+}
+.error-box{
+margin-top:20px;
+padding:14px 16px;
+background:var(--error-tint);
+border:1px solid #f2c6c1;
+border-radius:8px;
+color:var(--error);
+font-size:13.5px;
+display:none;
+}
+.error-box.show{ display:block; }
+.toggle-work{
+margin-top:14px;
+display:none;
+}
+.toggle-work.show{ display:block; }
+.toggle-work a{
+font-size:13px;
+color:var(--accent);
+text-decoration:none;
+cursor:pointer;
+font-weight:500;
+}
+.toggle-work a:hover{ text-decoration:underline; }
+.work-panel{
+margin-top:10px;
+padding:14px 16px 14px 18px;
+border-left:3px solid var(--brass);
+background:#fafbfc;
+border-radius:0 6px 6px 0;
+}
+.step{
+font-family:'IBM Plex Mono', monospace;
+font-size:13px;
+line-height:1.7;
+color:var(--ink);
+}
+.step + .step{ margin-top:8px; }
+.step-label{
+display:block;
+font-family:'Inter', sans-serif;
+font-size:11px;
+font-weight:600;
+color:var(--muted);
+text-transform:uppercase;
+letter-spacing:0.04em;
+margin-bottom:2px;
+}
+.step.result-step{
+padding-top:8px;
+margin-top:10px;
+border-top:1px dashed var(--border);
+color:var(--accent-dark);
+font-weight:600;
+}
+footer.app-footer{
+padding:14px 24px 18px;
+border-top:1px solid var(--border);
+font-size:12px;
+color:var(--muted);
+background:var(--bg);
+}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="card">
+<header class="app-header">
+<div>
+<h1>Unit Conversion Calculator</h1>
+<p>Pick a quantity, choose your units, and convert — with the math shown step by step.</p>
+</div>
+<button id="fsBtn" title="Full screen" onclick="toggleFullscreen()">⛶</button>
+</header>
+<div class="body">
+<div class="field">
+<label for="mtopic">Quantity</label>
+<select id="mtopic" onchange="onCategoryChange()">
+<option value="" selected disabled>Select a quantity…</option>
+</select>
+</div>
+<div class="field">
+<label for="variable">Value to convert</label>
+<input type="number" id="variable" placeholder="e.g. 12.5" onkeydown="if(event.key==='Enter'){event.preventDefault();doConvert();}">
+</div>
+<div class="unit-row">
+<div class="field" style="margin-bottom:0;">
+<label for="unitInput">From</label>
+<select id="unitInput"></select>
+</div>
+<button class="swap-btn" title="Swap units" onclick="swapUnits()">⇄</button>
+<div class="field" style="margin-bottom:0;">
+<label for="unitOutput">To</label>
+<select id="unitOutput"></select>
+</div>
+</div>
+<button class="calc-btn" onclick="doConvert()">Calculate</button>
+<div class="result" id="resultBox">
+<div class="eq" id="resultEq"></div>
+<div class="cat-note" id="resultNote"></div>
+</div>
+<div class="error-box" id="errorBox"></div>
+<div class="toggle-work" id="toggleWork">
+<a id="workLink" href="#" onclick="toggleWorkPanel(); return false;">Show the math ▸</a>
+<div class="work-panel" id="workPanel" style="display:none;"></div>
+</div>
+</div>
+<footer class="app-footer">© Taha Mzoughi 2015</footer>
+</div>
+</div>
+<script>
+// ****************************************************************************
+// Unit Conversion Calculator
+// Original: 12.12.2015 — Taha Mzoughi
+// Rewritten 2026: fixed missing/duplicate quantities, corrected significant-
+// figure handling, reworked temperature conversion, responsive redesign, and
+// an explicit toggle for the step-by-step "show your work" panel.
+// Feel free to use this code freely while giving fair credit.
+// ****************************************************************************
+// ---- Conversion data -------------------------------------------------------
+// Each non-temperature unit's "value" is how many of that unit equal one
+// "base" unit for the category (the base unit has value 1 and base:true).
+// Converting X input-units to output-units:  result = X * (outFactor/inFactor)
+const Acceleration = [
+{ value:100, text:"centimeters/sec\u00B2" },
+{ value:3.28083989501312, text:"feet/sec\u00B2" },
+{ value:0.101971621297793, text:"gs (g is 9.8 N/kg)" },
+{ value:39.3700787401575, text:"inch/sec\u00B2" },
+{ value:12958.9632829374, text:"kilometers/hr\u00B2" },
+{ value:3.59971202303816, text:"kilometers/hr/sec" },
+{ value:0.001, text:"kilometers/sec\u00B2" },
+{ value:1, text:"meters/sec\u00B2", base:true },
+{ value:8053.69127516779, text:"miles/hr\u00B2" },
+{ value:2.23713646532438, text:"miles/hr/sec" },
+{ value:2.23713646532438, text:"miles/sec\u00B2" },
+];
+const Angle = [
+{ value:0.159159637116027, text:"circumference" },
+{ value:63.6619771068602, text:"grade" },
+{ value:57.3065902578797, text:"degrees" },
+{ value:3437.60742523204, text:"minutes (angles)" },
+{ value:0.63653723742839, text:"quadrants (angle)" },
+{ value:1, text:"radians", base:true },
+{ value:0.159159637116027, text:"revolutions" },
+{ value:206264.798210117, text:"seconds (angle)" },
+];
+const AngularAcceleration = [
+{ value:1, text:"radians/sec\u00B2", base:true },
+{ value:573.065902578797, text:"revolutions/min\u00B2" },
+{ value:0.159159637116027, text:"revolutions/sec\u00B2" },
+];
+const AngularSpeed = [
+{ value:206264.806293699, text:"degrees/hour" },
+{ value:3437.7467668344, text:"degrees/min" },
+{ value:57.3065902578797, text:"degrees/sec" },
+{ value:1, text:"radians/sec", base:true },
+{ value:572.957795785523, text:"revolutions/hour" },
+{ value:9.55109837631328, text:"revolutions/min" },
+{ value:0.159159637116027, text:"revolutions/sec" },
+];
+const Area = [
+{ value:0.000247104369225325, text:"acre" },
+{ value:0.01, text:"ares" },
+{ value:1e28, text:"barn" },
+{ value:1, text:"centares (centiares)" },
+{ value:1973525159.97888, text:"circular mils" },
+{ value:1013249965828.14, text:"darcy (d)" },
+{ value:0.0001, text:"hectare (ha)" },
+{ value:0.000988, text:"roods (brit)" },
+{ value:0.000000386, text:"section (land)" },
+{ value:0.1076426, text:"square (building)" },
+{ value:10000, text:"cm\u00B2" },
+{ value:0.00247, text:"chains\u00B2 (gunter's)" },
+{ value:0.00108, text:"chains\u00B2 (ramden's)" },
+{ value:10.7642626480086, text:"ft\u00B2" },
+{ value:0.0001, text:"hectometers\u00B2" },
+{ value:1549.90700557967, text:"in\u00B2" },
+{ value:0.000001, text:"km\u00B2" },
+{ value:0.0000247, text:"links\u00B2 (gunter's)" },
+{ value:0.0000108, text:"links\u00B2 (ramden's)" },
+{ value:1, text:"m\u00B2", base:true },
+{ value:3.86102174990772e-7, text:"miles\u00B2" },
+{ value:1000000, text:"mm\u00B2" },
+{ value:154990.700557967, text:"mils\u00B2" },
+{ value:0.0395, text:"(perchs/poles)\u00B2" },
+{ value:0.0395, text:"rods\u00B2" },
+{ value:1.19602918311207, text:"yards\u00B2" },
+{ value:0.0000000107, text:"townships (us)" },
+];
+const Capacitance = [
+{ value:0.000000001, text:"abafarad" },
+{ value:0.000000001, text:"e.m. cgs units" },
+{ value:898755224014.74, text:"e.s. cgs units" },
+{ value:1, text:"farads", base:true },
+{ value:1000000, text:"microfarad" },
+{ value:1000000000000, text:"picofarad" },
+{ value:898755224014.74, text:"statfarad" },
+];
+const Charge = [
+{ value:0.1, text:"abacoulombs" },
+{ value:0.000277777777777778, text:"ampere-hours" },
+{ value:1, text:"coulombs", base:true },
+{ value:6241960000000000000, text:"electronic charge" },
+{ value:0.00001036377, text:"faradays (chem)" },
+{ value:0.00001036086, text:"faradays (phys)" },
+{ value:1000000, text:"microcoulombs" },
+{ value:1000, text:"millicoulombs" },
+{ value:2997925435.59857, text:"statcoulombs" },
+];
+const Current = [
+{ value:0.1, text:"abampere" },
+{ value:1, text:"ampere", base:true },
+{ value:1.00016502722949, text:"ampere (int)" },
+{ value:0.00001036377, text:"faradays (chem)/sec" },
+{ value:0.00001036086, text:"faradays (phys)/sec" },
+{ value:2997930000, text:"statampere" },
+];
+const Energy = [
+{ value:0.000948047023132347, text:"btu" },
+{ value:0.238845896627496, text:"calorie" },
+{ value:9.870861, text:"cu. cm.-atm." },
+{ value:0.000349, text:"cu. ft.-atm." },
+{ value:6241457005723420000, text:"electron volt" },
+{ value:10000000, text:"ergs" },
+{ value:0.737463126843658, text:"foot-pounds" },
+{ value:3.725782414307e-7, text:"horsepower-hrs" },
+{ value:1, text:"joules", base:true },
+{ value:1.000165, text:"joules (abs)" },
+{ value:0.000238845896627496, text:"kilocalorie" },
+{ value:2.77777777777778e-7, text:"kilowatt-hrs" },
+{ value:0.000000278, text:"kilowatt-hrs (int.)" },
+{ value:0.00987, text:"liter-atm" },
+{ value:2.38e-16, text:"megatons (tnt)" },
+{ value:0.00000000948, text:"therms" },
+{ value:2.39005736137667e-10, text:"ton (nuclear equi. tnt)" },
+{ value:0.000277777777777778, text:"watt-hours" },
+{ value:1.000165, text:"watt-sec" },
+];
+const Force = [
+{ value:100000, text:"dynes" },
+{ value:0.01, text:"joules/cm" },
+{ value:1, text:"newton", base:true },
+{ value:3.59694245503552, text:"ounce force (ozf)" },
+{ value:7.23065798987708, text:"poundals" },
+{ value:0.224820143884892, text:"pounds (lbf)" },
+];
+const Illuminance = [
+{ value:0.0929022668153103, text:"foot-candle" },
+{ value:0.0001, text:"lumens/sq cm" },
+{ value:0.0929368029739777, text:"lumens/sq ft" },
+{ value:1, text:"lumens/sq m" },
+{ value:1, text:"lux", base:true },
+];
+const Inductance = [
+{ value:1000000000, text:"abhenries" },
+{ value:1000000000, text:"e.m. cgs units" },
+{ value:1.11264978213205e-12, text:"e.s. cgs units" },
+{ value:1, text:"henries", base:true },
+{ value:1000000, text:"microhenries" },
+{ value:1000, text:"millihenries" },
+{ value:1.11264978213205e-12, text:"stathenries" },
+];
+const Length = [
+{ value:551.2679, text:"agate" },
+{ value:10000000000, text:"angstrom" },
+{ value:6.68896321070234e-12, text:"astronomical unit" },
+{ value:0.0273403324584427, text:"bolt (us cloth)" },
+{ value:0.00456, text:"cable lengths" },
+{ value:3937.00787401575, text:"caliber" },
+{ value:100, text:"centimeters" },
+{ value:0.0497017892644135, text:"chain" },
+{ value:0.0497097, text:"chains (gunter's)" },
+{ value:0.0328084, text:"chains (ramden's)" },
+{ value:2.187227, text:"cubit" },
+{ value:10, text:"decimeters" },
+{ value:0.1, text:"dekameters" },
+{ value:0.874890638670166, text:"ell" },
+{ value:236.2391, text:"em" },
+{ value:0.546805453181423, text:"fathoms" },
+{ value:3.28083989501312, text:"feet" },
+{ value:1000000000000000, text:"fermi" },
+{ value:0.00497096953789867, text:"furlongs" },
+{ value:9.84251968503937, text:"hand" },
+{ value:0.01, text:"hectometers" },
+{ value:39.3700787401575, text:"inches" },
+{ value:0.001, text:"kilometers" },
+{ value:0.000207168013258753, text:"league" },
+{ value:0.00018, text:"leagues (naut. int.)" },
+{ value:1.05702099772212e-16, text:"light year" },
+{ value:472.4424, text:"lines" },
+{ value:3.28083989501312, text:"links (engineer's)" },
+{ value:4.97096953789867, text:"links (surveyor's)" },
+{ value:1, text:"meters", base:true },
+{ value:1000000, text:"microns" },
+{ value:0.000539665407447383, text:"miles (nautical)" },
+{ value:0.000621504039776259, text:"miles (statute)" },
+{ value:1000, text:"millimeters" },
+{ value:1000000000, text:"millmicrons" },
+{ value:39370.0787401575, text:"mils" },
+{ value:1000000000, text:"nanometer" },
+{ value:1.312336, text:"paces" },
+{ value:13.12336, text:"palms" },
+{ value:3.24254215304799e-17, text:"parsec" },
+{ value:237.106279095904, text:"pica" },
+{ value:2845.27561900394, text:"point" },
+{ value:0.1988388, text:"poles (brit.)" },
+{ value:4.374453, text:"quarters (brit.)" },
+{ value:0.198846689202625, text:"rod" },
+{ value:0.198838781515947, text:"rods (surveyor's meas.)" },
+{ value:0.164042, text:"ropes (brit.)" },
+{ value:0.00911, text:"skeins" },
+{ value:4.37445319335083, text:"span" },
+{ value:1.178967, text:"varas" },
+{ value:1.09361329833771, text:"yards" },
+];
+const Luminance = [
+{ value:0.318268618714195, text:"candle/sq. cm" },
+{ value:2.05338809034908, text:"candle/sq. inch" },
+{ value:3.18268618714195e-5, text:"candle/sq. m" },
+{ value:295.7195, text:"candles/sq feet" },
+{ value:1, text:"lamberts", base:true },
+{ value:1, text:"phots" },
+];
+const MagneticField = [
+{ value:10000, text:"gausses" },
+{ value:10000, text:"lines/sq cm" },
+{ value:64516.1290322581, text:"lines/sq in" },
+{ value:1, text:"tesla", base:true },
+{ value:0.000645161290322581, text:"webers/sq in" },
+{ value:1, text:"webers/sq meter" },
+];
+const MagneticFlux = [
+{ value:100000000, text:"maxwells" },
+{ value:100, text:"megalines" },
+{ value:1, text:"webers", base:true },
+];
+const Mass = [
+{ value:100000, text:"centigrams" },
+{ value:10000, text:"decigrams" },
+{ value:100, text:"dekagrams" },
+{ value:564.397787560673, text:"drams" },
+{ value:15432.7514007703, text:"grains" },
+{ value:15432.0987654321, text:"grains (troy)" },
+{ value:1000, text:"grams" },
+{ value:10, text:"hectograms" },
+{ value:1, text:"kilograms", base:true },
+{ value:1000000000, text:"micrograms" },
+{ value:0.001, text:"milliers" },
+{ value:1000000, text:"milligrams" },
+{ value:35.2739571281031, text:"ounces" },
+{ value:643.016519094376, text:"pennyweights (troy)" },
+{ value:70.9219858156028, text:"poundals (mass)" },
+{ value:2.20458553791887, text:"pounds (mass)" },
+{ value:771.637570038515, text:"scruples" },
+{ value:0.0685400959561343, text:"slug" },
+{ value:0.000984251968503937, text:"tons (long)" },
+{ value:0.001, text:"tons (metric)" },
+{ value:0.0011015642211941, text:"tons (short)" },
+];
+const Power = [
+{ value:3.41180484476288, text:"btu/hr" },
+{ value:0.0569151963574274, text:"btu/min" },
+{ value:0.000948586605957123, text:"btu/sec" },
+{ value:10000000, text:"ergs/sec" },
+{ value:44.2477876106195, text:"foot-pounds/min" },
+{ value:0.737463126843658, text:"foot-pounds/sec" },
+{ value:0.01, text:"hectowatts" },
+{ value:0.0013410218586563, text:"horsepower" },
+{ value:0.000102009588901357, text:"horsepower (boiler)" },
+{ value:0.0013596490506502, text:"horsepower (metric)" },
+{ value:0.001, text:"kilowatts" },
+{ value:668.449197860963, text:"lumen" },
+{ value:0.999800039992002, text:"watt (international)" },
+{ value:1, text:"watt", base:true },
+];
+const Pressure = [
+{ value:0.00000986923266716013, text:"atmospheres" },
+{ value:0.0000100002357555579, text:"bars" },
+{ value:0.000749941692033445, text:"cm of mercury" },
+{ value:10.0002357555579, text:"dyne/sq. cm" },
+{ value:0.000334550259903733, text:"feet of water" },
+{ value:0.000295309176156796, text:"inches of mercury" },
+{ value:0.00401514754563065, text:"inches of water (at 4 C)" },
+{ value:0.000001, text:"megapascal" },
+{ value:0.0000075, text:"meters of mercury (0 deg C)" },
+{ value:0.000102, text:"meters of water (4 deg C)" },
+{ value:0.01, text:"millibars" },
+{ value:0.0075, text:"mm of mercury (0 deg C)" },
+{ value:1, text:"newtons/sq m" },
+{ value:0.000001, text:"newtons/sq mm" },
+{ value:1, text:"pascals", base:true },
+{ value:0.0208872649040426, text:"pounds/sq ft" },
+{ value:0.000145050450722518, text:"pounds/sq in" },
+];
+const Resistance = [
+{ value:0.000001, text:"megohms" },
+{ value:1000000, text:"microhms" },
+{ value:0.999500249875062, text:"ohm (international)" },
+{ value:1, text:"ohms", base:true },
+];
+const Speed = [
+{ value:100, text:"centimeters/sec" },
+{ value:196.850393700787, text:"feet/min" },
+{ value:3.28083989501312, text:"feet/sec" },
+{ value:3.59971202303816, text:"kilometers/hr" },
+{ value:0.06, text:"kilometers/min" },
+{ value:0.001, text:"kilometers/sec" },
+{ value:1.94243040310714, text:"knots" },
+{ value:3600, text:"meters/hr" },
+{ value:60, text:"meters/min" },
+{ value:1, text:"meters/sec", base:true },
+{ value:2.23713646532438, text:"miles/hr" },
+{ value:0.0372856077554064, text:"miles/min" },
+{ value:0.000621, text:"miles/sec" },
+{ value:1.943846, text:"nautical miles/hr" },
+{ value:0.0324, text:"nautical miles/min" },
+{ value:0.00054, text:"nautical miles/sec" },
+];
+// Temperature is affine, not a simple ratio, so it's handled with its own
+// formulas rather than the value/base factor system above.
+const Temperature = [
+{ id:"C", text:"degrees Celsius (\u00B0C)" },
+{ id:"F", text:"degrees Fahrenheit (\u00B0F)" },
+{ id:"K", text:"degrees Kelvin (K)", base:true },
+];
+const Time = [
+{ value:3.17e-10, text:"centuries" },
+{ value:0.0000115740740740741, text:"days" },
+{ value:0.0000116, text:"days (mean solar)" },
+{ value:0.0000116, text:"days (sidereal)" },
+{ value:3.17e-11, text:"decades" },
+{ value:0.000277777755555557, text:"hours (mean solar)" },
+{ value:0.000279, text:"hours (sidereal)" },
+{ value:0.000278, text:"hours (solar)" },
+{ value:1000000, text:"microseconds" },
+{ value:3.17e-14, text:"millenniums" },
+{ value:1000, text:"milliseconds" },
+{ value:0.0167, text:"minutes" },
+{ value:0.000000392, text:"months (lunar)" },
+{ value:0.000000381, text:"months (mean calendar)" },
+{ value:1000000000, text:"nanoseconds" },
+{ value:1000000000000, text:"picoseconds" },
+{ value:1, text:"seconds", base:true },
+{ value:1.002738, text:"seconds (sidereal)" },
+{ value:1.65343915343915e-6, text:"week" },
+{ value:0.00000165, text:"weeks (calendar)" },
+{ value:3.16880878140289e-8, text:"year (mean of 4 year period)" },
+{ value:3.17e-8, text:"years (calendar)" },
+{ value:3.16e-8, text:"years (leap)" },
+{ value:3.17e-8, text:"years (sidereal)" },
+{ value:3.17e-8, text:"years (tropical)" },
+];
+const Voltage = [
+{ value:0.00333564048466856, text:"statvolts" },
+{ value:100000000, text:"abvolt (abv)" },
+{ value:100000000, text:"e.m. cgs units" },
+{ value:0.00333566830114413, text:"e.s. cgs units" },
+{ value:1000000, text:"microvolt" },
+{ value:1000, text:"millivolt" },
+{ value:1000000000000, text:"picovolt" },
+{ value:1, text:"volt", base:true },
+];
+const Volume = [
+{ value:0.000810680554165013, text:"acre-feet" },
+{ value:0.00973, text:"acre-inches" },
+{ value:6.110262, text:"barrels (brit.)" },
+{ value:6.28981056977507, text:"barrels (oil)" },
+{ value:8.64694057407384, text:"barrels (us dry)" },
+{ value:6.60502, text:"barrels (us proof spirits)" },
+{ value:8.38732674928183, text:"barrels (us, liquid)" },
+{ value:423.776, text:"board feet" },
+{ value:55.005500550055, text:"bucket (brit. dry)" },
+{ value:28.3734306655499, text:"bushels" },
+{ value:27.49617, text:"bushels (brit.)" },
+{ value:22.20495, text:"bushels (us heaped)" },
+{ value:2.096604, text:"butts" },
+{ value:100000, text:"centiliters" },
+{ value:2.2069209039548, text:"cord feet" },
+{ value:0.2758945, text:"cords" },
+{ value:1000000, text:"cm\u00B3" },
+{ value:1000, text:"decimeters\u00B3" },
+{ value:0.001, text:"dekameters\u00B3" },
+{ value:35.3107344632768, text:"ft\u00B3" },
+{ value:61012.812690665, text:"in\u00B3" },
+{ value:1, text:"m\u00B3", base:true },
+{ value:1.30787339785509, text:"yards\u00B3" },
+{ value:4226.75348981902, text:"cups" },
+{ value:10000, text:"deciliters" },
+{ value:10, text:"decisteres" },
+{ value:100, text:"dekaliters" },
+{ value:60024.0096038415, text:"drops" },
+{ value:264.172043930553, text:"gallon (oil)" },
+{ value:264.200792602378, text:"gallons" },
+{ value:219.9694, text:"gallons (brit. imperial)" },
+{ value:219.993165912301, text:"gallons (liq. British imp.)" },
+{ value:227.0208, text:"gallons (us dry)" },
+{ value:8453.0853761623, text:"gills" },
+{ value:7038.78369817696, text:"gills (British)" },
+{ value:10, text:"hectoliters" },
+{ value:3.49127293487016, text:"hogsheads (British)" },
+{ value:4.19275769466967, text:"hogsheads (u.s.)" },
+{ value:12.22052, text:"kilderskins (brit.)" },
+{ value:1, text:"kiloliters" },
+{ value:1000, text:"liters" },
+{ value:528.4016, text:"magnums" },
+{ value:1000000000, text:"microliters" },
+{ value:1000000, text:"milliliters" },
+{ value:16894174.8884984, text:"minims (British)" },
+{ value:16200000, text:"minims (us)" },
+{ value:7039.021, text:"noggins (brit.)" },
+{ value:33818.0588434224, text:"ounces (fluid)" },
+{ value:109.987999209406, text:"pecks (British)" },
+{ value:113.51276371569, text:"pecks (us)" },
+{ value:1.441415, text:"perches" },
+{ value:1759.755, text:"pints (brit.)" },
+{ value:2113.27134404057, text:"pints (liquid)" },
+{ value:1816.166, text:"pints (us dry)" },
+{ value:2.096436, text:"pipes" },
+{ value:43.99511, text:"pottles (brit.)" },
+{ value:2205.34885310833, text:"pounds of water" },
+{ value:3.1449, text:"puncheons (brit.)" },
+{ value:439.9511, text:"quarterns (brit. dry)" },
+{ value:7039.021, text:"quarterns (brit. liquid)" },
+{ value:907.928760277753, text:"quarts (dry)" },
+{ value:1056.63567202029, text:"quarts (liquid)" },
+{ value:0.0353, text:"rods (brit.)" },
+{ value:3.437118, text:"seams (brit.)" },
+{ value:1, text:"steres" },
+{ value:66666.6666666667, text:"tablespoons (metric)" },
+{ value:67613.2521974307, text:"tablespoons (us)" },
+{ value:200000, text:"teaspoons (metric)" },
+{ value:202839.756592292, text:"teaspoons (us)" },
+{ value:0.8827683, text:"tons (us shipping)" },
+{ value:1.048416, text:"tuns" },
+];
+const CATEGORIES = {
+Acceleration, Angle, AngularAcceleration, AngularSpeed, Area, Capacitance,
+Charge, Current, Energy, Force, Illuminance, Inductance, Length, Luminance,
+MagneticField, MagneticFlux, Mass, Power, Pressure, Resistance, Speed,
+Temperature, Time, Voltage, Volume,
+};
+const CATEGORY_LABELS = {
+Acceleration:"Acceleration", Angle:"Angle",
+AngularAcceleration:"Angular Acceleration", AngularSpeed:"Angular Speed",
+Area:"Area", Capacitance:"Capacitance", Charge:"Charge", Current:"Current",
+Energy:"Energy", Force:"Force", Illuminance:"Illuminance",
+Inductance:"Inductance", Length:"Length", Luminance:"Luminance",
+MagneticField:"Magnetic Field", MagneticFlux:"Magnetic Flux", Mass:"Mass",
+Power:"Power", Pressure:"Pressure", Resistance:"Resistance", Speed:"Speed",
+Temperature:"Temperature", Time:"Time", Voltage:"Voltage", Volume:"Volume",
+};
+// ---- Significant figures ----------------------------------------------------
+// Counts sig figs the conventional way: leading zeros never count; trailing
+// zeros only count when there's an explicit decimal point.
+function countSigFigs(str){
+str = String(str).trim();
+if (str === '' || isNaN(str)) return 1;
+if (str[0] === '-' || str[0] === '+') str = str.slice(1);
+let mantissa = str.split(/[eE]/)[0];
+if (mantissa.indexOf('.') !== -1){
+const [intPart, fracPart] = mantissa.split('.');
+let digits = (intPart + fracPart).replace(/^0+/, '');
+return digits.length || 1;
+}
+let digits = mantissa.replace(/^0+/, '').replace(/0+$/, '');
+return digits.length || 1;
+}
+function formatSigFigs(num, sig){
+if (!isFinite(num)) return String(num);
+if (sig < 1) sig = 1;
+if (num === 0) return sig > 1 ? (0).toFixed(sig - 1) : '0';
+return num.toPrecision(sig);
+}
+// Floating-point arithmetic can leave noise like 31.999999999999943 where the
+// true value is 32. Rounding to 12 significant figures clears that noise
+// while still preserving far more precision than any sig-fig display needs.
+function cleanFloat(num){
+if (!isFinite(num) || num === 0) return num;
+return parseFloat(num.toPrecision(12));
+}
+function trimNumber(num, maxSig){
+maxSig = maxSig || 6;
+if (num === 0) return '0';
+const p = parseFloat(num.toPrecision(maxSig));
+return p.toString();
+}
+// ---- UI wiring --------------------------------------------------------------
+function populateCategorySelect(){
+const sel = document.getElementById('mtopic');
+Object.keys(CATEGORIES).forEach(key => {
+const opt = document.createElement('option');
+opt.value = key;
+opt.textContent = CATEGORY_LABELS[key];
+sel.appendChild(opt);
+});
+}
+function unitLabel(u){ return u.text; }
+function populateUnitSelects(catName){
+const units = CATEGORIES[catName];
+const inputSel = document.getElementById('unitInput');
+const outputSel = document.getElementById('unitOutput');
+inputSel.innerHTML = '';
+outputSel.innerHTML = '';
+units.forEach((u, i) => {
+const o1 = document.createElement('option');
+o1.value = i; o1.textContent = unitLabel(u);
+if (u.base) o1.selected = true;
+inputSel.appendChild(o1);
+const o2 = document.createElement('option');
+o2.value = i; o2.textContent = unitLabel(u);
+if (u.base) o2.selected = true;
+outputSel.appendChild(o2);
+});
+}
+function onCategoryChange(){
+const catName = document.getElementById('mtopic').value;
+populateUnitSelects(catName);
+hideResult();
+hideWorkToggle();
+}
+function swapUnits(){
+const inSel = document.getElementById('unitInput');
+const outSel = document.getElementById('unitOutput');
+const tmp = inSel.value;
+inSel.value = outSel.value;
+outSel.value = tmp;
+if (document.getElementById('resultBox').classList.contains('show')){
+doConvert();
+}
+}
+function hideResult(){
+document.getElementById('resultBox').classList.remove('show');
+document.getElementById('errorBox').classList.remove('show');
+}
+function hideWorkToggle(){
+document.getElementById('toggleWork').classList.remove('show');
+document.getElementById('workPanel').style.display = 'none';
+document.getElementById('workLink').textContent = 'Show the math ▸';
+}
+function toggleWorkPanel(){
+const panel = document.getElementById('workPanel');
+const link = document.getElementById('workLink');
+const isOpen = panel.style.display !== 'none';
+panel.style.display = isOpen ? 'none' : 'block';
+link.textContent = isOpen ? 'Show the math ▸' : 'Hide the math ▾';
+}
+function showError(msg){
+hideResult();
+const box = document.getElementById('errorBox');
+box.textContent = msg;
+box.classList.add('show');
+hideWorkToggle();
+}
+function showResult(eqText, noteText, workHtml){
+document.getElementById('errorBox').classList.remove('show');
+document.getElementById('resultEq').textContent = eqText;
+document.getElementById('resultNote').textContent = noteText;
+document.getElementById('resultBox').classList.add('show');
+document.getElementById('workPanel').innerHTML = workHtml;
+document.getElementById('toggleWork').classList.add('show');
+}
+// ---- Conversion logic ---------------------------------------------------
+function doConvert(){
+const catName = document.getElementById('mtopic').value;
+if (!catName || !CATEGORIES[catName]){
+showError('Please choose a quantity first.');
+return;
+}
+const raw = document.getElementById('variable').value.trim();
+if (raw === '' || isNaN(raw)){
+showError('Enter a numeric value to convert.');
+return;
+}
+const value = parseFloat(raw);
+const units = CATEGORIES[catName];
+const inIdx = parseInt(document.getElementById('unitInput').value, 10);
+const outIdx = parseInt(document.getElementById('unitOutput').value, 10);
+const inputUnit = units[inIdx];
+const outputUnit = units[outIdx];
+const sig = countSigFigs(raw);
+if (catName === 'Temperature'){
+convertTemperature(value, raw, inputUnit, outputUnit, sig);
+} else {
+convertLinear(value, raw, inputUnit, outputUnit, sig);
+}
+}
+function convertLinear(value, raw, inputUnit, outputUnit, sig){
+const factor = outputUnit.value / inputUnit.value;
+const result = cleanFloat(value * factor);
+const rounded = formatSigFigs(result, sig);
+const fShown = trimNumber(factor, 6);
+showResult(
+`${raw} ${inputUnit.text} = ${rounded} ${outputUnit.text}`,
+`Rounded to ${sig} significant figure${sig === 1 ? '' : 's'}, matching the precision of your input.`,
+`
+<div class="step"><span class="step-label">Conversion factor</span>1 ${inputUnit.text} = ${fShown} ${outputUnit.text}</div>
+<div class="step"><span class="step-label">Set up</span>${raw} ${inputUnit.text} \u00D7 (${fShown} ${outputUnit.text} / 1 ${inputUnit.text}) = ${trimNumber(result, 10)} ${outputUnit.text}</div>
+<div class="step"><span class="step-label">Significant figures</span>${raw} has ${sig} significant figure${sig === 1 ? '' : 's'}, so the answer is reported to ${sig}.</div>
+<div class="step result-step"><span class="step-label">Answer</span>${raw} ${inputUnit.text} = ${rounded} ${outputUnit.text}</div>
+`
+);
+}
+function toKelvin(value, id){
+if (id === 'C') return { k: value + 273.15, formula:`K = ${value} + 273.15` };
+if (id === 'F') return { k: (value + 459.67) * 5 / 9, formula:`K = (${value} + 459.67) \u00D7 5/9` };
+return { k: value, formula:`K = ${value}` };
+}
+function fromKelvin(k, id){
+if (id === 'C') return { v: k - 273.15, formula:`\u00B0C = K \u2212 273.15` };
+if (id === 'F') return { v: k * 9 / 5 - 459.67, formula:`\u00B0F = K \u00D7 9/5 \u2212 459.67` };
+return { v: k, formula:`K = K` };
+}
+function convertTemperature(value, raw, inputUnit, outputUnit, sig){
+const step1 = toKelvin(value, inputUnit.id);
+step1.k = cleanFloat(step1.k);
+if (step1.k < 0){
+showError('That temperature is below absolute zero. Please enter a valid value and try again.');
+return;
+}
+const step2 = fromKelvin(step1.k, outputUnit.id);
+step2.v = cleanFloat(step2.v);
+const rounded = formatSigFigs(step2.v, sig);
+showResult(
+`${raw} ${inputUnit.text} = ${rounded} ${outputUnit.text}`,
+`Rounded to ${sig} significant figure${sig === 1 ? '' : 's'}, matching the precision of your input.`,
+`
+<div class="step"><span class="step-label">Step 1 — convert to Kelvin</span>${step1.formula} = ${trimNumber(step1.k, 8)} K</div>
+<div class="step"><span class="step-label">Step 2 — convert to target unit</span>${step2.formula} = ${trimNumber(step2.v, 8)} ${outputUnit.text}</div>
+<div class="step"><span class="step-label">Significant figures</span>${raw} has ${sig} significant figure${sig === 1 ? '' : 's'}, so the answer is reported to ${sig}.</div>
+<div class="step result-step"><span class="step-label">Answer</span>${raw} ${inputUnit.text} = ${rounded} ${outputUnit.text}</div>
+`
+);
+}
+// ---- Full screen ----------------------------------------------------------
+function toggleFullscreen(){
+if (!document.fullscreenElement){
+document.documentElement.requestFullscreen().catch(() => {});
+} else {
+document.exitFullscreen();
+}
+}
+document.addEventListener('fullscreenchange', () => {
+document.getElementById('fsBtn').textContent = document.fullscreenElement ? '⤡' : '⛶';
+});
+// ---- Init -------------------------------------------------------------------
+populateCategorySelect();
+</script>
+</body>
+</html>

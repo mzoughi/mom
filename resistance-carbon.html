@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Electricity: Resistance of a Pencil Lead</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, resistance, resistivity, graphite, pencil lead, ohmmeter, linear fit, uncertainty, lesson, scientific">
+<meta name="description" content="Interactive ohmmeter measurement of the resistance of graphite pencil leads: vary the grade, diameter, length and probe leads, graph and fit the data with uncertainties, and average constant quantities.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+@media (max-width:600px) { body { margin:0 !important; padding:4px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<!--
+============================================================
+GRAPHITE-ROD (PENCIL LEAD) RESISTANCE LAB (MOM-compatible) -- v2: same template as the wire resistivity lab:
+mobile, colour-blind safe, fit uncertainties, average +/- std dev, CSV of the graphed data, send-to-answer-box
+buttons, data kept across submissions (window state + browser storage).
+Template variables (MOM):  = MOM instance id; LCD colours #222 / #a8b89a.
+Physics as in v1: A = pi (d/2)^2, R = rho L/A + beta * probe length (beta = 2 ohm/m of lead), 2% Gaussian noise
+(0.01 ohm floor). Ohmmeter ranges 200 ohm ... 200 Mohm; OL when the reading exceeds 1.05 x the range.
+Grades 4H ... 9B: resistivities from Marshall, Phys. Educ. 38 (2003) 94 and Costa Sousa & Buchanan (2000).
+============================================================
+-->
+<div id="rlRoot" class="rl_root" role="region" aria-label="Pencil-lead resistance lab: an ohmmeter measurement of the resistance of graphite rods, with data table, graph, fit and averages">
+<div class="rl_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="rl_a11ybtn" id="rlBtnHC" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="rl_a11ybtn" id="rlBtnLM" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="rl_a11ybtn" id="rlBtnCB" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="rl_a11ybtn rl_a11yon" id="rlBtnNR" aria-pressed="true">NARRATION: ON</button>
+<button type="button" class="rl_a11ybtn" id="rlBtnFS" aria-label="Font size: normal. Press to change.">FONT: NORMAL</button>
+</div>
+<div class="rl_header"><p class="rl_h1">Resistance of a Pencil Lead</p><p class="rl_sub">R = &rho; L / A + lead resistance &middot; vary one quantity at a time</p></div>
+<div class="rl_main">
+<div class="rl_panel rl_inst"><div class="rl_ptitle">The ohmmeter</div>
+<div id="rlMeters" class="rl_svgbox"></div>
+<div class="rl_pbody">
+<div class="rl_ctrl"><div class="rl_ctrlhdr"><label class="rl_ctrlname" for="rlRng">range dial</label><span class="rl_sval" id="rlRngv"></span></div>
+<input type="range" id="rlRng" min="0" max="7" step="1" value="1"></div>
+<p class="rl_note">Choose the smallest range that does not show OL (overload): it gives the most digits.</p>
+</div></div>
+<div class="rl_panel rl_app"><div class="rl_ptitle">The graphite rod</div>
+<div id="rlApp" class="rl_svgbox"></div>
+<div class="rl_pbody">
+<div class="rl_two">
+<div class="rl_ctrl"><label class="rl_ctrlname" for="rlMat">pencil grade</label><select id="rlMat"></select></div>
+<div class="rl_ctrl"><label class="rl_ctrlname" for="rlDiam">diameter d</label><select id="rlDiam"></select></div>
+</div>
+<div class="rl_ctrl"><div class="rl_ctrlhdr"><label class="rl_ctrlname" for="rlLeff">length of the rod L</label><span class="rl_sval" id="rlLeffv"></span></div>
+<input type="range" id="rlLeff" min="5" max="15" step="0.5" value="10"></div>
+<div class="rl_ctrl"><div class="rl_ctrlhdr"><label class="rl_ctrlname" for="rlProbe">length of the probe leads</label><span class="rl_sval" id="rlProbev"></span></div>
+<input type="range" id="rlProbe" min="10" max="200" step="5" value="30"></div>
+</div></div>
+</div>
+<div class="rl_read" id="rlRead" aria-label="Readings"></div>
+<div class="rl_bbar">
+<button type="button" class="rl_btn rl_kick" id="rlRec">&#8853; Record measurement</button>
+<span id="rlRecInfo" class="rl_note"></span>
+</div>
+<div class="rl_tabs" role="tablist" aria-label="Data views">
+<button type="button" role="tab" class="rl_tab" id="rlT0" aria-selected="true" aria-controls="rlP0">Data</button>
+<button type="button" role="tab" class="rl_tab" id="rlT1" aria-selected="false" aria-controls="rlP1">Graph &amp; fit</button>
+<button type="button" role="tab" class="rl_tab" id="rlT2" aria-selected="false" aria-controls="rlP2">Average &plusmn; std. dev.</button>
+</div>
+<div class="rl_panel rl_tabp" id="rlP0" role="tabpanel" aria-labelledby="rlT0"><div class="rl_pbody">
+<div class="rl_tblwrap"><table class="rl_tbl" id="rlTbl" aria-label="Recorded measurements"></table></div>
+<p id="rlNo" class="rl_note">No measurements yet. Set up the wire, then press Record measurement.</p>
+<div class="rl_bar">
+<button type="button" class="rl_btn" id="rlCsvAll">Download all data (CSV)</button>
+<button type="button" class="rl_btn" id="rlUndo">Delete last</button>
+<button type="button" class="rl_btn rl_warn" id="rlClr">Clear all data</button>
+</div></div></div>
+<div class="rl_panel rl_tabp" id="rlP1" role="tabpanel" aria-labelledby="rlT1" hidden><div class="rl_pbody">
+<div class="rl_two">
+<div class="rl_ctrl"><label class="rl_ctrlname" for="rlGy">y (dependent)</label><select id="rlGy"></select></div>
+<div class="rl_ctrl"><label class="rl_ctrlname" for="rlGx">x (independent)</label><select id="rlGx"></select></div>
+</div>
+<div id="rlGraph" class="rl_svgbox rl_white" role="img" aria-describedby="rlFit"></div>
+<div class="rl_res" id="rlFit" aria-live="polite"></div>
+<div class="rl_bar">
+<button type="button" class="rl_btn" id="rlCsvG">Download graphed data (CSV)</button>
+</div>
+<div class="rl_send rl_mom">
+<div class="rl_ctrlname">Send to the answer boxes</div>
+<div class="rl_bar">
+<button type="button" class="rl_btn rl_sendb" id="rlSendXY">Send the graphed data (x and y)</button>
+<button type="button" class="rl_btn rl_sendb" id="rlSendM">Send the slope &amp; its uncertainty</button>
+<button type="button" class="rl_btn rl_sendb" id="rlSendB">Send the intercept &amp; its uncertainty</button>
+</div></div>
+</div></div>
+<div class="rl_panel rl_tabp" id="rlP2" role="tabpanel" aria-labelledby="rlT2" hidden><div class="rl_pbody">
+<div class="rl_ctrl"><label class="rl_ctrlname" for="rlAq">quantity that should stay constant</label><select id="rlAq"></select></div>
+<div class="rl_res" id="rlAvg" aria-live="polite"></div>
+<p class="rl_note">For a quantity that should not change from one measurement to the next (for example the measured resistivity &rho; = RA/L for one material), the average is the best value and the standard deviation shows the scatter. The standard error of the mean is s/&radic;n.</p>
+<div class="rl_send rl_mom">
+<div class="rl_bar"><button type="button" class="rl_btn rl_sendb" id="rlSendA">Send the average &amp; its std. dev.</button></div>
+</div>
+</div></div>
+<div id="rlNar" class="rl_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="rl_descwrap">
+<button type="button" class="rl_descbtn" id="rlDescBtn" aria-expanded="false" aria-controls="rlDesc">&#9656; SIM DESCRIPTION</button>
+<div class="rl_desc" id="rlDesc" role="region" aria-labelledby="rlDescBtn" hidden>
+<p>A graphite rod (a pencil lead) is held between two alligator clips, red on the left and black on the right, connected to a digital ohmmeter by two probe leads. Choose the pencil grade, the diameter d and the length L of the rod, and the length of the probe leads, then read the resistance on the ohmmeter.</p>
+<p>The resistance of the rod is R = &rho;L/A, with A = &pi;(d/2)&sup2; its cross-section and &rho; the resistivity of the lead. The probe leads add a small resistance of their own, about 2 &Omega; per metre of lead: plot R against L and it shows up as the intercept. The reading carries a small random error (about 2%). Turn the range dial to the smallest range that does not show OL (overload).</p>
+<p>Pencil leads are graphite (a conductor) mixed with clay (an insulator). Hard grades (H) contain more clay and have a larger resistivity; soft grades (B) contain more graphite and have a smaller resistivity. The rod is drawn darker for softer grades. Resistivities used (&Omega;&middot;m): 4H 3.0&times;10&#8315;&#8308;, 2H 2.0&times;10&#8315;&#8308;, H 1.4&times;10&#8315;&#8308;, HB 1.0&times;10&#8315;&#8308;, B 7.0&times;10&#8315;&#8309;, 2B 6.0&times;10&#8315;&#8309;, 4B 4.5&times;10&#8315;&#8309;, 6B 3.5&times;10&#8315;&#8309;, 9B 3.0&times;10&#8315;&#8309;.</p>
+<p>The <b>Graph &amp; fit</b> tab plots any recorded quantity against any other, with the best straight line y = mx + b, the uncertainties in the slope m and the intercept b (from the scatter of the points about the line), and R&sup2;. At least five points are needed. Vary one quantity at a time: for example, R against L at fixed grade and diameter has slope &rho;/A and an intercept equal to the resistance of the leads. The <b>Average</b> tab gives the mean, the standard deviation and the standard error of any quantity. The data stay saved in this browser, also when answers are submitted.</p>
+</div></div>
+</div><!-- #rlRoot -->
+<style>
+#rlRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8; --c-bad:#ff8a7a;
+  background:var(--c-chassis); color:var(--c-text); font-family:Arial, sans-serif; font-size:14px; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#rlRoot.rl_fsL { font-size:16.5px; } #rlRoot.rl_fsXL { font-size:19px; }
+#rlRoot * { box-sizing:border-box; }
+#rlRoot.rl_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; --c-bad:#a02010; }
+#rlRoot.rl_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e8e8e8; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; --c-bad:#ff5555; }
+#rlRoot .rl_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#rlRoot .rl_a11ybtn { padding:4px 10px; font-size:.72em; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:32px; }
+#rlRoot .rl_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#rlRoot .rl_header { text-align:center; }
+#rlRoot .rl_h1 { margin:0; font-size:1.05em; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--c-accent); }
+#rlRoot .rl_sub { margin:3px 0 0; font-size:.75em; color:var(--c-dim); letter-spacing:.06em; text-transform:uppercase; }
+#rlRoot .rl_main { display:grid; grid-template-columns:minmax(0,230px) minmax(0,1fr); gap:10px; }
+#rlRoot .rl_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; min-width:0; }
+#rlRoot .rl_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.68em; letter-spacing:.12em; text-transform:uppercase; color:var(--c-dim); }
+#rlRoot .rl_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:9px; }
+#rlRoot .rl_svgbox { padding:6px; }
+#rlRoot .rl_svgbox svg { display:block; width:100%; height:auto; }
+#rlRoot .rl_white { background:#fff; border-radius:4px; }
+#rlRoot .rl_white svg { max-width:560px; margin:0 auto; }
+#rlRoot .rl_two { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px 12px; }
+#rlRoot .rl_ctrl { display:flex; flex-direction:column; gap:3px; min-width:0; }
+#rlRoot .rl_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#rlRoot .rl_ctrlname { font-size:.8em; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.03em; }
+#rlRoot .rl_sval { font-family:monospace; font-size:.9em; color:var(--c-val); white-space:nowrap; }
+#rlRoot .rl_note { margin:0; font-size:.8em; color:var(--c-dim); line-height:1.4; }
+#rlRoot select { width:100%; background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:5px; font-size:.92em; min-height:36px; }
+#rlRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); margin:9px 0; }
+#rlRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rlRoot input[type=range]::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#rlRoot .rl_bbar, #rlRoot .rl_bar { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; }
+#rlRoot .rl_bbar { background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; }
+#rlRoot .rl_btn { padding:7px 12px; font-family:monospace; font-size:.8em; letter-spacing:.03em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; min-height:38px; }
+#rlRoot .rl_btn:hover { border-color:var(--c-accent); }
+#rlRoot .rl_btn:disabled { opacity:.45; cursor:not-allowed; }
+#rlRoot .rl_kick { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#rlRoot .rl_warn { border-color:#cc6655; color:var(--c-bad); }
+#rlRoot .rl_sendb { border-color:var(--c-green); color:var(--c-green); }
+#rlRoot .rl_send { border-top:1px dashed var(--c-bd2); padding-top:8px; display:flex; flex-direction:column; gap:6px; }
+#rlRoot .rl_read { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:6px 10px; background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; padding:8px 12px; }
+#rlRoot .rl_flabel { font-family:monospace; font-size:.68em; color:var(--c-dim); letter-spacing:.06em; text-transform:uppercase; }
+#rlRoot .rl_fvalue { font-family:monospace; font-size:.98em; color:var(--c-val); font-variant-numeric:tabular-nums; }
+#rlRoot .rl_tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:-6px; }
+#rlRoot .rl_tab { flex:1 1 140px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px 4px 0 0; cursor:pointer; font-family:monospace; font-size:.8em; text-transform:uppercase; min-height:40px; }
+#rlRoot .rl_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#rlRoot .rl_tblwrap { width:100%; overflow:auto; max-height:300px; }
+#rlRoot .rl_tbl { border-collapse:collapse; font-family:monospace; font-size:.8em; min-width:100%; }
+#rlRoot .rl_tbl th { background:var(--c-hi); border:1px solid var(--c-bd2); padding:4px 6px; position:sticky; top:0; white-space:nowrap; }
+#rlRoot .rl_tbl td { border:1px solid var(--c-bd); padding:3px 6px; text-align:right; white-space:nowrap; }
+#rlRoot .rl_del { background:transparent; border:1px solid #cc6655; color:var(--c-bad); border-radius:3px; cursor:pointer; min-width:28px; min-height:28px; }
+#rlRoot .rl_res { font-size:.9em; background:var(--c-nbg); color:var(--c-ntx); border-left:4px solid var(--c-nbd); border-radius:3px; padding:6px 10px; line-height:1.55; }
+#rlRoot .rl_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.92em; font-style:italic; line-height:1.45; border-radius:3px; }
+#rlRoot .rl_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#rlRoot .rl_descbtn { padding:8px 18px; font-family:monospace; font-size:.8em; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#rlRoot .rl_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.95em; line-height:1.55; }
+#rlRoot .rl_desc p { margin:0 0 9px; }
+#rlRoot [hidden] { display:none !important; }
+#rlRoot .rl_sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+#rlRoot button:focus-visible, #rlRoot input:focus-visible, #rlRoot select:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #rlRoot { padding:10px 6px 14px; } #rlRoot .rl_main { grid-template-columns:minmax(0,1fr); } #rlRoot .rl_inst .rl_svgbox { max-width:300px; margin:0 auto; } #rlRoot .rl_btn { flex:1 1 45%; } }
+@media (max-width:420px) { #rlRoot .rl_two { grid-template-columns:minmax(0,1fr); } }
+@media (pointer:coarse) { #rlRoot input[type=range] { height:8px; } #rlRoot input[type=range]::-webkit-slider-thumb { width:28px; height:28px; } #rlRoot input[type=range]::-moz-range-thumb { width:26px; height:26px; } #rlRoot .rl_a11ybtn, #rlRoot .rl_btn, #rlRoot select { min-height:44px; font-size:16px; } }
+</style>
+<script>
+(function(){
+/* ══════════ settings for the person who sets the question ══════════ */
+var BOX = { x:'000', y:'001', slope:'002', slopeU:'003', icpt:'004', icptU:'005', avg:'006', avgSD:'007' };   /* answer-box numbers */
+var DATA_SEP = '';            /* separator for lists: '' = automatic (a new line in a text area, a comma in a one-line box); or set ', ' or '\n' */
+var STORE_TAG = 'graphite'; /* change it if two different questions use this lab in the same assessment */
+var MIN_POINTS = 5;            /* points needed before the graph and the fit appear */
+var SHOW_SEND = 1;     /* 1: show the send buttons */
+var thisq = '', color = '#222', bg = '#a8b89a';
+function el(id){ return document.getElementById(id + thisq); }
+var ROOT = el('rlRoot');
+/* ══════════ state: kept on the window (re-render after a submission) and in the browser's storage (page reload) ══════════ */
+var aidM = (location.search || '').match(/aid=(\d+)/), STORE_KEY = 'grLab2_' + STORE_TAG + '_' + (aidM ? aidM[1] : location.pathname) + '_' + thisq, WKEY = 'grLab2_' + thisq;
+var DEF = { grade:'2B', d_mm:0.7, L_cm:10, probe_cm:30, dial:1, data:[], tab:0, gx:'L', gy:'R', aq:'rhom', a11y:{ lm:false, hc:false, cb:false, nr:true, fs:0 } };
+var state = window[WKEY] || load() || JSON.parse(JSON.stringify(DEF));
+window[WKEY] = state;
+['grade', 'd_mm', 'L_cm', 'probe_cm', 'dial', 'data', 'tab', 'gx', 'gy', 'aq', 'a11y'].forEach(function(k){ if (state[k] === undefined) state[k] = JSON.parse(JSON.stringify(DEF[k])); });
+function load(){ try { var s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); return s && s.data ? s : null; } catch (e) { return null; } }
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify({ grade:state.grade, d_mm:state.d_mm, L_cm:state.L_cm, probe_cm:state.probe_cm, dial:state.dial, data:state.data, tab:state.tab, gx:state.gx, gy:state.gy, aq:state.aq, a11y:state.a11y })); } catch (e) {} }
+/* ══════════ physics ══════════ */
+var GRAPHITE_RHO = { '4H':3.0e-4, '2H':2.0e-4, 'H':1.4e-4, 'HB':1.0e-4, 'B':7.0e-5, '2B':6.0e-5, '4B':4.5e-5, '6B':3.5e-5, '9B':3.0e-5 };
+var GRADES = ['4H', '2H', 'H', 'HB', 'B', '2B', '4B', '6B', '9B'];
+var GCOL = { '4H':['#b8b0a0', '#888'], '2H':['#a8a098', '#777'], 'H':['#989088', '#666'], 'HB':['#888888', '#555'], 'B':['#6a6a6a', '#444'], '2B':['#555555', '#333'], '4B':['#3a3a3a', '#1a1a1a'], '6B':['#222222', '#111'], '9B':['#0a0a0a', '#000'] };
+var DIAMS = [0.3, 0.7, 1.3, 2.8, 5.6], BETA = 2.0;
+var RANGES = [null, ['200', 200, 1, '\u03A9', '200 ohms'], ['2k', 2000, 1e-3, 'k\u03A9', '2 kilohms'], ['20k', 2e4, 1e-3, 'k\u03A9', '20 kilohms'], ['200k', 2e5, 1e-3, 'k\u03A9', '200 kilohms'],
+  ['2M', 2e6, 1e-6, 'M\u03A9', '2 megohms'], ['20M', 2e7, 1e-6, 'M\u03A9', '20 megohms'], ['200M', 2e8, 1e-6, 'M\u03A9', '200 megohms']];
+function gauss(s){ var u1 = Math.random() || 1e-9, u2 = Math.random(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2)*s; }
+function measure(){ var A = Math.PI*Math.pow(state.d_mm/2000, 2), R = (GRAPHITE_RHO[state.grade] || GRAPHITE_RHO['2B'])*(state.L_cm/100)/A + BETA*state.probe_cm/100;
+  return Math.max(0, R + gauss(Math.max(0.01, 0.02*R))); }
+var reading = null, readingKey = '';
+function key(){ return state.grade + '|' + state.d_mm + '|' + state.L_cm + '|' + state.probe_cm; }
+function getReading(force){ var k = key(); if (force || k !== readingKey || reading === null){ readingKey = k; reading = measure(); }
+  var on = state.dial > 0, rg = RANGES[state.dial]; return { R:reading, on:on, over:on && reading > 1.05*rg[1], rg:rg }; }
+/* ══════════ colours ══════════ */
+function pal(){ var cb = state.a11y.cb, hc = state.a11y.hc;
+  return { lbl:hc ? '#fff' : '#333', bg:hc ? '#000' : '#fafafa', red:hc ? '#ff5555' : (cb ? '#E69F00' : '#c33'), black:hc ? '#ffffff' : (cb ? '#0072B2' : '#222'), pt:cb ? '#D55E00' : '#c33', ptE:cb ? '#7a3000' : '#700', fit:cb ? '#0072B2' : '#06a', seg:hc ? '#fff' : color, segBg:hc ? '#000' : bg,
+    caseC:hc ? '#000' : '#e8c41a', caseS:hc ? '#fff' : '#222' }; }
+/* ══════════ 7-segment readouts (from v2) ══════════ */
+var segMap = { '0':'abcdef', '1':'bc', '2':'abdeg', '3':'abcdg', '4':'bcfg', '5':'acdfg', '6':'acdefg', '7':'abc', '8':'abcdefg', '9':'abcdfg', ' ':'', 'O':'abcdef', 'L':'def' };
+function hSeg(cx, cy, SL, ST){ var hl = SL/2, ht = ST/2; return (cx - hl + ht) + ',' + cy + ' ' + (cx - hl) + ',' + (cy - ht) + ' ' + (cx + hl - ht) + ',' + (cy - ht) + ' ' + (cx + hl) + ',' + cy + ' ' + (cx + hl - ht) + ',' + (cy + ht) + ' ' + (cx - hl) + ',' + (cy + ht); }
+function vSeg(cx, cy, SL, ST){ var hl = SL/2, ht = ST/2; return cx + ',' + (cy - hl + ht) + ' ' + (cx - ht) + ',' + (cy - hl) + ' ' + (cx - ht) + ',' + (cy + hl - ht) + ' ' + cx + ',' + (cy + hl) + ' ' + (cx + ht) + ',' + (cy + hl - ht) + ' ' + (cx + ht) + ',' + (cy - hl + ht); }
+function digits(v, over, blank){ if (blank) return { blank:true }; if (over) return { over:true }; var m = Math.abs(v), dp = m >= 1000 ? 0 : m >= 100 ? 1 : m >= 10 ? 2 : 3, s = String(Math.round(m*Math.pow(10, dp))); while (s.length < 4) s = '0' + s; return s.length > 4 ? { over:true } : { s:s, dp:dp }; }
+function seg7(p, onC){ var DW = 22, DH = 40, SL = 13, ST = 3.6, off = 0.1, out = '', i;
+  function one(x, segs, dot){ var f = '<g transform="translate(' + x + ',5) skewX(-4)">'; function P(pts, s){ return '<polygon points="' + pts + '" fill="' + onC + '" opacity="' + (segs.indexOf(s) >= 0 ? 1 : off) + '"/>'; }
+    f += P(hSeg(DW/2, 5, SL, ST), 'a') + P(vSeg(DW - 5, 12.5, SL, ST), 'b') + P(vSeg(DW - 5, 27.5, SL, ST), 'c') + P(hSeg(DW/2, 35, SL, ST), 'd') + P(vSeg(5, 27.5, SL, ST), 'e') + P(vSeg(5, 12.5, SL, ST), 'f') + P(hSeg(DW/2, 20, SL, ST), 'g');
+    return f + '<circle cx="' + (DW - 2.5) + '" cy="37.5" r="1.6" fill="' + onC + '" opacity="' + (dot ? 1 : off) + '"/></g>'; }
+  for (i=0; i<4; i++){ var ch = p.blank ? ' ' : (p.over ? ['O', 'L', ' ', ' '][i] : p.s.charAt(i)); out += one(6 + i*DW, segMap[ch] || '', !p.blank && !p.over && p.dp > 0 && i === 3 - p.dp); }
+  return out; }
+function metersSVG(){
+  var P = pal(), r = getReading(), W = 200, H = 168, d = !r.on ? digits(0, false, true) : (r.over ? digits(0, true) : digits(r.R*r.rg[2], false));
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Ohmmeter: ' + spokenR() + '">';
+  s += '<rect x="4" y="4" width="' + (W - 8) + '" height="' + (H - 8) + '" rx="16" fill="' + P.caseC + '" stroke="' + P.caseS + '" stroke-width="3"/>';
+  s += '<rect x="20" y="18" width="' + (W - 40) + '" height="74" rx="6" fill="' + (state.a11y.hc ? '#111' : '#3a3a3a') + '" stroke="' + (state.a11y.hc ? '#fff' : '#111') + '"/>';
+  s += '<text x="30" y="34" font-size="11" font-weight="bold" fill="#eee" font-family="Arial,sans-serif">OHMMETER</text>';
+  s += '<rect x="28" y="40" width="' + (W - 56) + '" height="44" rx="4" fill="' + P.segBg + '" stroke="#000"/>';
+  s += '<g transform="translate(30,40)" aria-hidden="true">' + seg7(d, P.seg) + '</g>';
+  if (r.on) s += '<text x="' + (W - 42) + '" y="68" text-anchor="middle" font-size="14" font-weight="bold" fill="' + P.seg + '" font-family="Arial,sans-serif">' + r.rg[3] + '</text>';
+  s += '<rect x="20" y="102" width="' + (W - 40) + '" height="28" rx="5" fill="#3a3a3a" stroke="#111"/><circle cx="36" cy="116" r="7" fill="' + (r.on ? '#3eff70' : '#600') + '"/>';
+  s += '<text x="50" y="120" font-size="11" font-weight="bold" fill="#fc0" font-family="Arial,sans-serif">' + (r.on ? 'RANGE ' + r.rg[0] + ' \u03A9' : 'OFF') + '</text>';
+  [['COM', 70, P.black], ['V/\u03A9', 130, P.red]].forEach(function(j){ s += '<circle cx="' + j[1] + '" cy="146" r="8" fill="#e0e0e0" stroke="#000"/><circle cx="' + j[1] + '" cy="146" r="4" fill="' + j[2] + '"/><text x="' + (j[1] + 13) + '" y="150" font-size="9" font-weight="bold" fill="' + P.caseS + '" font-family="Arial,sans-serif">' + j[0] + '</text>'; });
+  return s + '</svg>'; }
+function apparatusSVG(){
+  var P = pal(), W = 380, H = 200, ppc = (W - 110)/16, sq = (Math.sqrt(state.d_mm) - Math.sqrt(0.3))/(Math.sqrt(5.6) - Math.sqrt(0.3)), th = 4 + Math.max(0, Math.min(1, sq))*30;
+  var Lp = state.L_cm*ppc, cx = W/2, x0 = cx - Lp/2, x1 = cx + Lp/2, my = 100, top = my - th/2, bot = my + th/2, c = GCOL[state.grade] || GCOL.HB;
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Graphite rod, grade ' + state.grade + ', diameter ' + state.d_mm.toFixed(1) + ' millimetres, length ' + state.L_cm.toFixed(1) + ' centimetres, between a red clip on the left and a black clip on the right; probe leads ' + state.probe_cm + ' centimetres long."><rect width="' + W + '" height="' + H + '" fill="' + P.bg + '"/>';
+  s += '<rect x="' + x0 + '" y="' + top + '" width="' + Lp + '" height="' + th + '" rx="' + Math.min(th/2, 6) + '" fill="' + c[0] + '" stroke="' + c[1] + '" stroke-width="1.2"/>';
+  function clip(x, col, left){ var d = left ? -1 : 1, hx = x + d*20, jh = th/2 + 4, o = '';
+    o += '<polygon points="' + x + ',' + top + ' ' + hx + ',' + (my - jh) + ' ' + (hx + d*7) + ',' + (my - jh + 2) + ' ' + (hx + d*7) + ',' + (my - 4) + ' ' + (x + d*4) + ',' + (my - 1) + '" fill="' + col + '" stroke="#000" stroke-width="0.8"/>';
+    o += '<polygon points="' + x + ',' + bot + ' ' + hx + ',' + (my + jh) + ' ' + (hx + d*7) + ',' + (my + jh - 2) + ' ' + (hx + d*7) + ',' + (my + 4) + ' ' + (x + d*4) + ',' + (my + 1) + '" fill="' + col + '" stroke="#000" stroke-width="0.8"/>';
+    var wx = hx + d*7, ly = 8 + 22*(1 - Math.min(1, state.probe_cm/200));
+    return o + '<path d="M' + wx + ',' + my + ' L' + wx + ',' + (ly + 10) + ' Q' + wx + ',' + ly + ' ' + (wx - d*10) + ',' + ly + '" fill="none" stroke="' + col + '" stroke-width="2.4"/>'; }
+  s += clip(x0, P.red, true) + clip(x1, P.black, false);
+  s += '<text x="' + (W/2) + '" y="16" text-anchor="middle" font-size="10" fill="' + P.lbl + '">probe leads: ' + state.probe_cm + ' cm each way</text>';
+  var dy = bot + 28; s += '<line x1="' + x0 + '" y1="' + dy + '" x2="' + x1 + '" y2="' + dy + '" stroke="' + P.lbl + '"/><polygon points="' + x0 + ',' + dy + ' ' + (x0 + 6) + ',' + (dy - 3) + ' ' + (x0 + 6) + ',' + (dy + 3) + '" fill="' + P.lbl + '"/><polygon points="' + x1 + ',' + dy + ' ' + (x1 - 6) + ',' + (dy - 3) + ' ' + (x1 - 6) + ',' + (dy + 3) + '" fill="' + P.lbl + '"/>';
+  s += '<text x="' + cx + '" y="' + (dy - 5) + '" text-anchor="middle" font-size="11" font-weight="bold" fill="' + P.lbl + '">L = ' + state.L_cm.toFixed(1) + ' cm</text>';
+  s += '<text x="' + (x0 + 4) + '" y="' + (top - 8) + '" font-size="11" font-weight="bold" fill="' + P.lbl + '">grade ' + state.grade + '</text><text x="' + (x1 - 4) + '" y="' + (top - 8) + '" text-anchor="end" font-size="11" font-weight="bold" fill="' + P.lbl + '">d = ' + state.d_mm.toFixed(1) + ' mm</text>';
+  return s + '</svg>'; }
+/* ══════════ quantities ══════════ */
+var Q = [
+  ['L', 'length of the rod L (cm)', function(p){ return p.L_cm; }], ['d', 'diameter d (mm)', function(p){ return p.d_mm; }], ['A', 'cross-section A (mm\u00B2)', function(p){ return p.A_mm2; }],
+  ['invA', '1/A (1/mm\u00B2)', function(p){ return 1/p.A_mm2; }], ['invd2', '1/d\u00B2 (1/mm\u00B2)', function(p){ return 1/(p.d_mm*p.d_mm); }], ['LoverA', 'L/A (cm/mm\u00B2)', function(p){ return p.L_cm/p.A_mm2; }],
+  ['probe', 'probe lead length (cm)', function(p){ return p.probe_cm; }], ['R', 'resistance R (\u03A9)', function(p){ return p.R_ohm; }], ['RoverL', 'R/L (\u03A9/cm)', function(p){ return p.R_ohm/p.L_cm; }],
+  ['rhom', 'measured resistivity \u03C1 = RA/L (\u03A9\u00B7m)', function(p){ return p.R_ohm*(p.A_mm2*1e-6)/(p.L_cm/100); }], ['rho', 'table resistivity \u03C1 of the grade (\u03A9\u00B7m)', function(p){ return p.rho; }]];
+function qd(k){ for (var i=0; i<Q.length; i++) if (Q[i][0] === k) return Q[i]; return Q[0]; }
+/* ══════════ statistics ══════════ */
+function fitLin(P){ var n = P.length, sx = 0, sy = 0, sxx = 0, sxy = 0, i; if (n < 2) return null;
+  for (i=0; i<n; i++){ sx += P[i][0]; sy += P[i][1]; sxx += P[i][0]*P[i][0]; sxy += P[i][0]*P[i][1]; }
+  var D = n*sxx - sx*sx; if (!(Math.abs(D) > 1e-300)) return null;
+  var m = (n*sxy - sx*sy)/D, b = (sy*sxx - sx*sxy)/D, ss = 0, st = 0, my = sy/n;
+  for (i=0; i<n; i++){ var e = P[i][1] - (m*P[i][0] + b); ss += e*e; st += (P[i][1] - my)*(P[i][1] - my); }
+  var sres = n > 2 ? Math.sqrt(ss/(n - 2)) : null;
+  return { m:m, b:b, n:n, sm:sres === null ? null : sres*Math.sqrt(n/D), sb:sres === null ? null : sres*Math.sqrt(sxx/D), r2:st > 0 ? 1 - ss/st : 1 }; }
+function meanSd(v){ var n = v.length; if (!n) return null; var m = 0, s = 0; v.forEach(function(x){ m += x; }); m /= n; v.forEach(function(x){ s += (x - m)*(x - m); }); var sd = n > 1 ? Math.sqrt(s/(n - 1)) : null; return { m:m, sd:sd, se:sd === null ? null : sd/Math.sqrt(n), n:n }; }
+function sig(v, k){ if (v === null || v === undefined || !isFinite(v)) return '\u2014'; k = k || 4; var a = Math.abs(v); return a !== 0 && (a < 1e-3 || a >= 1e5) ? v.toExponential(k - 1) : String(parseFloat(v.toPrecision(k))); }
+function f6(v){ return (+v).toPrecision(6); }   /* the format sent to the answer boxes */
+function pts(){ var X = qd(state.gx)[2], Y = qd(state.gy)[2]; return state.data.map(function(p){ return [X(p), Y(p)]; }).filter(function(q){ return isFinite(q[0]) && isFinite(q[1]); }); }
+/* ══════════ the graph ══════════ */
+function graphSVG(P, xl, yl){
+  var C = pal(), W = 380, H = 250, mL = 62, mR = 14, mT = 14, mB = 42, pw = W - mL - mR, ph = H - mT - mB, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="background:#fff">';
+  if (state.gx === state.gy) return s + '<text x="' + W/2 + '" y="' + H/2 + '" text-anchor="middle" font-size="13" fill="#555">Choose different quantities for x and y.</text></svg>';
+  if (P.length < MIN_POINTS) return s + '<rect x="' + mL + '" y="' + mT + '" width="' + pw + '" height="' + ph + '" fill="#fff" stroke="#ccc"/><text x="' + W/2 + '" y="' + (H/2) + '" text-anchor="middle" font-size="13" fill="#555">At least ' + MIN_POINTS + ' points are needed for the graph</text><text x="' + W/2 + '" y="' + (H/2 + 18) + '" text-anchor="middle" font-size="12" fill="#666">(now ' + P.length + ')</text></svg>';
+  var xs = P.map(function(q){ return q[0]; }), ys = P.map(function(q){ return q[1]; }), x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  var xp = (x1 - x0)*0.08 || Math.abs(x1)*0.1 || 1, yp = (y1 - y0)*0.1 || Math.abs(y1)*0.1 || 1; x0 -= xp; x1 += xp; y0 = (y0 >= 0 && y0 - yp < 0) ? 0 : y0 - yp; y1 += yp;
+  function X(v){ return mL + (v - x0)/(x1 - x0)*pw; } function Y(v){ return mT + ph - (v - y0)/(y1 - y0)*ph; }
+  function step(r){ var raw = r/5, pw10 = Math.pow(10, Math.floor(Math.log(raw)/Math.LN10)), f = raw/pw10; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10)*pw10; }
+  var xs1 = step(x1 - x0), ys1 = step(y1 - y0), v;
+  s += '<rect x="' + mL + '" y="' + mT + '" width="' + pw + '" height="' + ph + '" fill="#fff" stroke="#555"/>';
+  for (v = Math.ceil(x0/xs1)*xs1; v <= x1 + 1e-12; v += xs1){ var a = X(v); s += '<line x1="' + a + '" y1="' + mT + '" x2="' + a + '" y2="' + (mT + ph) + '" stroke="#e2e6ea"/><text x="' + a + '" y="' + (mT + ph + 14) + '" text-anchor="middle" font-size="10" fill="#222">' + sig(v, 3) + '</text>'; }
+  for (v = Math.ceil(y0/ys1)*ys1; v <= y1 + 1e-12; v += ys1){ var b = Y(v); s += '<line x1="' + mL + '" y1="' + b + '" x2="' + (mL + pw) + '" y2="' + b + '" stroke="#e2e6ea"/><text x="' + (mL - 5) + '" y="' + (b + 3) + '" text-anchor="end" font-size="10" fill="#222">' + sig(v, 3) + '</text>'; }
+  var F = fitLin(P);
+  if (F) s += '<line x1="' + X(x0) + '" y1="' + Y(F.m*x0 + F.b) + '" x2="' + X(x1) + '" y2="' + Y(F.m*x1 + F.b) + '" stroke="' + C.fit + '" stroke-width="1.8" stroke-dasharray="6,3"/>';
+  P.forEach(function(q){ var a = X(q[0]), b = Y(q[1]); if (state.a11y.cb) s += '<rect x="' + (a - 4) + '" y="' + (b - 4) + '" width="8" height="8" fill="' + C.pt + '" stroke="' + C.ptE + '"/>'; else s += '<circle cx="' + a + '" cy="' + b + '" r="4" fill="' + C.pt + '" stroke="' + C.ptE + '"/>'; });
+  s += '<text x="' + (mL + pw/2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" font-weight="bold" fill="#111">' + xl + '</text>';
+  s += '<text x="13" y="' + (mT + ph/2) + '" text-anchor="middle" font-size="11" font-weight="bold" fill="#111" transform="rotate(-90 13 ' + (mT + ph/2) + ')">' + yl + '</text>';
+  return s + '</svg>'; }
+/* ══════════ updating the page ══════════ */
+function spokenR(){ var r = getReading(); if (!r.on) return 'off'; if (r.over) return 'OL, overload: choose a larger range'; var v = r.R*r.rg[2], u = { '\u03A9':'ohms', 'k\u03A9':'kilohms', 'M\u03A9':'megohms' }[r.rg[3]]; return (+v.toPrecision(4)) + ' ' + u; }
+function canRecord(){ var r = getReading(); return r.on && !r.over; }
+function update(){
+  var r = getReading();
+  el('rlMeters').innerHTML = metersSVG(); el('rlApp').innerHTML = apparatusSVG();
+  var c = [['OHMMETER', !r.on ? 'off' : (r.over ? 'OL (overload)' : (+(r.R*r.rg[2]).toPrecision(4)) + ' ' + r.rg[3])], ['RANGE', r.on ? r.rg[0] + ' \u03A9' : 'off'],
+    ['ROD', 'grade ' + state.grade + ', d = ' + state.d_mm.toFixed(1) + ' mm'], ['LENGTH L', state.L_cm.toFixed(1) + ' cm'], ['PROBE LEADS', state.probe_cm + ' cm']];
+  el('rlRead').innerHTML = c.map(function(q){ return '<div><div class="rl_flabel">' + q[0] + '</div><div class="rl_fvalue">' + q[1] + '</div></div>'; }).join('');
+  var rt = r.on ? r.rg[0] + ' \u03A9' : 'OFF'; el('rlRngv').textContent = rt; el('rlRng').setAttribute('aria-valuetext', r.on ? 'range ' + r.rg[4] : 'off');
+  el('rlLeffv').textContent = state.L_cm.toFixed(1) + ' cm'; el('rlLeff').setAttribute('aria-valuetext', state.L_cm.toFixed(1) + ' centimeters');
+  el('rlProbev').textContent = state.probe_cm + ' cm'; el('rlProbe').setAttribute('aria-valuetext', state.probe_cm + ' centimeters');
+  el('rlRec').disabled = !canRecord();
+  el('rlRecInfo').textContent = state.data.length + ' point' + (state.data.length === 1 ? '' : 's') + ' recorded' + (!r.on ? ' \u00B7 the ohmmeter is off: turn the range dial' : (r.over ? ' \u00B7 OL: turn the dial to a larger range' : ''));
+  table(); graph(); avg(); save(); }
+function table(){
+  var t = el('rlTbl'), no = el('rlNo');
+  if (!state.data.length){ t.innerHTML = ''; no.hidden = false; return; } no.hidden = true;
+  var h = '<thead><tr><th scope="col">#</th><th scope="col">grade</th><th scope="col">d (mm)</th><th scope="col">L (cm)</th><th scope="col">A (mm\u00B2)</th><th scope="col">probe (cm)</th><th scope="col">R (\u03A9)</th><th scope="col">\u03C1 = RA/L (\u03A9\u00B7m)</th><th scope="col"><span class="rl_sr">delete</span></th></tr></thead><tbody>';
+  state.data.forEach(function(p, i){ h += '<tr><td>' + (i + 1) + '</td><td style="text-align:left">' + p.grade + '</td><td>' + p.d_mm.toFixed(1) + '</td><td>' + p.L_cm.toFixed(1) + '</td><td>' + p.A_mm2.toFixed(3) + '</td><td>' + p.probe_cm + '</td><td>' + sig(p.R_ohm, 4) + '</td><td>' + sig(qd('rhom')[2](p), 3) + '</td>'
+    + '<td><button type="button" class="rl_del" data-i="' + i + '" aria-label="Delete measurement ' + (i + 1) + '">\u00D7</button></td></tr>'; });
+  t.innerHTML = h + '</tbody>';
+  [].forEach.call(t.querySelectorAll('button[data-i]'), function(b){ b.addEventListener('click', function(){ var i = +b.getAttribute('data-i'); state.data.splice(i, 1); narrate('Measurement ' + (i + 1) + ' deleted. ' + state.data.length + ' left.'); update(); }); }); }
+function graph(){
+  var P = pts(), X = qd(state.gx), Y = qd(state.gy), F = (state.gx !== state.gy && P.length >= MIN_POINTS) ? fitLin(P) : null;
+  el('rlGraph').innerHTML = graphSVG(P, X[1], Y[1]);
+  el('rlGraph').setAttribute('aria-label', 'Graph of ' + Y[1] + ' against ' + X[1] + ', ' + P.length + ' points' + (F ? ', with the best straight line' : ''));
+  var box = el('rlFit');
+  if (state.gx === state.gy) box.innerHTML = 'Choose two different quantities.';
+  else if (!F) box.innerHTML = 'Record at least ' + MIN_POINTS + ' points to see the graph and the fit (now ' + P.length + ').';
+  else box.innerHTML = '<b>Best straight line</b>, y = m x + b, from ' + F.n + ' points:<br>slope <b>m = ' + sig(F.m) + ' &plusmn; ' + sig(F.sm, 2) + '</b><br>intercept <b>b = ' + sig(F.b) + ' &plusmn; ' + sig(F.sb, 2) + '</b><br>R&sup2; = ' + F.r2.toFixed(4) + ' &nbsp;<span style="opacity:.8">(the uncertainties are the standard errors of the least-squares fit)</span>';
+  ['rlSendXY', 'rlSendM', 'rlSendB'].forEach(function(k){ el(k).disabled = state.gx === state.gy || P.length < (k === 'rlSendXY' ? 1 : MIN_POINTS); }); }
+function avg(){
+  var A = qd(state.aq), v = state.data.map(A[2]).filter(isFinite), S = meanSd(v), box = el('rlAvg');
+  box.innerHTML = !S ? 'Record some measurements first.' : '<b>' + A[1] + '</b> over ' + S.n + ' measurement' + (S.n === 1 ? '' : 's') + ':<br>average <b>' + sig(S.m) + '</b><br>standard deviation <b>s = ' + sig(S.sd, 2) + '</b>' + (S.se !== null ? '<br>standard error of the mean s/&radic;n = ' + sig(S.se, 2) : '<br>(one value: no standard deviation yet)');
+  el('rlSendA').disabled = !S; }
+/* ══════════ the answer boxes ══════════ */
+function getAnswerBox(num){ var id = 'qn' + '' + num; return document.getElementById(id); }   /* MOM: qn + the question number + the part number, e.g. qn1000 */
+function put(num, text){ var b = getAnswerBox(num); if (!b) return false; if (typeof text !== 'string') text = text.join(DATA_SEP || (b.tagName === 'TEXTAREA' ? '\n' : ', ')); b.value = text; try { b.dispatchEvent(new Event('input', { bubbles:true })); b.dispatchEvent(new Event('change', { bubbles:true })); } catch (e) {} return true; }
+function sent(ok, what, nums){ narrate(ok ? 'Sent ' + what + ' to answer box' + (nums.length > 1 ? 'es ' : ' ') + nums.join(' and ') + '. Your data stay saved in this browser after you submit.' : 'Could not find answer box ' + nums.join(' / ') + ' on this page.'); }
+/* ══════════ CSV ══════════ */
+function download(name, lines){ var b = new Blob(['\ufeff' + lines.join('\n') + '\n'], { type:'text/csv;charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function csvName(t){ return t.replace(/\u00B2/g, '^2').replace(/\u03A9/g, 'ohm').replace(/\u03C1/g, 'rho').replace(/\u00B7/g, '*').replace(/,/g, ';'); }
+/* ══════════ controls ══════════ */
+function on(id, ev, fn){ var x = el(id); if (x) x.addEventListener(ev, fn); }
+function fillSelects(){
+  el('rlMat').innerHTML = GRADES.map(function(m){ return '<option value="' + m + '"' + (m === state.grade ? ' selected' : '') + '>' + m + (m === '4H' ? ' (hardest)' : m === '9B' ? ' (softest)' : '') + '</option>'; }).join('');
+  el('rlDiam').innerHTML = DIAMS.map(function(d){ return '<option value="' + d + '"' + (Math.abs(d - state.d_mm) < 1e-6 ? ' selected' : '') + '>' + d.toFixed(1) + ' mm</option>'; }).join('');
+  var o = function(sel){ return Q.map(function(q){ return '<option value="' + q[0] + '"' + (q[0] === sel ? ' selected' : '') + '>' + q[1] + '</option>'; }).join(''); };
+  el('rlGx').innerHTML = o(state.gx); el('rlGy').innerHTML = o(state.gy); el('rlAq').innerHTML = o(state.aq);
+  el('rlRng').value = state.dial; el('rlLeff').value = state.L_cm; el('rlProbe').value = state.probe_cm; }
+on('rlRng', 'input', function(){ state.dial = +this.value; update(); });
+on('rlLeff', 'input', function(){ state.L_cm = +this.value; update(); });
+on('rlProbe', 'input', function(){ state.probe_cm = +this.value; update(); });
+['rlRng', 'rlLeff', 'rlProbe'].forEach(function(k){ on(k, 'change', function(){ narrate('Ohmmeter: ' + spokenR() + '.'); }); });
+on('rlMat', 'change', function(){ state.grade = this.value; update(); narrate('Grade ' + state.grade + '. Ohmmeter: ' + spokenR() + '.'); });
+on('rlDiam', 'change', function(){ state.d_mm = +this.value; update(); narrate('Diameter ' + state.d_mm.toFixed(1) + ' millimeters. Ohmmeter: ' + spokenR() + '.'); });
+on('rlRec', 'click', function(){
+  var r = getReading(); if (!canRecord()) return;
+  state.data.push({ grade:state.grade, rho:GRAPHITE_RHO[state.grade], d_mm:state.d_mm, A_mm2:Math.PI*Math.pow(state.d_mm/2, 2), L_cm:state.L_cm, probe_cm:state.probe_cm, R_ohm:r.R, t:Date.now() });
+  narrate('Recorded measurement ' + state.data.length + ': R = ' + spokenR() + '.');
+  getReading(true); update(); });
+on('rlUndo', 'click', function(){ if (!state.data.length) return; state.data.pop(); narrate('Last measurement deleted. ' + state.data.length + ' left.'); update(); });
+on('rlClr', 'click', function(){ if (!state.data.length) return; if (window.confirm && !window.confirm('Delete all ' + state.data.length + ' measurements?')) return; state.data = []; narrate('All data cleared.'); update(); });
+on('rlGx', 'change', function(){ state.gx = this.value; update(); narrateFit(); });
+on('rlGy', 'change', function(){ state.gy = this.value; update(); narrateFit(); });
+on('rlAq', 'change', function(){ state.aq = this.value; update(); narrate(el('rlAvg').textContent); });
+function narrateFit(){ narrate('Graph: ' + qd(state.gy)[1] + ' against ' + qd(state.gx)[1] + '. ' + el('rlFit').textContent); }
+on('rlCsvAll', 'click', function(){ if (!state.data.length){ narrate('No data to download yet.'); return; }
+  download('pencil_lead_data.csv', ['n,grade,d (mm),A (mm^2),L (cm),probe (cm),R (ohm),rho = RA/L (ohm*m)'].concat(state.data.map(function(p, i){ return [i + 1, p.grade, p.d_mm, f6(p.A_mm2), p.L_cm, p.probe_cm, f6(p.R_ohm), f6(qd('rhom')[2](p))].join(','); })));
+  narrate('All the data were saved as a CSV file.'); });
+on('rlCsvG', 'click', function(){ var P = pts(); if (!P.length || state.gx === state.gy){ narrate('Nothing graphed yet.'); return; }
+  var F = P.length >= MIN_POINTS ? fitLin(P) : null, L = ['n,' + csvName(qd(state.gx)[1]) + ',' + csvName(qd(state.gy)[1])].concat(P.map(function(q, i){ return (i + 1) + ',' + f6(q[0]) + ',' + f6(q[1]); }));
+  if (F) L.push('', 'slope,' + f6(F.m) + ',+/- ' + (F.sm === null ? '' : f6(F.sm)), 'intercept,' + f6(F.b) + ',+/- ' + (F.sb === null ? '' : f6(F.sb)), 'R^2,' + F.r2.toFixed(5));
+  download('pencil_lead_graph.csv', L); narrate('The graphed data' + (F ? ' and the fit' : '') + ' were saved as a CSV file.'); });
+on('rlSendXY', 'click', function(){ var P = pts(); if (!P.length) return; var a = put(BOX.x, P.map(function(q){ return f6(q[0]); })), b = put(BOX.y, P.map(function(q){ return f6(q[1]); })); sent(a && b, 'the ' + P.length + ' graphed x and y values', [BOX.x, BOX.y]); });
+on('rlSendM', 'click', function(){ var F = fitLin(pts()); if (!F) return; var a = put(BOX.slope, f6(F.m)), b = F.sm === null || put(BOX.slopeU, f6(F.sm)); sent(a && b, 'the slope (' + sig(F.m) + ') and its uncertainty (' + sig(F.sm, 2) + ')', [BOX.slope, BOX.slopeU]); });
+on('rlSendB', 'click', function(){ var F = fitLin(pts()); if (!F) return; var a = put(BOX.icpt, f6(F.b)), b = F.sb === null || put(BOX.icptU, f6(F.sb)); sent(a && b, 'the intercept (' + sig(F.b) + ') and its uncertainty (' + sig(F.sb, 2) + ')', [BOX.icpt, BOX.icptU]); });
+on('rlSendA', 'click', function(){ var S = meanSd(state.data.map(qd(state.aq)[2]).filter(isFinite)); if (!S) return; var a = put(BOX.avg, f6(S.m)), b = S.sd === null || put(BOX.avgSD, f6(S.sd)); sent(a && b, 'the average (' + sig(S.m) + ') and its standard deviation (' + sig(S.sd, 2) + ')', [BOX.avg, BOX.avgSD]); });
+/* tabs: click, and arrow keys between them */
+function setTab(i, focus){ state.tab = i; for (var k=0; k<3; k++){ var t = el('rlT' + k); t.setAttribute('aria-selected', k === i ? 'true' : 'false'); t.tabIndex = k === i ? 0 : -1; el('rlP' + k).hidden = k !== i; } if (focus) el('rlT' + i).focus(); save(); }
+[0, 1, 2].forEach(function(k){ on('rlT' + k, 'click', function(){ setTab(k); }); on('rlT' + k, 'keydown', function(e){ if (e.key === 'ArrowRight'){ setTab((k + 1) % 3, true); e.preventDefault(); } else if (e.key === 'ArrowLeft'){ setTab((k + 2) % 3, true); e.preventDefault(); } }); });
+/* display options */
+function applyA11y(){ var a = state.a11y;
+  ROOT.classList.toggle('rl_lm', !!a.lm); ROOT.classList.toggle('rl_hc', !!a.hc); ROOT.classList.toggle('rl_fsL', a.fs === 1); ROOT.classList.toggle('rl_fsXL', a.fs === 2);
+  [['hc', 'rlBtnHC'], ['lm', 'rlBtnLM'], ['cb', 'rlBtnCB'], ['nr', 'rlBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('rl_a11yon', !!a[q[0]]); b.setAttribute('aria-pressed', a[q[0]] ? 'true' : 'false'); });
+  el('rlBtnNR').textContent = 'NARRATION: ' + (a.nr ? 'ON' : 'OFF'); el('rlNar').style.display = a.nr ? '' : 'none';
+  var fsN = ['NORMAL', 'LARGE', 'XL'][a.fs]; el('rlBtnFS').textContent = 'FONT: ' + fsN; el('rlBtnFS').setAttribute('aria-label', 'Font size: ' + fsN.toLowerCase() + '. Press to change.');
+  el('rlBtnFS').classList.toggle('rl_a11yon', a.fs > 0); }
+function toggle(k){ state.a11y[k] = !state.a11y[k]; if (k === 'hc' && state.a11y.hc) state.a11y.lm = false; if (k === 'lm' && state.a11y.lm) state.a11y.hc = false; applyA11y(); update();
+  if (k === 'cb' && state.a11y.cb) narrate('Colour-blind safe colours: the left clip and V/\u03A9 jack are orange, the right clip and COM jack blue; graph points are orange squares and the fit line is blue.'); }
+on('rlBtnHC', 'click', function(){ toggle('hc'); }); on('rlBtnLM', 'click', function(){ toggle('lm'); }); on('rlBtnCB', 'click', function(){ toggle('cb'); }); on('rlBtnNR', 'click', function(){ toggle('nr'); });
+on('rlBtnFS', 'click', function(){ state.a11y.fs = (state.a11y.fs + 1) % 3; applyA11y(); save(); });
+on('rlDescBtn', 'click', function(){ var d = el('rlDesc'), open = d.hidden; d.hidden = !open; this.setAttribute('aria-expanded', open ? 'true' : 'false'); this.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION'; });
+var narT = ''; function narrate(m){ narT = m; if (state.a11y.nr) el('rlNar').textContent = m; }
+/* start */
+if (!SHOW_SEND) [].forEach.call(ROOT.querySelectorAll('.rl_mom'), function(x){ x.hidden = true; });
+fillSelects(); applyA11y(); setTab(state.tab || 0); update();
+narrate(state.data.length ? 'Welcome back: your ' + state.data.length + ' recorded measurement' + (state.data.length === 1 ? ' was' : 's were') + ' restored.' : 'Pencil-lead lab ready. Choose a grade, a diameter and a length, turn the ohmmeter dial to a suitable range, then record the resistance. The Graph tab fits any recorded quantity against any other.');
+})();
+</script>
+
+<div style="max-width:860px;margin:14px auto;padding:10px 14px;border:1px dashed #889;border-radius:6px;background:#fff;font-family:Arial,sans-serif"><b>Answer boxes (demonstration).</b> <span style="font-size:13px;color:#445">In the MOM version these are the question&rsquo;s answer boxes; the &ldquo;Send&rdquo; buttons fill them, ready to be submitted. The box numbers are set at the top of the script.</span>
+<div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn000" style="width:220px;font-size:13px">box 000: graphed x values</label><textarea id="qn000" rows="3" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn001" style="width:220px;font-size:13px">box 001: graphed y values</label><textarea id="qn001" rows="3" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn002" style="width:220px;font-size:13px">box 002: slope</label><textarea id="qn002" rows="1" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn003" style="width:220px;font-size:13px">box 003: slope uncertainty</label><textarea id="qn003" rows="1" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn004" style="width:220px;font-size:13px">box 004: intercept</label><textarea id="qn004" rows="1" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn005" style="width:220px;font-size:13px">box 005: intercept uncertainty</label><textarea id="qn005" rows="1" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn006" style="width:220px;font-size:13px">box 006: average</label><textarea id="qn006" rows="1" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div><div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;flex-wrap:wrap"><label for="qn007" style="width:220px;font-size:13px">box 007: its standard deviation</label><textarea id="qn007" rows="1" style="flex:1;min-width:160px;font-family:monospace;font-size:12px"></textarea></div></div>
+</body>
+</html>

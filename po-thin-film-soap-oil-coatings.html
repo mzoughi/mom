@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Configure MathJax to load the AsciiMath input component
+window.MathJax = {
+loader: { load: ['input/asciimath', 'output/chtml'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Simulations-Optics: Thin Films: Soap, Oil and Coatings</title>
+<meta name="author" content="Taha Mzoughi">
+<meta name="keywords" content="physics,Taha, Mzoughi, pupil,learning, teaching, teach, learn, light, optics, interference, thin film, interference, soap film, soap bubble, oil on water, anti-reflection coating, quarter-wave, phase change on reflection, white light, lesson, scientific">
+<meta name="description" content="Interactive simulation of thin films of constant thickness: soap films, oil on water and anti-reflection coatings, in reflected and transmitted light.">
+<style>
+body { margin:0; padding:24px 12px; background:#e9edf2; font-family:Arial, sans-serif; }
+.page { width:860px; max-width:100%; margin:0 auto; overflow-x:auto; }
+@media (max-width:600px) { body { margin:4px !important; padding:6px 0; } }
+</style>
+<link rel="shortcut icon" href=mzy.ico>   </head>
+<body style=margin:25px>
+<main class="page">
+<div id="tfRoot" class="tf_root" role="region" aria-label="Thin films of constant thickness: soap films, oil on water, anti-reflection coatings">
+<div class="tf_a11y" role="toolbar" aria-label="Display options">
+<button type="button" class="tf_a11ybtn" id="tfBtnHC" onclick="tfSim.theme('hc')" aria-pressed="false">HIGH CONTRAST</button>
+<button type="button" class="tf_a11ybtn" id="tfBtnLM" onclick="tfSim.theme('lm')" aria-pressed="false">LIGHT MODE</button>
+<button type="button" class="tf_a11ybtn" id="tfBtnCB" onclick="tfSim.theme('cb')" aria-pressed="false">COLOR-BLIND SAFE</button>
+<button type="button" class="tf_a11ybtn tf_a11yon" id="tfBtnNR" onclick="tfSim.theme('nr')" aria-pressed="true">NARRATION: ON</button>
+</div>
+<div class="tf_header"><p class="tf_h1">Thin Films: Soap, Oil and Coatings</p><p class="tf_sub">a film of constant thickness &middot; in one medium or between two</p></div>
+<div class="tf_tabs" role="tablist" aria-label="Topics">
+<button type="button" role="tab" class="tf_tab" id="tfT0" aria-selected="true" onclick="tfSim.tab(0)">Film in one medium</button>
+<button type="button" role="tab" class="tf_tab" id="tfT1" aria-selected="false" onclick="tfSim.tab(1)">Film between two media</button>
+<button type="button" role="tab" class="tf_tab" id="tfT2" aria-selected="false" onclick="tfSim.tab(2)">The waves</button>
+</div>
+<div class="tf_bbar tf_top"><label>Example <select id="tfEx"></select></label><span class="tf_vt" role="radiogroup" aria-label="View"><label><input type="radio" name="tfV" value="R" checked> reflected view</label><label><input type="radio" name="tfV" value="T"> transmitted view</label></span><label>Light <select id="tfSrc"><option value="white">white light</option><option value="one">one wavelength (slider)</option><option value="rgb">red, green and blue lasers</option></select></label><span id="tfRGB" class="tf_rgb" style="display:none"><label><input type="checkbox" id="tfR0" checked> R 660</label><label><input type="checkbox" id="tfR1" checked> G 540</label><label><input type="checkbox" id="tfR2" checked> B 440</label></span></div>
+<div class="tf_diag" id="tfBoxA"><div class="tf_dlabel"><b id="tfLabA">THE FILM</b><span id="tfHintA"></span></div><canvas id="tfApp" width="780" height="280" role="img" aria-label="The film as it looks."></canvas></div>
+<div class="tf_diag" id="tfBoxZ"><div class="tf_dlabel"><b id="tfLabZ">MAGNIFIED: THE REFLECTED LIGHT</b><span>arrows for the light; small boxed waves for the phase</span></div>
+<div class="tf_zgrid"><canvas id="tfZ" width="520" height="380" role="img" aria-label="Magnified view of the film: the light reflected and transmitted at each surface, the half-wave flips, and the phase of each wave."></canvas><div class="tf_ztxt" id="tfZtxt"></div></div></div>
+<div class="tf_diag" id="tfBoxW" style="display:none"><div class="tf_dlabel"><b id="tfLabW">THE WAVES</b><span>to scale: the film, and each wavelength</span></div><canvas id="tfWv" width="780" height="560" role="img" aria-label="The waves drawn to scale: the incident wave, the two reflected (or transmitted) waves, and their sum."></canvas><div class="tf_wtxt" id="tfWtxt"></div></div>
+<div class="tf_diag" id="tfBoxS"><div class="tf_dlabel"><b>THE COLOURS: INCIDENT, REFLECTED, TRANSMITTED</b><span id="tfSwNote">brightness of the reflection scaled up</span></div><canvas id="tfSw" width="780" height="84" role="img" aria-label="Swatches of the incident, reflected and transmitted colours."></canvas></div>
+<div class="tf_diag" id="tfBoxP"><div class="tf_dlabel"><b>ACROSS THE SPECTRUM, AT THIS THICKNESS</b><span>the colour seen: the swatches</span></div><canvas id="tfSp" width="780" height="220" role="img" aria-label="Graph of the reflected and transmitted fractions against the wavelength, and the colours seen."></canvas></div>
+<div class="tf_diag" id="tfBoxH"><div class="tf_dlabel"><b>AGAINST THE THICKNESS</b><span>the colour in white light, and the brightness at the chosen wavelength</span></div><canvas id="tfTh" width="780" height="200" role="img" aria-label="The colour against the thickness, and the reflected fraction at the chosen wavelength."></canvas></div>
+<div class="tf_bbar" id="tfBtns"></div>
+<div class="tf_panels">
+<div class="tf_panel"><div class="tf_ptitle">Settings</div><div class="tf_pbody" id="tfCtl"></div></div>
+<div class="tf_panel"><div class="tf_ptitle">Readout</div><div class="tf_pbody" id="tfRead"></div></div>
+</div>
+<div class="tf_eqs" id="tfEqs"></div>
+<div id="tfNar" class="tf_narbar" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="tf_descwrap">
+<button type="button" class="tf_descbtn" id="tfDescBtn" aria-expanded="false" aria-controls="tfDesc" onclick="tfSim.toggleDesc()">&#9656; SIM DESCRIPTION</button>
+<div class="tf_desc" id="tfDesc" role="region" aria-labelledby="tfDescBtn" style="display:none">
+<p>This simulation shows the colours of a thin film of constant thickness `t` and index `n_2`, between a medium of index `n_1` above and `n_3` below. Light falling straight down is partly reflected at the top of the film (wave 1) and partly at its bottom (wave 2), which travels an extra optical path `2 n_2 t`. A reflection has a half-wave (`pi`) phase change when the light meets a medium of higher index.</p>
+<p><b>One flip</b> (a soap film in air, oil on water): the reflection is bright when `2 n_2 t = (m + 1/2) lambda` and dark when `2 n_2 t = m lambda`. <b>No flip or two flips</b> (a coating on glass whose index lies between air's and the glass's): bright when `2 n_2 t = m lambda`, dark when `2 n_2 t = (m + 1/2) lambda`. The transmitted light is always the opposite. In white light, each wavelength is reflected differently, and the film takes the colour of what it reflects best.</p>
+<p>The simulation uses the exact result for all the reflections inside the film: `r = (r_12 + r_23 e^(i delta))/(1 + r_12 r_23 e^(i delta))`, with `r_12 = (n_1 - n_2)/(n_1 + n_2)`, `r_23 = (n_2 - n_3)/(n_2 + n_3)`, `delta = 4 pi n_2 t/lambda`, `R = |r|^2` and `T = 1 - R`.</p>
+<p><b>Soap films</b> drain: thin at the top, thicker below, so they show coloured bands; just before bursting the top becomes the "black film", far thinner than a wavelength, where wave 1 (flipped) and wave 2 (not) cancel. <b>Oil on water</b> is thicker in the middle of a drop and spreads into rings of colour. An <b>anti-reflection coating</b> is a quarter-wave layer, `t = lambda/(4 n_2)`: wave 2 comes back half a cycle late, and with `n_2 = sqrt(n_1 n_3)` the two reflected waves are equally strong and cancel completely. A layer of high index does the reverse: a <b>high-reflection coating</b>.</p>
+</div></div>
+</div><!-- #tfRoot -->
+<style>
+#tfRoot { --c-chassis:#1a1c1f; --c-panel:#22262b; --c-hi:#2c3138; --c-lo:#14161a; --c-bd:#3a4048; --c-bd2:#525c66; --c-text:#c8d0d8; --c-dim:#8a94a3; --c-accent:#e8a020; --c-green:#3ad08f; --c-val:#ffdd66; --c-nbg:#2a2410; --c-nbd:#e0b040; --c-ntx:#f0e2b8;
+  background:var(--c-chassis); background-image:repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  color:var(--c-text); font-family:Arial, sans-serif; padding:14px 10px 18px; border-radius:6px; box-sizing:border-box; width:100%; max-width:860px; margin:0 auto 10px; display:flex; flex-direction:column; gap:10px; }
+#tfRoot * { box-sizing:border-box; }
+#tfRoot.tf_lm { --c-chassis:#e9edf1; --c-panel:#ffffff; --c-hi:#f1f4f7; --c-lo:#f4f6f9; --c-bd:#c3cad3; --c-bd2:#9aa3ae; --c-text:#1d232a; --c-dim:#556070; --c-accent:#a8620a; --c-green:#12805a; --c-val:#8a4a00; --c-nbg:#ffefc0; --c-ntx:#333; background-image:none; }
+#tfRoot.tf_hc { --c-chassis:#000; --c-panel:#000; --c-hi:#111; --c-lo:#000; --c-bd:#fff; --c-bd2:#fff; --c-text:#fff; --c-dim:#e0e0e0; --c-accent:#ffd700; --c-green:#00ff88; --c-val:#ffff00; --c-nbg:#000; --c-nbd:#ffd700; --c-ntx:#fff; background-image:none; }
+#tfRoot .tf_a11y { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+#tfRoot .tf_a11ybtn { padding:4px 10px; font-size:.68rem; font-family:monospace; letter-spacing:.06em; border-radius:3px; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-dim); min-height:30px; }
+#tfRoot .tf_a11yon { background:rgba(58,208,143,.14); border-color:var(--c-green); color:var(--c-green); font-weight:bold; }
+#tfRoot .tf_header { text-align:center; }
+#tfRoot .tf_h1 { margin:0; font-size:.95rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--c-accent); }
+#tfRoot .tf_sub { margin:3px 0 0; font-size:.7rem; color:var(--c-dim); letter-spacing:.08em; text-transform:uppercase; }
+#tfRoot .tf_tabs { display:flex; gap:4px; flex-wrap:wrap; }
+#tfRoot .tf_tab { flex:1 1 90px; padding:8px 6px; border:1px solid var(--c-bd2); background:var(--c-hi); color:var(--c-text); border-radius:4px; cursor:pointer; font-family:monospace; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; min-height:38px; }
+#tfRoot .tf_tab[aria-selected="true"] { background:var(--c-accent); color:#1a1f24; border-color:var(--c-accent); font-weight:bold; }
+#tfRoot .tf_diag { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+#tfRoot .tf_dlabel { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--c-dim); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#tfRoot .tf_dlabel b { color:var(--c-accent); }
+#tfRoot canvas { display:block; width:100%; height:auto; touch-action:none; }
+#tfRoot .tf_row2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#tfRoot .tf_bbar { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; align-items:center; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:6px; padding:8px 10px; font-size:.8rem; }
+#tfRoot .tf_bbar label { display:flex; align-items:center; gap:5px; color:var(--c-dim); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+#tfRoot .tf_btn { padding:7px 12px; font-family:monospace; font-size:.72rem; letter-spacing:.04em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-bd2); color:var(--c-text); border-radius:3px; text-transform:uppercase; min-height:34px; }
+#tfRoot .tf_btn:hover { border-color:var(--c-accent); }
+#tfRoot .tf_btnon { border-color:var(--c-accent); color:var(--c-accent); font-weight:bold; }
+#tfRoot select { background:var(--c-hi); color:var(--c-text); border:1px solid var(--c-bd2); border-radius:3px; padding:4px 6px; font-size:.8rem; }
+#tfRoot .tf_panels { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+#tfRoot .tf_panel { background:var(--c-panel); border:1px solid var(--c-bd); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,.3); overflow:hidden; }
+#tfRoot .tf_ptitle { background:var(--c-lo); border-bottom:1px solid var(--c-bd); padding:6px 12px; font-family:monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--c-dim); }
+#tfRoot .tf_pbody { padding:9px 12px; display:flex; flex-direction:column; gap:8px; }
+#tfRoot .tf_ctrl { display:flex; flex-direction:column; gap:3px; }
+#tfRoot .tf_ctrlhdr { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+#tfRoot .tf_ctrlname { font-size:.72rem; font-weight:600; color:var(--c-dim); text-transform:uppercase; letter-spacing:.04em; }
+#tfRoot .tf_sval { font-family:monospace; font-size:.76rem; color:var(--c-val); white-space:nowrap; }
+#tfRoot input[type=range] { width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; background:var(--c-lo); border:1px solid var(--c-bd); }
+#tfRoot input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#tfRoot input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:var(--c-accent); border:2px solid var(--c-panel); cursor:pointer; }
+#tfRoot input[type=checkbox] { accent-color:var(--c-accent); width:16px; height:16px; }
+#tfRoot .tf_rrow { display:flex; justify-content:space-between; gap:6px; padding:4px 7px; background:var(--c-lo); border:1px solid var(--c-bd); border-radius:3px; font-family:monospace; font-size:.72rem; }
+#tfRoot .tf_rkey { color:var(--c-dim); }
+#tfRoot .tf_rval { color:var(--c-val); font-weight:bold; text-align:right; }
+#tfRoot .tf_eqs { background:var(--c-lo); border:1px solid var(--c-bd); border-left:4px solid var(--c-accent); border-radius:4px; padding:8px 14px; font-family:monospace; font-size:.74rem; color:var(--c-dim); line-height:1.7; }
+#tfRoot .tf_eqs b { color:var(--c-val); }
+#tfRoot .tf_narbar { min-height:30px; padding:6px 12px; background:var(--c-nbg); border-left:4px solid var(--c-nbd); color:var(--c-ntx); font-size:.84rem; font-style:italic; line-height:1.45; border-radius:3px; }
+#tfRoot .tf_descwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+#tfRoot .tf_descbtn { padding:8px 18px; font-family:monospace; font-size:.74rem; letter-spacing:.08em; cursor:pointer; background:var(--c-hi); border:1px solid var(--c-accent); color:var(--c-accent); border-radius:3px; font-weight:bold; min-height:40px; }
+#tfRoot .tf_desc { width:100%; background:#fbfbf7; border:1px solid #c9ccd2; border-left:4px solid var(--c-accent); border-radius:4px; padding:12px 16px; color:#1d232a; font-size:.9rem; line-height:1.55; }
+#tfRoot .tf_desc p { margin:0 0 9px; }
+#tfRoot .tf_eq { text-align:center; font-size:1rem; }
+#tfRoot button:focus-visible, #tfRoot input:focus-visible, #tfRoot select:focus-visible, #tfRoot canvas:focus-visible { outline:2px solid var(--c-accent); outline-offset:2px; }
+@media (max-width:640px) { #tfRoot .tf_row2, #tfRoot .tf_panels { grid-template-columns:minmax(0,1fr); } #tfRoot .tf_tab { font-size:.68rem; padding:8px 3px; } }
+@media (pointer:coarse) { #tfRoot input[type=range] { height:8px; } #tfRoot input[type=range]::-webkit-slider-thumb { width:26px; height:26px; } #tfRoot input[type=range]::-moz-range-thumb { width:24px; height:24px; } #tfRoot .tf_a11ybtn { min-height:40px; } #tfRoot input[type=checkbox] { width:22px; height:22px; } }
+</style>
+<style>
+#tfRoot .tf_zgrid { display:grid; grid-template-columns:minmax(0,520fr) minmax(0,260fr); }
+#tfRoot .tf_ztxt { padding:8px 12px; font-size:.84rem; line-height:1.4; color:var(--c-text); background:var(--c-panel); border-left:1px solid var(--c-bd); }
+#tfRoot .tf_ztxt p { margin:0 0 6px; } #tfRoot .tf_ztxt b { color:var(--c-val); }
+#tfRoot .tf_zvb { color:var(--c-green); font-weight:bold; } #tfRoot .tf_zvd { color:#6fa8ff; font-weight:bold; }
+#tfRoot .tf_zn { font-style:italic; color:var(--c-dim); font-size:.78rem; }
+#tfRoot .tf_vt, #tfRoot .tf_rgb { display:flex; gap:12px; flex-wrap:wrap; }
+#tfRoot .tf_wtxt { padding:8px 14px; font-size:.86rem; line-height:1.45; color:var(--c-text); border-top:1px solid var(--c-bd); } #tfRoot .tf_wtxt b { color:var(--c-val); }
+#tfRoot .tf_top select { max-width:100%; }
+@media (max-width:640px) { #tfRoot .tf_zgrid { grid-template-columns:minmax(0,1fr); } #tfRoot .tf_ztxt { border-left:none; border-top:1px solid var(--c-bd); } }
+</style>
+<!-- ════════ SIMULATION ════════
+Normal incidence; a film of index n2 and thickness t between n1 (above) and n3 (below). Exact reflection of the film:
+r = (r12 + r23 e^(i d))/(1 + r12 r23 e^(i d)), r12 = (n1 - n2)/(n1 + n2), r23 = (n2 - n3)/(n2 + n3), d = 4 pi n2 t/lambda; R = |r|^2, T = 1 - R.
+White light: R summed over 400-700 nm with the colour of each wavelength. No dollar signs or backticks in the code.
+-->
+<script>
+var tfSim = (function(){
+function el(id){ return document.getElementById(id + ''); }
+var ROOT = el('tfRoot'), DPR = window.devicePixelRatio || 1;
+function hi(id){ var c = el(id), g = c.getContext('2d'), w = c.width, h = c.height; c.width = w*DPR; c.height = h*DPR; g.scale(DPR, DPR); return { c:c, g:g, W:w, H:h }; }
+var CA = hi('tfApp'), CZ = hi('tfZ'), CP = hi('tfSp'), CH = hi('tfTh'), CW = hi('tfWv'), CS = hi('tfSw');
+var RGBL = [[660, [1, 0, 0], 'red'], [540, [0, 1, 0], 'green'], [440, [0, 0, 1], 'blue']];
+var Q = 550/(4*1.38), QI = 550/(4*Math.sqrt(1.52));
+var EX = [
+  [ { name:'Large soap bubble film', n1:1.00, n2:1.33, t:520, scene:'soap', note:'A soap film in air: one flip, at its top surface.' },
+    { name:'Soap film draining in a wire loop', n1:1.00, n2:1.33, t:300, scene:'soap', note:'It drains: thin at the top, thicker below.' },
+    { name:'Black film, just before it bursts', n1:1.00, n2:1.33, t:12, scene:'soap', note:'Far thinner than a wavelength: the two reflections cancel.' },
+    { name:'Air gap between glass plates', n1:1.52, n2:1.00, t:400, scene:'lens', note:'The film is air, the medium around it glass.' },
+    { name:'Thin glass sheet in air', n1:1.00, n2:1.52, t:1200, scene:'lens', note:'Thicker films show paler colours: many wavelengths are reflected.' } ],
+  [ { name:'Oil on a puddle (oil 1.45, water 1.33)', n1:1.00, n2:1.45, n3:1.33, t:420, scene:'puddle', note:'One flip, at the top of the oil.' },
+    { name:'Anti-reflection coating: MgF\u2082 on a lens', n1:1.00, n2:1.38, n3:1.52, t:Q, scene:'lens', note:'A quarter-wave layer for 550 nm: two flips, so they cancel.' },
+    { name:'Ideal anti-reflection coating (n = \u221A1.52)', n1:1.00, n2:Math.sqrt(1.52), n3:1.52, t:QI, scene:'lens', note:'With n\u2082 = \u221A(n\u2081n\u2083) the two reflected waves are equally strong.' },
+    { name:'High-reflection coating: TiO\u2082 on glass', n1:1.00, n2:2.40, n3:1.52, t:550/(4*2.4), scene:'lens', note:'A quarter-wave layer of high index: the reflections add.' },
+    { name:'Water film on glass', n1:1.00, n2:1.33, n3:1.52, t:380, scene:'puddle', note:'Two flips: they cancel.' } ] ];
+var EXALL = null;
+var S = { tab:0, ex:0, view:'R', white:true, src:'white', rgb:[true, true, true], wcol:0, run:false, ph:0, ovF:true, ovB:true, eqs:true, n1:1.00, n2:1.33, n3:1.00, t:520, lam:550, scene:'soap', boost:true };
+var th = { hc:false, lm:false, cb:false, nr:true };
+function n3(){ return S.tab === 0 ? S.n1 : S.n3; }
+function lamNow(){ return S.src === 'white' ? 550 : (S.src === 'rgb' ? RGBL[S.wcol][0] : S.lam); }   /* the wavelength the waves and the magnified view are drawn for */
+/* ══════════ optics ══════════ */
+function Rf(t, lam){ var a = S.n1, b = S.n2, c = n3(), r12 = (a - b)/(a + b), r23 = (b - c)/(b + c), d = 4*Math.PI*b*t/lam, cr = Math.cos(d), sr = Math.sin(d);
+  var nr = r12 + r23*cr, ni = r23*sr, dr = 1 + r12*r23*cr, di = r12*r23*sr; return (nr*nr + ni*ni)/(dr*dr + di*di); }
+function rmax(){ var a = S.n1, b = S.n2, c = n3(), r12 = Math.abs((a - b)/(a + b)), r23 = Math.abs((b - c)/(b + c)), m = (r12 + r23)/(1 + r12*r23); return Math.max(1e-6, m*m); }
+function rBare(){ var r = (S.n1 - n3())/(S.n1 + n3()); return r*r; }
+function wl2rgb(w){ var r = 0, g = 0, b = 0; if (w < 440){ r = -(w - 440)/60; b = 1; } else if (w < 490){ g = (w - 440)/50; b = 1; } else if (w < 510){ g = 1; b = -(w - 510)/20; } else if (w < 580){ r = (w - 510)/70; g = 1; } else if (w < 645){ r = 1; g = -(w - 645)/65; } else r = 1;
+  var a = w < 420 ? 0.3 + 0.7*(w - 380)/40 : (w > 700 ? 0.3 + 0.7*(780 - w)/80 : 1); return [r*a, g*a, b*a]; }
+var WL = []; for (var w0=400; w0<=700; w0+=6) WL.push([w0, wl2rgb(w0)]);
+var WS = WL.reduce(function(s, q){ return [s[0] + q[1][0], s[1] + q[1][1], s[2] + q[1][2]]; }, [0, 0, 0]);
+function colour(t, trans, scale){
+  /* the colour seen, reflected or transmitted; scale: the reflectance shown as full brightness */
+  var sc = scale || rmax(), tmin = 1 - sc;
+  function v(R){ if (!trans) return Math.min(1, R/sc); var T = 1 - R; return S.boost ? Math.max(0, (T - tmin)/(1 - tmin)) : T; }
+  if (S.src === 'rgb' && !S.white){ return RGBL.map(function(q, i){ return S.rgb[i] ? v(Rf(t, q[0])) : 0; }); }   /* each laser on its own channel */
+  if (!S.white){ var c = wl2rgb(S.lam), x = v(Rf(t, S.lam)); return [c[0]*x, c[1]*x, c[2]*x]; }
+  var s = [0, 0, 0]; for (var i=0; i<WL.length; i++){ var x2 = v(Rf(t, WL[i][0])); s[0] += WL[i][1][0]*x2; s[1] += WL[i][1][1]*x2; s[2] += WL[i][1][2]*x2; }
+  return [s[0]/WS[0], s[1]/WS[1], s[2]/WS[2]];
+}
+function c255(c){ return [Math.round(255*Math.pow(Math.min(1, Math.max(0, c[0])), 0.8)), Math.round(255*Math.pow(Math.min(1, Math.max(0, c[1])), 0.8)), Math.round(255*Math.pow(Math.min(1, Math.max(0, c[2])), 0.8))]; }
+function css(c){ var k = c255(c); return 'rgb(' + k[0] + ',' + k[1] + ',' + k[2] + ')'; }
+function whiteR(t){ var s = 0, n = 0; for (var i=0; i<WL.length; i++){ var wgt = WL[i][1][0] + WL[i][1][1] + WL[i][1][2]; s += Rf(t, WL[i][0])*wgt; n += wgt; } return s/n; }
+/* ══════════ helpers ══════════ */
+function pal(){ if (th.hc) return { bg:'#000', text:'#fff', grid:'rgba(255,255,255,0.25)', ray:'#ffff00', ray2:'#00ffff', probe:'#ff66ff', R:'#ffff00', T:'#00ffff', gedge:'#fff' };
+  return { bg:th.lm ? '#fff' : '#f6f8fb', text:'#1d2a36', grid:'rgba(0,0,0,0.12)', ray:th.cb ? '#e69f00' : '#e07a00', ray2:th.cb ? '#0072b2' : '#2952c9', probe:th.cb ? '#cc79a7' : '#c2185b', R:th.cb ? '#e69f00' : '#e07a00', T:th.cb ? '#0072b2' : '#2952c9', gedge:'#5b7c93' }; }
+function T(g, t, x, y, col, al, font){ g.fillStyle = col; g.font = font || '12px Arial, sans-serif'; g.textAlign = al || 'left'; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function seg(g, x1, y1, x2, y2, col, w, dash){ g.strokeStyle = col; g.lineWidth = w || 1.5; g.setLineDash(dash || []); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); }
+function arrowHead(g, x, y, ang, col){ g.fillStyle = col; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 9*Math.cos(ang - 0.4), y - 9*Math.sin(ang - 0.4)); g.lineTo(x - 9*Math.cos(ang + 0.4), y - 9*Math.sin(ang + 0.4)); g.closePath(); g.fill(); }
+function arrow(g, x1, y1, x2, y2, col, w, dash){ seg(g, x1, y1, x2, y2, col, w || 2.2, dash); arrowHead(g, x2, y2, Math.atan2(y2 - y1, x2 - x1), col); }
+function f2(v, n){ return (+v).toFixed(n === undefined ? 2 : n); }
+function fr_(x){ return ((x % 1) + 1) % 1; }
+function mediumName(n){ var k = f2(n); return ({ '1.00':'air', '1.33':'water', '1.52':'glass', '1.38':'MgF\u2082', '1.45':'oil', '2.40':'TiO\u2082', '1.23':'coating' }[k] || 'n'); }
+/* ══════════ the scene ══════════ */
+function drawApp(){
+  var C = CA, g = C.g, W = C.W, H = C.H, p = pal(), trans = S.view === 'T', Wp = Math.round(W*DPR), Hp = Math.round(H*DPR), img = g.createImageData(Wp, Hp), d = img.data;
+  /* a table of colours against thickness, for speed */
+  var tmax = Math.max(60, S.t*2.2), N = 300, lut = []; for (var i=0; i<=N; i++) lut.push(c255(colour(tmax*i/N, trans)));
+  function look(tt){ var k = Math.max(0, Math.min(N, Math.round(tt/tmax*N))); return lut[k]; }
+  var bgc = th.hc ? [0, 0, 0] : [26, 30, 36];
+  if (S.scene === 'soap'){
+    /* a wire loop holding a draining film: thickness grows downward, with gentle swirls */
+    var cx = 230*DPR, cy = 140*DPR, rx = 170*DPR, ry = 125*DPR;
+    for (var y=0; y<Hp; y++) for (var x=0; x<Wp; x++){ var q = 4*(y*Wp + x), u = (x - cx)/rx, v = (y - cy)/ry, inside = u*u + v*v < 1, col = bgc;
+      if (inside){ var depth = (v + 1)/2, sw = 1 + 0.07*Math.sin(6*u + 4*v) + 0.04*Math.sin(13*u - 9*v), tt = S.t*1.95*Math.pow(depth, 1.6)*sw; col = look(tt); }   /* drained: near zero at the top, the black film */
+      d[q] = col[0]; d[q + 1] = col[1]; d[q + 2] = col[2]; d[q + 3] = 255; }
+    g.putImageData(img, 0, 0); g.strokeStyle = '#c0c4ca'; g.lineWidth = 4; g.beginPath(); g.ellipse(230, 140, 170, 125, 0, 0, 2*Math.PI); g.stroke(); seg(g, 230, 265, 230, H, '#c0c4ca', 4);
+    T(g, 'thin at the top (it drains)', 420, 30, '#ddd', 'left', 'bold 12px Arial'); T(g, 'from almost 0 nm at the top (black: it is about to burst)', 420, 50, '#ddd', 'left', '12px Arial'); T(g, 'to ' + f2(S.t*1.95, 0) + ' nm at the bottom', 420, 66, '#ddd', 'left', '12px Arial');
+    T(g, 'the slider sets the thickness two-thirds of the way down', 420, 86, '#ddd', 'left', '12px Arial');
+  } else if (S.scene === 'puddle'){
+    /* an oil (or water) film on a dark puddle: thickest in the middle, spreading thinner */
+    var cx2 = 300*DPR, cy2 = 140*DPR, s2 = 190*DPR;
+    for (var y2=0; y2<Hp; y2++) for (var x2=0; x2<Wp; x2++){ var q2 = 4*(y2*Wp + x2), dx = (x2 - cx2)/s2, dy = (y2 - cy2)/(s2*0.62), r2 = dx*dx + dy*dy, sw2 = 1 + 0.12*Math.sin(5*dx + 3*dy) + 0.06*Math.sin(11*dx - 7*dy), tt2 = S.t*1.8*Math.exp(-r2*1.6)*sw2, col2;
+      if (tt2 < S.t*0.08) col2 = [bgc[0] + 8, bgc[1] + 10, bgc[2] + 14]; else { var lk = look(tt2), f = trans ? 1 : 0.85; col2 = [lk[0]*f + 10, lk[1]*f + 10, lk[2]*f + 14]; }
+      d[q2] = col2[0]; d[q2 + 1] = col2[1]; d[q2 + 2] = col2[2]; d[q2 + 3] = 255; }
+    g.putImageData(img, 0, 0); T(g, 'thickest in the middle: ' + f2(S.t*1.8, 0) + ' nm', 560, 30, '#ddd', 'left', 'bold 12px Arial'); T(g, 'the slider sets the thickness', 560, 50, '#ddd', 'left', '12px Arial'); T(g, 'part-way out', 560, 66, '#ddd', 'left', '12px Arial');
+  } else {
+    /* two glass panes reflecting a bright window: bare glass, and glass with this film */
+    g.fillStyle = th.hc ? '#000' : '#1a1e24'; g.fillRect(0, 0, W, H);
+    var sc = 0.10, bare = rBare(), coat = colour(S.t, trans, sc), Rw = whiteR(S.t);
+    [[60, 'bare surface', trans ? [1 - bare, 1 - bare, 1 - bare] : [bare/sc, bare/sc, bare/sc], trans ? 1 - bare : bare], [420, 'with this film', coat, trans ? 1 - Rw : Rw]].forEach(function(q){
+      g.fillStyle = th.hc ? '#111' : '#2a3038'; g.fillRect(q[0], 30, 300, 200); g.strokeStyle = '#8a94a3'; g.lineWidth = 2; g.strokeRect(q[0], 30, 300, 200);
+      g.fillStyle = css(q[2]); g.fillRect(q[0] + 60, 60, 80, 140); g.fillRect(q[0] + 160, 60, 80, 140);   /* the reflected window */
+      T(g, q[1], q[0] + 150, 245, '#ddd', 'center', 'bold 13px Arial'); T(g, (trans ? 'lets through ' : 'reflects ') + f2(q[3]*100, trans ? 1 : 2) + ' %', q[0] + 150, 264, '#ddd', 'center', '12px Arial'); });
+    T(g, trans ? 'light let through, against a bright window' : 'the reflection of a bright window (brightness \u00D710)', W/2, 14, '#ddd', 'center', '11px Arial');
+  }
+}
+/* ══════════ the magnified view ══════════ */
+function phases(){
+  var lam = lamNow(), a = S.n2*S.t/lam, c = n3();
+  var fTop = S.n2 > S.n1 ? 0.5 : 0, fBot = c > S.n2 ? 0.5 : 0, fIn = S.n1 > S.n2 ? 0.5 : 0;
+  var r12 = Math.abs((S.n1 - S.n2)/(S.n1 + S.n2)), r23 = Math.abs((S.n2 - c)/(S.n2 + c)), t12 = 1 - r12*r12;
+  return { a:a, m2:2*a, fTop:fTop, fBot:fBot, fIn:fIn, R1:fTop, R2:2*a + fBot, dR:fr_(2*a + fBot - fTop), T1:a, T2:3*a + fBot + fIn, dT:fr_(2*a + fBot + fIn), A1:r12, A2:t12*r23, B2:r23*r12 };
+}
+function glyph(g, cx, cy, ph, col, label, below, amp){
+  var w = 30, A = 7*(amp === undefined ? 1 : amp); g.fillStyle = th.hc ? '#000' : '#fff'; g.strokeStyle = col; g.lineWidth = 1; g.fillRect(cx - w/2 - 4, cy - 11, w + 8, 22); g.strokeRect(cx - w/2 - 4, cy - 11, w + 8, 22);
+  g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); for (var k=0; k<=w; k++){ var y = cy - A*Math.cos(2*Math.PI*(k/w + ph)); if (k) g.lineTo(cx - w/2 + k, y); else g.moveTo(cx - w/2 + k, y); } g.stroke();
+  g.fillStyle = col; g.beginPath(); g.arc(cx - w/2, cy - A*Math.cos(2*Math.PI*ph), 3, 0, 2*Math.PI); g.fill();
+  if (label) T(g, label, cx, cy + (below ? 21 : -19), col, 'center', 'bold 10px Arial');
+}
+function drawZoom(){
+  var g = CZ.g, W = CZ.W, H = CZ.H, p = pal(), P = phases(), Rv = S.view === 'R', lam = lamNow(), c3 = n3();
+  var yT = 84, y1 = 170, y2 = 282, inc = th.hc ? '#fff' : '#555', c1 = p.ray, c2 = p.ray2;
+  function shade(n){ var k = Math.min(1, (n - 1)/1.5); return th.hc ? 'rgba(150,220,255,' + (0.08 + 0.25*k) + ')' : 'rgba(120,180,215,' + (0.12 + 0.5*k) + ')'; }
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H); g.fillStyle = shade(S.n1); g.fillRect(0, 0, W, y1); g.fillStyle = th.hc ? 'rgba(255,255,0,0.12)' : 'rgba(255,225,150,0.55)'; g.fillRect(0, y1, W, y2 - y1); g.fillStyle = shade(c3); g.fillRect(0, y2, W, H - y2);
+  seg(g, 0, y1, W, y1, p.gedge, 1.5); seg(g, 0, y2, W, y2, p.gedge, 1.5);
+  T(g, mediumName(S.n1) + ' ' + f2(S.n1), W - 6, (yT + y1)/2, p.text, 'right', '11px Arial'); T(g, 'film: ' + mediumName(S.n2) + ' ' + f2(S.n2), W - 6, (y1 + y2)/2 - 7, p.text, 'right', '11px Arial'); T(g, '(thickness not to scale)', W - 6, (y1 + y2)/2 + 8, p.text, 'right', 'italic 10px Arial'); T(g, mediumName(c3) + ' ' + f2(c3), W - 6, (y2 + H)/2 + 10, p.text, 'right', '11px Arial');
+  function flipTag(x, y, on, up){ T(g, on ? 'flip \u00BD' : 'no flip', x, y + (up ? -9 : 11), on ? p.probe : p.text, 'center', 'bold 11px Arial'); g.fillStyle = on ? p.probe : p.text; g.beginPath(); g.arc(x, y, 4, 0, 2*Math.PI); g.fill(); }
+  var big = Math.max(P.A1, P.A2), a1 = P.A1/Math.max(big, 1e-9), a2 = P.A2/Math.max(big, 1e-9);
+  function cmpBox(title, ph1, ph2, d, s1, s2){ var x0 = 320; g.fillStyle = th.hc ? '#000' : '#fff'; g.strokeStyle = p.text; g.lineWidth = 1; g.fillRect(x0, 6, W - x0 - 6, 70); g.strokeRect(x0, 6, W - x0 - 6, 70);
+    T(g, title, x0 + 8, 17, p.text, 'left', 'bold 11px Arial'); T(g, 'wave 1', x0 + 8, 36, c1, 'left', 'bold 11px Arial'); glyph(g, x0 + 70, 36, ph1, c1, '', false, s1); T(g, 'wave 2', x0 + 8, 60, c2, 'left', 'bold 11px Arial'); glyph(g, x0 + 70, 60, ph2, c2, '', false, s2);
+    var ok = Math.min(d, 1 - d) < 0.15, op = Math.abs(d - 0.5) < 0.15, col = ok ? p.R : (op ? p.T : p.text);
+    T(g, ok ? 'in step:' : (op ? 'opposed:' : 'in between'), x0 + 100, 40, col, 'left', 'bold 11px Arial'); if (ok || op) T(g, ok ? (Rv ? 'BRIGHT' : 'brighter') : (Rv ? (Math.abs(a1 - a2) < 0.15 ? 'CANCEL' : 'DIM') : 'dimmer'), x0 + 100, 56, col, 'left', 'bold 12px Arial'); }
+  if (Rv){
+    arrow(g, 40, 4, 90, y1 - 2, inc); T(g, 'incoming', 6, 12, inc, 'left', 'bold 11px Arial');
+    arrow(g, 90, y1, 136, 4, c1, 1 + 2.2*a1); T(g, 'wave 1', 142, 12, c1, 'left', 'bold 11px Arial');
+    arrow(g, 90, y1, 170, y2 - 2, c2, 2); arrow(g, 170, y2, 250, y1 + 2, c2, 1 + 2.2*a2); arrow(g, 250, y1, 286, 4, c2, 1 + 2.2*a2); T(g, 'wave 2', 280, 24, c2, 'right', 'bold 11px Arial');
+    T(g, 'down t', 102, y1 + 30, c2, 'right', 'bold 11px Arial'); T(g, 'up t', 240, y1 + 30, c2, 'left', 'bold 11px Arial');
+    T(g, 'extra path for wave 2: 2t = ' + f2(P.m2, 2) + ' film wavelengths', 170, y2 + 20, c2, 'center', 'bold 11px Arial');
+    flipTag(90, y1, P.fTop > 0, true); flipTag(170, y2, P.fBot > 0, false);
+    glyph(g, 40, y1 - 34, 0, inc, 'arriving'); glyph(g, 150, y1 - 34, P.fTop, c1, P.fTop ? 'flipped' : 'unchanged');
+    glyph(g, 120, y2 - 22, fr_(P.a), c2, 'arriving'); glyph(g, 222, y2 - 22, fr_(P.a + P.fBot), c2, P.fBot ? 'flipped' : 'unchanged');
+    cmpBox('leaving, toward the eye', fr_(P.R1), fr_(P.R2), P.dR, a1, a2);
+  } else {
+    var b2 = P.B2/Math.max(1, 1e-9);
+    arrow(g, 40, 4, 90, y1 - 2, inc); T(g, 'incoming', 6, 12, inc, 'left', 'bold 11px Arial');
+    arrow(g, 90, y1, 108, y2, c1, 2.2); arrow(g, 108, y2, 124, H - 6, c1, 3); T(g, 'wave 1', 130, H - 14, c1, 'left', 'bold 11px Arial');
+    arrow(g, 90, y1, 170, y2 - 2, c2, 1.5, [5, 3]); arrow(g, 170, y2, 250, y1 + 2, c2, 1.6); arrow(g, 250, y1, 330, y2 - 2, c2, 1.2); arrow(g, 330, y2, 346, H - 6, c2, 1, [5, 3]); T(g, 'wave 2 (weak)', 352, H - 14, c2, 'left', 'bold 11px Arial');
+    T(g, 'extra path for wave 2: up t + down t = 2t', 250, (yT + y1)/2 - 8, c2, 'center', 'bold 11px Arial'); T(g, '= ' + f2(P.m2, 2) + ' film wavelengths', 250, (yT + y1)/2 + 8, c2, 'center', 'bold 11px Arial');
+    flipTag(170, y2, P.fBot > 0, false); flipTag(250, y1, P.fIn > 0, true);
+    glyph(g, 140, y2 - 22, fr_(P.a), c2, 'arriving'); glyph(g, 202, y2 - 22, fr_(P.a + P.fBot), c2, P.fBot ? 'flipped' : 'unchanged');
+    glyph(g, 222, y1 + 24, fr_(2*P.a + P.fBot), c2, 'arriving', true); glyph(g, 282, y1 + 24, fr_(2*P.a + P.fBot + P.fIn), c2, P.fIn ? 'flipped' : 'unchanged', true);
+    cmpBox('leaving through the bottom', fr_(P.T1), fr_(P.T2), P.dT, 1, Math.max(0.12, Math.min(1, P.B2*8)));
+  }
+  /* the explanation */
+  var html, nf = (P.fTop ? 1 : 0) + (P.fBot ? 1 : 0);
+  if (Rv) html = '<p class="tf_zn">The small boxed waves show only the phase (a dot marks the start), not the wavelength; their height and the arrows\u2019 width show how strong each wave is.</p>'
+    + '<p>In the film the wavelength is <b>\u03BB/n\u2082 = ' + f2(lam/S.n2, 0) + ' nm</b>: t = ' + f2(S.t, 1) + ' nm is <b>' + f2(P.a, 3) + ' film wavelengths</b>.</p>'
+    + '<p><b>Wave 1</b> reflects at the top: ' + (P.fTop ? 'into a denser film, <b>flipped</b>.' : '<b>no flip</b>.') + ' <b>Wave 2</b> reflects at the bottom: ' + (P.fBot ? 'into a denser medium, <b>flipped</b>.' : '<b>no flip</b>.') + ' ' + (nf === 1 ? 'One flip between them: \u00BD cycle.' : (nf === 2 ? 'Two flips: they cancel.' : 'No flips.')) + '</p>'
+    + '<p>Wave 2 is delayed by 2n\u2082t/\u03BB = ' + f2(P.m2, 3) + ' cycles' + (nf === 1 ? ' \u00B1 \u00BD' : '') + ': what counts is <b>' + f2(P.dR, 2) + '</b>.</p>'
+    + '<p>Strengths: wave 1 |r\u2081\u2082| = <b>' + f2(P.A1, 3) + '</b>, wave 2 \u2248 |r\u2082\u2083| = <b>' + f2(P.A2, 3) + '</b>' + (Math.abs(P.A1 - P.A2) < 0.01 ? ': <b>equal</b>, so when opposed they cancel completely.' : '.') + '</p>'
+    + '<p class="tf_zv' + (Math.min(P.dR, 1 - P.dR) < 0.15 ? 'b' : (Math.abs(P.dR - 0.5) < 0.15 ? 'd' : '')) + '">' + (Math.min(P.dR, 1 - P.dR) < 0.15 ? 'They leave in step: this wavelength is reflected strongly.' : (Math.abs(P.dR - 0.5) < 0.15 ? 'They leave opposed: this wavelength is hardly reflected.' : 'They are partly in step.')) + '</p>';
+  else html = '<p class="tf_zn">The small boxed waves show only the phase, not the wavelength.</p><p>In the film t = <b>' + f2(P.a, 3) + ' film wavelengths</b>.</p>'
+    + '<p><b>Wave 1</b> goes straight through. <b>Wave 2</b> is reflected at the bottom (' + (P.fBot ? 'flipped' : 'no flip') + ') and at the top, from inside (' + (P.fIn ? 'flipped' : 'no flip') + '): ' + ((P.fBot ? 1 : 0) + (P.fIn ? 1 : 0) === 1 ? 'one flip.' : 'no net flip.') + '</p>'
+    + '<p>What counts: <b>' + f2(P.dT, 2) + '</b> of a cycle, half a cycle from the reflected view: transmission is the opposite of reflection.</p>'
+    + '<p class="tf_zn">Wave 2 has been reflected twice: only ' + f2(P.B2*100, 2) + ' % of wave 1\u2019s amplitude. Nearly all the light gets through; the colours are faint.</p>';
+  var zt_ = el('tfZtxt'); if (zt_ && zt_.innerHTML !== html) zt_.innerHTML = html;
+  el('tfLabZ').textContent = Rv ? 'MAGNIFIED: THE REFLECTED LIGHT' : 'MAGNIFIED: THE TRANSMITTED LIGHT';
+}
+/* ══════════ graphs ══════════ */
+function drawSpec(){
+  var g = CP.g, W = CP.W, H = CP.H, p = pal(), X0 = 50, X1 = 600, Y0 = H - 40, Y1 = 14, l0 = 380, l1 = 750, Rv = S.view === 'R';
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  function X(l){ return X0 + (l - l0)/(l1 - l0)*(X1 - X0); }
+  for (var l=l0; l<=l1; l+=2){ g.fillStyle = css(wl2rgb(l)); g.fillRect(X(l), Y0 + 4, X(l + 2) - X(l) + 0.5, 10); }
+  var ymax = Rv ? Math.max(0.02, Math.ceil(rmax()*1.1*50)/50) : 1, ymin = Rv ? 0 : Math.max(0, 1 - Math.max(0.02, Math.ceil(rmax()*1.1*50)/50));
+  function Y(v){ return Y0 - (v - ymin)/(ymax - ymin)*(Y0 - Y1); }
+  for (var k=0; k<=4; k++){ var v = ymin + (ymax - ymin)*k/4; seg(g, X0, Y(v), X1, Y(v), p.grid, 1); T(g, f2(v*100, 1) + '%', X0 - 4, Y(v), p.text, 'right', '10px Arial'); }
+  for (var l2=400; l2<=750; l2+=50){ T(g, String(l2), X(l2), Y0 + 24, p.text, 'center', '10px Arial'); }
+  g.strokeStyle = Rv ? p.R : p.T; g.lineWidth = 2.4; g.beginPath(); for (var l3=l0; l3<=l1; l3++){ var R = Rf(S.t, l3), vv = Rv ? R : 1 - R; if (l3 === l0) g.moveTo(X(l3), Y(vv)); else g.lineTo(X(l3), Y(vv)); } g.stroke();
+  if (!Rv || true){ var bare = rBare(); if (S.tab === 1){ seg(g, X0, Y(Rv ? bare : 1 - bare), X1, Y(Rv ? bare : 1 - bare), p.text, 1, [4, 3]); T(g, 'bare surface, no film', X1 - 4, Y(Rv ? bare : 1 - bare) - 8, p.text, 'right', '10px Arial'); } }
+  seg(g, X(S.lam), Y0, X(S.lam), Y1, p.probe, 1.5, [3, 3]); T(g, S.lam + ' nm', X(S.lam) + 4, Y1 + 6, p.probe, 'left', 'bold 10px Arial');
+  T(g, (Rv ? 'reflected' : 'transmitted') + ' fraction against the wavelength (nm), at t = ' + f2(S.t, 1) + ' nm', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial');
+  /* the colours seen, in white light */
+  var sw = S.white; S.white = true; var cR = colour(S.t, false), cT = colour(S.t, true); S.white = sw;
+  [[640, 'reflected', cR], [710, 'transmitted', cT]].forEach(function(q){ g.fillStyle = css(q[2]); g.fillRect(q[0], 40, 56, 90); g.strokeStyle = p.text; g.lineWidth = 1; g.strokeRect(q[0], 40, 56, 90); T(g, q[1], q[0] + 28, 142, p.text, 'center', '10px Arial'); });
+  T(g, 'in white light:', 703, 26, p.text, 'center', 'bold 11px Arial'); T(g, 'reflects ' + f2(whiteR(S.t)*100, 2) + ' %', 703, 162, p.text, 'center', '11px Arial');
+}
+function drawThick(){
+  var g = CH.g, W = CH.W, H = CH.H, p = pal(), X0 = 50, X1 = W - 20, t1 = 1500, Rv = S.view === 'R';
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  function X(t){ return X0 + t/t1*(X1 - X0); }
+  var sw = S.white; S.white = true; for (var px=X0; px<=X1; px++){ g.fillStyle = css(colour((px - X0)/(X1 - X0)*t1, !Rv)); g.fillRect(px, 10, 1.4, 40); } S.white = sw;
+  T(g, 'white light', X0 - 4, 30, p.text, 'right', '10px Arial');
+  var Y0 = H - 30, Y1 = 64, ymax = Rv ? Math.max(0.02, rmax()*1.1) : 1, ymin = Rv ? 0 : 1 - Math.max(0.02, rmax()*1.1); function Y(v){ return Y0 - (v - ymin)/(ymax - ymin)*(Y0 - Y1); }
+  for (var t=0; t<=t1; t+=250){ seg(g, X(t), Y0, X(t), Y1, p.grid, 1); T(g, String(t), X(t), Y0 + 12, p.text, 'center', '10px Arial'); }
+  g.strokeStyle = Rv ? p.R : p.T; g.lineWidth = 2; g.beginPath(); for (var px2=X0; px2<=X1; px2++){ var tt = (px2 - X0)/(X1 - X0)*t1, R = Rf(tt, S.lam), v = Rv ? R : 1 - R; if (px2 === X0) g.moveTo(px2, Y(v)); else g.lineTo(px2, Y(v)); } g.stroke();
+  T(g, S.lam + ' nm', X0 - 4, (Y0 + Y1)/2, Rv ? p.R : p.T, 'right', 'bold 10px Arial');
+  seg(g, X(Math.min(S.t, t1)), 6, X(Math.min(S.t, t1)), Y0, p.probe, 2); T(g, 'thickness t (nm)', (X0 + X1)/2, H - 6, p.text, 'center', '11px Arial');
+}
+/* ══════════ the waves, to scale (the two main reflections, as in the classic diagrams) ══════════ */
+function waveGeo(){
+  var lam = lamNow(), x0 = 18, x1 = 300, kk = Math.min(0.2, (CW.W - 130 - x1)/Math.max(S.t, 1)), x2 = x1 + S.t*kk, c = n3(), cpp = 1/(lam*kk);   /* cycles per pixel in vacuum */
+  var r12 = (S.n1 - S.n2)/(S.n1 + S.n2), r23 = (S.n2 - c)/(S.n2 + c), f1 = S.n2 > S.n1 ? 0.5 : 0, f2 = c > S.n2 ? 0.5 : 0, fIn = S.n1 > S.n2 ? 0.5 : 0;
+  function qI(x){ return x <= x1 ? S.n1*(x - x0)*cpp : (x <= x2 ? S.n1*(x1 - x0)*cpp + S.n2*(x - x1)*cpp : S.n1*(x1 - x0)*cpp + S.n2*(x2 - x1)*cpp + c*(x - x2)*cpp); }
+  var q1 = qI(x1), q2 = qI(x2);
+  function qF(x){ return q1 + f1 + S.n1*(x1 - x)*cpp; }   /* reflected at the front, travelling back */
+  function qB(x){ return x >= x1 ? q2 + f2 + S.n2*(x2 - x)*cpp : q2 + f2 + S.n2*(x2 - x1)*cpp + S.n1*(x1 - x)*cpp; }   /* reflected at the back */
+  function qT2(x){ var b = q2 + f2 + S.n2*(x2 - x1)*cpp + fIn; return x <= x2 ? b + S.n2*(x - x1)*cpp : b + S.n2*(x2 - x1)*cpp + c*(x - x2)*cpp; }   /* reflected twice, then on */
+  return { lam:lam, x0:x0, x1:x1, x2:x2, kk:kk, c:c, cpp:cpp, r12:r12, r23:r23, f1:f1, f2:f2, fIn:fIn, qI:qI, qF:qF, qB:qB, qT2:qT2, AF:Math.abs(r12), AB:(1 - r12*r12)*Math.abs(r23), A2:Math.abs(r23*r12) };
+}
+function niceMag(a){ var t = 0.6/Math.max(a, 1e-6), opts = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500, 1000]; for (var i=opts.length - 1; i>=0; i--) if (opts[i] <= t) return opts[i]; return 1; }
+function drawWaves(){
+  var g = CW.g, W = CW.W, H = CW.H, p = pal(), G = waveGeo(), Rv = S.view === 'R', ph = S.ph, cw = wl2rgb(G.lam), wc = 'rgb(' + Math.round(200*cw[0]) + ',' + Math.round(150*cw[1]) + ',' + Math.round(210*cw[2]) + ')', A0 = 26, rows = [70, 184, 294, 430];
+  if (th.hc) wc = '#ffff00';
+  function shade(n){ var k = Math.min(1, (n - 1)/1.5); return th.hc ? 'rgba(150,220,255,' + (0.05 + 0.2*k) + ')' : 'rgba(120,170,210,' + (0.06 + 0.32*k) + ')'; }
+  g.fillStyle = p.bg; g.fillRect(0, 0, W, H); g.fillStyle = shade(S.n1); g.fillRect(0, 0, G.x1, H); g.fillStyle = th.hc ? 'rgba(255,255,0,0.12)' : 'rgba(255,225,150,0.5)'; g.fillRect(G.x1, 0, G.x2 - G.x1, H); g.fillStyle = shade(G.c); g.fillRect(G.x2, 0, W - G.x2, H);
+  seg(g, G.x1, 0, G.x1, H, p.gedge, 1.2); seg(g, G.x2, 0, G.x2, H, p.gedge, 1.2);
+  T(g, mediumName(S.n1) + ' (n = ' + f2(S.n1) + ')', 8, 12, p.text, 'left', 'bold 11px Arial'); T(g, 'film', (G.x1 + G.x2)/2, 12, p.text, 'center', 'bold 11px Arial'); T(g, mediumName(G.c) + ' (n = ' + f2(G.c) + ')', W - 8, 12, p.text, 'right', 'bold 11px Arial');
+  T(g, 't = ' + f2(S.t, 0) + ' nm', (G.x1 + G.x2)/2, 26, p.text, 'center', '10px Arial');
+  function line(y, xa, xb, q, amp, dash, col, w){ g.strokeStyle = col; g.lineWidth = w || 2.2; g.setLineDash(dash || []); g.beginPath(); var st = false; var a = Math.min(xa, xb), b = Math.max(xa, xb);
+    for (var x=a; x<=b; x+=1){ var y_ = y - amp*Math.cos(2*Math.PI*(q(x) - ph)); if (st) g.lineTo(x, y_); else { g.moveTo(x, y_); st = true; } } g.stroke(); g.setLineDash([]); }
+  function axis(y, xa, xb){ seg(g, xa, y, xb, y, th.hc ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', 1); }
+  function lab(y, t1, t2, t3){ if (y === rows[3]) y = H - A0 - 46; T(g, t1, 10, y + A0 + 22, p.text, 'left', 'bold 12px Arial'); if (t2) T(g, t2, 10, y + A0 + 38, p.probe, 'left', 'bold 11px Arial'); if (t3) T(g, t3, 200, y + A0 + 38, p.probe, 'left', 'bold 11px Arial'); }
+  var dashF = [8, 5], dashB = [2, 4];
+  /* row 1: the incident wave, on through the film; with the reflections overlaid if wanted */
+  axis(rows[0], G.x0, W - 8); line(rows[0], G.x0, W - 8, G.qI, A0, null, wc, 2.4);
+  var big = Math.max(G.AF, G.AB), sF = A0*G.AF/big, sB = A0*G.AB/big;
+  if (Rv){ if (S.ovF) line(rows[0], G.x0, G.x1, G.qF, sF, dashF, wc, 1.6); if (S.ovB) line(rows[0], G.x0, G.x2, G.qB, sB, dashB, wc, 1.8); }
+  lab(rows[0], '1. the incident wave' + (Rv ? '' : ', going on through'), Rv && (S.ovF || S.ovB) ? 'with the reflections drawn over it: front dashed, back dotted' : '');
+  if (Rv){
+    /* row 2: reflected at the front; row 3: reflected at the back; row 4: their sum */
+    axis(rows[1], G.x0, G.x1); line(rows[1], G.x0, G.x1, G.qF, sF, dashF, wc, 2.2);
+    lab(rows[1], '2. reflected at the front of the film (strength ' + f2(G.AF, 3) + ')', G.f1 ? '\u00BD \u03BB reflection shift (into a denser film)' : 'no reflection shift');
+    axis(rows[2], G.x0, G.x2); line(rows[2], G.x0, G.x2, G.qB, sB, dashB, wc, 2.6);
+    lab(rows[2], '3. reflected at the back of the film (strength ' + f2(G.AB, 3) + ')', G.f2 ? '\u00BD \u03BB reflection shift' : 'no reflection shift', 'extra path 2t = ' + f2(2*S.n2*S.t/G.lam, 2) + ' \u03BB');
+    axis(rows[3], G.x0, G.x1); line(rows[3], G.x0, G.x1, function(x){ return 0; }, 0, null, wc, 0.01);
+    g.strokeStyle = wc; g.lineWidth = 3; g.beginPath(); for (var x=G.x0; x<=G.x1; x++){ var y_ = rows[3] - sF*Math.cos(2*Math.PI*(G.qF(x) - ph)) - sB*Math.cos(2*Math.PI*(G.qB(x) - ph)); if (x === G.x0) g.moveTo(x, y_); else g.lineTo(x, y_); } g.stroke();
+    var dd = 2*Math.PI*(G.qB(G.x0) - G.qF(G.x0)), amp = Math.sqrt(G.AF*G.AF + G.AB*G.AB + 2*G.AF*G.AB*Math.cos(dd));
+    lab(rows[3], '4. 2 + 3: the reflected light (amplitude ' + f2(amp, 3) + ', so it reflects about ' + f2(amp*amp*100, 2) + ' %)', (Math.abs(Math.cos(dd)) > 0.95 ? (Math.cos(dd) > 0 ? 'in step: constructive' : 'opposed: destructive') : 'partly in step'));
+  } else {
+    /* row 2: straight through; row 3: reflected twice inside, magnified; row 4: their sum */
+    var mag = niceMag(G.A2);
+    axis(rows[1], G.x1, W - 8); line(rows[1], G.x1, W - 8, G.qI, A0, null, wc, 2.2);
+    lab(rows[1], '2. straight through: no reflection, no shift');
+    axis(rows[2], G.x1, W - 8); line(rows[2], G.x1, W - 8, G.qT2, A0*G.A2*mag, dashB, wc, 2.6);
+    lab(rows[2], '3. reflected twice inside the film (strength ' + f2(G.A2, 4) + ', drawn \u00D7' + mag + ')', (G.f2 + G.fIn === 0.5 ? 'one \u00BD \u03BB shift' : ((G.f2 + G.fIn) === 1 ? 'two \u00BD \u03BB shifts: they cancel' : 'no reflection shift')), 'extra path 2t = ' + f2(2*S.n2*S.t/G.lam, 2) + ' \u03BB');
+    axis(rows[3], G.x2, W - 8); g.strokeStyle = wc; g.lineWidth = 3; g.beginPath(); for (var x2=G.x2; x2<=W - 8; x2++){ var yy = rows[3] - A0*(Math.cos(2*Math.PI*(G.qI(x2) - ph)) + G.A2*Math.cos(2*Math.PI*(G.qT2(x2) - ph))); if (x2 === Math.ceil(G.x2)) g.moveTo(x2, yy); else g.lineTo(x2, yy); } g.stroke();
+    var dT = 2*Math.PI*(G.qT2(W - 8) - G.qI(W - 8)), ampT = Math.sqrt(1 + G.A2*G.A2 + 2*G.A2*Math.cos(dT));
+    lab(rows[3], '4. 2 + 3: the transmitted light (true size: amplitude ' + f2(ampT, 4) + ')', (Math.cos(dT) > 0.95 ? 'in step: a little brighter' : (Math.cos(dT) < -0.95 ? 'opposed: a little dimmer' : 'partly in step')));
+  }
+  el('tfLabW').textContent = 'THE WAVES, ' + (Rv ? 'REFLECTED' : 'TRANSMITTED') + ' \u2014 ' + G.lam + ' nm' + (S.src === 'white' ? ' (white light: shown for 550 nm)' : '');
+  var Pp = phases(), txt = Rv ? 'Wave 3 travels an extra 2t = ' + f2(2*S.t, 0) + ' nm in the film, that is <b>' + f2(Pp.m2, 3) + '</b> wavelengths in the film (2n\u2082t/\u03BB). ' + (G.f1 + G.f2 === 0.5 ? 'One of the two reflections is shifted by \u00BD \u03BB, so the difference is ' + f2(Pp.m2, 3) + ' \u00B1 \u00BD.' : 'Both reflections, or neither, are shifted: the shifts cancel.') + ' What counts is the fraction: <b>' + f2(Pp.dR, 2) + '</b> of a cycle. Amplitudes: front ' + f2(G.AF, 3) + ', back ' + f2(G.AB, 3) + (Math.abs(G.AF - G.AB) < 0.01 ? (Math.abs(Pp.dR - 0.5) < 0.05 ? ': <b>equal and opposed</b>, so they cancel completely.' : ': nearly <b>equal</b>; if they were opposed they would cancel completely.') : (Math.abs(Pp.dR - 0.5) < 0.05 ? ': opposed, but not equal, so they do not cancel completely.' : '.'))
+    : 'Wave 3 has been reflected twice inside the film, so it is weak (' + f2(G.A2*100, 2) + ' % of wave 2); it is drawn \u00D7' + niceMag(G.A2) + '. It travels an extra 2t, <b>' + f2(Pp.m2, 3) + '</b> film wavelengths; the fraction is <b>' + f2(Pp.dT, 2) + '</b>, half a cycle from the reflected view: where the reflection is weak, more gets through.';
+  txt += ' <i>The rows follow the two main waves, as in the classic diagrams; the graphs and the colours use the exact result with all the reflections inside the film.</i>';
+  var wt = el('tfWtxt'); if (wt.innerHTML !== txt) wt.innerHTML = txt;
+}
+function drawSwatches(){
+  var g = CS.g, W = CS.W, H = CS.H, p = pal(); g.fillStyle = p.bg; g.fillRect(0, 0, W, H);
+  var groups = [['incident', 'I'], ['reflected', 'R'], ['transmitted', 'T']], rgbMode = S.src === 'rgb';
+  groups.forEach(function(q, gi){ var x0 = 20 + gi*256; T(g, q[0], x0, 12, p.text, 'left', 'bold 12px Arial');
+    function val(kind, lam){ if (kind === 'I') return 1; var R = Rf(S.t, lam), sc = rmax(); if (kind === 'R') return Math.min(1, R/sc); var Tt = 1 - R; return S.boost ? Math.max(0, (Tt - (1 - sc))/sc) : Tt; }
+    if (rgbMode){ var net = [0, 0, 0]; RGBL.forEach(function(L, i){ var v = S.rgb[i] ? val(q[1], L[0]) : 0, col = [L[1][0]*v, L[1][1]*v, L[1][2]*v]; net[i] = v; g.fillStyle = css(col); g.fillRect(x0 + i*46, 22, 40, 40); g.strokeStyle = p.text; g.lineWidth = 1; g.strokeRect(x0 + i*46, 22, 40, 40); T(g, 'RGB'[i], x0 + i*46 + 20, 72, p.text, 'center', '11px Arial'); });
+      g.fillStyle = css(net); g.fillRect(x0 + 150, 22, 56, 40); g.strokeStyle = p.text; g.strokeRect(x0 + 150, 22, 56, 40); T(g, 'net', x0 + 178, 72, p.text, 'center', 'bold 11px Arial'); }
+    else { var col2; if (q[1] === 'I') col2 = S.src === 'white' ? [1, 1, 1] : wl2rgb(S.lam); else col2 = colour(S.t, q[1] === 'T'); g.fillStyle = css(col2); g.fillRect(x0, 22, 206, 40); g.strokeStyle = p.text; g.lineWidth = 1; g.strokeRect(x0, 22, 206, 40); T(g, S.src === 'white' ? 'white light' : S.lam + ' nm', x0 + 103, 72, p.text, 'center', '11px Arial'); }
+  });
+  el('tfSwNote').textContent = 'reflected brightness scaled up' + (S.boost ? '; transmitted contrast stretched' : '');
+}
+/* ══════════ readout, narration ══════════ */
+function rrow(k, v){ return '<div class="tf_rrow"><span class="tf_rkey">' + k + '</span><span class="tf_rval">' + v + '</span></div>'; }
+function rules(){ var P = phases(), one = ((P.fTop ? 1 : 0) + (P.fBot ? 1 : 0)) === 1, lam = S.lam, b = S.n2;
+  var tb = one ? lam/(4*b) : lam/(2*b), td = one ? lam/(2*b) : lam/(4*b); return { one:one, tBright:tb, tDark:td }; }
+function readout(){
+  var P = phases(), Ru = rules(), R = Rf(S.t, S.lam), r = '', e = '';
+  r = rrow('thickness t', f2(S.t, 1) + ' nm = ' + f2(P.a, 3) + ' \u03BB/n\u2082') + rrow('reflected at ' + S.lam + ' nm', f2(R*100, 3) + ' %') + rrow('in white light', f2(whiteR(S.t)*100, 2) + ' %') + (S.tab === 1 ? rrow('bare surface (no film)', f2(rBare()*100, 2) + ' %') : '')
+    + rrow('flips between the reflections', Ru.one ? 'one' : (P.fTop ? 'two (cancel)' : 'none'))
+    + rrow('thinnest bright film at ' + S.lam + ' nm', f2(Ru.tBright, 1) + ' nm') + rrow('thinnest dark film (after t = 0)', f2(Ru.one ? Ru.tDark : Ru.tDark, 1) + ' nm');
+  e = (Ru.one ? 'One flip: <b>bright</b> when 2n\u2082t = (m + \u00BD)\u03BB, <b>dark</b> when 2n\u2082t = m\u03BB. A very thin film (t \u2192 0) is <b>dark</b>.' : 'No net flip: <b>bright</b> when 2n\u2082t = m\u03BB, <b>dark</b> when 2n\u2082t = (m + \u00BD)\u03BB: the quarter-wave film, t = \u03BB/(4n\u2082) = ' + f2(S.lam/(4*S.n2), 1) + ' nm, is <b>anti-reflecting</b>.')
+    + '<br>Exactly: r\u2081\u2082 = ' + f2((S.n1 - S.n2)/(S.n1 + S.n2), 4) + ', r\u2082\u2083 = ' + f2((S.n2 - n3())/(S.n2 + n3()), 4) + ', \u03B4 = 4\u03C0n\u2082t/\u03BB = ' + f2(4*Math.PI*S.n2*S.t/S.lam, 3) + '; R = |r\u2081\u2082 + r\u2082\u2083e^(i\u03B4)|\u00B2/|1 + r\u2081\u2082r\u2082\u2083e^(i\u03B4)|\u00B2 = <b>' + f2(R*100, 3) + ' %</b>' + (S.tab === 1 && !Ru.one ? '; complete cancellation needs n\u2082 = \u221A(n\u2081n\u2083) = ' + f2(Math.sqrt(S.n1*n3()), 3) : '') + '.';
+  el('tfRead').innerHTML = r; el('tfEqs').innerHTML = e; el('tfEqs').style.display = S.eqs ? '' : 'none';
+}
+function summary(){ var ex = exList()[S.ex], Ru = rules(), Rw = whiteR(S.t);
+  return (ex ? ex.name + ': ' : '') + 'a film ' + f2(S.t, 0) + ' nanometres thick, index ' + f2(S.n2) + ', between ' + f2(S.n1) + ' and ' + f2(n3()) + '. ' + (Ru.one ? 'One reflection is flipped, so a very thin film looks dark.' : 'Both or neither reflection is flipped, so a quarter-wave film is anti-reflecting.') + ' In white light it reflects ' + f2(Rw*100, 2) + ' percent' + (S.tab === 1 ? ', against ' + f2(rBare()*100, 2) + ' percent with no film.' : '.'); }
+function narrate(m){ if (!th.nr) return; el('tfNar').textContent = m; }
+var nT = null; function later(){ clearTimeout(nT); nT = setTimeout(function(){ narrate(summary()); }, 400); }
+function draw(){ var ex = exList()[S.ex];
+  el('tfLabA').textContent = (S.scene === 'soap' ? 'A SOAP FILM IN A WIRE LOOP' : (S.scene === 'puddle' ? 'A FILM ON A DARK PUDDLE' : 'GLASS, WITH AND WITHOUT THE FILM')) + (S.view === 'R' ? ' \u2014 IN REFLECTED LIGHT' : ' \u2014 IN TRANSMITTED LIGHT');
+  el('tfHintA').textContent = S.src === 'white' ? 'white light' : (S.src === 'rgb' ? 'red, green and blue lasers' : S.lam + ' nm light');
+  var wv = S.tab === 2; ['tfBoxA', 'tfBoxZ', 'tfBoxP', 'tfBoxH'].forEach(function(id){ el(id).style.display = wv ? 'none' : ''; }); el('tfBoxW').style.display = wv ? '' : 'none';
+  if (wv){ drawWaves(); } else { drawApp(); drawZoom(); drawSpec(); drawThick(); } drawSwatches(); readout(); }
+var raf = null; function schedule(){ if (raf) return; raf = requestAnimationFrame(function(){ raf = null; draw(); }); }
+/* ══════════ controls ══════════ */
+function row(id, label, min, max, step, val, txt){ return '<div class="tf_ctrl"><div class="tf_ctrlhdr"><label class="tf_ctrlname" for="' + id + '">' + label + '</label><span class="tf_sval" id="' + id + 'v">' + txt + '</span></div><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"></div>'; }
+function exList(){ if (!EXALL) EXALL = EX[0].map(function(e){ var c = {}; for (var k in e) c[k] = e[k]; c.n3 = e.n1; return c; }).concat(EX[1]); return S.tab === 2 ? EXALL : EX[S.tab]; }
+function buildEx(){ var sel = el('tfEx'); sel.innerHTML = exList().map(function(e, i){ return '<option value="' + i + '">' + e.name + '</option>'; }).join('') + '<option value="-1">(your own settings)</option>'; sel.value = String(S.ex); }
+function loadEx(i){ S.ex = i; if (i < 0) return; var e = exList()[i]; S.n1 = e.n1; S.n2 = e.n2; S.n3 = e.n3 === undefined ? e.n1 : e.n3; S.t = e.t; S.scene = e.scene; }
+function buildCtl(){
+  var c = (S.tab === 0 ? row('tfN1', 'surrounding medium n\u2081', 1, 2, 0.01, S.n1, f2(S.n1)) : row('tfN1', (S.tab === 2 ? 'in front: n\u2081' : 'above: n\u2081'), 1, 2, 0.01, S.n1, f2(S.n1))) + row('tfN2', 'film: n\u2082', 1, 2.5, 0.01, S.n2, f2(S.n2)) + (S.tab >= 1 ? row('tfN3', S.tab === 2 ? 'behind: n\u2083' : 'below: n\u2083', 1, 2.5, 0.01, S.n3, f2(S.n3)) : '')
+    + row('tfTt', 'film thickness t', 0, 1500, 0.5, S.t, f2(S.t, 1) + ' nm') + row('tfLam', 'wavelength (for the graphs)', 400, 700, 1, S.lam, S.lam + ' nm');
+  var b = S.tab === 2 ? '<button type="button" class="tf_btn tf_btnon" id="tfRun">' + (S.run ? 'Pause' : 'Run') + '</button><button type="button" class="tf_btn" id="tfStep">Step</button>'
+    + '<label><input type="checkbox" id="tfOF"' + (S.ovF ? ' checked' : '') + '> front reflection over the incident wave</label><label><input type="checkbox" id="tfOB"' + (S.ovB ? ' checked' : '') + '> back reflection over it</label>'
+    + (S.src === 'rgb' ? '<label>Waves for <select id="tfWc">' + RGBL.map(function(q, i){ return S.rgb[i] ? '<option value="' + i + '"' + (S.wcol === i ? ' selected' : '') + '>' + q[2] + ' (' + q[0] + ' nm)</option>' : ''; }).join('') + '</select></label>' : '') : '<label>Scene <select id="tfSc"><option value="soap">soap film in a loop</option><option value="puddle">film on a puddle</option><option value="lens">glass with and without the film</option></select></label>'
+    + (S.tab === 1 ? '<button type="button" class="tf_btn" id="tfQW">Quarter-wave thickness</button>' : '') + '<label><input type="checkbox" id="tfBo"' + (S.boost ? ' checked' : '') + '> stretch the transmitted contrast</label><label><input type="checkbox" id="tfEq"' + (S.eqs ? ' checked' : '') + '> math</label><button type="button" class="tf_btn" id="tfDsc">Describe</button>';
+  if (S.tab === 2) b += '<label><input type="checkbox" id="tfBo"' + (S.boost ? ' checked' : '') + '> stretch the transmitted contrast</label><label><input type="checkbox" id="tfEq"' + (S.eqs ? ' checked' : '') + '> math</label><button type="button" class="tf_btn" id="tfDsc">Describe</button>';
+  el('tfCtl').innerHTML = c; el('tfBtns').innerHTML = b; if (el('tfSc')) el('tfSc').value = S.scene;
+  function on(id, ev, fn){ var e = el(id); if (e) e.addEventListener(ev, fn); }
+  function own(){ S.ex = -1; el('tfEx').value = '-1'; }
+  [['tfN1', 'n1', 2, ''], ['tfN2', 'n2', 2, ''], ['tfN3', 'n3', 2, ''], ['tfTt', 't', 1, ' nm'], ['tfLam', 'lam', 0, ' nm']].forEach(function(q){ on(q[0], 'input', function(){ S[q[1]] = +this.value; el(q[0] + 'v').textContent = f2(S[q[1]], q[2]) + q[3]; if (q[1] !== 'lam' && q[1] !== 't') own(); schedule(); later(); }); });
+  var ls = el('tfLam'); if (ls) ls.style.accentColor = css(wl2rgb(S.lam));
+  on('tfSc', 'change', function(){ S.scene = this.value; schedule(); }); on('tfBo', 'change', function(){ S.boost = this.checked; schedule(); }); on('tfEq', 'change', function(){ S.eqs = this.checked; schedule(); }); on('tfDsc', 'click', describe);
+  on('tfRun', 'click', function(){ S.run = !S.run; this.textContent = S.run ? 'Pause' : 'Run'; narrate(S.run ? 'The waves move: the incident to the right, the reflected ones back to the left.' : 'Paused.'); });
+  on('tfStep', 'click', function(){ S.run = false; var r_ = el('tfRun'); if (r_) r_.textContent = 'Run'; S.ph += 0.125; schedule(); });
+  on('tfOF', 'change', function(){ S.ovF = this.checked; schedule(); }); on('tfOB', 'change', function(){ S.ovB = this.checked; schedule(); });
+  on('tfWc', 'change', function(){ S.wcol = +this.value; schedule(); narrate('The waves are drawn for the ' + RGBL[S.wcol][2] + ' laser, ' + RGBL[S.wcol][0] + ' nanometres.'); });
+  on('tfQW', 'click', function(){ S.t = S.lam/(4*S.n2); buildCtl(); schedule(); narrate('Quarter-wave film for ' + S.lam + ' nanometres: t = ' + f2(S.t, 1) + ' nanometres. ' + summary()); });
+}
+el('tfEx').addEventListener('change', function(){ var i = +this.value; loadEx(i); buildCtl(); schedule(); if (i >= 0) narrate(exList()[i].note + ' ' + summary()); });
+[].forEach.call(document.getElementsByName('tfV'), function(r){ r.addEventListener('change', function(){ S.view = this.value; schedule(); narrate(S.view === 'R' ? 'Reflected view: the light the film sends back.' : 'Transmitted view: the light that gets through. Nearly all of it does, so its colours are faint, and the opposite of the reflected ones.'); }); });
+function setSrc(v){ S.src = v; S.white = v === 'white'; el('tfRGB').style.display = v === 'rgb' ? '' : 'none'; if (v === 'rgb'){ var i0 = S.rgb.indexOf(true); if (i0 >= 0 && !S.rgb[S.wcol]) S.wcol = i0; } buildCtl(); schedule(); }
+el('tfSrc').addEventListener('change', function(){ setSrc(this.value); narrate(S.src === 'rgb' ? 'Red, green and blue lasers, at 660, 540 and 440 nanometres: each is reflected by its own amount; the swatches show each colour and their mix.' : (S.src === 'one' ? 'One wavelength, set by the slider: only bright and dark.' : 'White light: every wavelength reflected by its own amount.')); });
+[0, 1, 2].forEach(function(i){ el('tfR' + i).addEventListener('change', function(){ S.rgb[i] = this.checked; if (!S.rgb[S.wcol]){ var j = S.rgb.indexOf(true); if (j >= 0) S.wcol = j; } buildCtl(); schedule(); }); });
+function tab(i){ var was = S.tab; if (i === 2 && was === 0) S.n3 = S.n1; S.tab = i; for (var k=0; k<3; k++) el('tfT' + k).setAttribute('aria-selected', k === i ? 'true' : 'false');
+  if (i === 2){ S.ex = -1; buildEx(); buildCtl(); draw(); narrate('The waves, drawn to scale, for the film you had: ' + summary() + ' Press Run to set them moving.'); return; }
+  S.run = false; loadEx(0); buildEx(); buildCtl(); draw(); narrate(EX[i][0].note + ' ' + summary()); }
+function theme(k){ th[k] = !th[k]; if (k === 'hc' && th.hc) th.lm = false; if (k === 'lm' && th.lm) th.hc = false; ROOT.classList.toggle('tf_hc', th.hc); ROOT.classList.toggle('tf_lm', th.lm);
+  [['hc', 'tfBtnHC'], ['lm', 'tfBtnLM'], ['cb', 'tfBtnCB'], ['nr', 'tfBtnNR']].forEach(function(q){ var b = el(q[1]); b.classList.toggle('tf_a11yon', th[q[0]]); b.setAttribute('aria-pressed', th[q[0]] ? 'true' : 'false'); });
+  el('tfBtnNR').textContent = 'NARRATION: ' + (th.nr ? 'ON' : 'OFF'); el('tfNar').style.display = th.nr ? '' : 'none'; draw(); }
+function describe(){ narrate('From the top: the film as it looks, a magnified view of the two reflected or transmitted waves with their flips and phases, the fraction reflected across the spectrum with the colour seen, and the colour against the thickness. ' + summary()); }
+function toggleDesc(){ var b = el('tfDescBtn'), d = el('tfDesc'), open = d.style.display === 'none'; d.style.display = open ? 'block' : 'none'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.innerHTML = (open ? '\u25BE' : '\u25B8') + ' SIM DESCRIPTION';
+  if (open && window.MathJax){ if (MathJax.typesetPromise) MathJax.typesetPromise([d]); else if (MathJax.Hub) MathJax.Hub.Queue(['Typeset', MathJax.Hub, d]); } }
+var lastW = null; (function wloop(ts){ if (S.tab === 2 && S.run && lastW !== null){ S.ph += (ts - lastW)/1000*0.5; drawWaves(); } lastW = ts; requestAnimationFrame(wloop); })(performance.now());
+loadEx(0); buildEx(); buildCtl(); draw(); narrate('Ready. ' + EX[0][0].note + ' ' + summary());
+return { tab:tab, theme:theme, describe:describe, toggleDesc:toggleDesc,
+  ex:function(i){ loadEx(i); el('tfEx').value = String(i); buildCtl(); draw(); }, set:function(k, v){ S[k] = v; buildCtl(); draw(); }, view:function(v){ S.view = v; [].forEach.call(document.getElementsByName('tfV'), function(r){ r.checked = r.value === v; }); draw(); },
+  src:function(v){ el('tfSrc').value = v; setSrc(v); }, _geo:function(){ var G = waveGeo(); return { AF:G.AF, AB:G.AB, A2:G.A2, f1:G.f1, f2:G.f2, fIn:G.fIn, lam:G.lam, x1:G.x1, x2:G.x2, dR:2*Math.PI*(G.qB(G.x0) - G.qF(G.x0)) }; },
+  _state:function(){ return { S:JSON.parse(JSON.stringify(S)), R:Rf(S.t, S.lam), Rw:whiteR(S.t), bare:rBare(), P:phases(), rules:rules() }; } };
+})();
+</script>
+</main>
+</body>
+</html>
